@@ -1,0 +1,3 @@
+include bin/regenerate *.txt
+recursive-include regenerate *.py
+recursive-include regenerate/data *.ui *.txt *.inc *.svg *.odt

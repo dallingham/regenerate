@@ -1,0 +1,13 @@
+Author: $U$ 
+Block: $M$ 
+
+----------------------------------------------------------------------
+Functional Description
+  Provides a block of registers and their associated input and output
+  signals
+----------------------------------------------------------------------
+
+Copyright $Y$ $U$. All rights reserved.
+
+
+
