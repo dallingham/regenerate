@@ -147,7 +147,11 @@ class UVM_Registers(WriterBase):
             for key in field_keys:
                 field = reg.get_bit_field(key)
                 size = field.width
-                lsb = field.start_position
+                if field.start_position >= reg.width:
+                    lsb = field.start_position % reg.width
+                    print "WARNING: %s has bits that exceed the register width" % reg.token
+                else:
+                    lsb = field.start_position
                 access = access_map[field.field_type]
                 volatile = field.input_signal != ""
                 has_reset = 1
