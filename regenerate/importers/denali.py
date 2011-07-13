@@ -142,7 +142,6 @@ class DenaliRDLParser:
                 else:
                     name_count[item.name] = 1
         duplicates = set([key for key in name_count if name_count[key] > 1])
-
         current_duplicates = {}
 
         for (reg_name, addr_txt, field_list) in reg_list:
@@ -152,6 +151,8 @@ class DenaliRDLParser:
 
                 register = Register()
                 register.address = int(addr_txt, 16) + (item.start / 8)
+                delta = (register.address % 4) * 8
+                
                 if item.name in duplicates:
                     if item.name in current_duplicates:
                         index = current_duplicates[item.name] + 1
@@ -180,8 +181,8 @@ class DenaliRDLParser:
                 field.field_name = name
                 field.field_type = lookup.get(item.software_access,
                                               BitField.READ_ONLY)
-                field.start_position = item.start
-                field.stop_position = item.stop
+                field.start_position = item.start - delta
+                field.stop_position = item.stop - delta
                 field.reset_value = item.reset
                 field.description = item.description
                 register.add_bit_field(field)
