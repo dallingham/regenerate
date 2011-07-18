@@ -7,7 +7,7 @@ setup(
     author='Donald N. Allingham',
     author_email='dallingham@gmail.com',
     description='Register editor for ASIC/FPGA designs',
-    long_description='Here a longer description',
+    long_description='Allows users to manange registers for ASIC and FPGA designs. Capable of generating Verilog RTL, test code, C and assembler header files, and documentation.',
     packages=["regenerate",
               "regenerate.db",
               "regenerate.importers",
@@ -19,7 +19,7 @@ setup(
                                  'data/media/*.png',
                                  'data/extra/*.odt',
                                  'data/*.*']},
-    url="http://code.google.com/p/vlsi-utils/",
+    url="https://github.com/dallingham/regenerate",
     scripts=['bin/regenerate'],
     classifiers=[
         'Operating System :: POSIX',
