@@ -814,16 +814,14 @@ class MainWindow(object):
         """
         name = None
         choose = gtk.FileChooserDialog(
-            "New", self.__top_window, gtk.FILE_CHOOSER_ACTION_OPEN,
-            (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN,
+            "New", self.__top_window, gtk.FILE_CHOOSER_ACTION_SAVE,
+            (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_SAVE,
              gtk.RESPONSE_OK))
         choose.show()
 
         response = choose.run()
         if response == gtk.RESPONSE_OK:
             name = choose.get_filename()
-            if self.__recent_manager:
-                self.__recent_manager.add_item(choose.get_uri())
         choose.destroy()
         return name
 
@@ -842,8 +840,9 @@ class MainWindow(object):
             self.__project.name = os.path.splitext(os.path.basename(filename))[0]
             self.__prj_model = ProjectModel(self.use_svn)
             self.__prj_obj.set_model(self.__prj_model)
+            self.__project.save()
             if self.__recent_manager:
-                self.__recent_manager.add_item(choose.get_uri())
+                self.__recent_manager.add_item("file://" + filename)
             self.__builder.get_object('save_btn').set_sensitive(True)
         choose.destroy()
 
