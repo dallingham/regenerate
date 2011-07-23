@@ -25,6 +25,7 @@ fears that it will get overwritten on the next install.
 
 from rdl import RDLParser
 from denali import DenaliRDLParser
+from certe_csv import CerteCSVParser
 
 #
 # Lists the exporters. The format is:
@@ -36,4 +37,5 @@ from denali import DenaliRDLParser
 IMPORTERS = [
     (RDLParser, "SystemRDL", "SystemRDL files", ".rdl", '-r', '--import-rdl'),
     (DenaliRDLParser, "DenaliRDL", "SystemRDL files", ".rdl", '-r', '--import-drdl'),
+    (CerteCSVParser, "CerteSCV", "CSV files", ".csv", '-c', '--import-csv'),
 ]

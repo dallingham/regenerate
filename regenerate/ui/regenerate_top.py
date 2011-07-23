@@ -260,7 +260,7 @@ class MainWindow(object):
 
         register_selected - A register is selected, so register operations are
                             valid
-        database_seelcted - A database is selected, so registers can be added,
+        database_selected - A database is selected, so registers can be added,
                             checked, etc.
         bitfield_selected - A bit field is selected, so a field can be removed
                             or edited.
@@ -277,6 +277,8 @@ class MainWindow(object):
         self.__database_selected = gtk.ActionGroup("database_selected")
         self.__database_selected.add_action(
             self.__builder.get_object('add_register_action'))
+        self.__database_selected.add_action(
+            self.__builder.get_object('import_action'))
         self.__database_selected.set_sensitive(False)
 
         self.__bitfield_selected = gtk.ActionGroup("bitfield_selected")
@@ -943,6 +945,11 @@ class MainWindow(object):
             self.__reglist_obj.set_model(self.__reg_model)
             self.__bitfield_obj.set_model(self.__bit_model)
 
+        self.__update_display()
+        self.clear_modified()
+
+    def __update_display(self):
+
         if self.__reg_model:
             self.__reg_model.clear()
             for key in self.dbase.get_keys():
@@ -954,7 +961,6 @@ class MainWindow(object):
         for instance in self.dbase.instances:
             self.__instance_model.append_instance(instance)
         self.__skip_changes = False
-        self.clear_modified()
 
     def open_xml(self, name, load=True):
         """
@@ -1052,7 +1058,7 @@ class MainWindow(object):
         importer = importer_class(self.dbase)
         try:
             importer.import_data(name)
-            self.redraw()
+            self.__update_display()
             self.set_modified()
         except IOError, msg:
             ErrorMsg("Could not create %s " % name, str(msg))
