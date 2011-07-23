@@ -828,9 +828,12 @@ class MainWindow(object):
     def on_new_project_clicked(self, obj):
         choose = self.__create_save_selector(
             "New Project", "Regenerate Project", DEF_MIME)
+        print "DEBUG: Opening file selector"
         response = choose.run()
+        print "DEBUG: file selector complete"
         if response == gtk.RESPONSE_OK:
             filename = choose.get_filename()
+            print "DEBUG: file selector name", filename
             ext = os.path.splitext(filename)
             if ext[1] != DEF_EXT:
                 filename = filename + DEF_EXT
@@ -840,10 +843,13 @@ class MainWindow(object):
             self.__project.name = os.path.splitext(os.path.basename(filename))[0]
             self.__prj_model = ProjectModel(self.use_svn)
             self.__prj_obj.set_model(self.__prj_model)
+            print "DEBUG: saving file"
             self.__project.save()
+            print "DEBUG: saving recent file"
             if self.__recent_manager:
                 self.__recent_manager.add_item("file://" + filename)
             self.__builder.get_object('save_btn').set_sensitive(True)
+            print "DEBUG: saving recent file"
         choose.destroy()
 
     def on_open_action_activate(self, obj):
