@@ -24,6 +24,20 @@ Imports data from a Denali RDL file
 from regenerate.db import Register, BitField
 import re
 
+REG_NAME     = "Register Name"
+REG_ADDR     = "Register Address"
+REG_WIDTH    = "Register Width"
+REG_ACC      = "Register Access"
+REG_RST      = "Register Reset Value"
+REG_RMASK    = "Register Reset Mask"
+FIELD_NAME   = "Field Name"
+FIELD_OFFSET = "Field Offset"
+FIELD_WIDTH  = "Field Width"
+FIELD_ACCESS = "Field Access"
+FIELD_RESET  = "Field Reset Value"
+FIELD_MASK   = "Field Reset Mask"
+
+
 def parse_hex_value(value):
     """
     Parses the input string, trying to determine the appropriate format.
@@ -65,23 +79,26 @@ class CerteCSVParser:
         field = None
         field_list = []
         reg_list = []
+        col = {}
 
         input_file = open(filename, "rU")
 
-        titles = input_file.readline()
+        titles = input_file.readline().split(",")
+        for (i,name) in enumerate(titles):
+            col[name] = i
 
         for line in input_file:
             data = line.split(",")
 
             r_addr = parse_hex_value(data[1])
-            r_name = data[0].strip()
-            r_token = data[0].upper().replace(" ", "_")
-            r_width = parse_hex_value(data[2])
-            f_name = data[6].strip()
-            f_start = parse_hex_value(data[7])
-            f_stop = f_start + parse_hex_value(data[8]) - 1
-            f_reset = parse_hex_value(data[10])
-            if data[9] == "RW":
+            r_name = data[col[REG_NAME]].strip()
+            r_token = data[col[REG_NAME]].upper().replace(" ", "_")
+            r_width = parse_hex_value(data[col[REG_WIDTH]])
+            f_name = data[col[FIELD_NAME]].strip()
+            f_start = parse_hex_value(data[col[FIELD_OFFSET]])
+            f_stop = f_start + parse_hex_value(data[col[FIELD_WIDTH]]) - 1
+            f_reset = parse_hex_value(data[col[FIELD_RESET]])
+            if data[col[FIELD_ACCESS]] == "RW":
                 f_type = BitField.READ_WRITE
             elif data[9] == "RO":
                 f_type = BItField.READ_ONLY
