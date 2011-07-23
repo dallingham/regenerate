@@ -253,11 +253,19 @@ class MainWindow(object):
         """
         self.__reg_notebook(value)
 
+    def __build_group(self, group_name, action_names):
+        group = gtk.ActionGroup(group_name)
+        for name in action_names:
+            group.add_action(self.__builder.get_object(name))
+        group.set_sensitive(False)
+        return group
+
     def __build_actions(self):
         """
         Builds the action groups. These groups are used to control which
         buttons/functions are active at any given time. The groups are:
 
+        project_loaded    - A project has been loaded.
         register_selected - A register is selected, so register operations are
                             valid
         database_selected - A database is selected, so registers can be added,
@@ -265,41 +273,35 @@ class MainWindow(object):
         bitfield_selected - A bit field is selected, so a field can be removed
                             or edited.
         """
-        self.__register_selected = gtk.ActionGroup("register_selected")
-        self.__register_selected.add_action(
-            self.__builder.get_object('remove_register_action'))
-        self.__register_selected.add_action(
-            self.__builder.get_object('duplicate_register_action'))
-        self.__register_selected.add_action(
-            self.__builder.get_object('add_bit_action'))
-        self.__register_selected.set_sensitive(False)
-
-        self.__database_selected = gtk.ActionGroup("database_selected")
-        self.__database_selected.add_action(
-            self.__builder.get_object('add_register_action'))
-        self.__database_selected.add_action(
-            self.__builder.get_object('import_action'))
-        self.__database_selected.set_sensitive(False)
-
-        self.__bitfield_selected = gtk.ActionGroup("bitfield_selected")
-        self.__bitfield_selected.add_action(
-            self.__builder.get_object('remove_bit_action'))
-        self.__bitfield_selected.add_action(
-            self.__builder.get_object('edit_bit_action'))
-        self.__bitfield_selected.set_sensitive(False)
-
-        self.__svn_selected = gtk.ActionGroup("svn_enabled")
-        self.__svn_selected.add_action(
-            self.__builder.get_object('update_svn'))
-        self.__svn_selected.add_action(
-            self.__builder.get_object('revert_svn'))
-        self.__svn_selected.set_sensitive(False)
-
-        self.__file_modified = gtk.ActionGroup("file_modified")
-        self.__file_modified.add_action(
-            self.__builder.get_object('revert_action'))
-        self.__file_modified.set_sensitive(False)
-
+        self.__project_loaded = self.__build_group("project_loaded",
+                                                   ["save_project_action", 
+                                                    "new_set_action",
+                                                    "add_set_action", 
+                                                    "build_action",
+                                                    "reg_grouping_action",
+                                                    "project_prop_action"])
+        
+        self.__register_selected = self.__build_group("register_selected",
+                                                      ['remove_register_action',
+                                                       'duplicate_register_action',
+                                                       'add_bit_action'])
+        
+        self.__database_selected = self.__build_group("database_selected",
+                                                      ['add_register_action',
+                                                       'remove_set_action',
+                                                       'import_action'])
+        
+        self.__bitfield_selected = self.__build_group("bitfield_selected",
+                                                      ['remove_bit_action',
+                                                       'edit_bit_action'])
+        
+        self.__svn_selected = self.__build_group("svn_enabled",
+                                                 ['update_svn',
+                                                  'revert_svn'])
+        
+        self.__file_modified = self.__build_group("file_modified",
+                                                  ['revert_action'])
+        
     def __build_data_width_box(self):
         """
         Builds the option menu for the bit width descriptor. Glade no longer
@@ -852,6 +854,7 @@ class MainWindow(object):
                 self.__recent_manager.add_item("file://" + filename)
             self.__builder.get_object('save_btn').set_sensitive(True)
             print "DEBUG: saving recent file"
+            self.__project_loaded.set_sensitive(True)
         choose.destroy()
 
     def on_open_action_activate(self, obj):
@@ -894,12 +897,16 @@ class MainWindow(object):
         self.__top_window.set_title("%s (%s) - regenerate" %
                                     (base, self.__project.name))
         self.__status_obj.pop(idval)
+        self.__project_loaded.set_sensitive(True)
 
     def on_new_register_set_activate(self, obj):
         """
         Creates a new database, and initializes the interface.
         """
         name = self.get_new_filename()
+        if not name:
+            return
+
         (base, ext) = os.path.splitext(os.path.basename(name))
         if ext != ".xml":
             name = name + ".xml"

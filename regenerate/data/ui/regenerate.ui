@@ -14,6 +14,10 @@
     <property name="stock_id">gtk-add</property>
     <signal name="activate" handler="on_add_register_action_activate" swapped="no"/>
   </object>
+  <object class="GtkAction" id="add_set_action">
+    <property name="label" translatable="yes">Add Register Set</property>
+    <property name="short_label" translatable="yes">Add Set</property>
+  </object>
   <object class="GtkAction" id="build_action">
     <property name="label">Build exports</property>
     <property name="short_label">Build</property>
@@ -35,11 +39,130 @@
     <property name="label" translatable="yes">Import Register Set</property>
     <property name="short_label" translatable="yes">Import</property>
   </object>
+  <object class="GtkAction" id="new_set_action">
+    <property name="label" translatable="yes">New Register Set</property>
+    <property name="short_label" translatable="yes">New Set</property>
+  </object>
   <object class="GtkAction" id="open_action">
     <property name="label">_Open Project</property>
     <property name="short_label">_Open</property>
     <property name="stock_id">gtk-open</property>
     <signal name="activate" handler="on_open_action_activate" swapped="no"/>
+  </object>
+  <object class="GtkAction" id="project_prop_action">
+    <property name="label" translatable="yes">Project Properties</property>
+    <property name="short_label" translatable="yes">Project Properties</property>
+  </object>
+  <object class="GtkAction" id="reg_grouping_action">
+    <property name="label" translatable="yes">Register Set Groupings</property>
+    <property name="short_label" translatable="yes">Groupings</property>
+  </object>
+  <object class="GtkAction" id="remove_bit_action">
+    <property name="label">_Remove Bit Action</property>
+    <property name="short_label">_Remove</property>
+    <property name="stock_id">gtk-remove</property>
+    <signal name="activate" handler="on_remove_bit_action_activate" swapped="no"/>
+  </object>
+  <object class="GtkAction" id="remove_register_action">
+    <property name="label">_Remove Register</property>
+    <property name="short_label">_Remove</property>
+    <property name="stock_id">gtk-remove</property>
+    <signal name="activate" handler="on_remove_register_action_activate" swapped="no"/>
+  </object>
+  <object class="GtkAction" id="remove_set_action">
+    <property name="label" translatable="yes">Remove Register Set</property>
+    <property name="short_label" translatable="yes">Remove Set</property>
+  </object>
+  <object class="GtkAction" id="revert_action">
+    <property name="label">Revert Changes</property>
+    <property name="short_label">Revert</property>
+    <property name="stock_id">gtk-revert-to-saved</property>
+    <signal name="activate" handler="on_revert_action_activate" swapped="no"/>
+  </object>
+  <object class="GtkAction" id="revert_svn">
+    <property name="label">Revert to SVN</property>
+    <property name="short_label">SVN revert</property>
+    <signal name="activate" handler="on_revert_svn_activate" swapped="no"/>
+  </object>
+  <object class="GtkAction" id="save_project_action">
+    <property name="label" translatable="yes">Save Project</property>
+    <property name="short_label" translatable="yes">Save</property>
+    <property name="stock_id">gtk-save</property>
+  </object>
+  <object class="GtkAction" id="update_svn">
+    <property name="label">Update from SVN</property>
+    <property name="short_label">SVN update</property>
+    <signal name="activate" handler="on_update_svn_activate" swapped="no"/>
+  </object>
+  <object class="GtkImage" id="image10">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-properties</property>
+  </object>
+  <object class="GtkImage" id="image11">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-copy</property>
+  </object>
+  <object class="GtkImage" id="image12">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-remove</property>
+  </object>
+  <object class="GtkImage" id="image13">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-missing-image</property>
+  </object>
+  <object class="GtkImage" id="image14">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-add</property>
+  </object>
+  <object class="GtkImage" id="image15">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-add</property>
+  </object>
+  <object class="GtkImage" id="image16">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-edit</property>
+  </object>
+  <object class="GtkImage" id="image17">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-remove</property>
+  </object>
+  <object class="GtkImage" id="image18">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-remove</property>
+  </object>
+  <object class="GtkImage" id="image19">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-preferences</property>
+  </object>
+  <object class="GtkImage" id="image6">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-new</property>
+  </object>
+  <object class="GtkImage" id="image7">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-new</property>
+  </object>
+  <object class="GtkImage" id="image8">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-open</property>
+  </object>
+  <object class="GtkImage" id="image9">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-add</property>
   </object>
   <object class="GtkTextBuffer" id="overview_buffer"/>
   <object class="GtkWindow" id="regenerate">
@@ -95,6 +218,7 @@
                         <property name="label">gtk-save</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="related_action">save_project_action</property>
                         <property name="use_action_appearance">False</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
@@ -112,6 +236,7 @@
                         <property name="label" translatable="yes">New _Register Set</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="related_action">new_set_action</property>
                         <property name="use_action_appearance">False</property>
                         <property name="use_underline">True</property>
                         <property name="image">image7</property>
@@ -124,6 +249,7 @@
                         <property name="label" translatable="yes">_Add Register Set</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="related_action">add_set_action</property>
                         <property name="use_action_appearance">False</property>
                         <property name="use_underline">True</property>
                         <property name="image">image9</property>
@@ -146,6 +272,7 @@
                         <property name="label" translatable="yes">Remove Register Set</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="related_action">remove_set_action</property>
                         <property name="use_action_appearance">False</property>
                         <property name="image">image18</property>
                         <property name="use_stock">False</property>
@@ -162,6 +289,7 @@
                       <object class="GtkMenuItem" id="register_grouping">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="related_action">reg_grouping_action</property>
                         <property name="use_action_appearance">False</property>
                         <property name="label" translatable="yes">Register Set Groupings</property>
                         <property name="use_underline">True</property>
@@ -292,6 +420,7 @@
                         <property name="label">_Project Properties</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="related_action">project_prop_action</property>
                         <property name="use_action_appearance">False</property>
                         <property name="use_underline">True</property>
                         <property name="image">image10</property>
@@ -370,10 +499,10 @@
             <child>
               <object class="GtkToolButton" id="save_btn">
                 <property name="visible">True</property>
-                <property name="sensitive">False</property>
                 <property name="can_focus">False</property>
                 <property name="has_tooltip">True</property>
                 <property name="tooltip_text" translatable="yes">Saves modified register groups and the project</property>
+                <property name="related_action">save_project_action</property>
                 <property name="use_action_appearance">False</property>
                 <property name="label" translatable="yes">Save</property>
                 <property name="use_underline">True</property>
@@ -481,6 +610,7 @@
               <object class="GtkToggleToolButton" id="preview">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="related_action">project_prop_action</property>
                 <property name="use_action_appearance">False</property>
                 <property name="label" translatable="yes">Preview</property>
                 <property name="use_underline">True</property>
@@ -1828,104 +1958,6 @@
     </child>
   </object>
   <object class="GtkTextBuffer" id="register_text_buffer"/>
-  <object class="GtkAction" id="remove_bit_action">
-    <property name="label">_Remove Bit Action</property>
-    <property name="short_label">_Remove</property>
-    <property name="stock_id">gtk-remove</property>
-    <signal name="activate" handler="on_remove_bit_action_activate" swapped="no"/>
-  </object>
-  <object class="GtkAction" id="remove_register_action">
-    <property name="label">_Remove Register</property>
-    <property name="short_label">_Remove</property>
-    <property name="stock_id">gtk-remove</property>
-    <signal name="activate" handler="on_remove_register_action_activate" swapped="no"/>
-  </object>
-  <object class="GtkAction" id="revert_action">
-    <property name="label">Revert Changes</property>
-    <property name="short_label">Revert</property>
-    <property name="stock_id">gtk-revert-to-saved</property>
-    <signal name="activate" handler="on_revert_action_activate" swapped="no"/>
-  </object>
-  <object class="GtkAction" id="revert_svn">
-    <property name="label">Revert to SVN</property>
-    <property name="short_label">SVN revert</property>
-    <signal name="activate" handler="on_revert_svn_activate" swapped="no"/>
-  </object>
-  <object class="GtkAction" id="update_svn">
-    <property name="label">Update from SVN</property>
-    <property name="short_label">SVN update</property>
-    <signal name="activate" handler="on_update_svn_activate" swapped="no"/>
-  </object>
-  <object class="GtkImage" id="image10">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-properties</property>
-  </object>
-  <object class="GtkImage" id="image11">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-copy</property>
-  </object>
-  <object class="GtkImage" id="image12">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-remove</property>
-  </object>
-  <object class="GtkImage" id="image13">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-missing-image</property>
-  </object>
-  <object class="GtkImage" id="image14">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-add</property>
-  </object>
-  <object class="GtkImage" id="image15">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-add</property>
-  </object>
-  <object class="GtkImage" id="image16">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-edit</property>
-  </object>
-  <object class="GtkImage" id="image17">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-remove</property>
-  </object>
-  <object class="GtkImage" id="image18">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-remove</property>
-  </object>
-  <object class="GtkImage" id="image19">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-preferences</property>
-  </object>
-  <object class="GtkImage" id="image6">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-new</property>
-  </object>
-  <object class="GtkImage" id="image7">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-new</property>
-  </object>
-  <object class="GtkImage" id="image8">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-open</property>
-  </object>
-  <object class="GtkImage" id="image9">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-add</property>
-  </object>
   <object class="GtkMenu" id="svn_prj_menu">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
