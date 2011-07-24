@@ -75,7 +75,10 @@ class ExportAssistant(gtk.Assistant):
     def forward(self, current_page):
         if current_page == 0:
             value = self.selected_export_is_project()
-            return 1 if value else 2
+            if value:
+                return 1
+            else:
+                return 2
         else:
             return current_page + 1
 

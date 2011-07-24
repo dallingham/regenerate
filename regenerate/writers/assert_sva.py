@@ -35,7 +35,10 @@ class AssertSva(AssertBase):
         if self.dbase.enable_ovm_messaging:
             ofile.write('  import ovm_pkg::*;\n\n')
 
-        polarity = "" if self.polarity else "~"
+        if self.polarity:
+            polarity = ""
+        else:
+            polarity = "~"
 
         for register in self.sorted_regs:
 

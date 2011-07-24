@@ -62,7 +62,10 @@ class ProjectModel(gtk.ListStore):
         self.__use_svn = use_svn
 
     def set_markup(self, node, modified):
-        icon = gtk.STOCK_EDIT if modified else None
+        if modified:
+            icon = gtk.STOCK_EDIT
+        else:
+            icon = None
         self.set_value(node, self.ICON, icon)
         self.set_value(node, self.MODIFIED, modified)
 
