@@ -32,6 +32,7 @@ try:
     WEBKIT = True
 except ImportError:
     WEBKIT = False
+    print "Webkit not installed, preview of formatted comments will not be available"
 
 from docutils.core import publish_string
 import pango
