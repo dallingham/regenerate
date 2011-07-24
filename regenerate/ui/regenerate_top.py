@@ -27,7 +27,12 @@ regenerate
 """
 
 import gtk
-import webkit
+try:
+    import webkit
+    WEBKIT = True
+except ImportError:
+    WEBKIT = False
+
 from docutils.core import publish_string
 import pango
 import xml
@@ -157,16 +162,17 @@ class MainWindow(object):
             self.__builder.get_object("register_list"),
             self.__selected_reg_changed, self.set_modified, self.update_register_addr)
 
-        self.__webkit = webkit.WebView()
-        self.__webkit_reg = webkit.WebView()
-
-        self.__wk_container = self.__builder.get_object('scroll_webkit')
-        self.__wk_container.add(self.__webkit)
-        self.__wk_container.hide()
-
-        self.__wk_reg_container = self.__builder.get_object('scroll_reg_webkit')
-        self.__wk_reg_container.add(self.__webkit_reg)
-        self.__wk_reg_container.hide()
+        if WEBKIT:
+            self.__webkit = webkit.WebView()
+            self.__webkit_reg = webkit.WebView()
+            
+            self.__wk_container = self.__builder.get_object('scroll_webkit')
+            self.__wk_container.add(self.__webkit)
+            self.__wk_container.hide()
+            
+            self.__wk_reg_container = self.__builder.get_object('scroll_reg_webkit')
+            self.__wk_reg_container.add(self.__webkit_reg)
+            self.__wk_reg_container.hide()
 
         self.__update_wk = False
         
@@ -437,7 +443,7 @@ class MainWindow(object):
         self.set_modified()
 
     def on_preview_toggled(self, obj):
-        if obj.get_active():
+        if obj.get_active() and WEBKIT:
             self.__update_wk = True
             self.__webkit.load_string(CSS + publish_string(self.dbase.overview_text,
                                                            writer_name="html"),
@@ -457,10 +463,11 @@ class MainWindow(object):
             self.__wk_reg_container.show()
         else:
             self.__update_wk = False
-            self.__webkit.hide()
-            self.__wk_container.hide()
-            self.__webkit_reg.hide()
-            self.__wk_reg_container.hide()
+            if WEBKIT:
+                self.__webkit.hide()
+                self.__wk_container.hide()
+                self.__webkit_reg.hide()
+                self.__wk_reg_container.hide()
     
     def on_register_grouping_activate(self, obj):
         """
@@ -659,7 +666,7 @@ class MainWindow(object):
             reg.description = self.__reg_text_buf.get_text(
                 self.__reg_text_buf.get_start_iter(),
                 self.__reg_text_buf.get_end_iter())
-            if self.__update_wk:
+            if self.__update_wk and WEBKIT:
                 self.__webkit_reg.load_string(CSS + publish_string(reg.description,
                                                                    writer_name="html"),
                                               "text/html", "utf-8", "")
@@ -804,7 +811,7 @@ class MainWindow(object):
         data = self.__prj_obj.get_selected()
         old_skip = self.__skip_changes
         self.__skip_changes = True
-        if (data):
+        if data:
             (store, node) = data
             filename = store.get_value(node, ProjectModel.FILE)
             store.remove(node)
@@ -1106,7 +1113,7 @@ class MainWindow(object):
         self.dbase.overview_text = obj.get_text(obj.get_start_iter(),
                                                 obj.get_end_iter())
         self.__set_description_warn_flag()
-        if self.__update_wk:
+        if self.__update_wk and WEBKIT:
             self.__webkit.load_string(CSS + publish_string(self.dbase.overview_text,
                                                            writer_name="html"),
                                       "text/html", "utf-8", "")
@@ -1153,8 +1160,10 @@ class MainWindow(object):
             self.set_modified()
 
     def on_data_width_changed(self, obj):
-        is_64 = obj.get_active()
-        self.dbase.data_bus_width = 64 if is_64 else 32
+        if obj.get_active():
+            self.dbase.data_bus_width = 64
+        else:
+            self.dbase.data_bus_width = 32
         self.set_modified()
 
     def on_byte_en_level_toggled(self, obj):
@@ -1351,7 +1360,10 @@ class MainWindow(object):
             self.__warn_reg_descr.set_property('visible', warn_reg)
             self.__warn_bit_list.set_property('visible', warn_bit)
         self.__reg_model.set_warning_for_register(reg, warn_reg or warn_bit)
-        tip = "\n".join(msg) if msg else None
+        if msg:
+            tip = "\n".join(msg)
+        else:
+            tip = None
         self.__reg_model.set_tooltip(reg, tip)
 
     def __set_description_warn_flag(self):
@@ -1409,7 +1421,10 @@ class MainWindow(object):
 
 
 def clean_ascii(value):
-    return value if isprint(value) else " "
+    if isprint(value):
+        return value
+    else:
+        return " "
 
 
 def build_new_name(name, reglist):
@@ -1466,7 +1481,10 @@ def signal_from_source(source_name, existing_list):
     """
     if source_name:
         signal = build_new_name(source_name, existing_list)
-        return signal if signal else source_name + "_COPY"
+        if signal:
+            return signal
+        else:
+            return source_name + "_COPY"
     else:
         return ""
 
