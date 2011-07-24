@@ -49,6 +49,12 @@
     <property name="stock_id">gtk-open</property>
     <signal name="activate" handler="on_open_action_activate" swapped="no"/>
   </object>
+  <object class="GtkAction" id="preview_action">
+    <property name="label" translatable="yes">Preview text</property>
+    <property name="short_label" translatable="yes">Preview</property>
+    <property name="tooltip" translatable="yes">View text as it would be formatted</property>
+    <property name="stock_id">gtk-page-setup</property>
+  </object>
   <object class="GtkAction" id="project_prop_action">
     <property name="label" translatable="yes">Project Properties</property>
     <property name="short_label" translatable="yes">Project Properties</property>
@@ -610,11 +616,9 @@
               <object class="GtkToggleToolButton" id="preview">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="related_action">project_prop_action</property>
-                <property name="use_action_appearance">False</property>
+                <property name="related_action">preview_action</property>
                 <property name="label" translatable="yes">Preview</property>
                 <property name="use_underline">True</property>
-                <property name="stock_id">gtk-page-setup</property>
                 <signal name="toggled" handler="on_preview_toggled" swapped="no"/>
               </object>
               <packing>

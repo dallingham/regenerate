@@ -280,13 +280,17 @@ class MainWindow(object):
         bitfield_selected - A bit field is selected, so a field can be removed
                             or edited.
         """
+
+        project_actions = ["save_project_action", "new_set_action",
+                           "add_set_action", "build_action",
+                           "reg_grouping_action", "project_prop_action" ]
+        if WEBKIT:
+            project_actions.append("preview_action")
+        else:
+            self.__build_group("unused", ["preview_action"])
+
         self.__project_loaded = self.__build_group("project_loaded",
-                                                   ["save_project_action", 
-                                                    "new_set_action",
-                                                    "add_set_action", 
-                                                    "build_action",
-                                                    "reg_grouping_action",
-                                                    "project_prop_action"])
+                                                   project_actions)
         
         self.__register_selected = self.__build_group("register_selected",
                                                       ['remove_register_action',
