@@ -91,7 +91,10 @@ class RegisterModel(gtk.ListStore):
 
     def set_warning_for_register(self, register, flag):
         path = self.reg2path[register]
-        self[path][self.ICON_COL] = gtk.STOCK_DIALOG_WARNING if flag else None
+        if flag:
+            self[path][self.ICON_COL] = gtk.STOCK_DIALOG_WARNING
+        else:
+            self[path][self.ICON_COL] = None
 
     def get_path_from_register(self, register):
         """
