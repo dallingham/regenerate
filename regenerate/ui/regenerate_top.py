@@ -49,11 +49,11 @@ from regenerate.db import RegWriter, RegisterDb, Register, BitField, RegProject
 from regenerate.importers import IMPORTERS
 from regenerate.settings.paths import GLADE_TOP, INSTALL_PATH
 from regenerate.settings import ini
+from regenerate import PROGRAM_VERSION, PROGRAM_NAME
 
 VALID_SIGNAL = re.compile("^[A-Za-z][A-Za-z0-9_]*$")
 DEF_EXT = '.rprj'
 DEF_MIME = "*" + DEF_EXT
-PROGRAM_VERSION = "0.8"
 
 CSS = '''
 <style type="text/css">
@@ -1314,11 +1314,11 @@ class MainWindow(object):
         Displays the About box, describing the program
         """
         box = gtk.AboutDialog()
-        box.set_name("Regenerate")
+        box.set_name(PROGRAM_NAME)
         box.set_version(PROGRAM_VERSION)
         box.set_comments(
-            "Regenerate allows you to manage your\n"
-            "registers for an ASIC or FPGA based design.")
+            "%s allows you to manage your\n"
+            "registers for an ASIC or FPGA based design." % PROGRAM_NAME)
         box.set_authors(['Donald N. Allingham'])
         try:
             data = file(os.path.join(INSTALL_PATH, "LICENSE.txt")).read()

@@ -1,0 +1,2 @@
+PROGRAM_VERSION = "0.8"
+PROGRAM_NAME = "regenerate"

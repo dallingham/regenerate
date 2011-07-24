@@ -64,13 +64,14 @@ def run():
     """
     from optparse import OptionParser
     import regenerate.writers
+    from regenerate import PROGRAM_VERSION, PROGRAM_NAME
     import sys
 
     parser = OptionParser(
         usage="%prog [project file]",
         description="Manages the registers in an ASIC or FPGA design",
-        prog="regedit",
-        version="0.7"
+        prog=PROGRAM_NAME,
+        version=PROGRAM_VERSION
         )
 
     (options, args) = parser.parse_args()
