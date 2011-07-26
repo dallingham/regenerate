@@ -107,10 +107,11 @@ class DbaseStatus(object):
     rows in the models.
     """
 
-    def __init__(self, db, filename, name, reg_model, bit_model, inst_model):
+    def __init__(self, db, filename, name, reg_model, modelfilter, bit_model, inst_model):
         self.db = db
         self.path = filename
         self.reg_model = reg_model
+        self.modelfilter = modelfilter
         self.bit_field_list = bit_model
         self.instance_list = inst_model
         self.name = name
@@ -137,13 +138,16 @@ class MainWindow(object):
         self.__status_obj = self.__builder.get_object("statusbar")
         self.__reg_text_buf = self.__builder.get_object("register_text_buffer")
 
+        self.__filter = self.__builder.get_object("filter")
+        self.__filter.connect('changed', self.__filter_changed)
+        
         pango_font = pango.FontDescription("monospace")
         self.__builder.get_object('overview').modify_font(pango_font)
-
+        
         self.__overview_buf = self.__builder.get_object('overview_buffer')
         self.__overview_buf.connect('changed', self.__overview_changed)
         Spell(self.__builder.get_object('overview'))
-
+        
         self.__prj_obj = ProjectList(self.__builder.get_object("project_list"),
                                      self.__prj_selection_changed)
         self.__module_notebook = self.__builder.get_object("module_notebook")
@@ -159,6 +163,8 @@ class MainWindow(object):
         self.__warn_reg_descr = self.__builder.get_object('reg_descr_warn')
         self.__preview_toggle = self.__builder.get_object('preview')
         
+        self.__filter_text = ""
+
         self.__reglist_obj = RegisterList(
             self.__builder.get_object("register_list"),
             self.__selected_reg_changed, self.set_modified, self.update_register_addr)
@@ -186,6 +192,7 @@ class MainWindow(object):
         self.dbase = None
         self.__reg_model = None
         self.__bit_model = None
+        self.__modelfilter = None
         self.__instance_model = None
 
         self.__reg_text_buf.connect('changed', self.__reg_description_changed)
@@ -201,7 +208,7 @@ class MainWindow(object):
         self.__bitfield_obj = BitList(
             self.__builder.get_object("bitfield_list"), self.__bit_combo_edit,
             self.__bit_text_edit, self.__bit_changed)
-
+        
         self.__recent_manager = gtk.recent_manager_get_default()
         recent_file_menu = self.__create_recent_menu_item()
         self.__builder.get_object('file_menu').insert(recent_file_menu, 2)
@@ -221,7 +228,7 @@ class MainWindow(object):
         self.__address_width_obj = self.__builder.get_object('address_width')
         self.__data_width_obj = self.__builder.get_object('data_width')
         self.__byte_level_obj = self.__builder.get_object('byte_en_level')
-
+        
         self.__instance_obj = InstanceList(
             self.__builder.get_object('instances'),
             self.__instance_id_changed,
@@ -243,6 +250,10 @@ class MainWindow(object):
         self.__top_window.show()
         self.__builder.connect_signals(self)
         self.__build_import_menu()
+
+    def __filter_changed(self, obj):
+        self.__filter_text = self.__filter.get_text()
+        self.__modelfilter.refilter()
 
     def __enable_registers(self, value):
         """
@@ -447,6 +458,9 @@ class MainWindow(object):
         self.__set_module_definition_warn_flag()
         self.set_modified()
 
+    def on_filter_icon_press(self, obj, *stuff):
+        obj.set_text("")
+
     def on_preview_toggled(self, obj):
         if obj.get_active() and WEBKIT:
             self.__update_wk = True
@@ -611,7 +625,8 @@ class MainWindow(object):
                 self.__file_modified.set_sensitive(store[node][ProjectModel.MODIFIED])
                 self.dbase = self.active.db
                 self.__reg_model = self.active.reg_model
-                self.__reglist_obj.set_model(self.__reg_model)
+                self.__modelfilter = self.active.modelfilter
+                self.__reglist_obj.set_model(self.__modelfilter)
                 self.__bit_model = self.active.bit_field_list
                 self.__bitfield_obj.set_model(self.__bit_model)
                 self.__instance_model = self.active.instance_list
@@ -926,7 +941,9 @@ class MainWindow(object):
         self.dbase = RegisterDb()
         self.dbase.module_name = base
         self.__reg_model = RegisterModel()
-        self.__reglist_obj.set_model(self.__reg_model)
+        self.__modelfilter = self.__reg_model.filter_new()
+        self.__modelfilter.set_visible_func(self.visible_cb)
+        self.__reglist_obj.set_model(self.__modelfilter)
 
         self.__bit_model = BitModel()
         self.__bitfield_obj.set_model(self.__bit_model)
@@ -935,7 +952,7 @@ class MainWindow(object):
         self.__instance_obj.set_model(self.__instance_model)
         self.__set_module_definition_warn_flag()
 
-        self.active = DbaseStatus(self.dbase, name, base, self.__reg_model,
+        self.active = DbaseStatus(self.dbase, name, base, self.__reg_model, self.__modelfilter,
                                   self.__bit_model, self.__instance_model)
         self.active.node = self.__prj_model.add_dbase(name, self.active)
         self.__prj_obj.select(self.active.node)
@@ -948,6 +965,16 @@ class MainWindow(object):
 
         self.clear_modified()
 
+    def visible_cb(self, model, iter):
+        if self.__filter_text == "":
+            return True
+        else:
+            text = self.__filter_text.upper()
+            for i in range(1,4):
+                if model.get_value(iter, i).upper().find(text) != -1:
+                    return True
+            return False
+
     def __input_xml(self, name, load=True):
         self.__skip_changes = True
         self.dbase = RegisterDb()
@@ -958,10 +985,12 @@ class MainWindow(object):
                     'you change permissions.')
 
         self.__reg_model = RegisterModel()
+        self.__modelfilter = self.__reg_model.filter_new()
+        self.__modelfilter.set_visible_func(self.visible_cb)
         self.__bit_model = BitModel()
 
         if load:
-            self.__reglist_obj.set_model(self.__reg_model)
+            self.__reglist_obj.set_model(self.__modelfilter)
             self.__bitfield_obj.set_model(self.__bit_model)
 
         self.__update_display()
@@ -993,6 +1022,7 @@ class MainWindow(object):
                 ErrorMsg("Could not load existing register set", str(msg))
             base = os.path.splitext(os.path.basename(name))[0]
             self.active = DbaseStatus(self.dbase, name, base, self.__reg_model,
+                                      self.__modelfilter,
                                       self.__bit_model, self.__instance_model)
 
             self.active.node = self.__prj_model.add_dbase(name, self.active)
