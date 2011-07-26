@@ -140,6 +140,7 @@ class MainWindow(object):
 
         self.__filter = self.__builder.get_object("filter")
         self.__filter.connect('changed', self.__filter_changed)
+        self.__selected_dbase = self.__builder.get_object("selected_dbase")
         
         pango_font = pango.FontDescription("monospace")
         self.__builder.get_object('overview').modify_font(pango_font)
@@ -631,6 +632,10 @@ class MainWindow(object):
                 self.__bitfield_obj.set_model(self.__bit_model)
                 self.__instance_model = self.active.instance_list
                 self.__instance_obj.set_model(self.__instance_model)
+                self.__selected_dbase.set_text("<b>%s - %s</b>" % (self.dbase.module_name,
+                                                                   self.dbase.descriptive_title))
+                self.__selected_dbase.set_use_markup(True)
+                self.__selected_dbase.set_ellipsize(pango.ELLIPSIZE_END)
                 if self.active.reg_select:
                     for row in self.active.reg_select:
                         self.__reglist_obj.select_row(row)
@@ -642,6 +647,7 @@ class MainWindow(object):
             else:
                 self.active = None
                 self.dbase = None
+                self.__selected_dbase.set_text("")
                 self.__svn_selected.set_sensitive(False)
                 self.__reglist_obj.set_model(None)
                 self.__enable_registers(False)

@@ -218,8 +218,8 @@ class UVM_Registers(WriterBase):
                 if field.reset_type == BitField.RESET_PARAMETER:
                     cfile.write('      %s.%s = %s;\n' % (reg.token.lower(), field.reset_parameter, field.reset_parameter))
                     
-            cfile.write('      %s.build();\n' % reg.token.lower())
             cfile.write('      %s.configure(this);\n' % reg.token.lower())
+            cfile.write('      %s.build();\n' % reg.token.lower())
             if reg.do_not_generate_code:
                 cfile.write('      //%s.add_hdl_path_slice("path to register", 0, <width> );\n\n' % reg.token.lower())
             else:
