@@ -170,8 +170,7 @@ class RegisterList(object):
             if col[2] >= 0:
                 column.set_sort_column_id(col[2])
             self.__obj.append_column(column)
-            if col[3] == True:
-                self.__obj.set_search_column(i)
+        self.__obj.set_search_column(3)
         self.__obj.set_tooltip_column(RegisterModel.TOOLTIP_COL)
 
     def set_model(self, model):
