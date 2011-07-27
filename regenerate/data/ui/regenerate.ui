@@ -592,6 +592,7 @@
               <object class="GtkToolButton" id="build">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="tooltip_markup">Build generated files</property>
                 <property name="related_action">build_action</property>
                 <property name="label" translatable="yes">Build</property>
                 <property name="use_underline">True</property>
@@ -673,7 +674,7 @@
                       <object class="GtkEntry" id="filter">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
-                        <property name="max_length">50</property>
+                        <property name="tooltip_text" translatable="yes">Display only registers matching the text</property>
                         <property name="invisible_char">•</property>
                         <property name="invisible_char_set">True</property>
                         <property name="primary_icon_stock">gtk-find</property>
