@@ -735,7 +735,6 @@
                               <object class="GtkTreeView" id="register_list">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
-                                <property name="search_column">10</property>
                               </object>
                             </child>
                           </object>

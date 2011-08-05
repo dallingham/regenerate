@@ -175,7 +175,10 @@ class RegisterList(object):
 
     def set_model(self, model):
         self.__obj.set_model(model)
-        self.__model = model
+        if model:
+            self.__model = model.get_model().get_model()
+        else:
+            self.__model = None
 
     def add_new_register(self, register):
         path = self.__model.append_register(register)
@@ -205,10 +208,10 @@ class RegisterList(object):
         if text != reg.register_name:
             reg.register_name = text
             self.__set_modified()
-        self.__model.get_model()[path][RegisterModel.NAME_COL] = reg.register_name
+        self.__model[path][RegisterModel.NAME_COL] = reg.register_name
         if reg.token == "":
             value = build_define(reg.register_name)
-            self.__model.get_model()[path][RegisterModel.DEFINE_COL] = value
+            self.__model[path][RegisterModel.DEFINE_COL] = value
             reg.token = value
             self.__set_modified()
 
@@ -222,7 +225,7 @@ class RegisterList(object):
         self.__model[path][RegisterModel.DEFINE_COL] = reg.token
 
     def __text_edited(self, cell, path, new_text, col):
-        register = self.__model.get_model().get_register_at_path(path)
+        register = self.__model.get_register_at_path(path)
         new_text = new_text.strip()
         if col == RegisterModel.ADDR_COL:
             self.__reg_update_addr(register, path, new_text)
@@ -233,8 +236,8 @@ class RegisterList(object):
 
     def __combo_edited(self, cell, path, node, col):
         model = cell.get_property('model')
-        register = self.__model.get_model().get_register_at_path(path)
-        self.__model.get_model()[path][col] = model.get_value(node, 0)
+        register = self.__model.get_register_at_path(path)
+        self.__model[path][col] = model.get_value(node, 0)
         register.width = model.get_value(node, 1)
         self.__set_modified()
 

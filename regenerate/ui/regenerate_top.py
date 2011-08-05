@@ -107,11 +107,12 @@ class DbaseStatus(object):
     rows in the models.
     """
 
-    def __init__(self, db, filename, name, reg_model, modelfilter, bit_model, inst_model):
+    def __init__(self, db, filename, name, reg_model, modelsort, modelfilter, bit_model, inst_model):
         self.db = db
         self.path = filename
         self.reg_model = reg_model
         self.modelfilter = modelfilter
+        self.modelsort = modelsort
         self.bit_field_list = bit_model
         self.instance_list = inst_model
         self.name = name
@@ -194,6 +195,7 @@ class MainWindow(object):
         self.__reg_model = None
         self.__bit_model = None
         self.__modelfilter = None
+        self.__modelsort = None
         self.__instance_model = None
 
         self.__reg_text_buf.connect('changed', self.__reg_description_changed)
@@ -627,7 +629,8 @@ class MainWindow(object):
                 self.dbase = self.active.db
                 self.__reg_model = self.active.reg_model
                 self.__modelfilter = self.active.modelfilter
-                self.__reglist_obj.set_model(self.__modelfilter)
+                self.__modelsort = self.active.modelsort
+                self.__reglist_obj.set_model(self.__modelsort)
                 self.__bit_model = self.active.bit_field_list
                 self.__bitfield_obj.set_model(self.__bit_model)
                 self.__instance_model = self.active.instance_list
@@ -948,8 +951,9 @@ class MainWindow(object):
         self.dbase.module_name = base
         self.__reg_model = RegisterModel()
         self.__modelfilter = self.__reg_model.filter_new()
+        self.__modelsort = gtk.TreeModelSort(self.__modelfilter)
         self.__modelfilter.set_visible_func(self.visible_cb)
-        self.__reglist_obj.set_model(self.__modelfilter)
+        self.__reglist_obj.set_model(self.__modelsort)
 
         self.__bit_model = BitModel()
         self.__bitfield_obj.set_model(self.__bit_model)
@@ -958,7 +962,8 @@ class MainWindow(object):
         self.__instance_obj.set_model(self.__instance_model)
         self.__set_module_definition_warn_flag()
 
-        self.active = DbaseStatus(self.dbase, name, base, self.__reg_model, self.__modelfilter,
+        self.active = DbaseStatus(self.dbase, name, base, self.__reg_model, 
+                                  self.__modelsort, self.__modelfilter,
                                   self.__bit_model, self.__instance_model)
         self.active.node = self.__prj_model.add_dbase(name, self.active)
         self.__prj_obj.select(self.active.node)
@@ -992,11 +997,13 @@ class MainWindow(object):
 
         self.__reg_model = RegisterModel()
         self.__modelfilter = self.__reg_model.filter_new()
+        self.__modelsort = gtk.TreeModelSort(self.__modelfilter)
         self.__modelfilter.set_visible_func(self.visible_cb)
         self.__bit_model = BitModel()
 
         if load:
-            self.__reglist_obj.set_model(self.__modelfilter)
+#            self.__reglist_obj.set_model(self.__modelfilter)
+            self.__reglist_obj.set_model(self.__modelsort)
             self.__bitfield_obj.set_model(self.__bit_model)
 
         self.__update_display()
@@ -1028,6 +1035,7 @@ class MainWindow(object):
                 ErrorMsg("Could not load existing register set", str(msg))
             base = os.path.splitext(os.path.basename(name))[0]
             self.active = DbaseStatus(self.dbase, name, base, self.__reg_model,
+                                      self.__modelsort,
                                       self.__modelfilter,
                                       self.__bit_model, self.__instance_model)
 
