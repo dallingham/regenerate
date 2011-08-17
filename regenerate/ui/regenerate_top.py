@@ -56,6 +56,10 @@ VALID_SIGNAL = re.compile("^[A-Za-z][A-Za-z0-9_]*$")
 DEF_EXT = '.rprj'
 DEF_MIME = "*" + DEF_EXT
 
+ADDR_FIELD = 1
+NAME_FIELD = 2
+TOKEN_FIELD = 3
+
 CSS = '''
 <style type="text/css">
 table.docutils td{
@@ -121,7 +125,6 @@ class DbaseStatus(object):
         self.bit_select = None
         self.node = None
 
-
 class MainWindow(object):
     """
     Main window of the Regenerate program
@@ -129,6 +132,7 @@ class MainWindow(object):
 
     def __init__(self):
 
+        self.__model_search_fields = (ADDR_FIELD, NAME_FIELD, TOKEN_FIELD)
         self.__project = None
         self.__builder = gtk.Builder()
         self.__builder.add_from_file(GLADE_TOP)
@@ -461,8 +465,39 @@ class MainWindow(object):
         self.__set_module_definition_warn_flag()
         self.set_modified()
 
-    def on_filter_icon_press(self, obj, *stuff):
-        obj.set_text("")
+    def on_filter_icon_press(self, obj, icon, event):
+        if icon == gtk.ENTRY_ICON_SECONDARY:
+            if event.type == gtk.gdk.BUTTON_PRESS:
+                obj.set_text("")
+        elif icon == gtk.ENTRY_ICON_PRIMARY:
+            if event.type == gtk.gdk.BUTTON_PRESS:
+                menu = self.__builder.get_object("filter_menu")
+                menu.popup(None, None, None, 1, 0)
+
+    def on_address_token_name_toggled(self, obj):
+        if obj.get_active():
+            self.__model_search_fields = (ADDR_FIELD, NAME_FIELD, TOKEN_FIELD)
+            self.__modelfilter.refilter()
+
+    def on_token_name_toggled(self, obj):
+        if obj.get_active():
+            self.__model_search_fields = (NAME_FIELD, TOKEN_FIELD)
+            self.__modelfilter.refilter()
+
+    def on_token_toggled(self, obj):
+        if obj.get_active():
+            self.__model_search_fields = (TOKEN_FIELD, )
+            self.__modelfilter.refilter()
+
+    def on_address_toggled(self, obj):
+        if obj.get_active():
+            self.__model_search_fields = (ADDR_FIELD, )
+            self.__modelfilter.refilter()
+
+    def on_name_toggled(self, obj):
+        if obj.get_active():
+            self.__model_search_fields = (NAME_FIELD, )
+            self.__modelfilter.refilter()
 
     def on_preview_toggled(self, obj):
         if obj.get_active() and WEBKIT:
@@ -981,10 +1016,13 @@ class MainWindow(object):
             return True
         else:
             text = self.__filter_text.upper()
-            for i in range(1,4):
-                if model.get_value(iter, i).upper().find(text) != -1:
-                    return True
-            return False
+            try:
+                for i in self.__model_search_fields:
+                    if model.get_value(iter, i).upper().find(text) != -1:
+                        return True
+                return False
+            except:
+                print self.__model_search_fields
 
     def __input_xml(self, name, load=True):
         self.__skip_changes = True
