@@ -20,6 +20,7 @@
 """
 Provides the container database for a set of registers.
 """
+import re
 
 from reg_parser import RegParser
 from reg_writer import RegWriter
@@ -265,3 +266,29 @@ class RegisterDb(object):
 
     descriptive_title = property(__get_title, __set_title, None,
                                  "Description of the module")
+
+    def find_register_by_name(self, name):
+        """Finds a register with the given name, or None if not found"""
+        for i in self.__registers:
+            if self.__registers[i].register_name == name:
+                return i
+        return None
+
+    def find_register_by_token(self, name):
+        """Finds a register with the given token name, or None if not found"""
+        for i in self.__registers:
+            if self.__registers[i].token == name:
+                return i
+        return None
+
+    def find_registers_by_name_regexp(self, name):
+        """Finds a register with the given name, or None if not found"""
+        regexp = re.compile(name)
+        return [self.__registers[i] for i in self.__registers
+                if regexp.match(self.__registers[i].register_name)]
+
+    def find_registers_by_token_regexp(self, name):
+        """Finds a register with the given name, or None if not found"""
+        regexp = re.compile(name)
+        return [self.__registers[i] for i in self.__registers
+                if regexp.match(self.__registers[i].token)]

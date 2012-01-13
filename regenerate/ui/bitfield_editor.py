@@ -73,12 +73,23 @@ class BitFieldEditor(object):
                                             register.register_name))
 
         self.__signal_type_obj.set_active(bit_field.field_type)
-        self.__oneshot_obj.set_active(bit_field.one_shot_type)
 
         pango_font = pango.FontDescription("monospace")
         self.__builder.get_object("descr").modify_font(pango_font)
 
         self.build_values_list()
+
+        model = gtk.ListStore(str, int)
+        model.append(row=["None", BitField.ONE_SHOT_NONE])
+        model.append(row=["Any write", BitField.ONE_SHOT_ANY])
+        model.append(row=["Write 1", BitField.ONE_SHOT_ONE])
+        model.append(row=["Write 0", BitField.ONE_SHOT_ZERO])
+        model.append(row=["Write toggle", BitField.ONE_SHOT_TOGGLE])
+        self.__oneshot_obj.set_model(model)
+        self.__oneshot_obj.set_active(bit_field.one_shot_type)
+        cell = gtk.CellRendererText()
+        self.__oneshot_obj.pack_start(cell, True)
+        self.__oneshot_obj.add_attribute(cell, 'text', 0)
 
         model = gtk.ListStore(str, int)
         model.append(row=["Set bits", BitField.FUNC_SET_BITS])
@@ -102,7 +113,7 @@ class BitFieldEditor(object):
 
         self.__initialize_from_data(bit_field)
         self.__output_obj.set_sensitive(self.__output_enable_obj.get_active())
-        self.__enable_fields()
+        self.__enable_fields(False)
         self.__check_data()
 
         self.__text_buffer.connect('changed', self.__description_changed)
@@ -152,7 +163,7 @@ class BitFieldEditor(object):
         self.__check_data()
         self.__modified()
 
-    def __enable_fields(self):
+    def __enable_fields(self, modify=True):
         node = self.__signal_type_obj.get_active_iter()
         value = self.__signal_type_obj.get_model().get_value(node, 1)
         self.__bit_field.input_function = value
@@ -166,13 +177,21 @@ class BitFieldEditor(object):
         elif value == BitField.FUNC_ASSIGNMENT:
             self.__ctrl_signal_activate(None)
         self.__check_data()
-        self.__modified()
+        if modify:
+            self.__modified()
 
     def on_signal_type_combo_changed(self, obj):
         """
         Sets the appropriate control widget based off the control mode.
         """
         self.__enable_fields()
+        self.__modified()
+
+    def on_oneshot_combo_changed(self, obj):
+        """
+        Sets the appropriate control widget based off the control mode.
+        """
+        self.__bit_field.one_shot_type = self.__oneshot_obj.get_active()
         self.__modified()
 
     def build_values_list(self):
@@ -302,6 +321,12 @@ class BitFieldEditor(object):
         Updates the data model when the text value is changed in the model.
         """
         node = self.__list_model.get_iter(path)
+        try:
+            new_text.decode("ascii")
+        except:
+            ErrorMsg("Invalid ASCII characters detected",
+                     "Look for strange punctuations, like dashs and quotes that "
+                     "look valid, but are not actual ascii characters.")
         self.__list_model.set_value(node, 2, new_text)
         self.__update_values()
         self.__modified()

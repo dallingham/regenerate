@@ -216,7 +216,7 @@ def write_value_list(ofile, field):
         ofile.write('      <values>\n')
         for value in field.values:
             ofile.write('        <value val="%s" token="%s">%s</value>\n' %
-                        value)
+                        (value[0], value[1], cleanup(value[2])))
         ofile.write('      </values>\n')
 
 

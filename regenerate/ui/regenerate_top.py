@@ -731,9 +731,13 @@ class MainWindow(object):
                 self.__reg_text_buf.get_start_iter(),
                 self.__reg_text_buf.get_end_iter())
             if self.__update_wk and WEBKIT:
+                pos = self.__wk_reg_container.get_vadjustment().get_value()
+
                 self.__webkit_reg.load_string(CSS + publish_string(reg.description,
                                                                    writer_name="html"),
                                               "text/html", "utf-8", "")
+                if pos <= self.__wk_reg_container.get_vadjustment().get_upper():
+                    self.__wk_reg_container.get_vadjustment().set_value(pos)
                 
             self.set_modified()
             self.__set_register_warn_flags(reg)
@@ -903,12 +907,9 @@ class MainWindow(object):
     def on_new_project_clicked(self, obj):
         choose = self.__create_save_selector(
             "New Project", "Regenerate Project", DEF_MIME)
-        print "DEBUG: Opening file selector"
         response = choose.run()
-        print "DEBUG: file selector complete"
         if response == gtk.RESPONSE_OK:
             filename = choose.get_filename()
-            print "DEBUG: file selector name", filename
             ext = os.path.splitext(filename)
             if ext[1] != DEF_EXT:
                 filename = filename + DEF_EXT
@@ -918,13 +919,10 @@ class MainWindow(object):
             self.__project.name = os.path.splitext(os.path.basename(filename))[0]
             self.__prj_model = ProjectModel(self.use_svn)
             self.__prj_obj.set_model(self.__prj_model)
-            print "DEBUG: saving file"
             self.__project.save()
-            print "DEBUG: saving recent file"
             if self.__recent_manager:
                 self.__recent_manager.add_item("file://" + filename)
             self.__builder.get_object('save_btn').set_sensitive(True)
-            print "DEBUG: saving recent file"
             self.__project_loaded.set_sensitive(True)
         choose.destroy()
 
@@ -1201,9 +1199,20 @@ class MainWindow(object):
                                                 obj.get_end_iter())
         self.__set_description_warn_flag()
         if self.__update_wk and WEBKIT:
-            self.__webkit.load_string(CSS + publish_string(self.dbase.overview_text,
-                                                           writer_name="html"),
-                                      "text/html", "utf-8", "")
+            adj = self.__wk_container.get_vadjustment()
+            pos = adj.get_value()
+            try:
+                self.__webkit.load_string(CSS + publish_string(self.dbase.overview_text,
+                                                               writer_name="html"),
+                                          "text/html", "utf-8", "")
+            except:
+                self.__webkit.load_string(self.dbase.overview_text,
+                                          "text/plain", "utf-8", "")
+
+            if pos <= adj.get_upper() - adj.get_page_size():
+                self.__wk_container.get_vadjustment().set_value(pos)
+            else:
+                self.__wk_container.get_vadjustment().set_value(adj.get_upper() - adj.get_page_size())
         self.set_modified()
 
     def on_regenerate_delete_event(self, obj, event):
