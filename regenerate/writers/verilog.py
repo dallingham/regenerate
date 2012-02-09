@@ -951,7 +951,7 @@ class Verilog(WriterBase):
 
         if field.reset_type == BitField.RESET_NUMERIC:
             if field.input_signal == "":
-                value = bin(field.reset_value, (stop + 1) - start)
+                value = bin(field.reset_value >> start, (stop + 1) - start)
             elif field.width > 1:
                 value = "%s[%d:%d]" % (field.input_signal, stop, start)
             else:
