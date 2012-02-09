@@ -60,9 +60,7 @@ class RegWriter(object):
                 (self.dbase.module_name, self.dbase.descriptive_title,
                  self.dbase.owner))
 
-        ofile.write('  <code coverage="%d" assertions="%d" ovm="%d" sync_rd="%d"/>\n' %
-                (self.dbase.enable_coverage, self.dbase.enable_assertions,
-                 self.dbase.enable_ovm_messaging, self.dbase.sync_read))
+        ofile.write('  <code sync_rd="%d"/>\n' % self.dbase.sync_read)
 
         ofile.write('  <base addr_width="%d" ' % self.dbase.address_bus_width)
         ofile.write('data_width="%d"/>\n' % self.dbase.data_bus_width)

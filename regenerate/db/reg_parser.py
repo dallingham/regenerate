@@ -148,16 +148,8 @@ class RegParser(object):
     def start_code(self, attrs):
         """
         Called when the code tag is encountered. Attributes are:
-
-          coverage
-          assertions
-          ovm
-          avm (deprecated)
         """
-        self.__db.enable_coverage = cnv_bool(attrs, 'coverage')
         self.__db.sync_read = cnv_bool(attrs, 'sync_rd')
-        self.__db.enable_assertions = cnv_bool(attrs, 'assertions')
-        self.__db.enable_ovm_messaging = cnv_bool(attrs, 'ovm')
 
     def start_instance(self, attrs):
         """

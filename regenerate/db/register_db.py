@@ -66,8 +66,6 @@ class RegisterDb(object):
         self.overview_text = ""
         self.enable_coverage = False
         self.sync_read = False
-        self.enable_ovm_messaging = False
-        self.enable_assertions = False
         self.__registers = {}
         self.instances = []
 
@@ -271,14 +269,14 @@ class RegisterDb(object):
         """Finds a register with the given name, or None if not found"""
         for i in self.__registers:
             if self.__registers[i].register_name == name:
-                return i
+                return self.__registers[i]
         return None
 
     def find_register_by_token(self, name):
         """Finds a register with the given token name, or None if not found"""
         for i in self.__registers:
             if self.__registers[i].token == name:
-                return i
+                return self.__registers[i]
         return None
 
     def find_registers_by_name_regexp(self, name):

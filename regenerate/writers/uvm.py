@@ -33,7 +33,8 @@ class UVM_Registers(WriterBase):
     REMAP_NAME = {
         'interface' : 'interface_',
         'class'     : 'class_',
-        'package'   : 'package_'
+        'package'   : 'package_',
+        'edge'      : 'edge_',
         };
         
     def __init__(self, dbase):
@@ -171,7 +172,7 @@ class UVM_Registers(WriterBase):
 
             cfile.write('\n    endfunction : build\n\n')
             cfile.write('  endclass : %s\n\n' % rname)
-            cfile.write('/*@}*/\n')
+            cfile.write('/*!@}*/\n')
 
         cfile.write('  class %s_reg_block extends uvm_reg_block;\n\n' % self._dbase.module_name)
         cfile.write('    `uvm_object_utils(%s_reg_block)\n\n' % self._dbase.module_name)

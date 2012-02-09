@@ -144,7 +144,6 @@ def input_signal_port(field, port_list, control_set):
     that it is not in the existing set, and the adds it to the port list
     """
     control = extract_base(field.input_signal)
-
     if control not in control_set:
         port_list.append(('input', get_width(field), control, "input signal"))
         control_set.add(control)
@@ -230,8 +229,6 @@ class Verilog(WriterBase):
             if not self._dbase.get_register(key).do_not_generate_code ]
 
         self._coverage = self._dbase.enable_coverage
-#       self.__assertions = self._dbase.enable_assertions
-#       self.__ovm = self._dbase.enable_ovm_messaging
 
         max_column_str = ini.get('user', 'column_width', "80")
         try:
@@ -376,6 +373,9 @@ class Verilog(WriterBase):
             self._ofile.write('%-6s %-7s %-30s // %s\n' %
                              (data[0], data[1], data[2] + ';', comment))
 
+    def err(self, msg):
+        print msg
+
     def _build_port_list(self):
         """
         Returns the port list of the design. We have several fixed
@@ -416,6 +416,8 @@ class Verilog(WriterBase):
 
                 # A parallel load requires an input signal
                 if field.input_function == BitField.FUNC_PARALLEL:
+                    if not field.control_signal:
+                        self.err("No parallel load signal specified for %s:%s" % (register.register_name, field.field_name))
                     parallel_load_port(field, port_list, output_list)
 
                 # If the bit is controlled by an input value, we
@@ -426,6 +428,8 @@ class Verilog(WriterBase):
 
                 # Output oneshots require a signal
                 if field.one_shot_type != BitField.ONE_SHOT_NONE:
+                    if not field.output_signal:
+                        self.err("Empty output signal for %s:%s" % (register.register_name, field.field_name))
                     port_list.append(('output', "",
                                       oneshot_name(field.output_signal),
                                       "one shot"))
