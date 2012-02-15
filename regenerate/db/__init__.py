@@ -24,6 +24,7 @@ Includes the base instances in the module
 __all__ = ["bitfield", "register_db", "register", "reg_parser", "reg_writer", "reg_project"]
 
 from bitfield import BitField
+from bitfield_types import *
 from register_db import RegisterDb
 from register import Register
 from reg_parser import RegParser

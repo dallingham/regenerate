@@ -24,8 +24,12 @@ Writes the XML file containing all the information in the register database
 import time
 import os
 from xml.sax.saxutils import escape
-from regenerate.db import BitField
+from regenerate.db import BitField, TYPES
 
+CONVERT_TYPE = {}
+for i in TYPES:
+    CONVERT_TYPE[i[0]] = i[1]
+    
 
 def create_backup_file(filename):
     """
@@ -174,9 +178,12 @@ def write_input_info(ofile, field):
     """
     Writes the input information to the output file
     """
-    ofile.write('      <input function="%d" load="%s">' %
-                (field.input_function, field.control_signal))
-    ofile.write('%s</input>\n' % field.input_signal)
+    if field.input_signal:
+        if field.control_signal:
+            ld = ' load="%s"' % field.control_signal
+        else:
+            ld = ""
+        ofile.write('      <input%s>%s</input>\n' % (ld, field.input_signal))
 
 
 def write_signal_info(ofile, field):
@@ -185,9 +192,8 @@ def write_signal_info(ofile, field):
     """
     ofile.write('      <signal enb="%d" static="%d" '
                 % (field.use_output_enable, field.output_is_static))
-    ofile.write('type="%d" ' % field.field_type)
-    ofile.write('side_effect="%d" oneshot="%d">'
-                % (field.output_has_side_effect, field.one_shot_type))
+    ofile.write('field_type="%s" ' % CONVERT_TYPE[field.field_type])
+    ofile.write('side_effect="%d">' % field.output_has_side_effect)
     ofile.write('%s</signal>\n' % field.output_signal)
 
 

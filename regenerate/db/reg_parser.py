@@ -24,8 +24,11 @@ Parses the register database, loading the database.
 import xml.parsers.expat
 
 from register import Register
-from bitfield import BitField
+from regenerate.db import BitField, TYPES
 
+CONVERT_TYPE = {}
+for i in TYPES:
+    CONVERT_TYPE[i[1]] = i[0]
 
 def cnv_hex(attrs, key, default=0):
     """
@@ -100,12 +103,12 @@ class RegParser(object):
         Parses the specified input file.
         """
         parser = xml.parsers.expat.ParserCreate()
-        parser.StartElementHandler = self.startElement
-        parser.EndElementHandler = self.endElement
+        parser.StartElementHandler = self.start_element
+        parser.EndElementHandler = self.end_element
         parser.CharacterDataHandler = self.characters
         parser.ParseFile(input_file)
 
-    def startElement(self, tag, attrs):
+    def start_element(self, tag, attrs):
         """
         Called every time an XML element begins
         """
@@ -115,7 +118,7 @@ class RegParser(object):
             method = getattr(self, mname)
             method(attrs)
 
-    def endElement(self, tag):
+    def end_element(self, tag):
         """
         Called every time an XML element end
         """
@@ -181,15 +184,37 @@ class RegParser(object):
            enb
            static
            side_effect
-           oneshot
            type
         """
         self.__field.use_output_enable = cnv_bool(attrs, 'enb')
         self.__field.output_is_static = cnv_bool(attrs, 'static')
         self.__field.output_has_side_effect = cnv_bool(attrs, 'side_effect')
-        self.__field.one_shot_type = cnv_int(attrs, 'oneshot')
-        self.__field.field_type = cnv_int(attrs, 'type')
-
+        if attrs.get('type'):
+            t = cnv_int(attrs, 'type')
+            oneshot = cnv_int(attrs, 'oneshot')
+            if t == BitField.READ_ONLY:
+                self.__field.field_type = BitField.TYPE_READ_ONLY
+            elif t == BitField.READ_WRITE:
+                if oneshot == BitField.ONE_SHOT_ANY:
+                    self.__field.field_type = BitField.TYPE_READ_WRITE_1S
+                elif oneshot == BitField.ONE_SHOT_ONE:
+                    self.__field.field_type = BitField.TYPE_READ_WRITE_1S_1
+                else:
+                    self.__field.field_type = BitField.TYPE_READ_WRITE
+            elif t == BitField.WRITE_1_TO_CLEAR:
+                if oneshot == BitField.ONE_SHOT_ANY:
+                    self.__field.field_type = BitField.TYPE_WRITE_1_TO_CLEAR_SET_1S
+                elif oneshot == BitField.ONE_SHOT_ONE:
+                    self.__field.field_type = BitField.TYPE_WRITE_1_TO_CLEAR_SET_1S_1
+                else:
+                    self.__field.field_type = BitField.TYPE_WRITE_1_TO_CLEAR_SET
+            elif t == BitField.WRITE_1_TO_SET:
+                self.__field.field_type = BitField.TYPE_WRITE_1_TO_SET
+            else: 
+                self.__field.field_type = BitField.TYPE_WRITE_ONLY
+        else:
+            self.__field.field_type = CONVERT_TYPE[attrs.get('field_type', 'RO')]
+            
     def start_input(self, attrs):
         """
         Called when the input tag is encountered. Attributes are;
@@ -197,8 +222,38 @@ class RegParser(object):
           function
           load
         """
-        self.__field.input_function = cnv_int(attrs, 'function',
-                                              BitField.FUNC_ASSIGNMENT)
+        if attrs.get('function'):
+            old_type = self.__field.field_type
+            
+            func = cnv_int(attrs, 'function', BitField.FUNC_ASSIGNMENT)
+            if old_type == BitField.TYPE_READ_ONLY:
+                if func == BitField.FUNC_PARALLEL:
+                    self.__field.field_type = BitField.TYPE_READ_ONLY_LOAD
+            elif old_type == BitField.TYPE_READ_WRITE:
+                if func == BitField.FUNC_SET_BITS:
+                    self.__field.field_type = BitField.TYPE_READ_WRITE_SET
+                elif func == BitField.FUNC_PARALLEL:
+                    self.__field.field_type = BitField.TYPE_READ_WRITE_LOAD
+            elif old_type == BitField.TYPE_READ_WRITE_1S:
+                if func == BitField.FUNC_SET_BITS:
+                    self.__field.field_type = BitField.TYPE_READ_WRITE_SET_1S
+                elif func == BitField.FUNC_PARALLEL:
+                    self.__field.field_type = BitField.TYPE_READ_WRITE_LOAD_1S
+            elif old_type == BitField.TYPE_READ_WRITE_1S_1:
+                if func == BitField.FUNC_SET_BITS:
+                    self.__field.field_type = BitField.TYPE_READ_WRITE_SET_1S_1
+                elif func == BitField.FUNC_PARALLEL:
+                    self.__field.field_type = BitField.TYPE_READ_WRITE_LOAD_1S_1
+            elif old_type == BitField.TYPE_WRITE_1_TO_CLEAR_SET:
+                if func == BitField.FUNC_PARALLEL:
+                    self.__field.field_type = BitField.TYPE_READ_WRITE_1_TO_CLEAR_LOAD
+            elif old_type == BitField.TYPE_WRITE_1_TO_CLEAR_SET_1S:
+                if func == BitField.FUNC_PARALLEL:
+                    self.__field.field_type = BitField.TYPE_READ_WRITE_1_TO_CLEAR_LOAD_1S
+            elif old_type == BitField.TYPE_WRITE_1_TO_CLEAR_SET_1S_1:
+                if func == BitField.FUNC_PARALLEL:
+                    self.__field.field_type = BitField.TYPE_READ_WRITE_1_TO_CLEAR_LOAD_1S_1
+
         self.__field.control_signal = cnv_str(attrs, 'load')
 
     def start_token(self, attrs):

@@ -26,24 +26,24 @@ import gtk
 import re
 import pango
 
-from regenerate.db import BitField
+from regenerate.db import BitField, TYPES
 from regenerate.settings.paths import GLADE_BIT
 from error_dialogs import ErrorMsg, Question
 
 VALID_SIGNAL = re.compile("^[A-Za-z][A-Za-z0-9_]*$")
 
+TYPE2STR = {}
+for i in TYPES:
+    TYPE2STR[i[0]] = i[5]
+
+TYPE_ENB = {}
+for i in TYPES:
+    TYPE_ENB[i[0]] = (i[2], i[3])
+
 class BitFieldEditor(object):
     """
     Bit field editing class.
     """
-
-    TYPE2STR = {
-        BitField.READ_ONLY: "Read Only",
-        BitField.READ_WRITE: "Read/Write",
-        BitField.WRITE_1_TO_CLEAR: "Write 1 to Clear",
-        BitField.WRITE_1_TO_SET: "Write 1 to Set",
-        BitField.WRITE_ONLY: "Write Only",
-        }
 
     def __init__(self, register, bit_field, modified):
         self.__modified = modified
@@ -59,48 +59,24 @@ class BitFieldEditor(object):
         self.__output_obj = self.__builder.get_object("output")
         self.__type_obj = self.__builder.get_object('type')
         self.__input_obj = self.__builder.get_object("input")
-        self.__signal_type_obj = self.__builder.get_object("signal_type_combo")
         self.__reset_obj = self.__builder.get_object("reset_value")
         self.__static_obj = self.__builder.get_object('static')
         self.__text_buffer = self.__builder.get_object("descr").get_buffer()
         self.__value_tree_obj = self.__builder.get_object('values')
         self.__output_enable_obj = self.__builder.get_object("outen")
-        self.__oneshot_obj = self.__builder.get_object("oneshot_combo")
         self.__side_effect_obj = self.__builder.get_object("side_effect")
         self.__col = None
         self.__top_window.set_title(
             "Edit Bit Field - [%02x] %s" % (register.address,
                                             register.register_name))
 
-        self.__signal_type_obj.set_active(bit_field.field_type)
+        self.__input_obj.set_sensitive(TYPE_ENB[bit_field.field_type][0])
+        self.__control_obj.set_sensitive(TYPE_ENB[bit_field.field_type][1])
 
         pango_font = pango.FontDescription("monospace")
         self.__builder.get_object("descr").modify_font(pango_font)
 
         self.build_values_list()
-
-        model = gtk.ListStore(str, int)
-        model.append(row=["None", BitField.ONE_SHOT_NONE])
-        model.append(row=["Any write", BitField.ONE_SHOT_ANY])
-        model.append(row=["Write 1", BitField.ONE_SHOT_ONE])
-        model.append(row=["Write 0", BitField.ONE_SHOT_ZERO])
-        model.append(row=["Write toggle", BitField.ONE_SHOT_TOGGLE])
-        self.__oneshot_obj.set_model(model)
-        self.__oneshot_obj.set_active(bit_field.one_shot_type)
-        cell = gtk.CellRendererText()
-        self.__oneshot_obj.pack_start(cell, True)
-        self.__oneshot_obj.add_attribute(cell, 'text', 0)
-
-        model = gtk.ListStore(str, int)
-        model.append(row=["Set bits", BitField.FUNC_SET_BITS])
-        model.append(row=["Clear bits", BitField.FUNC_CLEAR_BITS])
-        model.append(row=["Load", BitField.FUNC_PARALLEL])
-        model.append(row=["Assignment", BitField.FUNC_ASSIGNMENT])
-        self.__signal_type_obj.set_model(model)
-        self.__signal_type_obj.set_active(bit_field.input_function)
-        cell = gtk.CellRendererText()
-        self.__signal_type_obj.pack_start(cell, True)
-        self.__signal_type_obj.add_attribute(cell, 'text', 0)
 
         self.__list_model = gtk.ListStore(str, str, str)
         self.__model_selection = self.__value_tree_obj.get_selection()
@@ -113,7 +89,6 @@ class BitFieldEditor(object):
 
         self.__initialize_from_data(bit_field)
         self.__output_obj.set_sensitive(self.__output_enable_obj.get_active())
-        self.__enable_fields(False)
         self.__check_data()
 
         self.__text_buffer.connect('changed', self.__description_changed)
@@ -134,7 +109,7 @@ class BitFieldEditor(object):
             self.__bits.set_text(str(start))
         else:
             self.__bits.set_text("%d:%d" % (stop, start))
-        self.__type_obj.set_text(self.TYPE2STR[bit_field.field_type])
+        self.__type_obj.set_text(TYPE2STR[bit_field.field_type])
 
         if bit_field.reset_type == BitField.RESET_NUMERIC:
             self.__reset_obj.set_text("%x" % bit_field.reset_value)
@@ -142,6 +117,7 @@ class BitFieldEditor(object):
             self.__reset_obj.set_text(bit_field.reset_parameter)
         self.__output_obj.set_text(bit_field.output_signal)
         self.__input_obj.set_text(bit_field.input_signal)
+
         self.__static_obj.set_active(bit_field.output_is_static)
         self.__side_effect_obj.set_active(bit_field.output_has_side_effect)
         self.__text_buffer.set_text(bit_field.description)
@@ -161,37 +137,6 @@ class BitFieldEditor(object):
     def on_control_changed(self, obj):
         self.__bit_field.control_signal = obj.get_text()
         self.__check_data()
-        self.__modified()
-
-    def __enable_fields(self, modify=True):
-        node = self.__signal_type_obj.get_active_iter()
-        value = self.__signal_type_obj.get_model().get_value(node, 1)
-        self.__bit_field.input_function = value
-
-        if value == BitField.FUNC_SET_BITS:
-            self.__set_bits_activate(None)
-        elif value == BitField.FUNC_CLEAR_BITS:
-            self.__clear_bits_activate(None)
-        elif value == BitField.FUNC_PARALLEL:
-            self.__parallel_load_activate(None)
-        elif value == BitField.FUNC_ASSIGNMENT:
-            self.__ctrl_signal_activate(None)
-        self.__check_data()
-        if modify:
-            self.__modified()
-
-    def on_signal_type_combo_changed(self, obj):
-        """
-        Sets the appropriate control widget based off the control mode.
-        """
-        self.__enable_fields()
-        self.__modified()
-
-    def on_oneshot_combo_changed(self, obj):
-        """
-        Sets the appropriate control widget based off the control mode.
-        """
-        self.__bit_field.one_shot_type = self.__oneshot_obj.get_active()
         self.__modified()
 
     def build_values_list(self):
@@ -415,41 +360,6 @@ class BitFieldEditor(object):
         input_sig = self.__input_obj.get_text()
         out_enable = self.__output_obj.get_text()
         control_sig = self.__control_obj.get_text()
-        func = self.__bit_field.input_function
-
-        if input_sig == "":
-            if func == BitField.FUNC_PARALLEL:
-                set_error(self.__input_obj,
-                          "The load data signal must be specified since\n"
-                          "you have chosen a type of Parallel load")
-                input_error = True
-            elif func != BitField.FUNC_ASSIGNMENT:
-                set_error(self.__input_obj,
-                          "An input signal must be specified unless the logic "
-                          "type is set to Assignment")
-                input_error = True
-        elif not VALID_SIGNAL.match(input_sig):
-            set_error(self.__input_obj, "Invalid signal name")
-            input_error = True
-
-        if self.__output_enable_obj.get_active() and not out_enable:
-            set_error(self.__output_obj,
-                      "The output signal was enabled,\n"
-                      "but no signal was specified.")
-            output_error = True
-        elif not VALID_SIGNAL.match(out_enable):
-            set_error(self.__output_obj, "Invalid signal name")
-            output_error = True
-
-        if func == BitField.FUNC_PARALLEL:
-            if control_sig == "":
-                set_error(self.__control_obj,
-                          "The control data signal must be specified since\n"
-                          "you have chosen a type of Parallel load")
-                control_error = True
-            elif not VALID_SIGNAL.match(control_sig):
-                set_error(self.__control_obj, "Invalid signal name")
-                control_error = True
 
         if control_error == False:
             clear_error(self.__control_obj)

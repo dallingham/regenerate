@@ -25,7 +25,7 @@ import re
 import textwrap
 from regenerate.settings import ini
 
-from regenerate.db import BitField
+from regenerate.db import BitField, TYPES
 from writer_base import WriterBase
 
 #
@@ -43,17 +43,6 @@ def bin(val, width):
     Converts the integer value to a Verilog value
     """
     return "%d'h%x" % (width, val)
-
-
-def calc_init_value(field, start, stop):
-    """
-    Calculates the initial value of a field.
-    """
-    default_value = field.reset_value << field.start_position
-
-    width_mask = MASK_VALUES[stop - start]
-    return_val = (default_value >> start) & width_mask
-    return return_val
 
 
 def get_width(field, start=-1, stop=-1):
@@ -99,7 +88,7 @@ def get_base_signal(address, field):
     """
     Returns the base signal derived from the address and the output field
     """
-    return "r%02x_%s" % (address, field.output_signal)
+    return "r%02x_%s" % (address, field.field_name.lower())
 
 
 def get_signal_info(address, field, start=-1, stop=-1):
@@ -147,25 +136,6 @@ def input_signal_port(field, port_list, control_set):
     if control not in control_set:
         port_list.append(('input', get_width(field), control, "input signal"))
         control_set.add(control)
-
-
-def split_bus_values(offset, width, bit_range):
-    """
-    Returns the start and stop values, breaking at byte values.
-    """
-    bit_values = []
-
-    lower = bit_range.start_position
-    stop = bit_range.stop_position
-    for val in range(offset, (width / 8) + 2):
-        rng = range(val * 8, (val + 1) * 8)
-        if lower + (offset * 8) in rng or stop + (offset * 8) in rng:
-            if lower > stop:
-                break
-            next_top = lower + 7 - (lower % 8)
-            bit_values.append((lower, min(stop, next_top), val))
-            lower = next_top + 1
-    return bit_values
 
 
 def in_range(lower, upper, lower_limit, upper_limit):
@@ -252,8 +222,458 @@ class Verilog(WriterBase):
         self._ofile = None
         self._lower_bit = LOWER_BIT[self._data_width]
 
-        self._byte_fields = self.__generate_group_list(8)
         self._word_fields = self.__generate_group_list(self._data_width)
+
+        self._field_type_map = {
+            BitField.TYPE_READ_ONLY                  : self._register_read_only,
+            BitField.TYPE_READ_WRITE                 : self._register_read_write,
+            BitField.TYPE_WRITE_1_TO_CLEAR_SET       : self._register_w1c_clear_set,
+            BitField.TYPE_WRITE_1_TO_SET             : self._register_write_1_set,
+            BitField.TYPE_WRITE_ONLY                 : self._register_write_only,
+            BitField.TYPE_READ_ONLY_LOAD             : self._not_implemented,
+            BitField.TYPE_READ_WRITE_1S              : self._register_read_write_1s,
+            BitField.TYPE_READ_WRITE_1S_1            : self._register_read_write_1s_1,
+            BitField.TYPE_READ_WRITE_LOAD            : self._register_read_write_load,
+            BitField.TYPE_READ_WRITE_LOAD_1S         : self._register_read_write_load_1s,
+            BitField.TYPE_READ_WRITE_LOAD_1S_1       : self._register_read_write_load_1s_1,
+            BitField.TYPE_READ_WRITE_SET             : self._register_read_write_set,
+            BitField.TYPE_READ_WRITE_SET_1S          : self._register_read_write_set_1s,
+            BitField.TYPE_READ_WRITE_SET_1S_1        : self._register_read_write_set_1s_1,
+            BitField.TYPE_WRITE_1_TO_CLEAR_SET_1S    : self._register_w1c_clear_set_1s,
+            BitField.TYPE_WRITE_1_TO_CLEAR_SET_1S_1  : self._register_w1c_clear_set_1s_1,
+            BitField.TYPE_WRITE_1_TO_CLEAR_LOAD      : self._register_w1c_load,
+            BitField.TYPE_WRITE_1_TO_CLEAR_LOAD_1S   : self._register_w1c_load_1s,
+            BitField.TYPE_WRITE_1_TO_CLEAR_LOAD_1S_1 : self._register_w1c_load_1s_1,
+            }
+
+        self._has_input   = {}
+        self._has_oneshot = {}
+        self._has_control = {}
+        
+        for i in TYPES:
+            self._has_input[i[0]] = i[2]
+            self._has_oneshot[i[0]] = i[4]
+            self._has_control[i[0]] = i[3]
+
+    def _not_implemented(self, reg, field):
+        self._ofile.write("/* Not yet implemented */\n")
+
+    def _break_on_byte_boundaries(self, start, stop):
+
+        index = start
+        data = []
+        
+        while index <= stop:
+            next_boundary = ((index/8) + 1) * 8
+            data.append((index, min(stop, next_boundary - 1)))
+            index = next_boundary
+        return data
+
+    def _reset_value(self, field, start, stop):
+        if field.reset_type == BitField.RESET_NUMERIC:
+            return "%d'h%x" % (((stop - start) + 1), (field.reset_value >> start) & 0xff)
+        elif field.reset_type == BitField.RESET_INPUT:
+            return "%s[%d:%d]" % (field.reset_input, stop, start)
+        else:
+            return "%s[%d:%d]" % (field.reset_parameter, stop, start)
+
+    def _full_reset_value(self, field):
+        if field.reset_type == BitField.RESET_NUMERIC:
+            return "%d'h%0x" % (((field.stop_position - field.start_position) + 1), field.reset_value)
+        elif field.reset_type == BitField.RESET_INPUT:
+            return field.reset_input
+        else:
+            return field.reset_parameter
+
+    def _register_read_only(self, address, field):
+
+        field_name = field.field_name.lower()
+
+        start = field.start_position
+        stop = field.stop_position
+        rvalue = self._full_reset_value(field)
+        self._ofile.write('assign r%02x_%s = %s;\n' % (address, field_name, rvalue))
+        self._ofile.write('\n')
+
+    def _register_template(self, address, field, modbase, use_width, use_in, use_ld, use_1s):
+        field_name = field.field_name.lower()
+
+        for (start, stop) in self._break_on_byte_boundaries(field.start_position, field.stop_position):
+            width = (stop - start) + 1
+
+            index = get_width(field, start, stop)
+            instance = "r%02x_%s_%d" % (address, field_name, start)
+            
+            self._ofile.write('%s_%s_reg ' % (self._module, modbase))
+            if use_width:
+                self._ofile.write('#(.WIDTH(%d)) ' % width)
+            self._ofile.write('%s\n' % instance)
+            
+            self._ofile.write('  (\n')
+            self._ofile.write('    .CLK   (%s),\n' % self._clock)
+            self._ofile.write('    .RSTn  (%s),\n' % self._reset)
+            self._ofile.write('    .WE    (write_r%02x),\n' % address)
+            self._ofile.write('    .BE    (%s[%d]),\n' % (self._byte_enables, start/8))
+            self._ofile.write('    .DI    (%s%s),\n' % (self._data_in, index))
+            self._ofile.write('    .DO    (r%02x_%s%s),\n' % (address, field_name, index))
+            if use_ld:
+                self._ofile.write('    .LD    (%s),\n' % field.control_signal)
+            if use_in:
+                self._ofile.write('    .IN    (%s%s),\n' % (field.input_signal, index))
+            if use_1s:
+                self._ofile.write('    .DO_1S (r%02x_%s_1s),\n' % (address, field_name))
+                
+            self._ofile.write('    .RVAL  (%s)\n' % self._reset_value(field, start, stop))
+            self._ofile.write('  );\n\n')
+
+    def _register_read_write(self, address, field):
+        self._register_template(address, field, "rw", True, False, False, False)
+
+    def _register_read_write_set_1s(self, address, field):
+        self._register_template(address, field, "rw_set_1s", True, True, False, True)
+
+    def _register_read_write_set_1s_1(self, address, field):
+
+        field_name = field.field_name.lower()
+
+        for (start, stop) in self._break_on_byte_boundaries(field.start_position, field.stop_position):
+            width = (stop - start) + 1
+
+            index = get_width(field, start, stop)
+            instance = "r%02x_%s_%d" % (address, field_name, start)
+            
+            self._ofile.write('%s_rw_set_1s_1_reg #(.WIDTH(%d)) %s\n' %
+                              (self._module, width, instance))
+            self._ofile.write('  (\n')
+            self._ofile.write('    .CLK   (%s),\n' % self._clock)
+            self._ofile.write('    .RSTn  (%s),\n' % self._reset)
+            self._ofile.write('    .BE    (%s[%d]),\n' % (self._byte_enables, start/8))
+            self._ofile.write('    .WE    (write_r%02x),\n' % address)
+            self._ofile.write('    .DI    (%s%s),\n' % (self._data_in, index))
+            self._ofile.write('    .RVAL  (%s),\n' % self._reset_value(field, start, stop))
+            self._ofile.write('    .DO    (r%02x_%s%s),\n' % (address, field_name, index))
+            self._ofile.write('    .IN    (%s%s),\n' % (field.input_signal, index))
+            self._ofile.write('    .DO_1S (r%02x_%s_1s)\n' % (address, field_name))
+            self._ofile.write('  );\n\n')
+
+    def _register_read_write_set(self, address, field):
+
+        field_name = field.field_name.lower()
+
+        for (start, stop) in self._break_on_byte_boundaries(field.start_position, field.stop_position):
+            width = (stop - start) + 1
+
+            index = get_width(field, start, stop)
+            instance = "r%02x_%s_%d" % (address, field_name, start)
+            
+            self._ofile.write('%s_rw_set_reg #(.WIDTH(%d)) %s\n' %
+                              (self._module, width, instance))
+            self._ofile.write('  (\n')
+            self._ofile.write('    .CLK   (%s),\n' % self._clock)
+            self._ofile.write('    .RSTn  (%s),\n' % self._reset)
+            self._ofile.write('    .BE    (%s[%d]),\n' % (self._byte_enables, start/8))
+            self._ofile.write('    .WE    (write_r%02x),\n' % address)
+            self._ofile.write('    .DI    (%s%s),\n' % (self._data_in, index))
+            self._ofile.write('    .RVAL  (%s),\n' % self._reset_value(field, start, stop))
+            self._ofile.write('    .DO    (r%02x_%s%s),\n'  % (address, field_name, index))
+            self._ofile.write('    .IN    (%s%s)\n' % (field.input_signal, index))
+            self._ofile.write('  );\n\n')
+
+    def _register_read_write_load(self, address, field):
+
+        field_name = field.field_name.lower()
+
+        for (start, stop) in self._break_on_byte_boundaries(field.start_position, field.stop_position):
+            width = (stop - start) + 1
+
+            index = get_width(field, start, stop)
+            instance = "r%02x_%s_%d" % (address, field_name, start)
+            
+            self._ofile.write('%s_rw_reg #(.WIDTH(%d)) %s\n' %
+                              (self._module, width, instance))
+            self._ofile.write('  (\n')
+            self._ofile.write('    .CLK   (%s),\n' % self._clock)
+            self._ofile.write('    .RSTn  (%s),\n' % self._reset)
+            self._ofile.write('    .BE    (%s[%d]),\n' % (self._byte_enables, start/8))
+            self._ofile.write('    .WE    (write_r%02x),\n' % address)
+            self._ofile.write('    .DI    (%s%s),\n' % (self._data_in, index))
+            self._ofile.write('    .RVAL  (%s),\n' % self._reset_value(field, start, stop))
+            self._ofile.write('    .DO    (r%02x_%s%s),\n'  % (address, field_name, index))
+            self._ofile.write('    .IN    (%s%s),\n' % (field.input_signal, index))
+            self._ofile.write('    .LD    (%s)\n' % field.control_signal)
+            self._ofile.write('  );\n\n')
+
+    def _register_read_write_load_1s(self, address, field):
+
+        field_name = field.field_name.lower()
+
+        for (start, stop) in self._break_on_byte_boundaries(field.start_position, field.stop_position):
+            width = (stop - start) + 1
+
+            index = get_width(field, start, stop)
+            instance = "r%02x_%s_%d" % (address, field_name, start)
+            
+            self._ofile.write('%s_rw_ld_1s_reg #(.WIDTH(%d)) %s\n' %
+                              (self._module, width, instance))
+            self._ofile.write('  (\n')
+            self._ofile.write('    .CLK   (%s),\n' % self._clock)
+            self._ofile.write('    .RSTn  (%s),\n' % self._reset)
+            self._ofile.write('    .BE    (%s[%d]),\n' % (self._byte_enables, start/8))
+            self._ofile.write('    .WE    (write_r%02x),\n' % address)
+            self._ofile.write('    .DI    (%s%s),\n' % (self._data_in, index))
+            self._ofile.write('    .RVAL  (%s),\n' % self._reset_value(field, start, stop))
+            self._ofile.write('    .DO    (r%02x_%s%s),\n'  % (address, field_name, index))
+            self._ofile.write('    .LD    (%s),\n' % field.control_signal)
+            self._ofile.write('    .IN    (%s%s),\n' % (field.input_signal, index))
+            self._ofile.write('    .DO_1S (r%02x_%s_1s)\n' % (address, field_name))
+            self._ofile.write(' );\n\n')
+
+    def _register_read_write_load_1s_1(self, address, field):
+
+        field_name = field.field_name.lower()
+
+        for (start, stop) in self._break_on_byte_boundaries(field.start_position, field.stop_position):
+            width = (stop - start) + 1
+
+            index = get_width(field, start, stop)
+            instance = "r%02x_%s_%d" % (address, field_name, start)
+            
+            self._ofile.write('%s_rw_ld_1s_1_reg #(.WIDTH(%d)) %s\n' %
+                              (self._module, width, instance))
+            self._ofile.write('  (\n')
+            self._ofile.write('    .CLK   (%s),\n' % self._clock)
+            self._ofile.write('    .RSTn  (%s),\n' % self._reset)
+            self._ofile.write('    .BE    (%s[%d]),\n' % (self._byte_enables, start/8))
+            self._ofile.write('    .WE    (write_r%02x),\n' % address)
+            self._ofile.write('    .DI    (%s%s),\n' % (self._data_in, index))
+            self._ofile.write('    .RVAL  (%s),\n' % self._reset_value(field, start, stop))
+            self._ofile.write('    .DO    (r%02x_%s%s),\n'  % (address, field_name, index))
+            self._ofile.write('    .LD    (%s),\n' % field.control_signal)
+            self._ofile.write('    .DO_1S (r%02x_%s_1s)\n' % (address, field_name))
+            self._ofile.write('  );\n\n')
+
+    def _register_write_only(self, address, field):
+
+        field_name = field.field_name.lower()
+
+        for (start, stop) in self._break_on_byte_boundaries(field.start_position, field.stop_position):
+            width = (stop - start) + 1
+
+            index = get_width(field, start, stop)
+            instance = "r%02x_%s_%d" % (address, field_name, start)
+            
+            self._ofile.write('%s_wo_reg %s\n' % (self._module, instance))
+            self._ofile.write('  (\n')
+            self._ofile.write('    .CLK   (%s),\n' % self._clock)
+            self._ofile.write('    .RSTn  (%s),\n' % self._reset)
+            self._ofile.write('    .BE    (%s[%d]),\n' % (self._byte_enables, start/8))
+            self._ofile.write('    .WE    (write_r%02x),\n' % address)
+            self._ofile.write('    .DI    (%s%s),\n' % (self._data_in, index))
+            self._ofile.write('    .RVAL  (%s),\n' % self._reset_value(field, start, stop))
+            self._ofile.write('    .DO_1S (r%02x_%s_1s)\n' % (address, field_name))
+            self._ofile.write(' );\n\n')
+
+    def _register_write_1_set(self, address, field):
+
+        field_name = field.field_name.lower()
+
+        for (start, stop) in self._break_on_byte_boundaries(field.start_position, field.stop_position):
+            width = (stop - start) + 1
+
+            index = get_width(field, start, stop)
+            instance = "r%02x_%s_%d" % (address, field_name, start)
+            
+            self._ofile.write('%s_w1s_reg #(.WIDTH(%d)) %s\n' %
+                              (self._module, width, instance))
+            self._ofile.write('  (\n')
+            self._ofile.write('    .CLK   (%s),\n' % self._clock)
+            self._ofile.write('    .RSTn  (%s),\n' % self._reset)
+            self._ofile.write('    .BE    (%s[%d]),\n' % (self._byte_enables, start/8))
+            self._ofile.write('    .WE    (write_r%02x),\n' % address)
+            self._ofile.write('    .DI    (%s%s),\n' % (self._data_in, index))
+            self._ofile.write('    .RVAL  (%s),\n' % self._reset_value(field, start, stop))
+            self._ofile.write('    .DO    (r%02x_%s%s),\n' % (address, field_name, index))
+            self._ofile.write('    .DO_1S (r%02x_%s_1s)\n' % (address, field_name))
+            self._ofile.write('  );\n\n')
+
+    def _register_read_write_1s(self, address, field):
+
+        field_name = field.field_name.lower()
+
+        for (start, stop) in self._break_on_byte_boundaries(field.start_position, field.stop_position):
+            width = (stop - start) + 1
+
+            index = get_width(field, start, stop)
+            instance = "r%02x_%s_%d" % (address, field_name, start)
+            
+            self._ofile.write('%s_rw_reg_1s #(.WIDTH(%d)) %s\n' %
+                              (self._module, width, instance))
+            self._ofile.write('  (\n')
+            self._ofile.write('    .CLK   (%s),\n' % self._clock)
+            self._ofile.write('    .RSTn  (%s),\n' % self._reset)
+            self._ofile.write('    .BE    (%s[%d]),\n' % (self._byte_enables, start/8))
+            self._ofile.write('    .WE    (write_r%02x),\n' % address)
+            self._ofile.write('    .DI    (%s%s),\n' % (self._data_in, index))
+            self._ofile.write('    .RVAL  (%s),\n' % self._reset_value(field, start, stop))
+            self._ofile.write('    .DO    (r%02x_%s%s),\n' % (address, field_name, index))
+            self._ofile.write('    .DO_1S (r%02x_%s_1s)\n' % (address, field_name))
+            self._ofile.write('  );\n\n')
+
+    def _register_read_write_1s_1(self, address, field):
+
+        field_name = field.field_name.lower()
+
+        for (start, stop) in self._break_on_byte_boundaries(field.start_position, field.stop_position):
+            width = (stop - start) + 1
+
+            index = get_width(field, start, stop)
+            instance = "r%02x_%s_%d" % (address, field_name, start)
+            
+            self._ofile.write('%s_rw_reg_1s_1 #(.WIDTH(%d)) %s\n' %
+                              (self._module, width, instance))
+            self._ofile.write('  (\n')
+            self._ofile.write('    .CLK   (%s),\n' % self._clock)
+            self._ofile.write('    .RSTn  (%s),\n' % self._reset)
+            self._ofile.write('    .BE    (%s[%d]),\n' % (self._byte_enables, start/8))
+            self._ofile.write('    .WE    (write_r%02x),\n' % address)
+            self._ofile.write('    .DI    (%s%s),\n' % (self._data_in, index))
+            self._ofile.write('    .RVAL  (%s),\n' % self._reset_value(field, start, stop))
+            self._ofile.write('    .DO    (r%02x_%s%s),\n' % (address, field_name, index))
+            self._ofile.write('    .DO_1S (r%02x_%s_1s)\n' % (address, field_name))
+            self._ofile.write('  );\n\n')
+
+    def _register_w1c_load(self, address, field):
+        field_name = field.field_name.lower()
+
+        for (start, stop) in self._break_on_byte_boundaries(field.start_position, field.stop_position):
+            width = (stop - start) + 1
+
+            index = get_width(field, start, stop)
+            instance = "r%02x_%s_%d" % (address, field_name, start)
+            
+            self._ofile.write('%s_w1c_ld_reg #(.WIDTH(%d)) %s\n' % (self._module, width, instance))
+            self._ofile.write('  (\n')
+            self._ofile.write('    .CLK   (%s),\n' % self._clock)
+            self._ofile.write('    .RSTn  (%s),\n' % self._reset)
+            self._ofile.write('    .BE    (%s[%d]),\n' % (self._byte_enables, start/8))
+            self._ofile.write('    .WE    (write_r%02x),\n' % address)
+            self._ofile.write('    .DI    (%s%s),\n' % (self._data_in, index))
+            self._ofile.write('    .RVAL  (%s),\n' % self._reset_value(field, start, stop))
+            self._ofile.write('    .DO    (r%02x_%s%s),\n' % (address, field_name, index))
+            self._ofile.write('    .IN    (%s%s),\n' % (field.input_signal, index))
+            self._ofile.write('    .LD    (%s)\n' % field.control_signal)
+            self._ofile.write('  );\n\n')
+
+    def _register_w1c_load_1s(self, address, field):
+        field_name = field.field_name.lower()
+
+        for (start, stop) in self._break_on_byte_boundaries(field.start_position, field.stop_position):
+            width = (stop - start) + 1
+
+            index = get_width(field, start, stop)
+            instance = "r%02x_%s_%d" % (address, field_name, start)
+            
+            self._ofile.write('%s_w1c_ld_1s_reg #(.WIDTH(%d)) %s\n' % (self._module, width, instance))
+            self._ofile.write('  (\n')
+            self._ofile.write('    .CLK   (%s),\n' % self._clock)
+            self._ofile.write('    .RSTn  (%s),\n' % self._reset)
+            self._ofile.write('    .BE    (%s[%d]),\n' % (self._byte_enables, start/8))
+            self._ofile.write('    .WE    (write_r%02x),\n' % address)
+            self._ofile.write('    .DI    (%s%s),\n' % (self._data_in, index))
+            self._ofile.write('    .RVAL  (%s),\n' % self._reset_value(field, start, stop))
+            self._ofile.write('    .DO    (r%02x_%s%s),\n' % (address, field_name, index))
+            self._ofile.write('    .LD    (%s),\n' % field.control_signal)
+            self._ofile.write('    .IN    (%s%s),\n' % (field.input_signal, index))
+            self._ofile.write('    .DO_1S (r%02x_%s_1s)\n' % (address, field_name))
+            self._ofile.write('  );\n\n')
+
+    def _register_w1c_load_1s_1(self, address, field):
+        field_name = field.field_name.lower()
+
+        for (start, stop) in self._break_on_byte_boundaries(field.start_position, field.stop_position):
+            width = (stop - start) + 1
+
+            index = get_width(field, start, stop)
+            instance = "r%02x_%s_%d" % (address, field_name, start)
+            
+            self._ofile.write('%s_w1c_ld_1s_1_reg #(.WIDTH(%d)) %s\n' % (self._module, width, instance))
+            self._ofile.write('  (\n')
+            self._ofile.write('    .CLK   (%s),\n' % self._clock)
+            self._ofile.write('    .RSTn  (%s),\n' % self._reset)
+            self._ofile.write('    .BE    (%s[%d]),\n' % (self._byte_enables, start/8))
+            self._ofile.write('    .WE    (write_r%02x),\n' % address)
+            self._ofile.write('    .DI    (%s%s),\n' % (self._data_in, index))
+            self._ofile.write('    .RVAL  (%s),\n' % self._reset_value(field, start, stop))
+            self._ofile.write('    .DO    (r%02x_%s%s),\n' % (address, field_name, index))
+            self._ofile.write('    .LD    (%s),\n' % field.control_signal)
+            self._ofile.write('    .IN    (%s%s),\n' % (field.input_signal, index))
+            self._ofile.write('    .DO_1S (r%02x_%s_1s)\n' % (address, field_name))
+            self._ofile.write('  );\n\n')
+
+    def _register_w1c_clear_set(self, address, field):
+        field_name = field.field_name.lower()
+
+        for (start, stop) in self._break_on_byte_boundaries(field.start_position, field.stop_position):
+            width = (stop - start) + 1
+
+            index = get_width(field, start, stop)
+            instance = "r%02x_%s_%d" % (address, field_name, start)
+            
+            self._ofile.write('%s_w1c_set_reg #(.WIDTH(%d)) %s\n' % (self._module, width, instance))
+            self._ofile.write('  (\n')
+            self._ofile.write('    .CLK   (%s),\n' % self._clock)
+            self._ofile.write('    .RSTn  (%s),\n' % self._reset)
+            self._ofile.write('     .BE    (%s[%d]),\n' % (self._byte_enables, start/8))
+            self._ofile.write('    .WE    (write_r%02x),\n' % address)
+            self._ofile.write('    .DI    (%s%s),\n' % (self._data_in, index))
+            self._ofile.write('    .RVAL  (%s),\n' % self._reset_value(field, start, stop))
+            self._ofile.write('    .DO    (r%02x_%s%s),\n' % (address, field_name, index))
+            self._ofile.write('    .IN    (%s%s)\n' % (field.input_signal, index))
+            self._ofile.write('  );\n\n')
+
+    def _register_w1c_clear_set_1s(self, address, field):
+        field_name = field.field_name.lower()
+
+        for (start, stop) in self._break_on_byte_boundaries(field.start_position, field.stop_position):
+            width = (stop - start) + 1
+
+            index = get_width(field, start, stop)
+            instance = "r%02x_%s_%d" % (address, field_name, start)
+            
+            self._ofile.write('%s_w1c_set_1s_reg #(.WIDTH(%d)) %s\n' % (self._module, width, instance))
+            self._ofile.write('  (\n')
+            self._ofile.write('    .CLK   (%s),\n' % self._clock)
+            self._ofile.write('    .RSTn  (%s),\n' % self._reset)
+            self._ofile.write('    .BE    (%s[%d]),\n' % (self._byte_enables, start/8))
+            self._ofile.write('    .WE    (write_r%02x),\n' % address)
+            self._ofile.write('    .DI    (%s%s),\n' % (self._data_in, index))
+            self._ofile.write('    .RVAL  (%s),\n' % self._reset_value(field, start, stop))
+            self._ofile.write('    .DO    (r%02x_%s%s),\n' % (address, field_name, index))
+            self._ofile.write('    .IN    (%s%s),\n' % (field.input_signal, index))
+            self._ofile.write('    .DO_1S (r%02x_%s_1s)\n' % (address, field_name))
+            self._ofile.write('  );\n\n')
+
+    def _register_w1c_clear_set_1s_1(self, address, field):
+        field_name = field.field_name.lower()
+
+        for (start, stop) in self._break_on_byte_boundaries(field.start_position, field.stop_position):
+            width = (stop - start) + 1
+
+            index = get_width(field, start, stop)
+            instance = "r%02x_%s_%d" % (address, field_name, start)
+            
+            self._ofile.write('%s_w1c_set_1s_1_reg #(.WIDTH(%d)) %s\n' % (self._module, width, instance))
+            self._ofile.write('  (\n')
+            self._ofile.write('    .CLK   (%s),\n' % self._clock)
+            self._ofile.write('    .RSTn  (%s),\n' % self._reset)
+            self._ofile.write('    .BE    (%s[%d]),\n' % (self._byte_enables, start/8))
+            self._ofile.write('    .WE    (write_r%02x),\n' % address)
+            self._ofile.write('    .DI    (%s%s),\n' % (self._data_in, index))
+            self._ofile.write('    .RVAL  (%s),\n' % self._reset_value(field, start, stop))
+            self._ofile.write('    .DO    (r%02x_%s%s),\n' % (address, field_name, index))
+            self._ofile.write('    .IN    (%s%s),\n' % (field.input_signal, index))
+            self._ofile.write('    .DO_1S (r%02x_%s_1s)\n' % (address, field_name))
+            self._ofile.write(' );\n\n')
 
     def _byte_info(self, field, register, lower, size):
         """
@@ -284,29 +704,6 @@ class Verilog(WriterBase):
                         item_list.setdefault(data[3], []).append(data)
         return item_list
 
-    def __terminate_line(self, need_comma):
-        """
-        Terminates the with a comma if needed.
-        """
-        if not need_comma:
-            self._ofile.write(', ')
-        else:
-            need_comma = False
-        self._ofile.write('\n                    ')
-        return need_comma
-
-    def __find_registers_in_range(self, current, rlimit):
-        """
-        Finds the registers between the starting address and the
-        starting address plus the rlimit
-        """
-        rlist = []
-        for i in range(0, rlimit):
-            reg = self._dbase.get_register(current + i)
-            if reg and reg.do_not_generate_code:
-                rlist = [reg] + rlist
-        return rlist
-
     def write(self, filename):
         """
         Writes the verilog code to the specified filename
@@ -319,11 +716,7 @@ class Verilog(WriterBase):
         self._write_address_selects()
         self._write_output_assignments()
         self._write_register_rtl_code()
-        if self._coverage:
-            self._write_cover_groups()
         self._define_outputs()
-#        if self.__assertions:
-#            self._write_assertions()
         self._write_trailer()
         self._ofile.close()
 
@@ -415,19 +808,18 @@ class Verilog(WriterBase):
                           for field_key in register.get_bit_field_keys()]:
 
                 # A parallel load requires an input signal
-                if field.input_function == BitField.FUNC_PARALLEL:
+                if self._has_control[field.field_type]:
                     if not field.control_signal:
                         self.err("No parallel load signal specified for %s:%s" % (register.register_name, field.field_name))
                     parallel_load_port(field, port_list, output_list)
 
                 # If the bit is controlled by an input value, we
                 # need a signal
-                if (field.input_signal and
-                    field.input_function != BitField.FUNC_ASSIGNMENT):
+                if field.input_signal and self._has_input[field.field_type]:
                     input_signal_port(field, port_list, output_list)
 
                 # Output oneshots require a signal
-                if field.one_shot_type != BitField.ONE_SHOT_NONE:
+                if self._has_oneshot[field.field_type]:
                     if not field.output_signal:
                         self.err("Empty output signal for %s:%s" % (register.register_name, field.field_name))
                     port_list.append(('output', "",
@@ -477,21 +869,18 @@ class Verilog(WriterBase):
                 sindex = get_width(field)
                 base = get_base_signal(addr, field)
 
-                if field.is_constant():
-                    val = "wire %-8s %s;" % (sindex, base)
-                else:
-                    val = "reg %-9s %s;" % (sindex, base)
+                val = "wire %-10s %s;" % (sindex, base)
                 local_regs.append(val)
 
-                if field.one_shot_type != BitField.ONE_SHOT_NONE:
-                    val = "reg %-9s %s;" % ("", oneshot_name(base))
+                if self._has_oneshot[field.field_type]:
+                    val = "wire %-10s %s;" % ("", oneshot_name(base))
                     local_regs.append(val)
 
         if local_regs:
             self._ofile.write('\n// Register Declarations\n\n')
             self._ofile.write("\n".join(local_regs))
-        self._ofile.write("\nreg [%d:0]    mux_%s;\n" % (self._data_width-1,
-                                                         self._data_out))
+        self._ofile.write("\nreg [%d:0]      mux_%s;\n" % (self._data_width-1,
+                                                           self._data_out))
 
         if local_wires:
             self._ofile.write('\n// Wire Declarations (Constants)\n\n')
@@ -521,7 +910,7 @@ class Verilog(WriterBase):
 
             for field_key in register.get_bit_field_keys():
                 field = register.get_bit_field(field_key)
-                if field.one_shot_type != BitField.ONE_SHOT_NONE:
+                if self._has_oneshot[field.field_type]:
                     self._ofile.write("assign %-20s = %s;\n" % (
                         oneshot_name(field.output_signal),
                         oneshot_name(get_base_signal(address, field))))
@@ -544,191 +933,18 @@ class Verilog(WriterBase):
 
         one_shots = set()
 
-        for key in sorted(self._byte_fields.keys()):
-            for item in self._byte_fields[key]:
+        for reg in self.__sorted_regs:
+            for field in [reg.get_bit_field(k) for k in reg.get_bit_field_keys()]:
+                self._write_field(reg, field)
 
-                (field, start, stop, reg_address, reg) = item
-                reg_name = reg.register_name
-
-            # if a oneshot is required, write the code to generate a one shot
-                if field.one_shot_type != BitField.ONE_SHOT_NONE:
-                    if field not in one_shots:
-                        self.write_one_shot(reg_name, reg_address, field)
-                        one_shots.add(field)
-
-            # if the register field is a constant, write the constant value
-            # otherwise, write the field information
-
-                if field.is_constant():
-                    self._write_constant(reg_name, reg_address, field,
-                                         start, stop, reg.address)
-                else:
-                    self._write_field(reg_name, reg_address,
-                                      field, start, stop, reg.address)
-
-    def _write_field(self, reg_name, address, field, start, stop, regaddr):
+    def _write_field(self, reg, field):
         """
         Writes the register range that is specified
         """
-        base_signal = get_base_signal(regaddr, field)
-        self._write_field_comment(reg_name, address, field, start, stop)
-
-        init_value = calc_init_value(field, start, stop)
-
-        if field.reset_type == BitField.RESET_PARAMETER:
-            if stop == start:
-                rvalue = field.reset_parameter
-            else:
-                rvalue = "%s%s" % (field.reset_parameter,
-                                   get_width(field, start, stop))
-        elif field.reset_type == BitField.RESET_INPUT:
-            if stop == start:
-                rvalue = field.reset_input
-            else:
-                match = MULTI_BIT.match(field.reset_input)
-                if match:
-                    rvalue = field.reset_input
-                else:
-                    rvalue = "%s%s" % (field.reset_input,
-                                       get_width(field, start, stop))
-        else:
-            rvalue = bin(init_value, stop - start + 1)
-
-        self._start_always_ff(
-            base_signal, rvalue, start, stop, field.width > 1)
-
-        if field.input_function == BitField.FUNC_PARALLEL:
-            self._write_parallel_load(address, field, start, stop, regaddr)
-        elif field.input_function == BitField.FUNC_CLEAR_BITS:
-            self._write_clear_bits(address, field, start, stop, regaddr)
-        elif field.input_function == BitField.FUNC_SET_BITS:
-            self._write_set_bits(address, field, start, stop, regaddr)
-        else:
-            self._write_normal_bits(address, field, start, stop, regaddr)
-
-        self._end_always_ff()
-
-    def _write_be_lines(self, offset, signal, bit_range, start, stop):
-        """
-        Writes the byte enable control lines
-        """
-        if bit_range.field_type == BitField.WRITE_1_TO_CLEAR:
-            self._write_be_lines_w1c(
-                offset, signal, bit_range, start, stop, int(start / 8))
-        elif bit_range.field_type == BitField.WRITE_1_TO_SET:
-            self._write_be_lines_w1s(
-                offset, signal, bit_range, start, int(start / 8))
-        else:
-            self._write_be_lines_normal(
-                offset, signal, bit_range, start, stop, int(start / 8))
-
-    def _byte_enable(self, val):
-        """
-        Returns the active byte enable associated with the bit position
-        """
-        val = val % (self._data_width / 8)
-        return '%s[%d]' % (self.__be_condition, val)
-
-    def _write_be_lines_normal(self, offset, signal, bit_range,
-                               start, stop, byte_pos):
-        """
-        Writes the byte enable lines for a normal access register
-        """
-        width = bit_range.stop_position - bit_range.start_position
-        be_name = self._byte_enable(byte_pos)
-
-        if start >= self._data_width:
-            bus_start = (start - self._data_width) + (offset * 8)
-            bus_stop = (stop - self._data_width) + (offset * 8)
-        else:
-            bus_start = start + (offset * 8)
-            bus_stop = stop  + (offset * 8)
-
-        if width == 0:
-            sname = signal
-            dname = "%s[%d]" % (self._data_in, bus_start)
-        elif start == stop:
-            sname = "%s[%d]" % (signal, start)
-            dname = "%s[%d]" % (self._data_in, bus_start)
-        else:
-            sname = "%s[%d:%d]" % (signal, stop, start)
-            dname = "%s[%d:%d]" % (self._data_in, bus_stop, bus_start)
-
-        self._ofile.write('      %s <= ' % sname)
-        self._ofile.write('(%s) ' % be_name)
-        self._ofile.write('? %s : ' % dname)
-        self._ofile.write('%s;\n' % sname)
-
-    def _write_be_lines_w1s(self, offset, signal, bit_range, lower, val):
-        """
-        Writes the byte enables for a write-one-to-set register
-        """
-        start = bit_range.start_position
-        stop = bit_range.stop_position
-        if lower == stop:
-            if start == stop:
-                self._ofile.write('      %s <=' % signal)
-            else:
-                self._ofile.write('      %s[%d] <=' % (signal, lower))
-
-            self._ofile.write(' %s ' % self._byte_enable(val))
-            self._ofile.write('? (%s | %s[%d]) :' %
-                             (signal, self._data_in, lower + offset * 8))
-
-            if start == stop:
-                self._ofile.write(' %s;\n' % signal)
-            else:
-                self._ofile.write(' %s[%d];\n' % (signal, lower))
-        else:
-            sname = "%s[%d:%d]" % (signal, stop, lower)
-
-            self._ofile.write('      %s <= ' % sname)
-            self._ofile.write('(%s) ' % self._byte_enable(val))
-            self._ofile.write('%s;\n' % sname)
-
-    def _write_be_lines_w1c(self, offset, signal, bit_range, lower,
-                            next_top, val):
-        """
-        Writes the byte enable lines for a write-one-to-clear register
-        """
-        stop = bit_range.stop_position
-        start = bit_range.start_position
-        input_sig = bit_range.input_signal
-
-        if lower == stop:
-            if start == stop:
-                self._ofile.write('      %s <=' % signal)
-            else:
-                self._ofile.write('      %s[%d] <=' % (signal, lower))
-
-            self._ofile.write(' (%s ' % self._byte_enable(val))
-            self._ofile.write('& %s[%d]) ? 1\'b0 :' %
-                             (self._data_in,
-                              (lower + offset * 8) % self._data_width))
-
-            if start == stop:
-                if input_sig != "":
-                    self._ofile.write(' (%s | %s);\n' % (signal, input_sig))
-                else:
-                    self._ofile.write(' %s;\n' % signal)
-            else:
-                self._ofile.write(' %s[%d];\n' % (signal,
-                                                  lower % self._data_width))
-        else:
-            bitrng = "[%d:%d]" % (next_top, lower)
-            sname = "%s%s" % (signal, bitrng)
-            ival = "%s%s" % (input_sig, bitrng)
-            dname = "%s[%d:%d]" % (self._data_in,
-                                   next_top + (8 * offset) % self._data_width,
-                                   lower + (8 * offset) % self._data_width)
-
-            self._ofile.write('      %s <= ' % sname)
-            self._ofile.write(' (%s) ' % self._byte_enable(val))
-            self._ofile.write('? ((%s & ~%s)) | %s :' % (sname, dname, ival))
-            if input_sig != "":
-                self._ofile.write('(%s|%s);\n' % (sname, ival))
-            else:
-                self._ofile.write('%s;\n' % sname)
+        base_signal = get_base_signal(reg.address, field)
+        self._write_field_comment(reg.register_name, reg.address, field, field.start_position,
+                                  field.stop_position)
+        self._field_type_map[field.field_type](reg.address, field)
 
     def _write_field_comment(self, reg_name, address, field, start, stop):
         """
@@ -747,7 +963,7 @@ class Verilog(WriterBase):
                              ('Bits'.ljust(mlen), stop, start))
         self._ofile.write(' * %s : %s\n' % ('Register'.ljust(mlen), reg_name))
         self._ofile.write(' * %s : %08x\n' % ('Address'.ljust(mlen), address))
-        if field.reset_type == BitField.RESET_INPUT:
+        if field.reset_type == BitField.RESET_NUMERIC:
             self._ofile.write(' * %s : %d\'h%x\n' %
                               ('Reset Value'.ljust(mlen), field.width,
                                field.reset_value))
@@ -772,75 +988,6 @@ class Verilog(WriterBase):
         self._ofile.write(' *%s' % self.__comment_line)
         self._ofile.write('\n */\n')
 
-    def _write_parallel_load(self, address, field, start, stop, regaddr):
-        """
-        Writes the control values for a bit field with a parallel load control
-        """
-
-        (base_signal, signal, offset) = get_signal_info(regaddr, field)
-
-        if field.field_type == BitField.READ_ONLY:
-            index = get_width(field, start, stop)
-            self._ofile.write('      %s%s <= (%s) ? %s%s : %s%s;\n' % (
-                    base_signal, index,
-                    field.control_signal,
-                    field.input_signal, index,
-                    base_signal, index))
-        else:
-            self._ofile.write('    if (%s) begin\n' % write_strobe(address))
-            self._write_be_lines(offset, base_signal, field, start, stop)
-            self._ofile.write('    end else begin\n')
-            index = get_width(field, start, stop)
-            self._ofile.write('      %s%s <= (%s) ? %s%s : %s%s;\n' % (
-                    base_signal, index,
-                    field.control_signal,
-                    field.input_signal, index,
-                    base_signal, index))
-            self._ofile.write('    end\n')
-
-    def _write_clear_bits(self, address, field, start, stop, regaddr):
-        """
-        Writes the control values for a bit field that has a synchronous
-        clear signal.
-        """
-        (base_signal, signal, offset) = get_signal_info(regaddr, field)
-        index = get_width(field, start, stop)
-
-        self._ofile.write('    if (%s) begin\n' % (write_strobe(address)))
-        self._write_be_lines(offset, base_signal, field, start, stop)
-        self._ofile.write('    end else begin\n')
-        self._ofile.write('      %s%s <= ~(%s%s) & %s%s;\n' %
-                          (signal, index,
-                           field.input_signal, index,
-                           signal, index))
-        self._ofile.write('    end\n')
-
-    def _write_set_bits(self, address, field, start, stop, regaddr):
-        """
-        Writes the control values for a bit field that has a synchronous
-        set signal
-        """
-        (base, signal, offset) = get_signal_info(regaddr, field, start, stop)
-        index = get_width(field, start, stop)
-
-        self._ofile.write('    if (%s) begin\n' % write_strobe(address))
-        self._write_be_lines(offset, base, field, start, stop)
-        self._ofile.write('    end else begin\n')
-        self._ofile.write('      %s <= %s%s | %s;\n' %
-                           (signal, field.input_signal, index, signal))
-        self._ofile.write('    end\n')
-
-    def _write_normal_bits(self, address, field, start, stop, regaddr):
-        """
-        Writes the control values for a bit field that has a normal assignment
-        """
-        (base, signal, offset) = get_signal_info(regaddr, field, start, stop)
-
-        self._ofile.write('    if (%s) begin\n' % write_strobe(address))
-        self._write_be_lines(offset, base, field, start, stop)
-        self._ofile.write('    end else begin\n')
-        self._ofile.write('      %s <= %s;\n' % (signal, signal))
-        self._ofile.write('    end\n')
 
     def _define_outputs(self):
         """
@@ -966,82 +1113,6 @@ class Verilog(WriterBase):
 
         self._ofile.write('assign %s = %s;\n\n' % (signal, value))
 
-    def _start_always_ff(self, base_signal, reset_value, start, stop, is_bus):
-        """
-        Starts the always block, which consists of delecting the positive
-        edge of the clock or the active edge of reset.
-        """
-        if start == stop:
-            if is_bus:
-                bits = "_%d" % start
-                rng = "[%d]" % start
-            else:
-                bits = ""
-                rng = ""
-        else:
-            bits = "_%d_%d" % (stop, start)
-            rng = "[%d:%d]" % (stop, start)
-
-        self._ofile.write('%s @(posedge %s or %s) begin : b_%s%s\n' % (
-                self.ALWAYS_FF, self._clock, self._reset_edge,
-                base_signal, bits))
-        self._ofile.write('  if (%s) begin\n' % self._reset_condition)
-        self._ofile.write('    %s%s <= %s;\n' % (base_signal, rng,
-                                                 reset_value))
-        self._ofile.write('  end else begin\n')
-
-    def _end_always_ff(self):
-        """
-        Ends the always block by closing the always block and the if statement.
-        """
-        self._ofile.write('  end\n')
-        self._ofile.write('end\n\n')
-
-    def write_one_shot(self, reg_name, address, field):
-        """
-        Writes the one shot handling routine
-        """
-
-        start = field.start_position
-        stop = field.stop_position
-
-        # write the comment header
-        self._write_field_comment(reg_name, address, field, start, stop)
-
-        base_signal = get_base_signal(address, field)
-
-        # build signals names
-
-        ws_signal = oneshot_name(base_signal)
-        ctrl_signal = write_strobe(address)
-        ws_be = self._byte_enable_list(start, stop)
-        if start == stop:
-            insignal = "%s[%d]" % (self._data_in, stop)
-        else:
-            insignal = "(|%s[%d:%d])" % (self._data_in, stop, start)
-
-        mode = field.one_shot_type
-
-        # start the always block
-        self._start_always_ff(oneshot_name(base_signal), "1'b0", 0, 0, False)
-        self._ofile.write('    %s <= %s & %s' %
-                           (ws_signal, ctrl_signal, ws_be))
-
-        if mode == BitField.ONE_SHOT_ANY:
-            self._ofile.write(';\n')
-        elif mode == BitField.ONE_SHOT_ONE:
-            self._ofile.write(' & %s;\n' % insignal)
-        elif mode == BitField.ONE_SHOT_ZERO:
-            self._ofile.write(' & ~%s;\n' % insignal)
-        elif mode == BitField.ONE_SHOT_TOGGLE:
-            if start == stop:
-                self._ofile.write(' & (%s[%d] != %s);\n' % (
-                        self._data_in, stop, base_signal))
-            else:
-                self._ofile.write(' & (%s[%d:%d] != %s[%d:%d]);\n' % (
-                        self._data_in, stop, start, base_signal, stop, start))
-        self._end_always_ff()
-
     def _byte_enable_list(self, start, stop):
         """
         Writes the byte enables associated with the start/stop range,
@@ -1074,260 +1145,6 @@ class Verilog(WriterBase):
         closed.
         """
         self._ofile.write('endmodule // %s\n' % self._module)
-
-    def _write_cover_groups(self):
-        """
-        Writes covergroup information, checking for various test points
-        """
-
-        used_cover = set()
-
-        self._ofile.write('`ifdef USE_COVERAGE\n')
-        self._ofile.write('//synthesis off\n')
-
-        self._write_address_covergroup()
-
-        self._ofile.write('// Register specific coverage\n\n')
-
-        for address in sorted(self._byte_fields.keys()):
-            field_list = [item for item in self._byte_fields[address]
-                          if not item[0].is_constant() ]
-
-            if not field_list:
-                continue
-
-            field = field_list[0][0]
-            self._write_covergroup_head(address, field)
-
-            width = field_list[0][4].width
-
-            if field.field_type == BitField.READ_WRITE:
-                used_cover.add(field)
-                self._write_normal_cover(address, field,
-                                         field.start_position,
-                                         field.stop_position)
-            elif field.field_type == BitField.WRITE_1_TO_CLEAR:
-                used_cover.add(field)
-                self._write_cover_rw_w1c(address, field, width)
-                if field.input_function == BitField.FUNC_SET_BITS:
-                    self._write_cover_rw_set(address, field, width)
-            elif field.field_type == BitField.WRITE_1_TO_SET:
-                used_cover.add(field)
-                self._write_cover_rw_w1s(address, field, width)
-#                if field.input_function == BitField.FUNC_SET_BITS:
-#                    self._write_cover_rw_set(address, field, width)
-
-            self._write_covergroup_end()
-
-        for reg in self.__sorted_regs:
-            for field in [reg.get_bit_field(s)
-                          for s in reg.get_bit_field_keys()
-                          if reg.get_bit_field(s) in used_cover]:
-                basename = get_base_signal(reg.address, field)
-                self._ofile.write('cov_%s u_cov_%s = new;\n' %
-                                   (basename, basename))
-
-
-        self._ofile.write('//synthesis on\n\n')
-        self._ofile.write('`endif\n')
-
-    def _write_address_covergroup(self):
-        """
-        Writes the covergroup information for the address lines
-        """
-        self._ofile.write('\n// Make sure that all possible read '
-                           'addresses have at least\n')
-        self._ofile.write('// been seen. It does not prove that the '
-                           'values were read, but\n')
-        self._ofile.write('// if we did not detect it, we know that '
-                           'there is no way that\n')
-        self._ofile.write('// the register was read.\n\n')
-
-        self._ofile.write('covergroup cov_address @(posedge %s);\n' %
-                           self._clock)
-        self._ofile.write('  type_option.comment = "Read addresses";\n')
-        self._ofile.write('  %s_address_lines : coverpoint %s iff (!%s)\n' % (
-                self._module, self._addr, self._write_strobe))
-        self._ofile.write('  {\n')
-
-        for address in sorted(self._word_fields.keys()):
-            self._ofile.write("  bins r%02x = { %s };\n" % (
-                    address,
-                    bin(address >> self._lower_bit,
-                        self._addr_width - self._lower_bit)))
-        self._ofile.write('  }\n')
-        self._ofile.write('endgroup\n\n')
-
-    def _write_covergroup_head(self, address, field):
-        """
-        Write the start of a covergroup statement
-        """
-        signal_info = get_signal_info(address, field)
-        self._ofile.write('covergroup cov_%s @(posedge %s);\n' %
-                         (signal_info[0], self._clock))
-        self._ofile.write('  type_option.comment = "Coverage for %s";\n' %
-                         signal_info[0])
-        self._ofile.write('  type_option.strobe = 1;\n')
-
-    def _write_covergroup_end(self):
-        """
-        End the covergroup statement
-        """
-        self._ofile.write('endgroup\n\n')
-
-    def _write_normal_cover(self, address, field, start, stop):
-        """
-        Writes a cover group for read/write bit fields
-        """
-        (base_signal, signal, offset) = get_signal_info(address, field,
-                                                        start, stop)
-
-        if field.values:
-            name = "%s_%s" % (self._module, base_signal)
-            self._ofile.write('  %s : coverpoint %s\n' % (name, base_signal))
-            self._ofile.write('  {\n')
-            index = 0
-            for value in field.values:
-                self._ofile.write("     bins %s%d = { %d'h%s };\n" %
-                                  (base_signal, index, (stop - start + 1),
-                                   value[0]))
-                index += 1
-            self._ofile.write('  }\n')
-        else:
-            name = "%s_%s_%x" % (self._module, base_signal, address)
-            self._ofile.write('  %s : coverpoint %s;\n' % (name, signal))
-
-    def _write_cover_rw_set(self, address, field, width):
-        """
-        Writes a cover group for read/write bit fields that have a set signal
-        """
-        base_signal = get_base_signal(address, field)
-        offset = get_signal_offset(address)
-        bit_values = split_bus_values(offset, width, field)
-
-        for (lower, next_top, val) in bit_values:
-            for i in range(lower, next_top + 1):
-                name = "%s_%s_%d" % (self._module, base_signal, i)
-                self._ofile.write('  %s : coverpoint %s[%d]\n' %
-                                   (name, base_signal, i))
-                self._ofile.write('  {\n')
-                self._ofile.write('    bins b%d = (0 => 1);\n' % i)
-                self._ofile.write('  }\n')
-
-    def _write_cover_rw_clr(self, address, field, width):
-        """
-        Writes a cover group for read/write bit fields that have a clear
-        signal
-        """
-        base_signal = get_base_signal(address, field)
-        offset = get_signal_offset(address)
-        bit_values = split_bus_values(offset, width, field)
-
-        for (lower, next_top, val) in bit_values:
-            for i in range(lower, next_top + 1):
-                name = "%s_%s_%d" % (self._module, base_signal, i)
-                self._ofile.write('  %s : coverpoint %s[%d] {\n' %
-                                   (name, base_signal, i))
-                self._ofile.write('    bins b%d = (1 => 0);\n' % i)
-                self._ofile.write('  }\n')
-
-    def _write_cover_rw_w1c(self, address, field, width):
-        """
-        Writes a cover group for read/write bit fields that have a write one
-        to clear signal
-        """
-        base_signal = get_base_signal(address, field)
-        offset = get_signal_offset(address)
-        bit_values = split_bus_values(offset, width, field)
-
-        for (lower, next_top, val) in bit_values:
-            for i in range(lower, next_top + 1):
-                name = "%s_%s_%d" % (self._module, base_signal, i)
-                self._ofile.write('  W1C_%s : coverpoint %s[%d]\n' %
-                                   (name, base_signal, i))
-                self._ofile.write('  {\n')
-                self._ofile.write('    bins b%d = (1 => 0);\n' % i)
-                self._ofile.write('  }\n')
-
-    def _write_cover_rw_w1s(self, address, field, width):
-        """
-        Writes a cover group for read/write bit fields that have a write one
-        to clear signal
-        """
-        base_signal = get_base_signal(address, field)
-        offset = get_signal_offset(address)
-        bit_values = split_bus_values(offset, width, field)
-
-        for (lower, next_top, val) in bit_values:
-            byte_en = self._byte_enable(val)
-            for i in range(lower, next_top + 1):
-                name = "%s_%s_%d" % (self._module, base_signal, i)
-                self._ofile.write('  W1S_%s : coverpoint %s[%d]\n' %
-                                   (name, base_signal, i))
-                self._ofile.write('  {\n')
-                self._ofile.write('    bins b%d = (0 => 1);\n' % i)
-                self._ofile.write('  }\n')
-
-    def _write_cover_rw_pl(self, address, field, width):
-        """
-        Writes a cover group for read/write bit fields that have a parallel
-        load signal
-        """
-        start = field.start_position
-        stop = field.stop_position
-
-        base_signal = get_base_signal(address, field)
-
-        if field.values and (stop - start < 8):
-            name = "%s_%s" % (self._module, base_signal)
-            self._ofile.write('  PL%s : coverpoint %s iff (%s)\n' %
-                               (name, base_signal, field.input_signal))
-            self._ofile.write('  {\n')
-            index = 0
-            for value in field.values:
-                self._ofile.write("     bins %s%d = { %d'h%s };\n" %
-                                   (base_signal, index, (stop - start + 1),
-                                    value[0]))
-                index += 1
-            self._ofile.write('  }\n')
-        else:
-            offset = get_signal_offset(address)
-            bit_values = split_bus_values(offset, width, field)
-            for (lower, next_top, val) in bit_values:
-                name = "%s_%s_%d" % (self._module, base_signal, val)
-                if stop == start:
-                    target = base_signal
-                elif lower == next_top:
-                    target = "%s[%d]" % (base_signal, lower)
-                else:
-                    target = "%s[%d:%d]" % (base_signal, next_top, lower)
-                self._ofile.write('  PL%s : coverpoint %s iff (%s);\n' %
-                                   (name, target, field.input_signal))
-
-    def _write_cover_readonly_set(self, address, field):
-        """
-        Writes a cover group for read-only bit fields
-        """
-        start = field.start_position
-        stop = field.stop_position
-        base_signal = get_base_signal(address, field)
-
-        name = "%s_%s" % (self._module, base_signal)
-        if field.values:
-
-            self._ofile.write('  ROS%s : coverpoint %s\n' %
-                               (name, base_signal))
-            self._ofile.write('  {\n')
-            index = 0
-            for value in field.values:
-                upper = stop - start + 1
-                self._ofile.write("     bins %s%d = { %d'h%s };\n" %
-                                   (base_signal, index, upper, value[0]))
-                index += 1
-            self._ofile.write('  }\n')
-        else:
-            self._ofile.write('  ROS%s : coverpoint %s;\n' %
-                               (name, base_signal))
 
 
 class Verilog2001(Verilog):

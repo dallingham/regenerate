@@ -41,26 +41,45 @@ class BitField(DataItem):
     of a register)
     """
 
-    (READ_ONLY, READ_WRITE, WRITE_1_TO_CLEAR,
-     WRITE_1_TO_SET, WRITE_ONLY) = range(5)
+    (READ_ONLY, READ_WRITE, WRITE_1_TO_CLEAR, WRITE_1_TO_SET, WRITE_ONLY) = range(5)
+
+    (TYPE_READ_ONLY,
+     TYPE_READ_ONLY_LOAD,
+     TYPE_READ_WRITE,
+     TYPE_READ_WRITE_1S,
+     TYPE_READ_WRITE_1S_1,
+     TYPE_READ_WRITE_LOAD,
+     TYPE_READ_WRITE_LOAD_1S,
+     TYPE_READ_WRITE_LOAD_1S_1,
+     TYPE_READ_WRITE_SET,
+     TYPE_READ_WRITE_SET_1S,
+     TYPE_READ_WRITE_SET_1S_1,
+     TYPE_WRITE_1_TO_CLEAR_SET,
+     TYPE_WRITE_1_TO_CLEAR_SET_1S,
+     TYPE_WRITE_1_TO_CLEAR_SET_1S_1,
+     TYPE_WRITE_1_TO_CLEAR_LOAD,
+     TYPE_WRITE_1_TO_CLEAR_LOAD_1S,
+     TYPE_WRITE_1_TO_CLEAR_LOAD_1S_1,
+     TYPE_WRITE_1_TO_SET,
+     TYPE_WRITE_ONLY) = range(19)
+
+    (FUNC_SET_BITS, FUNC_CLEAR_BITS, FUNC_PARALLEL, FUNC_ASSIGNMENT) = range(4)
 
     (ONE_SHOT_NONE, ONE_SHOT_ANY, ONE_SHOT_ONE,
      ONE_SHOT_ZERO, ONE_SHOT_TOGGLE) = range(5)
 
-    (FUNC_SET_BITS, FUNC_CLEAR_BITS, FUNC_PARALLEL,
-     FUNC_ASSIGNMENT) = range(4)
 
     (RESET_NUMERIC, RESET_INPUT, RESET_PARAMETER) = range(3)
 
     __slots__ = ('start_position', 'stop_position', 'field_name',
                  'use_output_enable', '__output_signal', '__input_signal',
                  'field_type', 'reset_value', 'reset_input', 'reset_type',
-                 'reset_parameter', 'one_shot_type', 'input_function',
+                 'reset_parameter', 'input_function',
                  'description', 'control_signal', 'output_is_static',
                  'output_has_side_effect', 'values' )
 
     def __init__(self, stop=0, start=0, name="",
-                 sig_type=READ_ONLY, descr="", reset=0):
+                 sig_type=TYPE_READ_ONLY, descr="", reset=0):
 
         DataItem.__init__(self)
 
@@ -76,8 +95,6 @@ class BitField(DataItem):
         self.reset_input = ""
         self.reset_type = BitField.RESET_NUMERIC
         self.reset_parameter = ""
-        self.one_shot_type = BitField.ONE_SHOT_NONE
-        self.input_function = BitField.FUNC_ASSIGNMENT
         self.description = descr
         self.control_signal = ""
         self.output_is_static = False
@@ -88,8 +105,8 @@ class BitField(DataItem):
         """
         Indicates the the value is a constant value.
         """
-        return (self.field_type == BitField.READ_ONLY and
-                self.input_function != BitField.FUNC_PARALLEL)
+        return (self.field_type == BitField.TYPE_READ_ONLY or
+                self.field_type == BitField.TYPE_READ_ONLY_LOAD)
 
     def __get_width(self):
         """

@@ -18,19 +18,12 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 import gtk
-from regenerate.db import BitField
+from regenerate.db import BitField, TYPES
 from columns import EditableColumn, ComboMapColumn
 
+TYPE2STR = [(i[5], i[0]) for i in sorted(TYPES)]
 
 class BitModel(gtk.ListStore):
-
-    TYPE2STR = (
-        ("Read Only", BitField.READ_ONLY),
-        ("Read/Write", BitField.READ_WRITE),
-        ("Write 1 to Clear", BitField.WRITE_1_TO_CLEAR),
-        ("Write 1 to Set", BitField.WRITE_1_TO_SET),
-        ("Write Only", BitField.WRITE_ONLY),
-        )
 
     RESET2STR = (
         ("Constant", BitField.RESET_NUMERIC),
@@ -56,7 +49,7 @@ class BitModel(gtk.ListStore):
             None,
             bits(field),
             field.field_name,
-            self.TYPE2STR[field.field_type][0],
+            TYPE2STR[field.field_type][0],
             reset,
             self.RESET2STR[field.reset_type][0],
             field.start_position,
@@ -75,7 +68,7 @@ class BitList(object):
         ('', 20, -1, False, False),
         ('Bits', 60, BitModel.SORT_COL, False, False),
         ('Name', 125, BitModel.NAME_COL, True, False),
-        ('Type', 75, -1, False, True),
+        ('Type', 350, -1, False, True),
         ('Reset', 125, -1, False, False),
         ('Reset Type', 75, -1, False, False),
         )
@@ -99,7 +92,7 @@ class BitList(object):
         for (i, col) in enumerate(self.BIT_COLS):
             if i == BitModel.TYPE_COL:
                 column = ComboMapColumn(col[0], combo_edit,
-                                        BitModel.TYPE2STR, i)
+                                        TYPE2STR, i, str)
             elif i == BitModel.RESET_TYPE_COL:
                 column = ComboMapColumn(col[0], combo_edit,
                                         BitModel.RESET2STR, i)
