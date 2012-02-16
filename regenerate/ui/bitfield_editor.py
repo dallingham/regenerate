@@ -26,19 +26,24 @@ import gtk
 import re
 import pango
 
-from regenerate.db import BitField, TYPES
+from regenerate.db import BitField, TYPES, BFT_TYPE, BFT_ID, BFT_INP, BFT_CTRL, BFT_1S, BFT_DESC
 from regenerate.settings.paths import GLADE_BIT
 from error_dialogs import ErrorMsg, Question
+from regenerate.writers.verilog_reg_def import REG
 
 VALID_SIGNAL = re.compile("^[A-Za-z][A-Za-z0-9_]*$")
 
 TYPE2STR = {}
 for i in TYPES:
-    TYPE2STR[i[0]] = i[5]
+    TYPE2STR[i[BFT_TYPE]] = i[BFT_DESC]
+
+TYPE2ID = {}
+for i in TYPES:
+    TYPE2ID[i[BFT_TYPE]] = i[BFT_ID]
 
 TYPE_ENB = {}
 for i in TYPES:
-    TYPE_ENB[i[0]] = (i[2], i[3])
+    TYPE_ENB[i[BFT_TYPE]] = (i[BFT_INP], i[BFT_CTRL])
 
 class BitFieldEditor(object):
     """
@@ -52,7 +57,6 @@ class BitFieldEditor(object):
         self.__builder = gtk.Builder()
         self.__builder.add_from_file(GLADE_BIT)
         self.__top_window = self.__builder.get_object("editfield")
-        self.__bits = self.__builder.get_object("bits")
         self.__control_obj = self.__builder.get_object('control')
         self.__name_obj = self.__builder.get_object("field_name")
         self.__register_obj = self.__builder.get_object("register_name")
@@ -65,6 +69,7 @@ class BitFieldEditor(object):
         self.__value_tree_obj = self.__builder.get_object('values')
         self.__output_enable_obj = self.__builder.get_object("outen")
         self.__side_effect_obj = self.__builder.get_object("side_effect")
+        self.__verilog_obj = self.__builder.get_object('verilog_code')
         self.__col = None
         self.__top_window.set_title(
             "Edit Bit Field - [%02x] %s" % (register.address,
@@ -92,6 +97,14 @@ class BitFieldEditor(object):
         self.__check_data()
 
         self.__text_buffer.connect('changed', self.__description_changed)
+
+        try:
+            text = REG[TYPE2ID[bit_field.field_type].lower()] % "top"
+        except KeyError:
+            text = ""
+        
+        self.__verilog_obj.modify_font(pango_font)
+        self.__verilog_obj.get_buffer().set_text(text)
         self.__builder.connect_signals(self)
         self.__top_window.show_all()
 
@@ -102,19 +115,28 @@ class BitFieldEditor(object):
         self.__register_obj.set_text("<b>%s</b>" %
                                      self.__register.register_name)
         self.__register_obj.set_use_markup(True)
-        self.__name_obj.set_text(bit_field.field_name)
+
         start = self.__bit_field.start_position
         stop = self.__bit_field.stop_position
         if start == stop:
-            self.__bits.set_text(str(start))
+            name = bit_field.field_name
         else:
-            self.__bits.set_text("%d:%d" % (stop, start))
+            name = "%s[%d:%d]" % (bit_field.field_name, stop, start)
+
+        self.__name_obj.set_text(name)
         self.__type_obj.set_text(TYPE2STR[bit_field.field_type])
 
         if bit_field.reset_type == BitField.RESET_NUMERIC:
             self.__reset_obj.set_text("%x" % bit_field.reset_value)
         else:
             self.__reset_obj.set_text(bit_field.reset_parameter)
+
+        if TYPE_ENB[bit_field.field_type][0] and not bit_field.input_signal:
+            bit_field.input_signal = "%s_DATA_IN" % bit_field.field_name
+
+        if TYPE_ENB[bit_field.field_type][1] and not bit_field.control_signal:
+            bit_field.control_signal = "%s_LOAD" % bit_field.field_name
+
         self.__output_obj.set_text(bit_field.output_signal)
         self.__input_obj.set_text(bit_field.input_signal)
 
@@ -284,42 +306,6 @@ class BitFieldEditor(object):
         self.__output_obj.set_sensitive(obj.get_active())
         self.__check_data()
         self.__modified()
-
-    def __set_bits_activate(self, obj):
-        """
-        Called when the set bits mode has been activated, changing the
-        label appropriately.
-        """
-        self.__control_obj.set_sensitive(False)
-        self.__input_obj.set_sensitive(True)
-        self.__builder.get_object('input0_label').set_text('Input signal')
-
-    def __clear_bits_activate(self, obj):
-        """
-        Called when the clear bits mode has been activated, changing the
-        label appropriately.
-        """
-        self.__control_obj.set_sensitive(False)
-        self.__input_obj.set_sensitive(True)
-        self.__builder.get_object('input0_label').set_text('Input signal')
-
-    def __parallel_load_activate(self, obj):
-        """
-        Called when the parallel load mode has been activated, changing the
-        label appropriately.
-        """
-        self.__control_obj.set_sensitive(True)
-        self.__input_obj.set_sensitive(True)
-        self.__builder.get_object('input0_label').set_text('Load data')
-
-    def __ctrl_signal_activate(self, obj):
-        """
-        Called when the control signal has been activated, changing the
-        label appropriately.
-        """
-        self.__control_obj.set_sensitive(False)
-        self.__input_obj.set_sensitive(False)
-        self.__builder.get_object('input0_label').set_text('Input signal')
 
     def on_descr_key_press_event(self, obj, event):
         """

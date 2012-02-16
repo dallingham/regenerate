@@ -18,10 +18,10 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 import gtk
-from regenerate.db import BitField, TYPES
+from regenerate.db import BitField, TYPES, BFT_TYPE, BFT_DESC
 from columns import EditableColumn, ComboMapColumn
 
-TYPE2STR = [(i[5], i[0]) for i in sorted(TYPES)]
+TYPE2STR = [(i[BFT_DESC], i[BFT_TYPE]) for i in sorted(TYPES)]
 
 class BitModel(gtk.ListStore):
 
@@ -92,7 +92,7 @@ class BitList(object):
         for (i, col) in enumerate(self.BIT_COLS):
             if i == BitModel.TYPE_COL:
                 column = ComboMapColumn(col[0], combo_edit,
-                                        TYPE2STR, i, str)
+                                        TYPE2STR, i)
             elif i == BitModel.RESET_TYPE_COL:
                 column = ComboMapColumn(col[0], combo_edit,
                                         BitModel.RESET2STR, i)

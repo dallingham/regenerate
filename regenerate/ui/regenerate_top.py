@@ -52,6 +52,12 @@ from regenerate.settings.paths import GLADE_TOP, INSTALL_PATH
 from regenerate.settings import ini
 from regenerate import PROGRAM_VERSION, PROGRAM_NAME
 
+from regenerate.db import TYPES, BFT_TYPE, BFT_INP, BFT_CTRL
+TYPE_ENB = {}
+for i in TYPES:
+    TYPE_ENB[i[BFT_TYPE]] = (i[BFT_INP], i[BFT_CTRL])
+
+
 VALID_SIGNAL = re.compile("^[A-Za-z][A-Za-z0-9_]*$")
 DEF_EXT = '.rprj'
 DEF_MIME = "*" + DEF_EXT
@@ -163,7 +169,6 @@ class MainWindow(object):
         self.__hide = self.__builder.get_object('hide_doc')
         self.__module_entry_obj = self.__builder.get_object('module')
         self.__owner_entry_obj = self.__builder.get_object('owner')
-        self.__sync_rd_obj = self.__builder.get_object('sync_read')
         self.__title_entry_obj = self.__builder.get_object('title')
         self.__warn_bit_list = self.__builder.get_object('reg_bit_warn')
         self.__warn_reg_descr = self.__builder.get_object('reg_descr_warn')
@@ -360,6 +365,15 @@ class MainWindow(object):
         field = self.__bit_model.get_bitfield_at_path(path)
         if col == BitModel.TYPE_COL:
             field.field_type = model.get_value(node, 1)
+            register = self.__reglist_obj.get_selected_register()
+            if not field.output_signal:
+                field.output_signal = "%s_%s" % (register.token, field.field_name)
+
+            if TYPE_ENB[field.field_type][0] and not field.input_signal:
+                field.input_signal = "%s_%s_IN" % (register.token, field.field_name)
+
+            if TYPE_ENB[field.field_type][1] and not field.control_signal:
+                field.control_signal = "%s_%s_LD" % (register.token, field.field_name)
         elif col == BitModel.RESET_TYPE_COL:
             field.reset_type = model.get_value(node, 1)
             if field.reset_type == BitField.RESET_NUMERIC:
@@ -369,6 +383,7 @@ class MainWindow(object):
                 self.__bit_model[path][BitModel.RESET_COL] = field.reset_input
             else:
                 self.__bit_model[path][BitModel.RESET_COL] = field.reset_parameter
+
         self.set_modified()
 
     def __bit_update_bits(self, field, path, new_text):
@@ -408,7 +423,7 @@ class MainWindow(object):
         display) and alter the corresponding field.
         """
         if new_text != field.field_name:
-            field.field_name = new_text
+            field.field_name = new_text.upper().replace(' ','_').replace('/','_').replace('-','_')
             self.__bit_model[path][BitModel.NAME_COL] = field.field_name
             self.set_modified()
 
@@ -1168,7 +1183,6 @@ class MainWindow(object):
         """
         self.__module_entry_obj.set_text(self.dbase.module_name)
         self.__owner_entry_obj.set_text(self.dbase.owner)
-        self.__sync_rd_obj.set_active(self.dbase.sync_read)
         self.__title_entry_obj.set_text(self.dbase.descriptive_title)
         self.__data_width_obj.set_active((self.dbase.data_bus_width / 32) - 1)
 
@@ -1183,7 +1197,6 @@ class MainWindow(object):
         self.__read_data_obj.set_text(self.dbase.read_data_name)
         self.__write_strobe_obj.set_text(self.dbase.write_strobe_name)
         self.__read_strobe_obj.set_text(self.dbase.read_strobe_name)
-        self.__read_strobe_obj.set_sensitive(self.dbase.sync_read)
         self.__byte_en_obj.set_text(self.dbase.byte_strobe_name)
 
         self.__address_bus_obj.set_text(self.dbase.address_bus_name)
@@ -1218,12 +1231,6 @@ class MainWindow(object):
     def on_regenerate_delete_event(self, obj, event):
         self.on_quit_activate(obj)
 
-    def on_sync_read_toggled(self, obj):
-        active = obj.get_active()
-        self.__read_strobe_obj.set_sensitive(active)
-        self.dbase.sync_read = active
-        self.set_modified()
-
     def on_quit_activate(self, *obj):
         """
         Called when the quit button is clicked.  Checks to see if the
@@ -1250,8 +1257,7 @@ class MainWindow(object):
         """
         reg = self.__reglist_obj.get_selected_register()
         if reg:
-            node = self.__reglist_obj.get_selected_node()
-            self.__reg_model.remove(node)
+            self.__reglist_obj.delete_selected_node()
             self.dbase.delete_register(reg)
             self.set_modified()
 
@@ -1517,10 +1523,7 @@ class MainWindow(object):
 
 
 def clean_ascii(value):
-    if isprint(value):
-        return value
-    else:
-        return " "
+    return value if isprint(value) else " "
 
 
 def build_new_name(name, reglist):

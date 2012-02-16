@@ -73,6 +73,7 @@ class WriterBase(object):   # IGNORE:R0921 - we know this is a abstract class
         self._data_in = dbase.write_data_name
         self._data_out = dbase.read_data_name
         self._write_strobe  = dbase.write_strobe_name
+        self._read_strobe  = dbase.read_strobe_name
         self._filename = "UNKNOWN"
         self._project_name = "UNKNOWN"
         self._local_path = os.path.join(INSTALL_PATH, "site_local")

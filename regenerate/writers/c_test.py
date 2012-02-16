@@ -225,7 +225,11 @@ class CTest(WriterBase):
 
         for rng in [register.get_bit_field(key)
                     for key in register.get_bit_field_keys()]:
-            if rng.field_type == BitField.READ_WRITE:
+            if rng.field_type in (BitField.TYPE_READ_WRITE, BitField.TYPE_WRITE_1S,
+                                  BitField.TYPE_READ_WRITE_1S, BitField.TYPE_READ_WRITE_1S_1,
+                                  BitField.TYPE_READ_WRITE_LOAD, BitField.TYPE_READ_WRITE_LOAD_1S,
+                                  BitField.TYPE_READ_WRITE_LOAD_1S_1, BitField.TYPE_READ_WRITE_SET,
+                                  BitField.TYPE_READ_WRITE_SET_1S, BitField.TYPE_READ_WRITE_SET_1S_1):
                 for i in range(rng.start_position, rng.stop_position + 1):
                     value = value | (1 << i)
         return value

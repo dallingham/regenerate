@@ -24,11 +24,11 @@ Writes the XML file containing all the information in the register database
 import time
 import os
 from xml.sax.saxutils import escape
-from regenerate.db import BitField, TYPES
+from regenerate.db import BitField, TYPES, BFT_TYPE, BFT_ID
 
 CONVERT_TYPE = {}
 for i in TYPES:
-    CONVERT_TYPE[i[0]] = i[1]
+    CONVERT_TYPE[i[BFT_TYPE]] = i[BFT_ID]
     
 
 def create_backup_file(filename):
@@ -63,8 +63,6 @@ class RegWriter(object):
         ofile.write('<module name="%s" title="%s" owner="%s">\n' %
                 (self.dbase.module_name, self.dbase.descriptive_title,
                  self.dbase.owner))
-
-        ofile.write('  <code sync_rd="%d"/>\n' % self.dbase.sync_read)
 
         ofile.write('  <base addr_width="%d" ' % self.dbase.address_bus_width)
         ofile.write('data_width="%d"/>\n' % self.dbase.data_bus_width)

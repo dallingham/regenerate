@@ -24,11 +24,11 @@ Parses the register database, loading the database.
 import xml.parsers.expat
 
 from register import Register
-from regenerate.db import BitField, TYPES
+from regenerate.db import BitField, TYPES, BFT_TYPE, BFT_ID
 
 CONVERT_TYPE = {}
 for i in TYPES:
-    CONVERT_TYPE[i[1]] = i[0]
+    CONVERT_TYPE[i[BFT_ID]] = i[BFT_TYPE]
 
 def cnv_hex(attrs, key, default=0):
     """
@@ -148,12 +148,6 @@ class RegParser(object):
             self.save_id = cnv_str(attrs, 'id').upper()
         self.__db.descriptive_title = cnv_str(attrs, 'title')
 
-    def start_code(self, attrs):
-        """
-        Called when the code tag is encountered. Attributes are:
-        """
-        self.__db.sync_read = cnv_bool(attrs, 'sync_rd')
-
     def start_instance(self, attrs):
         """
         Called when the instance tag is encounted. Attributes are:
@@ -246,13 +240,13 @@ class RegParser(object):
                     self.__field.field_type = BitField.TYPE_READ_WRITE_LOAD_1S_1
             elif old_type == BitField.TYPE_WRITE_1_TO_CLEAR_SET:
                 if func == BitField.FUNC_PARALLEL:
-                    self.__field.field_type = BitField.TYPE_READ_WRITE_1_TO_CLEAR_LOAD
+                    self.__field.field_type = BitField.TYPE_WRITE_1_TO_CLEAR_LOAD
             elif old_type == BitField.TYPE_WRITE_1_TO_CLEAR_SET_1S:
                 if func == BitField.FUNC_PARALLEL:
-                    self.__field.field_type = BitField.TYPE_READ_WRITE_1_TO_CLEAR_LOAD_1S
+                    self.__field.field_type = BitField.TYPE_WRITE_1_TO_CLEAR_LOAD_1S
             elif old_type == BitField.TYPE_WRITE_1_TO_CLEAR_SET_1S_1:
                 if func == BitField.FUNC_PARALLEL:
-                    self.__field.field_type = BitField.TYPE_READ_WRITE_1_TO_CLEAR_LOAD_1S_1
+                    self.__field.field_type = BitField.TYPE_WRITE_1_TO_CLEAR_LOAD_1S_1
 
         self.__field.control_signal = cnv_str(attrs, 'load')
 

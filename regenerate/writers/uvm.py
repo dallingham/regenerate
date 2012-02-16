@@ -57,11 +57,26 @@ class UVM_Registers(WriterBase):
         
     def write(self, filename):
 
-        access_map = { BitField.READ_ONLY : "RO",
-                       BitField.READ_WRITE : "RW",
-                       BitField.WRITE_1_TO_CLEAR : "W1C",
-                       BitField.WRITE_1_TO_SET : "W1S",
-                       BitField.WRITE_ONLY : "WO" }
+        access_map = { BitField.TYPE_READ_ONLY                  : "RO",
+                       BitField.TYPE_READ_ONLY_LOAD             : "RO",
+                       BitField.TYPE_READ_WRITE                 : "RW",
+                       BitField.TYPE_READ_WRITE_1S              : "RW",
+                       BitField.TYPE_READ_WRITE_1S_1            : "RW",
+                       BitField.TYPE_READ_WRITE_LOAD            : "RW",
+                       BitField.TYPE_READ_WRITE_LOAD_1S         : "RW",
+                       BitField.TYPE_READ_WRITE_LOAD_1S_1       : "RW",
+                       BitField.TYPE_READ_WRITE_SET             : "RW",
+                       BitField.TYPE_READ_WRITE_SET_1S          : "RW",
+                       BitField.TYPE_READ_WRITE_SET_1S_1        : "RW",
+                       BitField.TYPE_WRITE_1_TO_CLEAR_SET       : "W1C",
+                       BitField.TYPE_WRITE_1_TO_CLEAR_SET_1S    : "W1C",
+                       BitField.TYPE_WRITE_1_TO_CLEAR_SET_1S_1  : "W1C",
+                       BitField.TYPE_WRITE_1_TO_CLEAR_LOAD      : "W1C",
+                       BitField.TYPE_WRITE_1_TO_CLEAR_LOAD_1S   : "W1C",
+                       BitField.TYPE_WRITE_1_TO_CLEAR_LOAD_1S_1 : "W1C",
+                       BitField.TYPE_WRITE_1_TO_SET             : "W1S",
+                       BitField.TYPE_WRITE_ONLY                 : "WO",
+                       }
 
         cfile = open(filename, "w")
         base = os.path.splitext(os.path.basename(filename))[0]

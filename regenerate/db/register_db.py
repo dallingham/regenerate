@@ -65,7 +65,6 @@ class RegisterDb(object):
         self.__title = ""
         self.overview_text = ""
         self.enable_coverage = False
-        self.sync_read = False
         self.__registers = {}
         self.instances = []
 

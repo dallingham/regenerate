@@ -28,7 +28,8 @@ REPLACE = {
     'ERROR': 'ERR', 'INTERRUPT': 'INT', 'WRITE': 'WR',
     'READ': 'RD', 'TRANSMIT': 'TX', 'RECEIVE': 'RX',
     'SOFTWARE': 'SW', 'HARDWARE': 'HW', 'SOURCE': 'SRC',
-    'DESTINATION': 'DEST', 'REGISTER': '',
+    'DESTINATION': 'DEST', 'REGISTER': '', 'LOAD' : 'LD',
+    'CLEAR' : 'CLR'
     }
 
 
@@ -77,6 +78,14 @@ class RegisterModel(gtk.ListStore):
         path = self.get_path(self.append(row=data))
         self.reg2path[register] = path
         return path
+
+    def delete_register(self, register):
+        """
+        Adds a new row in the ListStore for the specified register,
+        filling in the data from the register into the appropriate
+        column.
+        """
+        del self[self.reg2path[register]]
 
     def set_tooltip(self, reg, msg):
         path = self.get_path_from_register(reg)
@@ -143,6 +152,10 @@ class RegisterList(object):
 
     def get_selected_node(self):
         return self.__selection.get_selected()[1]
+
+    def delete_selected_node(self):
+        reg = self.get_selected_register()
+        self.__model.delete_register(reg)
 
     def select_row(self, row):
         self.__selection.select_path(row)
@@ -243,8 +256,8 @@ class RegisterList(object):
 
 
 def build_define(text):
-    text = "_".join([REPLACE.get(i.upper(), i.upper())
+    text = text.replace('/', ' ')
+    text = text.replace('-', ' ')
+    return "_".join([REPLACE.get(i.upper(), i.upper())
                      for i in text.split()
                      if REPLACE.get(i.upper(), i.upper()) != ""])
-    text = text.replace('-', '')
-    return text.replace('/', '_')
