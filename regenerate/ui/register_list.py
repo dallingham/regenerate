@@ -46,7 +46,7 @@ REPLACE = {
     'CLOCK'     : 'CLK',   'EXTERNAL'      : 'EXT',
     'FABRIC'    : 'FAB',   'SPACE'         : 'SPC',
     'MAXIMUM'   : 'MAX',   'MINIMUM'       : 'MIN', 
-    'RESET'     : 'RST',   'MANAGEMENT'    : 'MGMT'
+    'RESET'     : 'RST',   'MANAGEMENT'    : 'MGMT',
     'REQUESTER' : 'REQ',   'REQUEST'       : 'REQ',
     'ALTERNATE' : 'ALT',   'DIVIDER'       : 'DIV',
     'REFERENCE' : 'REF',   'ARBITRATION'   : 'ARB',
