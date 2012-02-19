@@ -221,7 +221,7 @@ class Verilog(WriterBase):
         self._word_fields = self.__generate_group_list(self._data_width)
 
         self._field_type_map = {
-            BitField.TYPE_READ_ONLY      : self._register_read_only,
+            BitField.TYPE_READ_ONLY : self._register_read_only,
             }
 
         self._has_input   = {}
@@ -303,8 +303,8 @@ class Verilog(WriterBase):
             self._ofile.write('    .RSTn  (%s),\n' % self._reset)
             if not self._is_read_only[field.field_type]:
                 self._ofile.write('    .WE    (write_r%02x),\n' % address)
-                self._ofile.write('    .BE    (%s[%d]),\n' % (self._byte_enables, start/8))
                 self._ofile.write('    .DI    (%s%s),\n' % (self._data_in, index))
+                self._ofile.write('    .BE    (%s[%d]),\n' % (self._byte_enables, start/8))
             if self._has_rd[field.field_type]:
                 self._ofile.write('    .RD    (%s),\n' % self._read_strobe)
             if self._has_data_out[field.field_type]:
@@ -362,14 +362,27 @@ class Verilog(WriterBase):
         self._write_register_rtl_code()
         self._define_outputs()
         self._write_trailer()
+        self._write_register_modules()
+        self._ofile.close()
+
+    def _write_register_modules(self):
+
+        edge = "posedge" if self._dbase.reset_active_level else "negedge"
+        condition = "" if self._dbase.reset_active_level else "~"
+        be_level = "" if self._dbase.byte_strobe_active_level else "~"
+
+        name_map = { 'MODULE'          : self._module,
+                     'BE_LEVEL'        : be_level,
+                     'RESET_CONDITION' : condition,
+                     'RESET_EDGE'      : edge }
+        
         for i in self._used_types:
             self._ofile.write("\n\n")
             try:
                 self._ofile.write("// %s\n" % self._type_descr[i])
-                self._ofile.write(REG[self._cell_name[i]] % self._module)
+                self._ofile.write(REG[self._cell_name[i]] % name_map)
             except KeyError:
                 self._ofile.write('// No definition for %s_%s_reg\n' % (self._module, self._cell_name[i]))
-        self._ofile.close()
 
     def _write_module_header(self):
         """

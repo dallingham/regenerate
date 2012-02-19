@@ -31,6 +31,12 @@ from regenerate.settings.paths import GLADE_BIT
 from error_dialogs import ErrorMsg, Question
 from regenerate.writers.verilog_reg_def import REG
 
+try:
+    from gtkcodebuffer import CodeBuffer, SyntaxLoader
+    use_highlight = True
+except ImportError:
+    use_highlight = False
+
 VALID_SIGNAL = re.compile("^[A-Za-z][A-Za-z0-9_]*$")
 
 TYPE2STR = {}
@@ -50,7 +56,8 @@ class BitFieldEditor(object):
     Bit field editing class.
     """
 
-    def __init__(self, register, bit_field, modified):
+    def __init__(self, db, register, bit_field, modified):
+        self.__db = db
         self.__modified = modified
         self.__register = register
         self.__bit_field = bit_field
@@ -99,12 +106,26 @@ class BitFieldEditor(object):
         self.__text_buffer.connect('changed', self.__description_changed)
 
         try:
-            text = REG[TYPE2ID[bit_field.field_type].lower()] % "top"
+            edge = "posedge" if self.__db.reset_active_level else "negedge"
+            condition = "" if self.__db.reset_active_level else "~"
+            be_level = "" if self.__db.byte_strobe_active_level else "~"
+            
+            name_map = { 'MODULE'          : self.__db.module_name,
+                         'BE_LEVEL'        : be_level,
+                         'RESET_CONDITION' : condition,
+                         'RESET_EDGE'      : edge }
+            text = REG[TYPE2ID[bit_field.field_type].lower()] % name_map
         except KeyError:
             text = ""
-        
-        self.__verilog_obj.modify_font(pango_font)
-        self.__verilog_obj.get_buffer().set_text(text)
+
+        if use_highlight:
+            buff = CodeBuffer(lang=SyntaxLoader("verilog"))
+            self.__verilog_obj.set_buffer(buff)
+        else:
+            self.__verilog_obj.modify_font(pango_font)
+            buff = self.__verilog_obj.get_buffer()
+            
+        buff.set_text(text)
         self.__builder.connect_signals(self)
         self.__top_window.show_all()
 

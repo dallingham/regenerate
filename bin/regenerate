@@ -56,7 +56,19 @@ def run_gui(args):
         filename = ini.get("user", "last_project", None)
         if filename and os.path.exists(filename):
             edit.open_project(filename, None)
-    gtk.main()
+
+    # Windows seems to have a real problem with threads. This little trick
+    # allows us to get around it. Fortunately, Linux doesn't appear to be
+    # broken in the same way.
+    
+    if os.name == 'nt':
+        import gobject
+        gobject.threads_init()
+        gtk.threads_enter()
+        gtk.main()
+        gtk.threads_leave()
+    else:
+        gtk.main()
 
 def run():
     """
@@ -76,9 +88,6 @@ def run():
 
     (options, args) = parser.parse_args()
 
-    # if sys.version_info[0:2] < (2, 5):
-    #     sys.stderr.write('Python version 2.5 or greater required\n')
-    #     sys.exit()
     run_gui(args)
 
 

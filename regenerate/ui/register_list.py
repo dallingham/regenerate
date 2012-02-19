@@ -21,19 +21,41 @@ import gtk
 from columns import EditableColumn, ComboMapColumn
 
 REPLACE = {
-    'ENABLE': 'EN', 'TRANSLATION': 'TRANS', 'ADDRESS': 'ADDR',
-    'CONFIGURATION': 'CFG', 'CONFIG': 'CFG', 'SYSTEM': 'SYS',
-    'CONTROL': 'CTRL', 'STATUS': 'STAT', 'DEBUG': 'DBG',
-    'COMMAND': 'CMD', 'HEADER': 'HDR', 'PACKET': 'PKT',
-    'ERROR': 'ERR', 'INTERRUPT': 'INT', 'WRITE': 'WR',
-    'READ': 'RD', 'TRANSMIT': 'TX', 'RECEIVE': 'RX',
-    'SOFTWARE': 'SW', 'HARDWARE': 'HW', 'SOURCE': 'SRC',
-    'DESTINATION': 'DEST', 'REGISTER': '', 'LOAD' : 'LD',
-    'CLEAR' : 'CLR'
+    'ENABLE'    : 'EN',    'TRANSLATION'   : 'TRANS',
+    'ADDRESS'   : 'ADDR',  'CONFIGURATION' : 'CFG',
+    'CONFIG'    : 'CFG',   'SYSTEM'        : 'SYS',
+    'CONTROL'   : 'CTRL',  'STATUS'        : 'STAT',
+    'DEBUG'     : 'DBG',   'COMMAND'       : 'CMD',
+    'HEADER'    : 'HDR',   'PACKET'        : 'PKT',
+    'ERROR'     : 'ERR',   'INTERRUPT'     : 'INT',
+    'WRITE'     : 'WR',    'READ'          : 'RD',
+    'TRANSMIT'  : 'TX',    'RECEIVE'       : 'RX',
+    'SOFTWARE'  : 'SW',    'HARDWARE'      : 'HW',
+    'SOURCE'    : 'SRC',   'DESTINATION'   : 'DEST',
+    'REGISTER'  : '',      'LOAD'          : 'LD',
+    'CLEAR'     : 'CLR',   'CURRENT'       : 'CUR',
+    'RANGE'     : 'RNG',   'DELAY'         : 'DLY',
+    'ERROR'     : 'ERR',   'LOAD'          : 'LD',
+    'PARITY'    : 'PAR',   'COMPARE'       : 'CMP',
+    'POINTER'   : 'PTR',   'SELECT'        : 'SEL',
+    'COUNT'     : 'CNT',   'COUNTER'       : 'CNTR',
+    'VALUE'     : 'VAL',   'MESSAGE'       : 'MSG',
+    'ERRORS'    : 'ERRS',  'POWER'         : 'PWR',
+    'MAILBOX'   : 'MBX',   'VECTOR'        : 'VECT',
+    'RESPONSE'  : 'RSP',   'NUMBER'        : 'NUM',
+    'CLOCK'     : 'CLK',   'EXTERNAL'      : 'EXT',
+    'FABRIC'    : 'FAB',   'SPACE'         : 'SPC',
+    'MAXIMUM'   : 'MAX',   'MINIMUM'       : 'MIN', 
+    'RESET'     : 'RST',   'MANAGEMENT'    : 'MGMT'
+    'REQUESTER' : 'REQ',   'REQUEST'       : 'REQ',
+    'ALTERNATE' : 'ALT',   'DIVIDER'       : 'DIV',
+    'REFERENCE' : 'REF',   'ARBITRATION'   : 'ARB',
+    'ARBITER'   : 'ARB',   'TRANSACTION'   : 'TXN',
+    'MASTER'    : 'MSTR',  'SLAVE'         : 'SLV',
     }
 
 
-class RegisterModel(gtk.ListStore):
+Class registermodel(gtk.ListStore):
     """
     A derivation of the ListStore that defines the columns. The columsn are:
 
@@ -127,12 +149,12 @@ class RegisterList(object):
     (COL_TEXT, COL_COMBO, COL_ICON) = range(3)
 
     _COLS = (
-        # Title, Size, Column, Expand
-        ('', 20, RegisterModel.ICON_COL, False, COL_ICON),
-        ('Address', 75, RegisterModel.SORT_COL, False, COL_TEXT),
-        ('Name', 175, RegisterModel.NAME_COL, True, COL_TEXT),
-        ('Token', 175, RegisterModel.DEFINE_COL, False, COL_TEXT),
-        ('Width', 75, -1, False, COL_COMBO),
+        # Title,   Size, Column,                   Expand
+        ('',         20, RegisterModel.ICON_COL,   False,  COL_ICON),
+        ('Address',  75, RegisterModel.SORT_COL,   False,  COL_TEXT),
+        ('Name',    175, RegisterModel.NAME_COL,   True,   COL_TEXT),
+        ('Token',   175, RegisterModel.DEFINE_COL, True,   COL_TEXT),
+        ('Width',    75, -1,                       False,  COL_COMBO),
         )
 
     def __init__(self, obj, select_change_function, mod_function, update_addr):

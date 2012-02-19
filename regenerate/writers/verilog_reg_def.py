@@ -1,20 +1,20 @@
 REG = {
-    "rw" : """module %s_rw_reg #(parameter WIDTH = 1)
+    "rw" : """module %(MODULE)s_rw_reg #(parameter WIDTH = 1)
    (
-    input                  CLK,
-    input                  RSTn,
-    input                  BE,
-    input                  WE,
-    input [WIDTH-1:0]      DI,
-    input [WIDTH-1:0]      RVAL,
-    output reg [WIDTH-1:0] DO
+    input                  CLK,      // Clock
+    input                  RSTn,     // Reset
+    input                  BE,       // Byte Enable
+    input                  WE,       // Write Strobe
+    input [WIDTH-1:0]      DI,       // Data In
+    input [WIDTH-1:0]      RVAL,     // Reset Value
+    output reg [WIDTH-1:0] DO        // Data Out
    );
 
-   always @(posedge CLK or negedge RSTn) begin
-      if (~RSTn) begin
+   always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+      if (%(RESET_CONDITION)sRSTn) begin
          DO <= RVAL;
       end else begin
-         if (WE & BE) begin
+         if (WE & %(BE_LEVEL)sBE) begin
             DO <= DI;
          end else begin
             DO <= DO;
@@ -24,24 +24,24 @@ REG = {
 
 endmodule
 """,
-    "rw1s" : """module %s_rw1s_reg #(parameter WIDTH = 1)
+    "rw1s" : """module %(MODULE)s_rw1s_reg #(parameter WIDTH = 1)
    (
-    input                  CLK,
-    input                  RSTn,
-    input                  BE,
-    input                  WE,
-    input [WIDTH-1:0]      DI,
-    input [WIDTH-1:0]      RVAL,
-    output reg [WIDTH-1:0] DO,
-    output reg             DO_1S
+    input                  CLK,      // Clock
+    input                  RSTn,     // Reset
+    input                  BE,       // Byte Enable
+    input                  WE,       // Write Strobe
+    input [WIDTH-1:0]      DI,       // Data In
+    input [WIDTH-1:0]      RVAL,     // Reset Value
+    output reg [WIDTH-1:0] DO,       // Data Out
+    output reg             DO_1S     // One Shot
    );
 
-   always @(posedge CLK or negedge RSTn) begin
-      if (~RSTn) begin
+   always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+      if (%(RESET_CONDITION)sRSTn) begin
          DO <= RVAL;
          DO_1S <= 1'b0;
       end else begin
-         if (WE & BE) begin
+         if (WE & %(BE_LEVEL)sBE) begin
             DO <= DI;
             DO_1S <= 1'b1;
          end else begin
@@ -53,24 +53,24 @@ endmodule
 
 endmodule
 """,
-    "rwld" : """module %s_rwld_reg #(parameter WIDTH = 1)
+    "rwld" : """module %(MODULE)s_rwld_reg #(parameter WIDTH = 1)
    (
-    input                  CLK,
-    input                  RSTn,
-    input                  BE,
-    input                  WE,
-    input                  LD,
-    input [WIDTH-1:0]      DI,
-    input [WIDTH-1:0]      IN,
-    input [WIDTH-1:0]      RVAL,
-    output reg [WIDTH-1:0] DO
+    input                  CLK,      // Clock
+    input                  RSTn,     // Reset
+    input                  BE,       // Byte Enable
+    input                  WE,       // Write Strobe
+    input                  LD,       // Load Control
+    input [WIDTH-1:0]      DI,       // Data In
+    input [WIDTH-1:0]      IN,       // Load Data
+    input [WIDTH-1:0]      RVAL,     // Reset Value
+    output reg [WIDTH-1:0] DO        // Data Out
    );
 
-   always @(posedge CLK or negedge RSTn) begin
-      if (~RSTn) begin
+   always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+      if (%(RESET_CONDITION)sRSTn) begin
          DO <= RVAL;
       end else begin
-         if (WE & BE) begin
+         if (WE & %(BE_LEVEL)sBE) begin
             DO <= DI;
          end else begin
             DO <= (LD) ? IN : DO;
@@ -80,26 +80,26 @@ endmodule
 
 endmodule
 """,
-    "rwld1s" : """module %s_rwld1s_reg #(parameter WIDTH = 1)
+    "rwld1s" : """module %(MODULE)s_rwld1s_reg #(parameter WIDTH = 1)
    (
-    input                  CLK,
-    input                  RSTn,
-    input                  BE,
-    input                  WE,
-    input                  LD,
-    input [WIDTH-1:0]      DI,
-    input [WIDTH-1:0]      IN,
-    input [WIDTH-1:0]      RVAL,
-    output reg [WIDTH-1:0] DO,
-    output reg             DO_1S
+    input                  CLK,      // Clock
+    input                  RSTn,     // Reset
+    input                  BE,       // Byte Enable
+    input                  WE,       // Write Strobe
+    input                  LD,       // Load Control
+    input [WIDTH-1:0]      DI,       // Data In
+    input [WIDTH-1:0]      IN,       // Load Data
+    input [WIDTH-1:0]      RVAL,     // Reset Value
+    output reg [WIDTH-1:0] DO,       // Data Out
+    output reg             DO_1S     // One Shot
    );
 
-   always @(posedge CLK or negedge RSTn) begin
-      if (~RSTn) begin
+   always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+      if (%(RESET_CONDITION)sRSTn) begin
          DO <= RVAL;
          DO_1S <= 1'b0;
       end else begin
-         if (WE & BE) begin
+         if (WE & %(BE_LEVEL)sBE) begin
             DO <= DI;
             DO_1S <= 1'b1;
          end else begin
@@ -111,26 +111,26 @@ endmodule
 
 endmodule
 """,
-    "rwld1s1" : """module %s_rwld1s1_reg #(parameter WIDTH = 1)
+    "rwld1s1" : """module %(MODULE)s_rwld1s1_reg #(parameter WIDTH = 1)
    (
-    input                  CLK,
-    input                  RSTn,
-    input                  BE,
-    input                  WE,
-    input                  LD,
-    input [WIDTH-1:0]      DI,
-    input [WIDTH-1:0]      IN,
-    input [WIDTH-1:0]      RVAL,
-    output reg [WIDTH-1:0] DO,
-    output reg             DO_1S
+    input                  CLK,      // Clock
+    input                  RSTn,     // Reset
+    input                  BE,       // Byte Enable
+    input                  WE,       // Write Strobe
+    input                  LD,       // Load Control
+    input [WIDTH-1:0]      DI,       // Data In
+    input [WIDTH-1:0]      IN,       // Load Data
+    input [WIDTH-1:0]      RVAL,     // Reset Value
+    output reg [WIDTH-1:0] DO,       // Data Out
+    output reg             DO_1S     // One Shot
    );
 
-   always @(posedge CLK or negedge RSTn) begin
-      if (~RSTn) begin
+   always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+      if (%(RESET_CONDITION)sRSTn) begin
          DO <= RVAL;
          DO_1S <= 1'b0;
       end else begin
-         if (WE & BE) begin
+         if (WE & %(BE_LEVEL)sBE) begin
             DO <= DI;
             DO_1S <= DI;
          end else begin
@@ -142,23 +142,23 @@ endmodule
 
 endmodule
 """,
-    "rws" : """module %s_rws_reg #(parameter WIDTH = 1)
+    "rws" : """module %(MODULE)s_rws_reg #(parameter WIDTH = 1)
    (
-    input                  CLK,
-    input                  RSTn,
-    input                  BE,
-    input                  WE,
-    input [WIDTH-1:0]      DI,
-    input [WIDTH-1:0]      IN,
-    input [WIDTH-1:0]      RVAL,
-    output reg [WIDTH-1:0] DO
+    input                  CLK,      // Clock
+    input                  RSTn,     // Reset
+    input                  BE,       // Byte Enable
+    input                  WE,       // Write Strobe
+    input [WIDTH-1:0]      DI,       // Data In
+    input [WIDTH-1:0]      IN,       // Load Data
+    input [WIDTH-1:0]      RVAL,     // Reset Value
+    output reg [WIDTH-1:0] DO        // Data Out
    );
 
-   always @(posedge CLK or negedge RSTn) begin
-      if (~RSTn) begin
+   always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+      if (%(RESET_CONDITION)sRSTn) begin
          DO <= RVAL;
       end else begin
-         if (WE & BE) begin
+         if (WE & %(BE_LEVEL)sBE) begin
             DO <= DI;
          end else begin
             DO <= IN | DO;
@@ -168,25 +168,25 @@ endmodule
 
 endmodule
 """,
-    "rws1s" : """module %s_rws1s_reg #(parameter WIDTH = 1)
+    "rws1s" : """module %(MODULE)s_rws1s_reg #(parameter WIDTH = 1)
    (
-    input                  CLK,
-    input                  RSTn,
-    input                  BE,
-    input                  WE,
-    input [WIDTH-1:0]      DI,
-    input [WIDTH-1:0]      IN,
-    input [WIDTH-1:0]      RVAL,
-    output reg [WIDTH-1:0] DO,
-    output reg             DO_1S
+    input                  CLK,      // Clock
+    input                  RSTn,     // Reset
+    input                  BE,       // Byte Enable
+    input                  WE,       // Write Strobe
+    input [WIDTH-1:0]      DI,       // Data In
+    input [WIDTH-1:0]      IN,       // Load Data
+    input [WIDTH-1:0]      RVAL,     // Reset Value
+    output reg [WIDTH-1:0] DO,       // Data Out
+    output reg             DO_1S     // One Shot
    );
 
-   always @(posedge CLK or negedge RSTn) begin
-      if (~RSTn) begin
+   always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+      if (%(RESET_CONDITION)sRSTn) begin
          DO <= RVAL;
          DO_1S <= 1'b0;
       end else begin
-         if (WE & BE) begin
+         if (WE & %(BE_LEVEL)sBE) begin
             DO <= DI;
             DO_1S <= 1'b1;
          end else begin
@@ -198,26 +198,26 @@ endmodule
 
 endmodule
 """,
-    "w1cs" : """module %s_w1cs_reg #(parameter WIDTH = 1)
+    "w1cs" : """module %(MODULE)s_w1cs_reg #(parameter WIDTH = 1)
    (
-    input                  CLK,
-    input                  RSTn,
-    input                  BE,
-    input                  WE,
-    input [WIDTH-1:0]      DI,
-    input [WIDTH-1:0]      IN,
-    input [WIDTH-1:0]      RVAL,
-    output reg [WIDTH-1:0] DO
+    input                  CLK,      // Clock
+    input                  RSTn,     // Reset
+    input                  BE,       // Byte Enable
+    input                  WE,       // Write Strobe
+    input [WIDTH-1:0]      DI,       // Data In
+    input [WIDTH-1:0]      IN,       // Load Data
+    input [WIDTH-1:0]      RVAL,     // Reset Value
+    output reg [WIDTH-1:0] DO        // Data Out
     );
 
    genvar                  i;
    generate
       for(i = 0; i < WIDTH; i = i + 1) begin
-         always @(posedge CLK or negedge RSTn) begin
-            if (~RSTn) begin
+         always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+            if (%(RESET_CONDITION)sRSTn) begin
                DO[i] <= RVAL[i];
             end else begin
-               if (WE & BE & DI[i]) begin
+               if (WE & %(BE_LEVEL)sBE & DI[i]) begin
                   DO[i] <= 1'b0;
                end else begin
                   DO[i] <= IN[i] | DO[i];
@@ -229,27 +229,27 @@ endmodule
 
 endmodule
 """,
-    "w1cs1s" : """module %s_w1cs1s_reg #(parameter WIDTH = 1)
+    "w1cs1s" : """module %(MODULE)s_w1cs1s_reg #(parameter WIDTH = 1)
    (
-    input                  CLK,
-    input                  RSTn,
-    input                  BE,
-    input                  WE,
-    input [WIDTH-1:0]      DI,
-    input [WIDTH-1:0]      IN,
-    input [WIDTH-1:0]      RVAL,
-    output reg [WIDTH-1:0] DO,
-    output reg             DO_1S
+    input                  CLK,      // Clock
+    input                  RSTn,     // Reset
+    input                  BE,       // Byte Enable
+    input                  WE,       // Write Strobe
+    input [WIDTH-1:0]      DI,       // Data In
+    input [WIDTH-1:0]      IN,       // Load Data
+    input [WIDTH-1:0]      RVAL,     // Reset Value
+    output reg [WIDTH-1:0] DO,       // Data Out
+    output reg             DO_1S     // One Shot
     );
 
    genvar                  i;
    generate
       for(i = 0; i < WIDTH; i = i + 1) begin
-         always @(posedge CLK or negedge RSTn) begin
-            if (~RSTn) begin
+         always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+            if (%(RESET_CONDITION)sRSTn) begin
                DO[i] <= RVAL[i];
             end else begin
-               if (WE & BE & DI[i]) begin
+               if (WE & %(BE_LEVEL)sBE & DI[i]) begin
                   DO[i] <= 1'b0;
                end else begin
                   DO[i] <= IN[i] | DO[i];
@@ -259,37 +259,37 @@ endmodule
       end
    endgenerate
 
-   always @(posedge CLK or negedge RSTn) begin
-      if (~RSTn) begin
+   always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+      if (%(RESET_CONDITION)sRSTn) begin
          DO_1S <= 1'b0;
       end else begin
-         DO_1S <= WE & BE;
+         DO_1S <= WE & %(BE_LEVEL)sBE;
       end
    end
 
 endmodule
 """,
-    "w1cs1s1" : """module %s_w1cs1s1_reg #(parameter WIDTH = 1)
+    "w1cs1s1" : """module %(MODULE)s_w1cs1s1_reg #(parameter WIDTH = 1)
    (
-    input                  CLK,
-    input                  RSTn,
-    input                  BE,
-    input                  WE,
-    input [WIDTH-1:0]      DI,
-    input [WIDTH-1:0]      IN,
-    input [WIDTH-1:0]      RVAL,
-    output reg [WIDTH-1:0] DO,
-    output reg             DO_1S
+    input                  CLK,      // Clock
+    input                  RSTn,     // Reset
+    input                  BE,       // Byte Enable
+    input                  WE,       // Write Strobe
+    input [WIDTH-1:0]      DI,       // Data In
+    input [WIDTH-1:0]      IN,       // Load Data
+    input [WIDTH-1:0]      RVAL,     // Reset Value
+    output reg [WIDTH-1:0] DO,       // Data Out
+    output reg             DO_1S     // One Shot
     );
 
    genvar                  i;
    generate
       for(i = 0; i < WIDTH; i = i + 1) begin
-         always @(posedge CLK or negedge RSTn) begin
-            if (~RSTn) begin
+         always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+            if (%(RESET_CONDITION)sRSTn) begin
                DO[i] <= RVAL[i];
             end else begin
-               if (WE & BE & DI[i]) begin
+               if (WE & %(BE_LEVEL)sBE & DI[i]) begin
                   DO[i] <= 1'b0;
                end else begin
                   DO[i] <= IN[i] | DO[i];
@@ -299,37 +299,37 @@ endmodule
       end
    endgenerate
 
-   always @(posedge CLK or negedge RSTn) begin
-      if (~RSTn) begin
+   always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+      if (%(RESET_CONDITION)sRSTn) begin
          DO_1S <= 1'b0;
       end else begin
-         DO_1S <= WE & BE & (|(DI));
+         DO_1S <= WE & %(BE_LEVEL)sBE & (|(DI));
       end
    end
 
 endmodule
 """,
-    "w1cld" : """module %s_w1cld_reg #(parameter WIDTH = 1)
+    "w1cld" : """module %(MODULE)s_w1cld_reg #(parameter WIDTH = 1)
    (
-    input                  CLK,
-    input                  RSTn,
-    input                  BE,
-    input                  WE,
-    input                  LD,
-    input [WIDTH-1:0]      DI,
-    input [WIDTH-1:0]      IN,
-    input [WIDTH-1:0]      RVAL,
-    output reg [WIDTH-1:0] DO
+    input                  CLK,      // Clock
+    input                  RSTn,     // Reset
+    input                  BE,       // Byte Enable
+    input                  WE,       // Write Strobe
+    input                  LD,       // Load Control
+    input [WIDTH-1:0]      DI,       // Data In
+    input [WIDTH-1:0]      IN,       // Load Data
+    input [WIDTH-1:0]      RVAL,     // Reset Value
+    output reg [WIDTH-1:0] DO        // Data Out
     );
 
    genvar                  i;
    generate
       for(i = 0; i < WIDTH; i = i + 1) begin
-         always @(posedge CLK or negedge RSTn) begin
-            if (~RSTn) begin
+         always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+            if (%(RESET_CONDITION)sRSTn) begin
                DO[i] <= RVAL[i];
             end else begin
-               if (WE & BE & DI[i]) begin
+               if (WE & %(BE_LEVEL)sBE & DI[i]) begin
                   DO[i] <= 1'b0 ;
                end else begin
                   DO[i] <= (LD & IN[i]) | DO[i];
@@ -341,27 +341,27 @@ endmodule
 
 endmodule
 """,
-    "w1cld1s" : """module %s_w1cld1s_reg #(parameter WIDTH = 1)
+    "w1cld1s" : """module %(MODULE)s_w1cld1s_reg #(parameter WIDTH = 1)
    (
-    input                  CLK,
-    input                  RSTn,
-    input                  BE,
-    input                  WE,
-    input [WIDTH-1:0]      DI,
-    input [WIDTH-1:0]      IN,
-    input [WIDTH-1:0]      RVAL,
-    output reg [WIDTH-1:0] DO,
-    output reg             DO_1S
+    input                  CLK,      // Clock
+    input                  RSTn,     // Reset
+    input                  BE,       // Byte Enable
+    input                  WE,       // Write Strobe
+    input [WIDTH-1:0]      DI,       // Data In
+    input [WIDTH-1:0]      IN,       // Load Data
+    input [WIDTH-1:0]      RVAL,     // Reset Value
+    output reg [WIDTH-1:0] DO,       // Data Out
+    output reg             DO_1S     // One Shot
     );
 
    genvar                  i;
    generate
       for(i = 0; i < WIDTH; i = i + 1) begin
-         always @(posedge CLK or negedge RSTn) begin
-            if (~RSTn) begin
+         always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+            if (%(RESET_CONDITION)sRSTn) begin
                DO[i] <= RVAL[i];
             end else begin
-               if (WE & BE & DI[i]) begin
+               if (WE & %(BE_LEVEL)sBE & DI[i]) begin
                   DO[i] <= 1'b0;
                end else begin
                   DO[i] <= (LD & IN[i]) | DO[i];
@@ -371,28 +371,28 @@ endmodule
       end
    endgenerate
 
-   always @(posedge CLK or negedge RSTn) begin
-      if (~RSTn) begin
+   always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+      if (%(RESET_CONDITION)sRSTn) begin
          DO_1S <= 1'b0;
       end else begin
-         DO_1S <= WE & BE;
+         DO_1S <= WE & %(BE_LEVEL)sBE;
       end
    end
 
 endmodule
 """,
-    "rold" : """module %s_rold_reg #(parameter WIDTH = 1)
+    "rold" : """module %(MODULE)s_rold_reg #(parameter WIDTH = 1)
    (
-    input                  CLK,
-    input                  RSTn,
-    input                  LD,
-    input [WIDTH-1:0]      IN,
-    input [WIDTH-1:0]      RVAL,
-    output reg [WIDTH-1:0] DO
+    input                  CLK,      // Clock
+    input                  RSTn,     // Reset
+    input                  LD,       // Load Control
+    input [WIDTH-1:0]      IN,       // Load Data
+    input [WIDTH-1:0]      RVAL,     // Reset Value
+    output reg [WIDTH-1:0] DO        // Data Out
    );
 
-   always @(posedge CLK or negedge RSTn) begin
-      if (~RSTn) begin
+   always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+      if (%(RESET_CONDITION)sRSTn) begin
          DO <= RVAL;
       end else begin
          DO <= (LD) ? IN : DO;
@@ -401,96 +401,96 @@ endmodule
 
 endmodule
 """,
-    "rcld" : """module %s_rcld_reg #(parameter WIDTH = 1)
+    "rcld" : """module %(MODULE)s_rcld_reg #(parameter WIDTH = 1)
    (
-    input                  CLK,
-    input                  RSTn,
-    input                  RD,
-    input                  LD,
-    input [WIDTH-1:0]      IN,
-    input [WIDTH-1:0]      RVAL,
-    output reg [WIDTH-1:0] DO
+    input                  CLK,      // Clock
+    input                  RSTn,     // Reset
+    input                  RD,       // Read Strobe
+    input                  LD,       // Load Control
+    input [WIDTH-1:0]      IN,       // Load Data
+    input [WIDTH-1:0]      RVAL,     // Reset Value
+    output reg [WIDTH-1:0] DO        // Data Out
    );
 
-   always @(posedge CLK or negedge RSTn) begin
-      if (~RSTn) begin
+   always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+      if (%(RESET_CONDITION)sRSTn) begin
          DO <= RVAL;
       end else begin
          if (LD) begin
             DO <= IN;
          end else begin
-            DO <= RD ? {WIDTH{1'b0}} : DO;
+            DO <= RD ? (WIDTH(1'b0)) : DO;
          end
       end
    end
 
 endmodule
 """,
-    "rcs" : """module %s_rcs_reg #(parameter WIDTH = 1)
+    "rcs" : """module %(MODULE)s_rcs_reg #(parameter WIDTH = 1)
    (
-    input                  CLK,
-    input                  RSTn,
-    input                  RD,
-    input                  LD,
-    input [WIDTH-1:0]      IN,
-    input [WIDTH-1:0]      RVAL,
-    output reg [WIDTH-1:0] DO
+    input                  CLK,      // Clock
+    input                  RSTn,     // Reset
+    input                  RD,       // Read Strobe
+    input                  LD,       // Load Control
+    input [WIDTH-1:0]      IN,       // Load Data
+    input [WIDTH-1:0]      RVAL,     // Reset Value
+    output reg [WIDTH-1:0] DO        // Data Out
    );
 
-   always @(posedge CLK or negedge RSTn) begin
-      if (~RSTn) begin
+   always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+      if (%(RESET_CONDITION)sRSTn) begin
          DO <= RVAL;
       end else begin
          if (LD) begin
             DO <= DO | IN;
          end else begin
-            DO <= RD ? {WIDTH{1'b0}} : DO;
+            DO <= RD ? (WIDTH(1'b0)) : DO;
          end
       end
    end
 
 endmodule
 """,
-    "wo" : """module %s_wo_reg
+    "wo" : """module %(MODULE)s_wo_reg
    (
-    input      CLK,
-    input      RSTn,
-    input      BE,
-    input      WE,
-    input      DI,
-    input      RVAL,
-    output reg DO_1S
+    input      CLK,      // Clock
+    input      RSTn,     // Reset
+    input      BE,       // Byte Enable
+    input      WE,       // Write Strobe
+    input      DI,       // Data In
+    input      RVAL,     // Reset Value
+    output reg DO_1S     // One Shot
     );
 
-   always @(posedge CLK or negedge RSTn) begin
-      if (~RSTn) begin
+   always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+      if (%(RESET_CONDITION)sRSTn) begin
          DO_1S <= RVAL;
       end else begin
-         DO_1S <= WE & BE & DI;
+         DO_1S <= WE & %(BE_LEVEL)sBE & DI;
       end
    end
 
 endmodule
 """,
-    "w1s" : """module %s_w1s_reg
+    "w1s" : """module %(MODULE)s_w1s_reg
    (
-    input      CLK,
-    input      RSTn,
-    input      BE,
-    input      WE,
-    input      DI,
-    input      RVAL,
-    input      IN,
-    output reg DO,
-    output reg DO_1S
+    input      CLK,      // Clock
+    input      RSTn,     // Reset
+    input      BE,       // Byte Enable
+    input      WE,       // Write Strobe
+    input      DI,       // Data In
+    input      RVAL,     // Reset Value
+    input      IN,       // Load Data
+    output reg DO,       // Data Out
+    output reg DO_1S     // One Shot
     );
 
-   always @(posedge CLK or negedge RSTn) begin
-      if (~RSTn) begin
+   always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+      if (%(RESET_CONDITION)sRSTn) begin
          DO <= RVAL;
          DO_1S <= 1'b0;
       end else begin
-         if (WE & BE) begin
+         if (WE & %(BE_LEVEL)sBE) begin
             DO <= DO | DI;
             DO_1S <= 1'b1;
          end else begin

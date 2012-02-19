@@ -64,13 +64,13 @@ class BitModel(gtk.ListStore):
 class BitList(object):
 
     BIT_COLS = (
-        # Title, Size, Sort, Expand
-        ('', 20, -1, False, False),
-        ('Bits', 60, BitModel.SORT_COL, False, False),
-        ('Name', 125, BitModel.NAME_COL, True, False),
-        ('Type', 350, -1, False, True),
-        ('Reset', 125, -1, False, False),
-        ('Reset Type', 75, -1, False, False),
+        # Title,      Size, Sort,              Expand
+        ('',            20, -1,                False,  False),
+        ('Bits',        60, BitModel.SORT_COL, False,  False),
+        ('Name',       125, BitModel.NAME_COL, True,   False),
+        ('Type',       325, -1,                True,   True),
+        ('Reset',      100, -1,                False,  False),
+        ('Reset Type',  75, -1,                False,  False),
         )
 
     def __init__(self, obj, combo_edit, text_edit, selection_changed):
@@ -107,6 +107,7 @@ class BitList(object):
                 column.set_sort_column_id(col[2])
             column.set_min_width(col[1])
             column.set_expand(col[3])
+            column.set_resizable(True)
             self.__obj.append_column(column)
 
     def get_selected_row(self):

@@ -29,18 +29,18 @@ regenerate
 import gtk
 try:
     import webkit
+    from docutils.core import publish_string
     WEBKIT = True
 except ImportError:
     WEBKIT = False
     print "Webkit not installed, preview of formatted comments will not be available"
 
-from docutils.core import publish_string
 import pango
 import xml
 import os
 import copy
 import re
-from curses.ascii import isprint
+import string
 from properties import Properties
 from preferences import Preferences
 from bit_list import BitModel, BitList, bits, reset_value
@@ -793,7 +793,7 @@ class MainWindow(object):
         field = self.__bitfield_obj.select_field()
         if field:
             from bitfield_editor import BitFieldEditor
-            BitFieldEditor(register, field, self.__set_field_modified)
+            BitFieldEditor(self.dbase, register, field, self.__set_field_modified)
 
     def __set_field_modified(self):
         reg = self.__reglist_obj.get_selected_register()
@@ -952,12 +952,17 @@ class MainWindow(object):
             self.open_project(filename, uri)
 
     def set_busy_cursor(self, value):
-        if value:
-            self.__top_window.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.WATCH))
-        else:
-            self.__top_window.window.set_cursor(None)
-        while gtk.events_pending():
-            gtk.main_iteration()
+        """
+        This seems to cause Windows to hang, so don't change the cursor to indicate
+        busy under Windows.
+        """
+        if os.name == 'posix':
+            if value:
+                self.__top_window.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.WATCH))
+            else:
+                self.__top_window.window.set_cursor(None)
+            while gtk.events_pending():
+                gtk.main_iteration()
 
     def open_project(self, filename, uri):
         self.__loading_project = True
@@ -1523,7 +1528,7 @@ class MainWindow(object):
 
 
 def clean_ascii(value):
-    return value if isprint(value) else " "
+    return value if value in string.printable else " "
 
 
 def build_new_name(name, reglist):
