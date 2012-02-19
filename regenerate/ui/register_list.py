@@ -55,7 +55,7 @@ REPLACE = {
     }
 
 
-Class registermodel(gtk.ListStore):
+class RegisterModel(gtk.ListStore):
     """
     A derivation of the ListStore that defines the columns. The columsn are:
 
