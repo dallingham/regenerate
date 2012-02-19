@@ -24,9 +24,18 @@ WriterBase - base class for objects that product output from the
 
 import os
 import time
-import pwd
 from regenerate.settings.paths import INSTALL_PATH
 
+
+if os.name == 'nt':
+    def get_username():
+        import getpass
+        return getpass.getuser()
+else:
+    def get_username():
+        import pwd
+        return pwd.getpwnam(os.environ['USER'])[4].split(',')[0]
+    
 
 class WriterBase(object):   # IGNORE:R0921 - we know this is a abstract class
     """
@@ -112,8 +121,9 @@ class WriterBase(object):   # IGNORE:R0921 - we know this is a abstract class
         """
         t = time.time()
         year = str(time.localtime(t)[0])
-        user = pwd.getpwnam(os.environ['USER'])[4].split(',')[0]
         date = time.asctime(time.localtime(t))
+
+        user = get_username()
 
         if self._module == "":
             module = "I_forgot_to_give_the_module_a_name"
