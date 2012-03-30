@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<project name="test" short_name="unnamed" company_name="">
+  <registerset name="test.xml">
+    <export option="rtl-verilog-2001" path="test_regs.v"/>
+    <export option="uvm-system-verilog" path="test_regs_pkg.sv"/>
+  </registerset>
+</project>

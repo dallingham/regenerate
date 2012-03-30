@@ -138,7 +138,6 @@ class CerteCSVParser:
             next_addr = r_addr + r_width/8
 
             name2addr[r_name] = r_addr
-            print name2addr
 
             if f_start_col != -1:
                 f_start = parse_hex_value(data[f_start_col])
