@@ -27,14 +27,6 @@ regenerate
 """
 
 import gtk
-try:
-    import webkit
-    from docutils.core import publish_string
-    WEBKIT = True
-except ImportError:
-    WEBKIT = False
-    print "Webkit not installed, preview of formatted comments will not be available"
-
 import pango
 import xml
 import os
@@ -51,20 +43,60 @@ from regenerate.importers import IMPORTERS
 from regenerate.settings.paths import GLADE_TOP, INSTALL_PATH
 from regenerate.settings import ini
 from regenerate import PROGRAM_VERSION, PROGRAM_NAME
-
+from error_dialogs import ErrorMsg, WarnMsg, Question
+from project import ProjectModel, ProjectList, update_file
 from regenerate.db import TYPES, BFT_TYPE, BFT_INP, BFT_CTRL
+
+# Attempt to load the optional WebKit and docutils package. Webkit provides
+# an HTML canvas that we can use to display formatted text, and docutils
+# provides the reStructuredText interface that will generate HTML from
+# structured text
+try:
+    import webkit
+    from docutils.core import publish_string
+    WEBKIT = True
+except ImportError:
+    WEBKIT = False
+    print "Webkit is not installed, preview of formatted comments will not be available"
+
+try:
+    from docutils.core import publish_string
+except ImportError:
+    WEBKIT = False
+    print "docutils is not installed, preview of formatted comments will not be available"
+
+# Attempt to load the GTK spell package to provide basic spell checking.
+# If the import fails (gtkspell not installed), then create a dummy
+# spell object that does nothing.
+try:
+    from gtkspell import Spell
+except ImportError:
+
+    class Spell(object):
+        "Empty class for compatiblity if the spell checker is not found"
+
+        def __init__(self, obj):
+            pass
+
+
 TYPE_ENB = {}
 for i in TYPES:
     TYPE_ENB[i[BFT_TYPE]] = (i[BFT_INP], i[BFT_CTRL])
 
 
-VALID_SIGNAL = re.compile("^[A-Za-z][A-Za-z0-9_]*$")
 DEF_EXT = '.rprj'
 DEF_MIME = "*" + DEF_EXT
 
 ADDR_FIELD = 1
 NAME_FIELD = 2
 TOKEN_FIELD = 3
+
+# Regular expressions to check the validity of entered names. This should
+# probably be configurable, but has not been implemented yet.
+
+VALID_SIGNAL = re.compile("^[A-Za-z][A-Za-z0-9_]*$")
+VALID_BITS = re.compile("^\s*[\(\[]?(\d+)(\s*[-:]\s*(\d+))?[\)\]]?\s*$")
+REGNAME = re.compile("^(.*)(\d+)(.*)$")
 
 CSS = '''
 <style type="text/css">
@@ -91,23 +123,6 @@ body{
 }
 </style>
 '''
-
-from error_dialogs import ErrorMsg, WarnMsg, Question
-from project import ProjectModel, ProjectList, update_file
-
-try:
-    from gtkspell import Spell
-except ImportError:
-
-    class Spell(object):
-        "Empty class for compatiblity if the spell checker is not found"
-
-        def __init__(self, obj):
-            pass
-
-
-VALID_BITS = re.compile("^\s*[\(\[]?(\d+)(\s*[-:]\s*(\d+))?[\)\]]?\s*$")
-REGNAME = re.compile("^(.*)(\d+)(.*)$")
 
 
 class DbaseStatus(object):
@@ -180,6 +195,9 @@ class MainWindow(object):
             self.__builder.get_object("register_list"),
             self.__selected_reg_changed, self.set_modified, self.update_register_addr)
 
+        self.use_svn = bool(int(ini.get('user', 'use_svn', 0)))
+        self.use_preview = bool(int(ini.get('user', 'use_preview', 0)))
+
         if WEBKIT:
             self.__webkit = webkit.WebView()
             self.__webkit_reg = webkit.WebView()
@@ -211,8 +229,6 @@ class MainWindow(object):
         self.__reg_description = self.__builder.get_object('register_description')
         self.__reg_description.modify_font(pango_font)
         Spell(self.__reg_description)
-
-        self.use_svn = bool(int(ini.get('user', 'use_svn', 0)))
 
         self.__prj_model = ProjectModel(self.use_svn)
         self.__prj_obj.set_model(self.__prj_model)
@@ -247,7 +263,17 @@ class MainWindow(object):
             self.__instance_base_changed)
 
         self.__build_data_width_box()
+        self.__restore_position_and_size()
+        self.__preview_toggle.set_active(self.use_preview)
+        if self.use_preview:
+            self.__enable_preview()
+        self.__top_window.show()
+        self.__builder.connect_signals(self)
+        self.__build_import_menu()
 
+    def __restore_position_and_size(self):
+        "Restore the desired position and size from the user's config file"
+        
         height = int(ini.get('user', 'height', 0))
         width = int(ini.get('user', 'width', 0))
         vpos = int(ini.get('user', 'vpos', 0))
@@ -258,10 +284,7 @@ class MainWindow(object):
             self.__builder.get_object('vpaned').set_position(vpos)
         if hpos:
             self.__builder.get_object('hpaned').set_position(hpos)
-
-        self.__top_window.show()
-        self.__builder.connect_signals(self)
-        self.__build_import_menu()
+    
 
     def __filter_changed(self, obj):
         self.__filter_text = self.__filter.get_text()
@@ -514,32 +537,39 @@ class MainWindow(object):
             self.__model_search_fields = (NAME_FIELD, )
             self.__modelfilter.refilter()
 
-    def on_preview_toggled(self, obj):
-        if obj.get_active() and WEBKIT:
-            self.__update_wk = True
+    def __enable_preview(self):
+        self.__update_wk = True
+        if self.dbase:
             self.__webkit.load_string(CSS + publish_string(self.dbase.overview_text,
                                                            writer_name="html"),
                                       "text/html", "utf-8", "")
-            self.__wk_container.show()
-            self.__webkit.show()
-
             reg = self.__reglist_obj.get_selected_register()
             if reg:
                 text = reg.description
             else:
                 text = ""
-            
             self.__webkit_reg.load_string(CSS + publish_string(text, writer_name="html"),
                                           "text/html", "utf-8", "")
-            self.__webkit_reg.show()
-            self.__wk_reg_container.show()
+        self.__wk_container.show()
+        self.__webkit.show()
+        self.__webkit_reg.show()
+        self.__wk_reg_container.show()
+
+    def __disable_preview(self):
+        self.__update_wk = False
+        if WEBKIT:
+            self.__webkit.hide()
+            self.__wk_container.hide()
+            self.__webkit_reg.hide()
+            self.__wk_reg_container.hide()
+
+    def on_preview_toggled(self, obj):
+        if obj.get_active() and WEBKIT:
+            self.__enable_preview()
+            self.use_preview = True
         else:
-            self.__update_wk = False
-            if WEBKIT:
-                self.__webkit.hide()
-                self.__wk_container.hide()
-                self.__webkit_reg.hide()
-                self.__wk_reg_container.hide()
+            self.__disable_preview()
+            self.use_preview = False
     
     def on_register_grouping_activate(self, obj):
         """
@@ -975,13 +1005,13 @@ class MainWindow(object):
         self.set_busy_cursor(True)
         for f in self.__project.get_register_set():
             self.open_xml(f, False)
+        self.__loading_project = False
         self.__prj_obj.select_path(0)
         self.__prj_model.load_icons()
         if self.__recent_manager and uri:
             self.__recent_manager.add_item(uri)
         self.__builder.get_object('save_btn').set_sensitive(True)
         self.set_busy_cursor(False)
-        self.__loading_project = False
         base = os.path.splitext(os.path.basename(filename))[0]
         self.__top_window.set_title("%s (%s) - regenerate" %
                                     (base, self.__project.name))
@@ -1026,7 +1056,7 @@ class MainWindow(object):
         self.__project.add_register_set(name)
 
         self.__module_notebook.set_sensitive(True)
-
+        self.__set_module_definition_warn_flag()
         self.clear_modified()
 
     def visible_cb(self, model, iter):
@@ -1099,6 +1129,7 @@ class MainWindow(object):
             if load:
                 self.__prj_obj.select(self.active.node)
                 self.__module_notebook.set_sensitive(True)
+        self.__set_module_definition_warn_flag()
 
     def __load_database(self, filename):
         """
@@ -1133,6 +1164,7 @@ class MainWindow(object):
         then exit.
         """
         (width, height) = self.__top_window.get_size()
+        ini.set('user', 'use_preview', int(self.use_preview))
         ini.set('user', 'width', width)
         ini.set('user', 'height', height)
         ini.set('user', 'vpos',
@@ -1482,6 +1514,7 @@ class MainWindow(object):
         if not self.__loading_project:
             warn = False
             msgs = []
+            
             if len(self.dbase.instances) == 0:
                 warn = True
                 msgs.append("No instances of the module were defined.")

@@ -67,7 +67,7 @@ def oneshot_name(name):
     Returns the name of the oneshot signal associated with the signal. In this
     implementation, it is the name of the signal with a _1s appended.
     """
-    return name + "_1s"
+    return name + "_1S"
 
 
 def write_strobe(address):
@@ -314,7 +314,7 @@ class Verilog(WriterBase):
             if self._has_input[field.field_type]:
                 self._ofile.write('    .IN    (%s%s),\n' % (field.input_signal, index))
             if self._has_oneshot[field.field_type]:
-                self._ofile.write('    .DO_1S (r%02x_%s_1s),\n' % (address, field_name))
+                self._ofile.write('    .DO_1S (r%02x_%s_1S),\n' % (address, field_name))
                 
             self._ofile.write('    .RVAL  (%s)\n' % self._reset_value(field, start, stop))
             self._ofile.write('  );\n\n')
@@ -425,10 +425,12 @@ class Verilog(WriterBase):
         commenter = textwrap.TextWrapper(width=(self._max_column-52))
         sep = "\n" + " " * 46 + "// "
 
+        max_len = max([len(i[2]) for i in port_list]) + 2
+        fmt_string = "%%-6s %%-7s %-%ds // %s\n" % max_len
+
         for data in port_list:
             comment = sep.join(commenter.wrap(data[3]))
-            self._ofile.write('%-6s %-7s %-30s // %s\n' %
-                             (data[0], data[1], data[2] + ';', comment))
+            self._ofile.write(fmt_string % (data[0], data[1], data[2] + ';', comment))
 
     def err(self, msg):
         print msg
@@ -566,22 +568,36 @@ class Verilog(WriterBase):
         """
         self._ofile.write('\n// Output Assignments\n\n')
 
+        max_len = 0
+
+        for register in self.__sorted_regs:
+            for field_key in register.get_bit_field_keys():
+                field = register.get_bit_field(field_key)
+                if self._has_oneshot[field.field_type]:
+                    max_len = max(max_len, len(oneshot_name(field.output_signal)))
+                if not field.use_output_enable:
+                    continue
+                max_len = max(max_len, len(field.output_signal))
+
+        fmt_string = "assign %%-%ds = %%s;\n" % max_len
+
         for register in self.__sorted_regs:
             address = register.address
             for field_key in register.get_bit_field_keys():
                 field = register.get_bit_field(field_key)
                 if self._has_oneshot[field.field_type]:
-                    self._ofile.write("assign %-20s = %s;\n" % (
+                    self._ofile.write(fmt_string  % (
                         oneshot_name(field.output_signal),
                         oneshot_name(get_base_signal(address, field))))
                 if not field.use_output_enable:
                     continue
 
-                self._ofile.write("assign %-20s = %s;\n" % (
+                self._ofile.write(fmt_string % (
                     field.output_signal, get_base_signal(address, field)))
 
-        self._ofile.write("assign %-20s = mux_%s;\n" % (self._data_out,
-                                                        self._data_out.lower()))
+        fmt_string = "assign %%-%ds = mux_%%s;\n" % max_len
+        self._ofile.write(fmt_string % (self._data_out,
+                                        self._data_out.lower()))
         self._ofile.write("\n")
 
     def _write_register_rtl_code(self):
@@ -806,10 +822,12 @@ class Verilog2001(Verilog):
         total = len(ports)
         commenter = textwrap.TextWrapper(width=self._max_column-52)
 
+        max_len = max([len(i[2]) for i in ports]) + 2
+        fmt_string = "  %%-6s %%-7s %%-%ds // %%s\n" % max_len
+        
         for data in ports:
             comment = csep.join(commenter.wrap(data[3]))
-            self._ofile.write('  %-6s %-9s %-35s// %s\n' %
-                         (data[0], data[1], data[2] + sep, comment))
+            self._ofile.write(fmt_string % (data[0], data[1], data[2] + sep, comment))
             cnt += 1
             if cnt == total-1:
                 sep = ""

@@ -1,6 +1,9 @@
 <?xml version="1.0"?>
 <module name="test" title="test" owner="">
   <base addr_width="32" data_width="32"/>
+  <instances>
+    <instance id="INSTANCE" base="0"/>
+  </instances>
   <ports>
     <addr>ADDR</addr>
     <data_in>WDATA</data_in>
@@ -11,40 +14,40 @@
     <clk>CLK</clk>
     <reset active="0">RSTn</reset>
   </ports>
-  <overview></overview>
+  <overview>Test case for various register types in Regenerate.</overview>
   <register nocode="0" dont_test="0" hide="0">
     <token modified="0">RD_ONLY</token>
     <name modified="0">Read Only</name>
     <address modified="0">0</address>
     <width modified="0">32</width>
-    <description modified="0"></description>
+    <description modified="0">Read Only type.</description>
     <range start="0" stop="0">
       <modified time="0"/>
       <name>ONE_BIT</name>
       <signal enb="0" static="0" field_type="RO" side_effect="0">ONE_BIT</signal>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <modified time="0"/>
       <name>MULTI_BIT</name>
       <signal enb="0" static="0" field_type="RO" side_effect="0">MULTI_BIT</signal>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <modified time="0"/>
       <name>BYTE_CROSS</name>
       <signal enb="0" static="0" field_type="RO" side_effect="0">BYTE_CROSS</signal>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multi byte.</description>
     </range>
     <range start="17" stop="27">
       <modified time="0"/>
       <name>BYTE_CROSS_SKEWED</name>
       <signal enb="0" static="0" field_type="RO" side_effect="0">BYTE_CROSS_SKEWED</signal>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
   <register nocode="0" dont_test="0" hide="0">
@@ -52,38 +55,38 @@
     <name modified="0">Read Only Load</name>
     <address modified="0">4</address>
     <width modified="0">32</width>
-    <description modified="0"></description>
+    <description modified="0">Read Only with input.</description>
     <range start="0" stop="0">
       <modified time="0"/>
-      <name>ROLD_1BIT</name>
+      <name>ONE_BIT</name>
       <signal enb="0" static="0" field_type="ROLD" side_effect="0">ROLD_1BIT</signal>
       <input load="ROLD_1BIT_LD">ROLD_1BIT_DATA_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <modified time="0"/>
-      <name>ROLD_MULTI_BIT</name>
+      <name>MULTI_BIT</name>
       <signal enb="0" static="0" field_type="ROLD" side_effect="0">ROLD_MULTI_BIT</signal>
       <input load="ROLD_MULTI_BIT_LD">ROLD_MULTI_BIT_DATA_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <modified time="0"/>
-      <name>ROLD_BYTE_CROSS</name>
+      <name>BYTE_CROSS</name>
       <signal enb="0" static="0" field_type="ROLD" side_effect="0">ROLD_BYTE_CROSS</signal>
       <input load="ROLD_BYTE_CROSS_LD">ROLD_BYTE_CROSS_DATA_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multi byte.</description>
     </range>
     <range start="17" stop="27">
       <modified time="0"/>
-      <name>ROLD_BYTE_CROSS_SKEWED</name>
+      <name>BYTE_CROSS_SKEWED</name>
       <signal enb="0" static="0" field_type="ROLD" side_effect="0">ROLD_BYTE_CROSS_SKEWED</signal>
       <input load="ROLD_BYTE_CROSS_SKEWED_LD">ROLD_BYTE_CROSS_SKEWED_DATA_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
   <register nocode="0" dont_test="0" hide="0">
@@ -91,34 +94,34 @@
     <name modified="0">Read/Write</name>
     <address modified="0">8</address>
     <width modified="0">32</width>
-    <description modified="0"></description>
+    <description modified="0">Basic Read/Write.</description>
     <range start="0" stop="0">
       <modified time="0"/>
-      <name>RW_1BIT</name>
+      <name>ONE_BIT</name>
       <signal enb="0" static="0" field_type="RW" side_effect="0">RW_1BIT</signal>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <modified time="0"/>
-      <name>RW_MULTI_BIT</name>
+      <name>MULTI_BIT</name>
       <signal enb="0" static="0" field_type="RW" side_effect="0">RW_MULTI_BIT</signal>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multiple bit within a single bit.</description>
     </range>
     <range start="8" stop="15">
       <modified time="0"/>
-      <name>RW_BYTE_CROSS</name>
+      <name>BYTE_CROSS</name>
       <signal enb="0" static="0" field_type="RW" side_effect="0">RW_BYTE_CROSS</signal>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multi byte.</description>
     </range>
     <range start="17" stop="27">
       <modified time="0"/>
-      <name>RW_BYTE_CROSS_SKEW</name>
+      <name>BYTE_CROSS_SKEWED</name>
       <signal enb="0" static="0" field_type="RW" side_effect="0">RW_BYTE_CROSS_SKEW</signal>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
   <register nocode="0" dont_test="0" hide="0">
@@ -126,38 +129,38 @@
     <name modified="0">Read/Write Load</name>
     <address modified="0">12</address>
     <width modified="0">32</width>
-    <description modified="0"></description>
+    <description modified="0">Read Write with data loaded when a control signal is asserted.</description>
     <range start="0" stop="0">
       <modified time="0"/>
-      <name>RWLD_1BIT</name>
+      <name>ONE_BIT</name>
       <signal enb="0" static="0" field_type="RWLD" side_effect="0">RWLD_1BIT</signal>
       <input load="RWLD_1BIT_LOAD">RWLD_1BIT_DATA_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <modified time="0"/>
-      <name>RWLD_MULTI_BIT</name>
+      <name>MULTI_BIT</name>
       <signal enb="0" static="0" field_type="RWLD" side_effect="0">RWLD_MULTI_BIT</signal>
       <input load="RWLD_MULTI_BIT_LD">RWLD_MULTI_BIT_DATA_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <modified time="0"/>
-      <name>RWLD_BYTE_CROSS</name>
+      <name>BYTE_CROSS</name>
       <signal enb="0" static="0" field_type="RWLD" side_effect="0">RWLD_BYTE_CROSS</signal>
       <input load="RWLD_BYTE_CROSS_LD">RWLD_BYTE_CROSS_DATA_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multi byte.</description>
     </range>
     <range start="17" stop="27">
       <modified time="0"/>
-      <name>RWLD_BYTE_CROSS_SKEW</name>
+      <name>BYTE_CROSS_SKEWED</name>
       <signal enb="0" static="0" field_type="RWLD" side_effect="0">RWLD_BYTE_CROSS_SKEW</signal>
       <input load="RWLD_BYTE_CROSS_SKEW_LOAD">RWLD_BYTE_CROSS_SKEW_DATA_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
   <register nocode="0" dont_test="0" hide="0">
@@ -165,34 +168,34 @@
     <name modified="0">Read/Write 1 Shot</name>
     <address modified="0">16</address>
     <width modified="0">32</width>
-    <description modified="0"></description>
+    <description modified="0">Read/Write with a one shot generated on any write, with data loaded when a control signal is asserted.</description>
     <range start="0" stop="0">
       <modified time="0"/>
-      <name>RW1S_1BIT</name>
+      <name>ONE_BIT</name>
       <signal enb="0" static="0" field_type="RW1S" side_effect="0">RW1S_1BIT</signal>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <modified time="0"/>
-      <name>RW1S_MULTI_BIT</name>
+      <name>MULTI_BIT</name>
       <signal enb="0" static="0" field_type="RW1S" side_effect="0">RW1S_MULTI_BIT</signal>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <modified time="0"/>
-      <name>RW1S_BYTE_CROSS</name>
+      <name>BYTE_CROSS</name>
       <signal enb="0" static="0" field_type="RW1S" side_effect="0">RW1S_BYTE_CROSS</signal>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multi byte.</description>
     </range>
     <range start="17" stop="27">
       <modified time="0"/>
-      <name>RW1S_BYTE_CROSS_SKEWED</name>
+      <name>BYTE_CROSS_SKEWED</name>
       <signal enb="0" static="0" field_type="RW1S" side_effect="0">RW1S_BYTE_CROSS_SKEWED</signal>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
   <register nocode="0" dont_test="0" hide="0">
@@ -200,35 +203,35 @@
     <name modified="0">Read/Write 1 Shot 1</name>
     <address modified="0">20</address>
     <width modified="0">32</width>
-    <description modified="0"></description>
+    <description modified="0">Read/Write with a one shot generated on write of a 1, with data loaded when a control signal is asserted.</description>
     <range start="0" stop="0">
       <modified time="0"/>
-      <name>BIT</name>
+      <name>ONE_BIT</name>
       <signal enb="0" static="0" field_type="RW1S1" side_effect="0">BIT</signal>
       <input load="RD_WR_1_SHOT_1_BIT_LD">RD_WR_1_SHOT_1_BIT_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <modified time="0"/>
       <name>MULTI_BIT</name>
       <signal enb="0" static="0" field_type="RW1S1" side_effect="0">MULTI_BIT</signal>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <modified time="0"/>
       <name>BYTE_CROSS</name>
       <signal enb="0" static="0" field_type="RW1S1" side_effect="0">BYTE_CROSS</signal>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multi byte.</description>
     </range>
     <range start="17" stop="27">
       <modified time="0"/>
-      <name>BYTE_CROSS_SKEW</name>
+      <name>BYTE_CROSS_SKEWED</name>
       <signal enb="0" static="0" field_type="RW1S1" side_effect="0">BYTE_CROSS_SKEW</signal>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
   <register nocode="0" dont_test="0" hide="0">
@@ -236,14 +239,14 @@
     <name modified="0">Read/Write Load 1 Shot</name>
     <address modified="0">24</address>
     <width modified="0">32</width>
-    <description modified="0"></description>
+    <description modified="0">Read/Write with a one shot generated on any write, with data loaded when a control signal is asserted.</description>
     <range start="0" stop="0">
       <modified time="0"/>
-      <name>BIT</name>
+      <name>ONE_BIT</name>
       <signal enb="0" static="0" field_type="RWLD1S" side_effect="0">RD_WR_LD_1_SHOT_BIT_BIT</signal>
       <input load="RD_WR_LD_1_SHOT_BIT_LD">RD_WR_LD_1_SHOT_BIT_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <modified time="0"/>
@@ -251,7 +254,7 @@
       <signal enb="0" static="0" field_type="RWLD1S" side_effect="0">RD_WR_LD_1_SHOT_MULTI_BIT</signal>
       <input load="RD_WR_LD_1_SHOT_MULTI_BIT_LD">RD_WR_LD_1_SHOT_MULTI_BIT_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <modified time="0"/>
@@ -259,15 +262,15 @@
       <signal enb="0" static="0" field_type="RWLD1S" side_effect="0">RD_WR_LD_1_SHOT_BYTE_CROSS</signal>
       <input load="RD_WR_LD_1_SHOT_BYTE_CROSS_LD">RD_WR_LD_1_SHOT_BYTE_CROSS_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multi byte.</description>
     </range>
     <range start="17" stop="27">
       <modified time="0"/>
-      <name>BYTE_CROSS_SKEW</name>
+      <name>BYTE_CROSS_SKEWED</name>
       <signal enb="0" static="0" field_type="RWLD1S" side_effect="0">RD_WR_LD_1_SHOT_BYTE_CROSS_SKEW</signal>
       <input load="RD_WR_LD_1_SHOT_BYTE_CROSS_SKEW_LD">RD_WR_LD_1_SHOT_BYTE_CROSS_SKEW_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
   <register nocode="0" dont_test="0" hide="0">
@@ -275,14 +278,14 @@
     <name modified="0">Read/Write Load 1 Shot 1</name>
     <address modified="0">28</address>
     <width modified="0">32</width>
-    <description modified="0"></description>
+    <description modified="0">Read/Write with a one shot generated on write of a 1, with data loaded when a control signal is asserted.</description>
     <range start="0" stop="0">
       <modified time="0"/>
-      <name>BIT</name>
+      <name>ONE_BIT</name>
       <signal enb="0" static="0" field_type="RWLD1S1" side_effect="0">BIT</signal>
       <input load="RD_WR_LD_1_SHOT_1_BIT_LD">RD_WR_LD_1_SHOT_1_BIT_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <modified time="0"/>
@@ -290,7 +293,7 @@
       <signal enb="0" static="0" field_type="RWLD1S1" side_effect="0">MULTI_BIT</signal>
       <input load="RD_WR_LD_1_SHOT_1_MULTI_BIT_LD">RD_WR_LD_1_SHOT_1_MULTI_BIT_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <modified time="0"/>
@@ -298,15 +301,15 @@
       <signal enb="0" static="0" field_type="RWLD1S1" side_effect="0">BYTE_CROSS</signal>
       <input load="RD_WR_LD_1_SHOT_1_BYTE_CROSS_LD">RD_WR_LD_1_SHOT_1_BYTE_CROSS_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multi byte.</description>
     </range>
     <range start="17" stop="27">
       <modified time="0"/>
-      <name>BYTE_CROSS_SKEW</name>
+      <name>BYTE_CROSS_SKEWED</name>
       <signal enb="0" static="0" field_type="W1CS1S1" side_effect="0">BYTE_CROSS_SKEW</signal>
       <input>RD_WR_LD_1_SHOT_1_BYTE_CROSS_SKEW_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
   <register nocode="0" dont_test="0" hide="0">
@@ -314,14 +317,14 @@
     <name modified="0">Read/Write Set</name>
     <address modified="0">32</address>
     <width modified="0">32</width>
-    <description modified="0"></description>
+    <description modified="0">Read/Write, bits set when corresponding bit on the input signal is set.</description>
     <range start="0" stop="0">
       <modified time="0"/>
       <name>ONE_BIT</name>
       <signal enb="0" static="0" field_type="RWS" side_effect="0">ONE_BIT</signal>
       <input>RD_WR_SET_ONE_BIT_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <modified time="0"/>
@@ -329,7 +332,7 @@
       <signal enb="0" static="0" field_type="RWS" side_effect="0">MULTI_BIT</signal>
       <input>RD_WR_SET_MULTI_BIT_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <modified time="0"/>
@@ -337,15 +340,15 @@
       <signal enb="0" static="0" field_type="RWS" side_effect="0">BYTE_CROSS</signal>
       <input>RD_WR_SET_BYTE_CROSS_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multi byte.</description>
     </range>
     <range start="17" stop="27">
       <modified time="0"/>
-      <name>BYTE_CROSS_SKEW</name>
+      <name>BYTE_CROSS_SKEWED</name>
       <signal enb="0" static="0" field_type="RWS" side_effect="0">BYTE_CROSS_SKEW</signal>
       <input>RD_WR_SET_BYTE_CROSS_SKEW_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
   <register nocode="0" dont_test="0" hide="0">
@@ -353,14 +356,14 @@
     <name modified="0">Read/Write Set 1 Shot</name>
     <address modified="0">36</address>
     <width modified="0">32</width>
-    <description modified="0"></description>
+    <description modified="0">Read/Write, bits set when corresponding bit on the input signal is set, one shot signal generated on any write.</description>
     <range start="0" stop="0">
       <modified time="0"/>
       <name>ONE_BIT</name>
       <signal enb="0" static="0" field_type="RWS1S" side_effect="0">ONE_BIT</signal>
       <input>RD_WR_SET_1_SHOT_ONE_BIT_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <modified time="0"/>
@@ -368,7 +371,7 @@
       <signal enb="0" static="0" field_type="RWS1S" side_effect="0">MULTI_BIT</signal>
       <input>RD_WR_SET_1_SHOT_MULTI_BIT_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <modified time="0"/>
@@ -376,15 +379,15 @@
       <signal enb="0" static="0" field_type="RWS1S" side_effect="0">BYTE_CROSS</signal>
       <input load="RD_WR_SET_1_SHOT_BYTE_CROSS_LD">RD_WR_SET_1_SHOT_BYTE_CROSS_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multi byte.</description>
     </range>
     <range start="17" stop="27">
       <modified time="0"/>
-      <name>BYTE_CROSS_SKEW</name>
+      <name>BYTE_CROSS_SKEWED</name>
       <signal enb="0" static="0" field_type="RWS1S" side_effect="0">BYTE_CROSS_SKEW</signal>
       <input>RD_WR_SET_1_SHOT_BYTE_CROSS_SKEW_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
   <register nocode="0" dont_test="0" hide="0">
@@ -392,14 +395,14 @@
     <name modified="0">Read/Write Set 1 Shot 1</name>
     <address modified="0">40</address>
     <width modified="0">32</width>
-    <description modified="0"></description>
+    <description modified="0">Read/Write, bits set when corresponding bit on the input signal is set, one shot signal generated on a write of a 1.</description>
     <range start="0" stop="0">
       <modified time="0"/>
       <name>ONE_BIT</name>
       <signal enb="0" static="0" field_type="RWS1S1" side_effect="0">ONE_BIT</signal>
       <input>RD_WR_SET_1_SHOT_1_ONE_BIG_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <modified time="0"/>
@@ -407,7 +410,7 @@
       <signal enb="0" static="0" field_type="RWS1S1" side_effect="0">MULTI_BIT</signal>
       <input>RD_WR_SET_1_SHOT_1_MULTI_BIT_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <modified time="0"/>
@@ -415,15 +418,16 @@
       <signal enb="0" static="0" field_type="RWS1S1" side_effect="0">BYTE_CROSS</signal>
       <input>RD_WR_SET_1_SHOT_1_BYTE_CROSS_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multi byte.
+</description>
     </range>
     <range start="17" stop="27">
       <modified time="0"/>
-      <name>BYTE_CROSS_SKEW</name>
+      <name>BYTE_CROSS_SKEWED</name>
       <signal enb="0" static="0" field_type="RWS1S1" side_effect="0">BYTE_CROSS_SKEW</signal>
       <input>RD_WR_SET_1_SHOT_1_BYTE_CROSS_SKEW_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
   <register nocode="0" dont_test="0" hide="0">
@@ -431,14 +435,14 @@
     <name modified="0">Write 1 to Clear Set</name>
     <address modified="0">44</address>
     <width modified="0">32</width>
-    <description modified="0"></description>
+    <description modified="0">Write one to clear, bits are set based on input signal.</description>
     <range start="0" stop="0">
       <modified time="0"/>
       <name>ONE_BIT</name>
       <signal enb="0" static="0" field_type="W1CS" side_effect="0">ONE_BIT</signal>
       <input>WR_1_TO_CLR_SET_ONE_BIT_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <modified time="0"/>
@@ -446,7 +450,7 @@
       <signal enb="0" static="0" field_type="W1CS" side_effect="0">MULTI_BIT</signal>
       <input>WR_1_TO_CLR_SET_MULTI_BIT_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <modified time="0"/>
@@ -454,15 +458,15 @@
       <signal enb="0" static="0" field_type="W1CS" side_effect="0">BYTE_CROSS</signal>
       <input>WR_1_TO_CLR_SET_BYTE_CROSS_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multi byte.</description>
     </range>
     <range start="17" stop="27">
       <modified time="0"/>
-      <name>BYTE_CROSS_SKEW</name>
+      <name>BYTE_CROSS_SKEWED</name>
       <signal enb="0" static="0" field_type="W1CS" side_effect="0">BYTE_CROSS_SKEW</signal>
       <input>WR_1_TO_CLR_SET_BYTE_CROSS_SKEW_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
   <register nocode="0" dont_test="0" hide="0">
@@ -470,14 +474,14 @@
     <name modified="0">Write 1 to Clear 1 Shot</name>
     <address modified="0">48</address>
     <width modified="0">32</width>
-    <description modified="0"></description>
+    <description modified="0">Write one to clear, bits are set based on input signal, one shot generated on any write.</description>
     <range start="0" stop="0">
       <modified time="0"/>
       <name>ONE_BIT</name>
       <signal enb="0" static="0" field_type="W1CS1S" side_effect="0">ONE_BIT</signal>
       <input>WR_1_TO_CLR_1_SHOT_ONE_BIT_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <modified time="0"/>
@@ -485,7 +489,7 @@
       <signal enb="0" static="0" field_type="W1CS1S" side_effect="0">MULTI_BIT</signal>
       <input>WR_1_TO_CLR_1_SHOT_MULTI_BIT_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <modified time="0"/>
@@ -493,15 +497,15 @@
       <signal enb="0" static="0" field_type="W1CS1S" side_effect="0">BYTE_CROSS</signal>
       <input>WR_1_TO_CLR_1_SHOT_BYTE_CROSS_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multi byte.</description>
     </range>
     <range start="17" stop="27">
       <modified time="0"/>
-      <name>BYTE_CROSS_SKEW</name>
+      <name>BYTE_CROSS_SKEWED</name>
       <signal enb="0" static="0" field_type="W1CS1S" side_effect="0">BYTE_CROSS_SKEW</signal>
       <input>WR_1_TO_CLR_1_SHOT_BYTE_CROSS_SKEW_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
   <register nocode="0" dont_test="0" hide="0">
@@ -509,14 +513,14 @@
     <name modified="0">Write 1 to Clear Set 1 Shot 1</name>
     <address modified="0">52</address>
     <width modified="0">32</width>
-    <description modified="0"></description>
+    <description modified="0">Write one to clear, bits are set based on input signal, one shot generated on a write of 1.</description>
     <range start="0" stop="0">
       <modified time="0"/>
       <name>ONE_BIT</name>
       <signal enb="0" static="0" field_type="W1CS1S1" side_effect="0">ONE_BIT</signal>
       <input>WR_1_TO_CLR_SET_1_SHOT_1_ONE_BIT_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <modified time="0"/>
@@ -524,7 +528,7 @@
       <signal enb="0" static="0" field_type="W1CS1S1" side_effect="0">MULTI_BIT</signal>
       <input>WR_1_TO_CLR_SET_1_SHOT_1_MULTI_BIT_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <modified time="0"/>
@@ -532,15 +536,15 @@
       <signal enb="0" static="0" field_type="W1CS1S1" side_effect="0">BYTE_CROSS</signal>
       <input load="WR_1_TO_CLR_SET_1_SHOT_1_BYTE_CROSS_LD">WR_1_TO_CLR_SET_1_SHOT_1_BYTE_CROSS_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multi byte.</description>
     </range>
     <range start="17" stop="27">
       <modified time="0"/>
-      <name>BYTE_CROSS_SKEW</name>
+      <name>BYTE_CROSS_SKEWED</name>
       <signal enb="0" static="0" field_type="W1CS1S1" side_effect="0">BYTE_CROSS_SKEW</signal>
       <input>WR_1_TO_CLR_SET_1_SHOT_1_BYTE_CROSS_SKEW_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
   <register nocode="0" dont_test="0" hide="0">
@@ -548,14 +552,14 @@
     <name modified="0">Write 1 to Clear Load</name>
     <address modified="0">56</address>
     <width modified="0">32</width>
-    <description modified="0"></description>
+    <description modified="0">Write one to clear, value is loaded from an input signal based on a control signal.</description>
     <range start="0" stop="0">
       <modified time="0"/>
       <name>ONE_BIT</name>
       <signal enb="0" static="0" field_type="W1CLD" side_effect="0">ONE_BIT</signal>
       <input load="WR_1_TO_CLR_LD_ONE_BIT_LD">WR_1_TO_CLR_LD_ONE_BIT_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <modified time="0"/>
@@ -563,7 +567,7 @@
       <signal enb="0" static="0" field_type="W1CLD" side_effect="0">MULTI_BIT</signal>
       <input load="WR_1_TO_CLR_LD_MULTI_BIT_LD">WR_1_TO_CLR_LD_MULTI_BIT_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <modified time="0"/>
@@ -571,15 +575,15 @@
       <signal enb="0" static="0" field_type="W1CLD" side_effect="0">BYTE_CROSS</signal>
       <input load="WR_1_TO_CLR_LD_BYTE_CROSS_LD">WR_1_TO_CLR_LD_BYTE_CROSS_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multi byte.</description>
     </range>
     <range start="17" stop="27">
       <modified time="0"/>
-      <name>BYTE_CROSS_SKEW</name>
+      <name>BYTE_CROSS_SKEWED</name>
       <signal enb="0" static="0" field_type="W1CLD" side_effect="0">BYTE_CROSS_SKEW</signal>
       <input load="WR_1_TO_CLR_LD_BYTE_CROSS_SKEW_LD">WR_1_TO_CLR_LD_BYTE_CROSS_SKEW_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
   <register nocode="0" dont_test="0" hide="0">
@@ -587,14 +591,14 @@
     <name modified="0">Write 1 to Clear Load 1 Shot</name>
     <address modified="0">60</address>
     <width modified="0">32</width>
-    <description modified="0"></description>
+    <description modified="0">Write one to clear, value is loaded from an input signal based on a control signal, one shot generated on any write.</description>
     <range start="0" stop="0">
       <modified time="0"/>
       <name>ONE_BIT</name>
       <signal enb="0" static="0" field_type="W1CLD1S" side_effect="0">ONE_BIT</signal>
       <input load="WR_1_TO_CLR_LD_1_SHOT_ONE_BIT_LD">WR_1_TO_CLR_LD_1_SHOT_ONE_BIT_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <modified time="0"/>
@@ -602,7 +606,7 @@
       <signal enb="0" static="0" field_type="W1CLD1S" side_effect="0">MULTI_BIT</signal>
       <input load="WR_1_TO_CLR_LD_1_SHOT_MULTI_BIT_LD">WR_1_TO_CLR_LD_1_SHOT_MULTI_BIT_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <modified time="0"/>
@@ -610,15 +614,15 @@
       <signal enb="0" static="0" field_type="W1CLD1S" side_effect="0">BYTE_CROSS</signal>
       <input load="WR_1_TO_CLR_LD_1_SHOT_BYTE_CROSS_LD">WR_1_TO_CLR_LD_1_SHOT_BYTE_CROSS_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multi byte.</description>
     </range>
     <range start="17" stop="27">
       <modified time="0"/>
-      <name>BYTE_CROSS_SKEW</name>
+      <name>BYTE_CROSS_SKEWED</name>
       <signal enb="0" static="0" field_type="W1CLD1S" side_effect="0">BYTE_CROSS_SKEW</signal>
       <input load="WR_1_TO_CLR_LD_1_SHOT_BYTE_CROSS_SKEW_LD">WR_1_TO_CLR_LD_1_SHOT_BYTE_CROSS_SKEW_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
   <register nocode="0" dont_test="0" hide="0">
@@ -626,14 +630,14 @@
     <name modified="0">Write 1 to Clear Load 1 Shot 1</name>
     <address modified="0">64</address>
     <width modified="0">32</width>
-    <description modified="0"></description>
+    <description modified="0">Write one to clear, value is loaded from an input signal based on a control signal, one shot generated on a write of 1.</description>
     <range start="0" stop="0">
       <modified time="0"/>
       <name>ONE_BIT</name>
       <signal enb="0" static="0" field_type="W1CLD1S1" side_effect="0">ONE_BIT</signal>
       <input load="WR_1_TO_CLR_LD_1_SHOT_1_ONE_BIT_LD">WR_1_TO_CLR_LD_1_SHOT_1_ONE_BIT_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <modified time="0"/>
@@ -641,7 +645,7 @@
       <signal enb="0" static="0" field_type="W1CLD1S1" side_effect="0">MULTI_BIT</signal>
       <input load="WR_1_TO_CLR_LD_1_SHOT_1_MULTI_BIT_LD">WR_1_TO_CLR_LD_1_SHOT_1_MULTI_BIT_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <modified time="0"/>
@@ -649,15 +653,85 @@
       <signal enb="0" static="0" field_type="W1CLD1S1" side_effect="0">BYTE_CROSS</signal>
       <input load="WR_1_TO_CLR_LD_1_SHOT_1_BYTE_CROSS_LD">WR_1_TO_CLR_LD_1_SHOT_1_BYTE_CROSS_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multiple byte.</description>
     </range>
     <range start="17" stop="27">
       <modified time="0"/>
-      <name>BYTE_CROSS_SKEW</name>
+      <name>BYTE_CROSS_SKEWED</name>
       <signal enb="0" static="0" field_type="W1CLD1S1" side_effect="0">BYTE_CROSS_SKEW</signal>
       <input load="WR_1_TO_CLR_LD_1_SHOT_1_BYTE_CROSS_SKEW_LD">WR_1_TO_CLR_LD_1_SHOT_1_BYTE_CROSS_SKEW_IN</input>
       <reset type="0">0</reset>
-      <description></description>
+      <description>Multi byte, unaligned to a byte boundary.</description>
+    </range>
+  </register>
+  <register nocode="0" dont_test="0" hide="0">
+    <token modified="0">WR_1_TO_SET</token>
+    <name modified="0">Write 1 to Set</name>
+    <address modified="0">68</address>
+    <width modified="0">32</width>
+    <description modified="0">Write 1 to Set</description>
+    <range start="0" stop="0">
+      <modified time="0"/>
+      <name>ONE_BIT</name>
+      <signal enb="0" static="0" field_type="W1S" side_effect="0">WR_1_TO_SET_</signal>
+      <reset type="0">0</reset>
+      <description>Single bit.</description>
+    </range>
+    <range start="1" stop="7">
+      <modified time="0"/>
+      <name>MULTI_BIT</name>
+      <signal enb="0" static="0" field_type="W1S" side_effect="0">MULTI_BIT</signal>
+      <reset type="0">0</reset>
+      <description>Multiple bit within a single byte.</description>
+    </range>
+    <range start="8" stop="15">
+      <modified time="0"/>
+      <name>BYTE_CROSS</name>
+      <signal enb="0" static="0" field_type="W1S" side_effect="0">BYTE_CROSS</signal>
+      <reset type="0">0</reset>
+      <description>Multi byte.</description>
+    </range>
+    <range start="17" stop="27">
+      <modified time="0"/>
+      <name>BYTE_CROSS_SKEWED</name>
+      <signal enb="0" static="0" field_type="W1S" side_effect="0">BYTE_CROSS_SKEW</signal>
+      <reset type="0">0</reset>
+      <description>Multi byte, unaligned to a byte boundary.</description>
+    </range>
+  </register>
+  <register nocode="0" dont_test="0" hide="0">
+    <token modified="0">WR_ONLY</token>
+    <name modified="0">Write Only</name>
+    <address modified="0">72</address>
+    <width modified="0">32</width>
+    <description modified="0">Write only.</description>
+    <range start="0" stop="0">
+      <modified time="0"/>
+      <name>ONE_BIT</name>
+      <signal enb="0" static="0" field_type="WO" side_effect="0">ONE_BIT</signal>
+      <reset type="0">0</reset>
+      <description>Single bit.</description>
+    </range>
+    <range start="1" stop="7">
+      <modified time="0"/>
+      <name>MULTI_BIT</name>
+      <signal enb="0" static="0" field_type="WO" side_effect="0">MULTI_BIT</signal>
+      <reset type="0">0</reset>
+      <description>Multiple bit within a single byte.</description>
+    </range>
+    <range start="8" stop="15">
+      <modified time="0"/>
+      <name>BYTE_CROSS</name>
+      <signal enb="0" static="0" field_type="WO" side_effect="0">BYTE_CROSS</signal>
+      <reset type="0">0</reset>
+      <description>Multi byte.</description>
+    </range>
+    <range start="17" stop="27">
+      <modified time="0"/>
+      <name>BYTE_CROSS_SKEWED</name>
+      <signal enb="0" static="0" field_type="WO" side_effect="0">BYTE_CROSS_SKEW</signal>
+      <reset type="0">0</reset>
+      <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
 </module>
