@@ -100,6 +100,7 @@ class RegWriter(object):
                     (self.dbase.byte_strobe_active_level,
                      self.dbase.byte_strobe_name))
         ofile.write('    <wr>%s</wr>\n' % self.dbase.write_strobe_name)
+        ofile.write('    <ack>%s</ack>\n' % self.dbase.acknowledge_name)
         ofile.write('    <rd>%s</rd>\n' % self.dbase.read_strobe_name)
         ofile.write('    <clk>%s</clk>\n' % self.dbase.clock_name)
         ofile.write('    <reset active="%d">%s</reset>\n' %

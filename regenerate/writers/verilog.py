@@ -45,7 +45,7 @@ def bin(val, width):
     return "%d'h%x" % (width, val)
 
 
-def get_width(field, start=-1, stop=-1):
+def get_width(field, start=-1, stop=-1, force_index=False):
     """
     Returns with width if the bit range is greater than one.
     """
@@ -53,7 +53,7 @@ def get_width(field, start=-1, stop=-1):
         start = field.start_position
         stop = field.stop_position
 
-    if field.width == 1:
+    if field.width == 1 and not force_index:
         signal = ""
     elif start == stop:
         signal = "[%d]" % stop
@@ -261,7 +261,7 @@ class Verilog(WriterBase):
 
     def _reset_value(self, field, start, stop):
         if field.reset_type == BitField.RESET_NUMERIC:
-            return "%d'h%x" % (((stop - start) + 1), (field.reset_value >> start) & 0xff)
+            return "%d'h%x" % (((stop - start) + 1), (field.reset_value >> (start - field.start_position)) & 0xff)
         elif field.reset_type == BitField.RESET_INPUT:
             return "%s[%d:%d]" % (field.reset_input, stop, start)
         else:
@@ -288,8 +288,18 @@ class Verilog(WriterBase):
         self._used_types.add(field.field_type)
 
         for (start, stop) in self._break_on_byte_boundaries(field.start_position, field.stop_position):
+
+            if start >= self._data_width:
+                write_address = address + ((start / self._data_width) * (self._data_width / 8))
+            else:
+                write_address = address
+
+            bus_start = start % self._data_width
+            bus_stop = stop % self._data_width
+            
             width = (stop - start) + 1
 
+            bus_index = get_width(field, bus_start, bus_stop, True)
             index = get_width(field, start, stop)
             instance = "r%02x_%s_%d" % (address, field_name, start)
             
@@ -301,10 +311,12 @@ class Verilog(WriterBase):
             self._ofile.write('  (\n')
             self._ofile.write('    .CLK   (%s),\n' % self._clock)
             self._ofile.write('    .RSTn  (%s),\n' % self._reset)
+
+            byte_lane = (start % self._data_width) / 8;
             if not self._is_read_only[field.field_type]:
-                self._ofile.write('    .WE    (write_r%02x),\n' % address)
-                self._ofile.write('    .DI    (%s%s),\n' % (self._data_in, index))
-                self._ofile.write('    .BE    (%s[%d]),\n' % (self._byte_enables, start/8))
+                self._ofile.write('    .WE    (write_r%02x),\n' % write_address)
+                self._ofile.write('    .DI    (%s%s),\n' % (self._data_in, bus_index))
+                self._ofile.write('    .BE    (%s[%d]),\n' % (self._byte_enables, byte_lane))
             if self._has_rd[field.field_type]:
                 self._ofile.write('    .RD    (%s),\n' % self._read_strobe)
             if self._has_data_out[field.field_type]:
@@ -360,6 +372,7 @@ class Verilog(WriterBase):
         self._write_address_selects()
         self._write_output_assignments()
         self._write_register_rtl_code()
+        self._write_acknowledge()
         self._define_outputs()
         self._write_trailer()
         self._write_register_modules()
@@ -501,6 +514,7 @@ class Verilog(WriterBase):
 
         port_list.append(("output", '[%d:0]' % (self._data_width - 1),
                           self._data_out, "Data out"))
+        port_list.append(("output reg", '', self._dbase.acknowledge_name, "Acknowledge"))
 
         for key in reset_set:
             item = reset_set[key]
@@ -714,10 +728,28 @@ class Verilog(WriterBase):
         self._write_output_mux(keys, self._addr,
                                self._addr_width, self._data_out)
 
+    def _write_acknowledge(self):
+        self._ofile.write("\nreg prev_write, prev_read;\n\n")
+        self._ofile.write('\nalways @(posedge %s or %s) begin\n' %
+                          (self._clock, self._reset_edge))
+        self._ofile.write('  if (%s) begin\n' % self._reset_condition)
+        self._ofile.write("     prev_write <= 1'b0;\n")
+        self._ofile.write("     prev_read  <= 1'b0;\n")
+        self._ofile.write("     %s <= 1'b0;\n" % self._dbase.acknowledge_name);
+        self._ofile.write('  end else begin\n')
+        self._ofile.write("     prev_write <= %s;\n" % self._dbase.write_strobe_name)
+        self._ofile.write("     prev_read  <= %s;\n" % self._dbase.read_strobe_name)
+        self._ofile.write("     %s <= (~prev_write & %s) | (~prev_read & %s);\n" %
+                          (self._dbase.acknowledge_name,
+                           self._dbase.write_strobe_name,
+                           self._dbase.read_strobe_name));
+        self._ofile.write('  end\nend\n\n')
+
     def _write_output_mux(self, out_address, addr_bus, addr_width, data_out):
         """
         Writes the output mux that controls the selection of the output data
         """
+        
         self._ofile.write('\nalways @(posedge %s or %s) begin\n' %
                           (self._clock, self._reset_edge))
         self._ofile.write('  if (%s) begin\n' % self._reset_condition)
@@ -823,7 +855,7 @@ class Verilog2001(Verilog):
         commenter = textwrap.TextWrapper(width=self._max_column-52)
 
         max_len = max([len(i[2]) for i in ports]) + 2
-        fmt_string = "  %%-6s %%-7s %%-%ds // %%s\n" % max_len
+        fmt_string = "  %%-10s %%-7s %%-%ds // %%s\n" % max_len
         
         for data in ports:
             comment = csep.join(commenter.wrap(data[3]))
