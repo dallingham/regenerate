@@ -286,16 +286,18 @@ class Verilog(WriterBase):
         field_name = field.field_name.lower()
         cell_name = self._cell_name[field.field_type]
         self._used_types.add(field.field_type)
+        bytes = self._data_width / 8
 
         for (start, stop) in self._break_on_byte_boundaries(field.start_position, field.stop_position):
 
             if start >= self._data_width:
                 write_address = address + ((start / self._data_width) * (self._data_width / 8))
             else:
-                write_address = address
+                write_address = (address / bytes) * bytes
 
-            bus_start = start % self._data_width
-            bus_stop = stop % self._data_width
+            reg_start_bit = (address * 8) % (self._data_width)
+            bus_start = start % self._data_width + reg_start_bit
+            bus_stop = stop % self._data_width + reg_start_bit
             
             width = (stop - start) + 1
 
@@ -312,7 +314,7 @@ class Verilog(WriterBase):
             self._ofile.write('    .CLK   (%s),\n' % self._clock)
             self._ofile.write('    .RSTn  (%s),\n' % self._reset)
 
-            byte_lane = (start % self._data_width) / 8;
+            byte_lane = (reg_start_bit + start) / 8
             if not self._is_read_only[field.field_type]:
                 self._ofile.write('    .WE    (write_r%02x),\n' % write_address)
                 self._ofile.write('    .DI    (%s%s),\n' % (self._data_in, bus_index))
@@ -340,9 +342,11 @@ class Verilog(WriterBase):
         start = max(field.start_position, lower)
         stop = min(field.stop_position, lower + size - 1)
 
-        address = register.address + (int(lower / width) * (width / 8))
+        bytes = size / 8
+        address = (register.address / bytes) * bytes
+        bit_offset = (register.address * 8) % size
 
-        return (field, start, stop, address, register)
+        return (field, start + bit_offset, stop + bit_offset, address, register)
 
     def __generate_group_list(self, size):
         """
@@ -693,7 +697,7 @@ class Verilog(WriterBase):
         for key in keys:
             current_pos = self._data_width - 1
             comma = False
-            upper = self._data_width-1
+            upper = self._data_width - 1
             self._ofile.write("wire [%d:0] r%02x = {" % (upper, key))
 
             for field_info in sorted(self._word_fields[key],
