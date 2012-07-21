@@ -40,7 +40,7 @@ class FieldInfo:
         self.reset = 0
         self.name = ""
 
-    def do_desc(self, text):
+    def do_reset(self, text):
         """
         Strips off begining and ending quotes from the line of text and assigns
         the value to desc field.
@@ -50,7 +50,7 @@ class FieldInfo:
             text = text[:-1]
         if text[0] == '"':
             text = text[1:]
-        self.reset = parse_hex_value(groups[3])
+        self.reset = parse_hex_value(text)
 
     def do_desc(self, text):
         """
@@ -135,7 +135,6 @@ class DenaliRDLParser:
                 field.stop = int(groups[1])
                 field.start = int(groups[2])
                 field_list.append(field)
-                print field.name, field_list
                 continue
 
             match = re.match("\s*}\s*([_A-Za-z_0-9]+)\s*@([0-9A-Fa-fx]+)\s*;",
@@ -153,9 +152,9 @@ class DenaliRDLParser:
         Converts the extracted data into register and bit field values, and
         loads the new data into the database.
         """
-        lookup = {'rw': BitField.READ_WRITE,
-                  'w': BitField.WRITE_ONLY,
-                  'r': BitField.READ_ONLY}
+        lookup = {'rw': BitField.TYPE_READ_WRITE,
+                  'w': BitField.TYPE_WRITE_ONLY,
+                  'r': BitField.TYPE_READ_ONLY}
 
         name_count = {}
         for (reg_name, addr_txt, field_list) in reg_list:
@@ -169,7 +168,6 @@ class DenaliRDLParser:
 
         for (reg_name, addr_txt, field_list) in reg_list:
             for item in field_list:
-                print "  >>", item.name
                 if item.name.startswith("OBSOLETE"):
                     continue
 
@@ -199,7 +197,6 @@ class DenaliRDLParser:
                 else:
                     register.width = 64
 
-                print "Adding register"
                 self.dbase.add_register(register)
 
                 field = BitField()
