@@ -100,6 +100,13 @@ class DenaliRDLParser:
         input_file = open(filename)
 
         for line in input_file:
+            match = re.match("addrmap\s+(.*)\s*{\s*default\s+regwidth\s*=\s*(\d+)\s*;", line)
+            if match:
+                groups = match.groups()
+                self.dbase.descriptive_title = groups[0].strip()
+                self.dbase.data_bus_width = int(groups[1]);
+                continue
+
             match = re.match("\s*reg\s+{", line)
             if match:
                 field_list = []
@@ -166,6 +173,8 @@ class DenaliRDLParser:
         duplicates = set([key for key in name_count if name_count[key] > 1])
         current_duplicates = {}
 
+        offset = self.dbase.data_bus_width / 8
+
         for (reg_name, addr_txt, field_list) in reg_list:
             for item in field_list:
                 if item.name.startswith("OBSOLETE"):
@@ -173,8 +182,8 @@ class DenaliRDLParser:
 
                 register = Register()
                 register.address = int(addr_txt, 16) + (item.start / 8)
-                delta = (register.address % 4) * 8
-                
+                delta = (register.address % offset) * 8
+
                 if item.name in duplicates:
                     if item.name in current_duplicates:
                         index = current_duplicates[item.name] + 1

@@ -1108,6 +1108,7 @@ class MainWindow(object):
         self.__instance_obj.set_model(self.__instance_model)
         for instance in self.dbase.instances:
             self.__instance_model.append_instance(instance)
+        self.redraw()
         self.__skip_changes = False
 
     def open_xml(self, name, load=True):
