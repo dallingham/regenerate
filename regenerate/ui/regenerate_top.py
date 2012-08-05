@@ -250,6 +250,7 @@ class MainWindow(object):
         self.__write_data_obj = self.__builder.get_object('write_data_bus')
         self.__read_data_obj = self.__builder.get_object('read_data_bus')
         self.__write_strobe_obj = self.__builder.get_object('write_strobe')
+        self.__ack_obj = self.__builder.get_object('ack')
         self.__read_strobe_obj = self.__builder.get_object('read_strobe')
         self.__byte_en_obj = self.__builder.get_object('byte_en_signal')
         self.__address_bus_obj = self.__builder.get_object('address_bus')
@@ -1107,6 +1108,7 @@ class MainWindow(object):
         self.__instance_obj.set_model(self.__instance_model)
         for instance in self.dbase.instances:
             self.__instance_model.append_instance(instance)
+        self.redraw()
         self.__skip_changes = False
 
     def open_xml(self, name, load=True):
@@ -1233,6 +1235,7 @@ class MainWindow(object):
         self.__write_data_obj.set_text(self.dbase.write_data_name)
         self.__read_data_obj.set_text(self.dbase.read_data_name)
         self.__write_strobe_obj.set_text(self.dbase.write_strobe_name)
+        self.__ack_obj.set_text(self.dbase.acknowledge_name)
         self.__read_strobe_obj.set_text(self.dbase.read_strobe_name)
         self.__byte_en_obj.set_text(self.dbase.byte_strobe_name)
 
@@ -1332,6 +1335,11 @@ class MainWindow(object):
 
     def on_write_strobe_changed(self, obj):
         self.dbase.write_strobe_name = obj.get_text()
+        self.__set_module_ports_warn_flag()
+        self.set_modified()
+
+    def on_ack_changed(self, obj):
+        self.dbase.acknowledge_name = obj.get_text()
         self.__set_module_ports_warn_flag()
         self.set_modified()
 
@@ -1546,6 +1554,7 @@ class MainWindow(object):
             (self.__read_data_obj, "read data"),
             (self.__byte_en_obj, "byte enables"),
             (self.__write_strobe_obj, "write strobe"),
+            (self.__ack_obj, "acknowledge"),
             (self.__address_bus_obj, "address bus"))
 
         if not self.__loading_project:

@@ -169,6 +169,7 @@ class UVM_Registers(WriterBase):
                 else:
                     lsb = field.start_position
                 access = access_map[field.field_type]
+		print access, field.field_type,field.field_name
                 volatile = field.input_signal != ""
                 has_reset = 1
                 if field.reset_type == BitField.RESET_PARAMETER:
@@ -185,6 +186,7 @@ class UVM_Registers(WriterBase):
                 cfile.write('      uvm_resource_db #(bit)::set({"REG::", get_full_name()}, "NO_REG_HW_RESET_TEST", 1);\n')
                 cfile.write('      uvm_resource_db #(bit)::set({"REG::", get_full_name()}, "NO_REG_BIT_BASH_TEST", 1);\n')
 
+            cfile.write('\n      reset();\n')
             cfile.write('\n    endfunction : build\n\n')
             cfile.write('  endclass : %s\n\n' % rname)
             cfile.write('/*!@}*/\n')
@@ -255,7 +257,8 @@ class UVM_Registers(WriterBase):
             reg = self._dbase.get_register(key)
 
         cfile.write("\n")
-        cfile.write('      default_map = create_map("default_map", \'h0, 4, UVM_LITTLE_ENDIAN, 1);\n\n')
+        cfile.write('      default_map = create_map("default_map", \'h0, %d, UVM_LITTLE_ENDIAN, 1);\n\n' % 
+	            (self._data_width / 8))
         for key in self._dbase.get_keys():
             reg = self._dbase.get_register(key)
             cfile.write('      default_map.add_reg(%s, \'h%04x, "RW");\n' % (reg.token.lower(), reg.address))

@@ -40,6 +40,18 @@ class FieldInfo:
         self.reset = 0
         self.name = ""
 
+    def do_reset(self, text):
+        """
+        Strips off begining and ending quotes from the line of text and assigns
+        the value to desc field.
+        """
+        text = text.strip()
+        if text[-1] == '"':
+            text = text[:-1]
+        if text[0] == '"':
+            text = text[1:]
+        self.reset = parse_hex_value(text)
+
     def do_desc(self, text):
         """
         Strips off begining and ending quotes from the line of text and assigns
@@ -88,6 +100,13 @@ class DenaliRDLParser:
         input_file = open(filename)
 
         for line in input_file:
+            match = re.match("addrmap\s+(.*)\s*{\s*default\s+regwidth\s*=\s*(\d+)\s*;", line)
+            if match:
+                groups = match.groups()
+                self.dbase.descriptive_title = groups[0].strip()
+                self.dbase.data_bus_width = int(groups[1]);
+                continue
+
             match = re.match("\s*reg\s+{", line)
             if match:
                 field_list = []
@@ -115,7 +134,17 @@ class DenaliRDLParser:
                 field_list.append(field)
                 continue
 
-            match = re.match("\s*}\s*([A-Za-z_0-9]+)\s*@([0-9A-Fa-fx]+)\s*;",
+            match = re.match("\s*}\s*([^[]+)\[(\d+):(\d+)\]\s*;",
+                             line)
+            if match:
+                groups = match.groups()
+                field.name = groups[0].strip()
+                field.stop = int(groups[1])
+                field.start = int(groups[2])
+                field_list.append(field)
+                continue
+
+            match = re.match("\s*}\s*([_A-Za-z_0-9]+)\s*@([0-9A-Fa-fx]+)\s*;",
                              line)
             if match:
                 groups = match.groups()
@@ -130,9 +159,9 @@ class DenaliRDLParser:
         Converts the extracted data into register and bit field values, and
         loads the new data into the database.
         """
-        lookup = {'rw': BitField.READ_WRITE,
-                  'w': BitField.WRITE_ONLY,
-                  'r': BitField.READ_ONLY}
+        lookup = {'rw': BitField.TYPE_READ_WRITE,
+                  'w': BitField.TYPE_WRITE_ONLY,
+                  'r': BitField.TYPE_READ_ONLY}
 
         name_count = {}
         for (reg_name, addr_txt, field_list) in reg_list:
@@ -144,15 +173,23 @@ class DenaliRDLParser:
         duplicates = set([key for key in name_count if name_count[key] > 1])
         current_duplicates = {}
 
+        offset = self.dbase.data_bus_width / 8
+
         for (reg_name, addr_txt, field_list) in reg_list:
+            register = Register()
+            register.address = int(addr_txt, 16)
+            register.register_name = reg_name
+            register.token = reg_name
+            register.description = reg_name
+            register.width = self.dbase.data_bus_width
+            print register.width
+            
             for item in field_list:
                 if item.name.startswith("OBSOLETE"):
                     continue
 
-                register = Register()
-                register.address = int(addr_txt, 16) + (item.start / 8)
-                delta = (register.address % 4) * 8
-                
+                delta = (register.address % offset) * 8
+
                 if item.name in duplicates:
                     if item.name in current_duplicates:
                         index = current_duplicates[item.name] + 1
@@ -162,18 +199,7 @@ class DenaliRDLParser:
                     name = "%s_%d" % (item.name, index)
                 else:
                     name = item.name
-                register.register_name = name
-                register.token = name
-                register.description = item.description
                 width = (item.stop - item.start) + 1
-                if width <= 8:
-                    register.width = 8
-                elif width <= 16:
-                    register.width = 16
-                elif width <= 32:
-                    register.width = 32
-                else:
-                    register.width = 64
 
                 self.dbase.add_register(register)
 

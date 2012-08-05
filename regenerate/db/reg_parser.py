@@ -520,10 +520,17 @@ class RegParser(object):
         """
         self.__db.write_strobe_name = text
 
+    def end_ack(self, text):
+        """
+        Called when the ack tag is terminated. The text value is assigned
+        to the database's acknowledge_name
+        """
+        self.__db.acknowledge_name = text
+
     def end_rd(self, text):
         """
         Called when the rd tag is terminated. The text value is assigned
-        to the database's write_strobe_name
+        to the database's read_strobe_name
         """
         self.__db.read_strobe_name = text
 

@@ -36,6 +36,7 @@ DEF_WR_NAME = "WR"
 DEF_RD_NAME = "RD"
 DEF_ADDR_NAME = "ADDR"
 DEF_BE_NAME = "BE"
+DEF_ACK_NAME = "ACK"
 
 class RegisterDb(object):
     """
@@ -55,6 +56,7 @@ class RegisterDb(object):
                                         DEF_RD_NAME)
         self.__addr = rules.get('rules', 'address_default', DEF_ADDR_NAME)
         self.__be = rules.get('rules', 'byte_strobe_default', DEF_BE_NAME)
+        self.__ack = rules.get('rule', 'ack_default', DEF_ACK_NAME)
         self.__module = "unnamed_regs"
 
         self.reset_active_level = 0
@@ -156,6 +158,21 @@ class RegisterDb(object):
 
     write_strobe_name = property(__get_write_strobe, __set_write_strobe, None,
                                  "Name of the write strobe")
+
+    def __get_ack(self):
+        """
+        Gets __ack, which is accessed via the acknowledge_name property
+        """
+        return self.__ack
+
+    def __set_ack(self, name):
+        """
+        Sets __ack, which is accessed via the acknowledge_name property
+        """
+        self.__ack = name.strip()
+
+    acknowledge_name = property(__get_ack, __set_ack, None,
+                                 "Name of the acknowledge")
 
     def __get_read_strobe(self):
         """
