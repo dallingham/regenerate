@@ -176,12 +176,18 @@ class DenaliRDLParser:
         offset = self.dbase.data_bus_width / 8
 
         for (reg_name, addr_txt, field_list) in reg_list:
+            register = Register()
+            register.address = int(addr_txt, 16)
+            register.register_name = reg_name
+            register.token = reg_name
+            register.description = reg_name
+            register.width = self.dbase.data_bus_width
+            print register.width
+            
             for item in field_list:
                 if item.name.startswith("OBSOLETE"):
                     continue
 
-                register = Register()
-                register.address = int(addr_txt, 16) + (item.start / 8)
                 delta = (register.address % offset) * 8
 
                 if item.name in duplicates:
@@ -193,18 +199,7 @@ class DenaliRDLParser:
                     name = "%s_%d" % (item.name, index)
                 else:
                     name = item.name
-                register.register_name = name
-                register.token = name
-                register.description = item.description
                 width = (item.stop - item.start) + 1
-                if width <= 8:
-                    register.width = 8
-                elif width <= 16:
-                    register.width = 16
-                elif width <= 32:
-                    register.width = 32
-                else:
-                    register.width = 64
 
                 self.dbase.add_register(register)
 

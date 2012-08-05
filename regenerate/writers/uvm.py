@@ -186,6 +186,7 @@ class UVM_Registers(WriterBase):
                 cfile.write('      uvm_resource_db #(bit)::set({"REG::", get_full_name()}, "NO_REG_HW_RESET_TEST", 1);\n')
                 cfile.write('      uvm_resource_db #(bit)::set({"REG::", get_full_name()}, "NO_REG_BIT_BASH_TEST", 1);\n')
 
+            cfile.write('\n      reset();\n')
             cfile.write('\n    endfunction : build\n\n')
             cfile.write('  endclass : %s\n\n' % rname)
             cfile.write('/*!@}*/\n')
