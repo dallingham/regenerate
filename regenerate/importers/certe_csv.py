@@ -144,7 +144,6 @@ class CerteCSVParser:
 
                 if f_width_col != -1:
                     width = parse_hex_value(data[col[FIELD_WIDTH]])
-                    print "WIDTH", width
                     if width == 0:
                         f_stop = f_start
                     else:

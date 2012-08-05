@@ -38,14 +38,14 @@ from preferences import Preferences
 from bit_list import BitModel, BitList, bits, reset_value
 from register_list import RegisterModel, RegisterList, build_define
 from instance_list import InstanceModel, InstanceList
-from regenerate.db import RegWriter, RegisterDb, Register, BitField, RegProject
+from regenerate.db import RegWriter, RegisterDb, Register, BitField, RegProject, LOGGER
 from regenerate.importers import IMPORTERS
 from regenerate.settings.paths import GLADE_TOP, INSTALL_PATH
 from regenerate.settings import ini
 from regenerate import PROGRAM_VERSION, PROGRAM_NAME
 from error_dialogs import ErrorMsg, WarnMsg, Question
 from project import ProjectModel, ProjectList, update_file
-from regenerate.db import TYPES, BFT_TYPE, BFT_INP, BFT_CTRL
+from regenerate.db import TYPES, BFT_TYPE, BFT_INP, BFT_CTRL, LOGGER
 
 # Attempt to load the optional WebKit and docutils package. Webkit provides
 # an HTML canvas that we can use to display formatted text, and docutils
@@ -57,13 +57,13 @@ try:
     WEBKIT = True
 except ImportError:
     WEBKIT = False
-    print "Webkit is not installed, preview of formatted comments will not be available"
+    LOGGER.warning("Webkit is not installed, preview of formatted comments will not be available")
 
 try:
     from docutils.core import publish_string
 except ImportError:
     WEBKIT = False
-    print "docutils is not installed, preview of formatted comments will not be available"
+    LOGGER.warning("docutils is not installed, preview of formatted comments will not be available")
 
 # Attempt to load the GTK spell package to provide basic spell checking.
 # If the import fails (gtkspell not installed), then create a dummy
@@ -1070,7 +1070,7 @@ class MainWindow(object):
                         return True
                 return False
             except:
-                print self.__model_search_fields
+                LOGGER.error("Error filtering")
 
     def __input_xml(self, name, load=True):
         self.__skip_changes = True

@@ -21,7 +21,10 @@
 Includes the base instances in the module
 """
 
-__all__ = ["bitfield", "register_db", "register", "reg_parser", "reg_writer", "reg_project"]
+__all__ = ["bitfield", "register_db", "register", "reg_parser", "reg_writer", "reg_project", "LOGGER"]
+
+import logging
+LOGGER = logging.getLogger()
 
 from bitfield import BitField
 from bitfield_types import *

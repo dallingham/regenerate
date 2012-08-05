@@ -23,7 +23,7 @@ RegProject is the container object for a regenerate project
 
 import xml.parsers.expat
 import os.path
-
+from regenerate.db import LOGGER
 
 class RegProject(object):
     """
@@ -139,9 +139,7 @@ class RegProject(object):
             path2remove = os.path.relpath(path, os.path.dirname(self.path))
             self.__filelist.remove(path2remove)
         except ValueError, msg:
-            print str(msg)
-            print path2remove
-            print self.__filelist
+            LOGGER.error(str(msg))
 
     def get_export_list(self, path):
         """

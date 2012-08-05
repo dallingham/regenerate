@@ -26,9 +26,11 @@ fears that it will get overwritten on the next install.
 EXPORTERS = []
 PRJ_EXPORTERS = []
 
+from regenerate.db import LOGGER
+
 try:
     from regenerate.site_local.verilog import Verilog, Verilog2001, SystemVerilog
-    print "Found site_local verilog"
+    LOGGER.info("Found site_local verilog")
 except ImportError:
     from verilog import Verilog, Verilog2001, SystemVerilog
 EXPORTERS.append((Verilog, ("RTL", "Verilog 95"), "Verilog files",
@@ -44,14 +46,14 @@ EXPORTERS.append((UVM_Registers, ("Test", "UVM Registers"),
 
 try:
     from regenerate.site_local.c_test import CTest
-    print "Found site_local C test"
+    LOGGER.info("Found site_local C test")
 except ImportError:
     from c_test import CTest
 EXPORTERS.append((CTest, ("Test", "C program"), "C files", ".c", 'test-c'))
 
 try:
     from regenerate.site_local.asm_equ import AsmEqu
-    print "Found site_local asm_eq"
+    LOGGER.info("Found site_local asm_eq")
 except ImportError:
     from asm_equ import AsmEqu
 EXPORTERS.append((AsmEqu, ("Header files", "Assembler Source"),
@@ -59,7 +61,7 @@ EXPORTERS.append((AsmEqu, ("Header files", "Assembler Source"),
 
 try:
     from regenerate.site_local.sdc import Sdc
-    print "Found site_local sdc"
+    LOGGER.info("Found site_local sdc")
 except ImportError:
     from sdc import Sdc
 EXPORTERS.append((Sdc, ("Synthesis", "SDC Constraints"), "SDC files",
@@ -67,7 +69,7 @@ EXPORTERS.append((Sdc, ("Synthesis", "SDC Constraints"), "SDC files",
 
 try:
     from regenerate.site_local.c_defines import CDefines
-    print "Found site_local c_defines"
+    LOGGER.info("Found site_local c_defines")
 except ImportError:
     from c_defines import CDefines
 EXPORTERS.append((CDefines, ("Header files", "C Source"), "C header files",
@@ -75,9 +77,9 @@ EXPORTERS.append((CDefines, ("Header files", "C Source"), "C header files",
 
 try:
     from regenerate.site_local.reg_pkg import VerilogConstRegPackage
-    print "Found site_local reg_pkg"
+    LOGGER.info("Found site_local reg_pkg")
     from regenerate.site_local.reg_pkg_wrap import VerilogRegPackage
-    print "Found site_local reg_pkg_wrap"
+    LOGGER.info("Found site_local reg_pkg_wrap")
     PRJ_EXPORTERS.append((VerilogRegPackage, ("Headers", "SystemVerilog Symbolic Register Mappings"),
                           "SystemVerilog files", ".sv", 'headers-system-verilog-wrap'))
 except:
@@ -94,7 +96,7 @@ except:
 
 try:
     from regenerate.site_local.odt_doc import OdtDoc
-    print "Found site_local odt_doc"
+    LOGGER.info("Found site_local odt_doc")
 except ImportError:
     from odt_doc import OdtDoc
 EXPORTERS.append((OdtDoc, ("Documentation", "OpenDocument"),
@@ -102,7 +104,7 @@ EXPORTERS.append((OdtDoc, ("Documentation", "OpenDocument"),
 
 try:
     from regenerate.site_local.verilog_defs import VerilogDefines
-    print "Found site_local verilog_defs"
+    LOGGER.info("Found site_local verilog_defs")
 except ImportError:
     from verilog_defs import VerilogDefines
 EXPORTERS.append((VerilogDefines, ("RTL", "Verilog defines"),
@@ -110,7 +112,7 @@ EXPORTERS.append((VerilogDefines, ("RTL", "Verilog defines"),
 
 try:
     from regenerate.site_local.verilog_param import VerilogParameters
-    print "Found site_local verilog_param"
+    LOGGER.info("Found site_local verilog_param")
 except ImportError:
     from verilog_param import VerilogParameters
 EXPORTERS.append((VerilogParameters, ("RTL", "Verilog parameters"),
@@ -118,7 +120,7 @@ EXPORTERS.append((VerilogParameters, ("RTL", "Verilog parameters"),
 
 try:
     from regenerate.site_local.odt_spec import OdtSpec
-    print "Found site_local odt_spec"
+    LOGGER.info("Found site_local odt_spec")
 except ImportError:
     from odt_spec import OdtSpec
 

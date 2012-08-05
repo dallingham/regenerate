@@ -24,7 +24,7 @@ Actual program. Parses the arguments, and initiates the main window
 
 import sys
 import os
-from regenerate.db import RegisterDb, BitField
+from regenerate.db import RegisterDb, BitField, LOGGER
 from regenerate.writers.writer_base import WriterBase
 
 
@@ -165,7 +165,7 @@ class UVM_Registers(WriterBase):
                 size = field.width
                 if field.start_position >= reg.width:
                     lsb = field.start_position % reg.width
-                    print "WARNING: %s has bits that exceed the register width" % reg.token
+                    LOGGER.warning("%s has bits that exceed the register width" % reg.token)
                 else:
                     lsb = field.start_position
                 access = access_map[field.field_type]
