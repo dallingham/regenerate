@@ -74,7 +74,7 @@ class BitField(DataItem):
 
     __slots__ = ('start_position', 'stop_position', 'field_name',
                  'use_output_enable', '__output_signal', '__input_signal',
-                 'field_type', 'reset_value', 'reset_input', 'reset_type',
+                 'field_type', 'volatile', 'reset_value', 'reset_input', 'reset_type',
                  'reset_parameter', 'input_function',
                  'description', 'control_signal', 'output_is_static',
                  'output_has_side_effect', 'values' )
@@ -92,6 +92,7 @@ class BitField(DataItem):
         self.field_name = name
         self.use_output_enable = False
         self.field_type = sig_type
+        self.volatile = False
         self.reset_value = reset
         self.reset_input = ""
         self.reset_type = BitField.RESET_NUMERIC

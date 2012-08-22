@@ -192,7 +192,8 @@ def write_signal_info(ofile, field):
     ofile.write('      <signal enb="%d" static="%d" '
                 % (field.use_output_enable, field.output_is_static))
     ofile.write('field_type="%s" ' % CONVERT_TYPE[field.field_type])
-    ofile.write('side_effect="%d">' % field.output_has_side_effect)
+    ofile.write('side_effect="%d" ' % field.output_has_side_effect)
+    ofile.write('volatile="%d">' % field.volatile)
     ofile.write('%s</signal>\n' % field.output_signal)
 
 

@@ -26,7 +26,7 @@ import sys
 import os
 from regenerate.db import RegisterDb, BitField, LOGGER
 from regenerate.writers.writer_base import WriterBase
-
+from regenerate.db.bitfield_types import *
 
 class UVM_Registers(WriterBase):
 
@@ -152,7 +152,6 @@ class UVM_Registers(WriterBase):
             cfile.write('    virtual function void build();\n')
 
             field_keys = reg.get_bit_field_keys()
-            num_of_fields = len(field_keys)
             
             for key in field_keys:
                 field = reg.get_bit_field(key)
@@ -170,15 +169,16 @@ class UVM_Registers(WriterBase):
                 else:
                     lsb = field.start_position
                 access = access_map[field.field_type]
-		print access, field.field_type,field.field_name
-                volatile = field.input_signal != ""
+                
+                volatile = is_volatile(field)
                 has_reset = 1
                 if field.reset_type == BitField.RESET_PARAMETER:
                     reset = field.reset_parameter
                 else:
                     reset = "%d'h%x" % (field.width, field.reset_value)
                 is_rand = 0
-                ind_access = num_of_fields == 1
+                ind_access = individual_access(field, reg)
+                                               
                 cfile.write('      %s.configure(this, %d, %d, "%s", %d, %s, %d, %d, %d);\n' %
                             (self._fix_name(field), size, lsb, access, volatile, reset,
                              has_reset, is_rand, ind_access))
@@ -309,4 +309,35 @@ class UVM_Registers(WriterBase):
         cfile.write('endclass : %s_reg_access_wrapper\n\n' % base)
         
         
-        
+def is_volatile(field):
+    return TYPES[field.field_type][BFT_INP] or field.volatile
+
+def is_readonly(field):
+    return TYPES[field.field_type][BFT_RO];
+
+def individual_access(field, reg):
+    """
+    Make sure that the bits in the field are not in the same byte as any
+    other field that is writable.
+    """
+    used_bytes = set()
+
+    # get all the fields in the register
+    flds = [reg.get_bit_field(key) for key in reg.get_bit_fields()]
+
+    # loop through all fields are are not read only and are not the original
+    # field we are checking for. Calculate the bytes used, and add them to the
+    # used_bytes set
+    
+    for f in [ fld for fld in flds if fld != field and not is_readonly(fld)]:
+        for pos in range(f.start_position, f.stop_position+1):
+            used_bytes.add(pos/8)
+
+    # loop through the bytes used by the current field, and make sure they
+    # do match any of the bytes used by other fields
+    for pos in range(field.start_position, field.stop_position+1):
+        if (pos/8) in used_bytes:
+            return False
+    return True
+
+    
