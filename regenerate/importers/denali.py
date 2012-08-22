@@ -82,6 +82,7 @@ class FieldInfo:
         self.stop = 0
         self.reset = 0
         self.name = ""
+        self.volatile = False
 
     def do_reset(self, text):
         """
@@ -112,6 +113,15 @@ class FieldInfo:
         Assigns the text to the software_access field
         """
         self.software_access = text
+
+    def do_hw(self, text):
+        """
+        Assigns the text to the software_access field
+        """
+        if text and text[0] == "w":
+            self.volatile = True
+        else:
+            self.volatile = False
 
     def dispatch(self, command, text):
         """
@@ -276,6 +286,7 @@ class DenaliRDLParser:
                 field.start_position = item.start - delta
                 field.stop_position = item.stop - delta
                 field.reset_value = item.reset
+                field.volatile = item.volatile
                 field.description = item.description
                 register.add_bit_field(field)
             self.dbase.add_register(register)
