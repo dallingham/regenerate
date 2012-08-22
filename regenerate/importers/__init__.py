@@ -26,6 +26,7 @@ fears that it will get overwritten on the next install.
 from rdl import RDLParser
 from denali import DenaliRDLParser
 from certe_csv import CerteCSVParser
+from ipxact import IpXactParser
 
 #
 # Lists the exporters. The format is:
@@ -38,4 +39,5 @@ IMPORTERS = [
     (RDLParser, "SystemRDL", "SystemRDL files", ".rdl", '-r', '--import-rdl'),
     (DenaliRDLParser, "DenaliRDL", "SystemRDL files", ".rdl", '-r', '--import-drdl'),
     (CerteCSVParser, "Certe CSV", "CSV files", ".csv", '-c', '--import-csv'),
+    (IpXactParser, "IP-XACT XML", "IP-XACT files", ".xml", '-s', '--import-ipxact'),
 ]

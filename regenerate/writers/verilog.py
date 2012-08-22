@@ -37,6 +37,7 @@ BUS_ELEMENT = re.compile("([\w_]+)\[(\d+)\]")
 SINGLE_BIT = re.compile("\s*(\S+)\[(\d+)\]")
 MULTI_BIT = re.compile("\s*(\S+)\[(\d+):(\d+)\]")
 
+(F_FIELD, F_START_OFF, F_STOP_OFF, F_START, F_STOP, F_ADDRESS, F_REGISTER) = range(7)
 
 def bin(val, width):
     """
@@ -220,6 +221,9 @@ class Verilog(WriterBase):
 
         self._word_fields = self.__generate_group_list(self._data_width)
 
+        for i in self._word_fields:
+            print i, self._word_fields[i]
+        
         self._field_type_map = {
             BitField.TYPE_READ_ONLY : self._register_read_only,
             }
@@ -346,7 +350,7 @@ class Verilog(WriterBase):
         address = (register.address / bytes) * bytes
         bit_offset = (register.address * 8) % size
 
-        return (field, start + bit_offset, stop + bit_offset, address, register)
+        return (field, start + bit_offset, stop + bit_offset, start, stop, address, register)
 
     def __generate_group_list(self, size):
         """
@@ -361,7 +365,7 @@ class Verilog(WriterBase):
                     if in_range(field.start_position, field.stop_position,
                                 lower, lower + size - 1):
                         data = self._byte_info(field, register, lower, size)
-                        item_list.setdefault(data[3], []).append(data)
+                        item_list.setdefault(data[F_ADDRESS], []).append(data)
         return item_list
 
     def write(self, filename):
@@ -700,6 +704,7 @@ class Verilog(WriterBase):
             upper = self._data_width - 1
             self._ofile.write("wire [%d:0] r%02x = {" % (upper, key))
 
+            print "NEW"
             for field_info in sorted(self._word_fields[key],
                                      reverse=True,
                                      cmp=lambda x, y: cmp(x[2], y[2])):
@@ -708,21 +713,23 @@ class Verilog(WriterBase):
                 else:
                     comma = True
 
-                stop = field_info[2] % self._data_width
-                start = field_info[1] % self._data_width
+                stop = field_info[F_STOP_OFF] % self._data_width
+                start = field_info[F_START_OFF] % self._data_width
 
+                print stop, start, current_pos
                 if stop != current_pos:
                     self._ofile.write("\n                  ")
                     self._ofile.write("%d'b0," % (current_pos - stop))
                     current_pos = stop - 1
 
-                name_info = get_signal_info(field_info[-1].address,
-                                            field_info[0],
-                                            field_info[1],
-                                            field_info[2])
+                name_info = get_signal_info(field_info[F_REGISTER].address,
+                                            field_info[F_FIELD],
+                                            field_info[F_START],
+                                            field_info[F_STOP])
                 self._ofile.write("\n                  ")
                 self._ofile.write("%s" % (name_info[1]))
                 current_pos = start  - 1
+                print name_info[1]
 
             if current_pos != -1:
                 self._ofile.write(",\n                  ")
@@ -916,7 +923,7 @@ class SystemVerilog(Verilog2001):
 
     def _write_output_mux(self, out_address, addr_bus, addr_width, data_out):
         """
-        Writes the always_comb syntax, instead of the always @(xxx) syntax
+        Writes the always_ff syntax, instead of the always @(xxx) syntax
         """
         self._ofile.write('\nalways_ff @(posedge %s or %s) begin\n' % (
             self._clock, self._reset_edge))
@@ -931,11 +938,11 @@ class SystemVerilog(Verilog2001):
             self._ofile.write('           %s: mux_%s <= r%02x;\n' %
                               (bin(addr >> self._lower_bit, width),
                                data_out.lower(), addr))
-            self._ofile.write('         default: mux_%s <= %d\'h0;\n' %
-                              (data_out.lower(), self._data_width))
-        self._ofile.write('         endcase\n')
+        self._ofile.write('           default: mux_%s <= %d\'h0;\n' %
+                          (data_out.lower(), self._data_width))
+        self._ofile.write('        endcase\n')
         self._ofile.write('      end else begin\n')
         self._ofile.write('         mux_%s <= %d\'h0;\n' % (data_out.lower(), self._data_width))
-        self._ofile.write('      end')
-        self._ofile.write('   end')
+        self._ofile.write('      end\n')
+        self._ofile.write('   end\n')
         self._ofile.write('end\n\n')
