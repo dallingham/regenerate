@@ -19,6 +19,7 @@
 
 import gtk
 from columns import EditableColumn, ComboMapColumn
+from error_dialogs import ErrorMsg
 
 REPLACE = {
     'ENABLE'    : 'EN',    'TRANSLATION'   : 'TRANS',
@@ -259,11 +260,26 @@ class RegisterList(object):
             self.__set_modified()
         self.__model[path][RegisterModel.DEFINE_COL] = reg.token
 
+    def __new_address_is_not_used(self, new_text, path):
+        addr_list = set()
+        address = int(new_text,16)
+        for data in self.__model:
+            if data == self.__model[path]:
+                continue
+            reg = data[-1]
+            for i in range (reg.address, reg.address + (reg.width/8)):
+                addr_list.add(i)
+        return address not in addr_list
+
     def __text_edited(self, cell, path, new_text, col):
         register = self.__model.get_register_at_path(path)
         new_text = new_text.strip()
         if col == RegisterModel.ADDR_COL:
-            self.__reg_update_addr(register, path, new_text)
+            if self.__new_address_is_not_used(new_text, path):
+                self.__reg_update_addr(register, path, new_text)
+            else:
+                ErrorMsg("Address already used",
+                         "The address %0x is already used by another register" % int(new_text, 16))
         elif col == RegisterModel.NAME_COL:
             self.__reg_update_name(register, path, new_text)
         elif col == RegisterModel.DEFINE_COL:
