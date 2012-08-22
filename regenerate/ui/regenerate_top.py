@@ -1324,12 +1324,8 @@ class MainWindow(object):
     def on_address_width_changed(self, obj):
         try:
             new_width = int(obj.get_text())
-            if 1 < new_width < 33:
-                self.dbase.address_bus_width = new_width
-                self.set_modified()
-            else:
-                width = str(self.dbase.address_bus_width)
-                obj.set_text(width)
+            self.dbase.address_bus_width = new_width
+            self.set_modified()
         except ValueError:
             pass # keep old value
 
