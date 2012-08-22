@@ -77,6 +77,7 @@ class BitFieldEditor(object):
         self.__output_enable_obj = self.__builder.get_object("outen")
         self.__side_effect_obj = self.__builder.get_object("side_effect")
         self.__verilog_obj = self.__builder.get_object('verilog_code')
+        self.__volatile_obj = self.__builder.get_object('volatile')
         self.__col = None
         self.__top_window.set_title(
             "Edit Bit Field - [%02x] %s" % (register.address,
@@ -161,6 +162,8 @@ class BitFieldEditor(object):
         self.__output_obj.set_text(bit_field.output_signal)
         self.__input_obj.set_text(bit_field.input_signal)
 
+        self.__volatile_obj.set_active(bit_field.volatile)
+
         self.__static_obj.set_active(bit_field.output_is_static)
         self.__side_effect_obj.set_active(bit_field.output_has_side_effect)
         self.__text_buffer.set_text(bit_field.description)
@@ -175,6 +178,10 @@ class BitFieldEditor(object):
     def on_input_changed(self, obj):
         self.__bit_field.input_signal = obj.get_text()
         self.__check_data()
+        self.__modified()
+
+    def on_volatile_changed(self, obj):
+        self.__bit_field.volatile = obj.get_active()
         self.__modified()
 
     def on_control_changed(self, obj):

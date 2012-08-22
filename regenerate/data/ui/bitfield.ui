@@ -143,12 +143,13 @@
                         </child>
                         <child>
                           <object class="GtkCheckButton" id="volatile">
-                            <property name="label" translatable="yes">Volatile (not guarenteed to be stable between reads)</property>
+                            <property name="label" translatable="yes">Volatile (not guaranteed to be stable between reads)</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">False</property>
                             <property name="use_action_appearance">False</property>
                             <property name="draw_indicator">True</property>
+                            <signal name="toggled" handler="on_volatile_changed" swapped="no"/>
                           </object>
                           <packing>
                             <property name="right_attach">2</property>

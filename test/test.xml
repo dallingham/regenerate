@@ -17,6 +17,41 @@
   </ports>
   <overview>Test case for various register types in Regenerate.</overview>
   <register nocode="0" dont_test="0" hide="0">
+    <token modified="0">RD_ONLY</token>
+    <name modified="0">Read Only</name>
+    <address modified="0">0</address>
+    <width modified="0">32</width>
+    <description modified="0">Read Only type.</description>
+    <range start="0" stop="0">
+      <modified time="0"/>
+      <name>ONE_BIT</name>
+      <signal enb="0" static="0" field_type="RO" side_effect="0" volatile="0">ONE_BIT</signal>
+      <reset type="0">0</reset>
+      <description>Single bit.</description>
+    </range>
+    <range start="1" stop="7">
+      <modified time="0"/>
+      <name>MULTI_BIT</name>
+      <signal enb="0" static="0" field_type="RO" side_effect="0" volatile="0">MULTI_BIT</signal>
+      <reset type="0">0</reset>
+      <description>Multiple bit within a single byte.</description>
+    </range>
+    <range start="8" stop="15">
+      <modified time="0"/>
+      <name>BYTE_CROSS</name>
+      <signal enb="0" static="0" field_type="RO" side_effect="0" volatile="0">BYTE_CROSS</signal>
+      <reset type="0">0</reset>
+      <description>Multi byte.</description>
+    </range>
+    <range start="17" stop="27">
+      <modified time="0"/>
+      <name>BYTE_CROSS_SKEWED</name>
+      <signal enb="0" static="0" field_type="RO" side_effect="0" volatile="0">BYTE_CROSS_SKEWED</signal>
+      <reset type="0">0</reset>
+      <description>Multi byte, unaligned to a byte boundary.</description>
+    </range>
+  </register>
+  <register nocode="0" dont_test="0" hide="0">
     <token modified="0">RD_ONLY_LD</token>
     <name modified="0">Read Only Load</name>
     <address modified="0">4</address>
@@ -724,38 +759,17 @@
     </range>
   </register>
   <register nocode="0" dont_test="0" hide="0">
-    <token modified="0">RD_ONLY</token>
-    <name modified="0">Read Only</name>
-    <address modified="0">512</address>
+    <token modified="0">VOLATILE</token>
+    <name modified="0">Volatile</name>
+    <address modified="0">80</address>
     <width modified="0">32</width>
-    <description modified="0">Read Only type.</description>
+    <description modified="0"></description>
     <range start="0" stop="0">
       <modified time="0"/>
       <name>ONE_BIT</name>
-      <signal enb="0" static="0" field_type="RO" side_effect="0" volatile="0">ONE_BIT</signal>
+      <signal enb="0" static="0" field_type="RO" side_effect="0" volatile="1">ONE_BIT</signal>
       <reset type="0">0</reset>
-      <description>Single bit.</description>
-    </range>
-    <range start="1" stop="7">
-      <modified time="0"/>
-      <name>MULTI_BIT</name>
-      <signal enb="0" static="0" field_type="RO" side_effect="0" volatile="0">MULTI_BIT</signal>
-      <reset type="0">0</reset>
-      <description>Multiple bit within a single byte.</description>
-    </range>
-    <range start="8" stop="15">
-      <modified time="0"/>
-      <name>BYTE_CROSS</name>
-      <signal enb="0" static="0" field_type="RO" side_effect="0" volatile="0">BYTE_CROSS</signal>
-      <reset type="0">0</reset>
-      <description>Multi byte.</description>
-    </range>
-    <range start="17" stop="27">
-      <modified time="0"/>
-      <name>BYTE_CROSS_SKEWED</name>
-      <signal enb="0" static="0" field_type="RO" side_effect="0" volatile="0">BYTE_CROSS_SKEWED</signal>
-      <reset type="0">0</reset>
-      <description>Multi byte, unaligned to a byte boundary.</description>
+      <description></description>
     </range>
   </register>
 </module>
