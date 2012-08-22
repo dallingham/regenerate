@@ -107,8 +107,18 @@ class RegisterModel(gtk.ListStore):
         Adds a new row in the ListStore for the specified register,
         filling in the data from the register into the appropriate
         column.
+
+        After the register is deleted, we need to fix all the register
+        to path operations by decrementing the corresponding path
         """
+        old_path = self.reg2path[register]
+
         del self[self.reg2path[register]]
+        del self.reg2path[register]
+
+        for reg in self.reg2path:
+            if self.reg2path[reg] > old_path:
+                self.reg2path[reg] = (self.reg2path[reg][0] - 1,)
 
     def set_tooltip(self, reg, msg):
         path = self.get_path_from_register(reg)
