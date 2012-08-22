@@ -223,6 +223,8 @@ class RegParser(object):
             if old_type == BitField.TYPE_READ_ONLY:
                 if func == BitField.FUNC_PARALLEL:
                     self.__field.field_type = BitField.TYPE_READ_ONLY_LOAD
+                elif func == BitField.FUNC_SET_BITS:
+                    self.__field.field_type = BitField.TYPE_READ_ONLY_VALUE
             elif old_type == BitField.TYPE_READ_WRITE:
                 if func == BitField.FUNC_SET_BITS:
                     self.__field.field_type = BitField.TYPE_READ_WRITE_SET

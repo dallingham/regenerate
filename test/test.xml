@@ -10,6 +10,7 @@
     <data_out>RDATA</data_out>
     <be active="1">BE</be>
     <wr>WR</wr>
+    <ack>ACK</ack>
     <rd>RD</rd>
     <clk>CLK</clk>
     <reset active="0">RSTn</reset>
@@ -732,6 +733,29 @@
       <signal enb="0" static="0" field_type="WO" side_effect="0">BYTE_CROSS_SKEW</signal>
       <reset type="0">0</reset>
       <description>Multi byte, unaligned to a byte boundary.</description>
+    </range>
+  </register>
+  <register nocode="0" dont_test="0" hide="0">
+    <token modified="0">RD_ONLY_VAL</token>
+    <name modified="0">Read Only Value</name>
+    <address modified="0">76</address>
+    <width modified="0">32</width>
+    <description modified="0"></description>
+    <range start="0" stop="0">
+      <modified time="0"/>
+      <name>ONE_BIT</name>
+      <signal enb="0" static="0" field_type="ROV" side_effect="0">_</signal>
+      <input>ROV_1BIT_DATA_IN</input>
+      <reset type="0">0</reset>
+      <description></description>
+    </range>
+    <range start="1" stop="7">
+      <modified time="0"/>
+      <name>MULTI_BIT</name>
+      <signal enb="0" static="0" field_type="ROV" side_effect="0">MULTI_BIT</signal>
+      <input>RD_ONLY_VAL_MULTI_BIT_IN</input>
+      <reset type="0">0</reset>
+      <description></description>
     </range>
   </register>
 </module>

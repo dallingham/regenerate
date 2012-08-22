@@ -13,6 +13,7 @@ BFT_DESC = 9
 
 TYPES =  (
     (BitField.TYPE_READ_ONLY,                 "RO",      False, False, False, True,  True,  False, True,  "Read Only"),
+    (BitField.TYPE_READ_ONLY_VALUE,           "ROV",     True,  False, False, True,  False, False, True,  "Read Only, value continuously assigned"),
     (BitField.TYPE_READ_ONLY_LOAD,            "ROLD",    True,  True,  False, True,  True,  False, True,  "Read Only, value loaded on control signal" ),
     (BitField.TYPE_READ_WRITE,                "RW",      False, False, False, True,  True,  False, False, "Read/Write"),
     (BitField.TYPE_READ_WRITE_1S,             "RW1S",    False, False, True,  True,  True,  False, False, "Read/Write, one shot on any write"),

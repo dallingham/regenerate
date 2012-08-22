@@ -221,11 +221,9 @@ class Verilog(WriterBase):
 
         self._word_fields = self.__generate_group_list(self._data_width)
 
-        for i in self._word_fields:
-            print i, self._word_fields[i]
-        
         self._field_type_map = {
-            BitField.TYPE_READ_ONLY : self._register_read_only,
+            BitField.TYPE_READ_ONLY       : self._register_read_only,
+            BitField.TYPE_READ_ONLY_VALUE : self._register_read_only_value,
             }
 
         self._has_input   = {}
@@ -282,6 +280,13 @@ class Verilog(WriterBase):
     def _register_read_only(self, address, field):
         field_name = field.field_name.lower()
         rvalue = self._full_reset_value(field)
+        
+        self._ofile.write('assign r%02x_%s = %s;\n' % (address, field_name, rvalue))
+        self._ofile.write('\n')
+
+    def _register_read_only_value(self, address, field):
+        field_name = field.field_name.lower()
+        rvalue = field.input_signal
         
         self._ofile.write('assign r%02x_%s = %s;\n' % (address, field_name, rvalue))
         self._ofile.write('\n')
@@ -704,7 +709,6 @@ class Verilog(WriterBase):
             upper = self._data_width - 1
             self._ofile.write("wire [%d:0] r%02x = {" % (upper, key))
 
-            print "NEW"
             for field_info in sorted(self._word_fields[key],
                                      reverse=True,
                                      cmp=lambda x, y: cmp(x[2], y[2])):
@@ -716,7 +720,6 @@ class Verilog(WriterBase):
                 stop = field_info[F_STOP_OFF] % self._data_width
                 start = field_info[F_START_OFF] % self._data_width
 
-                print stop, start, current_pos
                 if stop != current_pos:
                     self._ofile.write("\n                  ")
                     self._ofile.write("%d'b0," % (current_pos - stop))
@@ -729,7 +732,6 @@ class Verilog(WriterBase):
                 self._ofile.write("\n                  ")
                 self._ofile.write("%s" % (name_info[1]))
                 current_pos = start  - 1
-                print name_info[1]
 
             if current_pos != -1:
                 self._ofile.write(",\n                  ")
