@@ -20,6 +20,7 @@
 import gtk
 from columns import EditableColumn, ComboMapColumn
 from error_dialogs import ErrorMsg
+from regenerate.db import LOGGER
 
 REPLACE = {
     'ENABLE'    : 'EN',    'TRANSLATION'   : 'TRANS',
@@ -247,8 +248,11 @@ class RegisterList(object):
                 self.__update_addr(reg, new_addr)
                 self.__model.set_address_at_path(path, new_addr)
                 self.__set_modified()
-        except ValueError:
-            return
+        except KeyError:
+            ErrorMsg("Internal Error",
+                     "Deleting the register caused an internal inconsistency.\n"
+                     "Please exit without saving to prevent any corruption to\n"
+                     "your database and report this error.")
 
     def __reg_update_name(self, reg, path, text):
         if text != reg.register_name:
@@ -285,11 +289,15 @@ class RegisterList(object):
         register = self.__model.get_register_at_path(path)
         new_text = new_text.strip()
         if col == RegisterModel.ADDR_COL:
-            if self.__new_address_is_not_used(new_text, path):
-                self.__reg_update_addr(register, path, new_text)
-            else:
-                ErrorMsg("Address already used",
-                         "The address %0x is already used by another register" % int(new_text, 16))
+            try:
+                if self.__new_address_is_not_used(new_text, path):
+                    self.__reg_update_addr(register, path, new_text)
+                else:
+                    ErrorMsg("Address already used",
+                             "The address %0x is already used by another register" % int(new_text, 16))
+            except ValueError:
+                LOGGER.warning('Address %0x could not be changed: invalid hex value "%s"' %
+                               (register.address, new_text))
         elif col == RegisterModel.NAME_COL:
             self.__reg_update_name(register, path, new_text)
         elif col == RegisterModel.DEFINE_COL:
