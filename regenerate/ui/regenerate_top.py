@@ -27,6 +27,7 @@ regenerate
 """
 
 import gtk
+import gobject
 import pango
 import xml
 import os
@@ -46,6 +47,23 @@ from regenerate import PROGRAM_VERSION, PROGRAM_NAME
 from error_dialogs import ErrorMsg, WarnMsg, Question
 from project import ProjectModel, ProjectList, update_file
 from regenerate.db import TYPES, BFT_TYPE, BFT_INP, BFT_CTRL, LOGGER
+import logging
+
+
+class StatusHandler(logging.Handler): # Inherit from logging.Handler
+
+    def __init__(self, status_obj):
+        logging.Handler.__init__(self)
+        self.status_obj = status_obj
+        self.status_id = status_obj.get_context_id(__name__)
+        self.timer = None
+        
+    def emit(self, record):
+        idval = self.status_obj.push(self.status_id, record.getMessage())
+        gobject.timeout_add(15 * 1000, self._clear, idval)
+        
+    def _clear(self, idval):
+        self.status_obj.remove(self.status_id, idval)
 
 # Attempt to load the optional WebKit and docutils package. Webkit provides
 # an HTML canvas that we can use to display formatted text, and docutils
@@ -162,6 +180,7 @@ class MainWindow(object):
         self.__top_window.set_icon_from_file(
             os.path.join(INSTALL_PATH, "media", "flop.svg"))
         self.__status_obj = self.__builder.get_object("statusbar")
+        LOGGER.addHandler(StatusHandler(self.__status_obj))
         self.__reg_text_buf = self.__builder.get_object("register_text_buffer")
 
         self.__filter = self.__builder.get_object("filter")
@@ -1497,7 +1516,12 @@ class MainWindow(object):
             for key in reg.get_bit_field_keys():
                 field = reg.get_bit_field(key)
                 if check_field(field):
-                    msg.append("Missing description for '%s'" % field.field_name)
+                    if field.start_position == field.stop_position:
+                        msg.append("Missing field description for '%s' (bit %d)"
+                                   % (field.field_name, field.start_position))
+                    else:
+                        msg.append("Missing field description for '%s' (bits [%d:%d])"
+                                   % (field.field_name, field.stop_position, field.start_position))
                     warn_bit = True
         if mark and not self.__loading_project:
             self.__warn_reg_descr.set_property('visible', warn_reg)
@@ -1538,6 +1562,7 @@ class MainWindow(object):
             field = row[BitModel.FIELD_COL]
             icon = check_field(field)
             row[BitModel.ICON_COL] = icon
+            msg = []
             if icon:
                 warn = True
         return warn
