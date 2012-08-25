@@ -16,8 +16,6 @@ REG = {
       end else begin
          if (WE & %(BE_LEVEL)sBE) begin
             DO <= DI;
-         end else begin
-            DO <= DO;
          end
       end
    end
