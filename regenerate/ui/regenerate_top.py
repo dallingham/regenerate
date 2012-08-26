@@ -48,22 +48,8 @@ from error_dialogs import ErrorMsg, WarnMsg, Question
 from project import ProjectModel, ProjectList, update_file
 from regenerate.db import TYPES, BFT_TYPE, BFT_INP, BFT_CTRL, LOGGER
 import logging
-
-
-class StatusHandler(logging.Handler): # Inherit from logging.Handler
-
-    def __init__(self, status_obj):
-        logging.Handler.__init__(self)
-        self.status_obj = status_obj
-        self.status_id = status_obj.get_context_id(__name__)
-        self.timer = None
-        
-    def emit(self, record):
-        idval = self.status_obj.push(self.status_id, record.getMessage())
-        gobject.timeout_add(15 * 1000, self._clear, idval)
-        
-    def _clear(self, idval):
-        self.status_obj.remove(self.status_id, idval)
+from preview import html_string
+from spell import Spell
 
 # Attempt to load the optional WebKit and docutils package. Webkit provides
 # an HTML canvas that we can use to display formatted text, and docutils
@@ -71,31 +57,11 @@ class StatusHandler(logging.Handler): # Inherit from logging.Handler
 # structured text
 try:
     import webkit
-    from docutils.core import publish_string
     WEBKIT = True
 except ImportError:
     WEBKIT = False
-    LOGGER.warning("Webkit is not installed, preview of formatted comments will not be available")
-
-try:
-    from docutils.core import publish_string
-except ImportError:
-    WEBKIT = False
-    LOGGER.warning("docutils is not installed, preview of formatted comments will not be available")
-
-# Attempt to load the GTK spell package to provide basic spell checking.
-# If the import fails (gtkspell not installed), then create a dummy
-# spell object that does nothing.
-try:
-    from gtkspell import Spell
-except ImportError:
-
-    class Spell(object):
-        "Empty class for compatiblity if the spell checker is not found"
-
-        def __init__(self, obj):
-            pass
-
+    LOGGER.warning("Webkit is not installed, preview of formatted "
+                   "comments will not be available")
 
 TYPE_ENB = {}
 for i in TYPES:
@@ -116,31 +82,20 @@ VALID_SIGNAL = re.compile("^[A-Za-z][A-Za-z0-9_]*$")
 VALID_BITS = re.compile("^\s*[\(\[]?(\d+)(\s*[-:]\s*(\d+))?[\)\]]?\s*$")
 REGNAME = re.compile("^(.*)(\d+)(.*)$")
 
-CSS = '''
-<style type="text/css">
-table.docutils td{
-    padding: 3pt;
-}
-table.docutils th{
-    padding: 3pt;
-}
-table.docutils {
-    border-spacing: 0pt;
-}
-h1{
-    font-family: Arial,Helvetica,Sans;
-    font-size: 14pt;
-}
-h2{
-    font-family: Arial,Helvetica,Sans;
-    font-size: 12pt;
-}
-body{
-    font-size: 10pt;
-    font-family: Arial,Helvetica,Sans;
-}
-</style>
-'''
+class StatusHandler(logging.Handler): # Inherit from logging.Handler
+
+    def __init__(self, status_obj):
+        logging.Handler.__init__(self)
+        self.status_obj = status_obj
+        self.status_id = status_obj.get_context_id(__name__)
+        self.timer = None
+        
+    def emit(self, record):
+        idval = self.status_obj.push(self.status_id, record.getMessage())
+        gobject.timeout_add(15 * 1000, self._clear, idval)
+        
+    def _clear(self, idval):
+        self.status_obj.remove(self.status_id, idval)
 
 
 class DbaseStatus(object):
@@ -150,7 +105,8 @@ class DbaseStatus(object):
     rows in the models.
     """
 
-    def __init__(self, db, filename, name, reg_model, modelsort, modelfilter, bit_model, inst_model):
+    def __init__(self, db, filename, name, reg_model, modelsort,
+                 modelfilter, bit_model, inst_model):
         self.db = db
         self.path = filename
         self.reg_model = reg_model
@@ -304,7 +260,6 @@ class MainWindow(object):
             self.__builder.get_object('vpaned').set_position(vpos)
         if hpos:
             self.__builder.get_object('hpaned').set_position(hpos)
-    
 
     def __filter_changed(self, obj):
         self.__filter_text = self.__filter.get_text()
@@ -560,15 +515,14 @@ class MainWindow(object):
     def __enable_preview(self):
         self.__update_wk = True
         if self.dbase:
-            self.__webkit.load_string(CSS + publish_string(self.dbase.overview_text,
-                                                           writer_name="html"),
+            self.__webkit.load_string(html_string(self.dbase.overview_text),
                                       "text/html", "utf-8", "")
             reg = self.__reglist_obj.get_selected_register()
             if reg:
                 text = reg.description
             else:
                 text = ""
-            self.__webkit_reg.load_string(CSS + publish_string(text, writer_name="html"),
+            self.__webkit_reg.load_string(html_string(text),
                                           "text/html", "utf-8", "")
         self.__wk_container.show()
         self.__webkit.show()
@@ -798,8 +752,7 @@ class MainWindow(object):
             if self.__update_wk and WEBKIT:
                 pos = self.__wk_reg_container.get_vadjustment().get_value()
 
-                self.__webkit_reg.load_string(CSS + publish_string(reg.description,
-                                                                   writer_name="html"),
+                self.__webkit_reg.load_string(html_string(reg.description),
                                               "text/html", "utf-8", "")
                 if pos <= self.__wk_reg_container.get_vadjustment().get_upper():
                     self.__wk_reg_container.get_vadjustment().set_value(pos)
@@ -1108,7 +1061,6 @@ class MainWindow(object):
         self.__bit_model = BitModel()
 
         if load:
-#            self.__reglist_obj.set_model(self.__modelfilter)
             self.__reglist_obj.set_model(self.__modelsort)
             self.__bitfield_obj.set_model(self.__bit_model)
 
@@ -1274,8 +1226,7 @@ class MainWindow(object):
             adj = self.__wk_container.get_vadjustment()
             pos = adj.get_value()
             try:
-                self.__webkit.load_string(CSS + publish_string(self.dbase.overview_text,
-                                                               writer_name="html"),
+                self.__webkit.load_string(html_string(self.dbase.overview_text),
                                           "text/html", "utf-8", "")
             except:
                 self.__webkit.load_string(self.dbase.overview_text,
