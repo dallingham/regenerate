@@ -133,8 +133,12 @@ class MainWindow(object):
         self.__builder.add_from_file(GLADE_TOP)
         self.__build_actions()
         self.__top_window = self.__builder.get_object("regenerate")
-        self.__top_window.set_icon_from_file(
-            os.path.join(INSTALL_PATH, "media", "flop.svg"))
+        try:
+            self.__top_window.set_icon_from_file(
+                os.path.join(INSTALL_PATH, "media", "flop.svg"))
+        except:
+            self.__top_window.set_icon_from_file(
+                os.path.join(INSTALL_PATH, "media", "flop.png"))
         self.__status_obj = self.__builder.get_object("statusbar")
         LOGGER.addHandler(StatusHandler(self.__status_obj))
         self.__reg_text_buf = self.__builder.get_object("register_text_buffer")
