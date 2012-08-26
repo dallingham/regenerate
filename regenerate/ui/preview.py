@@ -1,6 +1,7 @@
 try:
     from docutils.core import publish_string
 except ImportError:
+    from regenerate.db import LOGGER
     LOGGER.warning("docutils is not installed, preview of formatted "
                    "comments will not be available")
     def publish_string (text):
