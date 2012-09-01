@@ -64,10 +64,8 @@ class ExportAssistant(gtk.Assistant):
         if page == self.page2:
             filename = self.choose.get_filename()
             if not filename:
-                if self.selected_export_is_project:
-                    value = self.project_name
-                else:
-                    value = self.selected_register_set()
+                model = self.register_combo.get_model()
+                value = model.get_value(self.register_combo.get_active_iter(), 0)
                 ext = self.selected_extension()
                 filename = value + ext
                 self.choose.set_current_name(filename)

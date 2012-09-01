@@ -28,22 +28,38 @@ PRJ_EXPORTERS = []
 
 from regenerate.db import LOGGER
 
+#-----------------------------------------------------------------------------
+#
+#  Load the register writers. Currently Verilog-95, Verilog-2001, and
+#  SystemVerilog.
+#
+#-----------------------------------------------------------------------------
 try:
     from regenerate.site_local.verilog import Verilog, Verilog2001, SystemVerilog
     LOGGER.info("Found site_local verilog")
 except ImportError:
     from verilog import Verilog, Verilog2001, SystemVerilog
-EXPORTERS.append((Verilog, ("RTL", "Verilog 95"), "Verilog files",
-                  ".v", 'rtl-verilog-95'))
-EXPORTERS.append((Verilog2001, ("RTL", "Verilog 2001"), "Verilog files",
-                  ".v", 'rtl-verilog-2001'))
 EXPORTERS.append((SystemVerilog, ("RTL", "SystemVerilog"),
                   "SystemVerilog files", ".sv", 'rtl-system-verilog'))
+EXPORTERS.append((Verilog2001, ("RTL", "Verilog 2001"), "Verilog files",
+                  ".v", 'rtl-verilog-2001'))
+EXPORTERS.append((Verilog, ("RTL", "Verilog 95"), "Verilog files",
+                  ".v", 'rtl-verilog-95'))
 
+#-----------------------------------------------------------------------------
+#
+#  UVM Register Exporting
+#
+#-----------------------------------------------------------------------------
 from uvm import UVM_Registers
 EXPORTERS.append((UVM_Registers, ("Test", "UVM Registers"),
                   "SystemVerilog files", ".sv", 'uvm-system-verilog'))
 
+#-----------------------------------------------------------------------------
+#
+#  C code register test case exporting
+#
+#-----------------------------------------------------------------------------
 try:
     from regenerate.site_local.c_test import CTest
     LOGGER.info("Found site_local C test")
@@ -51,6 +67,11 @@ except ImportError:
     from c_test import CTest
 EXPORTERS.append((CTest, ("Test", "C program"), "C files", ".c", 'test-c'))
 
+#-----------------------------------------------------------------------------
+#
+#  ASM definition exporting
+#
+#-----------------------------------------------------------------------------
 try:
     from regenerate.site_local.asm_equ import AsmEqu
     LOGGER.info("Found site_local asm_eq")
@@ -59,6 +80,11 @@ except ImportError:
 EXPORTERS.append((AsmEqu, ("Header files", "Assembler Source"),
                   "Assembler files", ".s", 'headers-asm' ))
 
+#-----------------------------------------------------------------------------
+#
+#  Synthesis constraints
+#
+#-----------------------------------------------------------------------------
 try:
     from regenerate.site_local.sdc import Sdc
     LOGGER.info("Found site_local sdc")
@@ -67,6 +93,11 @@ except ImportError:
 EXPORTERS.append((Sdc, ("Synthesis", "SDC Constraints"), "SDC files",
                   ".sdc", 'syn-constraints'))
 
+#-----------------------------------------------------------------------------
+#
+#  C definition exporting
+#
+#-----------------------------------------------------------------------------
 try:
     from regenerate.site_local.c_defines import CDefines
     LOGGER.info("Found site_local c_defines")
@@ -75,16 +106,29 @@ except ImportError:
 EXPORTERS.append((CDefines, ("Header files", "C Source"), "C header files",
                   ".h", 'headers-c' ))
 
+#-----------------------------------------------------------------------------
+#
+#  Verilog register headers
+#
+#-----------------------------------------------------------------------------
 try:
     from regenerate.site_local.reg_pkg import VerilogConstRegPackage
     LOGGER.info("Found site_local reg_pkg")
     from regenerate.site_local.reg_pkg_wrap import VerilogRegPackage
     LOGGER.info("Found site_local reg_pkg_wrap")
-    PRJ_EXPORTERS.append((VerilogRegPackage, ("Headers", "SystemVerilog Symbolic Register Mappings"),
+    PRJ_EXPORTERS.append((VerilogRegPackage, ("Headers",
+                                              "SystemVerilog Symbolic Register Mappings"),
                           "SystemVerilog files", ".sv", 'headers-system-verilog-wrap'))
+#-----------------------------------------------------------------------------
+#
+#  Verilog constant headers
+#
+#-----------------------------------------------------------------------------
 except:
     from reg_pkg import VerilogConstRegPackage
-PRJ_EXPORTERS.append((VerilogConstRegPackage, ("Headers", "SystemVerilog Register Constants"),
+    
+PRJ_EXPORTERS.append((VerilogConstRegPackage, ("Headers",
+                                               "SystemVerilog Register Constants"),
                       "SystemVerilog files", ".sv", 'headers-system-verilog'))
 
 try:
@@ -94,6 +138,11 @@ try:
 except:
     pass
 
+#-----------------------------------------------------------------------------
+#
+#  Open Document generator
+#
+#-----------------------------------------------------------------------------
 try:
     from regenerate.site_local.odt_doc import OdtDoc
     LOGGER.info("Found site_local odt_doc")
