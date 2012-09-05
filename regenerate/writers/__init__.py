@@ -26,6 +26,8 @@ fears that it will get overwritten on the next install.
 EXPORTERS = []
 PRJ_EXPORTERS = []
 
+(EXP_CLASS, EXP_TYPE, EXP_DESCRIPTION, EXP_EXT, EXP_ID) = range(5)
+
 from regenerate.db import LOGGER
 
 #-----------------------------------------------------------------------------

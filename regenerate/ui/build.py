@@ -21,85 +21,117 @@ import os
 import gtk
 from export_assistant import ExportAssistant
 from regenerate.settings.paths import INSTALL_PATH
-from regenerate.writers import EXPORTERS, PRJ_EXPORTERS
+from regenerate.writers import EXPORTERS, PRJ_EXPORTERS, EXP_CLASS, EXP_TYPE, EXP_DESCRIPTION, EXP_EXT, EXP_ID
 from columns import EditableColumn, ToggleColumn, ComboMapColumn
+from error_dialogs import ErrorMsg
 
-
+(MDL_MOD, MDL_BASE, MDL_FMT, MDL_DEST, MDL_CLASS, MDL_DBASE) = range(6)
+(OPTMAP_DESCRIPTION, OPTMAP_CLASS, OPTMAP_REGISTER_SET) = range(3)
+(MAPOPT_ID, MAPOPT_CLASS, MAPOPT_REGISTER_SET) = range(3)
+(DB_MAP_DBASE, DB_MAP_MODIFIED) = range(2)
+ 
 class Build(object):
-
-    (MOD, BASE, FMT, DEST, CLS, DBASE) = range(6)
-    (COL_MOD, COL_BASE, COL_FMT, COL_DEST, COL_CLASS, COL_DBASE) = range(6)
+    """
+    Builder interface. Allows the user to control exporters, building rules
+    as to what should be built.
+    """
 
     def __init__(self, project, dbmap):
         self.__dbmap = dbmap
         self.__project = project
+        self.__modlist = []
+
+        self.__base2path = {}
+        for item in self.__project.get_register_set():
+            self.__base2path[os.path.splitext(os.path.basename(item))[0]] = item
+
+        self.__build_interface()
+        self.__build_export_maps()
+        self.__populate()
+
+    def __build_export_maps(self):
+        """
+        Builds the maps used to map options. The __optmap maps an internal
+        Type Identifier to:
+
+        (Document Description, Exporter Class, Register/Project)
+
+        The __mapopt maps the Document Description to:
+
+        (Type Identifier, Exporter Class, Register/Project)
+        
+        """
+        self.__optmap = {}
+        self.__mapopt = {}
+        for item in EXPORTERS:
+            value = "%s (%s)" % item[1]
+            self.__optmap[item[EXP_ID]] = (value, item[EXP_CLASS], True)
+            self.__mapopt[value] = (item[EXP_ID], item[EXP_CLASS], True)
+        for item in PRJ_EXPORTERS:
+            value = "%s (%s)" % item[EXP_TYPE]
+            self.__optmap[item[EXP_ID]] = (value, item[EXP_CLASS], False)
+            self.__mapopt[value] = (item[EXP_ID], item[EXP_CLASS], False)
+
+    def __build_interface(self):
+        """
+        Builds the interface from the glade description, connects the signals,
+        and creates the data models to load into the system.
+        """
         self.__builder = gtk.Builder()
-        self.__builder.add_from_file(os.path.join(INSTALL_PATH, "ui/build.ui"))
+        self.__builder.add_from_file(os.path.join(INSTALL_PATH, "ui", "build.ui"))
         self.__build_top = self.__builder.get_object('build')
         self.__build_list = self.__builder.get_object('buildlist')
         self.__builder.connect_signals(self)
         self.__add_columns()
         self.__model = gtk.ListStore(bool, str, str, str, object, object)
         self.__build_list.set_model(self.__model)
+        self.__build_top.set_icon_from_file(
+            os.path.join(INSTALL_PATH, "media", "flop.svg"))
         self.__build_top.show_all()
-        self.__modlist = []
-
-        self.__base2path = {}
-        for item in self.__project.get_register_set():
-            self.__base2path[os.path.splitext(os.path.basename(item))[0]] = item
-        self.__optmap = {}
-        self.__mapopt = {}
-        for item in EXPORTERS:
-            value = "%s (%s)" % item[1]
-            self.__optmap[item[4]] = (value, item[0], True)
-            self.__mapopt[value] = (item[4], item[0], True)
-        for item in PRJ_EXPORTERS:
-            value = "%s (%s)" % item[1]
-            self.__optmap[item[4]] = (value, item[0], False)
-            self.__mapopt[value] = (item[4], item[0], False)
-
-        self.__populate()
 
     def __add_item_to_list(self, full_path, option, dest):
-        if  self.__optmap[option][2]:
+        """
+        Adds the item to the list view.
+        """
+        if  self.__optmap[option][OPTMAP_REGISTER_SET]:
             self.__add_dbase_item_to_list(full_path, option, dest)
         else:
             self.__add_prj_item_to_list(option, dest)
 
     def __add_prj_item_to_list(self, option, dest):
+        """
+        Adds a target to the list that is dependent on the entire project. This is
+        similar to adding a target that is dependent on a single database, except
+        we have to compare dates on all files in the project, not just a single
+        file.
+        """
         local_dest = os.path.join(os.path.dirname(self.__project.path), dest)
-        mod = False
-        if not os.path.exists(local_dest):
-            mod = True
-        else:
-            dest_mtime = os.path.getmtime(local_dest)
 
-            for full_path in self.__project.get_register_set():
-                db_file_mtime = os.path.getmtime(full_path)
-                base = os.path.splitext(os.path.basename(full_path))[0]
-                if db_file_mtime > dest_mtime or self.__dbmap[base][1]:
-                    mod = True
+        mod = file_needs_rebuilt(local_dest, self.__dbmap, self.__project.get_regsiter_set())
         self.__modlist.append(mod)
         (fmt, cls, dbtype) = self.__optmap[option]
         self.__model.append(row=[mod, "<project>", fmt, dest, cls, None])
 
-    def __add_dbase_item_to_list(self, full_path, option, dest):
-        base = os.path.splitext(os.path.basename(full_path))[0]
-        db_file_mtime = os.path.getmtime(full_path)
+    def __add_dbase_item_to_list(self, dbase_full_path, option, dest):
+        """
+        Adds the specific item to the build list. We have to check to see if the
+        file needs rebuilt, depending on modification flags a file timestamps.
+        """
+        (base, db_file_mtime) = base_and_modtime(dbase_full_path)
         local_dest = os.path.join(os.path.dirname(self.__project.path), dest)
-        mod = False
-        if not os.path.exists(local_dest):
-            mod = True
-        else:
-            dest_mtime = os.path.getmtime(local_dest)
-            if db_file_mtime > dest_mtime or self.__dbmap[base][1]:
-                mod = True
+
+        mod = file_needs_rebuilt(local_dest, self.__dbmap, [dbase_full_path])
+        
         self.__modlist.append(mod)
         (fmt, cls, rpttype) = self.__optmap[option]
-        dbase = self.__dbmap[base][0].db
+        dbase = self.__dbmap[base][DB_MAP_DBASE].db
         self.__model.append(row=[mod, base, fmt, dest, cls, dbase])
-
+    
     def __populate(self):
+        """
+        Populate the display with the items stored in the project's
+        export list.
+        """
         for item in self.__project.get_register_set():
             try:
                 for (option, dest) in self.__project.get_export_list(item):
@@ -113,74 +145,113 @@ class Build(object):
                 pass
 
     def toggle_callback(self, cell, path, source):
-        self.__model[path][0] = not self.__model[path][0]
+        """
+        Called with the modified toggle is changed. Toggles the value in
+        the internal list.
+        """
+        self.__model[path][MDL_MOD] = not self.__model[path][MDL_MOD]
 
     def register_set_callback(self, cell, path, node, col):
-        model = cell.get_property('model')
-        self.__model[path][self.DBASE] = model[node][1]
-        self.__model[path][self.BASE] = model[node][0]
+        """
+        Called when the register set is changed. The combo_box_model is
+        attached to the cell that caused the change (on the 'model'
+        property). The data is then copied out of the combo_box_model and
+        into the database.
+        """
+        combo_box_model = cell.get_property('model')
+        self.__model[path][MDL_DBASE] = combo_box_model[node][1]
+        self.__model[path][MDL_BASE] = combo_box_model[node][0]
 
     def format_callback(self, cell, path, node, col):
-        model = cell.get_property('model')
-        self.__model[path][self.CLS] = model[node][1]
-        self.__model[path][self.FMT] = model[node][0]
+        """
+        Called when the format is changed. The combo_box_model is
+        attached to the cell that caused the change (on the 'model'
+        property). The data is then copied out of the combo_box_model and
+        into the database.
+        """
+        combon_box_model = cell.get_property('model')
+        self.__model[path][MDL_CLASS] = combo_box_model[node][1]
+        self.__model[path][MDL_FMT] = combo_box_model[node][0]
 
     def __add_columns(self):
-        column = ToggleColumn("Build", self.toggle_callback, self.MOD)
+        """
+        Adds the columns to the builder list.
+        """
+        column = ToggleColumn("Build", self.toggle_callback, MDL_MOD)
         self.__build_list.append_column(column)
 
-        column = EditableColumn("RegisterSet", None, self.BASE)
+        column = EditableColumn("RegisterSet", None, MDL_BASE)
         column.set_min_width(125)
-        column.set_sort_column_id(self.BASE)
+        column.set_sort_column_id(MDL_BASE)
         self.__build_list.append_column(column)
 
-        column = EditableColumn("Format", None, self.FMT)
+        column = EditableColumn("Format", None, MDL_FMT)
         column.set_min_width(175)
-        column.set_sort_column_id(self.FMT)
+        column.set_sort_column_id(MDL_FMT)
         self.__build_list.append_column(column)
 
-        column = EditableColumn("Destination", None, self.DEST)
+        column = EditableColumn("Destination", None, MDL_DEST)
         column.set_min_width(250)
-        column.set_sort_column_id(self.DEST)
+        column.set_sort_column_id(MDL_DEST)
         self.__build_list.append_column(column)
 
     def on_buildlist_button_press_event(self, obj, event):
+        """
+        Callback the pops open the menu if the right mouse button
+        is clicked (event.button == 3, in GTK terms)
+        """
         if event.button == 3:
             menu = self.__builder.get_object("menu")
             menu.popup(None, None, None, 1, 0)
 
     def on_select_all_activate(self, obj):
+        """
+        Called with the menu item has been selected to select all
+        targets for rebuild. Simply sets all the modified flags to True.
+        """
         for item in self.__model:
-            item[0] = True
+            item[MDL_MOD] = True
 
     def on_unselect_all_activate(self, obj):
+        """
+        Called with the menu item has been selected to unselect all
+        targets for rebuild. Simply sets all the modified flags to False.
+        """
         for item in self.__model:
-            item[0] = False
+            item[MDL_MOD] = False
 
     def on_select_ood_activate(self, obj):
+        """
+        Called when the menu item has been selected to select all out of
+        data targets for rebuild. We have already determined this from
+        the original load (we don't dynamically recalulate the ist). So
+        we just march down the list and set the appropriate modified flags.
+        """
         for (count, item) in enumerate(self.__model):
-            item[0] = self.__modlist[count]
+            item[MDL_MOD] = self.__modlist[count]
 
     def on_run_build_clicked(self, obj):
-        for item in [item for item in self.__model if item[0]]:
-            wrclass = item[self.CLS]
-            dbase = item[self.DBASE]
+        """
+        Called when the build button is pressed.
+        """
+        for item in [item for item in self.__model if item[MDL_MOD]]:
+            writer_class = item[MDL_CLASS]
+            dbase = item[MDL_DBASE]
             dest = os.path.abspath(
                 os.path.join(os.path.dirname(self.__project.path),
-                             item[self.DEST]))
+                             item[MDL_DEST]))
+
             try:
                 if dbase:
-                    gen = wrclass(dbase)
+                    gen = writer_class(dbase)
                 else:
-                    db_list = [i[0].db for i in self.__dbmap.values()]
-                    gen = wrclass(self.__project, db_list)
+                    db_list = [i[DB_MAP_DBASE].db for i in self.__dbmap.values()]
+                    gen = writer_class(self.__project, db_list)
                 gen.set_project(self.__project)
                 gen.write(dest)
-                item[self.MOD] = False
+                item[MDL_MOD] = False
             except IOError, msg:
-                from error_dialogs import ErrorMsg
-                ErrorMsg("Error running exporter",
-                         str(msg))
+                ErrorMsg("Error running exporter", str(msg))
 
     def on_add_build_clicked(self, obj):
         optlist = [("%s (%s)" % item[1], True, item[3]) for item in EXPORTERS] + \
@@ -191,8 +262,8 @@ class Build(object):
                         self.add_callback, self.run_callback)
 
     def add_callback(self, filename, export_format, register_set):
-        option = self.__mapopt[export_format][0]
-        if self.__mapopt[export_format][2]:
+        option = self.__mapopt[export_format][MAPOPT_ID]
+        if self.__mapopt[export_format][MAPOPT_REGISTER_SET]:
             register_path = self.__base2path[register_set]
             self.__project.add_to_export_list(register_path, option, filename)
         else:
@@ -202,12 +273,12 @@ class Build(object):
 
     def run_callback(self, filename, export_format, register_set):
         base = os.path.splitext(os.path.basename(register_set))[0]
-        dbase = self.__dbmap[base][0].db
-        wrclass = self.__mapopt[export_format][1]
-        if self.__mapopt[export_format][2]:
+        dbase = self.__dbmap[base][DB_MAP_DBASE].db
+        wrclass = self.__mapopt[export_format][MAPOPT_CLASS]
+        if self.__mapopt[export_format][MAPOPT_REGISTER_SET]:
             gen = wrclass(dbase)
         else:
-            db_list = [i[0].db for i in self.__dbmap.values()]
+            db_list = [i[DB_MAP_DBASE].db for i in self.__dbmap.values()]
             gen = wrclass(self.__project, db_list)
         gen.set_project(self.__project)
         gen.write(filename)
@@ -216,10 +287,10 @@ class Build(object):
         sel = self.__build_list.get_selection().get_selected()
         data = sel[0][sel[1]]
 
-        option = self.__mapopt[data[self.COL_FMT]][0]
-        filename = data[self.COL_DEST]
-        if data[self.COL_DBASE]:
-            register_path = self.__base2path[data[self.COL_BASE]]
+        option = self.__mapopt[data[MDL_FMT]][MAPOPT_ID]
+        filename = data[MDL_DEST]
+        if data[MDL_DBASE]:
+            register_path = self.__base2path[data[MDL_BASE]]
             self.__project.remove_from_export_list(register_path, option,
                                                    filename)
         else:
@@ -228,3 +299,34 @@ class Build(object):
 
     def on_close_clicked(self, obj):
         self.__build_top.destroy()
+
+
+def base_and_modtime(dbase_full_path):
+    """
+    Returns the base name of the register set, along with the modification
+    time of the associated file.
+    """
+    base = os.path.splitext(os.path.basename(dbase_full_path))[0]
+    db_file_mtime = os.path.getmtime(dbase_full_path)
+    return (base, db_file_mtime)
+
+
+def file_needs_rebuilt(local_dest, dbmap, db_paths):
+    """
+    Returns True if the associated database has been modified since the
+    local_dest file has been last modified. If the destination file does
+    not exist, the destination file is older than the saved database file,
+    or if the database has been modified in internal memory, we consider
+    it to need to be rebuilt.
+    """
+    mod = False
+    if not os.path.exists(local_dest):
+        mod = True
+    else:
+        for full_path in db_paths:
+            (base, db_file_mtime) = base_and_modtime(full_path)
+            dest_mtime = os.path.getmtime(local_dest)
+            if db_file_mtime > dest_mtime or dbmap[base][DB_MAP_MODIFIED]:
+                mod = True
+    return mod
+    
