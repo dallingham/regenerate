@@ -57,7 +57,7 @@ class BitModel(gtk.ListStore):
             bits(field),
             field.field_name,
             TYPE2STR[field.field_type][0],
-            __get_field_reset_data(field),
+            get_field_reset_data(field),
             self.RESET2STR[field.reset_type][0],
             field.start_position,
             field
@@ -191,7 +191,8 @@ def reset_value(field):
     strval = "%x" % field.reset_value
     return strval.zfill(width / 4)
 
-def __get_field_reset_data(self, field):
+
+def get_field_reset_data(field):
     """
     Converts the fields reset value/type into a displayable value.
     """

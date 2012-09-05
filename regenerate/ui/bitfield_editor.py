@@ -25,9 +25,11 @@ information.
 import gtk
 import re
 import pango
+import os
 
-from regenerate.db import BitField, TYPES, BFT_TYPE, BFT_ID, BFT_INP, BFT_CTRL, BFT_1S, BFT_DESC
-from regenerate.settings.paths import GLADE_BIT
+from regenerate.db import (BitField, TYPES, BFT_TYPE, BFT_ID, BFT_INP,
+                           BFT_CTRL, BFT_1S, BFT_DESC)
+from regenerate.settings.paths import GLADE_BIT, INSTALL_PATH
 from error_dialogs import ErrorMsg, Question
 from regenerate.writers.verilog_reg_def import REG
 
@@ -83,6 +85,8 @@ class BitFieldEditor(object):
             "Edit Bit Field - [%02x] %s" % (register.address,
                                             register.register_name))
 
+        self.__top_window.set_icon_from_file(
+            os.path.join(INSTALL_PATH, "media", "flop.svg"))
         self.__input_obj.set_sensitive(TYPE_ENB[bit_field.field_type][0])
         self.__control_obj.set_sensitive(TYPE_ENB[bit_field.field_type][1])
 

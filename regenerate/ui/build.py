@@ -21,7 +21,8 @@ import os
 import gtk
 from export_assistant import ExportAssistant
 from regenerate.settings.paths import INSTALL_PATH
-from regenerate.writers import EXPORTERS, PRJ_EXPORTERS, EXP_CLASS, EXP_TYPE, EXP_DESCRIPTION, EXP_EXT, EXP_ID
+from regenerate.writers import (EXPORTERS, PRJ_EXPORTERS, EXP_CLASS, EXP_TYPE,
+                                EXP_ID, EXP_EXT, EXP_DESCRIPTION)
 from columns import EditableColumn, ToggleColumn, ComboMapColumn
 from error_dialogs import ErrorMsg
 
@@ -64,7 +65,7 @@ class Build(object):
         self.__optmap = {}
         self.__mapopt = {}
         for item in EXPORTERS:
-            value = "%s (%s)" % item[1]
+            value = "%s (%s)" % item[EXP_TYPE]
             self.__optmap[item[EXP_ID]] = (value, item[EXP_CLASS], True)
             self.__mapopt[value] = (item[EXP_ID], item[EXP_CLASS], True)
         for item in PRJ_EXPORTERS:
@@ -254,14 +255,24 @@ class Build(object):
                 ErrorMsg("Error running exporter", str(msg))
 
     def on_add_build_clicked(self, obj):
-        optlist = [("%s (%s)" % item[1], True, item[3]) for item in EXPORTERS] + \
-            [("%s (%s)" % item[1], False, item[3]) for item in PRJ_EXPORTERS]
+        """
+        Brings up the export assistant, to help the user build a new rule
+        to add to the builder.
+        """
+        optlist = [("%s (%s)" % item[EXP_ITEM], True, item[EXP_EXT])
+                   for item in EXPORTERS] + \
+                   [("%s (%s)" % item[EXP_ITEM], False, item[EXP_ITEM])
+                    for item in PRJ_EXPORTERS]
         reglist = [os.path.splitext(os.path.basename(i))[0]
                    for i in self.__project.get_register_set()]
         ExportAssistant(self.__project.short_name, optlist, reglist,
                         self.add_callback, self.run_callback)
 
     def add_callback(self, filename, export_format, register_set):
+        """
+        Called when a item has been added to the builder, and is used
+        to add the new item to the list view.
+        """
         option = self.__mapopt[export_format][MAPOPT_ID]
         if self.__mapopt[export_format][MAPOPT_REGISTER_SET]:
             register_path = self.__base2path[register_set]
@@ -272,6 +283,10 @@ class Build(object):
         self.__add_item_to_list(register_path, option, filename)
 
     def run_callback(self, filename, export_format, register_set):
+        """
+        Runs a specified exporter. Typcially called when the user
+        decides to run a case instead of adding it to the builder.
+        """
         base = os.path.splitext(os.path.basename(register_set))[0]
         dbase = self.__dbmap[base][DB_MAP_DBASE].db
         wrclass = self.__mapopt[export_format][MAPOPT_CLASS]
@@ -284,6 +299,10 @@ class Build(object):
         gen.write(filename)
 
     def on_remove_build_clicked(self, obj):
+        """
+        Called when the user had opted to delete an existing rule.
+        Deletes the selected rule.
+        """
         sel = self.__build_list.get_selection().get_selected()
         data = sel[0][sel[1]]
 
@@ -298,6 +317,9 @@ class Build(object):
         self.__model.remove(sel[1])
 
     def on_close_clicked(self, obj):
+        """
+        Closes the builder.
+        """
         self.__build_top.destroy()
 
 
