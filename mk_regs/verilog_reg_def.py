@@ -1,12 +1,14 @@
 REG = {
-    "rw" : """module %(MODULE)s_rw_reg #(parameter WIDTH = 1)
+    "rw" : """module %(MODULE)s_rw_reg #(
+                           parameter WIDTH = 1,
+                           parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
+                           )
    (
     input                  CLK,      // Clock
     input                  RSTn,     // Reset
     input                  BE,       // Byte Enable
     input                  WE,       // Write Strobe
     input [WIDTH-1:0]      DI,       // Data In
-    input [WIDTH-1:0]      RVAL,     // Reset Value
     output reg [WIDTH-1:0] DO        // Data Out
    );
 
@@ -22,14 +24,16 @@ REG = {
 
 endmodule
 """,
-    "rw1s" : """module %(MODULE)s_rw1s_reg #(parameter WIDTH = 1)
+    "rw1s" : """module %(MODULE)s_rw1s_reg #(
+                             parameter WIDTH = 1,
+                             parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
+                             )
    (
     input                  CLK,      // Clock
     input                  RSTn,     // Reset
     input                  BE,       // Byte Enable
     input                  WE,       // Write Strobe
     input [WIDTH-1:0]      DI,       // Data In
-    input [WIDTH-1:0]      RVAL,     // Reset Value
     output reg [WIDTH-1:0] DO,       // Data Out
     output reg             DO_1S     // One Shot
    );
@@ -51,14 +55,16 @@ endmodule
 
 endmodule
 """,
-    "rw1s1" : """module %(MODULE)s_rw1s1_reg #(parameter WIDTH = 1)
+    "rw1s1" : """module %(MODULE)s_rw1s1_reg #(
+                              parameter WIDTH = 1,
+                              parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
+                              )
    (
     input                  CLK,      // Clock
     input                  RSTn,     // Reset
     input                  BE,       // Byte Enable
     input                  WE,       // Write Strobe
     input [WIDTH-1:0]      DI,       // Data In
-    input [WIDTH-1:0]      RVAL,     // Reset Value
     output reg [WIDTH-1:0] DO,       // Data Out
     output reg             DO_1S     // One Shot
    );
@@ -85,7 +91,10 @@ endmodule
 
 endmodule
 """,
-    "rwld" : """module %(MODULE)s_rwld_reg #(parameter WIDTH = 1)
+    "rwld" : """module %(MODULE)s_rwld_reg #(
+                             parameter WIDTH = 1,
+                             parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
+                             )
    (
     input                  CLK,      // Clock
     input                  RSTn,     // Reset
@@ -94,7 +103,6 @@ endmodule
     input                  LD,       // Load Control
     input [WIDTH-1:0]      DI,       // Data In
     input [WIDTH-1:0]      IN,       // Load Data
-    input [WIDTH-1:0]      RVAL,     // Reset Value
     output reg [WIDTH-1:0] DO        // Data Out
    );
 
@@ -112,7 +120,10 @@ endmodule
 
 endmodule
 """,
-    "rwld1s" : """module %(MODULE)s_rwld1s_reg #(parameter WIDTH = 1)
+    "rwld1s" : """module %(MODULE)s_rwld1s_reg #(
+                               parameter WIDTH = 1,
+                               parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
+                               )
    (
     input                  CLK,      // Clock
     input                  RSTn,     // Reset
@@ -121,7 +132,6 @@ endmodule
     input                  LD,       // Load Control
     input [WIDTH-1:0]      DI,       // Data In
     input [WIDTH-1:0]      IN,       // Load Data
-    input [WIDTH-1:0]      RVAL,     // Reset Value
     output reg [WIDTH-1:0] DO,       // Data Out
     output reg             DO_1S     // One Shot
    );
@@ -143,7 +153,10 @@ endmodule
 
 endmodule
 """,
-    "rwld1s1" : """module %(MODULE)s_rwld1s1_reg #(parameter WIDTH = 1)
+    "rwld1s1" : """module %(MODULE)s_rwld1s1_reg #(
+                                parameter WIDTH = 1,
+                                parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
+                                )
    (
     input                  CLK,      // Clock
     input                  RSTn,     // Reset
@@ -152,7 +165,6 @@ endmodule
     input                  LD,       // Load Control
     input [WIDTH-1:0]      DI,       // Data In
     input [WIDTH-1:0]      IN,       // Load Data
-    input [WIDTH-1:0]      RVAL,     // Reset Value
     output reg [WIDTH-1:0] DO,       // Data Out
     output reg             DO_1S     // One Shot
    );
@@ -179,7 +191,10 @@ endmodule
 
 endmodule
 """,
-    "rws" : """module %(MODULE)s_rws_reg #(parameter WIDTH = 1)
+    "rws" : """module %(MODULE)s_rws_reg #(
+                            parameter WIDTH = 1,
+                            parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
+                            )
    (
     input                  CLK,      // Clock
     input                  RSTn,     // Reset
@@ -187,7 +202,6 @@ endmodule
     input                  WE,       // Write Strobe
     input [WIDTH-1:0]      DI,       // Data In
     input [WIDTH-1:0]      IN,       // Load Data
-    input [WIDTH-1:0]      RVAL,     // Reset Value
     output reg [WIDTH-1:0] DO        // Data Out
    );
 
@@ -205,7 +219,10 @@ endmodule
 
 endmodule
 """,
-    "rws1s" : """module %(MODULE)s_rws1s_reg #(parameter WIDTH = 1)
+    "rws1s" : """module %(MODULE)s_rws1s_reg #(
+                              parameter WIDTH = 1,
+                              parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
+                              )
    (
     input                  CLK,      // Clock
     input                  RSTn,     // Reset
@@ -213,7 +230,6 @@ endmodule
     input                  WE,       // Write Strobe
     input [WIDTH-1:0]      DI,       // Data In
     input [WIDTH-1:0]      IN,       // Load Data
-    input [WIDTH-1:0]      RVAL,     // Reset Value
     output reg [WIDTH-1:0] DO,       // Data Out
     output reg             DO_1S     // One Shot
    );
@@ -235,7 +251,10 @@ endmodule
 
 endmodule
 """,
-    "w1cs" : """module %(MODULE)s_w1cs_reg #(parameter WIDTH = 1)
+    "w1cs" : """module %(MODULE)s_w1cs_reg #(
+                             parameter WIDTH = 1,
+                             parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
+                             )
    (
     input                  CLK,      // Clock
     input                  RSTn,     // Reset
@@ -243,7 +262,6 @@ endmodule
     input                  WE,       // Write Strobe
     input [WIDTH-1:0]      DI,       // Data In
     input [WIDTH-1:0]      IN,       // Load Data
-    input [WIDTH-1:0]      RVAL,     // Reset Value
     output reg [WIDTH-1:0] DO        // Data Out
     );
 
@@ -266,7 +284,10 @@ endmodule
 
 endmodule
 """,
-    "w1cs1s" : """module %(MODULE)s_w1cs1s_reg #(parameter WIDTH = 1)
+    "w1cs1s" : """module %(MODULE)s_w1cs1s_reg #(
+                               parameter WIDTH = 1,
+                               parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
+                               )
    (
     input                  CLK,      // Clock
     input                  RSTn,     // Reset
@@ -274,7 +295,6 @@ endmodule
     input                  WE,       // Write Strobe
     input [WIDTH-1:0]      DI,       // Data In
     input [WIDTH-1:0]      IN,       // Load Data
-    input [WIDTH-1:0]      RVAL,     // Reset Value
     output reg [WIDTH-1:0] DO,       // Data Out
     output reg             DO_1S     // One Shot
     );
@@ -306,7 +326,10 @@ endmodule
 
 endmodule
 """,
-    "w1cs1s1" : """module %(MODULE)s_w1cs1s1_reg #(parameter WIDTH = 1)
+    "w1cs1s1" : """module %(MODULE)s_w1cs1s1_reg #(
+                                parameter WIDTH = 1,
+                                parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
+                                )
    (
     input                  CLK,      // Clock
     input                  RSTn,     // Reset
@@ -314,7 +337,6 @@ endmodule
     input                  WE,       // Write Strobe
     input [WIDTH-1:0]      DI,       // Data In
     input [WIDTH-1:0]      IN,       // Load Data
-    input [WIDTH-1:0]      RVAL,     // Reset Value
     output reg [WIDTH-1:0] DO,       // Data Out
     output reg             DO_1S     // One Shot
     );
@@ -346,7 +368,10 @@ endmodule
 
 endmodule
 """,
-    "w1cld" : """module %(MODULE)s_w1cld_reg #(parameter WIDTH = 1)
+    "w1cld" : """module %(MODULE)s_w1cld_reg #(
+                              parameter WIDTH = 1,
+                              parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
+                              )
    (
     input                  CLK,      // Clock
     input                  RSTn,     // Reset
@@ -355,7 +380,6 @@ endmodule
     input                  LD,       // Load Control
     input [WIDTH-1:0]      DI,       // Data In
     input [WIDTH-1:0]      IN,       // Load Data
-    input [WIDTH-1:0]      RVAL,     // Reset Value
     output reg [WIDTH-1:0] DO        // Data Out
     );
 
@@ -378,7 +402,10 @@ endmodule
 
 endmodule
 """,
-    "w1cld1s" : """module %(MODULE)s_w1cld1s_reg #(parameter WIDTH = 1)
+    "w1cld1s" : """module %(MODULE)s_w1cld1s_reg #(
+                                parameter WIDTH = 1,
+                                parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
+                                )
    (
     input                  CLK,      // Clock
     input                  RSTn,     // Reset
@@ -386,7 +413,6 @@ endmodule
     input                  WE,       // Write Strobe
     input [WIDTH-1:0]      DI,       // Data In
     input [WIDTH-1:0]      IN,       // Load Data
-    input [WIDTH-1:0]      RVAL,     // Reset Value
     output reg [WIDTH-1:0] DO,       // Data Out
     output reg             DO_1S     // One Shot
     );
@@ -418,13 +444,15 @@ endmodule
 
 endmodule
 """,
-    "rold" : """module %(MODULE)s_rold_reg #(parameter WIDTH = 1)
+    "rold" : """module %(MODULE)s_rold_reg #(
+                             parameter WIDTH = 1,
+                             parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
+                             )
    (
     input                  CLK,      // Clock
     input                  RSTn,     // Reset
     input                  LD,       // Load Control
     input [WIDTH-1:0]      IN,       // Load Data
-    input [WIDTH-1:0]      RVAL,     // Reset Value
     output reg [WIDTH-1:0] DO        // Data Out
    );
 
@@ -438,14 +466,16 @@ endmodule
 
 endmodule
 """,
-    "rcld" : """module %(MODULE)s_rcld_reg #(parameter WIDTH = 1)
+    "rcld" : """module %(MODULE)s_rcld_reg #(
+                             parameter WIDTH = 1,
+                             parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
+                             )
    (
     input                  CLK,      // Clock
     input                  RSTn,     // Reset
     input                  RD,       // Read Strobe
     input                  LD,       // Load Control
     input [WIDTH-1:0]      IN,       // Load Data
-    input [WIDTH-1:0]      RVAL,     // Reset Value
     output reg [WIDTH-1:0] DO        // Data Out
    );
 
@@ -463,14 +493,16 @@ endmodule
 
 endmodule
 """,
-    "rcs" : """module %(MODULE)s_rcs_reg #(parameter WIDTH = 1)
+    "rcs" : """module %(MODULE)s_rcs_reg #(
+                            parameter WIDTH = 1,
+                            parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
+                            )
    (
     input                  CLK,      // Clock
     input                  RSTn,     // Reset
     input                  RD,       // Read Strobe
     input                  LD,       // Load Control
     input [WIDTH-1:0]      IN,       // Load Data
-    input [WIDTH-1:0]      RVAL,     // Reset Value
     output reg [WIDTH-1:0] DO        // Data Out
    );
 
@@ -488,14 +520,15 @@ endmodule
 
 endmodule
 """,
-    "wo" : """module %(MODULE)s_wo_reg
+    "wo" : """module %(MODULE)s_wo_reg #(
+                           parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
+                           )
    (
     input      CLK,      // Clock
     input      RSTn,     // Reset
     input      BE,       // Byte Enable
     input      WE,       // Write Strobe
     input      DI,       // Data In
-    input      RVAL,     // Reset Value
     output reg DO_1S     // One Shot
     );
 
@@ -509,14 +542,15 @@ endmodule
 
 endmodule
 """,
-    "w1s" : """module %(MODULE)s_w1s_reg
+    "w1s" : """module %(MODULE)s_w1s_reg #(
+                            parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
+                            )
    (
     input      CLK,      // Clock
     input      RSTn,     // Reset
     input      BE,       // Byte Enable
     input      WE,       // Write Strobe
     input      DI,       // Data In
-    input      RVAL,     // Reset Value
     input      IN,       // Load Data
     output reg DO,       // Data Out
     output reg DO_1S     // One Shot

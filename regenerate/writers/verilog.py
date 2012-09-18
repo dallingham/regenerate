@@ -316,31 +316,31 @@ class Verilog(WriterBase):
             
             self._ofile.write('%s_%s_reg ' % (self._module, cell_name))
             if self._allows_wide[field.field_type]:
-                self._ofile.write('#(.WIDTH(%d)) ' % width)
-            self._ofile.write('%s\n' % instance)
+                self._ofile.write('#(.WIDTH(%d)' % width)
+            self._ofile.write(', .RVAL(%s)' % self._reset_value(field, start, stop))
+            self._ofile.write(') %s\n' % instance)
             
             self._ofile.write('  (\n')
             self._ofile.write('    .CLK   (%s),\n' % self._clock)
-            self._ofile.write('    .RSTn  (%s),\n' % self._reset)
+            self._ofile.write('    .RSTn  (%s)' % self._reset)
 
             byte_lane = (reg_start_bit + start) / 8
             if not self._is_read_only[field.field_type]:
-                self._ofile.write('    .WE    (write_r%02x),\n' % write_address)
-                self._ofile.write('    .DI    (%s%s),\n' % (self._data_in, bus_index))
-                self._ofile.write('    .BE    (%s[%d]),\n' % (self._byte_enables, byte_lane))
+                self._ofile.write(',\n    .WE    (write_r%02x)' % write_address)
+                self._ofile.write(',\n    .DI    (%s%s)' % (self._data_in, bus_index))
+                self._ofile.write(',\n    .BE    (%s[%d])' % (self._byte_enables, byte_lane))
             if self._has_rd[field.field_type]:
-                self._ofile.write('    .RD    (%s),\n' % self._read_strobe)
+                self._ofile.write(',\n    .RD    (%s)' % self._read_strobe)
             if self._has_data_out[field.field_type]:
-                self._ofile.write('    .DO    (r%02x_%s%s),\n' % (address, field_name, index))
+                self._ofile.write(',\n    .DO    (r%02x_%s%s)' % (address, field_name, index))
             if self._has_control[field.field_type]:
-                self._ofile.write('    .LD    (%s),\n' % field.control_signal)
+                self._ofile.write(',\n    .LD    (%s)' % field.control_signal)
             if self._has_input[field.field_type]:
-                self._ofile.write('    .IN    (%s%s),\n' % (field.input_signal, index))
+                self._ofile.write(',\n    .IN    (%s%s)' % (field.input_signal, index))
             if self._has_oneshot[field.field_type]:
-                self._ofile.write('    .DO_1S (r%02x_%s_1S),\n' % (address, field_name))
+                self._ofile.write(',\n    .DO_1S (r%02x_%s_1S)' % (address, field_name))
                 
-            self._ofile.write('    .RVAL  (%s)\n' % self._reset_value(field, start, stop))
-            self._ofile.write('  );\n\n')
+            self._ofile.write('\n  );\n\n')
 
     def _byte_info(self, field, register, lower, size):
         """
