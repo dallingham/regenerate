@@ -229,16 +229,22 @@ class RegParser(object):
             elif old_type == BitField.TYPE_READ_WRITE:
                 if func == BitField.FUNC_SET_BITS:
                     self.__field.field_type = BitField.TYPE_READ_WRITE_SET
+                elif func == BitField.FUNC_CLEAR_BITS:
+                    self.__field.field_type = BitField.TYPE_READ_WRITE_CLR
                 elif func == BitField.FUNC_PARALLEL:
                     self.__field.field_type = BitField.TYPE_READ_WRITE_LOAD
             elif old_type == BitField.TYPE_READ_WRITE_1S:
                 if func == BitField.FUNC_SET_BITS:
                     self.__field.field_type = BitField.TYPE_READ_WRITE_SET_1S
+                elif func == BitField.FUNC_CLEAR_BITS:
+                    self.__field.field_type = BitField.TYPE_READ_WRITE_CLR_1S
                 elif func == BitField.FUNC_PARALLEL:
                     self.__field.field_type = BitField.TYPE_READ_WRITE_LOAD_1S
             elif old_type == BitField.TYPE_READ_WRITE_1S_1:
                 if func == BitField.FUNC_SET_BITS:
                     self.__field.field_type = BitField.TYPE_READ_WRITE_SET_1S_1
+                elif func == BitField.FUNC_CLEAR_BITS:
+                    self.__field.field_type = BitField.TYPE_READ_WRITE_CLR_1S_1
                 elif func == BitField.FUNC_PARALLEL:
                     self.__field.field_type = BitField.TYPE_READ_WRITE_LOAD_1S_1
             elif old_type == BitField.TYPE_WRITE_1_TO_CLEAR_SET:

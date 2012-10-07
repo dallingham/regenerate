@@ -299,6 +299,7 @@ class Verilog(WriterBase):
 
         for (start, stop) in self._break_on_byte_boundaries(field.start_position, field.stop_position):
 
+            parameters = []
             if start >= self._data_width:
                 write_address = address + ((start / self._data_width) * (self._data_width / 8))
             else:
@@ -315,12 +316,18 @@ class Verilog(WriterBase):
             instance = "r%02x_%s_%d" % (address, field_name, start)
             
             self._ofile.write('%s_%s_reg ' % (self._module, cell_name))
+
+
             if self._allows_wide[field.field_type]:
-                self._ofile.write('#(.WIDTH(%d)' % width)
-            self._ofile.write(', .RVAL(%s)' % self._reset_value(field, start, stop))
-            self._ofile.write(') %s\n' % instance)
+                parameters.append('.WIDTH(%d)' % width)
+            parameters.append('.RVAL(%s)' % self._reset_value(field, start, stop))
+
+            if parameters:
+                self._ofile.write(' #(')
+                self._ofile.write(", ".join(parameters))
+                self._ofile.write(') %s\n' % instance)
             
-            self._ofile.write('  (\n')
+            self._ofile.write(' (\n')
             self._ofile.write('    .CLK   (%s),\n' % self._clock)
             self._ofile.write('    .RSTn  (%s)' % self._reset)
 
@@ -452,7 +459,7 @@ class Verilog(WriterBase):
         sep = "\n" + " " * 46 + "// "
 
         max_len = max([len(i[2]) for i in port_list]) + 2
-        fmt_string = "%%-6s %%-7s %-%ds // %s\n" % max_len
+        fmt_string = "%%-6s %%-7s %%-%ds // %%s\n" % max_len
 
         for data in port_list:
             comment = sep.join(commenter.wrap(data[3]))
@@ -781,8 +788,8 @@ class Verilog(WriterBase):
         self._ofile.write('       endcase\n')
         self._ofile.write('     end else begin\n')
         self._ofile.write('        mux_%s <= %d\'h0;\n' % (data_out.lower(), self._data_width))
-        self._ofile.write('     end')
-        self._ofile.write('  end')
+        self._ofile.write('     end\n')
+        self._ofile.write('  end\n')
         self._ofile.write('end\n\n')
 
     def _byte_enable_list(self, start, stop):

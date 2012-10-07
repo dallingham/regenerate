@@ -108,7 +108,7 @@ class Build(object):
         """
         local_dest = os.path.join(os.path.dirname(self.__project.path), dest)
 
-        mod = file_needs_rebuilt(local_dest, self.__dbmap, self.__project.get_regsiter_set())
+        mod = file_needs_rebuilt(local_dest, self.__dbmap, self.__project.get_register_set())
         self.__modlist.append(mod)
         (fmt, cls, dbtype) = self.__optmap[option]
         self.__model.append(row=[mod, "<project>", fmt, dest, cls, None])
@@ -259,9 +259,9 @@ class Build(object):
         Brings up the export assistant, to help the user build a new rule
         to add to the builder.
         """
-        optlist = [("%s (%s)" % item[EXP_ITEM], True, item[EXP_EXT])
+        optlist = [("%s (%s)" % item[EXP_TYPE], True, item[EXP_EXT])
                    for item in EXPORTERS] + \
-                   [("%s (%s)" % item[EXP_ITEM], False, item[EXP_ITEM])
+                   [("%s (%s)" % item[EXP_TYPE], False, item[EXP_EXT])
                     for item in PRJ_EXPORTERS]
         reglist = [os.path.splitext(os.path.basename(i))[0]
                    for i in self.__project.get_register_set()]

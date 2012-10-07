@@ -87,7 +87,7 @@ module %(MODULE)s_rw1s1_reg #(
       if (%(RESET_CONDITION)sRSTn) begin
          DO_1S <= 1'b0;
       end else begin
-         DO_1S <= WE & %(BE_LEVEL)sBE && DI != {pWidth{1'b0}};
+         DO_1S <= WE & %(BE_LEVEL)sBE && DI != {WIDTH{1'b0}};
       end
    end
 
@@ -190,7 +190,7 @@ module %(MODULE)s_rwld1s1_reg #(
       if (%(RESET_CONDITION)sRSTn) begin
          DO_1S <= 1'b0;
       end else begin
-         DO_1S <= WE && %(BE_LEVEL)sBE && DI != {pWidth{1'b0}};
+         DO_1S <= WE && %(BE_LEVEL)sBE && DI != {WIDTH{1'b0}};
       end
    end
 
@@ -253,6 +253,44 @@ module %(MODULE)s_rws1s_reg #(
             DO <= IN | DO;
             DO_1S <= 1'b0;
          end
+      end
+   end
+
+endmodule
+
+/* Read/write with input signal that sets bits on one, one shot on write of 1 */
+module %(MODULE)s_rws1s1_reg #(
+                              parameter WIDTH = 1,
+                              parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
+                              )
+   (
+    input                  CLK,      // Clock
+    input                  RSTn,     // Reset
+    input                  BE,       // Byte Enable
+    input                  WE,       // Write Strobe
+    input [WIDTH-1:0]      DI,       // Data In
+    input [WIDTH-1:0]      IN,       // Load Data
+    output reg [WIDTH-1:0] DO,       // Data Out
+    output reg             DO_1S     // One Shot
+   );
+
+   always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+      if (%(RESET_CONDITION)sRSTn) begin
+         DO <= RVAL;
+      end else begin
+         if (WE & %(BE_LEVEL)sBE) begin
+            DO <= DI;
+         end else begin
+            DO <= IN | DO;
+         end
+      end
+   end
+
+   always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+      if (%(RESET_CONDITION)sRSTn) begin
+         DO_1S <= 1'b0;
+      end else begin
+         DO_1S <= WE & %(BE_LEVEL)sBE && DI != {WIDTH{1'b0}};
       end
    end
 
@@ -372,7 +410,7 @@ module %(MODULE)s_w1cs1s1_reg #(
       if (%(RESET_CONDITION)sRSTn) begin
          DO_1S <= 1'b0;
       end else begin
-         DO_1S <= WE && %(BE_LEVEL)sBE && DI != {pWidth{1'b0}};
+         DO_1S <= WE && %(BE_LEVEL)sBE && DI != {WIDTH{1'b0}};
       end
    end
 
@@ -536,6 +574,7 @@ module %(MODULE)s_rcs_reg #(
 endmodule
 
 module %(MODULE)s_wo_reg #(
+                           parameter WIDTH = 1,
                            parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
                            )
    (
@@ -559,6 +598,73 @@ endmodule
 
 
 module %(MODULE)s_w1s_reg #(
+                            parameter WIDTH = 1,
+                            parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
+                            )
+   (
+    input      CLK,      // Clock
+    input      RSTn,     // Reset
+    input      BE,       // Byte Enable
+    input      WE,       // Write Strobe
+    input      DI,       // Data In
+    input      IN,       // Load Data
+    output reg DO        // Data Out
+    );
+
+   always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+      if (%(RESET_CONDITION)sRSTn) begin
+         DO <= RVAL;
+      end else begin
+         if (WE & %(BE_LEVEL)sBE) begin
+            DO <= DO | DI;
+         end else begin
+            DO <= ~(IN) & DO;
+         end
+      end
+   end
+
+endmodule
+
+module %(MODULE)s_w1s1s1_reg #(
+                            parameter WIDTH = 1,
+                            parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
+                            )
+   (
+    input      CLK,      // Clock
+    input      RSTn,     // Reset
+    input      BE,       // Byte Enable
+    input      WE,       // Write Strobe
+    input      DI,       // Data In
+    input      IN,       // Load Data
+    output reg DO,       // Data Out
+    output reg DO_1S     // One Shot
+    );
+
+   always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+      if (%(RESET_CONDITION)sRSTn) begin
+         DO <= RVAL;
+      end else begin
+         if (WE & %(BE_LEVEL)sBE) begin
+            DO <= DO | DI;
+         end else begin
+            DO <= ~(IN) & DO;
+         end
+      end
+   end
+
+   always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+      if (%(RESET_CONDITION)sRSTn) begin
+         DO_1S <= 1'b0;
+      end else begin
+         DO_1S <= WE & %(BE_LEVEL)sBE && DI != {WIDTH{1'b0}};
+      end
+   end
+
+
+endmodule
+
+module %(MODULE)s_w1s1s_reg #(
+                            parameter WIDTH = 1,
                             parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
                             )
    (
@@ -584,6 +690,106 @@ module %(MODULE)s_w1s_reg #(
             DO <= ~(IN) & DO;
             DO_1S <= 1'b0;
          end
+      end
+   end
+
+endmodule
+
+/* Read/write with input signal that clears bits on one */
+module %(MODULE)s_rwc_reg #(
+                            parameter WIDTH = 1,
+                            parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
+                            )
+   (
+    input                  CLK,      // Clock
+    input                  RSTn,     // Reset
+    input                  BE,       // Byte Enable
+    input                  WE,       // Write Strobe
+    input [WIDTH-1:0]      DI,       // Data In
+    input [WIDTH-1:0]      IN,       // Load Data
+    output reg [WIDTH-1:0] DO        // Data Out
+   );
+
+   always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+      if (%(RESET_CONDITION)sRSTn) begin
+         DO <= RVAL;
+      end else begin
+         if (WE & %(BE_LEVEL)sBE) begin
+            DO <= DI;
+         end else begin
+            DO <= ~(IN) & DO;
+         end
+      end
+   end
+
+endmodule
+
+/* Read/write with input signal that clears bits on one, one shot on any write */
+module %(MODULE)s_rwc1s_reg #(
+                            parameter WIDTH = 1,
+                            parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
+                            )
+   (
+    input                  CLK,      // Clock
+    input                  RSTn,     // Reset
+    input                  BE,       // Byte Enable
+    input                  WE,       // Write Strobe
+    input [WIDTH-1:0]      DI,       // Data In
+    input [WIDTH-1:0]      IN,       // Load Data
+    output reg [WIDTH-1:0] DO,       // Data Out
+    output reg             DO_1S     // One Shot
+   );
+
+   always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+      if (%(RESET_CONDITION)sRSTn) begin
+         DO <= RVAL;
+         DO_1S <= 1'b0;
+      end else begin
+         if (WE & %(BE_LEVEL)sBE) begin
+            DO <= DI;
+            DO_1S <= 1'b1;
+         end else begin
+            DO <= ~(IN) & DO;
+            DO_1S <= 1'b0;
+         end
+      end
+   end
+
+endmodule
+
+/* Read/write with input signal that clears bits on one, one shot on write of 1 */
+module %(MODULE)s_rwc1s1_reg #(
+                            parameter WIDTH = 1,
+                            parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
+                            )
+   (
+    input                  CLK,      // Clock
+    input                  RSTn,     // Reset
+    input                  BE,       // Byte Enable
+    input                  WE,       // Write Strobe
+    input [WIDTH-1:0]      DI,       // Data In
+    input [WIDTH-1:0]      IN,       // Load Data
+    output reg [WIDTH-1:0] DO,       // Data Out
+    output reg             DO_1S     // One Shot
+   );
+
+   always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+      if (%(RESET_CONDITION)sRSTn) begin
+         DO <= RVAL;
+      end else begin
+         if (WE & %(BE_LEVEL)sBE) begin
+            DO <= DI;
+         end else begin
+            DO <= ~(IN) & DO;
+         end
+      end
+   end
+
+   always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+      if (%(RESET_CONDITION)sRSTn) begin
+         DO_1S <= 1'b0;
+      end else begin
+         DO_1S <= WE & %(BE_LEVEL)sBE && DI != {WIDTH{1'b0}};
       end
    end
 
