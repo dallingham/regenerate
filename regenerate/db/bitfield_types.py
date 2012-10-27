@@ -26,7 +26,7 @@ TYPES =  (
     (BitField.TYPE_READ_WRITE_SET_1S_1,       "RWS1S1",  True,  False, True,  True,  True,  False, False, "Read/Write, bits set on input signal, one shot on write of 1"),
     (BitField.TYPE_READ_WRITE_CLR,            "RWC",     True,  False, False, True,  True,  False, False, "Read/Write, bits cleared on input signal"),
     (BitField.TYPE_READ_WRITE_CLR_1S,         "RWC1S",   True,  False, False, True,  True,  False, False, "Read/Write, bits cleared on input signal, one shot on any write"),
-    (BitField.TYPE_READ_WRITE_CLR_1S_1,       "RWC1S1",  True,  False, False, True,  True,  False, False, "Read/Write, bits cleared on input signal, one shot on write of 1"),
+    (BitField.TYPE_READ_WRITE_CLR_1S_1,       "RWC1S1",  True,  False, True, True,  True,  False, False, "Read/Write, bits cleared on input signal, one shot on write of 1"),
     (BitField.TYPE_WRITE_1_TO_CLEAR_SET,      "W1CS",    True,  False, False, True,  True,  False, False, "Write 1 to Clear, bits set on input signal"),
     (BitField.TYPE_WRITE_1_TO_CLEAR_SET_1S,   "W1CS1S",  True,  False, True,  True,  True,  False, False, "Write 1 to Clear, bits set on input signal, one shot on any write"),
     (BitField.TYPE_WRITE_1_TO_CLEAR_SET_1S_1, "W1CS1S1", True,  False, True,  True,  True,  False, False, "Write 1 to Clear, bits set on input signal, one shot on write of 1"),
