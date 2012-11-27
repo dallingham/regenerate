@@ -63,12 +63,15 @@ def get_width(field, start=-1, stop=-1, force_index=False):
     return signal
 
 
-def oneshot_name(name):
+def oneshot_name(name, index = None):
     """
     Returns the name of the oneshot signal associated with the signal. In this
     implementation, it is the name of the signal with a _1s appended.
     """
-    return name + "_1S"
+    if index == None:
+        return name + "_1S"
+    else:
+        return "%s_%d_1S" % (name, index)
 
 
 def write_strobe(address):
@@ -345,7 +348,7 @@ class Verilog(WriterBase):
             if self._has_input[field.field_type]:
                 self._ofile.write(',\n    .IN    (%s%s)' % (field.input_signal, index))
             if self._has_oneshot[field.field_type]:
-                self._ofile.write(',\n    .DO_1S (r%02x_%s_1S)' % (address, field_name))
+                self._ofile.write(',\n    .DO_1S (r%02x_%s_%d_1S)' % (address, field_name, start))
                 
             self._ofile.write('\n  );\n\n')
 
@@ -571,8 +574,10 @@ class Verilog(WriterBase):
                 local_regs.append(val)
 
                 if self._has_oneshot[field.field_type]:
-                    val = "wire %-10s %s;" % ("", oneshot_name(base))
-                    local_regs.append(val)
+                    for (start, stop) in self._break_on_byte_boundaries(field.start_position,
+                                                                        field.stop_position):
+                        val = "wire %-10s %s;" % ("", oneshot_name(base, start))
+                        local_regs.append(val)
 
         if local_regs:
             self._ofile.write('\n// Register Declarations\n\n')
@@ -620,9 +625,11 @@ class Verilog(WriterBase):
             for field_key in register.get_bit_field_keys():
                 field = register.get_bit_field(field_key)
                 if self._has_oneshot[field.field_type]:
+                    names = " | ".join([ oneshot_name(get_base_signal(address, field), start)
+                                         for (start, stop) in
+                                         self._break_on_byte_boundaries(field.start_position, field.stop_position)])
                     self._ofile.write(fmt_string  % (
-                        oneshot_name(field.output_signal),
-                        oneshot_name(get_base_signal(address, field))))
+                        oneshot_name(field.output_signal), names))
                 if not field.use_output_enable:
                     continue
 

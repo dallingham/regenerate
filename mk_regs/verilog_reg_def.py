@@ -35,21 +35,33 @@ endmodule
     input                  WE,       // Write Strobe
     input [WIDTH-1:0]      DI,       // Data In
     output reg [WIDTH-1:0] DO,       // Data Out
-    output reg             DO_1S     // One Shot
+    output                 DO_1S     // One Shot
    );
+
+   reg                     ws;
+   reg                     ws_d;
 
    always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
       if (%(RESET_CONDITION)sRSTn) begin
          DO <= RVAL;
-         DO_1S <= 1'b0;
       end else begin
          if (WE & %(BE_LEVEL)sBE) begin
             DO <= DI;
-            DO_1S <= 1'b1;
          end else begin
             DO <= DO;
-            DO_1S <= 1'b0;
          end
+      end
+   end
+
+   assign DO_1S = ws & !ws_d;
+
+   always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+      if (%(RESET_CONDITION)sRSTn) begin
+         ws <= 1'b0;
+         ws_d <= 1'b0;
+      end else begin
+         ws <= WE & %(BE_LEVEL)sBE && DI != {WIDTH{1'b0}};
+         ws_d <= ws;
       end
    end
 
@@ -66,8 +78,11 @@ endmodule
     input                  WE,       // Write Strobe
     input [WIDTH-1:0]      DI,       // Data In
     output reg [WIDTH-1:0] DO,       // Data Out
-    output reg             DO_1S     // One Shot
+    output                 DO_1S     // One Shot
    );
+
+   reg                     ws;
+   reg                     ws_d;
 
    always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
       if (%(RESET_CONDITION)sRSTn) begin
@@ -81,11 +96,15 @@ endmodule
       end
    end
 
+   assign DO_1S = ws & !ws_d;
+
    always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
       if (%(RESET_CONDITION)sRSTn) begin
-         DO_1S <= 1'b0;
+         ws <= 1'b0;
+         ws_d <= 1'b0;
       end else begin
-         DO_1S <= WE & %(BE_LEVEL)sBE && DI != {WIDTH{1'b0}};
+         ws <= WE & %(BE_LEVEL)sBE && DI != {WIDTH{1'b0}};
+         ws_d <= ws;
       end
    end
 
@@ -133,21 +152,33 @@ endmodule
     input [WIDTH-1:0]      DI,       // Data In
     input [WIDTH-1:0]      IN,       // Load Data
     output reg [WIDTH-1:0] DO,       // Data Out
-    output reg             DO_1S     // One Shot
+    output                 DO_1S     // One Shot
    );
+
+   reg                     ws;
+   reg                     ws_d;
 
    always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
       if (%(RESET_CONDITION)sRSTn) begin
          DO <= RVAL;
-         DO_1S <= 1'b0;
       end else begin
          if (WE & %(BE_LEVEL)sBE) begin
             DO <= DI;
-            DO_1S <= 1'b1;
          end else begin
             DO <= (LD) ? IN : DO;
-            DO_1S <= 1'b0;
          end
+      end
+   end
+
+   assign DO_1S = ws & !ws_d;
+
+   always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+      if (%(RESET_CONDITION)sRSTn) begin
+         ws <= 1'b0;
+         ws_d <= 1'b0;
+      end else begin
+         ws <= WE & %(BE_LEVEL)sBE && DI != {WIDTH{1'b0}};
+         ws_d <= ws;
       end
    end
 
@@ -166,8 +197,11 @@ endmodule
     input [WIDTH-1:0]      DI,       // Data In
     input [WIDTH-1:0]      IN,       // Load Data
     output reg [WIDTH-1:0] DO,       // Data Out
-    output reg             DO_1S     // One Shot
+    output                 DO_1S     // One Shot
    );
+
+   reg                     ws;
+   reg                     ws_d;
 
    always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
       if (%(RESET_CONDITION)sRSTn) begin
@@ -181,11 +215,15 @@ endmodule
       end
    end
 
+   assign DO_1S = ws & !ws_d;
+
    always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
       if (%(RESET_CONDITION)sRSTn) begin
-         DO_1S <= 1'b0;
+         ws <= 1'b0;
+         ws_d <= 1'b0;
       end else begin
-         DO_1S <= WE && %(BE_LEVEL)sBE && DI != {WIDTH{1'b0}};
+         ws <= WE & %(BE_LEVEL)sBE && DI != {WIDTH{1'b0}};
+         ws_d <= ws;
       end
    end
 
@@ -231,21 +269,33 @@ endmodule
     input [WIDTH-1:0]      DI,       // Data In
     input [WIDTH-1:0]      IN,       // Load Data
     output reg [WIDTH-1:0] DO,       // Data Out
-    output reg             DO_1S     // One Shot
+    output                 DO_1S     // One Shot
    );
+
+   reg                     ws;
+   reg                     ws_d;
 
    always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
       if (%(RESET_CONDITION)sRSTn) begin
          DO <= RVAL;
-         DO_1S <= 1'b0;
       end else begin
          if (WE & %(BE_LEVEL)sBE) begin
             DO <= DI;
-            DO_1S <= 1'b1;
          end else begin
             DO <= IN | DO;
-            DO_1S <= 1'b0;
          end
+      end
+   end
+
+   assign DO_1S = ws & !ws_d;
+
+   always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+      if (%(RESET_CONDITION)sRSTn) begin
+         ws <= 1'b0;
+         ws_d <= 1'b0;
+      end else begin
+         ws <= WE & %(BE_LEVEL)sBE && DI != {WIDTH{1'b0}};
+         ws_d <= ws;
       end
    end
 
@@ -263,8 +313,11 @@ endmodule
     input [WIDTH-1:0]      DI,       // Data In
     input [WIDTH-1:0]      IN,       // Load Data
     output reg [WIDTH-1:0] DO,       // Data Out
-    output reg             DO_1S     // One Shot
+    output                 DO_1S     // One Shot
    );
+
+   reg                     ws;
+   reg                     ws_d;
 
    always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
       if (%(RESET_CONDITION)sRSTn) begin
@@ -278,11 +331,15 @@ endmodule
       end
    end
 
+   assign DO_1S = ws & !ws_d;
+
    always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
       if (%(RESET_CONDITION)sRSTn) begin
-         DO_1S <= 1'b0;
+         ws <= 1'b0;
+         ws_d <= 1'b0;
       end else begin
-         DO_1S <= WE & %(BE_LEVEL)sBE && DI != {WIDTH{1'b0}};
+         ws <= WE & %(BE_LEVEL)sBE && DI != {WIDTH{1'b0}};
+         ws_d <= ws;
       end
    end
 
@@ -333,8 +390,11 @@ endmodule
     input [WIDTH-1:0]      DI,       // Data In
     input [WIDTH-1:0]      IN,       // Load Data
     output reg [WIDTH-1:0] DO,       // Data Out
-    output reg             DO_1S     // One Shot
+    output                 DO_1S     // One Shot
     );
+
+   reg                     ws;
+   reg                     ws_d;
 
    genvar                  i;
    generate
@@ -353,11 +413,15 @@ endmodule
       end
    endgenerate
 
+   assign DO_1S = ws & !ws_d;
+
    always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
       if (%(RESET_CONDITION)sRSTn) begin
-         DO_1S <= 1'b0;
+         ws <= 1'b0;
+         ws_d <= 1'b0;
       end else begin
-         DO_1S <= WE & %(BE_LEVEL)sBE;
+         ws <= WE & %(BE_LEVEL)sBE && DI != {WIDTH{1'b0}};
+         ws_d <= ws;
       end
    end
 
@@ -375,8 +439,11 @@ endmodule
     input [WIDTH-1:0]      DI,       // Data In
     input [WIDTH-1:0]      IN,       // Load Data
     output reg [WIDTH-1:0] DO,       // Data Out
-    output reg             DO_1S     // One Shot
+    output                 DO_1S     // One Shot
     );
+
+   reg                     ws;
+   reg                     ws_d;
 
    genvar                  i;
    generate
@@ -395,11 +462,15 @@ endmodule
       end
    endgenerate
 
+   assign DO_1S = ws & !ws_d;
+
    always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
       if (%(RESET_CONDITION)sRSTn) begin
-         DO_1S <= 1'b0;
+         ws <= 1'b0;
+         ws_d <= 1'b0;
       end else begin
-         DO_1S <= WE && %(BE_LEVEL)sBE && DI != {WIDTH{1'b0}};
+         ws <= WE & %(BE_LEVEL)sBE && DI != {WIDTH{1'b0}};
+         ws_d <= ws;
       end
    end
 
@@ -451,8 +522,11 @@ endmodule
     input [WIDTH-1:0]      DI,       // Data In
     input [WIDTH-1:0]      IN,       // Load Data
     output reg [WIDTH-1:0] DO,       // Data Out
-    output reg             DO_1S     // One Shot
+    output                 DO_1S     // One Shot
     );
+
+   reg                     ws;
+   reg                     ws_d;
 
    genvar                  i;
    generate
@@ -471,11 +545,15 @@ endmodule
       end
    endgenerate
 
+   assign DO_1S = ws & !ws_d;
+
    always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
       if (%(RESET_CONDITION)sRSTn) begin
-         DO_1S <= 1'b0;
+         ws <= 1'b0;
+         ws_d <= 1'b0;
       end else begin
-         DO_1S <= WE & %(BE_LEVEL)sBE;
+         ws <= WE & %(BE_LEVEL)sBE && DI != {WIDTH{1'b0}};
+         ws_d <= ws;
       end
    end
 
@@ -567,14 +645,21 @@ endmodule
     input      BE,       // Byte Enable
     input      WE,       // Write Strobe
     input      DI,       // Data In
-    output reg DO_1S     // One Shot
+    output     DO_1S     // One Shot
     );
+
+   reg                     ws;
+   reg                     ws_d;
+
+   assign DO_1S = ws & !ws_d;
 
    always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
       if (%(RESET_CONDITION)sRSTn) begin
-         DO_1S <= RVAL;
+         ws <= 1'b0;
+         ws_d <= 1'b0;
       end else begin
-         DO_1S <= WE & %(BE_LEVEL)sBE & DI;
+         ws <= WE & %(BE_LEVEL)sBE && DI != {WIDTH{1'b0}};
+         ws_d <= ws;
       end
    end
 
@@ -620,8 +705,11 @@ endmodule
     input      DI,       // Data In
     input      IN,       // Load Data
     output reg DO,       // Data Out
-    output reg DO_1S     // One Shot
+    output     DO_1S     // One Shot
     );
+
+   reg                     ws;
+   reg                     ws_d;
 
    always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
       if (%(RESET_CONDITION)sRSTn) begin
@@ -635,14 +723,17 @@ endmodule
       end
    end
 
+   assign DO_1S = ws & !ws_d;
+
    always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
       if (%(RESET_CONDITION)sRSTn) begin
-         DO_1S <= 1'b0;
+         ws <= 1'b0;
+         ws_d <= 1'b0;
       end else begin
-         DO_1S <= WE & %(BE_LEVEL)sBE && DI != {WIDTH{1'b0}};
+         ws <= WE & %(BE_LEVEL)sBE && DI != {WIDTH{1'b0}};
+         ws_d <= ws;
       end
    end
-
 
 endmodule
 """,
@@ -658,21 +749,33 @@ endmodule
     input      DI,       // Data In
     input      IN,       // Load Data
     output reg DO,       // Data Out
-    output reg DO_1S     // One Shot
+    output     DO_1S     // One Shot
     );
+
+   reg                     ws;
+   reg                     ws_d;
 
    always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
       if (%(RESET_CONDITION)sRSTn) begin
          DO <= RVAL;
-         DO_1S <= 1'b0;
       end else begin
          if (WE & %(BE_LEVEL)sBE) begin
             DO <= DO | DI;
-            DO_1S <= 1'b1;
          end else begin
             DO <= ~(IN) & DO;
-            DO_1S <= 1'b0;
          end
+      end
+   end
+
+   assign DO_1S = ws & !ws_d;
+
+   always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+      if (%(RESET_CONDITION)sRSTn) begin
+         ws <= 1'b0;
+         ws_d <= 1'b0;
+      end else begin
+         ws <= WE & %(BE_LEVEL)sBE && DI != {WIDTH{1'b0}};
+         ws_d <= ws;
       end
    end
 
@@ -718,21 +821,33 @@ endmodule
     input [WIDTH-1:0]      DI,       // Data In
     input [WIDTH-1:0]      IN,       // Load Data
     output reg [WIDTH-1:0] DO,       // Data Out
-    output reg             DO_1S     // One Shot
+    output                 DO_1S     // One Shot
    );
+
+   reg                     ws;
+   reg                     ws_d;
 
    always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
       if (%(RESET_CONDITION)sRSTn) begin
          DO <= RVAL;
-         DO_1S <= 1'b0;
       end else begin
          if (WE & %(BE_LEVEL)sBE) begin
             DO <= DI;
-            DO_1S <= 1'b1;
          end else begin
             DO <= ~(IN) & DO;
-            DO_1S <= 1'b0;
          end
+      end
+   end
+
+   assign DO_1S = ws & !ws_d;
+
+   always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+      if (%(RESET_CONDITION)sRSTn) begin
+         ws <= 1'b0;
+         ws_d <= 1'b0;
+      end else begin
+         ws <= WE & %(BE_LEVEL)sBE && DI != {WIDTH{1'b0}};
+         ws_d <= ws;
       end
    end
 
@@ -750,8 +865,11 @@ endmodule
     input [WIDTH-1:0]      DI,       // Data In
     input [WIDTH-1:0]      IN,       // Load Data
     output reg [WIDTH-1:0] DO,       // Data Out
-    output reg             DO_1S     // One Shot
+    output                 DO_1S     // One Shot
    );
+
+   reg                     ws;
+   reg                     ws_d;
 
    always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
       if (%(RESET_CONDITION)sRSTn) begin
@@ -765,11 +883,15 @@ endmodule
       end
    end
 
+   assign DO_1S = ws & !ws_d;
+
    always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
       if (%(RESET_CONDITION)sRSTn) begin
-         DO_1S <= 1'b0;
+         ws <= 1'b0;
+         ws_d <= 1'b0;
       end else begin
-         DO_1S <= WE & %(BE_LEVEL)sBE && DI != {WIDTH{1'b0}};
+         ws <= WE & %(BE_LEVEL)sBE && DI != {WIDTH{1'b0}};
+         ws_d <= ws;
       end
    end
 
