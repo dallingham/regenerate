@@ -21,6 +21,9 @@ import gtk
 from regenerate.settings.paths import GLADE_PREF
 from regenerate.settings import ini
 
+"""
+Provides the preferences dialog box
+"""
 
 class Preferences(object):
 
