@@ -48,7 +48,7 @@ def bin(val, width):
 
 def get_width(field, start=-1, stop=-1, force_index=False):
     """
-    Returns with width if the bit range is greater than one.
++    Returns with width if the bit range is greater than one.
     """
     if stop == -1:
         start = field.start_position
@@ -63,12 +63,15 @@ def get_width(field, start=-1, stop=-1, force_index=False):
     return signal
 
 
-def oneshot_name(name):
+def oneshot_name(name, index = None):
     """
     Returns the name of the oneshot signal associated with the signal. In this
     implementation, it is the name of the signal with a _1s appended.
     """
-    return name + "_1S"
+    if index == None:
+        return name + "_1S"
+    else:
+        return "%s_%d_1S" % (name, index)
 
 
 def write_strobe(address):
@@ -187,10 +190,12 @@ class Verilog(WriterBase):
     Write an RTL description of the registers, suitable for synthesis.
     """
 
-    ALWAYS_FF = 'always'
 
     def __init__(self, dbase):
         WriterBase.__init__(self, dbase)
+
+        self._always = 'always'
+
         self.__sorted_regs = [
             dbase.get_register(key) for key in dbase.get_keys()
             if not self._dbase.get_register(key).do_not_generate_code ]
@@ -202,7 +207,6 @@ class Verilog(WriterBase):
             self._max_column = max(int(max_column_str), 80)
         except ValueError:
             self._max_column = 80
-        self.__comment_line = '-' * (self._max_column-2)
 
         if dbase.reset_active_level:
             self._reset_edge = "posedge %s" % self._reset
@@ -247,6 +251,22 @@ class Verilog(WriterBase):
             self._has_data_out[i[BFT_TYPE]] = i[BFT_DO]
             self._has_rd[i[BFT_TYPE]]       = i[BFT_RD]
             self._is_read_only[i[BFT_TYPE]] = i[BFT_RO]
+
+    def _comment(self, text_list, border = None, precede_blank = 0):
+        if border:
+            border_string = border * (self._max_column - 2)
+        else:
+            border_string = ""
+            
+        if text_list:
+            if precede_blank:
+                self._ofile.write('\n')
+            self._ofile.write("/*%s\n * " % border_string)
+            self._ofile.write("\n * ".join(text_list))
+            if border:
+                text = "\n *%s" % border_string
+                self._ofile.write(text.rstrip())
+            self._ofile.write("\n */\n")
 
     def _not_implemented(self, reg, field):
         self._ofile.write("/* Not yet implemented */\n")
@@ -299,6 +319,7 @@ class Verilog(WriterBase):
 
         for (start, stop) in self._break_on_byte_boundaries(field.start_position, field.stop_position):
 
+            parameters = []
             if start >= self._data_width:
                 write_address = address + ((start / self._data_width) * (self._data_width / 8))
             else:
@@ -312,35 +333,42 @@ class Verilog(WriterBase):
 
             bus_index = get_width(field, bus_start, bus_stop, True)
             index = get_width(field, start, stop)
-            instance = "r%02x_%s_%d" % (address, field_name, start)
+            instance = "%s_%d" % (get_base_signal(address, field), start)
             
             self._ofile.write('%s_%s_reg ' % (self._module, cell_name))
+
+
             if self._allows_wide[field.field_type]:
-                self._ofile.write('#(.WIDTH(%d)) ' % width)
-            self._ofile.write('%s\n' % instance)
+                parameters.append('.WIDTH(%d)' % width)
+            parameters.append('.RVAL(%s)' % self._reset_value(field, start, stop))
+
+            if parameters:
+                self._ofile.write(' #(')
+                self._ofile.write(", ".join(parameters))
+                self._ofile.write(') %s\n' % instance)
             
-            self._ofile.write('  (\n')
+            self._ofile.write(' (\n')
             self._ofile.write('    .CLK   (%s),\n' % self._clock)
-            self._ofile.write('    .RSTn  (%s),\n' % self._reset)
+            self._ofile.write('    .RSTn  (%s)' % self._reset)
 
             byte_lane = (reg_start_bit + start) / 8
             if not self._is_read_only[field.field_type]:
-                self._ofile.write('    .WE    (write_r%02x),\n' % write_address)
-                self._ofile.write('    .DI    (%s%s),\n' % (self._data_in, bus_index))
-                self._ofile.write('    .BE    (%s[%d]),\n' % (self._byte_enables, byte_lane))
+                self._ofile.write(',\n    .WE    (write_r%02x)' % write_address)
+                self._ofile.write(',\n    .DI    (%s%s)' % (self._data_in, bus_index))
+                self._ofile.write(',\n    .BE    (%s[%d])' % (self._byte_enables, byte_lane))
             if self._has_rd[field.field_type]:
-                self._ofile.write('    .RD    (%s),\n' % self._read_strobe)
+                self._ofile.write(',\n    .RD    (%s)' % self._read_strobe)
             if self._has_data_out[field.field_type]:
-                self._ofile.write('    .DO    (r%02x_%s%s),\n' % (address, field_name, index))
+                self._ofile.write(',\n    .DO    (r%02x_%s%s)' % (address, field_name, index))
             if self._has_control[field.field_type]:
-                self._ofile.write('    .LD    (%s),\n' % field.control_signal)
+                self._ofile.write(',\n    .LD    (%s)' % field.control_signal)
             if self._has_input[field.field_type]:
-                self._ofile.write('    .IN    (%s%s),\n' % (field.input_signal, index))
+                self._ofile.write(',\n    .IN    (%s%s)' % (field.input_signal, index))
             if self._has_oneshot[field.field_type]:
-                self._ofile.write('    .DO_1S (r%02x_%s_1S),\n' % (address, field_name))
+                one_shot_name = oneshot_name(get_base_signal(address, field), start)
+                self._ofile.write(',\n    .DO_1S (%s)' % one_shot_name)
                 
-            self._ofile.write('    .RVAL  (%s)\n' % self._reset_value(field, start, stop))
-            self._ofile.write('  );\n\n')
+            self._ofile.write('\n  );\n\n')
 
     def _byte_info(self, field, register, lower, size):
         """
@@ -379,7 +407,7 @@ class Verilog(WriterBase):
         """
         self._ofile = open(filename, "w")
         self._write_header_comment(self._ofile, 'site_verilog.inc',
-                                   comment_char='//')
+                                   comment_char='// ')
         self._write_module_header()
         self._write_locals()
         self._write_address_selects()
@@ -390,6 +418,9 @@ class Verilog(WriterBase):
         self._write_trailer()
         self._write_register_modules()
         self._ofile.close()
+
+    def _wrln(self, text):
+        self._ofile.write(text)
 
     def _write_register_modules(self):
 
@@ -403,12 +434,12 @@ class Verilog(WriterBase):
                      'RESET_EDGE'      : edge }
         
         for i in self._used_types:
-            self._ofile.write("\n\n")
+            self._wrln("\n\n")
             try:
-                self._ofile.write("// %s\n" % self._type_descr[i])
-                self._ofile.write(REG[self._cell_name[i]] % name_map)
+                self._comment([self._type_descr[i]])
+                self._wrln(REG[self._cell_name[i]] % name_map)
             except KeyError:
-                self._ofile.write('// No definition for %s_%s_reg\n' % (self._module, self._cell_name[i]))
+                self._comment(['No definition for %s_%s_reg\n' % (self._module, self._cell_name[i])])
 
     def _write_module_header(self):
         """
@@ -439,24 +470,24 @@ class Verilog(WriterBase):
         if plist or blist:
             params = ["parameter %s = %d'h%x" % item for item in blist] + \
                      ["parameter [%d:%d] %s = %d'h%x" % item for item in plist]
-            self._ofile.write('module %s #(\n  ' % self._module )
-            self._ofile.write(",\n    ".join(params))
-            self._ofile.write('\n  )(\n')
+            self._wrln('module %s #(\n  ' % self._module )
+            self._wrln(",\n    ".join(params))
+            self._wrln('\n  )(\n')
         else:
-            self._ofile.write('module %s (\n' % self._module )
+            self._wrln('module %s (\n' % self._module )
 
-        self._ofile.write(", \n  ".join([f[2] for f in port_list]))
-        self._ofile.write(');\n\n')
+        self._wrln(", \n  ".join([f[2] for f in port_list]))
+        self._wrln(');\n\n')
 
         commenter = textwrap.TextWrapper(width=(self._max_column-52))
         sep = "\n" + " " * 46 + "// "
 
         max_len = max([len(i[2]) for i in port_list]) + 2
-        fmt_string = "%%-6s %%-7s %-%ds // %s\n" % max_len
+        fmt_string = "%%-6s %%-7s %%-%ds // %%s\n" % max_len
 
         for data in port_list:
             comment = sep.join(commenter.wrap(data[3]))
-            self._ofile.write(fmt_string % (data[0], data[1], data[2] + ';', comment))
+            self._wrln(fmt_string % (data[0], data[1], data[2] + ';', comment))
 
     def err(self, msg):
         print msg
@@ -564,28 +595,30 @@ class Verilog(WriterBase):
                 local_regs.append(val)
 
                 if self._has_oneshot[field.field_type]:
-                    val = "wire %-10s %s;" % ("", oneshot_name(base))
-                    local_regs.append(val)
+                    for (start, stop) in self._break_on_byte_boundaries(field.start_position,
+                                                                        field.stop_position):
+                        val = "wire %-10s %s;" % ("", oneshot_name(base, start))
+                        local_regs.append(val)
 
         if local_regs:
-            self._ofile.write('\n// Register Declarations\n\n')
-            self._ofile.write("\n".join(local_regs))
-        self._ofile.write("\nreg [%d:0]      mux_%s;\n" % (self._data_width-1,
-                                                           self._data_out.lower()))
+            self._comment(['Register Declarations'], precede_blank = 1)
+            self._wrln("\n".join(local_regs))
+        self._wrln("\nreg [%d:0]      mux_%s;\n" % (self._data_width-1,
+                                                    self._data_out.lower()))
 
         if local_wires:
-            self._ofile.write('\n// Wire Declarations (Constants)\n\n')
-            self._ofile.write("\n".join(local_wires))
+            self._comment(['Wire Declarations (Constants)'], precede_blank = 1)
+            self._wrln("\n".join(local_wires))
 
     def _write_address_selects(self):
         """
         Writes the address select lines
         """
-        self._ofile.write('\n\n// Address Selects\n\n')
+        self._comment(['Address Selects'], precede_blank = 1)
 
         for address in sorted(self._word_fields.keys()):
             width = self._addr_width - self._lower_bit
-            self._ofile.write("wire %s = %s & (%s == %s);\n" % (
+            self._wrln("wire %s = %s & (%s == %s);\n" % (
                 write_strobe(address), self._write_strobe, self._addr,
                 bin(address >> self._lower_bit, width)))
 
@@ -593,7 +626,7 @@ class Verilog(WriterBase):
         """
         Writes the output assignments
         """
-        self._ofile.write('\n// Output Assignments\n\n')
+        self._comment(['Output Assignments'], precede_blank = 1)
 
         max_len = 0
 
@@ -613,19 +646,20 @@ class Verilog(WriterBase):
             for field_key in register.get_bit_field_keys():
                 field = register.get_bit_field(field_key)
                 if self._has_oneshot[field.field_type]:
-                    self._ofile.write(fmt_string  % (
-                        oneshot_name(field.output_signal),
-                        oneshot_name(get_base_signal(address, field))))
+                    names = " | ".join([ oneshot_name(get_base_signal(address, field), start)
+                                         for (start, stop) in
+                                         self._break_on_byte_boundaries(field.start_position, field.stop_position)])
+                    self._wrln(fmt_string  % (
+                        oneshot_name(field.output_signal), names))
                 if not field.use_output_enable:
                     continue
 
-                self._ofile.write(fmt_string % (
+                self._wrln(fmt_string % (
                     field.output_signal, get_base_signal(address, field)))
 
         fmt_string = "assign %%-%ds = mux_%%s;\n" % max_len
-        self._ofile.write(fmt_string % (self._data_out,
-                                        self._data_out.lower()))
-        self._ofile.write("\n")
+        self._wrln(fmt_string % (self._data_out, self._data_out.lower()))
+        self._wrln("\n")
 
     def _write_register_rtl_code(self):
         """
@@ -653,67 +687,57 @@ class Verilog(WriterBase):
         """
         mlen = 11
 
-        self._ofile.write("/*%s\n" % self.__comment_line)
-        self._ofile.write(' * %s : %s\n' % ('Field'.ljust(mlen),
-                                             field.field_name))
-        self._ofile.write(' * %s : %s\n' % ('Type'.ljust(mlen),
-                                             self._type_descr[field.field_type]))
+        lines = ['%s : %s' % ('Field'.ljust(mlen), field.field_name)]
+        lines.append('%s : %s' % ('Type'.ljust(mlen),
+                                  self._type_descr[field.field_type]))
 
         if  field.width == 1:
-            self._ofile.write(' * %s : %d\n' % ('Bit'.ljust(mlen), stop))
+            lines.append('%s : %d' % ('Bit'.ljust(mlen), stop))
         else:
-            self._ofile.write(' * %s : %d:%d\n' %
-                             ('Bits'.ljust(mlen), stop, start))
-        self._ofile.write(' * %s : %s\n' % ('Register'.ljust(mlen), reg_name))
-        self._ofile.write(' * %s : %08x\n' % ('Address'.ljust(mlen), address))
+            lines.append('%s : %d:%d' %
+                         ('Bits'.ljust(mlen), stop, start))
+        lines.append('%s : %s' % ('Register'.ljust(mlen), reg_name))
+        lines.append('%s : %08x' % ('Address'.ljust(mlen), address))
         if field.reset_type == BitField.RESET_NUMERIC:
-            self._ofile.write(' * %s : %d\'h%x\n' %
-                              ('Reset Value'.ljust(mlen), field.width,
-                               field.reset_value))
+            lines.append('%s : %d\'h%x' %
+                         ('Reset Value'.ljust(mlen), field.width,
+                          field.reset_value))
         elif field.reset_type == BitField.RESET_PARAMETER:
-            self._ofile.write(' * %s : %d\'h%x\n' %
-                              ('Reset Value'.ljust(mlen), field.width,
-                               field.reset_value))
+            lines.append('%s : %d\'h%x' %
+                         ('Reset Value'.ljust(mlen), field.width,
+                          field.reset_value))
         else:
-            self._ofile.write(' * %s : %s\n' %
-                              ('Reset Value'.ljust(mlen), field.reset_input))
+            lines.append('%s : %s' %
+                         ('Reset Value'.ljust(mlen), field.reset_input))
 
         comment = field.description
         if comment:
-            fmt = comment.replace(u'\2013', '-')
-            fmt = textwrap.TextWrapper(width=self._max_column-8,
-                                       initial_indent=" * ",
-                                       subsequent_indent=" * ")
-            self._ofile.write(' *\n')
-            self._ofile.write("\n".join(fmt.wrap(comment)))
-            self._ofile.write('\n')
+            comment = comment.replace(u'\2013', '-')
+            fmt = textwrap.TextWrapper(width=self._max_column-3)
+            lines.append('')
+            for i in fmt.wrap(comment):
+                lines.append(i)
 
-        self._ofile.write(' *%s' % self.__comment_line)
-        self._ofile.write('\n */\n')
+        self._comment(lines, border="-")
 
     def _define_outputs(self):
         """
         Writes the output declarations
         """
-        self._ofile.write('/*%s\n' % self.__comment_line)
-        self._ofile.write(' *\n')
-        self._ofile.write(' * Register Read Output Assignments\n')
-        self._ofile.write(' *\n')
-        self._ofile.write(' *%s\n' % self.__comment_line)
-        self._ofile.write(' */\n\n')
+        self._comment([ "", "Register Read Output Assignments", ""], border="-")
 
         keys = sorted(self._word_fields.keys())
         for key in keys:
             current_pos = self._data_width - 1
             comma = False
             upper = self._data_width - 1
-            self._ofile.write("wire [%d:0] r%02x = {" % (upper, key))
+            self._wrln("wire [%d:0] r%02x = {" % (upper, key))
 
             for field_info in sorted(self._word_fields[key],
                                      reverse=True,
                                      cmp=lambda x, y: cmp(x[2], y[2])):
                 if comma:
-                    self._ofile.write(",")
+                    self._wrln(",")
                 else:
                     comma = True
 
@@ -721,69 +745,70 @@ class Verilog(WriterBase):
                 start = field_info[F_START_OFF] % self._data_width
 
                 if stop != current_pos:
-                    self._ofile.write("\n                  ")
-                    self._ofile.write("%d'b0," % (current_pos - stop))
+                    self._wrln("\n                  ")
+                    self._wrln("%d'b0," % (current_pos - stop))
                     current_pos = stop - 1
 
                 name_info = get_signal_info(field_info[F_REGISTER].address,
                                             field_info[F_FIELD],
                                             field_info[F_START],
                                             field_info[F_STOP])
-                self._ofile.write("\n                  ")
-                self._ofile.write("%s" % (name_info[1]))
+                self._wrln("\n                  ")
+                self._wrln("%s" % (name_info[1]))
                 current_pos = start  - 1
 
             if current_pos != -1:
-                self._ofile.write(",\n                  ")
-                self._ofile.write("%d'b0" % (current_pos + 1))
-            self._ofile.write("\n                  };\n")
+                self._wrln(",\n                  ")
+                self._wrln("%d'b0" % (current_pos + 1))
+            self._wrln("\n                  };\n")
 
         self._write_output_mux(keys, self._addr,
                                self._addr_width, self._data_out)
 
     def _write_acknowledge(self):
-        self._ofile.write("\nreg prev_write, prev_read;\n\n")
-        self._ofile.write('\nalways @(posedge %s or %s) begin\n' %
-                          (self._clock, self._reset_edge))
-        self._ofile.write('  if (%s) begin\n' % self._reset_condition)
-        self._ofile.write("     prev_write <= 1'b0;\n")
-        self._ofile.write("     prev_read  <= 1'b0;\n")
-        self._ofile.write("     %s <= 1'b0;\n" % self._dbase.acknowledge_name);
-        self._ofile.write('  end else begin\n')
-        self._ofile.write("     prev_write <= %s;\n" % self._dbase.write_strobe_name)
-        self._ofile.write("     prev_read  <= %s;\n" % self._dbase.read_strobe_name)
-        self._ofile.write("     %s <= (~prev_write & %s) | (~prev_read & %s);\n" %
-                          (self._dbase.acknowledge_name,
-                           self._dbase.write_strobe_name,
-                           self._dbase.read_strobe_name));
-        self._ofile.write('  end\nend\n\n')
+        self._comment(["Ensure that internal write is one clock wide"], border="-")
+        self._wrln("\nreg prev_write, prev_read;\n\n")
+        self._wrln('%s @(posedge %s or %s) begin\n' %
+                          (self._always, self._clock, self._reset_edge))
+        self._wrln('  if (%s) begin\n' % self._reset_condition)
+        self._wrln("     prev_write <= 1'b0;\n")
+        self._wrln("     prev_read  <= 1'b0;\n")
+        self._wrln("     %s <= 1'b0;\n" % self._dbase.acknowledge_name);
+        self._wrln('  end else begin\n')
+        self._wrln("     prev_write <= %s;\n" % self._dbase.write_strobe_name)
+        self._wrln("     prev_read  <= %s;\n" % self._dbase.read_strobe_name)
+        self._wrln("     %s <= (~prev_write & %s) | (~prev_read & %s);\n" %
+                   (self._dbase.acknowledge_name,
+                    self._dbase.write_strobe_name,
+                    self._dbase.read_strobe_name));
+        self._wrln('  end\nend\n\n')
 
     def _write_output_mux(self, out_address, addr_bus, addr_width, data_out):
         """
         Writes the output mux that controls the selection of the output data
         """
         
-        self._ofile.write('\nalways @(posedge %s or %s) begin\n' %
-                          (self._clock, self._reset_edge))
-        self._ofile.write('  if (%s) begin\n' % self._reset_condition)
-        self._ofile.write("     mux_%s <= %d'h0;\n" % (data_out.lower(), self._data_width))
-        self._ofile.write('  end else begin\n')
+        self._wrln('\n%s @(posedge %s or %s) begin\n' %
+                          (self._always, self._clock, self._reset_edge))
+        self._wrln('  if (%s) begin\n' % self._reset_condition)
+        self._wrln("     mux_%s <= %d'h0;\n" % (data_out.lower(), self._data_width))
+        self._wrln('  end else begin\n')
 
-        self._ofile.write("     if (%s) begin\n" % self._dbase.read_strobe_name)
-        self._ofile.write('        case (%s)\n' % addr_bus)
+        self._wrln("     if (%s) begin\n" % self._dbase.read_strobe_name)
+        self._wrln('        case (%s)\n' % addr_bus)
         for addr in out_address:
             width = addr_width - self._lower_bit
-            self._ofile.write('         %s: mux_%s <= r%02x;\n' %
-                              (bin(addr >> self._lower_bit, width),
-                               data_out.lower(), addr))
-        self._ofile.write('       default: mux_%s <= %d\'h0;\n' %
-                          (data_out.lower(), self._data_width))
-        self._ofile.write('       endcase\n')
-        self._ofile.write('     end else begin\n')
-        self._ofile.write('        mux_%s <= %d\'h0;\n' % (data_out.lower(), self._data_width))
-        self._ofile.write('     end')
-        self._ofile.write('  end')
-        self._ofile.write('end\n\n')
+            self._wrln('         %s: mux_%s <= r%02x;\n' %
+                       (bin(addr >> self._lower_bit, width),
+                        data_out.lower(), addr))
+        self._wrln('       default: mux_%s <= %d\'h0;\n' %
+                   (data_out.lower(), self._data_width))
+        self._wrln('       endcase\n')
+        self._wrln('     end else begin\n')
+        self._wrln('        mux_%s <= %d\'h0;\n' % (data_out.lower(), self._data_width))
+        self._wrln('     end\n')
+        self._wrln('  end\n')
+        self._wrln('end\n\n')
 
     def _byte_enable_list(self, start, stop):
         """
@@ -816,7 +841,7 @@ class Verilog(WriterBase):
         statement. A comment is added to indicate which module is being
         closed.
         """
-        self._ofile.write('endmodule // %s\n' % self._module)
+        self._wrln('endmodule // %s\n' % self._module)
 
 
 class Verilog2001(Verilog):
@@ -828,6 +853,10 @@ class Verilog2001(Verilog):
     * Use of always_ff and always_comb instead of the usual always
     * Uses the endmodule : name syntax
     """
+
+    def __init__(self, dbase):
+        Verilog.__init__(self, dbase)
+        self._always = 'always_ff'
 
     def _write_module_header(self):
         """
@@ -854,11 +883,11 @@ class Verilog2001(Verilog):
         if plist or blist:
             params = ["parameter %s = %d'h%x" % item for item in blist] + \
                      ["parameter [%d:%d] %s = %d'h%x" % item for item in plist]
-            self._ofile.write('module %s #(\n  ' % self._module )
-            self._ofile.write(",\n    ".join(params))
-            self._ofile.write('\n  )(\n')
+            self._wrln('module %s #(\n  ' % self._module )
+            self._wrln(",\n    ".join(params))
+            self._wrln('\n  )(\n')
         else:
-            self._ofile.write('module %s (\n' % self._module )
+            self._wrln('module %s (\n' % self._module )
 
         csep = "\n" + " " * 48 + "// "
         sep = ", "
@@ -872,37 +901,38 @@ class Verilog2001(Verilog):
         
         for data in ports:
             comment = csep.join(commenter.wrap(data[3]))
-            self._ofile.write(fmt_string % (data[0], data[1], data[2] + sep, comment))
+            self._wrln(fmt_string % (data[0], data[1], data[2] + sep, comment))
             cnt += 1
             if cnt == total-1:
                 sep = ""
-        self._ofile.write(');\n')
+        self._wrln(');\n')
 
     def _write_output_mux(self, out_address, addr_bus, addr_width, data_out):
         """
         Writes the output mux that controls the selection of the output data
         """
-        self._ofile.write('\nalways @(posedge %s or %s) begin\n' % (
-            self._clock, self._reset_edge))
-        self._ofile.write('   if (%s) begin\n' % self._reset_condition)
-        self._ofile.write("      mux_%s <= %d'h0;\n" % (data_out.lower(), self._data_width))
-        self._ofile.write('   end else begin\n')
+        self._wrln('\n%s @(posedge %s or %s) begin\n' % (
+            self._always, self._clock, self._reset_edge))
+        self._wrln('   if (%s) begin\n' % self._reset_condition)
+        self._wrln("      mux_%s <= %d'h0;\n" % (data_out.lower(), self._data_width))
+        self._wrln('   end else begin\n')
         
-        self._ofile.write("      if (%s) begin\n" % self._dbase.read_strobe_name)
-        self._ofile.write('         case (%s)\n' % addr_bus)
+        self._wrln("      if (%s) begin\n" % self._dbase.read_strobe_name)
+        self._wrln('         case (%s)\n' % addr_bus)
         for addr in out_address:
             width = addr_width - self._lower_bit
-            self._ofile.write('            %s: mux_%s <= r%02x;\n' %
-                              (bin(addr >> self._lower_bit, width),
-                               data_out.lower(), addr))
-        self._ofile.write('            default: mux_%s <= %d\'h0;\n' %
-                          (data_out.lower(), self._data_width))
-        self._ofile.write('         endcase\n')
-        self._ofile.write('      end else begin\n')
-        self._ofile.write('         mux_%s <= %d\'h0;\n' % (data_out.lower(), self._data_width))
-        self._ofile.write('      end\n')
-        self._ofile.write('   end\n')
-        self._ofile.write('end\n\n')
+            self._wrln('            %s: mux_%s <= r%02x;\n' %
+                       (bin(addr >> self._lower_bit, width),
+                        data_out.lower(), addr))
+        self._wrln('            default: mux_%s <= %d\'h0;\n' %
+                   (data_out.lower(), self._data_width))
+        self._wrln('         endcase\n')
+        self._wrln('      end else begin\n')
+        self._wrln('         mux_%s <= %d\'h0;\n' % (data_out.lower(), self._data_width))
+        self._wrln('      end\n')
+        self._wrln('   end\n')
+        self._wrln('end\n\n')
+
 
 class SystemVerilog(Verilog2001):
     """
@@ -914,37 +944,39 @@ class SystemVerilog(Verilog2001):
     * Uses the endmodule : name syntax
     """
 
-    ALWAYS_FF = 'always_ff'
+    def __init__(self, dbase):
+        Verilog2001.__init__(self, dbase)
+        self._always = 'always_ff'
 
     def _write_trailer(self):
         """
         Writes the endmodule statement using the : name syntax instead
         of writing a comment.
         """
-        self._ofile.write('endmodule : %s\n' % self._module)
+        self._wrln('endmodule : %s\n' % self._module)
 
     def _write_output_mux(self, out_address, addr_bus, addr_width, data_out):
         """
         Writes the always_ff syntax, instead of the always @(xxx) syntax
         """
-        self._ofile.write('\nalways_ff @(posedge %s or %s) begin\n' % (
-            self._clock, self._reset_edge))
-        self._ofile.write('   if (%s) begin\n' % self._reset_condition)
-        self._ofile.write("      mux_%s <= %d'h0;\n" % (data_out.lower(), self._data_width))
-        self._ofile.write('   end else begin\n')
+        self._wrln('\n%s @(posedge %s or %s) begin\n' % (
+            self._always, self._clock, self._reset_edge))
+        self._wrln('   if (%s) begin\n' % self._reset_condition)
+        self._wrln("      mux_%s <= %d'h0;\n" % (data_out.lower(), self._data_width))
+        self._wrln('   end else begin\n')
 
-        self._ofile.write("     if (%s) begin\n" % self._dbase.read_strobe_name)
-        self._ofile.write('        case (%s)\n' % addr_bus)
+        self._wrln("     if (%s) begin\n" % self._dbase.read_strobe_name)
+        self._wrln('        case (%s)\n' % addr_bus)
         for addr in out_address:
             width = addr_width - self._lower_bit
-            self._ofile.write('           %s: mux_%s <= r%02x;\n' %
-                              (bin(addr >> self._lower_bit, width),
-                               data_out.lower(), addr))
-        self._ofile.write('           default: mux_%s <= %d\'h0;\n' %
-                          (data_out.lower(), self._data_width))
-        self._ofile.write('        endcase\n')
-        self._ofile.write('      end else begin\n')
-        self._ofile.write('         mux_%s <= %d\'h0;\n' % (data_out.lower(), self._data_width))
-        self._ofile.write('      end\n')
-        self._ofile.write('   end\n')
-        self._ofile.write('end\n\n')
+            self._wrln('           %s: mux_%s <= r%02x;\n' %
+                       (bin(addr >> self._lower_bit, width),
+                        data_out.lower(), addr))
+        self._wrln('           default: mux_%s <= %d\'h0;\n' %
+                   (data_out.lower(), self._data_width))
+        self._wrln('        endcase\n')
+        self._wrln('      end else begin\n')
+        self._wrln('         mux_%s <= %d\'h0;\n' % (data_out.lower(), self._data_width))
+        self._wrln('      end\n')
+        self._wrln('   end\n')
+        self._wrln('end\n\n')

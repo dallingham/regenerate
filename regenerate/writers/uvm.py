@@ -69,6 +69,9 @@ class UVM_Registers(WriterBase):
                        BitField.TYPE_READ_WRITE_SET             : "RW",
                        BitField.TYPE_READ_WRITE_SET_1S          : "RW",
                        BitField.TYPE_READ_WRITE_SET_1S_1        : "RW",
+                       BitField.TYPE_READ_WRITE_CLR             : "RW",
+                       BitField.TYPE_READ_WRITE_CLR_1S          : "RW",
+                       BitField.TYPE_READ_WRITE_CLR_1S_1        : "RW",
                        BitField.TYPE_WRITE_1_TO_CLEAR_SET       : "W1C",
                        BitField.TYPE_WRITE_1_TO_CLEAR_SET_1S    : "W1C",
                        BitField.TYPE_WRITE_1_TO_CLEAR_SET_1S_1  : "W1C",
@@ -110,10 +113,15 @@ class UVM_Registers(WriterBase):
                     field_list.append(field)
 
             for field in field_list:
-                if field.width == 1:
-                    cfile.write("    bit %s;\n" % field.reset_parameter)
+                if field.reset_parameter:
+                    name = field.reset_parameter
                 else:
-                    cfile.write("    bit [%d:0] %s;\n" % (field.width - 1, field.reset_parameter))
+                    name = "p%s" % field.field_name.upper()
+                    
+                if field.width == 1:
+                    cfile.write("    bit %s = 1'b0;\n" % name)
+                else:
+                    cfile.write("    bit [%d:0] %s = '0;\n" % (field.width - 1, name))
 
             grps = set()
 
@@ -173,7 +181,10 @@ class UVM_Registers(WriterBase):
                 volatile = is_volatile(field)
                 has_reset = 1
                 if field.reset_type == BitField.RESET_PARAMETER:
-                    reset = field.reset_parameter
+                    if field.reset_parameter:
+                        reset = field.reset_parameter
+                    else:
+                        reset = "p%s" % field.field_name.upper()
                 else:
                     reset = "%d'h%x" % (field.width, field.reset_value)
                 is_rand = 0
@@ -201,11 +212,15 @@ class UVM_Registers(WriterBase):
             field_keys = reg.get_bit_field_keys()
             for key in field_keys:
                 field = reg.get_bit_field(key)
+                if field.reset_parameter:
+                    name = field.reset_parameter
+                else:
+                    name = "p%s" % field.field_name.upper()
                 if field.reset_type == BitField.RESET_PARAMETER:
                     if field.width == 1:
-                        cfile.write("    bit %s;\n" % field.reset_parameter)
+                        cfile.write("    bit %s;\n" % name)
                     else:
-                        cfile.write("    bit [%d:0] %s;\n" % (field.width - 1, field.reset_parameter))
+                        cfile.write("    bit [%d:0] %s;\n" % (field.width - 1, name))
 
         for key in self._dbase.get_keys():
             reg = self._dbase.get_register(key)
@@ -236,7 +251,11 @@ class UVM_Registers(WriterBase):
             for field_key in reg.get_bit_field_keys():
                 field = reg.get_bit_field(field_key)
                 if field.reset_type == BitField.RESET_PARAMETER:
-                    cfile.write('      %s.%s = %s;\n' % (reg.token.lower(), field.reset_parameter, field.reset_parameter))
+                    if field.reset_parameter:
+                        name = field.reset_parameter
+                    else:
+                        name = "p%s" % field.field_name.upper()
+                    cfile.write('      %s.%s = %s;\n' % (reg.token.lower(), name, name))
                     
             cfile.write('      %s.configure(this);\n' % reg.token.lower())
             cfile.write('      %s.build();\n' % reg.token.lower())

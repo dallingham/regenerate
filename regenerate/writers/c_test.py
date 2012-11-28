@@ -229,7 +229,9 @@ class CTest(WriterBase):
                                   BitField.TYPE_READ_WRITE_1S, BitField.TYPE_READ_WRITE_1S_1,
                                   BitField.TYPE_READ_WRITE_LOAD, BitField.TYPE_READ_WRITE_LOAD_1S,
                                   BitField.TYPE_READ_WRITE_LOAD_1S_1, BitField.TYPE_READ_WRITE_SET,
-                                  BitField.TYPE_READ_WRITE_SET_1S, BitField.TYPE_READ_WRITE_SET_1S_1):
+                                  BitField.TYPE_READ_WRITE_SET_1S, BitField.TYPE_READ_WRITE_SET_1S_1,
+                                  BitField.TYPE_READ_WRITE_CLR,
+                                  BitField.TYPE_READ_WRITE_CLR_1S, BitField.TYPE_READ_WRITE_CLR_1S_1):
                 for i in range(rng.start_position, rng.stop_position + 1):
                     value = value | (1 << i)
         return value
