@@ -74,15 +74,15 @@ class BitField(DataItem):
     (ONE_SHOT_NONE, ONE_SHOT_ANY, ONE_SHOT_ONE,
      ONE_SHOT_ZERO, ONE_SHOT_TOGGLE) = range(5)
 
-
     (RESET_NUMERIC, RESET_INPUT, RESET_PARAMETER) = range(3)
 
     __slots__ = ('start_position', 'stop_position', 'field_name',
                  'use_output_enable', '__output_signal', '__input_signal',
-                 'field_type', 'volatile', 'reset_value', 'reset_input', 'reset_type',
+                 'field_type', 'volatile', 'reset_value',
+                 'reset_input', 'reset_type',
                  'reset_parameter', 'input_function',
                  'description', 'control_signal', 'output_is_static',
-                 'output_has_side_effect', 'values' )
+                 'output_has_side_effect', 'values')
 
     def __init__(self, stop=0, start=0, name="",
                  sig_type=TYPE_READ_ONLY, descr="", reset=0):

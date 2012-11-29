@@ -88,6 +88,7 @@ class BitFieldEditor(object):
         self.__top_window.set_icon_from_file(
             os.path.join(INSTALL_PATH, "media", "flop.svg"))
         self.__input_obj.set_sensitive(TYPE_ENB[bit_field.field_type][0])
+        print bit_field.field_type, TYPE_ENB[bit_field.field_type][0]
         self.__control_obj.set_sensitive(TYPE_ENB[bit_field.field_type][1])
 
         pango_font = pango.FontDescription("monospace")
