@@ -149,6 +149,7 @@ class UVM_Registers(WriterBase):
             cfile.write('    endfunction : new\n\n')
 
             if grps:
+                cfile.write('\n')
                 cfile.write('    function void sample(uvm_reg_data_t data,\n')
                 cfile.write('                         uvm_reg_data_t byte_en,\n')
                 cfile.write('                         bit            is_read,\n')
@@ -206,6 +207,8 @@ class UVM_Registers(WriterBase):
 
         cfile.write('  class %s_reg_block extends uvm_reg_block;\n\n' % self._dbase.module_name)
         cfile.write('    `uvm_object_utils(%s_reg_block)\n\n' % self._dbase.module_name)
+
+        cfile.write('    local int default_bus_width = %0d;\n\n' % (self._data_width / 8,))
 
         for key in self._dbase.get_keys():
             reg = self._dbase.get_register(key)
@@ -278,13 +281,17 @@ class UVM_Registers(WriterBase):
             reg = self._dbase.get_register(key)
 
         cfile.write("\n")
-        cfile.write('      default_map = create_map("default_map", \'h0, %d, UVM_LITTLE_ENDIAN, 1);\n\n' % 
-	            (self._data_width / 8))
+        cfile.write('      default_map = create_map("default_map", \'h0, default_bus_width, UVM_LITTLE_ENDIAN, 1);\n\n')
         for key in self._dbase.get_keys():
             reg = self._dbase.get_register(key)
             cfile.write('      default_map.add_reg(%s, \'h%04x, "RW");\n' % (reg.token.lower(), reg.address))
+        cfile.write('\n')
         cfile.write('      lock_model();\n')
         cfile.write('    endfunction : build\n')
+
+        cfile.write('    function void set_default_bus_width(int width);\n')
+        cfile.write('       default_bus_width = width;\n')
+        cfile.write('    endfunction : set_default_bus_width;\n\n')
 
         cfile.write('    function void sample(uvm_reg_addr_t offset, bit is_read, uvm_reg_map  map);\n')
         cfile.write('       if(get_coverage(UVM_CVR_ALL)) begin\n')
