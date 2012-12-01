@@ -73,7 +73,7 @@ class Register(object):
                 bit.add(val)
         lbits = sorted(list(bit))
         if lbits:
-            if lbits[-1] == self.width - 1 :
+            if lbits[-1] == self.width - 1:
                 return self.find_first_unused_bit()
             else:
                 return lbits[-1] + 1

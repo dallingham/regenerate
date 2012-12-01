@@ -25,8 +25,7 @@ import re
 import textwrap
 from regenerate.settings import ini
 from verilog_reg_def import REG
-from regenerate.db import BitField, TYPES, BFT_TYPE, BFT_ID, BFT_INP, \
-     BFT_CTRL, BFT_1S, BFT_DESC, BFT_WIDE, BFT_DO, BFT_RD, BFT_RO
+from regenerate.db import BitField, TYPES
 
 from writer_base import WriterBase
 
@@ -49,7 +48,7 @@ def binary(val, width):
     return "%d'h%x" % (width, val)
 
 
-def report_err(msg):
+def errmsg(msg):
     """
     Displays an error message
     """
@@ -130,12 +129,13 @@ def break_on_byte_boundaries(start, stop):
     """
     index = start
     data = []
-    
+
     while index <= stop:
         next_boundary = ((index / 8) + 1) * 8
         data.append((index, min(stop, next_boundary - 1)))
         index = next_boundary
     return data
+
 
 def get_base_signal(address, field):
     """
@@ -287,15 +287,15 @@ class Verilog(WriterBase):
         self._used_types = set()
 
         for i in TYPES:
-            self._cell_name[i[BFT_TYPE]] = i[BFT_ID].lower()
-            self._has_input[i[BFT_TYPE]] = i[BFT_INP]
-            self._has_control[i[BFT_TYPE]] = i[BFT_CTRL]
-            self._has_oneshot[i[BFT_TYPE]] = i[BFT_1S]
-            self._type_descr[i[BFT_TYPE]] = i[BFT_DESC]
-            self._allows_wide[i[BFT_TYPE]] = i[BFT_WIDE]
-            self._has_data_out[i[BFT_TYPE]] = i[BFT_DO]
-            self._has_rd[i[BFT_TYPE]] = i[BFT_RD]
-            self._is_read_only[i[BFT_TYPE]] = i[BFT_RO]
+            self._cell_name[i.type] = i.id.lower()
+            self._has_input[i.type] = i.input
+            self._has_control[i.type] = i.control
+            self._has_oneshot[i.type] = i.oneshot
+            self._type_descr[i.type] = i.description
+            self._allows_wide[i.type] = i.wide
+            self._has_data_out[i.type] = i.dataout
+            self._has_rd[i.type] = i.read
+            self._is_read_only[i.type] = i.readonly
 
     def _comment(self, text_list, border=None, precede_blank=0):
         """
@@ -343,7 +343,6 @@ class Verilog(WriterBase):
         """
         Called when a know register type is requested that is known.
         """
-        field_name = field.field_name.lower()
         cell_name = self._cell_name[field.field_type]
         self._used_types.add(field.field_type)
         nbytes = self._data_width / 8
@@ -368,7 +367,6 @@ class Verilog(WriterBase):
             instance = "%s_%d" % (get_base_signal(address, field), start)
 
             self._wrln('%s_%s_reg ' % (self._module, cell_name))
-
 
             if self._allows_wide[field.field_type]:
                 parameters.append('.WIDTH(%d)' % width)
@@ -474,10 +472,10 @@ class Verilog(WriterBase):
         condition = "" if self._dbase.reset_active_level else "~"
         be_level = "" if self._dbase.byte_strobe_active_level else "~"
 
-        name_map = { 'MODULE' : self._module,
-                     'BE_LEVEL' : be_level,
-                     'RESET_CONDITION' : condition,
-                     'RESET_EDGE' : edge }
+        name_map = {'MODULE': self._module,
+                    'BE_LEVEL': be_level,
+                    'RESET_CONDITION': condition,
+                    'RESET_EDGE': edge}
 
         for i in self._used_types:
             self._wrln("\n\n")
@@ -527,7 +525,7 @@ class Verilog(WriterBase):
         self._wrln(port_signals)
         self._wrln(');\n\n')
 
-        commenter = textwrap.TextWrapper(width=(self._max_column-52))
+        commenter = textwrap.TextWrapper(width=(self._max_column - 52))
         sep = "\n" + " " * 46 + "// "
 
         max_len = max([len(i[2]) for i in port_list]) + 2
@@ -556,13 +554,13 @@ class Verilog(WriterBase):
         be_width   = "[%d:0]" % ((self._data_width / 8) - 1)
 
         port_list = [
-            ("input", '',         self._clock,        "Input clock"),
-            ("input", '',         self._reset,        "Reset"),
-            ("input", '',         self._write_strobe, "Write strobe"),
-            ("input", '',         self._read_strobe,  "Read strobe"),
-            ("input", be_width,   self._byte_enables, "Byte enables"),
-            ("input", addr_width, self._addr,         "Address"),
-            ("input", data_width, self._data_in,      "Data in")
+            ("input", '', self._clock, "Input clock"),
+            ("input", '', self._reset, "Reset"),
+            ("input", '', self._write_strobe, "Write strobe"),
+            ("input", '', self._read_strobe, "Read strobe"),
+            ("input", be_width, self._byte_enables, "Byte enables"),
+            ("input", addr_width, self._addr, "Address"),
+            ("input", data_width, self._data_in, "Data in")
             ]
 
         for register in self.__sorted_regs:
@@ -574,8 +572,8 @@ class Verilog(WriterBase):
                 # A parallel load requires an input signal
                 if self._has_control[field.field_type]:
                     if not field.control_signal:
-                        report_err("No parallel load signal specified for %s:%s"
-                                   % (register.register_name, field.field_name))
+                        errmsg("No parallel load signal specified for %s:%s"
+                               % (register.register_name, field.field_name))
                     parallel_load_port(field, port_list, output_list)
 
                 # If the bit is controlled by an input value, we
@@ -586,8 +584,8 @@ class Verilog(WriterBase):
                 # Output oneshots require a signal
                 if self._has_oneshot[field.field_type]:
                     if not field.output_signal:
-                        report_err("Empty output signal for %s:%s"
-                                   % (register.register_name, field.field_name))
+                        errmsg("Empty output signal for %s:%s"
+                               % (register.register_name, field.field_name))
                     port_list.append(('output', "",
                                       oneshot_name(field.output_signal),
                                       "one shot"))
@@ -643,24 +641,25 @@ class Verilog(WriterBase):
                     boundaries = break_on_byte_boundaries(field.start_position,
                                                           field.stop_position)
                     for (start, stop) in boundaries:
-                        val = "wire %-10s %s;" % ("", oneshot_name(base, start))
+                        val = "wire %-10s %s;" % ("",
+                                                  oneshot_name(base, start))
                         local_regs.append(val)
 
         if local_regs:
-            self._comment(['Register Declarations'], precede_blank = 1)
+            self._comment(['Register Declarations'], precede_blank=1)
             self._wrln("\n".join(local_regs))
-        self._wrln("\nreg [%d:0]      mux_%s;\n" % (self._data_width-1,
+        self._wrln("\nreg [%d:0]      mux_%s;\n" % (self._data_width - 1,
                                                     self._data_out.lower()))
 
         if local_wires:
-            self._comment(['Wire Declarations (Constants)'], precede_blank = 1)
+            self._comment(['Wire Declarations (Constants)'], precede_blank=1)
             self._wrln("\n".join(local_wires))
 
     def _write_address_selects(self):
         """
         Writes the address select lines
         """
-        self._comment(['Address Selects'], precede_blank = 1)
+        self._comment(['Address Selects'], precede_blank=1)
 
         for address in sorted(self._word_fields.keys()):
             width = self._addr_width - self._lower_bit
@@ -672,7 +671,7 @@ class Verilog(WriterBase):
         """
         Writes the output assignments
         """
-        self._comment(['Output Assignments'], precede_blank = 1)
+        self._comment(['Output Assignments'], precede_blank=1)
 
         max_len = 0
 
@@ -763,7 +762,7 @@ class Verilog(WriterBase):
         comment = field.description
         if comment:
             comment = comment.replace(u'\2013', '-')
-            fmt = textwrap.TextWrapper(width=self._max_column-3)
+            fmt = textwrap.TextWrapper(width=self._max_column - 3)
             lines.append('')
             for i in fmt.wrap(comment):
                 lines.append(i)
@@ -774,7 +773,8 @@ class Verilog(WriterBase):
         """
         Writes the output declarations
         """
-        self._comment([ "", "Register Read Output Assignments", ""], border="-")
+        self._comment(["", "Register Read Output Assignments", ""],
+                      border="-")
 
         keys = sorted(self._word_fields.keys())
         for key in keys:
@@ -920,7 +920,7 @@ class Verilog2001(Verilog):
         ports = self._build_port_list()
         cnt = 0
         total = len(ports)
-        commenter = textwrap.TextWrapper(width=self._max_column-52)
+        commenter = textwrap.TextWrapper(width=self._max_column - 52)
 
         max_len = max([len(i[2]) for i in ports]) + 2
         fmt_string = "  %%-10s %%-7s %%-%ds // %%s\n" % max_len
@@ -929,7 +929,7 @@ class Verilog2001(Verilog):
             comment = csep.join(commenter.wrap(data[3]))
             self._wrln(fmt_string % (data[0], data[1], data[2] + sep, comment))
             cnt += 1
-            if cnt == total-1:
+            if cnt == total - 1:
                 sep = ""
         self._wrln(');\n')
 

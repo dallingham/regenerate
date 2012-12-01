@@ -21,14 +21,16 @@
 Includes the base instances in the module
 """
 
-__all__ = ["bitfield", "register_db", "register", "reg_parser", "reg_writer", "reg_project", "LOGGER"]
+__all__ = ["bitfield", "register_db", "register", "reg_parser",
+           "reg_writer", "reg_project", "LOGGER"]
 
 import logging
 LOGGER = logging.getLogger('regenerate')
 
 # create console handler and set level to debug
 __ch = logging.StreamHandler()
-__formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+__formatter = logging.Formatter('%(asctime)s - %(name)s - '
+                                '%(levelname)s - %(message)s')
 # add formatter to ch
 __ch.setFormatter(__formatter)
 # add ch to logger

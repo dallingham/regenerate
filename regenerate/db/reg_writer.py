@@ -24,12 +24,12 @@ Writes the XML file containing all the information in the register database
 import time
 import os
 from xml.sax.saxutils import escape
-from regenerate.db import BitField, TYPES, BFT_TYPE, BFT_ID
+from regenerate.db import BitField, TYPES
 
 CONVERT_TYPE = {}
 for i in TYPES:
-    CONVERT_TYPE[i[BFT_TYPE]] = i[BFT_ID]
-    
+    CONVERT_TYPE[i.type] = i.id
+
 
 def create_backup_file(filename):
     """

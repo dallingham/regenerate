@@ -22,29 +22,27 @@
 Actual program. Parses the arguments, and initiates the main window
 """
 
-import sys
-import os
-from regenerate.db import RegisterDb, BitField, LOGGER
+from regenerate.db import BitField, TYPES, LOGGER
 from regenerate.writers.writer_base import WriterBase
-from regenerate.db.bitfield_types import *
+
 
 class UVM_Registers(WriterBase):
 
     REMAP_NAME = {
-        'interface' : 'interface_',
-        'class'     : 'class_',
-        'package'   : 'package_',
-        'edge'      : 'edge_',
-        };
-        
+        'interface': 'interface_',
+        'class': 'class_',
+        'package': 'package_',
+        'edge': 'edge_',
+        }
+
     def __init__(self, dbase):
         WriterBase.__init__(self, dbase)
 
     def _fix_name(self, field):
         name = field.field_name.lower()
         name = "_".join(name.split())
-        
-        if self.REMAP_NAME.has_key(name):
+
+        if name in self.REMAP_NAME:
             return self.REMAP_NAME[name]
         else:
             return name
@@ -54,36 +52,35 @@ class UVM_Registers(WriterBase):
             return (value[1], int(value[0], 16))
         else:
             return (value[0], int(value[0], 16))
-        
+
     def write(self, filename):
 
-        access_map = { BitField.TYPE_READ_ONLY                  : "RO",
-                       BitField.TYPE_READ_ONLY_LOAD             : "RO",
-                       BitField.TYPE_READ_ONLY_VALUE            : "RO",
-                       BitField.TYPE_READ_WRITE                 : "RW",
-                       BitField.TYPE_READ_WRITE_1S              : "RW",
-                       BitField.TYPE_READ_WRITE_1S_1            : "RW",
-                       BitField.TYPE_READ_WRITE_LOAD            : "RW",
-                       BitField.TYPE_READ_WRITE_LOAD_1S         : "RW",
-                       BitField.TYPE_READ_WRITE_LOAD_1S_1       : "RW",
-                       BitField.TYPE_READ_WRITE_SET             : "RW",
-                       BitField.TYPE_READ_WRITE_SET_1S          : "RW",
-                       BitField.TYPE_READ_WRITE_SET_1S_1        : "RW",
-                       BitField.TYPE_READ_WRITE_CLR             : "RW",
-                       BitField.TYPE_READ_WRITE_CLR_1S          : "RW",
-                       BitField.TYPE_READ_WRITE_CLR_1S_1        : "RW",
-                       BitField.TYPE_WRITE_1_TO_CLEAR_SET       : "W1C",
-                       BitField.TYPE_WRITE_1_TO_CLEAR_SET_1S    : "W1C",
-                       BitField.TYPE_WRITE_1_TO_CLEAR_SET_1S_1  : "W1C",
-                       BitField.TYPE_WRITE_1_TO_CLEAR_LOAD      : "W1C",
-                       BitField.TYPE_WRITE_1_TO_CLEAR_LOAD_1S   : "W1C",
-                       BitField.TYPE_WRITE_1_TO_CLEAR_LOAD_1S_1 : "W1C",
-                       BitField.TYPE_WRITE_1_TO_SET             : "W1S",
-                       BitField.TYPE_WRITE_ONLY                 : "WO",
-                       }
+        access_map = {BitField.TYPE_READ_ONLY: "RO",
+                      BitField.TYPE_READ_ONLY_LOAD: "RO",
+                      BitField.TYPE_READ_ONLY_VALUE: "RO",
+                      BitField.TYPE_READ_WRITE: "RW",
+                      BitField.TYPE_READ_WRITE_1S: "RW",
+                      BitField.TYPE_READ_WRITE_1S_1: "RW",
+                      BitField.TYPE_READ_WRITE_LOAD: "RW",
+                      BitField.TYPE_READ_WRITE_LOAD_1S: "RW",
+                      BitField.TYPE_READ_WRITE_LOAD_1S_1: "RW",
+                      BitField.TYPE_READ_WRITE_SET: "RW",
+                      BitField.TYPE_READ_WRITE_SET_1S: "RW",
+                      BitField.TYPE_READ_WRITE_SET_1S_1: "RW",
+                      BitField.TYPE_READ_WRITE_CLR: "RW",
+                      BitField.TYPE_READ_WRITE_CLR_1S: "RW",
+                      BitField.TYPE_READ_WRITE_CLR_1S_1: "RW",
+                      BitField.TYPE_WRITE_1_TO_CLEAR_SET: "W1C",
+                      BitField.TYPE_WRITE_1_TO_CLEAR_SET_1S: "W1C",
+                      BitField.TYPE_WRITE_1_TO_CLEAR_SET_1S_1: "W1C",
+                      BitField.TYPE_WRITE_1_TO_CLEAR_LOAD: "W1C",
+                      BitField.TYPE_WRITE_1_TO_CLEAR_LOAD_1S: "W1C",
+                      BitField.TYPE_WRITE_1_TO_CLEAR_LOAD_1S_1: "W1C",
+                      BitField.TYPE_WRITE_1_TO_SET: "W1S",
+                      BitField.TYPE_WRITE_ONLY: "WO",
+                      }
 
         cfile = open(filename, "w")
-        base = os.path.splitext(os.path.basename(filename))[0]
 
         cfile.write(' /* \\defgroup registers Registers */\n')
 
@@ -102,13 +99,13 @@ class UVM_Registers(WriterBase):
             cfile.write(" *\n * \\addtogroup registers\n")
             cfile.write(" * * @{\n")
             cfile.write(" */\n")
-            cfile.write("  class %s extends uvm_reg;\n\n" % rname);
+            cfile.write("  class %s extends uvm_reg;\n\n" % rname)
             cfile.write("    `uvm_object_utils(%s);\n\n" % rname)
             field_keys = reg.get_bit_field_keys()
             field_list = []
             for key in field_keys:
                 field = reg.get_bit_field(key)
-                cfile.write("    uvm_reg_field %s;\n" % self._fix_name(field));
+                cfile.write("    uvm_reg_field %s;\n" % self._fix_name(field))
                 if field.reset_type == BitField.RESET_PARAMETER:
                     field_list.append(field)
 
@@ -117,11 +114,12 @@ class UVM_Registers(WriterBase):
                     name = field.reset_parameter
                 else:
                     name = "p%s" % field.field_name.upper()
-                    
+
                 if field.width == 1:
                     cfile.write("    bit %s = 1'b0;\n" % name)
                 else:
-                    cfile.write("    bit [%d:0] %s = '0;\n" % (field.width - 1, name))
+                    cfile.write("    bit [%d:0] %s = '0;\n" % (field.width - 1,
+                                                               name))
 
             grps = set()
 
@@ -129,22 +127,27 @@ class UVM_Registers(WriterBase):
                 field = reg.get_bit_field(key)
                 if field.values:
                     n = self._fix_name(field)
-                    grps.add("cov_%s" % n);
+                    grps.add("cov_%s" % n)
                     cfile.write("\n      covergroup cov_%s;\n" % n)
-                    cfile.write("         option.per_instance = 1;\n");
-                    cfile.write("         %s: coverpoint %s.value {\n" % (n.upper(), n.lower()))
+                    cfile.write("         option.per_instance = 1;\n")
+                    cfile.write("         %s: coverpoint %s.value {\n" %
+                                (n.upper(), n.lower()))
                     for value in field.values:
-                        cfile.write("            bins bin_%s = {'h%x};\n" % self.mk_coverpt(value))
+                        cfile.write("            bins bin_%s = {'h%x};\n" %
+                                    self.mk_coverpt(value))
                     cfile.write("      }\n")
                     cfile.write("      endgroup : cov_%s\n" % n)
 
-            cfile.write('\n    function new(string name = "%s");\n' % reg.token.lower())
+            cfile.write('\n    function new(string name = "%s");\n' %
+                        reg.token.lower())
             if grps:
-                cfile.write('       super.new(name, %d, build_coverage(UVM_CVR_FIELD_VALS));\n' % reg.width)
+                cfile.write('       super.new(name, %d, ' % reg.width)
+                cfile.write('build_coverage(UVM_CVR_FIELD_VALS));\n')
                 for item in grps:
                     cfile.write('       %s = new;\n' % item)
             else:
-                cfile.write('      super.new(name, %d, UVM_NO_COVERAGE);\n' % reg.width)
+                cfile.write('      super.new(name, %d' % reg.width)
+                cfile.write(', UVM_NO_COVERAGE);\n')
 
             cfile.write('    endfunction : new\n\n')
 
@@ -157,28 +160,31 @@ class UVM_Registers(WriterBase):
                 for item in grps:
                     cfile.write('     %s.sample();\n' % item)
                 cfile.write('    endfunction: sample\n\n')
-                
+
             cfile.write('    virtual function void build();\n')
 
             field_keys = reg.get_bit_field_keys()
-            
+
             for key in field_keys:
                 field = reg.get_bit_field(key)
-                cfile.write('      %s = uvm_reg_field::type_id::create("%s", , get_full_name());\n' %
+                cfile.write('      %s = uvm_reg_field::type_id::create("%s"' %
                             (self._fix_name(field), self._fix_name(field)))
+                cfile.write(', , get_full_name());\n')
             cfile.write("\n")
-            
+
             field_keys = reg.get_bit_field_keys()
             for key in field_keys:
                 field = reg.get_bit_field(key)
                 size = field.width
                 if field.start_position >= reg.width:
                     lsb = field.start_position % reg.width
-                    LOGGER.warning("%s has bits that exceed the register width" % reg.token)
+                    tok = reg.token
+                    msg = "%s has bits that exceed the register width" % tok
+                    LOGGER.warning(msg)
                 else:
                     lsb = field.start_position
                 access = access_map[field.field_type]
-                
+
                 volatile = is_volatile(field)
                 has_reset = 1
                 if field.reset_type == BitField.RESET_PARAMETER:
@@ -190,7 +196,7 @@ class UVM_Registers(WriterBase):
                     reset = "%d'h%x" % (field.width, field.reset_value)
                 is_rand = 0
                 ind_access = individual_access(field, reg)
-                                               
+
                 cfile.write('      %s.configure(this, %d, %d, "%s", %d, %s, %d, %d, %d);\n' %
                             (self._fix_name(field), size, lsb, access, volatile, reset,
                              has_reset, is_rand, ind_access))
@@ -205,10 +211,13 @@ class UVM_Registers(WriterBase):
             cfile.write('  endclass : %s\n\n' % rname)
             cfile.write('/*!@}*/\n')
 
-        cfile.write('  class %s_reg_block extends uvm_reg_block;\n\n' % self._dbase.module_name)
-        cfile.write('    `uvm_object_utils(%s_reg_block)\n\n' % self._dbase.module_name)
+        cfile.write('  class %s_reg_block extends uvm_reg_block;\n\n'
+                    % self._dbase.module_name)
+        cfile.write('    `uvm_object_utils(%s_reg_block)\n\n'
+                    % self._dbase.module_name)
 
-        cfile.write('    local int default_bus_width = %0d;\n\n' % (self._data_width / 8,))
+        cfile.write('    local int default_bus_width = %0d;\n\n'
+                    % (self._data_width / 8,))
 
         for key in self._dbase.get_keys():
             reg = self._dbase.get_register(key)
@@ -223,32 +232,33 @@ class UVM_Registers(WriterBase):
                     if field.width == 1:
                         cfile.write("    bit %s;\n" % name)
                     else:
-                        cfile.write("    bit [%d:0] %s;\n" % (field.width - 1, name))
+                        cfile.write("    bit [%d:0] %s;\n"
+                                    % (field.width - 1, name))
 
         for key in self._dbase.get_keys():
             reg = self._dbase.get_register(key)
             rname = "reg_%s_%s" % (self._dbase.module_name, reg.token.lower())
             cfile.write("    %s %s;\n" % (rname, reg.token.lower()))
 
-        cfile.write('    %s_reg_access_wrapper %s_access_cg;\n\n' % (self._dbase.module_name,
-                                                                    self._dbase.module_name))
-
-        cfile.write('\n    function new(string name = "%s_access_cg");\n' % self._dbase.module_name)
+        mod = self._dbase.module_name
+        cfile.write('    %s_reg_access_wrapper %s_access_cg;\n\n' % (mod, mod))
+        cfile.write('\n')
+        cfile.write('    function new(string name = "%s_access_cg");\n' % mod)
         cfile.write('      super.new(name,build_coverage(UVM_CVR_ALL));\n')
         cfile.write('    endfunction\n\n')
 
         cfile.write('    virtual function void build();\n')
 
         cfile.write('       if(has_coverage(UVM_CVR_ALL)) begin\n')
-        cfile.write('          %s_access_cg = %s_reg_access_wrapper::type_id::create("%s_access_cg");\n' %
-                    (self._dbase.module_name, self._dbase.module_name, self._dbase.module_name))
+        cfile.write('          %s_access_cg = %s_reg_access_wrapper::type_id::create("%s_access_cg");\n'
+                    % (mod, mod, mod))
         cfile.write("          void'(set_coverage(UVM_CVR_ALL));\n")
         cfile.write('       end\n')
-        
+
         for key in self._dbase.get_keys():
             reg = self._dbase.get_register(key)
             rname = "reg_%s_%s" % (self._dbase.module_name, reg.token.lower())
-            
+
             cfile.write('      %s = %s::type_id::create("%s", , get_full_name());\n' %
                         (reg.token.lower(), rname, reg.token.lower()))
             for field_key in reg.get_bit_field_keys():
@@ -259,19 +269,22 @@ class UVM_Registers(WriterBase):
                     else:
                         name = "p%s" % field.field_name.upper()
                     cfile.write('      %s.%s = %s;\n' % (reg.token.lower(), name, name))
-                    
+
             cfile.write('      %s.configure(this);\n' % reg.token.lower())
             cfile.write('      %s.build();\n' % reg.token.lower())
             if reg.do_not_generate_code:
-                cfile.write('      //%s.add_hdl_path_slice("path to register", 0, <width> );\n\n' % reg.token.lower())
+                cfile.write('      //%s.add_hdl_path_slice("path to register", 0, <width> );\n\n'
+                            % reg.token.lower())
             else:
                 for key in reg.get_bit_field_keys():
                     field = reg.get_bit_field(key)
-                    cfile.write('      %s.add_hdl_path_slice("r%02x_%s", %d, %d );\n' % (
-                        reg.token.lower(), reg.address, self._fix_name(field),
-                        field.start_position, field.width))
+                    cfile.write('      %s.add_hdl_path_slice("r%02x_%s", %d, %d );\n'
+                                % (
+                                    reg.token.lower(), reg.address,
+                                    self._fix_name(field),
+                                    field.start_position, field.width))
                 cfile.write("\n")
-  
+
         cfile.write("\n")
         for key in self._dbase.get_keys():
             reg = self._dbase.get_register(key)
@@ -333,13 +346,15 @@ class UVM_Registers(WriterBase):
         cfile.write('      ra_cov.sample(offset, is_read);\n')
         cfile.write('   endfunction: sample\n')
         cfile.write('endclass : %s_reg_access_wrapper\n\n' % base)
-        
-        
+
+
 def is_volatile(field):
-    return TYPES[field.field_type][BFT_INP] or field.volatile
+    return TYPES[field.field_type].input or field.volatile
+
 
 def is_readonly(field):
-    return TYPES[field.field_type][BFT_RO];
+    return TYPES[field.field_type].readonly
+
 
 def individual_access(field, reg):
     """
@@ -354,16 +369,14 @@ def individual_access(field, reg):
     # loop through all fields are are not read only and are not the original
     # field we are checking for. Calculate the bytes used, and add them to the
     # used_bytes set
-    
-    for f in [ fld for fld in flds if fld != field and not is_readonly(fld)]:
-        for pos in range(f.start_position, f.stop_position+1):
-            used_bytes.add(pos/8)
+
+    for f in [fld for fld in flds if fld != field and not is_readonly(fld)]:
+        for pos in range(f.start_position, f.stop_position + 1):
+            used_bytes.add(pos / 8)
 
     # loop through the bytes used by the current field, and make sure they
     # do match any of the bytes used by other fields
-    for pos in range(field.start_position, field.stop_position+1):
-        if (pos/8) in used_bytes:
+    for pos in range(field.start_position, field.stop_position + 1):
+        if (pos / 8) in used_bytes:
             return False
     return True
-
-    

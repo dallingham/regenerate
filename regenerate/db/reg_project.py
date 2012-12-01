@@ -25,6 +25,7 @@ import xml.parsers.expat
 import os.path
 from regenerate.db import LOGGER
 
+
 class RegProject(object):
     """
     RegProject is the container object for a regenerate project. The project
@@ -258,15 +259,15 @@ class RegProject(object):
         self.__project_exports.append(value)
 
     def start_grouping(self, attrs):
-        self.__groupings.append((attrs['name'], int(attrs['start'],16),
-                                 int(attrs['end'],16)))
+        self.__groupings.append((attrs['name'], int(attrs['start'], 16),
+                                 int(attrs['end'], 16)))
         self.__grouping_excludes[attrs['name']] = []
 
     def start_group_exclude(self, attrs):
         self.__grouping_excludes[self.__groupings[-1][0]].append(attrs['name'])
 
     def start_address_map(self, attrs):
-        self.__address_maps[attrs['name']] = int(attrs['base'],16)
+        self.__address_maps[attrs['name']] = int(attrs['base'], 16)
 
     def is_not_saved(self):
         if self.__modified:

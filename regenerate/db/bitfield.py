@@ -41,7 +41,8 @@ class BitField(DataItem):
     of a register)
     """
 
-    (READ_ONLY, READ_WRITE, WRITE_1_TO_CLEAR, WRITE_1_TO_SET, WRITE_ONLY) = range(5)
+    (READ_ONLY, READ_WRITE, WRITE_1_TO_CLEAR,
+     WRITE_1_TO_SET, WRITE_ONLY) = range(5)
 
     (TYPE_READ_ONLY,
      TYPE_READ_ONLY_VALUE,

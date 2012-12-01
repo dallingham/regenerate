@@ -24,11 +24,12 @@ Parses the register database, loading the database.
 import xml.parsers.expat
 
 from register import Register
-from regenerate.db import BitField, TYPES, BFT_TYPE, BFT_ID
+from regenerate.db import BitField, TYPES
 
 CONVERT_TYPE = {}
 for i in TYPES:
-    CONVERT_TYPE[i[BFT_ID]] = i[BFT_TYPE]
+    CONVERT_TYPE[i.id] = i.type
+
 
 def cnv_hex(attrs, key, default=0):
     """
@@ -205,11 +206,12 @@ class RegParser(object):
                     self.__field.field_type = BitField.TYPE_WRITE_1_TO_CLEAR_SET
             elif t == BitField.WRITE_1_TO_SET:
                 self.__field.field_type = BitField.TYPE_WRITE_1_TO_SET
-            else: 
+            else:
                 self.__field.field_type = BitField.TYPE_WRITE_ONLY
         else:
-            self.__field.field_type = CONVERT_TYPE[attrs.get('field_type', 'RO')]
-            
+            self.__field.field_type = CONVERT_TYPE[attrs.get('field_type',
+                                                             'RO')]
+
     def start_input(self, attrs):
         """
         Called when the input tag is encountered. Attributes are;
@@ -219,7 +221,7 @@ class RegParser(object):
         """
         if attrs.get('function'):
             old_type = self.__field.field_type
-            
+
             func = cnv_int(attrs, 'function', BitField.FUNC_ASSIGNMENT)
             if old_type == BitField.TYPE_READ_ONLY:
                 if func == BitField.FUNC_PARALLEL:

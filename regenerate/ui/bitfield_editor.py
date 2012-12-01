@@ -27,10 +27,9 @@ import re
 import pango
 import os
 
-from regenerate.db import (BitField, TYPES, BFT_TYPE, BFT_ID, BFT_INP,
-                           BFT_CTRL, BFT_1S, BFT_DESC)
+from regenerate.db import BitField, TYPES
 from regenerate.settings.paths import GLADE_BIT, INSTALL_PATH
-from error_dialogs import ErrorMsg, Question
+from error_dialogs import ErrorMsg
 from regenerate.writers.verilog_reg_def import REG
 
 try:
@@ -43,15 +42,16 @@ VALID_SIGNAL = re.compile("^[A-Za-z][A-Za-z0-9_]*$")
 
 TYPE2STR = {}
 for i in TYPES:
-    TYPE2STR[i[BFT_TYPE]] = i[BFT_DESC]
+    TYPE2STR[i.type] = i.description
 
 TYPE2ID = {}
 for i in TYPES:
-    TYPE2ID[i[BFT_TYPE]] = i[BFT_ID]
+    TYPE2ID[i.type] = i.id
 
 TYPE_ENB = {}
 for i in TYPES:
-    TYPE_ENB[i[BFT_TYPE]] = (i[BFT_INP], i[BFT_CTRL])
+    TYPE_ENB[i.type] = (i.input, i.control)
+
 
 class BitFieldEditor(object):
     """
@@ -88,7 +88,6 @@ class BitFieldEditor(object):
         self.__top_window.set_icon_from_file(
             os.path.join(INSTALL_PATH, "media", "flop.svg"))
         self.__input_obj.set_sensitive(TYPE_ENB[bit_field.field_type][0])
-        print bit_field.field_type, TYPE_ENB[bit_field.field_type][0]
         self.__control_obj.set_sensitive(TYPE_ENB[bit_field.field_type][1])
 
         pango_font = pango.FontDescription("monospace")
@@ -115,11 +114,11 @@ class BitFieldEditor(object):
             edge = "posedge" if self.__db.reset_active_level else "negedge"
             condition = "" if self.__db.reset_active_level else "~"
             be_level = "" if self.__db.byte_strobe_active_level else "~"
-            
-            name_map = { 'MODULE'          : self.__db.module_name,
-                         'BE_LEVEL'        : be_level,
-                         'RESET_CONDITION' : condition,
-                         'RESET_EDGE'      : edge }
+
+            name_map = {'MODULE': self.__db.module_name,
+                        'BE_LEVEL': be_level,
+                        'RESET_CONDITION': condition,
+                        'RESET_EDGE': edge }
             text = REG[TYPE2ID[bit_field.field_type].lower()] % name_map
         except KeyError:
             text = ""
@@ -130,7 +129,7 @@ class BitFieldEditor(object):
         else:
             self.__verilog_obj.modify_font(pango_font)
             buff = self.__verilog_obj.get_buffer()
-            
+
         buff.set_text(text)
         self.__builder.connect_signals(self)
         self.__top_window.show_all()
@@ -265,7 +264,7 @@ class BitFieldEditor(object):
         self.__update_values()
         self.__modified()
 
-    def __change_val(self, text, path, new_text): # IGNORE:W0613
+    def __change_val(self, text, path, new_text):  # IGNORE:W0613
         """
         Called with the value has changed value field. Checks to make sure that
         value is a valid hex value, and within the correct range.
@@ -325,8 +324,9 @@ class BitFieldEditor(object):
             new_text.decode("ascii")
         except:
             ErrorMsg("Invalid ASCII characters detected",
-                     "Look for strange punctuations, like dashs and quotes that "
-                     "look valid, but are not actual ascii characters.")
+                     "Look for strange punctuations, like dashs and "
+                     "quotes that look valid, but are not actual "
+                     "ascii characters.")
         self.__list_model.set_value(node, 2, new_text)
         self.__update_values()
         self.__modified()
@@ -335,7 +335,8 @@ class BitFieldEditor(object):
         """
         Enables the output field based on the output enable field
         """
-        self.__bit_field.use_output_enable = self.__output_enable_obj.get_active()
+        active = self.__output_enable_obj.get_active()
+        self.__bit_field.use_output_enable = active
         self.__output_obj.set_sensitive(obj.get_active())
         self.__check_data()
         self.__modified()
@@ -375,10 +376,6 @@ class BitFieldEditor(object):
         input_error = False
         output_error = False
         control_error = False
-
-        input_sig = self.__input_obj.get_text()
-        out_enable = self.__output_obj.get_text()
-        control_sig = self.__control_obj.get_text()
 
         if control_error == False:
             clear_error(self.__control_obj)

@@ -38,6 +38,7 @@ DEF_ADDR_NAME = "ADDR"
 DEF_BE_NAME = "BE"
 DEF_ACK_NAME = "ACK"
 
+
 class RegisterDb(object):
     """
     Container database for a set of registers.

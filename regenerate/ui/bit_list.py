@@ -18,11 +18,12 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 import gtk
-from regenerate.db import BitField, TYPES, BFT_TYPE, BFT_DESC
+from regenerate.db import BitField, TYPES
 from columns import EditableColumn, ComboMapColumn
 
-TYPE2STR = [(i[BFT_DESC], i[BFT_TYPE]) for i in sorted(TYPES)]
+TYPE2STR = [(i.description, i.type) for i in sorted(TYPES)]
 (BIT_TITLE, BIT_SIZE, BIT_SORT, BIT_EXPAND) = range(4)
+
 
 class BitModel(gtk.ListStore):
     """

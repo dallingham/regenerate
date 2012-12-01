@@ -39,14 +39,14 @@ from preferences import Preferences
 from bit_list import BitModel, BitList, bits, reset_value
 from register_list import RegisterModel, RegisterList, build_define
 from instance_list import InstanceModel, InstanceList
-from regenerate.db import RegWriter, RegisterDb, Register, BitField, RegProject, LOGGER
+from regenerate.db import (RegWriter, RegisterDb, Register,
+                           BitField, RegProject, LOGGER, TYPES)
 from regenerate.importers import IMPORTERS
 from regenerate.settings.paths import GLADE_TOP, INSTALL_PATH
 from regenerate.settings import ini
 from regenerate import PROGRAM_VERSION, PROGRAM_NAME
 from error_dialogs import ErrorMsg, WarnMsg, Question
 from project import ProjectModel, ProjectList, update_file
-from regenerate.db import TYPES, BFT_TYPE, BFT_INP, BFT_CTRL, LOGGER
 import logging
 from preview import html_string
 from spell import Spell
@@ -65,7 +65,7 @@ except ImportError:
 
 TYPE_ENB = {}
 for i in TYPES:
-    TYPE_ENB[i[BFT_TYPE]] = (i[BFT_INP], i[BFT_CTRL])
+    TYPE_ENB[i.type] = (i.input, i.control)
 
 
 DEF_EXT = '.rprj'
@@ -82,18 +82,19 @@ VALID_SIGNAL = re.compile("^[A-Za-z][A-Za-z0-9_]*$")
 VALID_BITS = re.compile("^\s*[\(\[]?(\d+)(\s*[-:]\s*(\d+))?[\)\]]?\s*$")
 REGNAME = re.compile("^(.*)(\d+)(.*)$")
 
-class StatusHandler(logging.Handler): # Inherit from logging.Handler
+
+class StatusHandler(logging.Handler):  # Inherit from logging.Handler
 
     def __init__(self, status_obj):
         logging.Handler.__init__(self)
         self.status_obj = status_obj
         self.status_id = status_obj.get_context_id(__name__)
         self.timer = None
-        
+
     def emit(self, record):
         idval = self.status_obj.push(self.status_id, record.getMessage())
         gobject.timeout_add(15 * 1000, self._clear, idval)
-        
+
     def _clear(self, idval):
         self.status_obj.remove(self.status_id, idval)
 
@@ -119,6 +120,7 @@ class DbaseStatus(object):
         self.reg_select = None
         self.bit_select = None
         self.node = None
+
 
 class MainWindow(object):
     """
@@ -146,14 +148,14 @@ class MainWindow(object):
         self.__filter = self.__builder.get_object("filter")
         self.__filter.connect('changed', self.__filter_changed)
         self.__selected_dbase = self.__builder.get_object("selected_dbase")
-        
+
         pango_font = pango.FontDescription("monospace")
         self.__builder.get_object('overview').modify_font(pango_font)
-        
+
         self.__overview_buf = self.__builder.get_object('overview_buffer')
         self.__overview_buf.connect('changed', self.__overview_changed)
         Spell(self.__builder.get_object('overview'))
-        
+
         self.__prj_obj = ProjectList(self.__builder.get_object("project_list"),
                                      self.__prj_selection_changed)
         self.__module_notebook = self.__builder.get_object("module_notebook")
@@ -167,12 +169,13 @@ class MainWindow(object):
         self.__warn_bit_list = self.__builder.get_object('reg_bit_warn')
         self.__warn_reg_descr = self.__builder.get_object('reg_descr_warn')
         self.__preview_toggle = self.__builder.get_object('preview')
-        
+
         self.__filter_text = ""
 
         self.__reglist_obj = RegisterList(
             self.__builder.get_object("register_list"),
-            self.__selected_reg_changed, self.set_modified, self.update_register_addr)
+            self.__selected_reg_changed, self.set_modified,
+            self.update_register_addr)
 
         self.use_svn = bool(int(ini.get('user', 'use_svn', 0)))
         self.use_preview = bool(int(ini.get('user', 'use_preview', 0)))
@@ -180,17 +183,17 @@ class MainWindow(object):
         if WEBKIT:
             self.__webkit = webkit.WebView()
             self.__webkit_reg = webkit.WebView()
-            
+
             self.__wk_container = self.__builder.get_object('scroll_webkit')
             self.__wk_container.add(self.__webkit)
             self.__wk_container.hide()
-            
+
             self.__wk_reg_container = self.__builder.get_object('scroll_reg_webkit')
             self.__wk_reg_container.add(self.__webkit_reg)
             self.__wk_reg_container.hide()
 
         self.__update_wk = False
-        
+
         self.__filename = None
         self.__modified = False
 
@@ -215,7 +218,7 @@ class MainWindow(object):
         self.__bitfield_obj = BitList(
             self.__builder.get_object("bitfield_list"), self.__bit_combo_edit,
             self.__bit_text_edit, self.__bit_changed)
-        
+
         self.__recent_manager = gtk.recent_manager_get_default()
         recent_file_menu = self.__create_recent_menu_item()
         self.__builder.get_object('file_menu').insert(recent_file_menu, 2)
@@ -236,7 +239,7 @@ class MainWindow(object):
         self.__address_width_obj = self.__builder.get_object('address_width')
         self.__data_width_obj = self.__builder.get_object('data_width')
         self.__byte_level_obj = self.__builder.get_object('byte_en_level')
-        
+
         self.__instance_obj = InstanceList(
             self.__builder.get_object('instances'),
             self.__instance_id_changed,
@@ -253,7 +256,7 @@ class MainWindow(object):
 
     def __restore_position_and_size(self):
         "Restore the desired position and size from the user's config file"
-        
+
         height = int(ini.get('user', 'height', 0))
         width = int(ini.get('user', 'width', 0))
         vpos = int(ini.get('user', 'vpos', 0))
@@ -316,28 +319,28 @@ class MainWindow(object):
 
         self.__project_loaded = self.__build_group("project_loaded",
                                                    project_actions)
-        
+
         self.__register_selected = self.__build_group("register_selected",
                                                       ['remove_register_action',
                                                        'duplicate_register_action',
                                                        'add_bit_action'])
-        
+
         self.__database_selected = self.__build_group("database_selected",
                                                       ['add_register_action',
                                                        'remove_set_action',
                                                        'import_action'])
-        
+
         self.__bitfield_selected = self.__build_group("bitfield_selected",
                                                       ['remove_bit_action',
                                                        'edit_bit_action'])
-        
+
         self.__svn_selected = self.__build_group("svn_enabled",
                                                  ['update_svn',
                                                   'revert_svn'])
-        
+
         self.__file_modified = self.__build_group("file_modified",
                                                   ['revert_action'])
-        
+
     def __build_data_width_box(self):
         """
         Builds the option menu for the bit width descriptor. Glade no longer
@@ -369,13 +372,16 @@ class MainWindow(object):
             field.field_type = model.get_value(node, 1)
             register = self.__reglist_obj.get_selected_register()
             if not field.output_signal:
-                field.output_signal = "%s_%s" % (register.token, field.field_name)
+                field.output_signal = "%s_%s" % (register.token,
+                                                 field.field_name)
 
             if TYPE_ENB[field.field_type][0] and not field.input_signal:
-                field.input_signal = "%s_%s_IN" % (register.token, field.field_name)
+                field.input_signal = "%s_%s_IN" % (register.token,
+                                                   field.field_name)
 
             if TYPE_ENB[field.field_type][1] and not field.control_signal:
-                field.control_signal = "%s_%s_LD" % (register.token, field.field_name)
+                field.control_signal = "%s_%s_LD" % (register.token,
+                                                     field.field_name)
         elif col == BitModel.RESET_TYPE_COL:
             field.reset_type = model.get_value(node, 1)
             if field.reset_type == BitField.RESET_NUMERIC:
@@ -548,7 +554,7 @@ class MainWindow(object):
         else:
             self.__disable_preview()
             self.use_preview = False
-    
+
     def on_register_grouping_activate(self, obj):
         """
         Display the Groupings editor.
@@ -736,7 +742,7 @@ class MainWindow(object):
             self.__no_test.set_active(reg.do_not_test)
             self.__hide.set_active(reg.hide)
             self.__reg_notebook.set_sensitive(True)
-            self.__register_selected.set_sensitive(True) # FIXME
+            self.__register_selected.set_sensitive(True)  # FIXME
             self.__set_register_warn_flags(reg)
             self.__set_bits_warn_flag()
         else:
@@ -758,9 +764,10 @@ class MainWindow(object):
 
                 self.__webkit_reg.load_string(html_string(reg.description),
                                               "text/html", "utf-8", "")
-                if pos <= self.__wk_reg_container.get_vadjustment().get_upper():
+                adjust_obj = self.__wk_reg_container.get_vadjustment()
+                if pos <= adjust_obj.get_upper():
                     self.__wk_reg_container.get_vadjustment().set_value(pos)
-                
+
             self.set_modified()
             self.__set_register_warn_flags(reg)
 
@@ -770,7 +777,8 @@ class MainWindow(object):
         value is set, and the status bar is updated with an appropriate
         message.
         """
-        if self.active and not self.active.modified and not self.__skip_changes:
+        if (self.active and not self.active.modified and
+            not self.__skip_changes):
             self.active.modified = True
             self.__prj_model.set_markup(self.active.node, True)
             self.__file_modified.set_sensitive(True)
@@ -800,7 +808,8 @@ class MainWindow(object):
         field = self.__bitfield_obj.select_field()
         if field:
             from bitfield_editor import BitFieldEditor
-            BitFieldEditor(self.dbase, register, field, self.__set_field_modified)
+            BitFieldEditor(self.dbase, register, field,
+                           self.__set_field_modified)
 
     def __set_field_modified(self):
         reg = self.__reglist_obj.get_selected_register()
@@ -938,7 +947,8 @@ class MainWindow(object):
 
             self.__project = RegProject()
             self.__project.path = filename
-            self.__project.name = os.path.splitext(os.path.basename(filename))[0]
+            base_name = os.path.basename(filename)
+            self.__project.name = os.path.splitext(base_name)[0]
             self.__prj_model = ProjectModel(self.use_svn)
             self.__prj_obj.set_model(self.__prj_model)
             self.__project.save()
@@ -960,12 +970,13 @@ class MainWindow(object):
 
     def set_busy_cursor(self, value):
         """
-        This seems to cause Windows to hang, so don't change the cursor to indicate
-        busy under Windows.
+        This seems to cause Windows to hang, so don't change the cursor
+        to indicate busy under Windows.
         """
         if os.name == 'posix':
             if value:
-                self.__top_window.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.WATCH))
+                cursor = gtk.gdk.Cursor(gtk.gdk.WATCH)
+                self.__top_window.window.set_cursor(cursor)
             else:
                 self.__top_window.window.set_cursor(None)
             while gtk.events_pending():
@@ -1022,7 +1033,7 @@ class MainWindow(object):
         self.__instance_obj.set_model(self.__instance_model)
         self.__set_module_definition_warn_flag()
 
-        self.active = DbaseStatus(self.dbase, name, base, self.__reg_model, 
+        self.active = DbaseStatus(self.dbase, name, base, self.__reg_model,
                                   self.__modelsort, self.__modelfilter,
                                   self.__bit_model, self.__instance_model)
         self.active.node = self.__prj_model.add_dbase(name, self.active)
@@ -1230,7 +1241,8 @@ class MainWindow(object):
             adj = self.__wk_container.get_vadjustment()
             pos = adj.get_value()
             try:
-                self.__webkit.load_string(html_string(self.dbase.overview_text),
+                text = self.dbase.overview_text
+                self.__webkit.load_string(html_string(text),
                                           "text/html", "utf-8", "")
             except:
                 self.__webkit.load_string(self.dbase.overview_text,
@@ -1239,7 +1251,8 @@ class MainWindow(object):
             if pos <= adj.get_upper() - adj.get_page_size():
                 self.__wk_container.get_vadjustment().set_value(pos)
             else:
-                self.__wk_container.get_vadjustment().set_value(adj.get_upper() - adj.get_page_size())
+                value = adj.get_upper() - adj.get_page_size()
+                self.__wk_container.get_vadjustment().set_value(value)
         self.set_modified()
 
     def on_regenerate_delete_event(self, obj, event):
@@ -1301,7 +1314,7 @@ class MainWindow(object):
             self.dbase.address_bus_width = new_width
             self.set_modified()
         except ValueError:
-            pass # keep old value
+            pass  # keep old value
 
     def on_write_strobe_changed(self, obj):
         self.dbase.write_strobe_name = obj.get_text()
@@ -1476,7 +1489,8 @@ class MainWindow(object):
                                    % (field.field_name, field.start_position))
                     else:
                         msg.append("Missing field description for '%s' (bits [%d:%d])"
-                                   % (field.field_name, field.stop_position, field.start_position))
+                                   % (field.field_name, field.stop_position,
+                                      field.start_position))
                     warn_bit = True
         if mark and not self.__loading_project:
             self.__warn_reg_descr.set_property('visible', warn_reg)
@@ -1491,13 +1505,14 @@ class MainWindow(object):
     def __set_description_warn_flag(self):
         if not self.__loading_project:
             warn = self.dbase.overview_text == ""
-            self.__builder.get_object('mod_descr_warn').set_property('visible', warn)
+            self.__builder.get_object('mod_descr_warn').set_property('visible',
+                                                                     warn)
 
     def __set_module_definition_warn_flag(self):
         if not self.__loading_project:
             warn = False
             msgs = []
-            
+
             if len(self.dbase.instances) == 0:
                 warn = True
                 msgs.append("No instances of the module were defined.")
@@ -1517,7 +1532,6 @@ class MainWindow(object):
             field = row[BitModel.FIELD_COL]
             icon = check_field(field)
             row[BitModel.ICON_COL] = icon
-            msg = []
             if icon:
                 warn = True
         return warn
