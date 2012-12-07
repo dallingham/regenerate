@@ -26,14 +26,18 @@ try:
     import pysvn
     __client = pysvn.Client()
 
-    def get_out_of_date(path):
+    def __ood(path):
         files = []
+        for svn_status in __client.status(path, recurse=False,
+                                          get_all=True, update=True):
+            if (svn_status.repos_text_status != pysvn.wc_status_kind.none or
+                svn_status.repos_prop_status != pysvn.wc_status_kind.none):
+                files.append(svn_status.path)
+        return files
+
+    def get_out_of_date(path):
         try:
-            for svn_status in __client.status(path, recurse=False,
-                                              get_all=True, update=True):
-                if (svn_status.repos_text_status != pysvn.wc_status_kind.none or
-                    svn_status.repos_prop_status != pysvn.wc_status_kind.none):
-                    files.append(svn_status.path)
+            files = __ood(path)
         except:
             files = []
         return files

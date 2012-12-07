@@ -31,7 +31,8 @@ class ToggleColumn(gtk.TreeViewColumn):
         renderer = gtk.CellRendererToggle()
         renderer.set_property('activatable', True)
         renderer.connect('toggled', change_callback, source_column)
-        gtk.TreeViewColumn.__init__(self, title, renderer, active=source_column)
+        gtk.TreeViewColumn.__init__(self, title, renderer,
+                                    active=source_column)
 
 
 class EditableColumn(gtk.TreeViewColumn):

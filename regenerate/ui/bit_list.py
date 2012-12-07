@@ -47,7 +47,6 @@ class BitModel(gtk.ListStore):
         """
         gtk.ListStore.__init__(self, str, str, str, str, str, str, int, object)
 
-    
     def append_field(self, field):
         """
         Adds the field to the model, filling out the fields in the model.
@@ -80,13 +79,13 @@ class BitList(object):
     """
 
     BIT_COLS = (
-        # Title,      Size, Sort,              Expand
-        ('',            20, -1,                False), 
-        ('Bits',        60, BitModel.SORT_COL, False), 
-        ('Name',       125, BitModel.NAME_COL, True),  
-        ('Type',       325, -1,                True),  
-        ('Reset',      100, -1,                False), 
-        ('Reset Type',  75, -1,                False), 
+        # Title, Size, Sort, Expand
+        ('', 20, -1, False),
+        ('Bits', 60, BitModel.SORT_COL, False),
+        ('Name', 125, BitModel.NAME_COL, True),
+        ('Type', 325, -1, True),
+        ('Reset', 100, -1, False),
+        ('Reset Type', 75, -1, False),
         )
 
     def __init__(self, obj, combo_edit, text_edit, selection_changed):

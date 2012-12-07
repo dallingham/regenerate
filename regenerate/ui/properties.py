@@ -35,7 +35,8 @@ class Properties(object):
         self.__properties = self.__builder.get_object('properties')
         self.__builder.get_object('short_name').set_text(project.short_name)
         self.__builder.get_object('project_name').set_text(project.name)
-        self.__builder.get_object('company_name').set_text(project.company_name)
+        company = project.company_name
+        self.__builder.get_object('company_name').set_text(company)
         self.__builder.connect_signals(self)
 
         self.__tree = self.__builder.get_object('address_tree')
@@ -67,7 +68,6 @@ class Properties(object):
         self.__model[path][0] = new_text
 
     def map_address_changed(self, cell, path, new_text, col):
-        node = self.__model.get_iter(path)
         try:
             value = int(new_text, 16)
         except ValueError:

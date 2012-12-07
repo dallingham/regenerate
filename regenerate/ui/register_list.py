@@ -23,37 +23,27 @@ from error_dialogs import ErrorMsg
 from regenerate.db import LOGGER
 
 REPLACE = {
-    'ENABLE'    : 'EN',    'TRANSLATION'   : 'TRANS',
-    'ADDRESS'   : 'ADDR',  'CONFIGURATION' : 'CFG',
-    'CONFIG'    : 'CFG',   'SYSTEM'        : 'SYS',
-    'CONTROL'   : 'CTRL',  'STATUS'        : 'STAT',
-    'DEBUG'     : 'DBG',   'COMMAND'       : 'CMD',
-    'HEADER'    : 'HDR',   'PACKET'        : 'PKT',
-    'ERROR'     : 'ERR',   'INTERRUPT'     : 'INT',
-    'WRITE'     : 'WR',    'READ'          : 'RD',
-    'TRANSMIT'  : 'TX',    'RECEIVE'       : 'RX',
-    'SOFTWARE'  : 'SW',    'HARDWARE'      : 'HW',
-    'SOURCE'    : 'SRC',   'DESTINATION'   : 'DEST',
-    'REGISTER'  : '',      'LOAD'          : 'LD',
-    'CLEAR'     : 'CLR',   'CURRENT'       : 'CUR',
-    'RANGE'     : 'RNG',   'DELAY'         : 'DLY',
-    'ERROR'     : 'ERR',   'LOAD'          : 'LD',
-    'PARITY'    : 'PAR',   'COMPARE'       : 'CMP',
-    'POINTER'   : 'PTR',   'SELECT'        : 'SEL',
-    'COUNT'     : 'CNT',   'COUNTER'       : 'CNTR',
-    'VALUE'     : 'VAL',   'MESSAGE'       : 'MSG',
-    'ERRORS'    : 'ERRS',  'POWER'         : 'PWR',
-    'MAILBOX'   : 'MBX',   'VECTOR'        : 'VECT',
-    'RESPONSE'  : 'RSP',   'NUMBER'        : 'NUM',
-    'CLOCK'     : 'CLK',   'EXTERNAL'      : 'EXT',
-    'FABRIC'    : 'FAB',   'SPACE'         : 'SPC',
-    'MAXIMUM'   : 'MAX',   'MINIMUM'       : 'MIN', 
-    'RESET'     : 'RST',   'MANAGEMENT'    : 'MGMT',
-    'REQUESTER' : 'REQ',   'REQUEST'       : 'REQ',
-    'ALTERNATE' : 'ALT',   'DIVIDER'       : 'DIV',
-    'REFERENCE' : 'REF',   'ARBITRATION'   : 'ARB',
-    'ARBITER'   : 'ARB',   'TRANSACTION'   : 'TXN',
-    'MASTER'    : 'MSTR',  'SLAVE'         : 'SLV',
+    'ENABLE': 'EN', 'TRANSLATION': 'TRANS', 'ADDRESS': 'ADDR',
+    'CONFIGURATION': 'CFG', 'CONFIG': 'CFG', 'SYSTEM': 'SYS',
+    'CONTROL': 'CTRL', 'STATUS': 'STAT', 'DEBUG': 'DBG',
+    'COMMAND': 'CMD', 'HEADER': 'HDR', 'PACKET': 'PKT',
+    'ERROR': 'ERR', 'INTERRUPT': 'INT', 'WRITE': 'WR',
+    'READ': 'RD', 'TRANSMIT': 'TX', 'RECEIVE': 'RX',
+    'SOFTWARE': 'SW', 'HARDWARE': 'HW', 'SOURCE': 'SRC',
+    'DESTINATION': 'DEST', 'REGISTER': '', 'LOAD': 'LD',
+    'CLEAR': 'CLR', 'CURRENT': 'CUR', 'RANGE': 'RNG',
+    'DELAY': 'DLY', 'ERROR': 'ERR', 'LOAD': 'LD',
+    'PARITY': 'PAR', 'COMPARE': 'CMP', 'POINTER': 'PTR',
+    'SELECT': 'SEL', 'COUNT': 'CNT', 'COUNTER': 'CNTR',
+    'VALUE': 'VAL', 'MESSAGE': 'MSG', 'ERRORS': 'ERRS',
+    'POWER': 'PWR', 'MAILBOX': 'MBX', 'VECTOR': 'VECT',
+    'RESPONSE': 'RSP', 'NUMBER': 'NUM', 'CLOCK': 'CLK',
+    'EXTERNAL': 'EXT', 'FABRIC': 'FAB', 'SPACE': 'SPC',
+    'MAXIMUM': 'MAX', 'MINIMUM': 'MIN', 'RESET': 'RST',
+    'MANAGEMENT': 'MGMT', 'REQUESTER': 'REQ', 'REQUEST': 'REQ',
+    'ALTERNATE': 'ALT', 'DIVIDER': 'DIV', 'REFERENCE': 'REF',
+    'ARBITRATION': 'ARB', 'ARBITER': 'ARB', 'TRANSACTION': 'TXN',
+    'MASTER': 'MSTR', 'SLAVE': 'SLV',
     }
 
 
@@ -162,11 +152,11 @@ class RegisterList(object):
 
     _COLS = (
         # Title,   Size, Column,                   Expand
-        ('',         20, RegisterModel.ICON_COL,   False,  COL_ICON),
-        ('Address',  75, RegisterModel.SORT_COL,   False,  COL_TEXT),
-        ('Name',    175, RegisterModel.NAME_COL,   True,   COL_TEXT),
-        ('Token',   175, RegisterModel.DEFINE_COL, True,   COL_TEXT),
-        ('Width',    75, -1,                       False,  COL_COMBO),
+        ('', 20, RegisterModel.ICON_COL, False, COL_ICON),
+        ('Address', 75, RegisterModel.SORT_COL, False, COL_TEXT),
+        ('Name', 175, RegisterModel.NAME_COL, True, COL_TEXT),
+        ('Token', 175, RegisterModel.DEFINE_COL, True, COL_TEXT),
+        ('Width', 75, -1, False, COL_COMBO),
         )
 
     def __init__(self, obj, select_change_function, mod_function, update_addr):
@@ -276,12 +266,12 @@ class RegisterList(object):
 
     def __new_address_is_not_used(self, new_text, path):
         addr_list = set()
-        address = int(new_text,16)
+        address = int(new_text, 16)
         for data in self.__model:
             if data == self.__model[path]:
                 continue
             reg = data[-1]
-            for i in range (reg.address, reg.address + (reg.width/8)):
+            for i in range(reg.address, reg.address + (reg.width / 8)):
                 addr_list.add(i)
         return address not in addr_list
 

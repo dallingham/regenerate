@@ -22,25 +22,25 @@
 Actual program. Parses the arguments, and initiates the main window
 """
 
-import sys
 import os
-from regenerate.db import RegisterDb
 from regenerate.writers.writer_base import WriterBase
+
 
 def find_range(address, range_map):
     for i in range_map:
         lower, upper = range_map[i]
         if (lower <= address <= upper):
-            return i;
+            return i
     else:
         return None
+
 
 class VerilogConstRegPackage(WriterBase):
 
     def __init__(self, project, dblist):
         WriterBase.__init__(self, None)
         self.dblist = dblist
-        
+
     def write(self, filename):
         cfile = open(filename, "w")
         base = os.path.splitext(os.path.basename(filename))[0]
@@ -54,8 +54,8 @@ class VerilogConstRegPackage(WriterBase):
                 for key in db.get_keys():
                     reg = db.get_register(key)
                     addr = i[1] + reg.address
-                    cfile.write("const xfer_addr %s_%s = 64'h%x;\n" % (i[0], reg.token, addr))
-            
+                    cfile.write("const xfer_addr %s_%s = 64'h%x;\n" %
+                                (i[0], reg.token, addr))
+
         cfile.write('\nendpackage : %s\n' % base)
         cfile.close()
-

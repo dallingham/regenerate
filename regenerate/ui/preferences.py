@@ -25,6 +25,7 @@ from regenerate.settings import ini
 Provides the preferences dialog box
 """
 
+
 class Preferences(object):
 
     def __init__(self):

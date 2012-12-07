@@ -35,7 +35,7 @@ else:
     def get_username():
         import pwd
         return pwd.getpwnam(os.environ['USER'])[4].split(',')[0]
-    
+
 
 class WriterBase(object):   # IGNORE:R0921 - we know this is a abstract class
     """

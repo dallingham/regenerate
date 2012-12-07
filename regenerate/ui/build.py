@@ -21,16 +21,17 @@ import os
 import gtk
 from export_assistant import ExportAssistant
 from regenerate.settings.paths import INSTALL_PATH
-from regenerate.writers import (EXPORTERS, PRJ_EXPORTERS, EXP_CLASS, EXP_TYPE,
-                                EXP_ID, EXP_EXT, EXP_DESCRIPTION)
-from columns import EditableColumn, ToggleColumn, ComboMapColumn
+from regenerate.writers import (EXPORTERS, PRJ_EXPORTERS, EXP_CLASS,
+                                EXP_TYPE, EXP_ID, EXP_EXT)
+from columns import EditableColumn, ToggleColumn
 from error_dialogs import ErrorMsg
 
 (MDL_MOD, MDL_BASE, MDL_FMT, MDL_DEST, MDL_CLASS, MDL_DBASE) = range(6)
 (OPTMAP_DESCRIPTION, OPTMAP_CLASS, OPTMAP_REGISTER_SET) = range(3)
 (MAPOPT_ID, MAPOPT_CLASS, MAPOPT_REGISTER_SET) = range(3)
 (DB_MAP_DBASE, DB_MAP_MODIFIED) = range(2)
- 
+
+
 class Build(object):
     """
     Builder interface. Allows the user to control exporters, building rules
@@ -44,7 +45,8 @@ class Build(object):
 
         self.__base2path = {}
         for item in self.__project.get_register_set():
-            self.__base2path[os.path.splitext(os.path.basename(item))[0]] = item
+            base_path = os.path.splitext(os.path.basename(item))
+            self.__base2path[base_path[0]] = item
 
         self.__build_interface()
         self.__build_export_maps()
@@ -60,7 +62,7 @@ class Build(object):
         The __mapopt maps the Document Description to:
 
         (Type Identifier, Exporter Class, Register/Project)
-        
+
         """
         self.__optmap = {}
         self.__mapopt = {}
@@ -79,7 +81,8 @@ class Build(object):
         and creates the data models to load into the system.
         """
         self.__builder = gtk.Builder()
-        self.__builder.add_from_file(os.path.join(INSTALL_PATH, "ui", "build.ui"))
+        bfile = os.path.join(INSTALL_PATH, "ui", "build.ui")
+        self.__builder.add_from_file(bfile)
         self.__build_top = self.__builder.get_object('build')
         self.__build_list = self.__builder.get_object('buildlist')
         self.__builder.connect_signals(self)
@@ -101,33 +104,35 @@ class Build(object):
 
     def __add_prj_item_to_list(self, option, dest):
         """
-        Adds a target to the list that is dependent on the entire project. This is
-        similar to adding a target that is dependent on a single database, except
-        we have to compare dates on all files in the project, not just a single
-        file.
+        Adds a target to the list that is dependent on the entire project.
+        This is similar to adding a target that is dependent on a single
+        database, except we have to compare dates on all files in the project,
+        not just a single file.
         """
         local_dest = os.path.join(os.path.dirname(self.__project.path), dest)
 
-        mod = file_needs_rebuilt(local_dest, self.__dbmap, self.__project.get_register_set())
+        register_set = self.__project.get_register_set()
+        mod = file_needs_rebuilt(local_dest, self.__dbmap, register_set)
         self.__modlist.append(mod)
         (fmt, cls, dbtype) = self.__optmap[option]
         self.__model.append(row=[mod, "<project>", fmt, dest, cls, None])
 
     def __add_dbase_item_to_list(self, dbase_full_path, option, dest):
         """
-        Adds the specific item to the build list. We have to check to see if the
-        file needs rebuilt, depending on modification flags a file timestamps.
+        Adds the specific item to the build list. We have to check to see
+        if the file needs rebuilt, depending on modification flags a file
+        timestamps.
         """
         (base, db_file_mtime) = base_and_modtime(dbase_full_path)
         local_dest = os.path.join(os.path.dirname(self.__project.path), dest)
 
         mod = file_needs_rebuilt(local_dest, self.__dbmap, [dbase_full_path])
-        
+
         self.__modlist.append(mod)
         (fmt, cls, rpttype) = self.__optmap[option]
         dbase = self.__dbmap[base][DB_MAP_DBASE].db
         self.__model.append(row=[mod, base, fmt, dest, cls, dbase])
-    
+
     def __populate(self):
         """
         Populate the display with the items stored in the project's
@@ -246,7 +251,8 @@ class Build(object):
                 if dbase:
                     gen = writer_class(dbase)
                 else:
-                    db_list = [i[DB_MAP_DBASE].db for i in self.__dbmap.values()]
+                    db_list = [i[DB_MAP_DBASE].db
+                               for i in self.__dbmap.values()]
                     gen = writer_class(self.__project, db_list)
                 gen.set_project(self.__project)
                 gen.write(dest)
@@ -351,4 +357,3 @@ def file_needs_rebuilt(local_dest, dbmap, db_paths):
             if db_file_mtime > dest_mtime or dbmap[base][DB_MAP_MODIFIED]:
                 mod = True
     return mod
-    

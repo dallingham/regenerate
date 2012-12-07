@@ -22,7 +22,8 @@ import gtk
 
 class ExportAssistant(gtk.Assistant):
 
-    def __init__(self, project_name, optlist, register_sets, save_callback, run_callback):
+    def __init__(self, project_name, optlist, register_sets,
+                 save_callback, run_callback):
         gtk.Assistant.__init__(self)
 
         self.project_name = project_name
@@ -65,7 +66,8 @@ class ExportAssistant(gtk.Assistant):
             filename = self.choose.get_filename()
             if not filename:
                 model = self.register_combo.get_model()
-                value = model.get_value(self.register_combo.get_active_iter(), 0)
+                active_iter = self.register_combo.get_active_iter()
+                value = model.get_value(active_iter, 0)
                 ext = self.selected_extension()
                 filename = value + ext
                 self.choose.set_current_name(filename)
@@ -166,7 +168,8 @@ class ExportAssistant(gtk.Assistant):
 
     def build_page_2(self):
         # Construct page 0
-        self.choose = gtk.FileChooserWidget(action=gtk.FILE_CHOOSER_ACTION_SAVE)
+        self.choose = gtk.FileChooserWidget(
+            action=gtk.FILE_CHOOSER_ACTION_SAVE)
         self.choose.show()
         self.choose.set_border_width(12)
         self.append_page(self.choose)
@@ -208,10 +211,12 @@ class ExportAssistant(gtk.Assistant):
             msg = "Immediately executed"
         destination = self.choose.get_filename()
         model = self.export_combo.get_model()
-        export_project = model.get_value(self.export_combo.get_active_iter(), 1)
-        export_type = model.get_value(self.export_combo.get_active_iter(), 0)
+        export_iter = self.export_combo.get_active_iter()
+        export_project = model.get_value(export_iter, 1)
+        export_type = model.get_value(export_iter, 0)
         model = self.register_combo.get_model()
-        register_set = model.get_value(self.register_combo.get_active_iter(), 0)
+        reg_iter = self.register_combo.get_active_iter()
+        register_set = model.get_value(reg_iter, 0)
 
         self.export_obj.set_text(export_type)
         if export_project:
@@ -225,19 +230,27 @@ class ExportAssistant(gtk.Assistant):
         self.summary = gtk.Table(4, 5)
         self.summary.set_row_spacings(6)
         self.summary.set_col_spacings(6)
-        self.summary.attach(MyLabel('Export type:'), 1, 2, 0, 1, gtk.FILL, 0)
-        self.summary.attach(MyLabel('Register set:'), 1, 2, 1, 2, gtk.FILL, 0)
-        self.summary.attach(MyLabel('Output file:'), 1, 2, 2, 3, gtk.FILL, 0)
-        self.summary.attach(MyLabel('Execute status:'), 1, 2, 3, 4, gtk.FILL, 0)
+        self.summary.attach(MyLabel('Export type:'), 1, 2, 0, 1,
+                            gtk.FILL, 0)
+        self.summary.attach(MyLabel('Register set:'), 1, 2, 1, 2,
+                            gtk.FILL, 0)
+        self.summary.attach(MyLabel('Output file:'), 1, 2, 2, 3,
+                            gtk.FILL, 0)
+        self.summary.attach(MyLabel('Execute status:'), 1, 2, 3, 4,
+                            gtk.FILL, 0)
         self.summary.set_border_width(12)
         self.export_obj = MyLabel()
         self.register_obj = MyLabel()
         self.dest_obj = MyLabel()
         self.execute_obj = MyLabel()
-        self.summary.attach(self.export_obj, 2, 3, 0, 1, gtk.FILL|gtk.EXPAND, 0)
-        self.summary.attach(self.register_obj, 2, 3, 1, 2, gtk.FILL|gtk.EXPAND, 0)
-        self.summary.attach(self.dest_obj, 2, 3, 2, 3, gtk.FILL|gtk.EXPAND, 0)
-        self.summary.attach(self.execute_obj, 2, 3, 3, 4, gtk.FILL|gtk.EXPAND, 0)
+        self.summary.attach(self.export_obj, 2, 3, 0, 1,
+                            gtk.FILL | gtk.EXPAND, 0)
+        self.summary.attach(self.register_obj, 2, 3, 1, 2,
+                            gtk.FILL | gtk.EXPAND, 0)
+        self.summary.attach(self.dest_obj, 2, 3, 2, 3,
+                            gtk.FILL | gtk.EXPAND, 0)
+        self.summary.attach(self.execute_obj, 2, 3, 3, 4,
+                            gtk.FILL | gtk.EXPAND, 0)
         self.summary.show_all()
 
         self.append_page(self.summary)
@@ -245,6 +258,7 @@ class ExportAssistant(gtk.Assistant):
         self.set_page_type(self.summary, gtk.ASSISTANT_PAGE_CONFIRM)
         self.show()
         return self.summary
+
 
 class MyLabel(gtk.Label):
 
@@ -258,4 +272,3 @@ class MyLabel(gtk.Label):
         if text == None:
             text = ""
         gtk.Label.set_text(self, text)
-    

@@ -75,7 +75,8 @@ class Groupings(object):
                 self.__model[path][3] = int(text, 16)
                 path = int(path)
                 data = self.__project.get_grouping_list()[path]
-                self.__project.set_grouping(path, data[0], int(text, 16), data[2])
+                self.__project.set_grouping(path, data[0],
+                                            int(text, 16), data[2])
             except ValueError:
                 return
         else:
