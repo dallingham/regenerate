@@ -776,4 +776,58 @@
       <description></description>
     </range>
   </register>
+  <register nocode="0" dont_test="0" hide="0">
+    <token modified="0">RD_ONLY_CLR_ON_RD</token>
+    <name modified="0">Read Only Clear On Read</name>
+    <address modified="0">84</address>
+    <width modified="0">32</width>
+    <description modified="0"></description>
+    <range start="0" stop="0">
+      <modified time="0"/>
+      <name>ONE_BIT</name>
+      <signal enb="0" static="0" field_type="RCLD" side_effect="0" volatile="0">RD_ONLY_CLR_ON_RD_</signal>
+      <input load="RD_ONLY_CLR_ON_RD__LD">RD_ONLY_CLR_ON_RD__IN</input>
+      <reset type="0">0</reset>
+      <description></description>
+    </range>
+    <range start="1" stop="7">
+      <modified time="0"/>
+      <name>MULTI_BIT</name>
+      <signal enb="0" static="0" field_type="RCLD" side_effect="0" volatile="0">MULTI_BIT</signal>
+      <input load="RD_ONLY_CLR_ON_RD_MULTI_BIT_LD">RD_ONLY_CLR_ON_RD_MULTI_BIT_IN</input>
+      <reset type="0">0</reset>
+      <description></description>
+    </range>
+  </register>
+  <register nocode="0" dont_test="0" hide="0">
+    <token modified="0">RD_ONLY_ONE_SHOT_ON_RD</token>
+    <name modified="0">Read Only One Shot On Read</name>
+    <address modified="0">88</address>
+    <width modified="0">32</width>
+    <description modified="0"></description>
+    <range start="0" stop="0">
+      <modified time="0"/>
+      <name>ONE_BIT</name>
+      <signal enb="0" static="0" field_type="RV1S" side_effect="0" volatile="0">ONE_BIT</signal>
+      <input>RD_ONLY_ONE_SHOT_ON_RD_ONE_BIT_IN</input>
+      <reset type="0">0</reset>
+      <description></description>
+    </range>
+    <range start="0" stop="7">
+      <modified time="0"/>
+      <name>MULTI_BIT</name>
+      <signal enb="0" static="0" field_type="RV1S" side_effect="0" volatile="0">MULTI_BIT</signal>
+      <input>RD_ONLY_ONE_SHOT_ON_RD_MULTI_BIT_IN</input>
+      <reset type="0">0</reset>
+      <description></description>
+    </range>
+    <range start="8" stop="15">
+      <modified time="0"/>
+      <name>BYTE_CROSS</name>
+      <signal enb="0" static="0" field_type="RV1S" side_effect="0" volatile="0">BYTE_CROSS</signal>
+      <input>RD_ONLY_ONE_SHOT_ON_RD_BYTE_CROSS_IN</input>
+      <reset type="0">0</reset>
+      <description></description>
+    </range>
+  </register>
 </module>

@@ -58,6 +58,8 @@ class UVM_Registers(WriterBase):
         access_map = {BitField.TYPE_READ_ONLY: "RO",
                       BitField.TYPE_READ_ONLY_LOAD: "RO",
                       BitField.TYPE_READ_ONLY_VALUE: "RO",
+                      BitField.TYPE_READ_ONLY_CLEAR_LOAD: "RC",
+                      BitField.TYPE_READ_ONLY_VALUE_1S: "RO",
                       BitField.TYPE_READ_WRITE: "RW",
                       BitField.TYPE_READ_WRITE_1S: "RW",
                       BitField.TYPE_READ_WRITE_1S_1: "RW",

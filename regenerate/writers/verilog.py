@@ -89,6 +89,12 @@ def write_strobe(address):
     """
     return "write_r%02x" % address
 
+def read_strobe(address):
+    """
+    Generates the read strobe signal associated with a particular address.
+    """
+    return "read_r%02x" % address
+
 
 def get_signal_offset(address):
     """
@@ -387,7 +393,7 @@ class Verilog(WriterBase):
                 self._write_port("DI", '%s%s' % (self._data_in, bus_index))
                 self._write_port('BE', '%s[%d]' % (self._byte_enables, lane))
             if self._has_rd[field.field_type]:
-                self._write_port('RD', self._read_strobe)
+                self._write_port('RD', 'read_r%02x' % write_address)
             if self._has_data_out[field.field_type]:
                 base = get_base_signal(address, field)
                 self._write_port('DO', '%s%s' % (base, index))
@@ -432,6 +438,23 @@ class Verilog(WriterBase):
         for register in self.__sorted_regs:
             for field in [register.get_bit_field(field_key)
                           for field_key in register.get_bit_field_keys()]:
+
+                for lower in range(0, register.width, size):
+                    if in_range(field.start_position, field.stop_position,
+                                lower, lower + size - 1):
+                        data = self._byte_info(field, register, lower, size)
+                        item_list.setdefault(data[F_ADDRESS], []).append(data)
+        return item_list
+
+    def __generate_read_strobes(self, size):
+        """
+        Breaks a set of bit fields along the specified boundary
+        """
+        item_list = {}
+        for register in self.__sorted_regs:
+            for field in [register.get_bit_field(field_key)
+                          for field_key in register.get_bit_field_keys()
+                          if self._has_rd[register.get_bit_field(field_key).field_type]]:
 
                 for lower in range(0, register.width, size):
                     if in_range(field.start_position, field.stop_position,
@@ -665,6 +688,12 @@ class Verilog(WriterBase):
             width = self._addr_width - self._lower_bit
             self._wrln("wire %s = %s & (%s == %s);\n" % (
                 write_strobe(address), self._write_strobe, self._addr,
+                binary(address >> self._lower_bit, width)))
+
+        for address in sorted(self.__generate_read_strobes(self._data_width).keys()):
+            width = self._addr_width - self._lower_bit
+            self._wrln("wire %s  = %s & (%s == %s);\n" % (
+                read_strobe(address), self._read_strobe, self._addr,
                 binary(address >> self._lower_bit, width)))
 
     def _write_output_assignments(self):
