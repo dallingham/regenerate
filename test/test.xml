@@ -27,7 +27,14 @@
       <name>ONE_BIT</name>
       <signal enb="0" static="0" field_type="RO" side_effect="0" volatile="0">RO_ONE_BIT</signal>
       <reset type="0">0</reset>
-      <description>Single bit.</description>
+      <values>
+        <value val="0" token="SET">Set</value>
+        <value val="1" token="CLEAR">Clear</value>
+      </values>
+      <description>Single bit.
+
+* List 1
+* List 2</description>
     </range>
     <range start="1" stop="7">
       <modified time="0"/>

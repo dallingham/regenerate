@@ -34,7 +34,6 @@ else:
     fullPath = os.getcwd()
 sys.path.insert(0, os.path.dirname(fullPath))
 
-
 def run_gui(args):
     """
     Actually runs the program

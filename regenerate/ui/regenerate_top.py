@@ -45,6 +45,7 @@ from regenerate.importers import IMPORTERS
 from regenerate.settings.paths import GLADE_TOP, INSTALL_PATH
 from regenerate.settings import ini
 from regenerate import PROGRAM_VERSION, PROGRAM_NAME
+import regenerate.extras
 from error_dialogs import ErrorMsg, WarnMsg, Question
 from project import ProjectModel, ProjectList, update_file
 import logging
@@ -135,6 +136,7 @@ class MainWindow(object):
         self.__builder.add_from_file(GLADE_TOP)
         self.__build_actions()
         self.__top_window = self.__builder.get_object("regenerate")
+        self.html_window = None
         try:
             self.__top_window.set_icon_from_file(
                 os.path.join(INSTALL_PATH, "media", "flop.svg"))
@@ -561,6 +563,26 @@ class MainWindow(object):
         """
         from groupings import Groupings
         Groupings(self.__project)
+
+    def on_summary_action_activate(self, obj):
+        """
+        Display the Groupings editor.
+        """
+        reg = self.__reglist_obj.get_selected_register()
+
+        if WEBKIT and reg:
+            if self.html_window is None:
+                self.html_window = self.__builder.get_object("summary_window")
+                self.html_wkit = webkit.WebView()
+                wk_container = self.__builder.get_object('summary_scroll')
+                wk_container.add(self.html_wkit)
+                button = self.__builder.get_object('close_button')
+                button.connect('clicked', lambda x, y: y.hide(),
+                               self.html_window)
+            reg_info = regenerate.extras.RegisterRst(reg)
+            self.html_wkit.load_string(reg_info.html_css(), "text/html",
+                                       "utf-8", "")
+            self.html_window.show_all()
 
     def on_build_action_activate(self, obj):
         from build import Build

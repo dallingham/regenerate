@@ -95,6 +95,12 @@
     <property name="short_label" translatable="yes">Save</property>
     <property name="stock_id">gtk-save</property>
   </object>
+  <object class="GtkAction" id="summary_action">
+    <property name="label" translatable="yes">Summary</property>
+    <property name="tooltip" translatable="yes">Displays a summary of the selected register</property>
+    <property name="stock_id">gtk-file</property>
+    <signal name="activate" handler="on_summary_action_activate" swapped="no"/>
+  </object>
   <object class="GtkAction" id="update_svn">
     <property name="label">Update from SVN</property>
     <property name="short_label">SVN update</property>
@@ -691,6 +697,19 @@
                 <property name="homogeneous">True</property>
               </packing>
             </child>
+            <child>
+              <object class="GtkToolButton" id="Summary">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="related_action">summary_action</property>
+                <property name="label" translatable="yes">toolbutton2</property>
+                <property name="use_underline">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+              </packing>
+            </child>
           </object>
           <packing>
             <property name="expand">False</property>
@@ -932,6 +951,7 @@
                               <object class="GtkVPaned" id="vpaned2">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
+                                <property name="position">100</property>
                                 <child>
                                   <object class="GtkScrolledWindow" id="scrolledwindow4">
                                     <property name="visible">True</property>
@@ -1465,6 +1485,7 @@
                       <object class="GtkVPaned" id="vpaned1">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
+                        <property name="position">200</property>
                         <child>
                           <object class="GtkScrolledWindow" id="scrolledwindow6">
                             <property name="visible">True</property>
@@ -2088,6 +2109,75 @@
     </child>
   </object>
   <object class="GtkTextBuffer" id="register_text_buffer"/>
+  <object class="GtkWindow" id="summary_window">
+    <property name="can_focus">False</property>
+    <property name="default_width">800</property>
+    <property name="default_height">600</property>
+    <child>
+      <object class="GtkVBox" id="vbox3">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <child>
+          <object class="GtkLabel" id="titl">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Register Summary</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="padding">12</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkScrolledWindow" id="summary_scroll">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="hscrollbar_policy">automatic</property>
+            <property name="vscrollbar_policy">automatic</property>
+            <property name="shadow_type">in</property>
+            <child>
+              <placeholder/>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkHButtonBox" id="hbuttonbox1">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="close_button">
+                <property name="label">gtk-close</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_action_appearance">False</property>
+                <property name="use_stock">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="padding">6</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
   <object class="GtkMenu" id="svn_prj_menu">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
