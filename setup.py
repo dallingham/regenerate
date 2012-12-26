@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='regenerate',
-    version='0.8',
+    version='0.9.2',
     license='License.txt',
     author='Donald N. Allingham',
     author_email='dallingham@gmail.com',
