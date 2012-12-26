@@ -15,13 +15,65 @@
     <clk>CLK</clk>
     <reset active="0">RSTn</reset>
   </ports>
-  <overview>Test case for various register types in Regenerate.</overview>
+  <overview>Test case for various register types in Regenerate. 
+
+Table Test 1
+------------
+
++-----------+-----------+-----------+
+| Header 1  | Header 2  | Header 3  |
++===========+===========+===========+
+| Data 1    | Data 2    | Data 3    |
++-----------+-----------+-----------+
+
+Table Test 2
+------------
+
+=========== =========== ============
+Header 1    Header 2    Header 3    
+=========== =========== ============
+Data 1      Data 2      Data 3
+Data 4      Data 5      Data 6
+=========== =========== ============
+
+Image Test
+----------
+
+.. image:: https://raw.github.com/dallingham/regenerate/master/regenerate/data/media/flop.png
+
+
+Admonitions
+-----------
+
+.. caution::
+   This is a caution message
+
+.. note::
+   This is a note
+
+.. warning::
+   This is a warning
+
+.. tip::
+   This is a tip
+
+
+
+
+
+
+
+
+
+
+</overview>
   <register nocode="0" dont_test="0" hide="0">
     <token modified="0">RD_ONLY</token>
     <name modified="0">Read Only</name>
     <address modified="0">0</address>
     <width modified="0">32</width>
-    <description modified="0">Read Only type.</description>
+    <description modified="0">Read Only type.
+</description>
     <range start="0" stop="0">
       <modified time="0"/>
       <name>ONE_BIT</name>

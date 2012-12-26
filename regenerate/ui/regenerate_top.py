@@ -190,9 +190,9 @@ class MainWindow(object):
             self.__wk_container.add(self.__webkit)
             self.__wk_container.hide()
 
-            self.__wk_reg_container = self.__builder.get_object('scroll_reg_webkit')
-            self.__wk_reg_container.add(self.__webkit_reg)
-            self.__wk_reg_container.hide()
+            self.__reg_webkit = self.__builder.get_object('scroll_reg_webkit')
+            self.__reg_webkit.add(self.__webkit_reg)
+            self.__reg_webkit.hide()
 
         self.__update_wk = False
 
@@ -210,9 +210,9 @@ class MainWindow(object):
         self.__instance_model = None
 
         self.__reg_text_buf.connect('changed', self.__reg_description_changed)
-        self.__reg_description = self.__builder.get_object('register_description')
-        self.__reg_description.modify_font(pango_font)
-        Spell(self.__reg_description)
+        self.__reg_descript = self.__builder.get_object('register_description')
+        self.__reg_descript.modify_font(pango_font)
+        Spell(self.__reg_descript)
 
         self.__prj_model = ProjectModel(self.use_svn)
         self.__prj_obj.set_model(self.__prj_model)
@@ -303,11 +303,11 @@ class MainWindow(object):
         buttons/functions are active at any given time. The groups are:
 
         project_loaded    - A project has been loaded.
-        register_selected - A register is selected, so register operations are
+        reg_selected      - A register is selected, so register operations are
                             valid
         database_selected - A database is selected, so registers can be added,
                             checked, etc.
-        bitfield_selected - A bit field is selected, so a field can be removed
+        field_selected    - A bit field is selected, so a field can be removed
                             or edited.
         """
 
@@ -322,17 +322,18 @@ class MainWindow(object):
         self.__project_loaded = self.__build_group("project_loaded",
                                                    project_actions)
 
-        self.__register_selected = self.__build_group("register_selected",
-                                                      ['remove_register_action',
-                                                       'duplicate_register_action',
-                                                       'add_bit_action'])
+        self.__reg_selected = self.__build_group("reg_selected",
+                                                 ['remove_register_action',
+                                                  'duplicate_register_action',
+                                                  'summary_action',
+                                                  'add_bit_action'])
 
         self.__database_selected = self.__build_group("database_selected",
                                                       ['add_register_action',
                                                        'remove_set_action',
                                                        'import_action'])
 
-        self.__bitfield_selected = self.__build_group("bitfield_selected",
+        self.__field_selected = self.__build_group("field_selected",
                                                       ['remove_bit_action',
                                                        'edit_bit_action'])
 
@@ -433,7 +434,8 @@ class MainWindow(object):
         display) and alter the corresponding field.
         """
         if new_text != field.field_name:
-            field.field_name = new_text.upper().replace(' ','_').replace('/','_').replace('-','_')
+            new_text = new_text.upper().replace(' ', '_')
+            field.field_name = new_text.replace('/', '_').replace('-', '_')
             self.__bit_model[path][BitModel.NAME_COL] = field.field_name
             self.set_modified()
 
@@ -539,7 +541,7 @@ class MainWindow(object):
         self.__wk_container.show()
         self.__webkit.show()
         self.__webkit_reg.show()
-        self.__wk_reg_container.show()
+        self.__reg_webkit.show()
 
     def __disable_preview(self):
         self.__update_wk = False
@@ -547,7 +549,7 @@ class MainWindow(object):
             self.__webkit.hide()
             self.__wk_container.hide()
             self.__webkit_reg.hide()
-            self.__wk_reg_container.hide()
+            self.__reg_webkit.hide()
 
     def on_preview_toggled(self, obj):
         if obj.get_active() and WEBKIT:
@@ -688,15 +690,15 @@ class MainWindow(object):
 
     def on_notebook_switch_page(self, obj, page, page_num):
         if self.__reglist_obj.get_selected_register():
-            self.__register_selected.set_sensitive(page_num == 0)
+            self.__reg_selected.set_sensitive(page_num == 0)
         else:
-            self.__register_selected.set_sensitive(False)
+            self.__reg_selected.set_sensitive(False)
 
     def __bit_changed(self, obj):
         if self.__bitfield_obj.get_selected_row():
-            self.__bitfield_selected.set_sensitive(True)
+            self.__field_selected.set_sensitive(True)
         else:
-            self.__bitfield_selected.set_sensitive(False)
+            self.__field_selected.set_sensitive(False)
 
     def __prj_selection_changed(self, obj):
         data = self.__prj_obj.get_selected()
@@ -710,8 +712,9 @@ class MainWindow(object):
 
             if node:
                 self.active = store.get_value(node, ProjectModel.OBJ)
-                self.__svn_selected.set_sensitive(store[node][ProjectModel.OOD])
-                self.__file_modified.set_sensitive(store[node][ProjectModel.MODIFIED])
+                row = store[node]
+                self.__svn_selected.set_sensitive(row[ProjectModel.OOD])
+                self.__file_modified.set_sensitive(row[ProjectModel.MODIFIED])
                 self.dbase = self.active.db
                 self.__reg_model = self.active.reg_model
                 self.__modelfilter = self.active.modelfilter
@@ -721,8 +724,9 @@ class MainWindow(object):
                 self.__bitfield_obj.set_model(self.__bit_model)
                 self.__instance_model = self.active.instance_list
                 self.__instance_obj.set_model(self.__instance_model)
-                self.__selected_dbase.set_text("<b>%s - %s</b>" % (self.dbase.module_name,
-                                                                   self.dbase.descriptive_title))
+                text = "<b>%s - %s</b>" % (self.dbase.module_name,
+                                           self.dbase.descriptive_title)
+                self.__selected_dbase.set_text(text)
                 self.__selected_dbase.set_use_markup(True)
                 self.__selected_dbase.set_ellipsize(pango.ELLIPSIZE_END)
                 if self.active.reg_select:
@@ -764,7 +768,7 @@ class MainWindow(object):
             self.__no_test.set_active(reg.do_not_test)
             self.__hide.set_active(reg.hide)
             self.__reg_notebook.set_sensitive(True)
-            self.__register_selected.set_sensitive(True)  # FIXME
+            self.__reg_selected.set_sensitive(True)  # FIXME
             self.__set_register_warn_flags(reg)
             self.__set_bits_warn_flag()
         else:
@@ -772,7 +776,7 @@ class MainWindow(object):
                 self.__bit_model.clear()
             self.__reg_text_buf.set_text("")
             self.__reg_notebook.set_sensitive(False)
-            self.__register_selected.set_sensitive(False)
+            self.__reg_selected.set_sensitive(False)
         self.__skip_changes = old_skip
 
     def __reg_description_changed(self, obj):
@@ -782,13 +786,13 @@ class MainWindow(object):
                 self.__reg_text_buf.get_start_iter(),
                 self.__reg_text_buf.get_end_iter())
             if self.__update_wk and WEBKIT:
-                pos = self.__wk_reg_container.get_vadjustment().get_value()
+                pos = self.__reg_webkit.get_vadjustment().get_value()
 
                 self.__webkit_reg.load_string(html_string(reg.description),
                                               "text/html", "utf-8", "")
-                adjust_obj = self.__wk_reg_container.get_vadjustment()
+                adjust_obj = self.__reg_webkit.get_vadjustment()
                 if pos <= adjust_obj.get_upper():
-                    self.__wk_reg_container.get_vadjustment().set_value(pos)
+                    self.__reg_webkit.get_vadjustment().set_value(pos)
 
             self.set_modified()
             self.__set_register_warn_flags(reg)
@@ -1506,13 +1510,14 @@ class MainWindow(object):
             for key in reg.get_bit_field_keys():
                 field = reg.get_bit_field(key)
                 if check_field(field):
+                    txt = "Missing field description for '%s'" % \
+                          field.field_name
                     if field.start_position == field.stop_position:
-                        msg.append("Missing field description for '%s' (bit %d)"
-                                   % (field.field_name, field.start_position))
+                        txt = txt + " (bit %d)" % field.start_position
                     else:
-                        msg.append("Missing field description for '%s' (bits [%d:%d])"
-                                   % (field.field_name, field.stop_position,
-                                      field.start_position))
+                        txt = txt + "(bits [%d:%d])" \
+                              % (field.stop_position, field.start_position)
+                    msg.append(txt)
                     warn_bit = True
         if mark and not self.__loading_project:
             self.__warn_reg_descr.set_property('visible', warn_reg)
