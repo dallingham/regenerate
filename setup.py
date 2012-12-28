@@ -11,6 +11,7 @@ setup(
     packages=["regenerate",
               "regenerate.db",
               "regenerate.importers",
+              "regenerate.extras",
               "regenerate.settings",
               "regenerate.ui",
               "regenerate.writers"],
