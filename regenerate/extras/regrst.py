@@ -55,7 +55,7 @@ table td.field-body{
     padding-bottom: 0pt;
     font-size: 10pt;
 }
-table {
+table{
     border-spacing: 0pt;
 }
 h1{
@@ -110,7 +110,8 @@ class RegisterRst:
         if self.prefix_list:
             pass
         else:
-            o.write(".. list-table::\n\n")
+            o.write(".. list-table::\n")
+            o.write("   :class: summary\n\n")
             o.write("   * - Width\n")
             o.write("     - %0d bits\n" % self.reg.width)
             o.write("   * - Offset\n")
@@ -118,7 +119,7 @@ class RegisterRst:
                                                   self.reg.address))
         o.write("Bit fields\n---------------\n")
         o.write(".. list-table::\n")
-        o.write("   :widths: 5 15 10 20 50\n")
+        o.write("   :widths: 10 10 5 25 50\n")
         o.write("   :header-rows: 1\n\n")
         o.write("   * - Bit(s)\n")
         o.write("     - Reset\n")
