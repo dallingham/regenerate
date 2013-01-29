@@ -27,21 +27,47 @@ except ImportError:
 from regenerate.settings.paths import HELP_PATH
 import os.path
 from preview import html_string
-    
+
+
 class HelpWindow(object):
+
+    window = None
+    wkit = None
+    container = None
+    button = None
 
     def __init__(self, builder, filename):
 
-        print "HELP"
-        if WEBKIT:
+        if not WEBKIT:
+            return
+
+        try:
             fname = os.path.join(HELP_PATH, filename)
             f = open(fname)
-            help_window = builder.get_object("help_win")
-            help_wkit = webkit.WebView()
-            wk_container = builder.get_object('help_scroll')
-            wk_container.add(help_wkit)
-            button = builder.get_object('help_close')
-            button.connect('clicked', lambda x, y: y.destroy(),
-                           help_window)
-            help_wkit.load_string(html_string(f.read()), "text/html", "utf-8", "")
-            help_window.show_all()
+            data = f.read()
+        except IOError, msg:
+            data = "Help file '%s' could not be found" % fname
+
+        if HelpWindow.window is None:
+            HelpWindow.window = builder.get_object("help_win")
+            HelpWindow.wkit = webkit.WebView()
+            HelpWindow.container = builder.get_object('help_scroll')
+            HelpWindow.container.add(HelpWindow.wkit)
+            HelpWindow.button = builder.get_object('help_close')
+            HelpWindow.button.connect('clicked', self.hide)
+            HelpWindow.window.connect('destroy', self.destroy)
+            HelpWindow.window.connect('delete_event', self.delete)
+
+        HelpWindow.wkit.load_string(html_string(data), "text/html", "utf-8", "")
+        HelpWindow.window.show_all()
+
+    def destroy(self, obj):
+        HelpWindow.window.hide()
+        return True
+
+    def delete(self, obj, event):
+        HelpWindow.window.hide()
+        return True
+
+    def hide(self, obj):
+        HelpWindow.window.hide()
