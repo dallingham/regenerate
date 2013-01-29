@@ -33,8 +33,7 @@ class Groupings(object):
 
         self.__list = self.__builder.get_object('list')
         self.__top = self.__builder.get_object('groupings')
-        self.__model = gtk.ListStore(str, str, str, gobject.TYPE_UINT64,
-                                     gobject.TYPE_UINT64)
+        self.__model = gtk.ListStore(str, str, gobject.TYPE_UINT64)
         self.__list.set_model(self.__model)
         self.__build()
         self.__populate()
@@ -52,47 +51,34 @@ class Groupings(object):
         column.set_sort_column_id(3)
         self.__list.append_column(column)
 
-        column = EditableColumn("Starting Address",
-                                self.__column_edited, 2)
-        column.set_min_width(150)
-        column.set_sort_column_id(4)
-        self.__list.append_column(column)
-
     def __populate(self):
         for item in self.__project.get_grouping_list():
-            self.__model.append(row=[item[0], "%x" % item[1], "%x" % item[2],
-                                     item[1], item[2]])
+            self.__model.append(row=[item[0], "%x" % item[1], item[1]])
 
     def __column_edited(self, cell, path, text, col):
         if col == 0:
             self.__model[path][col] = text
             path = int(path)
             data = self.__project.get_grouping_list()[path]
-            self.__project.set_grouping(path, text, data[1], data[2])
+            self.__project.set_grouping(path, text, data[1])
         elif col == 1:
             try:
                 self.__model[path][col] = "%x" % int(text, 16)
-                self.__model[path][3] = int(text, 16)
+                self.__model[path][2] = int(text, 16)
                 path = int(path)
                 data = self.__project.get_grouping_list()[path]
-                self.__project.set_grouping(path, data[0],
-                                            int(text, 16), data[2])
+                print data
+                self.__project.set_grouping(path, data[0], int(text, 16))
             except ValueError:
                 return
-        else:
-            self.__model[path][col] = "%x" % int(text, 16)
-            self.__model[path][4] = int(text, 16)
-            path = int(path)
-            data = self.__project.get_grouping_list()[path]
-            self.__project.set_grouping(path, data[0], data[1], int(text, 16))
 
     def on_close_clicked(self, obj):
         self.__top.destroy()
 
     def on_add_clicked(self, obj):
-        node = self.__model.append(("", "0", "0", 0, 0))
+        node = self.__model.append(("", "0", 0))
         path = self.__model.get_path(node)
-        self.__project.add_to_grouping_list("", "0", "0")
+        self.__project.add_to_grouping_list("", 0)
         self.__list.set_cursor(path, focus_column=self.__column,
                                start_editing=True)
 

@@ -149,15 +149,6 @@ class RegParser(object):
             self.save_id = cnv_str(attrs, 'id').upper()
         self.__db.descriptive_title = cnv_str(attrs, 'title')
 
-    def start_instance(self, attrs):
-        """
-        Called when the instance tag is encounted. Attributes are:
-
-          id
-          base
-        """
-        self.__db.instances.append((attrs['id'], cnv_hex(attrs, 'base')))
-
     def start_base(self, attrs):
         """
         Called when the base tag is encountered. Attributes are:
@@ -166,9 +157,6 @@ class RegParser(object):
            addr_width
            data_width
         """
-        if 'offset' in attrs:
-            self.__db.instances.append((self.save_id,
-                                        cnv_hex(attrs, 'offset')))
         self.__db.address_bus_width = cnv_int(attrs, 'addr_width', 32)
         self.__db.data_bus_width = cnv_int(attrs, 'data_width', 32)
 

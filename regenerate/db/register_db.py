@@ -69,7 +69,6 @@ class RegisterDb(object):
         self.overview_text = ""
         self.enable_coverage = False
         self.__registers = {}
-        self.instances = []
 
     def get_keys(self):
         """

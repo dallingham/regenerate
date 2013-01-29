@@ -1,5 +1,13 @@
 <?xml version="1.0"?>
-<project name="test" short_name="unnamed" company_name="">
+<project name="Regenerate Test Project" short_name="test" company_name="Yoyodyne Propulsion Systems">
+  <address_maps>
+    <address_map name="MAP0" base="0" fixed="0"/>
+  </address_maps>
+  <groupings>
+    <grouping name="GROUP" start="0">
+      <map set="test" offset="0" repeat="1" repeat_offset="0"/>
+    </grouping>
+  </groupings>
   <registerset name="test.xml">
     <export option="rtl-verilog-2001" path="test_regs.v"/>
     <export option="uvm-system-verilog" path="test_regs_pkg.sv"/>

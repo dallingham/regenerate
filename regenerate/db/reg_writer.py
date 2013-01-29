@@ -67,7 +67,6 @@ class RegWriter(object):
         ofile.write('  <base addr_width="%d" ' % self.dbase.address_bus_width)
         ofile.write('data_width="%d"/>\n' % self.dbase.data_bus_width)
 
-        self.write_instances(ofile)
         self.write_port_information(ofile)
 
         ofile.write("  <overview>%s</overview>\n" %
@@ -76,16 +75,6 @@ class RegWriter(object):
         self.write_signal_list(ofile, curtime)
         ofile.write('</module>\n')
         ofile.close()
-
-    def write_instances(self, ofile):
-        """
-        Write instance information to the output file.
-        """
-        if self.dbase.instances:
-            ofile.write('  <instances>\n')
-            for instance in self.dbase.instances:
-                ofile.write('    <instance id="%s" base="%x"/>\n' % instance)
-            ofile.write('  </instances>\n')
 
     def write_port_information(self, ofile):
         """

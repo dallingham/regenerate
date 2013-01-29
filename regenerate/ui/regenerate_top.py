@@ -34,21 +34,21 @@ import os
 import copy
 import re
 import string
-from properties import Properties
+import logging
+import regenerate.extras
 from preferences import Preferences
 from bit_list import BitModel, BitList, bits, reset_value
 from register_list import RegisterModel, RegisterList, build_define
 from instance_list import InstanceModel, InstanceList
 from regenerate.db import (RegWriter, RegisterDb, Register,
                            BitField, RegProject, LOGGER, TYPES)
+from columns import EditableColumn, ToggleColumn
 from regenerate.importers import IMPORTERS
 from regenerate.settings.paths import GLADE_TOP, INSTALL_PATH
 from regenerate.settings import ini
 from regenerate import PROGRAM_VERSION, PROGRAM_NAME
-import regenerate.extras
 from error_dialogs import ErrorMsg, WarnMsg, Question
 from project import ProjectModel, ProjectList, update_file
-import logging
 from preview import html_string
 from spell import Spell
 
@@ -108,14 +108,13 @@ class DbaseStatus(object):
     """
 
     def __init__(self, db, filename, name, reg_model, modelsort,
-                 modelfilter, bit_model, inst_model):
+                 modelfilter, bit_model):
         self.db = db
         self.path = filename
         self.reg_model = reg_model
         self.modelfilter = modelfilter
         self.modelsort = modelsort
         self.bit_field_list = bit_model
-        self.instance_list = inst_model
         self.name = name
         self.modified = False
         self.reg_select = None
@@ -171,6 +170,9 @@ class MainWindow(object):
         self.__warn_bit_list = self.__builder.get_object('reg_bit_warn')
         self.__warn_reg_descr = self.__builder.get_object('reg_descr_warn')
         self.__preview_toggle = self.__builder.get_object('preview')
+
+
+        self.build_project_tab()
 
         self.__filter_text = ""
 
@@ -245,7 +247,9 @@ class MainWindow(object):
         self.__instance_obj = InstanceList(
             self.__builder.get_object('instances'),
             self.__instance_id_changed,
-            self.__instance_base_changed)
+            self.__instance_base_changed,
+            self.__instance_repeat_changed,
+            self.__instance_repeat_offset_changed)
 
         self.__build_data_width_box()
         self.__restore_position_and_size()
@@ -255,6 +259,139 @@ class MainWindow(object):
         self.__top_window.show()
         self.__builder.connect_signals(self)
         self.__build_import_menu()
+
+    def build_project_tab(self):
+        self.__project_short_name_obj = self.__builder.get_object('short_name')
+        self.__project_name_obj = self.__builder.get_object('project_name')
+        self.__project_company_name_obj = self.__builder.get_object('company_name')
+
+        self.__addr_map_tree_obj = self.__builder.get_object('address_tree')
+        self.__addr_map_model = gtk.ListStore(str, str, gobject.TYPE_UINT64, bool)
+        self.__addr_map_tree_obj.set_model(self.__addr_map_model)
+
+        self.__map_name_column = EditableColumn('Map Name', self.map_name_changed, 0)
+        self.__map_name_column.set_min_width(400)
+        self.__addr_map_tree_obj.append_column(self.__map_name_column)
+
+        column = EditableColumn('Base Address', self.map_address_changed, 1)
+        column.set_min_width(400)
+        self.__addr_map_tree_obj.append_column(column)
+
+        column = ToggleColumn('Fixed Address', self.map_fixed_changed, 2)
+        column.set_max_width(200)
+        self.__addr_map_tree_obj.append_column(column)
+
+    def load_project_tab(self):
+        self.__project_short_name_obj.set_text(self.__project.short_name)
+        self.__project_name_obj.set_text(self.__project.name)
+        company = self.__project.company_name
+        self.__project_company_name_obj.set_text(company)
+
+        self.__addr_map_model.clear()
+        for base in self.__project.get_address_maps():
+            addr = self.__project.get_address_base(base)
+            fixed = self.__project.get_address_fixed(base)
+            self.__addr_map_model.append(row=(base, "%x" % addr, addr, fixed))
+        self.__project.clear_modified()
+
+    def map_name_changed(self, cell, path, new_text, col):
+        node = self.__addr_map_model.get_iter(path)
+        name = self.__addr_map_model.get_value(node, 0)
+        value = self.__addr_map_model.get_value(node, 2)
+        fixed = self.__addr_map_model.get_value(node, 3)
+        try:
+            self.__project.remove_address_map(name)
+        except:
+            pass
+        self.__project.set_address_map(new_text, value, fixed)
+        self.__addr_map_model[path][0] = new_text
+        self.__project.set_modified()
+
+    def map_fixed_changed(self, cell, path, source):
+        """
+        Called with the modified toggle is changed. Toggles the value in
+        the internal list.
+        """
+        node = self.__addr_map_model.get_iter(path)
+        name = self.__addr_map_model.get_value(node, 0)
+        value = self.__addr_map_model.get_value(node, 2)
+        fixed = self.__addr_map_model.get_value(node, 3)
+        self.__addr_map_model[path][2] = not self.__addr_map_model[path][2]
+        self.__project.set_address_map(name, value, not fixed)
+
+    def map_address_changed(self, cell, path, new_text, col):
+        try:
+            value = int(new_text, 16)
+        except ValueError:
+            pass
+        if new_text:
+            name = self.__addr_map_model.get_value(node, 0)
+            fixed = self.__addr_map_model.get_value(node, 3)
+
+            self.__project.set_address_map(name, value, fixed)
+            self.__addr_map_model[path][1] = "%x" % value
+            self.__addr_map_model[path][2] = value
+            self.__project.set_modified()
+
+    def on_addr_map_help_clicked(self, obj):
+        from help_window import HelpWindow
+
+        HelpWindow(self.__builder, "addr_map_help.rst")
+
+    def on_group_help_clicked(self, obj):
+        from help_window import HelpWindow
+
+        HelpWindow(self.__builder, "project_group_help.rst")
+        
+    def on_remove_map_clicked(self, obj):
+        (model, node) = self.__addr_map_tree_obj.get_selection().get_selected()
+        name = model.get_value(node, 0)
+        model.remove(node)
+        self.__project.set_modified()
+        self.__project.remove_address_map(name)
+
+    def on_add_map_clicked(self, obj):
+        node = self.__addr_map_model.append(row=("NewMap", 0, 0, False))
+        path = self.__addr_map_model.get_path(node)
+        self.__project.set_modified()
+        self.__project.set_address_map('NewMap', 0, False)
+        self.__addr_map_tree_obj.set_cursor(path, focus_column=self.__map_name_column,
+                                            start_editing=True)
+
+    def on_project_name_changed(self, obj):
+        """
+        Callback function from glade to handle changes in the project name.
+        When the name is changed, it is immediately updated in the project
+        object.
+        """
+        self.__project.set_modified()
+        self.__project.name = obj.get_text()
+
+    def on_company_name_changed(self, obj):
+        """
+        Callback function from glade to handle changes in the company name.
+        When the name is changed, it is immediately updated in the project
+        object.
+        """
+        self.__project.set_modified()
+        self.__project.company_name = obj.get_text()
+
+    def on_offset_insert_text(self, obj, new_text, pos, *extra):
+        try:
+            int(new_text, 16)
+        except ValueError:
+            obj.stop_emission('insert-text')
+
+    def on_short_name_changed(self, obj):
+        """
+        Callback function from glade to handle changes in the short name.
+        When the name is changed, it is immediately updated in the project
+        object. The name must not have spaces, so we immediately replace any
+        spaces.
+        """
+        self.__project.short_name = obj.get_text().replace(' ', '').strip()
+        self.__project.set_modified()
+        obj.set_text(self.__project.short_name)
 
     def __restore_position_and_size(self):
         "Restore the desired position and size from the user's config file"
@@ -479,18 +616,34 @@ class MainWindow(object):
         Updates the data model when the text value is changed in the model.
         """
         self.__instance_model.change_id(path, new_text)
-        self.dbase.instances = self.__instance_model.get_values()
         self.__set_module_definition_warn_flag()
-        self.set_modified()
+        self.__project.set_modified()
 
     def __instance_base_changed(self, cell, path, new_text, col):
         """
         Updates the data model when the text value is changed in the model.
         """
         self.__instance_model.change_base(path, new_text)
-        self.dbase.instances = self.__instance_model.get_values()
         self.__set_module_definition_warn_flag()
-        self.set_modified()
+        self.__project.set_modified()
+
+    def __instance_repeat_changed(self, cell, path, new_text, col):
+        """
+        Updates the data model when the text value is changed in the model.
+        """
+        if len(path) > 1:
+            self.__instance_model.change_repeat(path, new_text)
+            self.__set_module_definition_warn_flag()
+            self.__project.set_modified()
+
+    def __instance_repeat_offset_changed(self, cell, path, new_text, col):
+        """
+        Updates the data model when the text value is changed in the model.
+        """
+        if len(path) > 1:
+            self.__instance_model.change_repeat_offset(path, new_text)
+            self.__set_module_definition_warn_flag()
+            self.__project.set_modified()
 
     def on_filter_icon_press(self, obj, icon, event):
         if icon == gtk.ENTRY_ICON_SECONDARY:
@@ -559,16 +712,8 @@ class MainWindow(object):
             self.__disable_preview()
             self.use_preview = False
 
-    def on_register_grouping_activate(self, obj):
-        """
-        Display the Groupings editor.
-        """
-        from groupings import Groupings
-        Groupings(self.__project)
-
     def on_summary_action_activate(self, obj):
         """
-        Display the Groupings editor.
         """
         reg = self.__reglist_obj.get_selected_register()
 
@@ -647,16 +792,15 @@ class MainWindow(object):
         Called with the remove button is clicked
         """
         selected = self.__instance_obj.get_selected_instance()
-        if selected:
+        if selected and selected[1]:
             self.__instance_model.remove(selected[1])
-            self.dbase.instances = self.__instance_model.get_values()
             self.__set_module_definition_warn_flag()
-            self.set_modified()
+            self.__project.set_modified()
 
     def  on_add_instance_clicked(self, obj):
         self.__instance_obj.new_instance()
         self.__set_module_definition_warn_flag()
-        self.set_modified()
+        self.__project.set_modified()
 
     def __data_changed(self, obj):
         """
@@ -722,8 +866,6 @@ class MainWindow(object):
                 self.__reglist_obj.set_model(self.__modelsort)
                 self.__bit_model = self.active.bit_field_list
                 self.__bitfield_obj.set_model(self.__bit_model)
-                self.__instance_model = self.active.instance_list
-                self.__instance_obj.set_model(self.__instance_model)
                 text = "<b>%s - %s</b>" % (self.dbase.module_name,
                                            self.dbase.descriptive_title)
                 self.__selected_dbase.set_text(text)
@@ -973,6 +1115,7 @@ class MainWindow(object):
 
             self.__project = RegProject()
             self.__project.path = filename
+            self.__initialize_project_address_maps()
             base_name = os.path.basename(filename)
             self.__project.name = os.path.splitext(base_name)[0]
             self.__prj_model = ProjectModel(self.use_svn)
@@ -982,6 +1125,7 @@ class MainWindow(object):
                 self.__recent_manager.add_item("file://" + filename)
             self.__builder.get_object('save_btn').set_sensitive(True)
             self.__project_loaded.set_sensitive(True)
+            self.load_project_tab()
         choose.destroy()
 
     def on_open_action_activate(self, obj):
@@ -1013,6 +1157,8 @@ class MainWindow(object):
         self.__prj_model = ProjectModel(self.use_svn)
         self.__prj_obj.set_model(self.__prj_model)
         self.__project = RegProject(filename)
+        self.__initialize_project_address_maps()
+
         ini.set("user", "last_project", filename)
         idval = self.__status_obj.get_context_id('mod')
         self.__status_obj.push(idval, "Loading %s ..." % filename)
@@ -1030,7 +1176,13 @@ class MainWindow(object):
         self.__top_window.set_title("%s (%s) - regenerate" %
                                     (base, self.__project.name))
         self.__status_obj.pop(idval)
+        self.load_project_tab()
         self.__project_loaded.set_sensitive(True)
+
+    def __initialize_project_address_maps(self):
+        self.__instance_model = InstanceModel()
+        self.__instance_obj.set_model(self.__instance_model)
+        self.__instance_obj.set_project(self.__project)
 
     def on_new_register_set_activate(self, obj):
         """
@@ -1055,13 +1207,11 @@ class MainWindow(object):
         self.__bit_model = BitModel()
         self.__bitfield_obj.set_model(self.__bit_model)
 
-        self.__instance_model = InstanceModel()
-        self.__instance_obj.set_model(self.__instance_model)
         self.__set_module_definition_warn_flag()
 
         self.active = DbaseStatus(self.dbase, name, base, self.__reg_model,
                                   self.__modelsort, self.__modelfilter,
-                                  self.__bit_model, self.__instance_model)
+                                  self.__bit_model)
         self.active.node = self.__prj_model.add_dbase(name, self.active)
         self.__prj_obj.select(self.active.node)
         self.redraw()
@@ -1116,10 +1266,6 @@ class MainWindow(object):
                 register = self.dbase.get_register(key)
                 self.__reg_model.append_register(register)
                 self.__set_register_warn_flags(register)
-        self.__instance_model = InstanceModel()
-        self.__instance_obj.set_model(self.__instance_model)
-        for instance in self.dbase.instances:
-            self.__instance_model.append_instance(instance)
         self.redraw()
         self.__skip_changes = False
 
@@ -1137,7 +1283,7 @@ class MainWindow(object):
             self.active = DbaseStatus(self.dbase, name, base, self.__reg_model,
                                       self.__modelsort,
                                       self.__modelfilter,
-                                      self.__bit_model, self.__instance_model)
+                                      self.__bit_model)
 
             self.active.node = self.__prj_model.add_dbase(name, self.active)
             if load:
@@ -1168,7 +1314,11 @@ class MainWindow(object):
                     self.clear_modified(item[ProjectModel.OBJ])
                 except IOError, msg:
                     ErrorMsg("Could not save database", str(msg))
+
         self.__project.set_new_order([item[0] for item in self.__prj_model])
+        (grps, gmap) = self.__instance_obj.get_groups()
+        self.__project.set_grouping_list(grps)
+        self.__project.set_grouping_map(gmap)
         self.__project.save()
         self.active.modified = False
 
@@ -1540,9 +1690,6 @@ class MainWindow(object):
             warn = False
             msgs = []
 
-            if len(self.dbase.instances) == 0:
-                warn = True
-                msgs.append("No instances of the module were defined.")
             if self.dbase.descriptive_title == "":
                 warn = True
                 msgs.append("No title was provided for the register set.")
