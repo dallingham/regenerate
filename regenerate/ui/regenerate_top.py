@@ -35,7 +35,6 @@ import copy
 import re
 import string
 import logging
-import regenerate.extras
 from preferences import Preferences
 from bit_list import BitModel, BitList, bits, reset_value
 from register_list import RegisterModel, RegisterList, build_define
@@ -342,7 +341,7 @@ class MainWindow(object):
         from help_window import HelpWindow
 
         HelpWindow(self.__builder, "project_group_help.rst")
-        
+
     def on_remove_map_clicked(self, obj):
         (model, node) = self.__addr_map_tree_obj.get_selection().get_selected()
         name = model.get_value(node, 0)
@@ -717,19 +716,9 @@ class MainWindow(object):
         """
         reg = self.__reglist_obj.get_selected_register()
 
-        if WEBKIT and reg:
-            if self.html_window is None:
-                self.html_window = self.__builder.get_object("summary_window")
-                self.html_wkit = webkit.WebView()
-                wk_container = self.__builder.get_object('summary_scroll')
-                wk_container.add(self.html_wkit)
-                button = self.__builder.get_object('close_button')
-                button.connect('clicked', lambda x, y: y.hide(),
-                               self.html_window)
-            reg_info = regenerate.extras.RegisterRst(reg)
-            self.html_wkit.load_string(reg_info.html_css(), "text/html",
-                                       "utf-8", "")
-            self.html_window.show_all()
+        if reg:
+            from summary_window import SummaryWindow
+            SummaryWindow(self.__builder, reg)
 
     def on_build_action_activate(self, obj):
         from build import Build
