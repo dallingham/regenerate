@@ -26,7 +26,7 @@ import os.path
 from regenerate.db import LOGGER
 from collections import namedtuple
 
-AddrMapData = namedtuple("AddrMapData", "base fixed")
+AddrMapData = namedtuple("AddrMapData", "base width fixed")
 GroupMapData = namedtuple("GroupMapData", "set offset repeat repeat_offset")
 
 
@@ -68,8 +68,8 @@ class RegProject(object):
             ofile.write('  <address_maps>\n')
             for key in self.__address_maps:
                 data = self.__address_maps[key]
-                ofile.write('    <address_map name="%s" base="%x" fixed="%d"/>\n' %
-                            (key, data.base, data.fixed))
+                ofile.write('    <address_map name="%s" base="%x" fixed="%d" width="%d"/>\n' %
+                            (key, data.base, data.fixed, data.width))
             ofile.write('  </address_maps>\n')
 
         if self.__groupings:
@@ -217,9 +217,12 @@ class RegProject(object):
     def get_address_fixed(self, name):
         return self.__address_maps[name].fixed
 
-    def set_address_map(self, name, base, fixed):
+    def get_address_width(self, name):
+        return self.__address_maps[name].width
+
+    def set_address_map(self, name, base, width, fixed):
         self.__modified = True
-        self.__address_maps[name] = AddrMapData(base, fixed)
+        self.__address_maps[name] = AddrMapData(base, width, fixed)
 
     def remove_address_map(self, name):
         self.__modified = True
@@ -280,13 +283,14 @@ class RegProject(object):
         data = GroupMapData(attrs['set'],
                             int(attrs['offset'], 16),
                             int(attrs['repeat']),
-                            int(attrs['repeat_offset'], 16))
+                            int(attrs['repeat_offset']))
         self.__grouping_map[self._current_group].append(data)
 
     def start_address_map(self, attrs):
-        self.__address_maps[attrs['name']] = AddrMapData(int(attrs['base'], 16),
-                                                         int(attrs['fixed']))
-
+        self.__address_maps[attrs['name']] = AddrMapData(int(attrs.get('base',0), 16),
+                                                         int(attrs.get('width', 4)),
+                                                         int(attrs.get('fixed', 1)))
+        
     def set_modified(self):
         self.__modified = True
 

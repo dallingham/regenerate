@@ -146,7 +146,7 @@ class InstanceList(object):
             node = self.__model.append(None, row=(item[0], "%x" % item[1], item[1], "", ""))
             for entry in self.__project.get_group_map(item[0]):
                 self.__model.append(node, (entry[0], "%x" % entry[1], entry[1],
-                                    entry[2], entry[3]))
+                                    "%d" % entry[2], "%x" % entry[3]))
 
 
     def __build_instance_table(self, id_changed, base_changed, repeat_changed,
@@ -188,8 +188,8 @@ class InstanceList(object):
                 group_map[data[0]].append(
                     GroupMapData(self.__model.get_value(child, 0),
                                  self.__model.get_value(child, 2),
-                                 self.__model.get_value(child, 3),
-                                 self.__model.get_value(child, 4)
+                                 int(self.__model.get_value(child, 3)),
+                                 int(self.__model.get_value(child, 4), 16)
                                  ))
                 child = self.__model.iter_next(child)
             tree_iter = self.__model.iter_next(tree_iter)
