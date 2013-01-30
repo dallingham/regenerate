@@ -12,4 +12,5 @@
     <export option="rtl-verilog-2001" path="test_regs.v"/>
     <export option="uvm-system-verilog" path="test_regs_pkg.sv"/>
   </registerset>
+  <project_export option="proj-uvm" path="test_regs_pkg.sv"/>
 </project>

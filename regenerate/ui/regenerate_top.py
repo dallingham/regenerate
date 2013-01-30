@@ -324,6 +324,7 @@ class MainWindow(object):
         except ValueError:
             pass
         if new_text:
+            node = self.__addr_map_model.get_iter(path)
             name = self.__addr_map_model.get_value(node, 0)
             fixed = self.__addr_map_model.get_value(node, 3)
 

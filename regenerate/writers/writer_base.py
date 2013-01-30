@@ -60,33 +60,35 @@ class WriterBase(object):   # IGNORE:R0921 - we know this is a abstract class
         self._clock = dbase.clock_name
         self._addr = dbase.address_bus_name
         self._addr_width = dbase.address_bus_width
-        if dbase.instances:
-            if instance_name:
-                for i in dbase.instances:
-                    if instance_name == i[0]:
-                        self._offset = i[1]
-                        prefix = instance_name
-                        break
-            else:
-                self._offset = dbase.instances[0][1]
-                prefix = dbase.instances[0][0]
-        else:
-            self._offset = 0
-            prefix = "UNKNOWN"
+        prefix = ""
+        # if dbase.instances:
+        #     if instance_name:
+        #         for i in dbase.instances:
+        #             if instance_name == i[0]:
+        #                 self._offset = i[1]
+        #                 prefix = instance_name
+        #                 break
+        #     else:
+        #         self._offset = dbase.instances[0][1]
+        #         prefix = dbase.instances[0][0]
+        # else:
+        #     self._offset = 0
+        #     prefix = "UNKNOWN"
 
-        self._data_width = dbase.data_bus_width
-        self._reset = dbase.reset_name
-        self._reset_level = dbase.reset_active_level
-        self._byte_enables = dbase.byte_strobe_name
-        self._be_level = dbase.byte_strobe_active_level
-        self._data_in = dbase.write_data_name
-        self._data_out = dbase.read_data_name
-        self._write_strobe  = dbase.write_strobe_name
-        self._read_strobe  = dbase.read_strobe_name
-        self._filename = "UNKNOWN"
-        self._project_name = "UNKNOWN"
-        self._local_path = os.path.join(INSTALL_PATH, "site_local")
-        self._data_path = os.path.join(INSTALL_PATH, "data")
+        if self._project is None:
+            self._data_width = dbase.data_bus_width
+            self._reset = dbase.reset_name
+            self._reset_level = dbase.reset_active_level
+            self._byte_enables = dbase.byte_strobe_name
+            self._be_level = dbase.byte_strobe_active_level
+            self._data_in = dbase.write_data_name
+            self._data_out = dbase.read_data_name
+            self._write_strobe  = dbase.write_strobe_name
+            self._read_strobe  = dbase.read_strobe_name
+            self._filename = "UNKNOWN"
+            self._project_name = "UNKNOWN"
+            self._local_path = os.path.join(INSTALL_PATH, "site_local")
+            self._data_path = os.path.join(INSTALL_PATH, "data")
 
         if prefix:
             self._prefix = "%s_" % prefix.replace(' ', '_').upper()

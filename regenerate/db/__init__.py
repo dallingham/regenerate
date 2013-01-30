@@ -42,4 +42,4 @@ from register_db import RegisterDb
 from register import Register
 from reg_parser import RegParser
 from reg_writer import RegWriter
-from reg_project import RegProject
+from reg_project import RegProject, AddrMapData, GroupMapData

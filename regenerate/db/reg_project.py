@@ -27,6 +27,7 @@ from regenerate.db import LOGGER
 from collections import namedtuple
 
 AddrMapData = namedtuple("AddrMapData", "base fixed")
+GroupMapData = namedtuple("GroupMapData", "set offset repeat repeat_offset")
 
 
 class RegProject(object):
@@ -77,7 +78,8 @@ class RegProject(object):
                 if self.__grouping_map.has_key(key):
                     ofile.write('    <grouping name="%s" start="%x">\n' % (key, start))
                     for item in self.__grouping_map[key]:
-                        ofile.write('      <map set="%s" offset="%x" repeat="%s" repeat_offset="%s"/>\n' % item)
+                        ofile.write('      <map set="%s" offset="%x" repeat="%s" repeat_offset="%s"/>\n' %
+                                    (item.set, item.offset, item.repeat, item.repeat_offset))
                     ofile.write('    </grouping>\n')
                 else:
                     ofile.write('    <grouping name="%s" start="%x"/>\n' % (key, start))
@@ -214,7 +216,7 @@ class RegProject(object):
 
     def get_address_fixed(self, name):
         return self.__address_maps[name].fixed
-    
+
     def set_address_map(self, name, base, fixed):
         self.__modified = True
         self.__address_maps[name] = AddrMapData(base, fixed)
@@ -275,10 +277,11 @@ class RegProject(object):
         self.__grouping_map[self._current_group] = []
 
     def start_map(self, attrs):
-        self.__grouping_map[self._current_group].append((attrs['set'],
-                                                         int(attrs['offset'], 16),
-                                                         int(attrs['repeat']),
-                                                         int(attrs['repeat_offset'], 16)))
+        data = GroupMapData(attrs['set'],
+                            int(attrs['offset'], 16),
+                            int(attrs['repeat']),
+                            int(attrs['repeat_offset'], 16))
+        self.__grouping_map[self._current_group].append(data)
 
     def start_address_map(self, attrs):
         self.__address_maps[attrs['name']] = AddrMapData(int(attrs['base'], 16),
