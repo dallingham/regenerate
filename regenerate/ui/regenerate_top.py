@@ -48,20 +48,8 @@ from regenerate.settings import ini
 from regenerate import PROGRAM_VERSION, PROGRAM_NAME
 from error_dialogs import ErrorMsg, WarnMsg, Question
 from project import ProjectModel, ProjectList, update_file
-from preview import html_string
 from spell import Spell
-
-# Attempt to load the optional WebKit and docutils package. Webkit provides
-# an HTML canvas that we can use to display formatted text, and docutils
-# provides the reStructuredText interface that will generate HTML from
-# structured text
-try:
-    import webkit
-    WEBKIT = True
-except ImportError:
-    WEBKIT = False
-    LOGGER.warning("Webkit is not installed, preview of formatted "
-                   "comments will not be available")
+from preview_editor import PreviewEditor, PREVIEW_ENABLED
 
 TYPE_ENB = {}
 for i in TYPES:
@@ -151,7 +139,6 @@ class MainWindow(object):
         self.__builder.add_from_file(GLADE_TOP)
         self.__build_actions()
         self.__top_window = self.__builder.get_object("regenerate")
-        self.html_window = None
         try:
             self.__top_window.set_icon_from_file(
                 os.path.join(INSTALL_PATH, "media", "flop.svg"))
@@ -200,19 +187,15 @@ class MainWindow(object):
         self.use_svn = bool(int(ini.get('user', 'use_svn', 0)))
         self.use_preview = bool(int(ini.get('user', 'use_preview', 0)))
 
-        if WEBKIT:
-            self.__webkit = webkit.WebView()
-            self.__webkit_reg = webkit.WebView()
-
-            self.__wk_container = self.__builder.get_object('scroll_webkit')
-            self.__wk_container.add(self.__webkit)
-            self.__wk_container.hide()
-
-            self.__reg_webkit = self.__builder.get_object('scroll_reg_webkit')
-            self.__reg_webkit.add(self.__webkit_reg)
-            self.__reg_webkit.hide()
-
-        self.__update_wk = False
+        self.__project_preview = PreviewEditor(
+            self.__builder.get_object('project_doc').get_buffer(),
+            self.__builder.get_object('project_webkit'))
+        self.__regset_preview = PreviewEditor(
+            self.__builder.get_object('overview_buffer'),
+            self.__builder.get_object('scroll_webkit'))
+        self.__regdescr_preview = PreviewEditor(
+            self.__builder.get_object('register_text_buffer'),
+            self.__builder.get_object('scroll_reg_webkit'))
 
         self.__filename = None
         self.__modified = False
@@ -496,7 +479,7 @@ class MainWindow(object):
         project_actions = ["save_project_action", "new_set_action",
                            "add_set_action", "build_action",
                            "reg_grouping_action", "project_prop_action" ]
-        if WEBKIT:
+        if PREVIEW_ENABLED:
             project_actions.append("preview_action")
         else:
             self.__build_group("unused", ["preview_action"])
@@ -725,32 +708,17 @@ class MainWindow(object):
             self.__modelfilter.refilter()
 
     def __enable_preview(self):
-        self.__update_wk = True
-        if self.dbase:
-            self.__webkit.load_string(html_string(self.dbase.overview_text),
-                                      "text/html", "utf-8", "")
-            reg = self.__reglist_obj.get_selected_register()
-            if reg:
-                text = reg.description
-            else:
-                text = ""
-            self.__webkit_reg.load_string(html_string(text),
-                                          "text/html", "utf-8", "")
-        self.__wk_container.show()
-        self.__webkit.show()
-        self.__webkit_reg.show()
-        self.__reg_webkit.show()
+        self.__project_preview.enable()
+        self.__regset_preview.enable()
+        self.__regdescr_preview.enable()
 
     def __disable_preview(self):
-        self.__update_wk = False
-        if WEBKIT:
-            self.__webkit.hide()
-            self.__wk_container.hide()
-            self.__webkit_reg.hide()
-            self.__reg_webkit.hide()
+        self.__project_preview.disable()
+        self.__regset_preview.disable()
+        self.__regdescr_preview.disable()
 
     def on_preview_toggled(self, obj):
-        if obj.get_active() and WEBKIT:
+        if obj.get_active():
             self.__enable_preview()
             self.use_preview = True
         else:
@@ -962,15 +930,6 @@ class MainWindow(object):
             reg.description = self.__reg_text_buf.get_text(
                 self.__reg_text_buf.get_start_iter(),
                 self.__reg_text_buf.get_end_iter())
-            if self.__update_wk and WEBKIT:
-                pos = self.__reg_webkit.get_vadjustment().get_value()
-
-                self.__webkit_reg.load_string(html_string(reg.description),
-                                              "text/html", "utf-8", "")
-                adjust_obj = self.__reg_webkit.get_vadjustment()
-                if pos <= adjust_obj.get_upper():
-                    self.__reg_webkit.get_vadjustment().set_value(pos)
-
             self.set_modified()
             self.__set_register_warn_flags(reg)
 
@@ -1448,22 +1407,6 @@ class MainWindow(object):
         self.dbase.overview_text = obj.get_text(obj.get_start_iter(),
                                                 obj.get_end_iter())
         self.__set_description_warn_flag()
-        if self.__update_wk and WEBKIT:
-            adj = self.__wk_container.get_vadjustment()
-            pos = adj.get_value()
-            try:
-                text = self.dbase.overview_text
-                self.__webkit.load_string(html_string(text),
-                                          "text/html", "utf-8", "")
-            except:
-                self.__webkit.load_string(self.dbase.overview_text,
-                                          "text/plain", "utf-8", "")
-
-            if pos <= adj.get_upper() - adj.get_page_size():
-                self.__wk_container.get_vadjustment().set_value(pos)
-            else:
-                value = adj.get_upper() - adj.get_page_size()
-                self.__wk_container.get_vadjustment().set_value(value)
         self.set_modified()
 
     def on_regenerate_delete_event(self, obj, event):
