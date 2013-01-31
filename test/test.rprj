@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <project name="Regenerate Test Project" short_name="test" company_name="Yoyodyne Propulsion Systems">
   <address_maps>
-    <address_map name="MAP0" base="0" fixed="0"/>
+    <address_map name="MAP0" base="0" fixed="1" width="4"/>
   </address_maps>
   <groupings>
     <grouping name="GROUP" start="0">

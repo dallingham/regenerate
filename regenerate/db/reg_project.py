@@ -28,6 +28,7 @@ from collections import namedtuple
 
 AddrMapData = namedtuple("AddrMapData", "base width fixed")
 GroupMapData = namedtuple("GroupMapData", "set offset repeat repeat_offset")
+GroupData = namedtuple("GroupData", "name base")
 
 
 class RegProject(object):
@@ -74,15 +75,15 @@ class RegProject(object):
 
         if self.__groupings:
             ofile.write('  <groupings>\n')
-            for (key, start) in self.__groupings:
-                if self.__grouping_map.has_key(key):
-                    ofile.write('    <grouping name="%s" start="%x">\n' % (key, start))
-                    for item in self.__grouping_map[key]:
+            for group in self.__groupings:
+                if self.__grouping_map.has_key(group.name):
+                    ofile.write('    <grouping name="%s" start="%x">\n' % (group.name, group.base))
+                    for item in self.__grouping_map[group.name]:
                         ofile.write('      <map set="%s" offset="%x" repeat="%s" repeat_offset="%s"/>\n' %
                                     (item.set, item.offset, item.repeat, item.repeat_offset))
                     ofile.write('    </grouping>\n')
                 else:
-                    ofile.write('    <grouping name="%s" start="%x"/>\n' % (key, start))
+                    ofile.write('    <grouping name="%s" start="%x"/>\n' % (group.name, group.base))
             ofile.write('  </groupings>\n')
 
         for fname in self.__filelist:
@@ -185,6 +186,11 @@ class RegProject(object):
         return self.__filelist
 
     def get_grouping_list(self):
+        """
+        Returns a list of named tuples (GroupData) that defines the groups.
+        The group contents are found by indexing using the Group name 
+        (GroupData.name) into the group map.
+        """
         return self.__groupings
 
     def set_grouping_list(self, glist):
@@ -202,11 +208,11 @@ class RegProject(object):
 
     def add_to_grouping_list(self, name, start):
         self.__modified = True
-        self.__groupings.append((name, start))
+        self.__groupings.append(GroupData(name, start))
 
     def remove_from_grouping_list(self, name, start):
         self.__modified = True
-        self.__groupings.remove((name, start))
+        self.__groupings.remove(GroupData(name, start))
 
     def get_address_maps(self):
         return self.__address_maps

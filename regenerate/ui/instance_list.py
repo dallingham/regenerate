@@ -20,7 +20,7 @@
 import gtk
 import gobject
 from columns import EditableColumn
-from regenerate.db import GroupMapData
+from regenerate.db import GroupMapData, GroupData
 
 class InstanceModel(gtk.TreeStore):
     """
@@ -179,7 +179,7 @@ class InstanceList(object):
         group_map = {}
         while tree_iter != None:
             data = self.__model.get(tree_iter, 0, 2)
-            groups.append(data)
+            groups.append(GroupData(data[0], data[1]))
             group_map[data[0]] = []
 
             child = self.__model.iter_children(tree_iter)
