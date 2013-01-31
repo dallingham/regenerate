@@ -127,7 +127,6 @@ class Build(object):
         local_dest = os.path.join(os.path.dirname(self.__project.path), dest)
 
         mod = file_needs_rebuilt(local_dest, self.__dbmap, [dbase_full_path])
-
         self.__modlist.append(mod)
         (fmt, cls, rpttype) = self.__optmap[option]
         dbase = self.__dbmap[base][DB_MAP_DBASE].db
@@ -139,11 +138,11 @@ class Build(object):
         export list.
         """
         for item in self.__project.get_register_set():
-            try:
-                for (option, dest) in self.__project.get_export_list(item):
+            for (option, dest) in self.__project.get_export_list(item):
+                try:
                     self.__add_dbase_item_to_list(item, option, dest)
-            except KeyError:
-                pass
+                except KeyError:
+                    pass
         for (option, dest) in self.__project.get_project_export_list():
             try:
                 self.__add_prj_item_to_list(option, dest)
