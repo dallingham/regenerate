@@ -75,6 +75,7 @@ ADDR_FIELD = 1
 NAME_FIELD = 2
 TOKEN_FIELD = 3
 
+(AM_NAME, AM_ADDR, AM_FIXED, AM_WIDTH) = range(4)
 
 # Regular expressions to check the validity of entered names. This should
 # probably be configurable, but has not been implemented yet.
@@ -281,23 +282,23 @@ class MainWindow(object):
         self.__project_company_name_obj = self.__builder.get_object('company_name')
 
         self.__addr_map_tree_obj = self.__builder.get_object('address_tree')
-        self.__addr_map_model = gtk.ListStore(str, str, gobject.TYPE_UINT64, bool, str)
+        self.__addr_map_model = gtk.ListStore(str, str, bool, str)
         self.__addr_map_tree_obj.set_model(self.__addr_map_model)
 
-        self.__map_name_column = EditableColumn('Map Name', self.map_name_changed, 0)
+        self.__map_name_column = EditableColumn('Map Name', self.map_name_changed, AM_NAME)
         self.__map_name_column.set_min_width(240)
         self.__addr_map_tree_obj.append_column(self.__map_name_column)
 
-        column = EditableColumn('Base Address', self.map_address_changed, 1)
+        column = EditableColumn('Base Address', self.map_address_changed, AM_ADDR)
         column.set_min_width(250)
         self.__addr_map_tree_obj.append_column(column)
 
         column = ComboMapColumn('Access Width', self.map_width_changed,
-                                SIZE2STR, 4)
+                                SIZE2STR, AM_WIDTH)
         column.set_min_width(250)
         self.__addr_map_tree_obj.append_column(column)
 
-        column = ToggleColumn('Fixed Address', self.map_fixed_changed, 2)
+        column = ToggleColumn('Fixed Address', self.map_fixed_changed, AM_FIXED)
         column.set_max_width(200)
         self.__addr_map_tree_obj.append_column(column)
 
@@ -314,23 +315,24 @@ class MainWindow(object):
             width = self.__project.get_address_width(base)
             fixed = bool(self.__project.get_address_fixed(base))
 
-            n = self.__addr_map_model.append(row=(base, "%x" % addr, addr, fixed, INT2SIZE[width]))
+            data = (base, "%x" % addr, fixed, INT2SIZE[width])
+            n = self.__addr_map_model.append(row=data)
             i=i+1
 
         self.__project.clear_modified()
 
     def map_name_changed(self, cell, path, new_text, col):
         node = self.__addr_map_model.get_iter(path)
-        name = self.__addr_map_model.get_value(node, 0)
-        value = self.__addr_map_model.get_value(node, 2)
-        fixed = self.__addr_map_model.get_value(node, 3)
-        width = STR2SIZE[self.__addr_map_model.get_value(node, 4)]
+        name = self.__addr_map_model.get_value(node, AM_NAME)
+        value = self.__addr_map_model.get_value(node, AM_ADDR)
+        fixed = self.__addr_map_model.get_value(node, AM_FIXED)
+        width = STR2SIZE[self.__addr_map_model.get_value(node, AM_WIDTH)]
         try:
             self.__project.remove_address_map(name)
         except:
             pass
-        self.__project.set_address_map(new_text, value, width, fixed)
-        self.__addr_map_model[path][0] = new_text
+        self.__project.set_address_map(new_text, int(value, 16), width, fixed)
+        self.__addr_map_model[path][AM_NAME] = new_text
         self.__project.set_modified()
 
     def map_fixed_changed(self, cell, path, source):
@@ -339,12 +341,12 @@ class MainWindow(object):
         the internal list.
         """
         node = self.__addr_map_model.get_iter(path)
-        name = self.__addr_map_model.get_value(node, 0)
-        value = self.__addr_map_model.get_value(node, 2)
-        fixed = self.__addr_map_model.get_value(node, 3)
-        width = STR2SIZE[self.__addr_map_model.get_value(node, 4)]
-        self.__addr_map_model[path][3] = not self.__addr_map_model[path][3]
-        self.__project.set_address_map(name, value, width, not fixed)
+        name = self.__addr_map_model.get_value(node, AM_NAME)
+        value = self.__addr_map_model.get_value(node, AM_ADDR)
+        fixed = self.__addr_map_model.get_value(node, AM_FIXED)
+        width = self.__addr_map_model.get_value(node, AM_WIDTH)
+        self.__addr_map_model[path][AM_FIXED] = not self.__addr_map_model[path][AM_FIXED]
+        self.__project.set_address_map(name, int(value, 16), STR2SIZE[width], not fixed)
 
     def map_width_changed(self, cell, path, node, col):
         """
@@ -352,14 +354,14 @@ class MainWindow(object):
         the internal list.
         """
         node = self.__addr_map_model.get_iter(path)
-        name = self.__addr_map_model.get_value(node, 0)
-        value = self.__addr_map_model.get_value(node, 2)
-        fixed = self.__addr_map_model.get_value(node, 3)
+        name = self.__addr_map_model.get_value(node, AM_NAME)
+        value = self.__addr_map_model.get_value(node, AM_ADDR)
+        fixed = self.__addr_map_model.get_value(node, AM_FIXED)
 
         model = cell.get_property('model')
         self.__addr_map_model[path][col] = model[path][0]
         width = model[path][1]
-        self.__project.set_address_map(name, value, width, not fixed)
+        self.__project.set_address_map(name, int(value, 16), width, fixed)
 
     def map_address_changed(self, cell, path, new_text, col):
         try:
@@ -368,14 +370,12 @@ class MainWindow(object):
             pass
         if new_text:
             node = self.__addr_map_model.get_iter(path)
-            name = self.__addr_map_model.get_value(node, 0)
-            fixed = self.__addr_map_model.get_value(node, 3)
-            print fixed
-            width = STR2SIZE[self.__addr_map_model.get_value(node, 4)]
+            name = self.__addr_map_model.get_value(node, AM_NAME)
+            fixed = self.__addr_map_model.get_value(node, AM_FIXED)
+            width = STR2SIZE[self.__addr_map_model.get_value(node, AM_WIDTH)]
 
             self.__project.set_address_map(name, value, width, fixed)
-            self.__addr_map_model[path][1] = "%x" % value
-            self.__addr_map_model[path][2] = value
+            self.__addr_map_model[path][AM_ADDR] = new_text
             self.__project.set_modified()
 
     def on_addr_map_help_clicked(self, obj):
@@ -390,13 +390,13 @@ class MainWindow(object):
 
     def on_remove_map_clicked(self, obj):
         (model, node) = self.__addr_map_tree_obj.get_selection().get_selected()
-        name = model.get_value(node, 0)
+        name = model.get_value(node, AM_NAME)
         model.remove(node)
         self.__project.set_modified()
         self.__project.remove_address_map(name)
 
     def on_add_map_clicked(self, obj):
-        node = self.__addr_map_model.append(row=("NewMap", 0, 0, False, SIZE2STR[0][0]))
+        node = self.__addr_map_model.append(row=("NewMap", 0, False, SIZE2STR[0][0]))
         path = self.__addr_map_model.get_path(node)
         self.__project.set_modified()
         self.__project.set_address_map('NewMap', 0, False, SIZE2STR[0][1])

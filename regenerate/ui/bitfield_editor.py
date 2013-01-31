@@ -188,6 +188,10 @@ class BitFieldEditor(object):
         self.__bit_field.volatile = obj.get_active()
         self.__modified()
 
+    def on_static_toggled(self, obj):
+        self.__bit_field.output_is_static = obj.get_active()
+        self.__modified()
+
     def on_control_changed(self, obj):
         self.__bit_field.control_signal = obj.get_text()
         self.__check_data()

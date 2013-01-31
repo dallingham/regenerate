@@ -166,7 +166,6 @@ class UVM_Block_Registers(WriterBase):
         cfile.write("\n")
 
         for group_entry in self.project.get_group_map(group[0]):
-            print group_entry
             if group_entry.repeat > 1:
                 cfile.write("   %s_reg_block %s[%d];\n" % (group_entry.set, group_entry.set, group_entry.repeat))
             else:
@@ -461,7 +460,7 @@ class UVM_Block_Registers(WriterBase):
         cfile.write("   ACCESS: cross ADDR, RW;\n\n")
         cfile.write("   endgroup : ra_cov\n\n")
         cfile.write('   function new(string name = "%s_reg_access_wrapper");\n' % base)
-        cfile.write('      ra_cov = new($psprintf("%s_%0d", name, s_inst_num++));\n')
+        cfile.write('      ra_cov = new($sformatf("%s_%0d", name, s_inst_num++));\n')
         cfile.write('   endfunction : new\n\n')
         cfile.write('   function void sample(uvm_reg_addr_t offset, bit is_read);\n')
         cfile.write('      ra_cov.sample(offset, is_read);\n')
