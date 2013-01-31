@@ -26,6 +26,7 @@ import gtk
 import re
 import pango
 import os
+from spell import Spell
 
 from regenerate.db import BitField, TYPES
 from regenerate.settings.paths import GLADE_BIT, INSTALL_PATH
@@ -84,6 +85,8 @@ class BitFieldEditor(object):
         self.__top_window.set_title(
             "Edit Bit Field - [%02x] %s" % (register.address,
                                             register.register_name))
+
+        self.__spell = Spell(self.__builder.get_object("descr"))
 
         self.__top_window.set_icon_from_file(
             os.path.join(INSTALL_PATH, "media", "flop.svg"))
@@ -360,6 +363,12 @@ class BitFieldEditor(object):
                 self.__modified()
             return True
         return False
+
+    def on_destroy_event(self, obj):
+        self.__spell.detach()
+
+    def on_delete_event(self, obj, event):
+        self.__spell.detach()
 
     def on_close_clicked(self, obj):
         """

@@ -17,5 +17,8 @@ except ImportError:
         def __init__(self, obj):
             pass
 
+        def detach(self):
+            pass
+
     LOGGER.warning("gtkspell is not installed, "
                    "spell checking will not be available")
