@@ -22,7 +22,7 @@ regenerate
 
    regenerate is a program for managing the registers in the design. It allows
    you to build a database describing the registers, which can then be used
-   to generate documenation, Verilog RTL descriptions, and support files.
+   to generate documentation, Verilog RTL descriptions, and support files.
 
 """
 
@@ -268,6 +268,8 @@ class MainWindow(object):
         self.__addr_map_model = gtk.ListStore(str, str, bool, str)
         self.__addr_map_tree_obj.set_model(self.__addr_map_model)
 
+        self.__project_doc_object = self.__builder.get_object('project_doc_buffer')
+
         self.__map_name_column = EditableColumn('Map Name', self.map_name_changed, AM_NAME)
         self.__map_name_column.set_min_width(240)
         self.__addr_map_tree_obj.append_column(self.__map_name_column)
@@ -287,6 +289,7 @@ class MainWindow(object):
 
     def load_project_tab(self):
         self.__project_short_name_obj.set_text(self.__project.short_name)
+        self.__project_doc_object.set_text(self.__project.documentation)
         self.__project_name_obj.set_text(self.__project.name)
         company = self.__project.company_name
         self.__project_company_name_obj.set_text(company)
@@ -409,6 +412,11 @@ class MainWindow(object):
             int(new_text, 16)
         except ValueError:
             obj.stop_emission('insert-text')
+
+    def on_project_documentation_changed(self, obj):
+        self.__project.set_modified()
+        self.__project.documentation = obj.get_text(obj.get_start_iter(), 
+                                                    obj.get_end_iter())
 
     def on_short_name_changed(self, obj):
         """

@@ -55,6 +55,14 @@
     <property name="tooltip" translatable="yes">View text as it would be formatted</property>
     <property name="stock_id">gtk-page-setup</property>
   </object>
+  <object class="GtkAction" id="project_prop_action">
+    <property name="label" translatable="yes">Project Properties</property>
+    <property name="short_label" translatable="yes">Project Properties</property>
+  </object>
+  <object class="GtkAction" id="reg_grouping_action">
+    <property name="label" translatable="yes">Register Set Groupings</property>
+    <property name="short_label" translatable="yes">Groupings</property>
+  </object>
   <object class="GtkMenu" id="filter_menu">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -327,16 +335,7 @@
     <property name="can_focus">False</property>
     <property name="stock">gtk-add</property>
   </object>
-  <object class="GtkTextBuffer" id="overview_buffer"/>
-  <object class="GtkTextBuffer" id="project_doc_buffer"/>
-  <object class="GtkAction" id="project_prop_action">
-    <property name="label" translatable="yes">Project Properties</property>
-    <property name="short_label" translatable="yes">Project Properties</property>
-  </object>
-  <object class="GtkAction" id="reg_grouping_action">
-    <property name="label" translatable="yes">Register Set Groupings</property>
-    <property name="short_label" translatable="yes">Groupings</property>
-  </object>
+  <object class="GtkTextBuffer" id="register_text_buffer"/>
   <object class="GtkAction" id="remove_bit_action">
     <property name="label">_Remove Bit Action</property>
     <property name="short_label">_Remove</property>
@@ -379,6 +378,10 @@
     <property name="label">Update from SVN</property>
     <property name="short_label">SVN update</property>
     <signal name="activate" handler="on_update_svn_activate" swapped="no"/>
+  </object>
+  <object class="GtkTextBuffer" id="overview_buffer"/>
+  <object class="GtkTextBuffer" id="project_doc_buffer">
+    <signal name="changed" handler="on_project_documentation_changed" swapped="no"/>
   </object>
   <object class="GtkWindow" id="regenerate">
     <property name="can_focus">False</property>
@@ -2624,7 +2627,6 @@
       </object>
     </child>
   </object>
-  <object class="GtkTextBuffer" id="register_text_buffer"/>
   <object class="GtkWindow" id="summary_window">
     <property name="can_focus">False</property>
     <property name="default_width">800</property>

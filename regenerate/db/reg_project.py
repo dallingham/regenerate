@@ -22,6 +22,7 @@ RegProject is the container object for a regenerate project
 """
 
 import xml.parsers.expat
+from xml.sax.saxutils import escape
 import os.path
 from regenerate.db import LOGGER
 from collections import namedtuple
@@ -43,6 +44,7 @@ class RegProject(object):
         self.name = "unnamed"
         self.short_name = "unnamed"
         self.company_name = ""
+        self.documentation = ""
         self.__filelist = []
         self.__groupings = []
         self.__grouping_map = {}
@@ -65,6 +67,8 @@ class RegProject(object):
         ofile.write('<project name="%s" short_name="%s" company_name="%s">\n' %
                     (self.name, self.short_name, self.company_name))
 
+        if self.documentation:
+            ofile.write('  <documentation>%s</documentation>' % escape(self.documentation))
         if self.__address_maps:
             ofile.write('  <address_maps>\n')
             for key in self.__address_maps:
@@ -261,6 +265,9 @@ class RegProject(object):
         later.
         """
         self.__token_list.append(data)
+
+    def end_documentation(self, text):
+        self.documentation = text
 
     def start_project(self, attrs):
         self.name = attrs['name']
