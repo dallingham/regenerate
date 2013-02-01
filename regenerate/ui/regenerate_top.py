@@ -35,6 +35,7 @@ import copy
 import re
 import string
 import logging
+import spell
 from preferences import Preferences
 from bit_list import BitModel, BitList, bits, reset_value
 from register_list import RegisterModel, RegisterList, build_define
@@ -48,12 +49,11 @@ from regenerate.settings import ini
 from regenerate import PROGRAM_VERSION, PROGRAM_NAME
 from error_dialogs import ErrorMsg, WarnMsg, Question
 from project import ProjectModel, ProjectList, update_file
-from spell import Spell
 from preview_editor import PreviewEditor, PREVIEW_ENABLED
 
 TYPE_ENB = {}
-for i in TYPES:
-    TYPE_ENB[i.type] = (i.input, i.control)
+for data_type in TYPES:
+    TYPE_ENB[data_type.type] = (data_type.input, data_type.control)
 
 
 DEF_EXT = '.rprj'
@@ -158,7 +158,7 @@ class MainWindow(object):
 
         self.__overview_buf = self.__builder.get_object('overview_buffer')
         self.__overview_buf.connect('changed', self.__overview_changed)
-        Spell(self.__builder.get_object('overview'))
+        spell.Spell(self.__builder.get_object('overview'))
 
         self.__prj_obj = ProjectList(self.__builder.get_object("project_list"),
                                      self.__prj_selection_changed)
@@ -213,7 +213,7 @@ class MainWindow(object):
         self.__reg_text_buf.connect('changed', self.__reg_description_changed)
         self.__reg_descript = self.__builder.get_object('register_description')
         self.__reg_descript.modify_font(pango_font)
-        Spell(self.__reg_descript)
+        spell.Spell(self.__reg_descript)
 
         self.__prj_model = ProjectModel(self.use_svn)
         self.__prj_obj.set_model(self.__prj_model)
@@ -295,7 +295,6 @@ class MainWindow(object):
         self.__project_company_name_obj.set_text(company)
 
         self.__addr_map_model.clear()
-        i = 0
         for base in self.__project.get_address_maps():
             addr = self.__project.get_address_base(base)
             width = self.__project.get_address_width(base)
@@ -303,7 +302,6 @@ class MainWindow(object):
 
             data = (base, "%x" % addr, fixed, INT2SIZE[width])
             n = self.__addr_map_model.append(row=data)
-            i=i+1
 
         self.__project.clear_modified()
 
@@ -791,9 +789,6 @@ class MainWindow(object):
             store[node][ProjectModel.ICON] = ""
             self.set_busy_cursor(False)
             self.__file_modified.set_sensitive(False)
-
-    def on_project_properties_activate(self, obj):
-        Properties(self.__project)
 
     def on_user_preferences_activate(self, obj):
         Preferences()

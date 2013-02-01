@@ -17,6 +17,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""
+Provides a preview editor, tying a text buffer to a webkit display. All changes
+to the buffer cause an update on the webkit display, after the text is converted
+from restructuredText to HTML.
+"""
+
 from regenerate.db import LOGGER
 
 try:
@@ -29,6 +35,9 @@ except ImportError:
                    "comments will not be available")
 
 class PreviewEditor(object):
+    """
+    Connects a text buffer to a webkit display.
+    """
 
     def __init__(self, text_buffer, webkit_container):
         if not PREVIEW_ENABLED:
@@ -44,12 +53,19 @@ class PreviewEditor(object):
         self.__adjust = self.__container.get_vadjustment()
 
     def __update_text(self):
+        """
+        Extracts text from the buffer, converts it to HTML, and loads it
+        into the webkit display
+        """
         text = self.__text_buffer.get_text(
             self.__text_buffer.get_start_iter(),
             self.__text_buffer.get_end_iter())
         self.__webkit.load_string(html_string(text), "text/html", "utf-8", "")
 
     def enable(self):
+        """
+        Enables updating and display of the webkit display
+        """
         if PREVIEW_ENABLED:
             self.__update_text()
             self.__container.show()
@@ -57,12 +73,18 @@ class PreviewEditor(object):
         self.__update = True
 
     def disable(self):
+        """
+        Disables updating and display of the webkit display
+        """
         self.__update = False
         if PREVIEW_ENABLED:
             self.__webkit.hide()
             self.__container.hide()
 
     def _changed(self, obj):
+        """
+        Text buffer callback tying the buffer to the display
+        """
         if self.__update:
             pos = self.__adjust.get_value()
             self.__update_text()

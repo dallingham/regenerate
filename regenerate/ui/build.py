@@ -174,7 +174,7 @@ class Build(object):
         property). The data is then copied out of the combo_box_model and
         into the database.
         """
-        combon_box_model = cell.get_property('model')
+        combo_box_model = cell.get_property('model')
         self.__model[path][MDL_CLASS] = combo_box_model[node][1]
         self.__model[path][MDL_FMT] = combo_box_model[node][0]
 

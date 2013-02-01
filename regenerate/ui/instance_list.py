@@ -123,16 +123,16 @@ class InstanceList(object):
         if drop_info:
             path, position = drop_info
             if len(path) == 1:
-                iter = self.__model.get_iter(path)
-                self.__model.append(iter, row_data)
+                node = self.__model.get_iter(path)
+                self.__model.append(node, row_data)
             else:
                 parent = self.__model.get_iter((path[0],))
-                iter = self.__model.get_iter(path)
+                node = self.__model.get_iter(path)
                 if (position == gtk.TREE_VIEW_DROP_BEFORE
                     or position == gtk.TREE_VIEW_DROP_INTO_OR_BEFORE):
-                    self.__model.insert_before(parent, iter, row_data)
+                    self.__model.insert_before(parent, node, row_data)
                 else:
-                    model.insert_after(parent, iter, row_data)
+                    model.insert_after(parent, node, row_data)
 
     def set_project(self, project):
         self.__project = project

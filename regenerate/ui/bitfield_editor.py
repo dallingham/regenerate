@@ -35,9 +35,9 @@ from regenerate.writers.verilog_reg_def import REG
 
 try:
     from gtkcodebuffer import CodeBuffer, SyntaxLoader
-    use_highlight = True
+    USE_HIGHLIGHT = True
 except ImportError:
-    use_highlight = False
+    USE_HIGHLIGHT = False
 
 VALID_SIGNAL = re.compile("^[A-Za-z][A-Za-z0-9_]*$")
 
@@ -59,8 +59,8 @@ class BitFieldEditor(object):
     Bit field editing class.
     """
 
-    def __init__(self, db, register, bit_field, modified):
-        self.__db = db
+    def __init__(self, dbase, register, bit_field, modified):
+        self.__db = dbase
         self.__modified = modified
         self.__register = register
         self.__bit_field = bit_field
@@ -126,7 +126,7 @@ class BitFieldEditor(object):
         except KeyError:
             text = ""
 
-        if use_highlight:
+        if USE_HIGHLIGHT:
             buff = CodeBuffer(lang=SyntaxLoader("verilog"))
             self.__verilog_obj.set_buffer(buff)
         else:
