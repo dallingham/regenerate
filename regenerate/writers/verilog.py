@@ -243,8 +243,8 @@ class Verilog(WriterBase):
     Write an RTL description of the registers, suitable for synthesis.
     """
 
-    def __init__(self, dbase):
-        WriterBase.__init__(self, dbase)
+    def __init__(self, project, dbase):
+        WriterBase.__init__(self, project, dbase)
 
         self._always = 'always'
 
@@ -910,8 +910,8 @@ class Verilog2001(Verilog):
     * Uses the endmodule : name syntax
     """
 
-    def __init__(self, dbase):
-        Verilog.__init__(self, dbase)
+    def __init__(self, project, dbase):
+        Verilog.__init__(self, project, dbase)
         self._always = 'always_ff'
 
     def _write_module_header(self):
@@ -1000,8 +1000,8 @@ class SystemVerilog(Verilog2001):
     * Uses the endmodule : name syntax
     """
 
-    def __init__(self, dbase):
-        Verilog2001.__init__(self, dbase)
+    def __init__(self, project, dbase):
+        Verilog2001.__init__(self, project, dbase)
         self._always = 'always_ff'
 
     def _write_trailer(self):

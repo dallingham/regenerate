@@ -248,7 +248,7 @@ class Build(object):
 
             try:
                 if dbase:
-                    gen = writer_class(dbase)
+                    gen = writer_class(self.__project, dbase)
                 else:
                     db_list = [i[DB_MAP_DBASE].db
                                for i in self.__dbmap.values()]

@@ -32,15 +32,10 @@ except:
 from cStringIO import StringIO
 from regenerate.db import TYPES
 import re
-from collections import namedtuple
-
+from token import full_token, in_groups
 
 # Formating token names
 #
-DEFAULT_FORMAT = "%(G)s%(D)s_%(R)s"
-InstData = namedtuple("InstData",
-                      "group set base offset repeat roffset format")
-
 
 TYPE_STR = {}
 for i in TYPES:
@@ -101,25 +96,6 @@ class RegisterRst:
         self._project = project
         self._regset_name = regset_name
 
-    def in_groups(self):
-        groups = []
-        if self._regset_name and self._project:
-            for group_data in self._project.get_grouping_list():
-                for regset in self._project.get_group_map(group_data.name):
-                    if regset.set == self._regset_name:
-                        if regset.format:
-                            fmt = regset.format
-                        else:
-                            fmt = DEFAULT_FORMAT
-                        groups.append(InstData(group_data.name,
-                                               self._regset_name,
-                                               group_data.base,
-                                               regset.offset,
-                                               regset.repeat,
-                                               regset.repeat_offset,
-                                               fmt))
-        return groups
-
     def html_css(self):
         """
         Returns the definition with the basic, default CSS provided
@@ -161,15 +137,12 @@ class RegisterRst:
             o.write("     - Offset\n")
             for amap in addr_maps:
                 o.write("     - %s\n" % self.text(amap))
-            for inst in self.in_groups():
+            for inst in in_groups(self._regset_name, self._project):
                 if inst.repeat == 1:
-                    name_data = {"G": inst.group.upper(),
-                                 "D": "",
-                                 "R": self._reg.token.upper(),
-                                 "S": self._regset_name,
-                                 }
-                    name = self.text(inst.format % name_data)
-                    o.write("   * - %s\n" % name)
+                    name = full_token(inst.group, self._reg.token,
+                                      self._regset_name, -1,
+                                      inst.format)
+                    o.write("   * - %s\n" % self.text(name))
                     o.write("     - %s\n" % self.text("0x%08x" %
                                                       self._reg.address))
                     addr = self._reg.address + inst.offset + inst.base
@@ -178,16 +151,10 @@ class RegisterRst:
                         o.write("     - %s\n" % self.text("0x%08x" % faddr))
                 else:
                     for i in range(0, inst.repeat):
-                        name_data = {"G": inst.group.upper(),
-                                     "g": inst.group.lower(),
-                                     "D": "%d" % i,
-                                     "R": self._reg.token.upper(),
-                                     "r": self._reg.token.lower(),
-                                     "S": self._regset_name.upper(),
-                                     "s": self._regset_name.lower()
-                                     }
-                        name = self.text(inst.format % name_data)
-                        o.write("   * - %s\n" % name)
+                        name = full_token(inst.group, self._reg.token,
+                                          self._regset_name, i,
+                                          inst.format)
+                        o.write("   * - %s\n" % self.text(name))
                         addr = self._reg.address + inst.base + \
                             inst.offset  + (i * inst.roffset)
                         o.write("     - %s\n" % self.text("0x%08x" % addr))
