@@ -263,12 +263,12 @@ class ExportAssistant(gtk.Assistant):
 class MyLabel(gtk.Label):
 
     def __init__(self, text=""):
-        if text == None:
+        if text is None:
             text = ""
         gtk.Label.__init__(self, text)
         self.set_alignment(0, 0)
 
     def set_text(self, text):
-        if text == None:
+        if text is None:
             text = ""
         gtk.Label.set_text(self, text)

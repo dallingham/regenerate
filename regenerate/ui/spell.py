@@ -10,7 +10,6 @@ try:
 
 except ImportError:
 
-
     class Spell(object):
         "Empty class for compatiblity if the spell checker is not found"
 

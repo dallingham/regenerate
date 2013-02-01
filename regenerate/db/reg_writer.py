@@ -61,8 +61,8 @@ class RegWriter(object):
         ofile = open(filename, "w")
         ofile.write('<?xml version="1.0"?>\n')
         ofile.write('<module name="%s" title="%s" owner="%s">\n' %
-                (self.dbase.module_name, self.dbase.descriptive_title,
-                 self.dbase.owner))
+                    (self.dbase.module_name, self.dbase.descriptive_title,
+                     self.dbase.owner))
 
         ofile.write('  <base addr_width="%d" ' % self.dbase.address_bus_width)
         ofile.write('data_width="%d"/>\n' % self.dbase.data_bus_width)
@@ -93,7 +93,7 @@ class RegWriter(object):
         ofile.write('    <rd>%s</rd>\n' % self.dbase.read_strobe_name)
         ofile.write('    <clk>%s</clk>\n' % self.dbase.clock_name)
         ofile.write('    <reset active="%d">%s</reset>\n' %
-                (self.dbase.reset_active_level, self.dbase.reset_name))
+                    (self.dbase.reset_active_level, self.dbase.reset_name))
         ofile.write('  </ports>\n')
 
     def write_signal_list(self, ofile, curtime):
@@ -112,8 +112,8 @@ def write_register(ofile, reg, curtime):
     ofile.write('  <register nocode="%d" dont_test="%d" hide="%d">\n' %
                 (reg.do_not_generate_code, reg.do_not_test, reg.hide))
     ofile.write('    <token modified="%d">%s</token>\n' %
-            (calc_mod_time(reg.get_token_obj(), curtime),
-             reg.token))
+                (calc_mod_time(reg.get_token_obj(), curtime),
+                 reg.token))
     ofile.write('    <name modified="%d">%s</name>\n' %
                 (calc_mod_time(reg.get_name_obj(), curtime),
                  reg.register_name))
@@ -127,7 +127,7 @@ def write_register(ofile, reg, curtime):
                 (calc_mod_time(reg.get_description_obj(), curtime),
                  cleanup(reg.description)))
     for field in [reg.get_bit_field(key)
-                   for key in reg.get_bit_field_keys() ]:
+                  for key in reg.get_bit_field_keys() ]:
         write_field(ofile, field, curtime)
     ofile.write('  </register>\n')
 

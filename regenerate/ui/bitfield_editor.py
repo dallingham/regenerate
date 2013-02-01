@@ -263,7 +263,7 @@ class BitFieldEditor(object):
                                          start_editing=True)
         self.__modified()
 
-    def  on_remove_clicked(self, obj):  # IGNORE:W0613 - obj is unused
+    def on_remove_clicked(self, obj):  # IGNORE:W0613 - obj is unused
         """
         Called with the remove button is clicked
         """
@@ -390,11 +390,11 @@ class BitFieldEditor(object):
         output_error = False
         control_error = False
 
-        if control_error == False:
+        if control_error is False:
             clear_error(self.__control_obj)
-        if input_error == False:
+        if input_error is False:
             clear_error(self.__input_obj)
-        if output_error == False:
+        if output_error is False:
             clear_error(self.__output_obj)
 
 

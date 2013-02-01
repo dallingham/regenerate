@@ -18,9 +18,9 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
-Provides a preview editor, tying a text buffer to a webkit display. All changes
-to the buffer cause an update on the webkit display, after the text is converted
-from restructuredText to HTML.
+Provides a preview editor, tying a text buffer to a webkit display. All
+changes to the buffer cause an update on the webkit display, after the
+text is converted from restructuredText to HTML.
 """
 
 from regenerate.db import LOGGER
@@ -33,6 +33,7 @@ except ImportError:
     PREVIEW_ENABLED = False
     LOGGER.warning("Webkit is not installed, preview of formatted "
                    "comments will not be available")
+
 
 class PreviewEditor(object):
     """
@@ -90,4 +91,3 @@ class PreviewEditor(object):
             self.__update_text()
             if pos <= self.__adjust.get_upper():
                 self.__adjust.set_value(pos)
-            

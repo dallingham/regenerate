@@ -34,8 +34,7 @@ class BitModel(gtk.ListStore):
     RESET2STR = (
         ("Constant", BitField.RESET_NUMERIC),
         ("Input Port", BitField.RESET_INPUT),
-        ("Parameter", BitField.RESET_PARAMETER),
-        )
+        ("Parameter", BitField.RESET_PARAMETER))
 
     (ICON_COL, BIT_COL, NAME_COL, TYPE_COL, RESET_COL,
      RESET_TYPE_COL, SORT_COL, FIELD_COL) = range(8)
@@ -60,8 +59,7 @@ class BitModel(gtk.ListStore):
             get_field_reset_data(field),
             self.RESET2STR[field.reset_type][0],
             field.start_position,
-            field
-            ])
+            field])
         return self.get_path(node)
 
     def get_bitfield_at_path(self, path):

@@ -58,7 +58,8 @@ class HelpWindow(object):
             HelpWindow.window.connect('destroy', self.destroy)
             HelpWindow.window.connect('delete_event', self.delete)
 
-        HelpWindow.wkit.load_string(html_string(data), "text/html", "utf-8", "")
+        HelpWindow.wkit.load_string(html_string(data), "text/html",
+                                    "utf-8", "")
         HelpWindow.window.show_all()
 
     def destroy(self, obj):

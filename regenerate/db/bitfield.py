@@ -144,7 +144,7 @@ class BitField(DataItem):
             return clean_signal(self.field_name)
 
     output_signal = property(__get_output_signal, __set_output_signal,
-                            None, "Name of the output signal")
+                             None, "Name of the output signal")
 
     def __set_input_signal(self, input_signal):
         """
@@ -159,4 +159,4 @@ class BitField(DataItem):
         return self.__input_signal
 
     input_signal = property(__get_input_signal, __set_input_signal,
-                           None, "Name of the input signal")
+                            None, "Name of the input signal")

@@ -23,11 +23,12 @@ Parses the register database, loading the database.
 
 import xml.parsers.expat
 
-from regenerate.db import Register, BitField, TYPES
+from regenerate.db import Register, BitField
 text2field = {
-    "read-only"  : BitField.TYPE_READ_ONLY,
-    "read-write" : BitField.TYPE_READ_WRITE,
+    "read-only": BitField.TYPE_READ_ONLY,
+    "read-write": BitField.TYPE_READ_WRITE,
     }
+
 
 class IpXactParser(object):
     """
@@ -59,7 +60,7 @@ class IpXactParser(object):
         Called every time an XML element begins
         """
         self.__token_list = []
-        mname = 'start_' + tag.replace(":","_")
+        mname = 'start_' + tag.replace(":", "_")
         if hasattr(self, mname):
             method = getattr(self, mname)
             method(attrs)
@@ -69,7 +70,7 @@ class IpXactParser(object):
         Called every time an XML element end
         """
         text = ''.join(self.__token_list)
-        mname = 'end_' + tag.replace(":","_")
+        mname = 'end_' + tag.replace(":", "_")
         if hasattr(self, mname):
             method = getattr(self, mname)
             method(text)
@@ -109,8 +110,9 @@ class IpXactParser(object):
 
     def end_spirit_access(self, text):
         if self.__field:
-            self.__field.field_type = text2field.get(text, BitField.TYPE_READ_ONLY)
-        
+            self.__field.field_type = text2field.get(text,
+                                                     BitField.TYPE_READ_ONLY)
+
     def end_spirit_name(self, text):
         if self.__field:
             self.__field.field_name = text.upper()
@@ -131,7 +133,7 @@ class IpXactParser(object):
 
     def end_spirit_bitWidth(self, text):
         self.__field_width = int(text)
-        
+
     def start_spirit_memoryMaps(self, attrs):
         self.__in_maps = True
 

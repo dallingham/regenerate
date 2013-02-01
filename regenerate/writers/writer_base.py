@@ -61,19 +61,6 @@ class WriterBase(object):   # IGNORE:R0921 - we know this is a abstract class
         self._addr = dbase.address_bus_name
         self._addr_width = dbase.address_bus_width
         prefix = ""
-        # if dbase.instances:
-        #     if instance_name:
-        #         for i in dbase.instances:
-        #             if instance_name == i[0]:
-        #                 self._offset = i[1]
-        #                 prefix = instance_name
-        #                 break
-        #     else:
-        #         self._offset = dbase.instances[0][1]
-        #         prefix = dbase.instances[0][0]
-        # else:
-        #     self._offset = 0
-        #     prefix = "UNKNOWN"
 
         if self._project is None:
             self._data_width = dbase.data_bus_width

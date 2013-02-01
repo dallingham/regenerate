@@ -97,7 +97,7 @@ class Build(object):
         """
         Adds the item to the list view.
         """
-        if  self.__optmap[option][OPTMAP_REGISTER_SET]:
+        if self.__optmap[option][OPTMAP_REGISTER_SET]:
             self.__add_dbase_item_to_list(full_path, option, dest)
         else:
             self.__add_prj_item_to_list(option, dest)
@@ -265,7 +265,7 @@ class Build(object):
         to add to the builder.
         """
         optlist = [("%s (%s)" % item[EXP_TYPE], True, item[EXP_EXT])
-                   for item in EXPORTERS] + \
+                   for item in EXPORTERS] + 
                    [("%s (%s)" % item[EXP_TYPE], False, item[EXP_EXT])
                     for item in PRJ_EXPORTERS]
         reglist = [os.path.splitext(os.path.basename(i))[0]

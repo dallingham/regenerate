@@ -24,6 +24,7 @@ Imports data from a Denali RDL file
 from regenerate.db import Register, BitField
 import re
 
+
 class FieldInfo:
     """
     Temporary storage mechanism for a 'field' instance in an RDL reg

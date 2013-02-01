@@ -74,8 +74,7 @@ REGNAME = re.compile("^(.*)(\d+)(.*)$")
 
 SIZE2STR = (
     ("32-bits", 4),
-    ("64-bits", 8),
-    )
+    ("64-bits", 8))
 
 INT2SIZE = {
     4: "32-bits",
@@ -83,8 +82,8 @@ INT2SIZE = {
     }
 
 STR2SIZE = {
-    "32-bits" : 4,
-    "64-bits" : 8,
+    "32-bits": 4,
+    "64-bits": 8,
     }
 
 
@@ -134,7 +133,7 @@ class MainWindow(object):
     def __init__(self):
 
         self.__model_search_fields = (ADDR_FIELD, NAME_FIELD, TOKEN_FIELD)
-        self.__project = None
+        self.__prj = None
         self.__builder = gtk.Builder()
         self.__builder.add_from_file(GLADE_TOP)
         self.__build_actions()
@@ -174,7 +173,6 @@ class MainWindow(object):
         self.__warn_reg_descr = self.__builder.get_object('reg_descr_warn')
         self.__preview_toggle = self.__builder.get_object('preview')
 
-
         self.build_project_tab()
 
         self.__filter_text = ""
@@ -187,7 +185,7 @@ class MainWindow(object):
         self.use_svn = bool(int(ini.get('user', 'use_svn', 0)))
         self.use_preview = bool(int(ini.get('user', 'use_preview', 0)))
 
-        self.__project_preview = PreviewEditor(
+        self.__prj_preview = PreviewEditor(
             self.__builder.get_object('project_doc').get_buffer(),
             self.__builder.get_object('project_webkit'))
         self.__regset_preview = PreviewEditor(
@@ -260,50 +258,53 @@ class MainWindow(object):
         self.__build_import_menu()
 
     def build_project_tab(self):
-        self.__project_short_name_obj = self.__builder.get_object('short_name')
-        self.__project_name_obj = self.__builder.get_object('project_name')
-        self.__project_company_name_obj = self.__builder.get_object('company_name')
+        self.__prj_short_name_obj = self.__builder.get_object('short_name')
+        self.__prj_name_obj = self.__builder.get_object('project_name')
+        self.__prj_company_name_obj = self.__builder.get_object('company_name')
 
-        self.__addr_map_tree_obj = self.__builder.get_object('address_tree')
+        self.__addr_map_obj = self.__builder.get_object('address_tree')
         self.__addr_map_model = gtk.ListStore(str, str, bool, str)
-        self.__addr_map_tree_obj.set_model(self.__addr_map_model)
+        self.__addr_map_obj.set_model(self.__addr_map_model)
 
-        self.__project_doc_object = self.__builder.get_object('project_doc_buffer')
+        self.__prj_doc_object = self.__builder.get_object('project_doc_buffer')
 
-        self.__map_name_column = EditableColumn('Map Name', self.map_name_changed, AM_NAME)
-        self.__map_name_column.set_min_width(240)
-        self.__addr_map_tree_obj.append_column(self.__map_name_column)
+        self.__map_name_col = EditableColumn('Map Name', self.map_name_changed,
+                                             AM_NAME)
+        self.__map_name_col.set_min_width(240)
+        self.__addr_map_obj.append_column(self.__map_name_col)
 
-        column = EditableColumn('Base Address', self.map_address_changed, AM_ADDR)
+        column = EditableColumn('Base Address', self.map_address_changed,
+                                AM_ADDR)
         column.set_min_width(250)
-        self.__addr_map_tree_obj.append_column(column)
+        self.__addr_map_obj.append_column(column)
 
         column = ComboMapColumn('Access Width', self.map_width_changed,
                                 SIZE2STR, AM_WIDTH)
         column.set_min_width(250)
-        self.__addr_map_tree_obj.append_column(column)
+        self.__addr_map_obj.append_column(column)
 
-        column = ToggleColumn('Fixed Address', self.map_fixed_changed, AM_FIXED)
+        column = ToggleColumn('Fixed Address', self.map_fixed_changed,
+                              AM_FIXED)
         column.set_max_width(200)
-        self.__addr_map_tree_obj.append_column(column)
+        self.__addr_map_obj.append_column(column)
 
     def load_project_tab(self):
-        self.__project_short_name_obj.set_text(self.__project.short_name)
-        self.__project_doc_object.set_text(self.__project.documentation)
-        self.__project_name_obj.set_text(self.__project.name)
-        company = self.__project.company_name
-        self.__project_company_name_obj.set_text(company)
+        self.__prj_short_name_obj.set_text(self.__prj.short_name)
+        self.__prj_doc_object.set_text(self.__prj.documentation)
+        self.__prj_name_obj.set_text(self.__prj.name)
+        company = self.__prj.company_name
+        self.__prj_company_name_obj.set_text(company)
 
         self.__addr_map_model.clear()
-        for base in self.__project.get_address_maps():
-            addr = self.__project.get_address_base(base)
-            width = self.__project.get_address_width(base)
-            fixed = bool(self.__project.get_address_fixed(base))
+        for base in self.__prj.get_address_maps():
+            addr = self.__prj.get_address_base(base)
+            width = self.__prj.get_address_width(base)
+            fixed = bool(self.__prj.get_address_fixed(base))
 
             data = (base, "%x" % addr, fixed, INT2SIZE[width])
-            n = self.__addr_map_model.append(row=data)
+            self.__addr_map_model.append(row=data)
 
-        self.__project.clear_modified()
+        self.__prj.clear_modified()
 
     def map_name_changed(self, cell, path, new_text, col):
         node = self.__addr_map_model.get_iter(path)
@@ -312,12 +313,12 @@ class MainWindow(object):
         fixed = self.__addr_map_model.get_value(node, AM_FIXED)
         width = STR2SIZE[self.__addr_map_model.get_value(node, AM_WIDTH)]
         try:
-            self.__project.remove_address_map(name)
+            self.__prj.remove_address_map(name)
         except:
             pass
-        self.__project.set_address_map(new_text, int(value, 16), width, fixed)
+        self.__prj.set_address_map(new_text, int(value, 16), width, fixed)
         self.__addr_map_model[path][AM_NAME] = new_text
-        self.__project.set_modified()
+        self.__prj.set_modified()
 
     def map_fixed_changed(self, cell, path, source):
         """
@@ -329,8 +330,9 @@ class MainWindow(object):
         value = self.__addr_map_model.get_value(node, AM_ADDR)
         fixed = self.__addr_map_model.get_value(node, AM_FIXED)
         width = self.__addr_map_model.get_value(node, AM_WIDTH)
-        self.__addr_map_model[path][AM_FIXED] = not self.__addr_map_model[path][AM_FIXED]
-        self.__project.set_address_map(name, int(value, 16), STR2SIZE[width], not fixed)
+        self.__addr_map_model[path][AM_FIXED] = not fixed
+        self.__prj.set_address_map(name, int(value, 16),
+                                   STR2SIZE[width], not fixed)
 
     def map_width_changed(self, cell, path, node, col):
         """
@@ -345,7 +347,7 @@ class MainWindow(object):
         model = cell.get_property('model')
         self.__addr_map_model[path][col] = model[path][0]
         width = model[path][1]
-        self.__project.set_address_map(name, int(value, 16), width, fixed)
+        self.__prj.set_address_map(name, int(value, 16), width, fixed)
 
     def map_address_changed(self, cell, path, new_text, col):
         try:
@@ -358,9 +360,9 @@ class MainWindow(object):
             fixed = self.__addr_map_model.get_value(node, AM_FIXED)
             width = STR2SIZE[self.__addr_map_model.get_value(node, AM_WIDTH)]
 
-            self.__project.set_address_map(name, value, width, fixed)
+            self.__prj.set_address_map(name, value, width, fixed)
             self.__addr_map_model[path][AM_ADDR] = new_text
-            self.__project.set_modified()
+            self.__prj.set_modified()
 
     def on_addr_map_help_clicked(self, obj):
         from help_window import HelpWindow
@@ -373,19 +375,20 @@ class MainWindow(object):
         HelpWindow(self.__builder, "project_group_help.rst")
 
     def on_remove_map_clicked(self, obj):
-        (model, node) = self.__addr_map_tree_obj.get_selection().get_selected()
+        (model, node) = self.__addr_map_obj.get_selection().get_selected()
         name = model.get_value(node, AM_NAME)
         model.remove(node)
-        self.__project.set_modified()
-        self.__project.remove_address_map(name)
+        self.__prj.set_modified()
+        self.__prj.remove_address_map(name)
 
     def on_add_map_clicked(self, obj):
-        node = self.__addr_map_model.append(row=("NewMap", 0, False, SIZE2STR[0][0]))
+        node = self.__addr_map_model.append(row=("NewMap", 0,
+                                                 False, SIZE2STR[0][0]))
         path = self.__addr_map_model.get_path(node)
-        self.__project.set_modified()
-        self.__project.set_address_map('NewMap', 0, False, SIZE2STR[0][1])
-        self.__addr_map_tree_obj.set_cursor(path, focus_column=self.__map_name_column,
-                                            start_editing=True)
+        self.__prj.set_modified()
+        self.__prj.set_address_map('NewMap', 0, False, SIZE2STR[0][1])
+        self.__addr_map_obj.set_cursor(path, focus_column=self.__map_name_col,
+                                       start_editing=True)
 
     def on_project_name_changed(self, obj):
         """
@@ -393,8 +396,8 @@ class MainWindow(object):
         When the name is changed, it is immediately updated in the project
         object.
         """
-        self.__project.set_modified()
-        self.__project.name = obj.get_text()
+        self.__prj.set_modified()
+        self.__prj.name = obj.get_text()
 
     def on_company_name_changed(self, obj):
         """
@@ -402,8 +405,8 @@ class MainWindow(object):
         When the name is changed, it is immediately updated in the project
         object.
         """
-        self.__project.set_modified()
-        self.__project.company_name = obj.get_text()
+        self.__prj.set_modified()
+        self.__prj.company_name = obj.get_text()
 
     def on_offset_insert_text(self, obj, new_text, pos, *extra):
         try:
@@ -412,9 +415,9 @@ class MainWindow(object):
             obj.stop_emission('insert-text')
 
     def on_project_documentation_changed(self, obj):
-        self.__project.set_modified()
-        self.__project.documentation = obj.get_text(obj.get_start_iter(), 
-                                                    obj.get_end_iter())
+        self.__prj.set_modified()
+        self.__prj.documentation = obj.get_text(obj.get_start_iter(),
+                                                obj.get_end_iter())
 
     def on_short_name_changed(self, obj):
         """
@@ -423,9 +426,9 @@ class MainWindow(object):
         object. The name must not have spaces, so we immediately replace any
         spaces.
         """
-        self.__project.short_name = obj.get_text().replace(' ', '').strip()
-        self.__project.set_modified()
-        obj.set_text(self.__project.short_name)
+        self.__prj.short_name = obj.get_text().replace(' ', '').strip()
+        self.__prj.set_modified()
+        obj.set_text(self.__prj.short_name)
 
     def __restore_position_and_size(self):
         "Restore the desired position and size from the user's config file"
@@ -490,8 +493,8 @@ class MainWindow(object):
         else:
             self.__build_group("unused", ["preview_action"])
 
-        self.__project_loaded = self.__build_group("project_loaded",
-                                                   project_actions)
+        self.__prj_loaded = self.__build_group("project_loaded",
+                                               project_actions)
 
         self.__reg_selected = self.__build_group("reg_selected",
                                                  ['remove_register_action',
@@ -505,8 +508,8 @@ class MainWindow(object):
                                                        'import_action'])
 
         self.__field_selected = self.__build_group("field_selected",
-                                                      ['remove_bit_action',
-                                                       'edit_bit_action'])
+                                                   ['remove_bit_action',
+                                                    'edit_bit_action'])
 
         self.__svn_selected = self.__build_group("svn_enabled",
                                                  ['update_svn',
@@ -651,7 +654,7 @@ class MainWindow(object):
         """
         self.__instance_model.change_id(path, new_text)
         self.__set_module_definition_warn_flag()
-        self.__project.set_modified()
+        self.__prj.set_modified()
 
     def __instance_base_changed(self, cell, path, new_text, col):
         """
@@ -659,7 +662,7 @@ class MainWindow(object):
         """
         self.__instance_model.change_base(path, new_text)
         self.__set_module_definition_warn_flag()
-        self.__project.set_modified()
+        self.__prj.set_modified()
 
     def __instance_repeat_changed(self, cell, path, new_text, col):
         """
@@ -668,7 +671,7 @@ class MainWindow(object):
         if len(path) > 1:
             self.__instance_model.change_repeat(path, new_text)
             self.__set_module_definition_warn_flag()
-            self.__project.set_modified()
+            self.__prj.set_modified()
 
     def __instance_repeat_offset_changed(self, cell, path, new_text, col):
         """
@@ -677,7 +680,7 @@ class MainWindow(object):
         if len(path) > 1:
             self.__instance_model.change_repeat_offset(path, new_text)
             self.__set_module_definition_warn_flag()
-            self.__project.set_modified()
+            self.__prj.set_modified()
 
     def on_filter_icon_press(self, obj, icon, event):
         if icon == gtk.ENTRY_ICON_SECONDARY:
@@ -714,12 +717,12 @@ class MainWindow(object):
             self.__modelfilter.refilter()
 
     def __enable_preview(self):
-        self.__project_preview.enable()
+        self.__prj_preview.enable()
         self.__regset_preview.enable()
         self.__regdescr_preview.enable()
 
     def __disable_preview(self):
-        self.__project_preview.disable()
+        self.__prj_preview.disable()
         self.__regset_preview.disable()
         self.__regdescr_preview.disable()
 
@@ -749,7 +752,7 @@ class MainWindow(object):
             modified = item[ProjectModel.MODIFIED]
             obj = item[ProjectModel.OBJ]
             dbmap[name] = (obj, modified)
-        Build(self.__project, dbmap)
+        Build(self.__prj, dbmap)
 
     def on_revert_svn_activate(self, obj):
         pass
@@ -801,12 +804,12 @@ class MainWindow(object):
         if selected and selected[1]:
             self.__instance_model.remove(selected[1])
             self.__set_module_definition_warn_flag()
-            self.__project.set_modified()
+            self.__prj.set_modified()
 
-    def  on_add_instance_clicked(self, obj):
+    def on_add_instance_clicked(self, obj):
         self.__instance_obj.new_instance()
         self.__set_module_definition_warn_flag()
-        self.__project.set_modified()
+        self.__prj.set_modified()
 
     def __data_changed(self, obj):
         """
@@ -952,7 +955,7 @@ class MainWindow(object):
         """
         Clears the modified tag in the status bar.
         """
-        if prj == None:
+        if prj is None:
             prj = self.active
         self.__modified = False
         if prj:
@@ -1062,7 +1065,7 @@ class MainWindow(object):
         if response == gtk.RESPONSE_OK:
             for filename in choose.get_filenames():
                 self.open_xml(filename)
-                self.__project.add_register_set(filename)
+                self.__prj.add_register_set(filename)
             self.__prj_model.load_icons()
         choose.destroy()
 
@@ -1079,7 +1082,7 @@ class MainWindow(object):
             (store, node) = data
             filename = store.get_value(node, ProjectModel.FILE)
             store.remove(node)
-            self.__project.remove_register_set(filename)
+            self.__prj.remove_register_set(filename)
         self.__skip_changes = old_skip
 
     def get_new_filename(self):
@@ -1110,18 +1113,18 @@ class MainWindow(object):
             if ext[1] != DEF_EXT:
                 filename = filename + DEF_EXT
 
-            self.__project = RegProject()
-            self.__project.path = filename
+            self.__prj = RegProject()
+            self.__prj.path = filename
             self.__initialize_project_address_maps()
             base_name = os.path.basename(filename)
-            self.__project.name = os.path.splitext(base_name)[0]
+            self.__prj.name = os.path.splitext(base_name)[0]
             self.__prj_model = ProjectModel(self.use_svn)
             self.__prj_obj.set_model(self.__prj_model)
-            self.__project.save()
+            self.__prj.save()
             if self.__recent_manager:
                 self.__recent_manager.add_item("file://" + filename)
             self.__builder.get_object('save_btn').set_sensitive(True)
-            self.__project_loaded.set_sensitive(True)
+            self.__prj_loaded.set_sensitive(True)
             self.load_project_tab()
         choose.destroy()
 
@@ -1153,14 +1156,14 @@ class MainWindow(object):
         self.__loading_project = True
         self.__prj_model = ProjectModel(self.use_svn)
         self.__prj_obj.set_model(self.__prj_model)
-        self.__project = RegProject(filename)
+        self.__prj = RegProject(filename)
         self.__initialize_project_address_maps()
 
         ini.set("user", "last_project", filename)
         idval = self.__status_obj.get_context_id('mod')
         self.__status_obj.push(idval, "Loading %s ..." % filename)
         self.set_busy_cursor(True)
-        for f in self.__project.get_register_set():
+        for f in self.__prj.get_register_set():
             self.open_xml(f, False)
         self.__loading_project = False
         self.__prj_obj.select_path(0)
@@ -1171,15 +1174,15 @@ class MainWindow(object):
         self.set_busy_cursor(False)
         base = os.path.splitext(os.path.basename(filename))[0]
         self.__top_window.set_title("%s (%s) - regenerate" %
-                                    (base, self.__project.name))
+                                    (base, self.__prj.name))
         self.__status_obj.pop(idval)
         self.load_project_tab()
-        self.__project_loaded.set_sensitive(True)
+        self.__prj_loaded.set_sensitive(True)
 
     def __initialize_project_address_maps(self):
         self.__instance_model = InstanceModel()
         self.__instance_obj.set_model(self.__instance_model)
-        self.__instance_obj.set_project(self.__project)
+        self.__instance_obj.set_project(self.__prj)
 
     def on_new_register_set_activate(self, obj):
         """
@@ -1214,7 +1217,7 @@ class MainWindow(object):
         self.redraw()
 
         self.__prj_model.load_icons()
-        self.__project.add_register_set(name)
+        self.__prj.add_register_set(name)
 
         self.__module_notebook.set_sensitive(True)
         self.__set_module_definition_warn_flag()
@@ -1312,11 +1315,11 @@ class MainWindow(object):
                 except IOError, msg:
                     ErrorMsg("Could not save database", str(msg))
 
-        self.__project.set_new_order([item[0] for item in self.__prj_model])
+        self.__prj.set_new_order([item[0] for item in self.__prj_model])
         (grps, gmap) = self.__instance_obj.get_groups()
-        self.__project.set_grouping_list(grps)
-        self.__project.set_grouping_map(gmap)
-        self.__project.save()
+        self.__prj.set_grouping_list(grps)
+        self.__prj.set_grouping_map(gmap)
+        self.__prj.save()
         self.active.modified = False
 
     def __exit(self):
@@ -1421,7 +1424,7 @@ class MainWindow(object):
         data needs to be saved first.
         """
         if (self.__modified or self.__prj_model.is_not_saved() or
-            (self.__project and self.__project.is_not_saved())):
+            (self.__prj and self.__prj.is_not_saved())):
             dialog = Question('Save Changes?',
                               "The file has been modified. "
                               "Do you want to save your changes?")
@@ -1612,8 +1615,8 @@ class MainWindow(object):
             box.set_license(data)
         except IOError:
             pass
-        box.set_logo(gtk.gdk.pixbuf_new_from_file(
-                os.path.join(INSTALL_PATH, "media", "flop.svg")))
+        fname = os.path.join(INSTALL_PATH, "media", "flop.svg")
+        box.set_logo(gtk.gdk.pixbuf_new_from_file(fname))
         box.run()
         box.destroy()
 

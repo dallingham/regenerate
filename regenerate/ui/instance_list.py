@@ -22,6 +22,7 @@ import gobject
 from columns import EditableColumn
 from regenerate.db import GroupMapData, GroupData
 
+
 class InstanceModel(gtk.TreeStore):
     """
     Provides the list of instances for the module. Instances consist of the
@@ -59,7 +60,7 @@ class InstanceModel(gtk.TreeStore):
         """
         node = self.get_iter(path)
         try:
-            a = int(text)
+            int(text)
             self.set_value(node, InstanceModel.REPEAT_COL, text)
         except ValueError:
             return
@@ -71,8 +72,8 @@ class InstanceModel(gtk.TreeStore):
         """
         node = self.get_iter(path)
         try:
-            a = int(text, 16)
-            self.set_value(node, InstanceModel.REPEAT_OFF_COL, "%x" % int(text,16))
+            value = int(text, 16)
+            self.set_value(node, InstanceModel.REPEAT_OFF_COL, "%x" % value)
         except ValueError:
             return
 
@@ -99,7 +100,8 @@ class InstanceModel(gtk.TreeStore):
 
 class InstanceList(object):
 
-    def __init__(self, obj, id_changed, base_changed, repeat_changed, repeat_offset_changed):
+    def __init__(self, obj, id_changed, base_changed, repeat_changed,
+                 repeat_offset_changed):
         self.__obj = obj
         self.__col = None
         self.__project = None
@@ -110,9 +112,11 @@ class InstanceList(object):
         self.__obj.set_sensitive(False)
 
     def __enable_dnd(self):
-        self.__obj.enable_model_drag_dest([('text/plain', 0, 0)], gtk.gdk.ACTION_DEFAULT|
+        self.__obj.enable_model_drag_dest([('text/plain', 0, 0)],
+                                          gtk.gdk.ACTION_DEFAULT |
                                           gtk.gdk.ACTION_MOVE)
-        self.__obj.connect('drag-data-received', self.__drag_data_received_data)
+        self.__obj.connect('drag-data-received',
+                           self.__drag_data_received_data)
 
     def __drag_data_received_data(self, treeview, context, x, y, selection,
                                   info, etime):
@@ -140,18 +144,21 @@ class InstanceList(object):
         self.__populate()
 
     def __populate(self):
-        if self.__project == None:
+        if self.__project is None:
             return
         for item in self.__project.get_grouping_list():
-            node = self.__model.append(None, row=(item[0], "%x" % item[1], item[1], "", ""))
+            hval = "%x" % item.base
+            node = self.__model.append(None, row=(item.name, hval, item.base,
+                                                  "", ""))
             for entry in self.__project.get_group_map(item[0]):
-                self.__model.append(node, (entry[0], "%x" % entry[1], entry[1],
-                                    "%d" % entry[2], "%x" % entry[3]))
-
+                self.__model.append(node, (entry.set, "%x" % entry.offset,
+                                           entry.offset, "%d" % entry.repeat,
+                                           "%x" % entry.repeat_offset))
 
     def __build_instance_table(self, id_changed, base_changed, repeat_changed,
                                repeat_offset_changed):
-        column = EditableColumn('Group/Instance', id_changed, InstanceModel.ID_COL)
+        column = EditableColumn('Group/Instance', id_changed,
+                                InstanceModel.ID_COL)
         column.set_min_width(250)
         column.set_sort_column_id(InstanceModel.ID_COL)
         self.__obj.append_column(column)
@@ -162,7 +169,8 @@ class InstanceList(object):
         column.set_sort_column_id(InstanceModel.SORT_COL)
         self.__obj.append_column(column)
 
-        column = EditableColumn('Repeat', repeat_changed, InstanceModel.REPEAT_COL)
+        column = EditableColumn('Repeat', repeat_changed,
+                                InstanceModel.REPEAT_COL)
         self.__obj.append_column(column)
 
         column = EditableColumn('Repeat Offset (hex)', repeat_offset_changed,
@@ -177,13 +185,12 @@ class InstanceList(object):
         tree_iter = self.__model.get_iter_first()
         groups = []
         group_map = {}
-        while tree_iter != None:
+        while tree_iter is not None:
             data = self.__model.get(tree_iter, 0, 2)
             groups.append(GroupData(data[0], data[1]))
             group_map[data[0]] = []
 
             child = self.__model.iter_children(tree_iter)
-            
             while child:
                 group_map[data[0]].append(
                     GroupMapData(self.__model.get_value(child, 0),

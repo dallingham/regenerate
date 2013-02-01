@@ -24,10 +24,7 @@ try:
 except ImportError:
     WEBKIT = False
 
-from regenerate.settings.paths import HELP_PATH
 import regenerate.extras
-import os.path
-from preview import html_string
 
 
 class SummaryWindow(object):

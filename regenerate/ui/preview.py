@@ -62,6 +62,7 @@ body{
 </style>
 '''
 
+
 def html_string(text):
     """
     Converts the strng from restructuredText to HTML and prepends

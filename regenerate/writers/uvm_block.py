@@ -429,20 +429,22 @@ class UVM_Block_Registers(WriterBase):
                          has_reset, is_rand, ind_access))
 
         if reg.do_not_test:
-            cfile.write('      uvm_resource_db #(bit)::set({"REG::", get_full_name()}, "NO_REG_HW_RESET_TEST", 1);\n')
+            cfile.write('      uvm_resource_db #(bit)::set({"REG::", '
+                        'get_full_name()}, "NO_REG_HW_RESET_TEST", 1);\n')
         if reg.do_not_test:
-            cfile.write('      uvm_resource_db #(bit)::set({"REG::", get_full_name()}, "NO_REG_BIT_BASH_TEST", 1);\n')
+            cfile.write('      uvm_resource_db #(bit)::set({"REG::", '
+                        'get_full_name()}, "NO_REG_BIT_BASH_TEST", 1);\n')
 
         cfile.write('\n      reset();\n')
         cfile.write('\n    endfunction : build\n\n')
         cfile.write('  endclass : %s\n\n' % rname)
         cfile.write('/*!@}*/\n')
 
-
     def generate_coverage(self, cfile, dbase):
 
         base = dbase.module_name
-        cfile.write("\n\nclass %s_reg_access_wrapper extends uvm_object;\n" % base)
+        cfile.write("\n\n")
+        cfile.write("class %s_reg_access_wrapper extends uvm_object;\n" % base)
         cfile.write("\n   `uvm_object_utils(%s_reg_access_wrapper)\n\n" % base)
         cfile.write("\n   static int s_inst_num = 0;\n\n")
         cfile.write("   covergroup ra_cov(string name) with function sample(uvm_reg_addr_t addr, bit is_read);\n\n")
@@ -451,7 +453,8 @@ class UVM_Block_Registers(WriterBase):
         cfile.write("   ADDR: coverpoint addr {\n")
         for key in dbase.get_keys():
             reg = dbase.get_register(key)
-            cfile.write("     bins r_%s = {'h%x};\n" % (reg.token.lower(), reg.address))
+            cfile.write("     bins r_%s = {'h%x};\n" % (reg.token.lower(),
+                                                        reg.address))
         cfile.write("   }\n\n")
         cfile.write("   RW: coverpoint is_read {\n")
         cfile.write("      bins RD = {1};\n")

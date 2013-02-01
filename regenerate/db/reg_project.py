@@ -68,7 +68,8 @@ class RegProject(object):
                     (self.name, self.short_name, self.company_name))
 
         if self.documentation:
-            ofile.write('  <documentation>%s</documentation>' % escape(self.documentation))
+            ofile.write('  <documentation>%s</documentation>' %
+                        escape(self.documentation))
         if self.__address_maps:
             ofile.write('  <address_maps>\n')
             for key in self.__address_maps:
@@ -80,14 +81,16 @@ class RegProject(object):
         if self.__groupings:
             ofile.write('  <groupings>\n')
             for group in self.__groupings:
-                if self.__grouping_map.has_key(group.name):
-                    ofile.write('    <grouping name="%s" start="%x">\n' % (group.name, group.base))
+                if group.name in self.__grouping_map:
+                    ofile.write('    <grouping name="%s" start="%x">\n' %
+                                (group.name, group.base))
                     for item in self.__grouping_map[group.name]:
                         ofile.write('      <map set="%s" offset="%x" repeat="%s" repeat_offset="%s"/>\n' %
                                     (item.set, item.offset, item.repeat, item.repeat_offset))
                     ofile.write('    </grouping>\n')
                 else:
-                    ofile.write('    <grouping name="%s" start="%x"/>\n' % (group.name, group.base))
+                    ofile.write('    <grouping name="%s" start="%x"/>\n' %
+                                (group.name, group.base))
             ofile.write('  </groupings>\n')
 
         for fname in self.__filelist:
@@ -192,7 +195,7 @@ class RegProject(object):
     def get_grouping_list(self):
         """
         Returns a list of named tuples (GroupData) that defines the groups.
-        The group contents are found by indexing using the Group name 
+        The group contents are found by indexing using the Group name
         (GroupData.name) into the group map.
         """
         return self.__groupings
@@ -208,7 +211,7 @@ class RegProject(object):
 
     def set_grouping(self, index, name, start):
         self.__modified = True
-        self.__groupings[index] = (name, start)
+        self.__groupings[index] = GroupData(name, start)
 
     def add_to_grouping_list(self, name, start):
         self.__modified = True
@@ -288,7 +291,8 @@ class RegProject(object):
         self.__project_exports.append(value)
 
     def start_grouping(self, attrs):
-        self.__groupings.append((attrs['name'], int(attrs['start'], 16)))
+        self.__groupings.append(GroupData(attrs['name'],
+                                          int(attrs['start'], 16)))
         self._current_group = attrs['name']
         self.__grouping_map[self._current_group] = []
 
@@ -300,10 +304,11 @@ class RegProject(object):
         self.__grouping_map[self._current_group].append(data)
 
     def start_address_map(self, attrs):
-        self.__address_maps[attrs['name']] = AddrMapData(int(attrs.get('base',0), 16),
-                                                         int(attrs.get('width', 4)),
-                                                         int(attrs.get('fixed', 1)))
-        
+        data = AddrMapData(int(attrs.get('base', 0), 16),
+                           int(attrs.get('width', 4)),
+                           int(attrs.get('fixed', 1)))
+        self.__address_maps[attrs['name']] = data
+
     def set_modified(self):
         self.__modified = True
 

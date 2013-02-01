@@ -102,8 +102,8 @@ class Register(object):
         return self.__dont_test
 
     do_not_test = property(__get_dont_test, __set_dont_test, None,
-                         "Indicates if the register should not be tested "
-                         "by automatic tests")
+                           "Indicates if the register should not be tested "
+                           "by automatic tests")
 
     def __set_hide(self, val):
         """
@@ -152,8 +152,8 @@ class Register(object):
         return self.__nocode
 
     do_not_generate_code = property(__get_no_code, __set_no_code, None,
-                                 "Indicates if code generation should be "
-                                 "suppressed")
+                                    "Indicates if code generation should be "
+                                    "suppressed")
 
     def __set_token(self, val):
         """

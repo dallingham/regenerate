@@ -89,6 +89,7 @@ def write_strobe(address):
     """
     return "write_r%02x" % address
 
+
 def read_strobe(address):
     """
     Generates the read strobe signal associated with a particular address.
@@ -769,7 +770,7 @@ class Verilog(WriterBase):
         lines.append('%s : %s' % ('Type'.ljust(mlen),
                                   self._type_descr[field.field_type]))
 
-        if  field.width == 1:
+        if field.width == 1:
             lines.append('%s : %d' % ('Bit'.ljust(mlen), stop))
         else:
             lines.append('%s : %d:%d' %
@@ -849,7 +850,7 @@ class Verilog(WriterBase):
                       border="-")
         self._wrln("\nreg prev_write, prev_read;\n\n")
         self._wrln('%s @(posedge %s or %s) begin\n' %
-                          (self._always, self._clock, self._reset_edge))
+                   (self._always, self._clock, self._reset_edge))
         self._wrln('  if (%s) begin\n' % self._reset_condition)
         self._wrln("     prev_write <= 1'b0;\n")
         self._wrln("     prev_read  <= 1'b0;\n")
@@ -869,7 +870,7 @@ class Verilog(WriterBase):
         """
         dout = data_out.lower()
         self._wrln('\n%s @(posedge %s or %s) begin\n' %
-                          (self._always, self._clock, self._reset_edge))
+                   (self._always, self._clock, self._reset_edge))
         self._wrln('  if (%s) begin\n' % self._reset_condition)
         self._wrln("     mux_%s <= %d'h0;\n" % (dout, self._data_width))
         self._wrln('  end else begin\n')
@@ -937,7 +938,7 @@ class Verilog2001(Verilog):
 
         if plist or blist:
             params = ["parameter %s = %d'h%x" % item for item in blist] + \
-                     ["parameter [%d:%d] %s = %d'h%x" % item for item in plist]
+                ["parameter [%d:%d] %s = %d'h%x" % item for item in plist]
             self._wrln('module %s #(\n  ' % self._module )
             self._wrln(",\n    ".join(params))
             self._wrln('\n  )(\n')

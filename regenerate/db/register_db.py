@@ -54,7 +54,7 @@ class RegisterDb(object):
         self.__write_strobe = rules.get('rules', 'write_strobe_default',
                                         DEF_WR_NAME)
         self.__read_strobe = rules.get('rules', 'read_strobe_default',
-                                        DEF_RD_NAME)
+                                       DEF_RD_NAME)
         self.__addr = rules.get('rules', 'address_default', DEF_ADDR_NAME)
         self.__be = rules.get('rules', 'byte_strobe_default', DEF_BE_NAME)
         self.__ack = rules.get('rule', 'ack_default', DEF_ACK_NAME)
@@ -172,7 +172,7 @@ class RegisterDb(object):
         self.__ack = name.strip()
 
     acknowledge_name = property(__get_ack, __set_ack, None,
-                                 "Name of the acknowledge")
+                                "Name of the acknowledge")
 
     def __get_read_strobe(self):
         """
