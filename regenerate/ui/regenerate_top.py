@@ -246,7 +246,8 @@ class MainWindow(object):
             self.__instance_id_changed,
             self.__instance_base_changed,
             self.__instance_repeat_changed,
-            self.__instance_repeat_offset_changed)
+            self.__instance_repeat_offset_changed,
+            self.__instance_format_changed)
 
         self.__build_data_width_box()
         self.__restore_position_and_size()
@@ -664,6 +665,15 @@ class MainWindow(object):
         self.__set_module_definition_warn_flag()
         self.__prj.set_modified()
 
+    def __instance_format_changed(self, cell, path, new_text, col):
+        """
+        Updates the data model when the text value is changed in the model.
+        """
+        if len(path) > 1:
+            self.__instance_model.change_format(path, new_text)
+            self.__set_module_definition_warn_flag()
+            self.__prj.set_modified()
+
     def __instance_repeat_changed(self, cell, path, new_text, col):
         """
         Updates the data model when the text value is changed in the model.
@@ -741,7 +751,7 @@ class MainWindow(object):
 
         if reg:
             from summary_window import SummaryWindow
-            SummaryWindow(self.__builder, reg)
+            SummaryWindow(self.__builder, reg, self.active.name, self.__prj)
 
     def on_build_action_activate(self, obj):
         from build import Build

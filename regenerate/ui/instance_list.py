@@ -29,10 +29,11 @@ class InstanceModel(gtk.TreeStore):
     symbolic ID name and the base address.
     """
 
-    (ID_COL, BASE_COL, SORT_COL, REPEAT_COL, REPEAT_OFF_COL) = range(5)
+    (ID_COL, BASE_COL, SORT_COL, RPT_COL, RPT_OFF_COL, FORMAT_COL) = range(6)
 
     def __init__(self):
-        gtk.TreeStore.__init__(self, str, str, gobject.TYPE_UINT64, str, str)
+        gtk.TreeStore.__init__(self, str, str, gobject.TYPE_UINT64, str,
+                               str, str)
 
     def change_id(self, path, text):
         """
@@ -40,6 +41,13 @@ class InstanceModel(gtk.TreeStore):
         """
         node = self.get_iter(path)
         self.set_value(node, InstanceModel.ID_COL, text)
+
+    def change_format(self, path, text):
+        """
+        Called when the ID of an instance has been edited in the InstanceList
+        """
+        node = self.get_iter(path)
+        self.set_value(node, InstanceModel.FORMAT_COL, text)
 
     def change_base(self, path, text):
         """
@@ -61,7 +69,7 @@ class InstanceModel(gtk.TreeStore):
         node = self.get_iter(path)
         try:
             int(text)
-            self.set_value(node, InstanceModel.REPEAT_COL, text)
+            self.set_value(node, InstanceModel.RPT_COL, text)
         except ValueError:
             return
 
@@ -73,7 +81,7 @@ class InstanceModel(gtk.TreeStore):
         node = self.get_iter(path)
         try:
             value = int(text, 16)
-            self.set_value(node, InstanceModel.REPEAT_OFF_COL, "%x" % value)
+            self.set_value(node, InstanceModel.RPT_OFF_COL, "%x" % value)
         except ValueError:
             return
 
@@ -82,14 +90,14 @@ class InstanceModel(gtk.TreeStore):
         Adds a new instance to the model. It is not added to the database until
         either the change_id or change_base is called.
         """
-        node = self.append(None, row=('', '0', 0, "", ""))
+        node = self.append(None, row=('', '0', 0, "", "", ""))
         return self.get_path(node)
 
     def append_instance(self, inst):
         """
         Adds the specified instance to the InstanceList
         """
-        self.append(row=(inst[0], "%08x" % inst[1], inst[1], "1", "0"))
+        self.append(row=(inst[0], "%08x" % inst[1], inst[1], "1", "0", ""))
 
     def get_values(self):
         """
@@ -101,13 +109,13 @@ class InstanceModel(gtk.TreeStore):
 class InstanceList(object):
 
     def __init__(self, obj, id_changed, base_changed, repeat_changed,
-                 repeat_offset_changed):
+                 repeat_offset_changed, format_changed):
         self.__obj = obj
         self.__col = None
         self.__project = None
         self.__model = None
         self.__build_instance_table(id_changed, base_changed, repeat_changed,
-                                    repeat_offset_changed)
+                                    repeat_offset_changed, format_changed)
         self.__enable_dnd()
         self.__obj.set_sensitive(False)
 
@@ -123,7 +131,7 @@ class InstanceList(object):
         model = treeview.get_model()
         data = selection.data
         drop_info = treeview.get_dest_row_at_pos(x, y)
-        row_data = [data, "0", 0, "1", "0"]
+        row_data = [data, "0", 0, "1", "0", ""]
         if drop_info:
             path, position = drop_info
             if len(path) == 1:
@@ -149,14 +157,15 @@ class InstanceList(object):
         for item in self.__project.get_grouping_list():
             hval = "%x" % item.base
             node = self.__model.append(None, row=(item.name, hval, item.base,
-                                                  "", ""))
+                                                  "", "", ""))
             for entry in self.__project.get_group_map(item[0]):
                 self.__model.append(node, (entry.set, "%x" % entry.offset,
                                            entry.offset, "%d" % entry.repeat,
-                                           "%x" % entry.repeat_offset))
+                                           "%x" % entry.repeat_offset,
+                                           entry.format))
 
     def __build_instance_table(self, id_changed, base_changed, repeat_changed,
-                               repeat_offset_changed):
+                               repeat_offset_changed, format_changed):
         column = EditableColumn('Group/Instance', id_changed,
                                 InstanceModel.ID_COL)
         column.set_min_width(250)
@@ -170,12 +179,19 @@ class InstanceList(object):
         self.__obj.append_column(column)
 
         column = EditableColumn('Repeat', repeat_changed,
-                                InstanceModel.REPEAT_COL)
+                                InstanceModel.RPT_COL)
         self.__obj.append_column(column)
 
         column = EditableColumn('Repeat Offset (hex)', repeat_offset_changed,
-                                InstanceModel.REPEAT_OFF_COL)
+                                InstanceModel.RPT_OFF_COL)
         self.__obj.append_column(column)
+
+        column = EditableColumn('ID Format', format_changed,
+                                InstanceModel.FORMAT_COL)
+        column.set_min_width(250)
+        column.set_sort_column_id(InstanceModel.FORMAT_COL)
+        self.__obj.append_column(column)
+        self.__col = column
 
     def set_model(self, model):
         self.__obj.set_model(model)
@@ -196,7 +212,8 @@ class InstanceList(object):
                     GroupMapData(self.__model.get_value(child, 0),
                                  self.__model.get_value(child, 2),
                                  int(self.__model.get_value(child, 3)),
-                                 int(self.__model.get_value(child, 4), 16)
+                                 int(self.__model.get_value(child, 4), 16),
+                                 self.__model.get_value(child, 5)
                                  ))
                 child = self.__model.iter_next(child)
             tree_iter = self.__model.iter_next(tree_iter)

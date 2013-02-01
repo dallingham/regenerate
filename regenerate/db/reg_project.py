@@ -28,7 +28,7 @@ from regenerate.db import LOGGER
 from collections import namedtuple
 
 AddrMapData = namedtuple("AddrMapData", "base width fixed")
-GroupMapData = namedtuple("GroupMapData", "set offset repeat repeat_offset")
+GroupMapData = namedtuple("GroupMapData", "set offset repeat repeat_offset format")
 GroupData = namedtuple("GroupData", "name base")
 
 
@@ -85,8 +85,12 @@ class RegProject(object):
                     ofile.write('    <grouping name="%s" start="%x">\n' %
                                 (group.name, group.base))
                     for item in self.__grouping_map[group.name]:
-                        ofile.write('      <map set="%s" offset="%x" repeat="%s" repeat_offset="%s"/>\n' %
+                        ofile.write('      <map set="%s" offset="%x" repeat="%s" repeat_offset="%s"' %
                                     (item.set, item.offset, item.repeat, item.repeat_offset))
+                        if item.format:
+                            ofile.write(' format="%s"/>\n' % item.format)
+                        else:
+                            ofile.write("/>\n")
                     ofile.write('    </grouping>\n')
                 else:
                     ofile.write('    <grouping name="%s" start="%x"/>\n' %
@@ -300,7 +304,8 @@ class RegProject(object):
         data = GroupMapData(attrs['set'],
                             int(attrs['offset'], 16),
                             int(attrs['repeat']),
-                            int(attrs['repeat_offset']))
+                            int(attrs['repeat_offset']),
+                            attrs.get("format", ""))
         self.__grouping_map[self._current_group].append(data)
 
     def start_address_map(self, attrs):
