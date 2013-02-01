@@ -265,9 +265,8 @@ class Build(object):
         to add to the builder.
         """
         optlist = [("%s (%s)" % item[EXP_TYPE], True, item[EXP_EXT])
-                   for item in EXPORTERS] + 
-                   [("%s (%s)" % item[EXP_TYPE], False, item[EXP_EXT])
-                    for item in PRJ_EXPORTERS]
+                   for item in EXPORTERS] + [("%s (%s)" % item[EXP_TYPE], False, item[EXP_EXT])
+                                             for item in PRJ_EXPORTERS]
         reglist = [os.path.splitext(os.path.basename(i))[0]
                    for i in self.__project.get_register_set()]
         ExportAssistant(self.__project.short_name, optlist, reglist,
