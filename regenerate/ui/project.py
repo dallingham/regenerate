@@ -109,12 +109,22 @@ class ProjectList(object):
         self.__model = None
         self.__build_prj_window()
 
+        self.__obj.enable_model_drag_source(gtk.gdk.BUTTON1_MASK, [('text/plain', 0, 0)],
+                                            gtk.gdk.ACTION_DEFAULT | gtk.gdk.ACTION_MOVE)
+        self.__obj.connect('drag-data-get', self.drag_data_get)
+
         self.factory = gtk.IconFactory()
         filename = os.path.join(INSTALL_PATH, "media", "ModifiedIcon.png")
         pixbuf = gtk.gdk.pixbuf_new_from_file(filename)
         iconset = gtk.IconSet(pixbuf)
         self.factory.add('out-of-date', iconset)
         self.factory.add_default()
+
+    def drag_data_get(self, treeview, context, selection, target_id, etime):
+        tselection = treeview.get_selection()
+        model, tree_iter = tselection.get_selected()
+        data = model.get_value(tree_iter, 0)
+        selection.set(selection.target, 8, data)
 
     def set_model(self, model):
         self.__model = model

@@ -53,9 +53,9 @@ EXPORTERS.append((Verilog, ("RTL", "Verilog 95"), "Verilog files",
 #  UVM Register Exporting
 #
 #-----------------------------------------------------------------------------
-from uvm import UVM_Registers
-EXPORTERS.append((UVM_Registers, ("Test", "UVM Registers"),
-                  "SystemVerilog files", ".sv", 'uvm-system-verilog'))
+#from uvm import UVM_Registers
+#EXPORTERS.append((UVM_Registers, ("Test", "UVM Registers"),
+#                  "SystemVerilog files", ".sv", 'uvm-system-verilog'))
 
 #-----------------------------------------------------------------------------
 #
@@ -177,3 +177,8 @@ except ImportError:
 
 PRJ_EXPORTERS.append((OdtSpec, ("Specification", "OpenDocument"),
                       "OpenDocument files", ".odt", 'spec-odt'))
+
+from uvm_block import UVM_Block_Registers
+
+PRJ_EXPORTERS.append((UVM_Block_Registers, ("Test", "UVM Registers"),
+                      "SystemVerilog files", ".sv", 'proj-uvm'))

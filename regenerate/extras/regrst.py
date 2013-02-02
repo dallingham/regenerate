@@ -23,10 +23,19 @@ Docutils is used to convert the output to the desired format. Currently, only
 HTML is supported now.
 """
 
-from docutils.core import publish_parts
+try:
+    from docutils.core import publish_parts
+    _HTML = True
+except:
+    _HTML = False
+
 from cStringIO import StringIO
 from regenerate.db import TYPES
 import re
+from token import full_token, in_groups
+
+# Formating token names
+#
 
 TYPE_STR = {}
 for i in TYPES:
@@ -79,10 +88,13 @@ class RegisterRst:
     Produces documentation from a register definition
     """
 
-    def __init__(self, register, highlight=None, prefix_list=[]):
-        self.reg = register
-        self.prefix_list = prefix_list
-        self.highlight = highlight
+    def __init__(self, register, regset_name=None, project=None,
+                 highlight=None, prefix_list=[]):
+        self._reg = register
+        self._prefix_list = prefix_list
+        self._highlight = highlight
+        self._project = project
+        self._regset_name = regset_name
 
     def html_css(self):
         """
@@ -91,8 +103,8 @@ class RegisterRst:
         return CSS + self.html()
 
     def text(self, line):
-        if self.highlight:
-            return re.sub(self.highlight, ":search:``%s``" % self.highlight,
+        if self._highlight:
+            return re.sub(self._highlight, ":search:``%s``" % self._highlight,
                           line)
         else:
             return line
@@ -102,21 +114,55 @@ class RegisterRst:
         Returns the defintion of the register in RestructuredText format
         """
         o = StringIO()
-        rlen = len(self.reg.register_name) + 2
+        rlen = len(self._reg.register_name) + 2
         o.write("%s\n" % ("=" * rlen))
-        o.write(" " + self.text(self.reg.register_name))
+        o.write(" " + self.text(self._reg.register_name))
         o.write("\n%s\n" % ("=" * rlen))
-        o.write("\n%s\n\n" % self.text(self.reg.description))
-        if self.prefix_list:
-            pass
-        else:
+        o.write("\n%s\n\n" % self.text(self._reg.description))
+        o.write(".. list-table::\n")
+        o.write("   :class: summary\n\n")
+        o.write("   * - Token\n")
+        o.write("     - %s\n" % self.text(self._reg.token))
+        o.write("   * - Width\n")
+        o.write("     - %0d bits\n\n\n" % self._reg.width)
+
+        addr_maps = self._project.get_address_maps().keys()
+
+        if addr_maps:
+            o.write("\n\nAddresses\n---------\n")
             o.write(".. list-table::\n")
+            o.write("   :header-rows: 1\n")
             o.write("   :class: summary\n\n")
-            o.write("   * - Width\n")
-            o.write("     - %0d bits\n" % self.reg.width)
-            o.write("   * - Offset\n")
-            o.write("     - %s\n\n\n" % self.text("0x%08x" %
-                                                  self.reg.address))
+            o.write("   * - ID\n")
+            o.write("     - Offset\n")
+            for amap in addr_maps:
+                o.write("     - %s\n" % self.text(amap))
+            for inst in in_groups(self._regset_name, self._project):
+                if inst.repeat == 1:
+                    name = full_token(inst.group, self._reg.token,
+                                      self._regset_name, -1,
+                                      inst.format)
+                    o.write("   * - %s\n" % self.text(name))
+                    o.write("     - %s\n" % self.text("0x%08x" %
+                                                      self._reg.address))
+                    addr = self._reg.address + inst.offset + inst.base
+                    for map_name in addr_maps:
+                        faddr = addr + self._project.get_address_base(map_name)
+                        o.write("     - %s\n" % self.text("0x%08x" % faddr))
+                else:
+                    for i in range(0, inst.repeat):
+                        name = full_token(inst.group, self._reg.token,
+                                          self._regset_name, i,
+                                          inst.format)
+                        o.write("   * - %s\n" % self.text(name))
+                        addr = self._reg.address + inst.base + \
+                            inst.offset  + (i * inst.roffset)
+                        o.write("     - %s\n" % self.text("0x%08x" % addr))
+                        for map_name in addr_maps:
+                            faddr = addr + self._project.get_address_base(map_name)
+                            o.write("     - %s\n" % self.text("0x%08x" % faddr))
+            o.write("\n\n")
+
         o.write("Bit fields\n---------------\n")
         o.write(".. list-table::\n")
         o.write("   :widths: 10 10 5 25 50\n")
@@ -127,10 +173,10 @@ class RegisterRst:
         o.write("     - Name\n")
         o.write("     - Description\n")
 
-        last_index = self.reg.width - 1
+        last_index = self._reg.width - 1
 
-        for key in reversed(self.reg.get_bit_field_keys()):
-            field = self.reg.get_bit_field(key)
+        for key in reversed(self._reg.get_bit_field_keys()):
+            field = self._reg.get_bit_field(key)
             start = field.start_position
             stop = field.stop_position
 
@@ -165,8 +211,11 @@ class RegisterRst:
         """
         Produces a HTML subsection of the document (no header/body).
         """
-        parts = publish_parts(self.restructured_text(), writer_name="html")
-        return parts['html_title'] + parts['html_subtitle'] + parts['body']
+        if _HTML:
+            parts = publish_parts(self.restructured_text(), writer_name="html")
+            return parts['html_title'] + parts['html_subtitle'] + parts['body']
+        else:
+            return "<pre>" + self.restructured_text() + "</pre>"
 
 
 def display_reserved(o, stop, start):
