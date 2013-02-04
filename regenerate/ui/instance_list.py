@@ -166,7 +166,7 @@ class InstanceList(object):
 
     def __build_instance_table(self, id_changed, base_changed, repeat_changed,
                                repeat_offset_changed, format_changed):
-        column = EditableColumn('Group/Instance', id_changed,
+        column = EditableColumn('Subsystem/Instance', id_changed,
                                 InstanceModel.ID_COL)
         column.set_min_width(250)
         column.set_sort_column_id(InstanceModel.ID_COL)

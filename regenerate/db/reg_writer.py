@@ -24,11 +24,7 @@ Writes the XML file containing all the information in the register database
 import time
 import os
 from xml.sax.saxutils import escape
-from regenerate.db import BitField, TYPES
-
-CONVERT_TYPE = {}
-for i in TYPES:
-    CONVERT_TYPE[i.type] = i.id
+from regenerate.db import BitField, TYPE_TO_ID
 
 
 def create_backup_file(filename):
@@ -180,7 +176,7 @@ def write_signal_info(ofile, field):
     """
     ofile.write('      <signal enb="%d" static="%d" '
                 % (field.use_output_enable, field.output_is_static))
-    ofile.write('field_type="%s" ' % CONVERT_TYPE[field.field_type])
+    ofile.write('field_type="%s" ' % TYPE_TO_ID[field.field_type])
     ofile.write('side_effect="%d" ' % field.output_has_side_effect)
     ofile.write('volatile="%d">' % field.volatile)
     ofile.write('%s</signal>\n' % field.output_signal)

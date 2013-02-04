@@ -30,16 +30,9 @@ except:
     _HTML = False
 
 from cStringIO import StringIO
-from regenerate.db import TYPES
+from regenerate.db import TYPE_TO_SIMPLE_TYPE
 import re
-from token import full_token, in_groups
-
-# Formating token names
-#
-
-TYPE_STR = {}
-for i in TYPES:
-    TYPE_STR[i.type] = i.simple_type
+from token import full_token, in_groups, uvm_name
 
 
 CSS = '''
@@ -89,12 +82,13 @@ class RegisterRst:
     """
 
     def __init__(self, register, regset_name=None, project=None,
-                 highlight=None, prefix_list=[]):
+                 highlight=None, show_defines=True, show_uvm=False):
         self._reg = register
-        self._prefix_list = prefix_list
         self._highlight = highlight
         self._project = project
         self._regset_name = regset_name
+        self._show_defines = show_defines
+        self._show_uvm = show_uvm
 
     def html_css(self):
         """
@@ -126,42 +120,11 @@ class RegisterRst:
         o.write("   * - Width\n")
         o.write("     - %0d bits\n\n\n" % self._reg.width)
 
-        addr_maps = self._project.get_address_maps().keys()
+        if self._show_defines:
+            self._write_defines(o)
 
-        if addr_maps:
-            o.write("\n\nAddresses\n---------\n")
-            o.write(".. list-table::\n")
-            o.write("   :header-rows: 1\n")
-            o.write("   :class: summary\n\n")
-            o.write("   * - ID\n")
-            o.write("     - Offset\n")
-            for amap in addr_maps:
-                o.write("     - %s\n" % self.text(amap))
-            for inst in in_groups(self._regset_name, self._project):
-                if inst.repeat == 1:
-                    name = full_token(inst.group, self._reg.token,
-                                      self._regset_name, -1,
-                                      inst.format)
-                    o.write("   * - %s\n" % self.text(name))
-                    o.write("     - %s\n" % self.text("0x%08x" %
-                                                      self._reg.address))
-                    addr = self._reg.address + inst.offset + inst.base
-                    for map_name in addr_maps:
-                        faddr = addr + self._project.get_address_base(map_name)
-                        o.write("     - %s\n" % self.text("0x%08x" % faddr))
-                else:
-                    for i in range(0, inst.repeat):
-                        name = full_token(inst.group, self._reg.token,
-                                          self._regset_name, i,
-                                          inst.format)
-                        o.write("   * - %s\n" % self.text(name))
-                        addr = self._reg.address + inst.base + \
-                            inst.offset  + (i * inst.roffset)
-                        o.write("     - %s\n" % self.text("0x%08x" % addr))
-                        for map_name in addr_maps:
-                            faddr = addr + self._project.get_address_base(map_name)
-                            o.write("     - %s\n" % self.text("0x%08x" % faddr))
-            o.write("\n\n")
+        if self._show_uvm:
+            self._write_uvm(o)
 
         o.write("Bit fields\n---------------\n")
         o.write(".. list-table::\n")
@@ -189,7 +152,7 @@ class RegisterRst:
                 o.write("   * - ``%d:%d``\n" % (stop, start))
             o.write("     - ``0x%x``\n" % field.reset_value)
             o.write("     - ``%s``\n" %
-                    self.text(TYPE_STR[field.field_type]))
+                    self.text(TYPE_TO_SIMPLE_TYPE[field.field_type]))
             o.write("     - ``%s``\n" % self.text(field.field_name))
             descr = self.text(field.description)
             marked_descr = "\n       ".join(descr.split("\n"))
@@ -206,6 +169,81 @@ class RegisterRst:
 
         o.write("\n")
         return o.getvalue()
+
+    def _write_defines(self, o):
+
+        addr_maps = self._project.get_address_maps().keys()
+        if not addr_maps:
+            return
+
+        o.write("\n\nAddresses\n---------\n")
+        o.write(".. list-table::\n")
+        o.write("   :header-rows: 1\n")
+        o.write("   :class: summary\n\n")
+        o.write("   * - ID\n")
+        o.write("     - Offset\n")
+        for amap in addr_maps:
+            o.write("     - %s\n" % self.text(amap))
+        for inst in in_groups(self._regset_name, self._project):
+            if inst.repeat == 1:
+                name = full_token(inst.group, self._reg.token,
+                                  self._regset_name, -1,
+                                  inst.format)
+                o.write("   * - ``%s``\n" % self.text(name))
+                o.write("     - ``%s``\n" % self.text("0x%08x" %
+                                                      self._reg.address))
+                addr = self._reg.address + inst.offset + inst.base
+                for map_name in addr_maps:
+                    faddr = addr + self._project.get_address_base(map_name)
+                    o.write("     - ``%s``\n" % self.text("0x%08x" % faddr))
+            else:
+                for i in range(0, inst.repeat):
+                    name = full_token(inst.group, self._reg.token,
+                                      self._regset_name, i,
+                                      inst.format)
+                    o.write("   * - ``%s``\n" % self.text(name))
+                    addr = self._reg.address + inst.base + \
+                           inst.offset  + (i * inst.roffset)
+                    o.write("     - ``%s``\n" % self.text("0x%08x" % addr))
+                    for map_name in addr_maps:
+                        faddr = addr + self._project.get_address_base(map_name)
+                        o.write("     - ``%s``\n" % self.text("0x%08x" %
+                                                              faddr))
+        o.write("\n\n")
+
+    def _write_uvm(self, o):
+
+        addr_maps = self._project.get_address_maps().keys()
+        if not addr_maps:
+            return
+
+        o.write("\n\nUVM names\n---------\n")
+        o.write(".. list-table::\n")
+        o.write("   :header-rows: 1\n")
+        o.write("   :class: summary\n\n")
+        o.write("   * - ID\n")
+        o.write("     - UVM name\n")
+        for inst in in_groups(self._regset_name, self._project):
+            if inst.repeat == 1:
+                name = full_token(inst.group, self._reg.token,
+                                  self._regset_name, -1,
+                                  inst.format)
+                o.write("   * - ``%s``\n" % self.text(name))
+                name = uvm_name(inst.group, self._reg.token,
+                                self._regset_name, -1,
+                                inst.format)
+                o.write("     - ``%s``\n" % self.text(name))
+            else:
+                for i in range(0, inst.repeat):
+                    name = full_token(inst.group, self._reg.token,
+                                      self._regset_name, i,
+                                      inst.format)
+                    o.write("   * - ``%s``\n" % self.text(name))
+                    name = uvm_name(inst.group, self._reg.token,
+                                    self._regset_name, i,
+                                    inst.format)
+                    o.write("     - ``%s``\n" % self.text(name))
+        o.write("\n\n")
 
     def html(self):
         """

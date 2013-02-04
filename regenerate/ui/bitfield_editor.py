@@ -28,7 +28,8 @@ import pango
 import os
 from spell import Spell
 
-from regenerate.db import BitField, TYPES
+from regenerate.db import (BitField, TYPES, TYPE_TO_ID,
+                           TYPE_TO_DESCR, TYPE_TO_ENABLE)
 from regenerate.settings.paths import GLADE_BIT, INSTALL_PATH
 from error_dialogs import ErrorMsg
 from regenerate.writers.verilog_reg_def import REG
@@ -40,14 +41,6 @@ except ImportError:
     USE_HIGHLIGHT = False
 
 VALID_SIGNAL = re.compile("^[A-Za-z][A-Za-z0-9_]*$")
-
-TYPE2STR = {}
-for i in TYPES:
-    TYPE2STR[i.type] = i.description
-
-TYPE2ID = {}
-for i in TYPES:
-    TYPE2ID[i.type] = i.id
 
 TYPE_ENB = {}
 for i in TYPES:
@@ -90,8 +83,8 @@ class BitFieldEditor(object):
 
         self.__top_window.set_icon_from_file(
             os.path.join(INSTALL_PATH, "media", "flop.svg"))
-        self.__input_obj.set_sensitive(TYPE_ENB[bit_field.field_type][0])
-        self.__control_obj.set_sensitive(TYPE_ENB[bit_field.field_type][1])
+        self.__input_obj.set_sensitive(TYPE_TO_ENABLE[bit_field.field_type][0])
+        self.__control_obj.set_sensitive(TYPE_TO_ENABLE[bit_field.field_type][1])
 
         pango_font = pango.FontDescription("monospace")
         self.__builder.get_object("descr").modify_font(pango_font)
@@ -122,7 +115,7 @@ class BitFieldEditor(object):
                         'BE_LEVEL': be_level,
                         'RESET_CONDITION': condition,
                         'RESET_EDGE': edge }
-            text = REG[TYPE2ID[bit_field.field_type].lower()] % name_map
+            text = REG[TYPE_TO_ID[bit_field.field_type].lower()] % name_map
         except KeyError:
             text = ""
 
@@ -153,17 +146,17 @@ class BitFieldEditor(object):
             name = "%s[%d:%d]" % (bit_field.field_name, stop, start)
 
         self.__name_obj.set_text(name)
-        self.__type_obj.set_text(TYPE2STR[bit_field.field_type])
+        self.__type_obj.set_text(TYPE_TO_DESCR[bit_field.field_type])
 
         if bit_field.reset_type == BitField.RESET_NUMERIC:
             self.__reset_obj.set_text("%x" % bit_field.reset_value)
         else:
             self.__reset_obj.set_text(bit_field.reset_parameter)
 
-        if TYPE_ENB[bit_field.field_type][0] and not bit_field.input_signal:
+        if TYPE_TO_ENABLE[bit_field.field_type][0] and not bit_field.input_signal:
             bit_field.input_signal = "%s_DATA_IN" % bit_field.field_name
 
-        if TYPE_ENB[bit_field.field_type][1] and not bit_field.control_signal:
+        if TYPE_TO_ENABLE[bit_field.field_type][1] and not bit_field.control_signal:
             bit_field.control_signal = "%s_LOAD" % bit_field.field_name
 
         self.__output_obj.set_text(bit_field.output_signal)

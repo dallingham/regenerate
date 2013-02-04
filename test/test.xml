@@ -1,9 +1,6 @@
 <?xml version="1.0"?>
-<module name="test" title="test" owner="">
+<module name="test" title="Test Case for Regenerate" owner="John Bigboote">
   <base addr_width="32" data_width="32"/>
-  <instances>
-    <instance id="INSTANCE" base="0"/>
-  </instances>
   <ports>
     <addr>ADDR</addr>
     <data_in>WDATA</data_in>
