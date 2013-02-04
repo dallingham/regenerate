@@ -253,7 +253,6 @@ class Build(object):
                     db_list = [i[DB_MAP_DBASE].db
                                for i in self.__dbmap.values()]
                     gen = writer_class(self.__project, db_list)
-                gen.set_project(self.__project)
                 gen.write(dest)
                 item[MDL_MOD] = False
             except IOError, msg:
