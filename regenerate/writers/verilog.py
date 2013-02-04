@@ -664,9 +664,9 @@ class Verilog(WriterBase):
                 if self._has_oneshot[field.field_type]:
                     boundaries = break_on_byte_boundaries(field.start_position,
                                                           field.stop_position)
-                    for (start, stop) in boundaries:
+                    for pos in boundaries:
                         val = "wire %-10s %s;" % ("",
-                                                  oneshot_name(base, start))
+                                                  oneshot_name(base, pos[0]))
                         local_regs.append(val)
 
         if local_regs:
@@ -725,8 +725,8 @@ class Verilog(WriterBase):
                     base = get_base_signal(address, field)
                     boundaries = break_on_byte_boundaries(field.start_position,
                                                           field.stop_position)
-                    names = " | ".join([oneshot_name(base, start)
-                                        for (start, stop) in boundaries])
+                    names = " | ".join([oneshot_name(base, pos[0])
+                                        for pos in boundaries])
                     self._wrln(fmt_string  % (
                         oneshot_name(field.output_signal), names))
                 if not field.use_output_enable:
@@ -846,6 +846,9 @@ class Verilog(WriterBase):
                                self._addr_width, self._data_out)
 
     def _write_acknowledge(self):
+        """
+        Writes the acknowledge signal generate logic.
+        """
         self._comment(["Ensure that internal write is one clock wide"],
                       border="-")
         self._wrln("\nreg prev_write, prev_read;\n\n")

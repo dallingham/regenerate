@@ -102,3 +102,23 @@ TYPES = (
                  "WO", False, False, True, True, False, False, False,
                  "Write Only", "WO"),
     )
+
+TYPE_TO_ID = {}
+for __i in TYPES:
+    TYPE_TO_ID[__i.type] = __i.id
+
+ID_TO_TYPE = {}
+for __i in TYPES:
+    ID_TO_TYPE[__i.id] = __i.type
+
+TYPE_TO_SIMPLE_TYPE = {}
+for __i in TYPES:
+    TYPE_TO_SIMPLE_TYPE[__i.type] = __i.simple_type
+
+TYPE_TO_DESCR = {}
+for __i in TYPES:
+    TYPE_TO_DESCR[__i.type] = __i.description
+
+TYPE_TO_ENABLE = {}
+for i in TYPES:
+    TYPE_TO_ENABLE[i.type] = (i.input, i.control)
