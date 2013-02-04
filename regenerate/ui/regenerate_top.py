@@ -22,7 +22,7 @@ regenerate
 
    regenerate is a program for managing the registers in the design. It allows
    you to build a database describing the registers, which can then be used
-   to generate documenation, Verilog RTL descriptions, and support files.
+   to generate documentation, Verilog RTL descriptions, and support files.
 
 """
 
@@ -34,39 +34,26 @@ import os
 import copy
 import re
 import string
-from properties import Properties
+import logging
+import spell
 from preferences import Preferences
 from bit_list import BitModel, BitList, bits, reset_value
 from register_list import RegisterModel, RegisterList, build_define
 from instance_list import InstanceModel, InstanceList
 from regenerate.db import (RegWriter, RegisterDb, Register,
                            BitField, RegProject, LOGGER, TYPES)
+from columns import EditableColumn, ToggleColumn, ComboMapColumn
 from regenerate.importers import IMPORTERS
 from regenerate.settings.paths import GLADE_TOP, INSTALL_PATH
 from regenerate.settings import ini
 from regenerate import PROGRAM_VERSION, PROGRAM_NAME
-import regenerate.extras
 from error_dialogs import ErrorMsg, WarnMsg, Question
 from project import ProjectModel, ProjectList, update_file
-import logging
-from preview import html_string
-from spell import Spell
-
-# Attempt to load the optional WebKit and docutils package. Webkit provides
-# an HTML canvas that we can use to display formatted text, and docutils
-# provides the reStructuredText interface that will generate HTML from
-# structured text
-try:
-    import webkit
-    WEBKIT = True
-except ImportError:
-    WEBKIT = False
-    LOGGER.warning("Webkit is not installed, preview of formatted "
-                   "comments will not be available")
+from preview_editor import PreviewEditor, PREVIEW_ENABLED
 
 TYPE_ENB = {}
-for i in TYPES:
-    TYPE_ENB[i.type] = (i.input, i.control)
+for data_type in TYPES:
+    TYPE_ENB[data_type.type] = (data_type.input, data_type.control)
 
 
 DEF_EXT = '.rprj'
@@ -76,12 +63,28 @@ ADDR_FIELD = 1
 NAME_FIELD = 2
 TOKEN_FIELD = 3
 
+(AM_NAME, AM_ADDR, AM_FIXED, AM_WIDTH) = range(4)
+
 # Regular expressions to check the validity of entered names. This should
 # probably be configurable, but has not been implemented yet.
 
 VALID_SIGNAL = re.compile("^[A-Za-z][A-Za-z0-9_]*$")
 VALID_BITS = re.compile("^\s*[\(\[]?(\d+)(\s*[-:]\s*(\d+))?[\)\]]?\s*$")
 REGNAME = re.compile("^(.*)(\d+)(.*)$")
+
+SIZE2STR = (
+    ("32-bits", 4),
+    ("64-bits", 8))
+
+INT2SIZE = {
+    4: "32-bits",
+    8: "64-bits",
+    }
+
+STR2SIZE = {
+    "32-bits": 4,
+    "64-bits": 8,
+    }
 
 
 class StatusHandler(logging.Handler):  # Inherit from logging.Handler
@@ -108,14 +111,13 @@ class DbaseStatus(object):
     """
 
     def __init__(self, db, filename, name, reg_model, modelsort,
-                 modelfilter, bit_model, inst_model):
+                 modelfilter, bit_model):
         self.db = db
         self.path = filename
         self.reg_model = reg_model
         self.modelfilter = modelfilter
         self.modelsort = modelsort
         self.bit_field_list = bit_model
-        self.instance_list = inst_model
         self.name = name
         self.modified = False
         self.reg_select = None
@@ -131,12 +133,11 @@ class MainWindow(object):
     def __init__(self):
 
         self.__model_search_fields = (ADDR_FIELD, NAME_FIELD, TOKEN_FIELD)
-        self.__project = None
+        self.__prj = None
         self.__builder = gtk.Builder()
         self.__builder.add_from_file(GLADE_TOP)
         self.__build_actions()
         self.__top_window = self.__builder.get_object("regenerate")
-        self.html_window = None
         try:
             self.__top_window.set_icon_from_file(
                 os.path.join(INSTALL_PATH, "media", "flop.svg"))
@@ -156,7 +157,7 @@ class MainWindow(object):
 
         self.__overview_buf = self.__builder.get_object('overview_buffer')
         self.__overview_buf.connect('changed', self.__overview_changed)
-        Spell(self.__builder.get_object('overview'))
+        spell.Spell(self.__builder.get_object('overview'))
 
         self.__prj_obj = ProjectList(self.__builder.get_object("project_list"),
                                      self.__prj_selection_changed)
@@ -172,6 +173,8 @@ class MainWindow(object):
         self.__warn_reg_descr = self.__builder.get_object('reg_descr_warn')
         self.__preview_toggle = self.__builder.get_object('preview')
 
+        self.build_project_tab()
+
         self.__filter_text = ""
 
         self.__reglist_obj = RegisterList(
@@ -182,19 +185,15 @@ class MainWindow(object):
         self.use_svn = bool(int(ini.get('user', 'use_svn', 0)))
         self.use_preview = bool(int(ini.get('user', 'use_preview', 0)))
 
-        if WEBKIT:
-            self.__webkit = webkit.WebView()
-            self.__webkit_reg = webkit.WebView()
-
-            self.__wk_container = self.__builder.get_object('scroll_webkit')
-            self.__wk_container.add(self.__webkit)
-            self.__wk_container.hide()
-
-            self.__reg_webkit = self.__builder.get_object('scroll_reg_webkit')
-            self.__reg_webkit.add(self.__webkit_reg)
-            self.__reg_webkit.hide()
-
-        self.__update_wk = False
+        self.__prj_preview = PreviewEditor(
+            self.__builder.get_object('project_doc').get_buffer(),
+            self.__builder.get_object('project_webkit'))
+        self.__regset_preview = PreviewEditor(
+            self.__builder.get_object('overview_buffer'),
+            self.__builder.get_object('scroll_webkit'))
+        self.__regdescr_preview = PreviewEditor(
+            self.__builder.get_object('register_text_buffer'),
+            self.__builder.get_object('scroll_reg_webkit'))
 
         self.__filename = None
         self.__modified = False
@@ -212,7 +211,7 @@ class MainWindow(object):
         self.__reg_text_buf.connect('changed', self.__reg_description_changed)
         self.__reg_descript = self.__builder.get_object('register_description')
         self.__reg_descript.modify_font(pango_font)
-        Spell(self.__reg_descript)
+        spell.Spell(self.__reg_descript)
 
         self.__prj_model = ProjectModel(self.use_svn)
         self.__prj_obj.set_model(self.__prj_model)
@@ -245,7 +244,10 @@ class MainWindow(object):
         self.__instance_obj = InstanceList(
             self.__builder.get_object('instances'),
             self.__instance_id_changed,
-            self.__instance_base_changed)
+            self.__instance_base_changed,
+            self.__instance_repeat_changed,
+            self.__instance_repeat_offset_changed,
+            self.__instance_format_changed)
 
         self.__build_data_width_box()
         self.__restore_position_and_size()
@@ -255,6 +257,179 @@ class MainWindow(object):
         self.__top_window.show()
         self.__builder.connect_signals(self)
         self.__build_import_menu()
+
+    def build_project_tab(self):
+        self.__prj_short_name_obj = self.__builder.get_object('short_name')
+        self.__prj_name_obj = self.__builder.get_object('project_name')
+        self.__prj_company_name_obj = self.__builder.get_object('company_name')
+
+        self.__addr_map_obj = self.__builder.get_object('address_tree')
+        self.__addr_map_model = gtk.ListStore(str, str, bool, str)
+        self.__addr_map_obj.set_model(self.__addr_map_model)
+
+        self.__prj_doc_object = self.__builder.get_object('project_doc_buffer')
+
+        self.__map_name_col = EditableColumn('Map Name', self.map_name_changed,
+                                             AM_NAME)
+        self.__map_name_col.set_min_width(240)
+        self.__addr_map_obj.append_column(self.__map_name_col)
+
+        column = EditableColumn('Base Address', self.map_address_changed,
+                                AM_ADDR)
+        column.set_min_width(250)
+        self.__addr_map_obj.append_column(column)
+
+        column = ComboMapColumn('Access Width', self.map_width_changed,
+                                SIZE2STR, AM_WIDTH)
+        column.set_min_width(250)
+        self.__addr_map_obj.append_column(column)
+
+        column = ToggleColumn('Fixed Address', self.map_fixed_changed,
+                              AM_FIXED)
+        column.set_max_width(200)
+        self.__addr_map_obj.append_column(column)
+
+    def load_project_tab(self):
+        self.__prj_short_name_obj.set_text(self.__prj.short_name)
+        self.__prj_doc_object.set_text(self.__prj.documentation)
+        self.__prj_name_obj.set_text(self.__prj.name)
+        company = self.__prj.company_name
+        self.__prj_company_name_obj.set_text(company)
+
+        self.__addr_map_model.clear()
+        for base in self.__prj.get_address_maps():
+            addr = self.__prj.get_address_base(base)
+            width = self.__prj.get_address_width(base)
+            fixed = bool(self.__prj.get_address_fixed(base))
+
+            data = (base, "%x" % addr, fixed, INT2SIZE[width])
+            self.__addr_map_model.append(row=data)
+
+        self.__prj.clear_modified()
+
+    def map_name_changed(self, cell, path, new_text, col):
+        node = self.__addr_map_model.get_iter(path)
+        name = self.__addr_map_model.get_value(node, AM_NAME)
+        value = self.__addr_map_model.get_value(node, AM_ADDR)
+        fixed = self.__addr_map_model.get_value(node, AM_FIXED)
+        width = STR2SIZE[self.__addr_map_model.get_value(node, AM_WIDTH)]
+        try:
+            self.__prj.remove_address_map(name)
+        except:
+            pass
+        self.__prj.set_address_map(new_text, int(value, 16), width, fixed)
+        self.__addr_map_model[path][AM_NAME] = new_text
+        self.__prj.set_modified()
+
+    def map_fixed_changed(self, cell, path, source):
+        """
+        Called with the modified toggle is changed. Toggles the value in
+        the internal list.
+        """
+        node = self.__addr_map_model.get_iter(path)
+        name = self.__addr_map_model.get_value(node, AM_NAME)
+        value = self.__addr_map_model.get_value(node, AM_ADDR)
+        fixed = self.__addr_map_model.get_value(node, AM_FIXED)
+        width = self.__addr_map_model.get_value(node, AM_WIDTH)
+        self.__addr_map_model[path][AM_FIXED] = not fixed
+        self.__prj.set_address_map(name, int(value, 16),
+                                   STR2SIZE[width], not fixed)
+
+    def map_width_changed(self, cell, path, node, col):
+        """
+        Called with the modified toggle is changed. Toggles the value in
+        the internal list.
+        """
+        node = self.__addr_map_model.get_iter(path)
+        name = self.__addr_map_model.get_value(node, AM_NAME)
+        value = self.__addr_map_model.get_value(node, AM_ADDR)
+        fixed = self.__addr_map_model.get_value(node, AM_FIXED)
+
+        model = cell.get_property('model')
+        self.__addr_map_model[path][col] = model[path][0]
+        width = model[path][1]
+        self.__prj.set_address_map(name, int(value, 16), width, fixed)
+
+    def map_address_changed(self, cell, path, new_text, col):
+        try:
+            value = int(new_text, 16)
+        except ValueError:
+            pass
+        if new_text:
+            node = self.__addr_map_model.get_iter(path)
+            name = self.__addr_map_model.get_value(node, AM_NAME)
+            fixed = self.__addr_map_model.get_value(node, AM_FIXED)
+            width = STR2SIZE[self.__addr_map_model.get_value(node, AM_WIDTH)]
+
+            self.__prj.set_address_map(name, value, width, fixed)
+            self.__addr_map_model[path][AM_ADDR] = new_text
+            self.__prj.set_modified()
+
+    def on_addr_map_help_clicked(self, obj):
+        from help_window import HelpWindow
+
+        HelpWindow(self.__builder, "addr_map_help.rst")
+
+    def on_group_help_clicked(self, obj):
+        from help_window import HelpWindow
+
+        HelpWindow(self.__builder, "project_group_help.rst")
+
+    def on_remove_map_clicked(self, obj):
+        (model, node) = self.__addr_map_obj.get_selection().get_selected()
+        name = model.get_value(node, AM_NAME)
+        model.remove(node)
+        self.__prj.set_modified()
+        self.__prj.remove_address_map(name)
+
+    def on_add_map_clicked(self, obj):
+        node = self.__addr_map_model.append(row=("NewMap", 0,
+                                                 False, SIZE2STR[0][0]))
+        path = self.__addr_map_model.get_path(node)
+        self.__prj.set_modified()
+        self.__prj.set_address_map('NewMap', 0, False, SIZE2STR[0][1])
+        self.__addr_map_obj.set_cursor(path, focus_column=self.__map_name_col,
+                                       start_editing=True)
+
+    def on_project_name_changed(self, obj):
+        """
+        Callback function from glade to handle changes in the project name.
+        When the name is changed, it is immediately updated in the project
+        object.
+        """
+        self.__prj.set_modified()
+        self.__prj.name = obj.get_text()
+
+    def on_company_name_changed(self, obj):
+        """
+        Callback function from glade to handle changes in the company name.
+        When the name is changed, it is immediately updated in the project
+        object.
+        """
+        self.__prj.set_modified()
+        self.__prj.company_name = obj.get_text()
+
+    def on_offset_insert_text(self, obj, new_text, pos, *extra):
+        try:
+            int(new_text, 16)
+        except ValueError:
+            obj.stop_emission('insert-text')
+
+    def on_project_documentation_changed(self, obj):
+        self.__prj.set_modified()
+        self.__prj.documentation = obj.get_text(obj.get_start_iter(),
+                                                obj.get_end_iter())
+
+    def on_short_name_changed(self, obj):
+        """
+        Callback function from glade to handle changes in the short name.
+        When the name is changed, it is immediately updated in the project
+        object. The name must not have spaces, so we immediately replace any
+        spaces.
+        """
+        self.__prj.short_name = obj.get_text().replace(' ', '').strip()
+        self.__prj.set_modified()
+        obj.set_text(self.__prj.short_name)
 
     def __restore_position_and_size(self):
         "Restore the desired position and size from the user's config file"
@@ -314,13 +489,13 @@ class MainWindow(object):
         project_actions = ["save_project_action", "new_set_action",
                            "add_set_action", "build_action",
                            "reg_grouping_action", "project_prop_action" ]
-        if WEBKIT:
+        if PREVIEW_ENABLED:
             project_actions.append("preview_action")
         else:
             self.__build_group("unused", ["preview_action"])
 
-        self.__project_loaded = self.__build_group("project_loaded",
-                                                   project_actions)
+        self.__prj_loaded = self.__build_group("project_loaded",
+                                               project_actions)
 
         self.__reg_selected = self.__build_group("reg_selected",
                                                  ['remove_register_action',
@@ -334,8 +509,8 @@ class MainWindow(object):
                                                        'import_action'])
 
         self.__field_selected = self.__build_group("field_selected",
-                                                      ['remove_bit_action',
-                                                       'edit_bit_action'])
+                                                   ['remove_bit_action',
+                                                    'edit_bit_action'])
 
         self.__svn_selected = self.__build_group("svn_enabled",
                                                  ['update_svn',
@@ -479,18 +654,43 @@ class MainWindow(object):
         Updates the data model when the text value is changed in the model.
         """
         self.__instance_model.change_id(path, new_text)
-        self.dbase.instances = self.__instance_model.get_values()
         self.__set_module_definition_warn_flag()
-        self.set_modified()
+        self.__prj.set_modified()
 
     def __instance_base_changed(self, cell, path, new_text, col):
         """
         Updates the data model when the text value is changed in the model.
         """
         self.__instance_model.change_base(path, new_text)
-        self.dbase.instances = self.__instance_model.get_values()
         self.__set_module_definition_warn_flag()
-        self.set_modified()
+        self.__prj.set_modified()
+
+    def __instance_format_changed(self, cell, path, new_text, col):
+        """
+        Updates the data model when the text value is changed in the model.
+        """
+        if len(path) > 1:
+            self.__instance_model.change_format(path, new_text)
+            self.__set_module_definition_warn_flag()
+            self.__prj.set_modified()
+
+    def __instance_repeat_changed(self, cell, path, new_text, col):
+        """
+        Updates the data model when the text value is changed in the model.
+        """
+        if len(path) > 1:
+            self.__instance_model.change_repeat(path, new_text)
+            self.__set_module_definition_warn_flag()
+            self.__prj.set_modified()
+
+    def __instance_repeat_offset_changed(self, cell, path, new_text, col):
+        """
+        Updates the data model when the text value is changed in the model.
+        """
+        if len(path) > 1:
+            self.__instance_model.change_repeat_offset(path, new_text)
+            self.__set_module_definition_warn_flag()
+            self.__prj.set_modified()
 
     def on_filter_icon_press(self, obj, icon, event):
         if icon == gtk.ENTRY_ICON_SECONDARY:
@@ -527,64 +727,31 @@ class MainWindow(object):
             self.__modelfilter.refilter()
 
     def __enable_preview(self):
-        self.__update_wk = True
-        if self.dbase:
-            self.__webkit.load_string(html_string(self.dbase.overview_text),
-                                      "text/html", "utf-8", "")
-            reg = self.__reglist_obj.get_selected_register()
-            if reg:
-                text = reg.description
-            else:
-                text = ""
-            self.__webkit_reg.load_string(html_string(text),
-                                          "text/html", "utf-8", "")
-        self.__wk_container.show()
-        self.__webkit.show()
-        self.__webkit_reg.show()
-        self.__reg_webkit.show()
+        self.__prj_preview.enable()
+        self.__regset_preview.enable()
+        self.__regdescr_preview.enable()
 
     def __disable_preview(self):
-        self.__update_wk = False
-        if WEBKIT:
-            self.__webkit.hide()
-            self.__wk_container.hide()
-            self.__webkit_reg.hide()
-            self.__reg_webkit.hide()
+        self.__prj_preview.disable()
+        self.__regset_preview.disable()
+        self.__regdescr_preview.disable()
 
     def on_preview_toggled(self, obj):
-        if obj.get_active() and WEBKIT:
+        if obj.get_active():
             self.__enable_preview()
             self.use_preview = True
         else:
             self.__disable_preview()
             self.use_preview = False
 
-    def on_register_grouping_activate(self, obj):
-        """
-        Display the Groupings editor.
-        """
-        from groupings import Groupings
-        Groupings(self.__project)
-
     def on_summary_action_activate(self, obj):
         """
-        Display the Groupings editor.
         """
         reg = self.__reglist_obj.get_selected_register()
 
-        if WEBKIT and reg:
-            if self.html_window is None:
-                self.html_window = self.__builder.get_object("summary_window")
-                self.html_wkit = webkit.WebView()
-                wk_container = self.__builder.get_object('summary_scroll')
-                wk_container.add(self.html_wkit)
-                button = self.__builder.get_object('close_button')
-                button.connect('clicked', lambda x, y: y.hide(),
-                               self.html_window)
-            reg_info = regenerate.extras.RegisterRst(reg)
-            self.html_wkit.load_string(reg_info.html_css(), "text/html",
-                                       "utf-8", "")
-            self.html_window.show_all()
+        if reg:
+            from summary_window import SummaryWindow
+            SummaryWindow(self.__builder, reg, self.active.name, self.__prj)
 
     def on_build_action_activate(self, obj):
         from build import Build
@@ -595,7 +762,7 @@ class MainWindow(object):
             modified = item[ProjectModel.MODIFIED]
             obj = item[ProjectModel.OBJ]
             dbmap[name] = (obj, modified)
-        Build(self.__project, dbmap)
+        Build(self.__prj, dbmap)
 
     def on_revert_svn_activate(self, obj):
         pass
@@ -636,9 +803,6 @@ class MainWindow(object):
             self.set_busy_cursor(False)
             self.__file_modified.set_sensitive(False)
 
-    def on_project_properties_activate(self, obj):
-        Properties(self.__project)
-
     def on_user_preferences_activate(self, obj):
         Preferences()
 
@@ -647,16 +811,15 @@ class MainWindow(object):
         Called with the remove button is clicked
         """
         selected = self.__instance_obj.get_selected_instance()
-        if selected:
+        if selected and selected[1]:
             self.__instance_model.remove(selected[1])
-            self.dbase.instances = self.__instance_model.get_values()
             self.__set_module_definition_warn_flag()
-            self.set_modified()
+            self.__prj.set_modified()
 
-    def  on_add_instance_clicked(self, obj):
+    def on_add_instance_clicked(self, obj):
         self.__instance_obj.new_instance()
         self.__set_module_definition_warn_flag()
-        self.set_modified()
+        self.__prj.set_modified()
 
     def __data_changed(self, obj):
         """
@@ -722,8 +885,6 @@ class MainWindow(object):
                 self.__reglist_obj.set_model(self.__modelsort)
                 self.__bit_model = self.active.bit_field_list
                 self.__bitfield_obj.set_model(self.__bit_model)
-                self.__instance_model = self.active.instance_list
-                self.__instance_obj.set_model(self.__instance_model)
                 text = "<b>%s - %s</b>" % (self.dbase.module_name,
                                            self.dbase.descriptive_title)
                 self.__selected_dbase.set_text(text)
@@ -785,15 +946,6 @@ class MainWindow(object):
             reg.description = self.__reg_text_buf.get_text(
                 self.__reg_text_buf.get_start_iter(),
                 self.__reg_text_buf.get_end_iter())
-            if self.__update_wk and WEBKIT:
-                pos = self.__reg_webkit.get_vadjustment().get_value()
-
-                self.__webkit_reg.load_string(html_string(reg.description),
-                                              "text/html", "utf-8", "")
-                adjust_obj = self.__reg_webkit.get_vadjustment()
-                if pos <= adjust_obj.get_upper():
-                    self.__reg_webkit.get_vadjustment().set_value(pos)
-
             self.set_modified()
             self.__set_register_warn_flags(reg)
 
@@ -813,7 +965,7 @@ class MainWindow(object):
         """
         Clears the modified tag in the status bar.
         """
-        if prj == None:
+        if prj is None:
             prj = self.active
         self.__modified = False
         if prj:
@@ -923,7 +1075,7 @@ class MainWindow(object):
         if response == gtk.RESPONSE_OK:
             for filename in choose.get_filenames():
                 self.open_xml(filename)
-                self.__project.add_register_set(filename)
+                self.__prj.add_register_set(filename)
             self.__prj_model.load_icons()
         choose.destroy()
 
@@ -940,7 +1092,7 @@ class MainWindow(object):
             (store, node) = data
             filename = store.get_value(node, ProjectModel.FILE)
             store.remove(node)
-            self.__project.remove_register_set(filename)
+            self.__prj.remove_register_set(filename)
         self.__skip_changes = old_skip
 
     def get_new_filename(self):
@@ -971,17 +1123,19 @@ class MainWindow(object):
             if ext[1] != DEF_EXT:
                 filename = filename + DEF_EXT
 
-            self.__project = RegProject()
-            self.__project.path = filename
+            self.__prj = RegProject()
+            self.__prj.path = filename
+            self.__initialize_project_address_maps()
             base_name = os.path.basename(filename)
-            self.__project.name = os.path.splitext(base_name)[0]
+            self.__prj.name = os.path.splitext(base_name)[0]
             self.__prj_model = ProjectModel(self.use_svn)
             self.__prj_obj.set_model(self.__prj_model)
-            self.__project.save()
+            self.__prj.save()
             if self.__recent_manager:
                 self.__recent_manager.add_item("file://" + filename)
             self.__builder.get_object('save_btn').set_sensitive(True)
-            self.__project_loaded.set_sensitive(True)
+            self.__prj_loaded.set_sensitive(True)
+            self.load_project_tab()
         choose.destroy()
 
     def on_open_action_activate(self, obj):
@@ -1012,12 +1166,14 @@ class MainWindow(object):
         self.__loading_project = True
         self.__prj_model = ProjectModel(self.use_svn)
         self.__prj_obj.set_model(self.__prj_model)
-        self.__project = RegProject(filename)
+        self.__prj = RegProject(filename)
+        self.__initialize_project_address_maps()
+
         ini.set("user", "last_project", filename)
         idval = self.__status_obj.get_context_id('mod')
         self.__status_obj.push(idval, "Loading %s ..." % filename)
         self.set_busy_cursor(True)
-        for f in self.__project.get_register_set():
+        for f in self.__prj.get_register_set():
             self.open_xml(f, False)
         self.__loading_project = False
         self.__prj_obj.select_path(0)
@@ -1028,9 +1184,15 @@ class MainWindow(object):
         self.set_busy_cursor(False)
         base = os.path.splitext(os.path.basename(filename))[0]
         self.__top_window.set_title("%s (%s) - regenerate" %
-                                    (base, self.__project.name))
+                                    (base, self.__prj.name))
         self.__status_obj.pop(idval)
-        self.__project_loaded.set_sensitive(True)
+        self.load_project_tab()
+        self.__prj_loaded.set_sensitive(True)
+
+    def __initialize_project_address_maps(self):
+        self.__instance_model = InstanceModel()
+        self.__instance_obj.set_model(self.__instance_model)
+        self.__instance_obj.set_project(self.__prj)
 
     def on_new_register_set_activate(self, obj):
         """
@@ -1055,19 +1217,17 @@ class MainWindow(object):
         self.__bit_model = BitModel()
         self.__bitfield_obj.set_model(self.__bit_model)
 
-        self.__instance_model = InstanceModel()
-        self.__instance_obj.set_model(self.__instance_model)
         self.__set_module_definition_warn_flag()
 
         self.active = DbaseStatus(self.dbase, name, base, self.__reg_model,
                                   self.__modelsort, self.__modelfilter,
-                                  self.__bit_model, self.__instance_model)
+                                  self.__bit_model)
         self.active.node = self.__prj_model.add_dbase(name, self.active)
         self.__prj_obj.select(self.active.node)
         self.redraw()
 
         self.__prj_model.load_icons()
-        self.__project.add_register_set(name)
+        self.__prj.add_register_set(name)
 
         self.__module_notebook.set_sensitive(True)
         self.__set_module_definition_warn_flag()
@@ -1116,10 +1276,6 @@ class MainWindow(object):
                 register = self.dbase.get_register(key)
                 self.__reg_model.append_register(register)
                 self.__set_register_warn_flags(register)
-        self.__instance_model = InstanceModel()
-        self.__instance_obj.set_model(self.__instance_model)
-        for instance in self.dbase.instances:
-            self.__instance_model.append_instance(instance)
         self.redraw()
         self.__skip_changes = False
 
@@ -1137,7 +1293,7 @@ class MainWindow(object):
             self.active = DbaseStatus(self.dbase, name, base, self.__reg_model,
                                       self.__modelsort,
                                       self.__modelfilter,
-                                      self.__bit_model, self.__instance_model)
+                                      self.__bit_model)
 
             self.active.node = self.__prj_model.add_dbase(name, self.active)
             if load:
@@ -1168,8 +1324,12 @@ class MainWindow(object):
                     self.clear_modified(item[ProjectModel.OBJ])
                 except IOError, msg:
                     ErrorMsg("Could not save database", str(msg))
-        self.__project.set_new_order([item[0] for item in self.__prj_model])
-        self.__project.save()
+
+        self.__prj.set_new_order([item[0] for item in self.__prj_model])
+        (grps, gmap) = self.__instance_obj.get_groups()
+        self.__prj.set_grouping_list(grps)
+        self.__prj.set_grouping_map(gmap)
+        self.__prj.save()
         self.active.modified = False
 
     def __exit(self):
@@ -1263,22 +1423,6 @@ class MainWindow(object):
         self.dbase.overview_text = obj.get_text(obj.get_start_iter(),
                                                 obj.get_end_iter())
         self.__set_description_warn_flag()
-        if self.__update_wk and WEBKIT:
-            adj = self.__wk_container.get_vadjustment()
-            pos = adj.get_value()
-            try:
-                text = self.dbase.overview_text
-                self.__webkit.load_string(html_string(text),
-                                          "text/html", "utf-8", "")
-            except:
-                self.__webkit.load_string(self.dbase.overview_text,
-                                          "text/plain", "utf-8", "")
-
-            if pos <= adj.get_upper() - adj.get_page_size():
-                self.__wk_container.get_vadjustment().set_value(pos)
-            else:
-                value = adj.get_upper() - adj.get_page_size()
-                self.__wk_container.get_vadjustment().set_value(value)
         self.set_modified()
 
     def on_regenerate_delete_event(self, obj, event):
@@ -1290,7 +1434,7 @@ class MainWindow(object):
         data needs to be saved first.
         """
         if (self.__modified or self.__prj_model.is_not_saved() or
-            (self.__project and self.__project.is_not_saved())):
+            (self.__prj and self.__prj.is_not_saved())):
             dialog = Question('Save Changes?',
                               "The file has been modified. "
                               "Do you want to save your changes?")
@@ -1481,8 +1625,8 @@ class MainWindow(object):
             box.set_license(data)
         except IOError:
             pass
-        box.set_logo(gtk.gdk.pixbuf_new_from_file(
-                os.path.join(INSTALL_PATH, "media", "flop.svg")))
+        fname = os.path.join(INSTALL_PATH, "media", "flop.svg")
+        box.set_logo(gtk.gdk.pixbuf_new_from_file(fname))
         box.run()
         box.destroy()
 
@@ -1540,9 +1684,6 @@ class MainWindow(object):
             warn = False
             msgs = []
 
-            if len(self.dbase.instances) == 0:
-                warn = True
-                msgs.append("No instances of the module were defined.")
             if self.dbase.descriptive_title == "":
                 warn = True
                 msgs.append("No title was provided for the register set.")

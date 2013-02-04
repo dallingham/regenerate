@@ -97,7 +97,7 @@ class Build(object):
         """
         Adds the item to the list view.
         """
-        if  self.__optmap[option][OPTMAP_REGISTER_SET]:
+        if self.__optmap[option][OPTMAP_REGISTER_SET]:
             self.__add_dbase_item_to_list(full_path, option, dest)
         else:
             self.__add_prj_item_to_list(option, dest)
@@ -127,7 +127,6 @@ class Build(object):
         local_dest = os.path.join(os.path.dirname(self.__project.path), dest)
 
         mod = file_needs_rebuilt(local_dest, self.__dbmap, [dbase_full_path])
-
         self.__modlist.append(mod)
         (fmt, cls, rpttype) = self.__optmap[option]
         dbase = self.__dbmap[base][DB_MAP_DBASE].db
@@ -139,11 +138,11 @@ class Build(object):
         export list.
         """
         for item in self.__project.get_register_set():
-            try:
-                for (option, dest) in self.__project.get_export_list(item):
+            for (option, dest) in self.__project.get_export_list(item):
+                try:
                     self.__add_dbase_item_to_list(item, option, dest)
-            except KeyError:
-                pass
+                except KeyError:
+                    pass
         for (option, dest) in self.__project.get_project_export_list():
             try:
                 self.__add_prj_item_to_list(option, dest)
@@ -175,7 +174,7 @@ class Build(object):
         property). The data is then copied out of the combo_box_model and
         into the database.
         """
-        combon_box_model = cell.get_property('model')
+        combo_box_model = cell.get_property('model')
         self.__model[path][MDL_CLASS] = combo_box_model[node][1]
         self.__model[path][MDL_FMT] = combo_box_model[node][0]
 
@@ -249,7 +248,7 @@ class Build(object):
 
             try:
                 if dbase:
-                    gen = writer_class(dbase)
+                    gen = writer_class(self.__project, dbase)
                 else:
                     db_list = [i[DB_MAP_DBASE].db
                                for i in self.__dbmap.values()]
@@ -266,9 +265,8 @@ class Build(object):
         to add to the builder.
         """
         optlist = [("%s (%s)" % item[EXP_TYPE], True, item[EXP_EXT])
-                   for item in EXPORTERS] + \
-                   [("%s (%s)" % item[EXP_TYPE], False, item[EXP_EXT])
-                    for item in PRJ_EXPORTERS]
+                   for item in EXPORTERS] + [("%s (%s)" % item[EXP_TYPE], False, item[EXP_EXT])
+                                             for item in PRJ_EXPORTERS]
         reglist = [os.path.splitext(os.path.basename(i))[0]
                    for i in self.__project.get_register_set()]
         ExportAssistant(self.__project.short_name, optlist, reglist,

@@ -26,6 +26,7 @@ import gtk
 import re
 import pango
 import os
+from spell import Spell
 
 from regenerate.db import BitField, TYPES
 from regenerate.settings.paths import GLADE_BIT, INSTALL_PATH
@@ -34,9 +35,9 @@ from regenerate.writers.verilog_reg_def import REG
 
 try:
     from gtkcodebuffer import CodeBuffer, SyntaxLoader
-    use_highlight = True
+    USE_HIGHLIGHT = True
 except ImportError:
-    use_highlight = False
+    USE_HIGHLIGHT = False
 
 VALID_SIGNAL = re.compile("^[A-Za-z][A-Za-z0-9_]*$")
 
@@ -58,8 +59,8 @@ class BitFieldEditor(object):
     Bit field editing class.
     """
 
-    def __init__(self, db, register, bit_field, modified):
-        self.__db = db
+    def __init__(self, dbase, register, bit_field, modified):
+        self.__db = dbase
         self.__modified = modified
         self.__register = register
         self.__bit_field = bit_field
@@ -84,6 +85,8 @@ class BitFieldEditor(object):
         self.__top_window.set_title(
             "Edit Bit Field - [%02x] %s" % (register.address,
                                             register.register_name))
+
+        self.__spell = Spell(self.__builder.get_object("descr"))
 
         self.__top_window.set_icon_from_file(
             os.path.join(INSTALL_PATH, "media", "flop.svg"))
@@ -123,7 +126,7 @@ class BitFieldEditor(object):
         except KeyError:
             text = ""
 
-        if use_highlight:
+        if USE_HIGHLIGHT:
             buff = CodeBuffer(lang=SyntaxLoader("verilog"))
             self.__verilog_obj.set_buffer(buff)
         else:
@@ -186,6 +189,10 @@ class BitFieldEditor(object):
 
     def on_volatile_changed(self, obj):
         self.__bit_field.volatile = obj.get_active()
+        self.__modified()
+
+    def on_static_toggled(self, obj):
+        self.__bit_field.output_is_static = obj.get_active()
         self.__modified()
 
     def on_control_changed(self, obj):
@@ -256,7 +263,7 @@ class BitFieldEditor(object):
                                          start_editing=True)
         self.__modified()
 
-    def  on_remove_clicked(self, obj):  # IGNORE:W0613 - obj is unused
+    def on_remove_clicked(self, obj):  # IGNORE:W0613 - obj is unused
         """
         Called with the remove button is clicked
         """
@@ -357,6 +364,12 @@ class BitFieldEditor(object):
             return True
         return False
 
+    def on_destroy_event(self, obj):
+        self.__spell.detach()
+
+    def on_delete_event(self, obj, event):
+        self.__spell.detach()
+
     def on_close_clicked(self, obj):
         """
         Saves the data from the interface to the internal BitField structure
@@ -377,11 +390,11 @@ class BitFieldEditor(object):
         output_error = False
         control_error = False
 
-        if control_error == False:
+        if control_error is False:
             clear_error(self.__control_obj)
-        if input_error == False:
+        if input_error is False:
             clear_error(self.__input_obj)
-        if output_error == False:
+        if output_error is False:
             clear_error(self.__output_obj)
 
 

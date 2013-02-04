@@ -22,6 +22,7 @@ CWriter - Writes out C defines representing the register addresses
 """
 
 from writer_base import WriterBase
+from regenerate.extras import full_token, in_groups
 import os
 
 
@@ -45,39 +46,44 @@ TRAILER = [
     "#endif\n"
     ]
 
+REG_TYPE = {
+    8: "unsigned char*",
+    16: "unsigned short*",
+    32: "unsigned long*",
+    64: "unsigned long long*",
+    }
+
 
 class CDefines(WriterBase):
     """
     Writes out C defines representing the register addresses
     """
 
-    def __init__(self, dbase):
-        WriterBase.__init__(self, dbase)
+    def __init__(self, project, dbase):
+        WriterBase.__init__(self, project, dbase)
         self._ofile = None
 
-    def write_def(self, reg, prefix, offset):
+    def write_def(self, reg, data, base):
         """
         Writes the definition in the format of:
 
         #define register (address)
         """
-        address = reg.address
-        name = reg.token
-        if not name:
-            name = "ADDR%04x" % address
-        name = "%s%s" % (prefix, name)
-
-        if reg.width == 8:
-            reg_type = "unsigned char*"
-        elif reg.width == 16:
-            reg_type = "unsigned short*"
-        elif reg.width == 32:
-            reg_type = "unsigned long*"
+        address = reg.address + base + data.base
+        if data.repeat > 1:
+            for i in range(0, data.repeat):
+                name = full_token(data.group, reg.token,
+                                  self._dbase.module_name,
+                                  i, data.format)
+                address += (i * data.roffset)
+                self._ofile.write("#define %-30s (*((volatile %s)0x%x))\n" %
+                                  (name, REG_TYPE[reg.width], address))
         else:
-            reg_type = "unsigned long long*"
-
-        self._ofile.write("#define %-30s (*((volatile %s)0x%x))\n" %
-                          (name, reg_type, (address + offset)))
+            name = full_token(data.group, reg.token,
+                              self._dbase.short_name,
+                              -1, data.format)
+            self._ofile.write("#define %-30s (*((volatile %s)0x%x))\n" %
+                              (name, REG_TYPE[reg.width], address))
 
     def write(self, filename):
         """
@@ -87,17 +93,24 @@ class CDefines(WriterBase):
         self._ofile = open(filename, "w")
         self.write_header(self._ofile, "".join(HEADER))
 
-        for (prefix, offset) in self._dbase.instances:
-            name = "%s_%s_BASE_PTR" % (prefix, self._dbase.module_name.upper())
+        addr_maps = self._project.get_address_maps().keys()
 
-            self._ofile.write("// Base address of the block\n")
-            self._ofile.write("#define %-30s (0x%x)\n" %
-                              (name, offset))
+        if len(addr_maps) > 0:
+            base = self._project.get_address_base(addr_maps[0])
+            for data in in_groups(self._dbase.module_name, self._project):
+                name = full_token(data.group, "BASE_PTR",
+                                  self._dbase.module_name,
+                                  -1, data.format)
 
-            for reg_key in self._dbase.get_keys():
-                register = self._dbase.get_register(reg_key)
-                self.write_def(register, prefix, offset)
-            self._ofile.write('\n')
+                self._ofile.write("// Base address of the block\n")
+                address = base + data.offset
+                self._ofile.write("#define %-30s (0x%x)\n" %
+                                  (name, address))
+
+                for reg_key in self._dbase.get_keys():
+                    register = self._dbase.get_register(reg_key)
+                    self.write_def(register, data, base)
+                self._ofile.write('\n')
 
         for line in TRAILER:
             self._ofile.write('%s\n' % line.replace('$M$', self._module))

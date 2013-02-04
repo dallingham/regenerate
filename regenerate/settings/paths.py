@@ -20,10 +20,12 @@
 import os
 import sys
 
+
 class project_path_not_found(Exception):
     pass
 
 __regenerate_data_directory__ = '../data/'
+
 
 def getdatapath():
     """Retrieve regenerate data path
@@ -37,12 +39,13 @@ def getdatapath():
     if __regenerate_data_directory__.startswith('/'):
         pathname = __regenerate_data_directory__
     else:
-        pathname = os.path.dirname(__file__) + '/' + __regenerate_data_directory__
+        pathname = os.path.join(os.path.dirname(__file__),
+                                __regenerate_data_directory__)
 
     return os.path.abspath(pathname)
 
 
-INSTALL_PATH = getdatapath() #os.path.dirname(os.path.abspath(sys.argv[0]))
+INSTALL_PATH = getdatapath()
 GLADE_TOP = os.path.join(INSTALL_PATH, "ui", "regenerate.ui")
 GLADE_BIT = os.path.join(INSTALL_PATH, "ui", "bitfield.ui")
 GLADE_CHK = os.path.join(INSTALL_PATH, "ui", "check.ui")
@@ -51,3 +54,4 @@ GLADE_PREF = os.path.join(INSTALL_PATH, "ui", "preferences.ui")
 GLADE_GRP = os.path.join(INSTALL_PATH, "ui", "groupings.ui")
 ODTFILE = os.path.join(INSTALL_PATH, "extra", "template.odt")
 USERODTFILE = os.path.join(INSTALL_PATH, "..", "site_local", "template.odt")
+HELP_PATH = os.path.join(INSTALL_PATH, "help")

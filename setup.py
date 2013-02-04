@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='regenerate',
-    version='0.9.2',
+    version='0.9.5',
     license='License.txt',
     author='Donald N. Allingham',
     author_email='dallingham@gmail.com',
@@ -17,6 +17,7 @@ setup(
               "regenerate.writers"],
     package_data={'regenerate': ['data/ui/*.ui',
                                  'data/media/*.svg',
+                                 'data/help/*.rst',
                                  'data/media/*.png',
                                  'data/extra/*.odt',
                                  'data/*.*']},

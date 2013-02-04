@@ -36,6 +36,7 @@ TRAILER = [
     ""
     ]
 
+
 class VerilogDefines(WriterBase):
     """
     Writes out Verilog defines representing the register addresses
@@ -59,7 +60,7 @@ class VerilogDefines(WriterBase):
         name = "%s%s" % (prefix, name)
 
         self._ofile.write("`define %-30s (32'h%x)\n" %
-                           (name, (address+offset)))
+                          (name, (address + offset)))
 
     def write(self, filename):
         """

@@ -43,9 +43,9 @@ class WriterBase(object):   # IGNORE:R0921 - we know this is a abstract class
     by the derived class.
     """
 
-    def __init__(self, dbase):
+    def __init__(self, project, dbase):
         self._dbase = dbase
-        self._project = None
+        self._project = project
         self._project_name = ""
         if dbase:
             self._set_values_init(dbase)
@@ -60,19 +60,7 @@ class WriterBase(object):   # IGNORE:R0921 - we know this is a abstract class
         self._clock = dbase.clock_name
         self._addr = dbase.address_bus_name
         self._addr_width = dbase.address_bus_width
-        if dbase.instances:
-            if instance_name:
-                for i in dbase.instances:
-                    if instance_name == i[0]:
-                        self._offset = i[1]
-                        prefix = instance_name
-                        break
-            else:
-                self._offset = dbase.instances[0][1]
-                prefix = dbase.instances[0][0]
-        else:
-            self._offset = 0
-            prefix = "UNKNOWN"
+        prefix = ""
 
         self._data_width = dbase.data_bus_width
         self._reset = dbase.reset_name

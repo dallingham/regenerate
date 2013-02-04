@@ -22,8 +22,14 @@ RegProject is the container object for a regenerate project
 """
 
 import xml.parsers.expat
+from xml.sax.saxutils import escape
 import os.path
 from regenerate.db import LOGGER
+from collections import namedtuple
+
+AddrMapData = namedtuple("AddrMapData", "base width fixed")
+GroupMapData = namedtuple("GroupMapData", "set offset repeat repeat_offset format")
+GroupData = namedtuple("GroupData", "name base")
 
 
 class RegProject(object):
@@ -38,9 +44,10 @@ class RegProject(object):
         self.name = "unnamed"
         self.short_name = "unnamed"
         self.company_name = ""
+        self.documentation = ""
         self.__filelist = []
         self.__groupings = []
-        self.__grouping_excludes = {}
+        self.__grouping_map = {}
         self.__exports = {}
         self.__project_exports = []
         self.__token_list = []
@@ -60,25 +67,34 @@ class RegProject(object):
         ofile.write('<project name="%s" short_name="%s" company_name="%s">\n' %
                     (self.name, self.short_name, self.company_name))
 
+        if self.documentation:
+            ofile.write('  <documentation>%s</documentation>' %
+                        escape(self.documentation))
         if self.__address_maps:
             ofile.write('  <address_maps>\n')
             for key in self.__address_maps:
-                ofile.write('    <address_map name="%s" base="%x"/>\n' %
-                            (key, self.__address_maps[key]))
+                data = self.__address_maps[key]
+                ofile.write('    <address_map name="%s" base="%x" fixed="%d" width="%d"/>\n' %
+                            (key, data.base, data.fixed, data.width))
             ofile.write('  </address_maps>\n')
 
         if self.__groupings:
             ofile.write('  <groupings>\n')
-            for grouping in self.__groupings:
-                if self.__grouping_excludes[grouping[0]]:
-                    ofile.write('    <grouping name="%s" start="%x" end="%x">\n' %
-                                grouping)
-                    for item in self.__grouping_excludes[grouping[0]]:
-                        ofile.write('      <group_exclude name="%s"/>\n' % item)
+            for group in self.__groupings:
+                if group.name in self.__grouping_map:
+                    ofile.write('    <grouping name="%s" start="%x">\n' %
+                                (group.name, group.base))
+                    for item in self.__grouping_map[group.name]:
+                        ofile.write('      <map set="%s" offset="%x" repeat="%s" repeat_offset="%s"' %
+                                    (item.set, item.offset, item.repeat, item.repeat_offset))
+                        if item.format:
+                            ofile.write(' format="%s"/>\n' % item.format)
+                        else:
+                            ofile.write("/>\n")
                     ofile.write('    </grouping>\n')
                 else:
-                    ofile.write('    <grouping name="%s" start="%x" end="%x"/>\n' %
-                                grouping)
+                    ofile.write('    <grouping name="%s" start="%x"/>\n' %
+                                (group.name, group.base))
             ofile.write('  </groupings>\n')
 
         for fname in self.__filelist:
@@ -181,32 +197,49 @@ class RegProject(object):
         return self.__filelist
 
     def get_grouping_list(self):
+        """
+        Returns a list of named tuples (GroupData) that defines the groups.
+        The group contents are found by indexing using the Group name
+        (GroupData.name) into the group map.
+        """
         return self.__groupings
 
-    def get_excludes(self, name):
-        return self.__grouping_excludes.get(name, [])
+    def set_grouping_list(self, glist):
+        self.__groupings = glist
 
-    def set_grouping(self, index, name, start, end):
-        self.__modified = True
-        self.__groupings[index] = (name, start, end)
+    def get_group_map(self, name):
+        return self.__grouping_map.get(name, [])
 
-    def add_to_grouping_list(self, name, start, end):
-        self.__modified = True
-        self.__groupings.append((name, start, end))
+    def set_grouping_map(self, gmap):
+        self.__grouping_map = gmap
 
-    def remove_from_grouping_list(self, name, start, end):
+    def set_grouping(self, index, name, start):
         self.__modified = True
-        self.__groupings.remove((name, start, end))
+        self.__groupings[index] = GroupData(name, start)
+
+    def add_to_grouping_list(self, name, start):
+        self.__modified = True
+        self.__groupings.append(GroupData(name, start))
+
+    def remove_from_grouping_list(self, name, start):
+        self.__modified = True
+        self.__groupings.remove(GroupData(name, start))
 
     def get_address_maps(self):
         return self.__address_maps
 
     def get_address_base(self, name):
-        return self.__address_maps[name]
+        return self.__address_maps[name].base
 
-    def set_address_map(self, name, base):
+    def get_address_fixed(self, name):
+        return self.__address_maps[name].fixed
+
+    def get_address_width(self, name):
+        return self.__address_maps[name].width
+
+    def set_address_map(self, name, base, width, fixed):
         self.__modified = True
-        self.__address_maps[name] = base
+        self.__address_maps[name] = AddrMapData(base, width, fixed)
 
     def remove_address_map(self, name):
         self.__modified = True
@@ -240,6 +273,9 @@ class RegProject(object):
         """
         self.__token_list.append(data)
 
+    def end_documentation(self, text):
+        self.documentation = text
+
     def start_project(self, attrs):
         self.name = attrs['name']
         self.short_name = attrs.get('short_name', '')
@@ -259,15 +295,33 @@ class RegProject(object):
         self.__project_exports.append(value)
 
     def start_grouping(self, attrs):
-        self.__groupings.append((attrs['name'], int(attrs['start'], 16),
-                                 int(attrs['end'], 16)))
-        self.__grouping_excludes[attrs['name']] = []
+        self.__groupings.append(GroupData(attrs['name'],
+                                          int(attrs['start'], 16)))
+        self._current_group = attrs['name']
+        self.__grouping_map[self._current_group] = []
 
-    def start_group_exclude(self, attrs):
-        self.__grouping_excludes[self.__groupings[-1][0]].append(attrs['name'])
+    def start_map(self, attrs):
+        data = GroupMapData(attrs['set'],
+                            int(attrs['offset'], 16),
+                            int(attrs['repeat']),
+                            int(attrs['repeat_offset']),
+                            attrs.get("format", ""))
+        self.__grouping_map[self._current_group].append(data)
 
     def start_address_map(self, attrs):
-        self.__address_maps[attrs['name']] = int(attrs['base'], 16)
+        data = AddrMapData(int(attrs.get('base', 0), 16),
+                           int(attrs.get('width', 4)),
+                           int(attrs.get('fixed', 1)))
+        self.__address_maps[attrs['name']] = data
+
+    def set_modified(self):
+        self.__modified = True
+
+    def clear_modified(self):
+        self.__modified = False
+
+    def get_modified(self):
+        return self.__modified
 
     def is_not_saved(self):
         if self.__modified:
