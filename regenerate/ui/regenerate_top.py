@@ -1130,7 +1130,9 @@ class MainWindow(object):
             self.__prj.name = os.path.splitext(base_name)[0]
             self.__prj_model = ProjectModel(self.use_svn)
             self.__prj_obj.set_model(self.__prj_model)
+            print "Saving"
             self.__prj.save()
+            print "Done"
             if self.__recent_manager:
                 self.__recent_manager.add_item("file://" + filename)
             self.__builder.get_object('save_btn').set_sensitive(True)

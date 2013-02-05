@@ -24,11 +24,7 @@ Parses the register database, loading the database.
 import xml.parsers.expat
 
 from register import Register
-from regenerate.db import BitField, TYPES
-
-CONVERT_TYPE = {}
-for i in TYPES:
-    CONVERT_TYPE[i.id] = i.type
+from regenerate.db import BitField, ID_TO_TYPE
 
 
 def cnv_hex(attrs, key, default=0):
@@ -197,8 +193,7 @@ class RegParser(object):
             else:
                 self.__field.field_type = BitField.TYPE_WRITE_ONLY
         else:
-            self.__field.field_type = CONVERT_TYPE[attrs.get('field_type',
-                                                             'RO')]
+            self.__field.field_type = ID_TO_TYPE[attrs.get('field_type', 'RO')]
 
     def start_input(self, attrs):
         """

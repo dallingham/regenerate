@@ -119,7 +119,8 @@ class UVM_Block_Registers(WriterBase):
         cfile.write("\n")
 
         for group_name in self._project.get_grouping_list():
-            cfile.write("   %s_group_reg_block %s;\n" % (group_name[0], group_name[0]))
+            cfile.write("   %s_group_reg_block %s;\n" %
+                        (group_name[0], group_name[0]))
 
         for addr_key in self._project.get_address_maps():
             name = "%s_map" % addr_key
@@ -127,7 +128,8 @@ class UVM_Block_Registers(WriterBase):
 
         cfile.write("\n")
         cfile.write('   function new(string name = "%s_reg_block");\n' % sname)
-        cfile.write("      super.new(name, build_coverage(UVM_CVR_ADDR_MAP));\n")
+        cfile.write("      super.new(name, "
+                    "build_coverage(UVM_CVR_ADDR_MAP));\n")
         cfile.write("   endfunction : new\n")
         cfile.write("\n")
         cfile.write("   function void build();\n")
@@ -136,20 +138,25 @@ class UVM_Block_Registers(WriterBase):
         cfile.write("      end\n")
         cfile.write("\n")
 
+        endian = "UVM_LITTLE_ENDIAN"
+
         for addr_key in self._project.get_address_maps():
             name = "%s_map" % addr_key
-            cfile.write('      %s_map = create_map("%s", \'h%x, %d, UVM_LITTLE_ENDIAN);\n' %
-                        (addr_key, addr_key, self._project.get_address_base(addr_key),
-                         self._project.get_address_width(addr_key)))
+            base = self._project.get_address_base(addr_key)
+            width = self._project.get_address_width(addr_key)
+            cfile.write('      %s = create_map("%s", \'h%x, %d, %s);\n' %
+                        (name, name, base, width, endian))
         cfile.write("\n")
 
         for group in self._project.get_grouping_list():
             name = group[0]
-            cfile.write('      %s = %s_group_reg_block::type_id::create("%s");\n' % (name, name, name))
+            cfile.write('      %s = %s_group_reg_block::type_id::create("%s");\n' %
+                        (name, name, name))
             cfile.write('      %s.configure(this, "%s");\n' % (name, name))
             cfile.write("      %s.build();\n" % name)
             for addr_key in self._project.get_address_maps():
-                cfile.write("      %s_map.add_submap(%s.%s_map, 0);\n" % (addr_key, name, addr_key))
+                cfile.write("      %s_map.add_submap(%s.%s_map, 0);\n" %
+                            (addr_key, name, addr_key))
             cfile.write("\n")
 
         cfile.write("   endfunction: build\n")
@@ -159,23 +166,28 @@ class UVM_Block_Registers(WriterBase):
     def write_group_block(self, group, cfile):
 
         sname = group[0]
-        cfile.write("class %s_group_reg_block extends uvm_reg_block;\n" % sname)
+        cfile.write("class %s_group_reg_block extends uvm_reg_block;\n" %
+                    sname)
         cfile.write("\n")
         cfile.write("   `uvm_object_utils(%s_group_reg_block)\n" % sname)
         cfile.write("\n")
 
         for group_entry in self._project.get_group_map(group[0]):
             if group_entry.repeat > 1:
-                cfile.write("   %s_reg_block %s[%d];\n" % (group_entry.set, group_entry.set, group_entry.repeat))
+                cfile.write("   %s_reg_block %s[%d];\n" %
+                            (group_entry.set, group_entry.set,
+                             group_entry.repeat))
             else:
-                cfile.write("   %s_reg_block %s;\n" % (group_entry.set, group_entry.set))
+                cfile.write("   %s_reg_block %s;\n" %
+                            (group_entry.set, group_entry.set))
 
         for addr_key in self._project.get_address_maps():
             name = "%s_map" % addr_key
             cfile.write('   uvm_reg_map %s;\n' % name)
 
         cfile.write("\n")
-        cfile.write('   function new(string name = "%s_group_reg_block");\n' % sname)
+        cfile.write('   function new(string name = "%s_group_reg_block");\n' %
+                    sname)
         cfile.write("      super.new(name, build_coverage(UVM_CVR_ADDR_MAP));\n")
         cfile.write("   endfunction : new\n")
         cfile.write("\n")
@@ -185,30 +197,38 @@ class UVM_Block_Registers(WriterBase):
         cfile.write("      end\n")
         cfile.write("\n")
 
+        endian = "UVM_LITTLE_ENDIAN"
         for addr_key in self._project.get_address_maps():
             name = "%s_map" % addr_key
-            cfile.write('      %s_map = create_map("%s", 0, %d, UVM_LITTLE_ENDIAN);\n' %
-                        (addr_key, addr_key, self._project.get_address_width(addr_key)))
+            width = self._project.get_address_width(addr_key)
+            cfile.write('      %s = create_map("%s", 0, %d, %s);\n' %
+                        (name, name, width, endian))
         cfile.write("\n")
 
         for group_entry in self._project.get_group_map(group[0]):
             if group_entry.repeat > 1:
                 name = group_entry.set
-                cfile.write('      for(int i = 0; i < %d; i++) begin\n' % group_entry.repeat)
-                cfile.write('         %s[i] = %s_reg_block::type_id::create("%s[i]");\n' % (name, name, name))
-                cfile.write('         %s[i].configure(this, $sformatf("%s[%%0d]", i));\n' % (name, name))
+                cfile.write('      for(int i = 0; i < %d; i++) begin\n' %
+                            group_entry.repeat)
+                cfile.write('         %s[i] = %s_reg_block::type_id::create("%s[i]");\n' %
+                            (name, name, name))
+                cfile.write('         %s[i].configure(this, $sformatf("%s[%%0d]", i));\n' %
+                            (name, name))
                 cfile.write("         %s[i].build();\n" % name)
                 for addr_key in self._project.get_address_maps():
                     cfile.write("         %s_map.add_submap(%s[i].%s_map, 'h%x + (i * 'h%x));\n" %
-                                (addr_key, name, addr_key, group_entry.offset, group_entry.repeat))
+                                (addr_key, name, addr_key, group_entry.offset, 
+                                 group_entry.repeat_offset))
                 cfile.write('      end\n')
             else:
                 name = group_entry.set
-                cfile.write('      %s = %s_reg_block::type_id::create("%s");\n' % (name, name, name))
+                cfile.write('      %s = %s_reg_block::type_id::create("%s");\n' %
+                            (name, name, name))
                 cfile.write('      %s.configure(this, "%s");\n' % (name, name))
                 cfile.write("      %s.build();\n" % name)
                 for addr_key in self._project.get_address_maps():
-                    cfile.write("      %s_map.add_submap(%s.%s_map, 'h%x);\n" % (addr_key, name, addr_key, group_entry.offset))
+                    cfile.write("      %s_map.add_submap(%s.%s_map, 'h%x);\n" %
+                                (addr_key, name, addr_key, group_entry.offset))
             cfile.write("\n")
 
         cfile.write("   endfunction: build\n")
@@ -249,7 +269,7 @@ class UVM_Block_Registers(WriterBase):
         mod = dbase.module_name
         cfile.write('    %s_reg_access_wrapper %s_access_cg;\n\n' % (mod, mod))
         cfile.write('\n')
-        cfile.write('    function new(string name = "%s_access_cg");\n' % mod)
+        cfile.write('    function new(string name = "%s_reg_block");\n' % mod)
         cfile.write('      super.new(name,build_coverage(UVM_CVR_ALL));\n')
         cfile.write('    endfunction\n\n')
 
@@ -274,7 +294,8 @@ class UVM_Block_Registers(WriterBase):
                         name = field.reset_parameter
                     else:
                         name = "p%s" % field.field_name.upper()
-                    cfile.write('      %s.%s = %s;\n' % (reg.token.lower(), name, name))
+                    cfile.write('      %s.%s = %s;\n' % (reg.token.lower(),
+                                                         name, name))
 
             cfile.write('      %s.configure(this);\n' % reg.token.lower())
             cfile.write('      %s.build();\n' % reg.token.lower())
@@ -300,16 +321,19 @@ class UVM_Block_Registers(WriterBase):
                         (name, name, self._project.get_address_width(addr_key)))
             for key in dbase.get_keys():
                 reg = dbase.get_register(key)
-                cfile.write('      %s.add_reg(%s, \'h%04x, "RW");\n' % (name, reg.token.lower(), reg.address))
+                cfile.write('      %s.add_reg(%s, \'h%04x, "RW");\n' %
+                            (name, reg.token.lower(), reg.address))
             cfile.write('\n')
 
         cfile.write('      lock_model();\n')
-        cfile.write('    endfunction : build\n')
+        cfile.write('    endfunction : build\n\n')
 
-        cfile.write('    function void sample(uvm_reg_addr_t offset, bit is_read, uvm_reg_map  map);\n')
+        cfile.write('    function void sample(uvm_reg_addr_t offset, '
+                    'bit is_read, uvm_reg_map  map);\n')
         cfile.write('       if(get_coverage(UVM_CVR_ALL)) begin\n')
         cfile.write('          if(map.get_name() == "default_map") begin\n')
-        cfile.write('             %s_access_cg.sample(offset, is_read);\n' % dbase.module_name)
+        cfile.write('             %s_access_cg.sample(offset, is_read);\n' %
+                    dbase.module_name)
         cfile.write('          end\n')
         cfile.write('       end\n')
         cfile.write('    endfunction: sample\n\n')
@@ -424,8 +448,8 @@ class UVM_Block_Registers(WriterBase):
             ind_access = individual_access(field, reg)
 
             cfile.write('      %s.configure(this, %d, %d, "%s", %d, %s, %d, %d, %d);\n' %
-                        (self._fix_name(field), size, lsb, access, volatile, reset,
-                         has_reset, is_rand, ind_access))
+                        (self._fix_name(field), size, lsb, access, volatile,
+                         reset, has_reset, is_rand, ind_access))
 
         if reg.do_not_test:
             cfile.write('      uvm_resource_db #(bit)::set({"REG::", '
@@ -461,7 +485,8 @@ class UVM_Block_Registers(WriterBase):
         cfile.write("   }\n\n")
         cfile.write("   ACCESS: cross ADDR, RW;\n\n")
         cfile.write("   endgroup : ra_cov\n\n")
-        cfile.write('   function new(string name = "%s_reg_access_wrapper");\n' % base)
+        cfile.write('   function new(string name = "%s_reg_access_wrapper");\n' %
+                    base)
         cfile.write('      ra_cov = new($sformatf("%s_%0d", name, s_inst_num++));\n')
         cfile.write('   endfunction : new\n\n')
         cfile.write('   function void sample(uvm_reg_addr_t offset, bit is_read);\n')

@@ -49,7 +49,8 @@ class SummaryWindow(object):
             SummaryWindow.window.connect('destroy', self.destroy)
             SummaryWindow.window.connect('delete_event', self.delete)
 
-        reg_info = regenerate.extras.RegisterRst(reg, regset_name, project)
+        reg_info = regenerate.extras.RegisterRst(reg, regset_name, project,
+                                                 show_uvm=True)
 
         SummaryWindow.wkit.load_string(reg_info.html_css(),
                                        "text/html", "utf-8", "")

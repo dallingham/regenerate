@@ -28,7 +28,8 @@ from regenerate.db import LOGGER
 from collections import namedtuple
 
 AddrMapData = namedtuple("AddrMapData", "base width fixed")
-GroupMapData = namedtuple("GroupMapData", "set offset repeat repeat_offset format")
+GroupMapData = namedtuple("GroupMapData",
+                          "set offset repeat repeat_offset format")
 GroupData = namedtuple("GroupData", "name base")
 
 
@@ -106,9 +107,8 @@ class RegProject(object):
             else:
                 ofile.write('  <registerset name="%s"/>\n' % fname)
 
-        if self.__project_exports:
-            for pair in self.__project_exports:
-                ofile.write('  <project_export option="%s" path="%s"/>\n' % pair)
+        for pair in self.__project_exports:
+            ofile.write('  <project_export option="%s" path="%s"/>\n' % pair)
 
         ofile.write('</project>\n')
         self.__modified = False

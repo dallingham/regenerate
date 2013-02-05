@@ -44,6 +44,16 @@ def full_token(group_name, reg_name, set_name, index, fmt_string):
     return fmt_string % name_data
 
 
+def uvm_name(group_name, reg_name, set_name, index, fmt_string):
+
+    if index >= 0:
+        return "<top>.%s.%s[%d].%s" % (group_name.lower(), set_name.lower(),
+                                       index, reg_name.lower())
+    else:
+        return "<top>.%s.%s.%s" % (group_name.lower(), set_name.lower(),
+                                   reg_name.lower())
+
+
 def in_groups(regset_name, project):
     groups = []
     if regset_name and project:

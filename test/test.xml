@@ -1,9 +1,6 @@
 <?xml version="1.0"?>
-<module name="test" title="test" owner="">
+<module name="test" title="Test Case for Regenerate" owner="John Bigboote">
   <base addr_width="32" data_width="32"/>
-  <instances>
-    <instance id="INSTANCE" base="0"/>
-  </instances>
   <ports>
     <addr>ADDR</addr>
     <data_in>WDATA</data_in>
@@ -357,8 +354,8 @@ Admonitions
     <range start="17" stop="27">
       <modified time="0"/>
       <name>BYTE_CROSS_SKEWED</name>
-      <signal enb="0" static="0" field_type="W1CS1S1" side_effect="0" volatile="0">RWLD1S_BYTE_CROSS_SKEW</signal>
-      <input>RD_WR_LD_1_SHOT_1_BYTE_CROSS_SKEW_IN</input>
+      <signal enb="0" static="0" field_type="RWLD1S1" side_effect="0" volatile="0">RWLD1S_BYTE_CROSS_SKEW</signal>
+      <input load="RD_WR_LD_1_SHOT_1_BYTE_CROSS_SKEWED_LD">RD_WR_LD_1_SHOT_1_BYTE_CROSS_SKEW_IN</input>
       <reset type="0">0</reset>
       <description>Multi byte, unaligned to a byte boundary.</description>
     </range>

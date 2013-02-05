@@ -109,8 +109,9 @@ class ProjectList(object):
         self.__model = None
         self.__build_prj_window()
 
-        self.__obj.enable_model_drag_source(gtk.gdk.BUTTON1_MASK, [('text/plain', 0, 0)],
-                                            gtk.gdk.ACTION_DEFAULT | gtk.gdk.ACTION_MOVE)
+        self.__obj.enable_model_drag_source(
+            gtk.gdk.BUTTON1_MASK, [('text/plain', 0, 0)],
+            gtk.gdk.ACTION_DEFAULT | gtk.gdk.ACTION_MOVE)
         self.__obj.connect('drag-data-get', self.drag_data_get)
 
         self.factory = gtk.IconFactory()
@@ -138,7 +139,7 @@ class ProjectList(object):
 
         renderer = gtk.CellRendererText()
         renderer.set_property('ellipsize', pango.ELLIPSIZE_END)
-        column = gtk.TreeViewColumn("Project Files", renderer, text=0)
+        column = gtk.TreeViewColumn("Register Sets", renderer, text=0)
         column.set_min_width(140)
         self.__obj.append_column(column)
 
