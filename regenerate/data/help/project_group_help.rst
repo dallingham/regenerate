@@ -42,7 +42,34 @@ In this case, a register's address is determined by:
 
   ``Address = AddressMapBase + SubsystemBase + RegisterBase + (i * RepeatOffset) + RegisterAddress``
 
+ID Format Control
+-----------------
 
+When regenerate creates ID tokens for a register, it may not create
+them in format that may be desired. By default, the ID token is
+created using the subsystem name and register name. The ID format
+field allows the user to override this format. Text, combined with a
+few special formatting tokens, gives the user higher control.
+
+The special formatting tokens are:
+
+``%{G}s``
+  subsystem name in upper case
+``%{g}s``
+  subsystem name in lower case
+``%{S}s``
+  register set name in upper case
+``%{s}s``
+  register set name in lower case
+``%{d}s``
+  array index (if repeat count is greater than one), or an empty string if 
+  the repeat count is one.
+``%{R}s``
+  register name in upper case
+``%{r}s``
+  register name in lower case
+
+The default format is "``%{G}s%{d}s_%{R}s``".
 
 
 
