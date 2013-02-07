@@ -210,7 +210,7 @@ class UVM_Block_Registers(WriterBase):
                 name = group_entry.set
                 cfile.write('      for(int i = 0; i < %d; i++) begin\n' %
                             group_entry.repeat)
-                cfile.write('         %s[i] = %s_reg_block::type_id::create("%s[i]");\n' %
+                cfile.write('         %s[i] = %s_reg_block::type_id::create($sformatf("%s[%%0d]", i));\n' %
                             (name, name, name))
                 cfile.write('         %s[i].configure(this, $sformatf("%s[%%0d]", i));\n' %
                             (name, name))
@@ -422,6 +422,8 @@ class UVM_Block_Registers(WriterBase):
             cfile.write(', , get_full_name());\n')
         cfile.write("\n")
 
+        dont_test = False
+
         field_keys = reg.get_bit_field_keys()
         for key in field_keys:
             field = reg.get_bit_field(key)
@@ -433,7 +435,11 @@ class UVM_Block_Registers(WriterBase):
                 LOGGER.warning(msg)
             else:
                 lsb = field.start_position
-            access = access_map[field.field_type]
+
+            access = access_map.get(field.field_type, None)
+            if access is None:
+                dont_test = True
+                continue
 
             volatile = is_volatile(field)
             has_reset = 1
@@ -451,10 +457,10 @@ class UVM_Block_Registers(WriterBase):
                         (self._fix_name(field), size, lsb, access, volatile,
                          reset, has_reset, is_rand, ind_access))
 
-        if reg.do_not_test:
+        if reg.do_not_test or dont_test:
             cfile.write('      uvm_resource_db #(bit)::set({"REG::", '
                         'get_full_name()}, "NO_REG_HW_RESET_TEST", 1);\n')
-        if reg.do_not_test:
+        if reg.do_not_test or dont_test:
             cfile.write('      uvm_resource_db #(bit)::set({"REG::", '
                         'get_full_name()}, "NO_REG_BIT_BASH_TEST", 1);\n')
 

@@ -101,6 +101,9 @@ TYPES = (
     BitFieldInfo(BitField.TYPE_WRITE_ONLY,
                  "WO", False, False, True, True, False, False, False,
                  "Write Only", "WO"),
+    BitFieldInfo(BitField.TYPE_READ_WRITE_RESET_ON_COMP,
+                 "RWRC", False, False, False, True, True, False, False,
+                 "Read/Write when reset, reset on complement", "RWRC"),
     )
 
 TYPE_TO_ID = {}
