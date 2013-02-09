@@ -2379,8 +2379,8 @@
                           </object>
                           <packing>
                             <property name="right_attach">5</property>
-                            <property name="top_attach">3</property>
-                            <property name="bottom_attach">4</property>
+                            <property name="top_attach">5</property>
+                            <property name="bottom_attach">6</property>
                             <property name="y_options"></property>
                           </packing>
                         </child>
@@ -2456,8 +2456,8 @@
                           <packing>
                             <property name="left_attach">4</property>
                             <property name="right_attach">5</property>
-                            <property name="top_attach">4</property>
-                            <property name="bottom_attach">5</property>
+                            <property name="top_attach">6</property>
+                            <property name="bottom_attach">7</property>
                             <property name="x_options"></property>
                           </packing>
                         </child>
@@ -2478,8 +2478,8 @@
                           <packing>
                             <property name="left_attach">1</property>
                             <property name="right_attach">4</property>
-                            <property name="top_attach">4</property>
-                            <property name="bottom_attach">5</property>
+                            <property name="top_attach">6</property>
+                            <property name="bottom_attach">7</property>
                             <property name="y_options">GTK_FILL</property>
                           </packing>
                         </child>
@@ -2500,8 +2500,8 @@
                           <packing>
                             <property name="left_attach">1</property>
                             <property name="right_attach">4</property>
-                            <property name="top_attach">6</property>
-                            <property name="bottom_attach">7</property>
+                            <property name="top_attach">4</property>
+                            <property name="bottom_attach">5</property>
                           </packing>
                         </child>
                         <child>
@@ -2576,8 +2576,8 @@
                           <packing>
                             <property name="left_attach">4</property>
                             <property name="right_attach">5</property>
-                            <property name="top_attach">6</property>
-                            <property name="bottom_attach">7</property>
+                            <property name="top_attach">4</property>
+                            <property name="bottom_attach">5</property>
                             <property name="x_options"></property>
                           </packing>
                         </child>
@@ -2591,8 +2591,8 @@
                           </object>
                           <packing>
                             <property name="right_attach">5</property>
-                            <property name="top_attach">5</property>
-                            <property name="bottom_attach">6</property>
+                            <property name="top_attach">3</property>
+                            <property name="bottom_attach">4</property>
                             <property name="y_options"></property>
                           </packing>
                         </child>
