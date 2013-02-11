@@ -122,8 +122,8 @@ class UVM_Block_Registers(WriterBase):
             cfile.write("   %s_group_reg_block %s;\n" %
                         (group_name[0], group_name[0]))
 
-        for addr_key in self._project.get_address_maps():
-            name = "%s_map" % addr_key
+        for data in self._project.get_address_maps():
+            name = "%s_map" % data.name
             cfile.write('   uvm_reg_map %s;\n' % name)
 
         cfile.write("\n")
@@ -140,12 +140,10 @@ class UVM_Block_Registers(WriterBase):
 
         endian = "UVM_LITTLE_ENDIAN"
 
-        for addr_key in self._project.get_address_maps():
-            name = "%s_map" % addr_key
-            base = self._project.get_address_base(addr_key)
-            width = self._project.get_address_width(addr_key)
+        for data in self._project.get_address_maps():
+            name = "%s_map" % data.name
             cfile.write('      %s = create_map("%s", \'h%x, %d, %s);\n' %
-                        (name, name, base, width, endian))
+                        (name, name, data.base, data.width, endian))
         cfile.write("\n")
 
         for group in self._project.get_grouping_list():
@@ -154,9 +152,9 @@ class UVM_Block_Registers(WriterBase):
                         (name, name, name))
             cfile.write('      %s.configure(this, "%s");\n' % (name, name))
             cfile.write("      %s.build();\n" % name)
-            for addr_key in self._project.get_address_maps():
+            for data in self._project.get_address_maps():
                 cfile.write("      %s_map.add_submap(%s.%s_map, 0);\n" %
-                            (addr_key, name, addr_key))
+                            (data.name, name, data.name))
             cfile.write("\n")
 
         cfile.write("   endfunction: build\n")
@@ -181,8 +179,8 @@ class UVM_Block_Registers(WriterBase):
                 cfile.write("   %s_reg_block %s;\n" %
                             (group_entry.set, group_entry.set))
 
-        for addr_key in self._project.get_address_maps():
-            name = "%s_map" % addr_key
+        for data in self._project.get_address_maps():
+            name = "%s_map" % data.name
             cfile.write('   uvm_reg_map %s;\n' % name)
 
         cfile.write("\n")
@@ -198,11 +196,10 @@ class UVM_Block_Registers(WriterBase):
         cfile.write("\n")
 
         endian = "UVM_LITTLE_ENDIAN"
-        for addr_key in self._project.get_address_maps():
-            name = "%s_map" % addr_key
-            width = self._project.get_address_width(addr_key)
+        for data in self._project.get_address_maps():
+            name = "%s_map" % data.name
             cfile.write('      %s = create_map("%s", 0, %d, %s);\n' %
-                        (name, name, width, endian))
+                        (name, name, data.width, endian))
         cfile.write("\n")
 
         for group_entry in self._project.get_group_map(group[0]):
@@ -215,9 +212,9 @@ class UVM_Block_Registers(WriterBase):
                 cfile.write('         %s[i].configure(this, $sformatf("%s[%%0d]", i));\n' %
                             (name, name))
                 cfile.write("         %s[i].build();\n" % name)
-                for addr_key in self._project.get_address_maps():
+                for data in self._project.get_address_maps():
                     cfile.write("         %s_map.add_submap(%s[i].%s_map, 'h%x + (i * 'h%x));\n" %
-                                (addr_key, name, addr_key, group_entry.offset, 
+                                (data.name, name, data.name, group_entry.offset, 
                                  group_entry.repeat_offset))
                 cfile.write('      end\n')
             else:
@@ -226,9 +223,10 @@ class UVM_Block_Registers(WriterBase):
                             (name, name, name))
                 cfile.write('      %s.configure(this, "%s");\n' % (name, name))
                 cfile.write("      %s.build();\n" % name)
-                for addr_key in self._project.get_address_maps():
+                for data in self._project.get_address_maps():
                     cfile.write("      %s_map.add_submap(%s.%s_map, 'h%x);\n" %
-                                (addr_key, name, addr_key, group_entry.offset))
+                                (data.name, name, data.name,
+                                 group_entry.offset))
             cfile.write("\n")
 
         cfile.write("   endfunction: build\n")
@@ -241,8 +239,8 @@ class UVM_Block_Registers(WriterBase):
         cfile.write('    `uvm_object_utils(%s_reg_block)\n\n'
                     % dbase.module_name)
 
-        for addr_key in self._project.get_address_maps():
-            name = "%s_map" % addr_key
+        for data in self._project.get_address_maps():
+            name = "%s_map" % data.name
             cfile.write('    uvm_reg_map %s;\n' % name)
 
         for key in dbase.get_keys():
@@ -314,11 +312,11 @@ class UVM_Block_Registers(WriterBase):
 
         cfile.write("\n")
 
-        for addr_key in self._project.get_address_maps():
-            name = "%s_map" % addr_key
+        for data in self._project.get_address_maps():
+            name = "%s_map" % data.name
 
             cfile.write('      %s = create_map("%s", \'h0, %d, UVM_LITTLE_ENDIAN, 1);\n\n' %
-                        (name, name, self._project.get_address_width(addr_key)))
+                        (name, name, data.width))
             for key in dbase.get_keys():
                 reg = dbase.get_register(key)
                 cfile.write('      %s.add_reg(%s, \'h%04x, "RW");\n' %

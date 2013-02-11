@@ -40,9 +40,10 @@ from preferences import Preferences
 from bit_list import BitModel, BitList, bits, reset_value
 from register_list import RegisterModel, RegisterList, build_define
 from instance_list import InstanceModel, InstanceList
+from addrmap_list import AddrMapList
 from regenerate.db import (RegWriter, RegisterDb, Register,
                            BitField, RegProject, LOGGER, TYPES)
-from columns import EditableColumn, ToggleColumn, ComboMapColumn
+#from columns import EditableColumn, ToggleColumn, ComboMapColumn
 from regenerate.importers import IMPORTERS
 from regenerate.settings.paths import GLADE_TOP, INSTALL_PATH
 from regenerate.settings import ini
@@ -262,32 +263,10 @@ class MainWindow(object):
         self.__prj_short_name_obj = self.__builder.get_object('short_name')
         self.__prj_name_obj = self.__builder.get_object('project_name')
         self.__prj_company_name_obj = self.__builder.get_object('company_name')
-
-        self.__addr_map_obj = self.__builder.get_object('address_tree')
-        self.__addr_map_model = gtk.ListStore(str, str, bool, str)
-        self.__addr_map_obj.set_model(self.__addr_map_model)
-
         self.__prj_doc_object = self.__builder.get_object('project_doc_buffer')
 
-        self.__map_name_col = EditableColumn('Map Name', self.map_name_changed,
-                                             AM_NAME)
-        self.__map_name_col.set_min_width(240)
-        self.__addr_map_obj.append_column(self.__map_name_col)
-
-        column = EditableColumn('Base Address', self.map_address_changed,
-                                AM_ADDR)
-        column.set_min_width(250)
-        self.__addr_map_obj.append_column(column)
-
-        column = ComboMapColumn('Access Width', self.map_width_changed,
-                                SIZE2STR, AM_WIDTH)
-        column.set_min_width(250)
-        self.__addr_map_obj.append_column(column)
-
-        column = ToggleColumn('Fixed Address', self.map_fixed_changed,
-                              AM_FIXED)
-        column.set_max_width(200)
-        self.__addr_map_obj.append_column(column)
+        self.__addr_map_obj = self.__builder.get_object('address_tree')
+        self.__addr_map_list = AddrMapList(self.__addr_map_obj)
 
     def load_project_tab(self):
         self.__prj_short_name_obj.set_text(self.__prj.short_name)
@@ -295,75 +274,8 @@ class MainWindow(object):
         self.__prj_name_obj.set_text(self.__prj.name)
         company = self.__prj.company_name
         self.__prj_company_name_obj.set_text(company)
-
-        self.__addr_map_model.clear()
-        for base in self.__prj.get_address_maps():
-            addr = self.__prj.get_address_base(base)
-            width = self.__prj.get_address_width(base)
-            fixed = bool(self.__prj.get_address_fixed(base))
-
-            data = (base, "%x" % addr, fixed, INT2SIZE[width])
-            self.__addr_map_model.append(row=data)
-
+        self.__addr_map_list.set_project(self.__prj)
         self.__prj.clear_modified()
-
-    def map_name_changed(self, cell, path, new_text, col):
-        node = self.__addr_map_model.get_iter(path)
-        name = self.__addr_map_model.get_value(node, AM_NAME)
-        value = self.__addr_map_model.get_value(node, AM_ADDR)
-        fixed = self.__addr_map_model.get_value(node, AM_FIXED)
-        width = STR2SIZE[self.__addr_map_model.get_value(node, AM_WIDTH)]
-        try:
-            self.__prj.remove_address_map(name)
-        except:
-            pass
-        self.__prj.set_address_map(new_text, int(value, 16), width, fixed)
-        self.__addr_map_model[path][AM_NAME] = new_text
-        self.__prj.set_modified()
-
-    def map_fixed_changed(self, cell, path, source):
-        """
-        Called with the modified toggle is changed. Toggles the value in
-        the internal list.
-        """
-        node = self.__addr_map_model.get_iter(path)
-        name = self.__addr_map_model.get_value(node, AM_NAME)
-        value = self.__addr_map_model.get_value(node, AM_ADDR)
-        fixed = self.__addr_map_model.get_value(node, AM_FIXED)
-        width = self.__addr_map_model.get_value(node, AM_WIDTH)
-        self.__addr_map_model[path][AM_FIXED] = not fixed
-        self.__prj.set_address_map(name, int(value, 16),
-                                   STR2SIZE[width], not fixed)
-
-    def map_width_changed(self, cell, path, node, col):
-        """
-        Called with the modified toggle is changed. Toggles the value in
-        the internal list.
-        """
-        node = self.__addr_map_model.get_iter(path)
-        name = self.__addr_map_model.get_value(node, AM_NAME)
-        value = self.__addr_map_model.get_value(node, AM_ADDR)
-        fixed = self.__addr_map_model.get_value(node, AM_FIXED)
-
-        model = cell.get_property('model')
-        self.__addr_map_model[path][col] = model[path][0]
-        width = model[path][1]
-        self.__prj.set_address_map(name, int(value, 16), width, fixed)
-
-    def map_address_changed(self, cell, path, new_text, col):
-        try:
-            value = int(new_text, 16)
-        except ValueError:
-            pass
-        if new_text:
-            node = self.__addr_map_model.get_iter(path)
-            name = self.__addr_map_model.get_value(node, AM_NAME)
-            fixed = self.__addr_map_model.get_value(node, AM_FIXED)
-            width = STR2SIZE[self.__addr_map_model.get_value(node, AM_WIDTH)]
-
-            self.__prj.set_address_map(name, value, width, fixed)
-            self.__addr_map_model[path][AM_ADDR] = new_text
-            self.__prj.set_modified()
 
     def on_addr_map_help_clicked(self, obj):
         from help_window import HelpWindow
@@ -376,20 +288,10 @@ class MainWindow(object):
         HelpWindow(self.__builder, "project_group_help.rst")
 
     def on_remove_map_clicked(self, obj):
-        (model, node) = self.__addr_map_obj.get_selection().get_selected()
-        name = model.get_value(node, AM_NAME)
-        model.remove(node)
-        self.__prj.set_modified()
-        self.__prj.remove_address_map(name)
+        self.__addr_map_list.remove_selected()
 
     def on_add_map_clicked(self, obj):
-        node = self.__addr_map_model.append(row=("NewMap", 0,
-                                                 False, SIZE2STR[0][0]))
-        path = self.__addr_map_model.get_path(node)
-        self.__prj.set_modified()
-        self.__prj.set_address_map('NewMap', 0, False, SIZE2STR[0][1])
-        self.__addr_map_obj.set_cursor(path, focus_column=self.__map_name_col,
-                                       start_editing=True)
+        self._addr_map_list.add_new_map()
 
     def on_project_name_changed(self, obj):
         """
@@ -929,7 +831,7 @@ class MainWindow(object):
             self.__no_test.set_active(reg.do_not_test)
             self.__hide.set_active(reg.hide)
             self.__reg_notebook.set_sensitive(True)
-            self.__reg_selected.set_sensitive(True)  # FIXME
+            self.__reg_selected.set_sensitive(True)
             self.__set_register_warn_flags(reg)
             self.__set_bits_warn_flag()
         else:

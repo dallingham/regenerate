@@ -27,7 +27,7 @@ import os.path
 from regenerate.db import LOGGER
 from collections import namedtuple
 
-AddrMapData = namedtuple("AddrMapData", "base width fixed")
+AddrMapData = namedtuple("AddrMapData", "name base width fixed")
 GroupMapData = namedtuple("GroupMapData",
                           "set offset repeat repeat_offset format")
 GroupData = namedtuple("GroupData", "name base")
@@ -49,12 +49,12 @@ class RegProject(object):
         self.__filelist = []
         self.__groupings = []
         self.__grouping_map = {}
+        self.__address_map_list = []
         self.__exports = {}
         self.__project_exports = []
         self.__token_list = []
         self.__modified = False
         self.__current = ""
-        self.__address_maps = {}
         self.path = path
         if path:
             self.open(path)
@@ -71,32 +71,12 @@ class RegProject(object):
         if self.documentation:
             ofile.write('  <documentation>%s</documentation>' %
                         escape(self.documentation))
-        if self.__address_maps:
-            ofile.write('  <address_maps>\n')
-            for key in self.__address_maps:
-                data = self.__address_maps[key]
-                ofile.write('    <address_map name="%s" base="%x" fixed="%d" width="%d"/>\n' %
-                            (key, data.base, data.fixed, data.width))
-            ofile.write('  </address_maps>\n')
+
+        if self.__address_map_list:
+            self._print_address_maps(ofile)
 
         if self.__groupings:
-            ofile.write('  <groupings>\n')
-            for group in self.__groupings:
-                if group.name in self.__grouping_map:
-                    ofile.write('    <grouping name="%s" start="%x">\n' %
-                                (group.name, group.base))
-                    for item in self.__grouping_map[group.name]:
-                        ofile.write('      <map set="%s" offset="%x" repeat="%s" repeat_offset="%s"' %
-                                    (item.set, item.offset, item.repeat, item.repeat_offset))
-                        if item.format:
-                            ofile.write(' format="%s"/>\n' % item.format)
-                        else:
-                            ofile.write("/>\n")
-                    ofile.write('    </grouping>\n')
-                else:
-                    ofile.write('    <grouping name="%s" start="%x"/>\n' %
-                                (group.name, group.base))
-            ofile.write('  </groupings>\n')
+            self._print_groupings(ofile)
 
         for fname in self.__filelist:
             if self.__exports[fname]:
@@ -112,6 +92,42 @@ class RegProject(object):
 
         ofile.write('</project>\n')
         self.__modified = False
+
+    def _print_address_maps(self, ofile):
+        """
+        Prints the address map list to the XML file
+        """
+        ofile.write('  <address_maps>\n')
+        for data in self.__address_map_list:
+            ofile.write('    <address_map name="%s" base="%x" ' %
+                        (data.name, data.base))
+            ofile.write('fixed="%d" width="%d"/>\n' %
+                        (data.fixed, data.width))
+        ofile.write('  </address_maps>\n')
+
+    def _print_groupings(self, ofile):
+        """
+        Prints the grouping list
+        """
+        ofile.write('  <groupings>\n')
+        for group in self.__groupings:
+            if group.name in self.__grouping_map:
+                ofile.write('    <grouping name="%s" start="%x">\n' %
+                            (group.name, group.base))
+                for item in self.__grouping_map[group.name]:
+                    ofile.write('      <map set="%s" offset="%x" ' %
+                                (item.set, item.offset))
+                    ofile.write('repeat="%s" repeat_offset="%s"' %
+                                (item.repeat, item.repeat_offset))
+                    if item.format:
+                        ofile.write(' format="%s"/>\n' % item.format)
+                    else:
+                        ofile.write("/>\n")
+                ofile.write('    </grouping>\n')
+            else:
+                ofile.write('    <grouping name="%s" start="%x"/>\n' %
+                            (group.name, group.base))
+        ofile.write('  </groupings>\n')
 
     def open(self, name):
         """
@@ -226,24 +242,41 @@ class RegProject(object):
         self.__groupings.remove(GroupData(name, start))
 
     def get_address_maps(self):
-        return self.__address_maps
+        return self.__address_map_list
 
     def get_address_base(self, name):
-        return self.__address_maps[name].base
+        for data in self.__address_map_list:
+            if name == data.name:
+                return data.base
+        return None
 
     def get_address_fixed(self, name):
-        return self.__address_maps[name].fixed
+        for data in self.__address_map_list:
+            if name == data.name:
+                return data.fixed
+        return None
 
     def get_address_width(self, name):
-        return self.__address_maps[name].width
+        for data in self.__address_map_list:
+            if name == data.name:
+                return data.width
+        return None
 
     def set_address_map(self, name, base, width, fixed):
         self.__modified = True
-        self.__address_maps[name] = AddrMapData(base, width, fixed)
+        new_data = AddrMapData(name, base, width, fixed)
+        for (i, data) in enumerate(self.__address_map_list):
+            if (data.name == name):
+                print new_data
+                self.__address_map_list[i] = new_data
+                return
+        self.__address_map_list.append(new_data)
 
     def remove_address_map(self, name):
         self.__modified = True
-        del self.__address_maps[name]
+        for (i, data) in enumerate(self.__address_map_list):
+            if (data.name == name):
+                del self.__address_map_list[i]
 
     def startElement(self, tag, attrs):
         """
@@ -309,10 +342,11 @@ class RegProject(object):
         self.__grouping_map[self._current_group].append(data)
 
     def start_address_map(self, attrs):
-        data = AddrMapData(int(attrs.get('base', 0), 16),
+        data = AddrMapData(attrs['name'],
+                           int(attrs.get('base', 0), 16),
                            int(attrs.get('width', 4)),
                            int(attrs.get('fixed', 1)))
-        self.__address_maps[attrs['name']] = data
+        self.__address_map_list.append(data)
 
     def set_modified(self):
         self.__modified = True

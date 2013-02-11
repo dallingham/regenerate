@@ -122,6 +122,7 @@ class ProjectList(object):
         self.factory.add_default()
 
     def drag_data_get(self, treeview, context, selection, target_id, etime):
+
         tselection = treeview.get_selection()
         model, tree_iter = tselection.get_selected()
         data = model.get_value(tree_iter, 0)

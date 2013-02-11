@@ -126,6 +126,17 @@ class InstanceList(object):
         self.__obj.connect('drag-data-received',
                            self.__drag_data_received_data)
 
+        self.__obj.enable_model_drag_source(
+            gtk.gdk.BUTTON1_MASK, [('text/plain', 0, 0)],
+            gtk.gdk.ACTION_DEFAULT | gtk.gdk.ACTION_MOVE)
+        self.__obj.connect('drag-data-get', self.drag_data_get)
+
+    def drag_data_get(self, treeview, context, selection, target_id, etime):
+        tselection = treeview.get_selection()
+        model, tree_iter = tselection.get_selected()
+        data = model.get_value(tree_iter, 0)
+        selection.set(selection.target, 8, data)
+
     def __drag_data_received_data(self, treeview, context, x, y, selection,
                                   info, etime):
         model = treeview.get_model()
