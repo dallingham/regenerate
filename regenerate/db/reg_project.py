@@ -49,7 +49,8 @@ class RegProject(object):
         self.__filelist = []
         self.__groupings = []
         self.__grouping_map = {}
-        self.__address_map_list = []
+        self.__addr_map_list = []
+        self.__addr_map_grps = {}
         self.__exports = {}
         self.__project_exports = []
         self.__token_list = []
@@ -69,10 +70,10 @@ class RegProject(object):
                     (self.name, self.short_name, self.company_name))
 
         if self.documentation:
-            ofile.write('  <documentation>%s</documentation>' %
+            ofile.write('  <documentation>%s</documentation>\n' %
                         escape(self.documentation))
 
-        if self.__address_map_list:
+        if self.__addr_map_list:
             self._print_address_maps(ofile)
 
         if self.__groupings:
@@ -98,11 +99,19 @@ class RegProject(object):
         Prints the address map list to the XML file
         """
         ofile.write('  <address_maps>\n')
-        for data in self.__address_map_list:
+        for data in self.__addr_map_list:
+            groups = self.__addr_map_grps.get(data.name, [])
             ofile.write('    <address_map name="%s" base="%x" ' %
                         (data.name, data.base))
-            ofile.write('fixed="%d" width="%d"/>\n' %
+            ofile.write('fixed="%d" width="%d"' %
                         (data.fixed, data.width))
+            if groups:
+                ofile.write('>\n')
+                for group in groups:
+                    ofile.write('      <map_group>%s</map_group>\n' % group)
+                ofile.write('    </address_map>\n')
+            else:
+                ofile.write('/>\n')
         ofile.write('  </address_maps>\n')
 
     def _print_groupings(self, ofile):
@@ -242,22 +251,52 @@ class RegProject(object):
         self.__groupings.remove(GroupData(name, start))
 
     def get_address_maps(self):
-        return self.__address_map_list
+        return self.__addr_map_list
+
+    def get_address_map_groups(self, name):
+        return self.__addr_map_grps.get(name, [])
+
+    def change_address_map_name(self, old_name, new_name):
+        for (i, addrmap) in enumerate(self.__addr_map_list):
+            if addrmap.name != old_name:
+                continue
+            old_data = self.__addr_map_list[i]
+            self.__addr_map_list[i] = AddrMapData(new_name,
+                                                  old_data.base,
+                                                  old_data.width,
+                                                  old_data.fixed)
+            self.__addr_map_grps[new_name] = self.__addr_map_grps[old_name]
+            del self.__addr_map_grps[old_name]
+            self.__modified = True
+            return
+
+    def add_address_map_group(self, name, group_name):
+        if group_name not in self.__addr_map_grps[name]:
+            self.__addr_map_grps[name].append(group_name)
+            return True
+        else:
+            return False
+
+    def remove_address_map_group(self, name, group_name):
+        for (i, group_name) in self.__addr_map_grps[name]:
+            if group_name == name:
+                del self.__addr_map_grps[name][i]
+                return
 
     def get_address_base(self, name):
-        for data in self.__address_map_list:
+        for data in self.__addr_map_list:
             if name == data.name:
                 return data.base
         return None
 
     def get_address_fixed(self, name):
-        for data in self.__address_map_list:
+        for data in self.__addr_map_list:
             if name == data.name:
                 return data.fixed
         return None
 
     def get_address_width(self, name):
-        for data in self.__address_map_list:
+        for data in self.__addr_map_list:
             if name == data.name:
                 return data.width
         return None
@@ -265,18 +304,19 @@ class RegProject(object):
     def set_address_map(self, name, base, width, fixed):
         self.__modified = True
         new_data = AddrMapData(name, base, width, fixed)
-        for (i, data) in enumerate(self.__address_map_list):
+        for (i, data) in enumerate(self.__addr_map_list):
             if (data.name == name):
-                print new_data
-                self.__address_map_list[i] = new_data
+                self.__addr_map_list[i] = new_data
                 return
-        self.__address_map_list.append(new_data)
+        self.__addr_map_list.append(new_data)
 
     def remove_address_map(self, name):
         self.__modified = True
-        for (i, data) in enumerate(self.__address_map_list):
+        for (i, data) in enumerate(self.__addr_map_list):
             if (data.name == name):
-                del self.__address_map_list[i]
+                del self.__addr_map_list[i]
+                if data.name in self.__addr_map_grps:
+                    self.__addr_map_grps[data.name]
 
     def startElement(self, tag, attrs):
         """
@@ -346,7 +386,12 @@ class RegProject(object):
                            int(attrs.get('base', 0), 16),
                            int(attrs.get('width', 4)),
                            int(attrs.get('fixed', 1)))
-        self.__address_map_list.append(data)
+        self.__addr_map_list.append(data)
+        self.__addr_map_grps[data.name] = []
+        self.__current_map = data.name
+
+    def end_map_group(self, text):
+        self.__addr_map_grps[self.__current_map].append(text)
 
     def set_modified(self):
         self.__modified = True

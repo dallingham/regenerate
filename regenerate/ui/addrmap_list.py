@@ -50,37 +50,6 @@ class AddrMapModel(gtk.TreeStore):
     def __init__(self):
         gtk.TreeStore.__init__(self, str, str, bool, str)
 
-    def change_name(self, path, text):
-        """
-        Called when the ID of an instance has been edited in the InstanceList
-        """
-        node = self.get_iter(path)
-        self.set_value(node, AddrMapModel.NAME_COL, text)
-
-    def change_base(self, path, text):
-        """
-        Called when the base address of an instance has been edited in the
-        InstanceList
-        """
-        node = self.get_iter(path)
-        try:
-            int(text, 16)
-            self.set_value(node, AddrMapModel.BASE_COL, text)
-        except ValueError:
-            return
-
-    def change_width(self, path, text):
-        """
-        Called when the base address of an instance has been edited in the
-        InstanceList
-        """
-        node = self.get_iter(path)
-        try:
-            int(text)
-            self.set_value(node, AddrMapModel.WIDTH_COL, text)
-        except ValueError:
-            return
-
     def new_instance(self):
         """
         Adds a new instance to the model. It is not added to the database until
@@ -137,17 +106,24 @@ class AddrMapList(object):
         if drop_info:
             path, position = drop_info
             row_data = [data, "", "", ""]
+            group_names = [n.name for n in self.__project.get_grouping_list()]
+            if data not in group_names:
+                return
             if len(path) == 1:
-                node = self.__model.get_iter(path)
-                self.__model.append(node, row_data)
+                parent_name = self.__model[path][0]
+                if self.__project.add_address_map_group(parent_name, data):
+                    node = self.__model.get_iter(path)
+                    self.__model.append(node, row_data)
             else:
                 parent = self.__model.get_iter((path[0],))
-                node = self.__model.get_iter(path)
-                if (position == gtk.TREE_VIEW_DROP_BEFORE
-                    or position == gtk.TREE_VIEW_DROP_INTO_OR_BEFORE):
-                    self.__model.insert_before(parent, node, row_data)
-                else:
-                    model.insert_after(parent, node, row_data)
+                parent_name = self.__model[path[0]][0]
+                if self.__project.add_address_map_group(parent_name, data):
+                    node = self.__model.get_iter(path)
+                    if (position == gtk.TREE_VIEW_DROP_BEFORE
+                        or position == gtk.TREE_VIEW_DROP_INTO_OR_BEFORE):
+                        self.__model.insert_before(parent, node, row_data)
+                    else:
+                        model.insert_after(parent, node, row_data)
 
     def set_project(self, project):
         """
@@ -169,7 +145,9 @@ class AddrMapList(object):
         for base in self.__project.get_address_maps():
             data = (base.name, "%x" % base.base, base.fixed,
                     INT2SIZE[base.width])
-            self.__model.append(None, row=data)
+            node = self.__model.append(None, row=data)
+            for name in self.__project.get_address_map_groups(base.name):
+                self.__model.append(node, row=[name, "", False, ""])
 
     def _name_changed(self, cell, path, new_text, col):
         """
@@ -180,14 +158,7 @@ class AddrMapList(object):
 
         node = self.__model.get_iter(path)
         name = self.__model.get_value(node, AddrMapModel.NAME_COL)
-        value = self.__model.get_value(node, AddrMapModel.BASE_COL)
-        fixed = self.__model.get_value(node, AddrMapModel.FIXED_COL)
-        width = STR2SIZE[self.__model.get_value(node, AddrMapModel.WIDTH_COL)]
-        try:
-            self.__project.remove_address_map(name)
-        except:
-            pass
-        self.__project.set_address_map(new_text, int(value, 16), width, fixed)
+        self.__project.change_address_map_name(name, new_text)
         self.__model[path][AddrMapModel.NAME_COL] = new_text
         self.__project.set_modified()
 
