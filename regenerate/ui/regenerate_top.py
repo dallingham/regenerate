@@ -291,7 +291,7 @@ class MainWindow(object):
         self.__addr_map_list.remove_selected()
 
     def on_add_map_clicked(self, obj):
-        self._addr_map_list.add_new_map()
+        self.__addr_map_list.add_new_map()
 
     def on_project_name_changed(self, obj):
         """

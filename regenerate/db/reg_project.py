@@ -309,6 +309,7 @@ class RegProject(object):
                 self.__addr_map_list[i] = new_data
                 return
         self.__addr_map_list.append(new_data)
+        self.__addr_map_grps[name] = []
 
     def remove_address_map(self, name):
         self.__modified = True
