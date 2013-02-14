@@ -85,7 +85,7 @@ class RegisterRst:
                  highlight=None, show_defines=True, show_uvm=False):
         self._reg = register
         self._highlight = highlight
-        self._project = project
+        self._prj = project
         self._regset_name = regset_name
         self._show_defines = show_defines
         self._show_uvm = show_uvm
@@ -172,7 +172,7 @@ class RegisterRst:
 
     def _write_defines(self, o):
 
-        addr_maps = self._project.get_address_maps().keys()
+        addr_maps = self._prj.get_address_maps()
         if not addr_maps:
             return
 
@@ -183,8 +183,8 @@ class RegisterRst:
         o.write("   * - ID\n")
         o.write("     - Offset\n")
         for amap in addr_maps:
-            o.write("     - %s\n" % self.text(amap))
-        for inst in in_groups(self._regset_name, self._project):
+            o.write("     - %s\n" % self.text(amap.name))
+        for inst in in_groups(self._regset_name, self._prj):
             if inst.repeat == 1:
                 name = full_token(inst.group, self._reg.token,
                                   self._regset_name, -1,
@@ -194,7 +194,7 @@ class RegisterRst:
                                                       self._reg.address))
                 addr = self._reg.address + inst.offset + inst.base
                 for map_name in addr_maps:
-                    faddr = addr + self._project.get_address_base(map_name)
+                    faddr = addr + self._prj.get_address_base(map_name.name)
                     o.write("     - ``%s``\n" % self.text("0x%08x" % faddr))
             else:
                 for i in range(0, inst.repeat):
@@ -206,43 +206,38 @@ class RegisterRst:
                            inst.offset  + (i * inst.roffset)
                     o.write("     - ``%s``\n" % self.text("0x%08x" % addr))
                     for map_name in addr_maps:
-                        faddr = addr + self._project.get_address_base(map_name)
+                        faddr = addr + self._prj.get_address_base(map_name)
                         o.write("     - ``%s``\n" % self.text("0x%08x" %
                                                               faddr))
         o.write("\n\n")
 
+    def _display_uvm_entry(self, inst, index, o):
+        name = full_token(inst.group, self._reg.token,
+                          self._regset_name, index, inst.format)
+        o.write("   * - ``%s``\n" % self.text(name))
+        name = uvm_name(inst.group, self._reg.token,
+                        self._regset_name, index, inst.format)
+        o.write("     - ``%s``\n" % self.text(name))
+
     def _write_uvm(self, o):
-
-        addr_maps = self._project.get_address_maps().keys()
-        if not addr_maps:
-            return
-
-        o.write("\n\nUVM names\n---------\n")
+        """
+        Writes the UVM path name(s) for the register as a table
+        in restructuredText format.
+        """
+        o.write("\n\n")
+        o.write("UVM names\n")
+        o.write("---------\n")
         o.write(".. list-table::\n")
         o.write("   :header-rows: 1\n")
         o.write("   :class: summary\n\n")
         o.write("   * - ID\n")
         o.write("     - UVM name\n")
-        for inst in in_groups(self._regset_name, self._project):
+        for inst in in_groups(self._regset_name, self._prj):
             if inst.repeat == 1:
-                name = full_token(inst.group, self._reg.token,
-                                  self._regset_name, -1,
-                                  inst.format)
-                o.write("   * - ``%s``\n" % self.text(name))
-                name = uvm_name(inst.group, self._reg.token,
-                                self._regset_name, -1,
-                                inst.format)
-                o.write("     - ``%s``\n" % self.text(name))
+                self._display_uvm_entry(inst, -1, o)
             else:
                 for i in range(0, inst.repeat):
-                    name = full_token(inst.group, self._reg.token,
-                                      self._regset_name, i,
-                                      inst.format)
-                    o.write("   * - ``%s``\n" % self.text(name))
-                    name = uvm_name(inst.group, self._reg.token,
-                                    self._regset_name, i,
-                                    inst.format)
-                    o.write("     - ``%s``\n" % self.text(name))
+                    self._display_uvm_entry(inst, i, o)
         o.write("\n\n")
 
     def html(self):
