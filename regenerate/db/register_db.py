@@ -21,7 +21,7 @@
 Provides the container database for a set of registers.
 """
 import re
-
+import os
 from reg_parser import RegParser
 from reg_writer import RegWriter
 
@@ -101,6 +101,7 @@ class RegisterDb(object):
         Reads the XML file, loading the databsae.
         """
         ifile = open(filename)
+        self.set_name = os.path.splitext(os.path.basename(filename))[0]
         parser = RegParser(self)
         parser.parse(ifile)
         ifile.close()

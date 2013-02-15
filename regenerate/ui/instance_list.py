@@ -29,11 +29,12 @@ class InstanceModel(gtk.TreeStore):
     symbolic ID name and the base address.
     """
 
-    (ID_COL, BASE_COL, SORT_COL, RPT_COL, RPT_OFF_COL, FORMAT_COL) = range(6)
+    (ID_COL, BASE_COL, SORT_COL, RPT_COL, RPT_OFF_COL,
+     FORMAT_COL, HDL_COL) = range(7)
 
     def __init__(self):
         gtk.TreeStore.__init__(self, str, str, gobject.TYPE_UINT64, str,
-                               str, str)
+                               str, str, str)
 
     def change_id(self, path, text):
         """
@@ -48,6 +49,13 @@ class InstanceModel(gtk.TreeStore):
         """
         node = self.get_iter(path)
         self.set_value(node, InstanceModel.FORMAT_COL, text)
+
+    def change_hdl(self, path, text):
+        """
+        Called when the ID of an instance has been edited in the InstanceList
+        """
+        node = self.get_iter(path)
+        self.set_value(node, InstanceModel.HDL_COL, text)
 
     def change_base(self, path, text):
         """
@@ -109,13 +117,14 @@ class InstanceModel(gtk.TreeStore):
 class InstanceList(object):
 
     def __init__(self, obj, id_changed, base_changed, repeat_changed,
-                 repeat_offset_changed, format_changed):
+                 repeat_offset_changed, format_changed, hdl_changed):
         self.__obj = obj
         self.__col = None
         self.__project = None
         self.__model = None
         self.__build_instance_table(id_changed, base_changed, repeat_changed,
-                                    repeat_offset_changed, format_changed)
+                                    repeat_offset_changed, format_changed,
+                                    hdl_changed)
         self.__enable_dnd()
         self.__obj.set_sensitive(False)
 
@@ -168,18 +177,18 @@ class InstanceList(object):
         for item in self.__project.get_grouping_list():
             hval = "%x" % item.base
             node = self.__model.append(None, row=(item.name, hval, item.base,
-                                                  "", "", ""))
+                                                  "", "", "", item.hdl))
             for entry in self.__project.get_group_map(item[0]):
                 self.__model.append(node, (entry.set, "%x" % entry.offset,
                                            entry.offset, "%d" % entry.repeat,
                                            "%x" % entry.repeat_offset,
-                                           entry.format))
+                                           entry.format, entry.hdl))
 
     def __build_instance_table(self, id_changed, base_changed, repeat_changed,
-                               repeat_offset_changed, format_changed):
+                               repeat_offset_changed, format_changed,
+                               hdl_changed):
         column = EditableColumn('Subsystem/Instance', id_changed,
                                 InstanceModel.ID_COL)
-        column.set_min_width(250)
         column.set_sort_column_id(InstanceModel.ID_COL)
         self.__obj.append_column(column)
         self.__col = column
@@ -199,8 +208,14 @@ class InstanceList(object):
 
         column = EditableColumn('ID Format', format_changed,
                                 InstanceModel.FORMAT_COL)
-        column.set_min_width(250)
+        column.set_min_width(175)
         column.set_sort_column_id(InstanceModel.FORMAT_COL)
+        self.__obj.append_column(column)
+
+        column = EditableColumn('HDL Path', hdl_changed,
+                                InstanceModel.HDL_COL)
+        column.set_min_width(250)
+        column.set_sort_column_id(InstanceModel.HDL_COL)
         self.__obj.append_column(column)
         self.__col = column
 
@@ -213,19 +228,25 @@ class InstanceList(object):
         groups = []
         group_map = {}
         while tree_iter is not None:
-            data = self.__model.get(tree_iter, 0, 2)
-            groups.append(GroupData(data[0], data[1]))
-            group_map[data[0]] = []
+            gname = self.__model.get_value(tree_iter, InstanceModel.ID_COL)
+            base = self.__model.get_value(tree_iter, InstanceModel.SORT_COL)
+            hdl = self.__model.get_value(tree_iter, InstanceModel.HDL_COL)
+
+            groups.append(GroupData(gname, base, hdl))
+            group_map[gname] = []
 
             child = self.__model.iter_children(tree_iter)
             while child:
-                group_map[data[0]].append(
-                    GroupMapData(self.__model.get_value(child, 0),
-                                 self.__model.get_value(child, 2),
-                                 int(self.__model.get_value(child, 3)),
-                                 int(self.__model.get_value(child, 4), 16),
-                                 self.__model.get_value(child, 5)
-                                 ))
+                name = self.__model.get_value(child, InstanceModel.ID_COL)
+                base = self.__model.get_value(child, InstanceModel.SORT_COL)
+                rpt = int(self.__model.get_value(child, InstanceModel.RPT_COL))
+                offset_str = self.__model.get_value(child,
+                                                    InstanceModel.RPT_OFF_COL)
+                offset = int(offset_str, 16)
+                fmt = self.__model.get_value(child, InstanceModel.FORMAT_COL)
+                hdl = self.__model.get_value(child, InstanceModel.HDL_COL)
+                group_map[gname].append(
+                    GroupMapData(name, base, rpt, offset, fmt, hdl))
                 child = self.__model.iter_next(child)
             tree_iter = self.__model.iter_next(tree_iter)
         return (groups, group_map)

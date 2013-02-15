@@ -29,8 +29,8 @@ from collections import namedtuple
 
 AddrMapData = namedtuple("AddrMapData", "name base width fixed")
 GroupMapData = namedtuple("GroupMapData",
-                          "set offset repeat repeat_offset format")
-GroupData = namedtuple("GroupData", "name base")
+                          "set offset repeat repeat_offset format hdl")
+GroupData = namedtuple("GroupData", "name base hdl")
 
 
 class RegProject(object):
@@ -121,13 +121,15 @@ class RegProject(object):
         ofile.write('  <groupings>\n')
         for group in self.__groupings:
             if group.name in self.__grouping_map:
-                ofile.write('    <grouping name="%s" start="%x">\n' %
-                            (group.name, group.base))
+                ofile.write('    <grouping name="%s" start="%x" hdl="%s">\n' %
+                            (group.name, group.base, group.hdl))
                 for item in self.__grouping_map[group.name]:
                     ofile.write('      <map set="%s" offset="%x" ' %
                                 (item.set, item.offset))
                     ofile.write('repeat="%s" repeat_offset="%s"' %
                                 (item.repeat, item.repeat_offset))
+                    if item.hdl:
+                        ofile.write(' hdl="%s"/>\n' % item.hdl)
                     if item.format:
                         ofile.write(' format="%s"/>\n' % item.format)
                     else:
@@ -238,17 +240,17 @@ class RegProject(object):
     def set_grouping_map(self, gmap):
         self.__grouping_map = gmap
 
-    def set_grouping(self, index, name, start):
+    def set_grouping(self, index, name, start, hdl):
         self.__modified = True
-        self.__groupings[index] = GroupData(name, start)
+        self.__groupings[index] = GroupData(name, start, hdl)
 
-    def add_to_grouping_list(self, name, start):
+    def add_to_grouping_list(self, name, start, hdl):
         self.__modified = True
-        self.__groupings.append(GroupData(name, start))
+        self.__groupings.append(GroupData(name, start, hdl))
 
-    def remove_from_grouping_list(self, name, start):
+    def remove_from_grouping_list(self, name, start, hdl):
         self.__modified = True
-        self.__groupings.remove(GroupData(name, start))
+        self.__groupings.remove(GroupData(name, start, hdl))
 
     def get_address_maps(self):
         return self.__addr_map_list
@@ -370,7 +372,8 @@ class RegProject(object):
 
     def start_grouping(self, attrs):
         self.__groupings.append(GroupData(attrs['name'],
-                                          int(attrs['start'], 16)))
+                                          int(attrs['start'], 16),
+                                          attrs.get('hdl', "")))
         self._current_group = attrs['name']
         self.__grouping_map[self._current_group] = []
 
@@ -379,7 +382,8 @@ class RegProject(object):
                             int(attrs['offset'], 16),
                             int(attrs['repeat']),
                             int(attrs['repeat_offset']),
-                            attrs.get("format", ""))
+                            attrs.get("format", ""),
+                            attrs.get("hdl", ""))
         self.__grouping_map[self._current_group].append(data)
 
     def start_address_map(self, attrs):
