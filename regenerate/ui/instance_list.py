@@ -98,14 +98,14 @@ class InstanceModel(gtk.TreeStore):
         Adds a new instance to the model. It is not added to the database until
         either the change_id or change_base is called.
         """
-        node = self.append(None, row=('', '0', 0, "", "", ""))
+        node = self.append(None, row=('', '0', 0, "", "", "", ""))
         return self.get_path(node)
 
     def append_instance(self, inst):
         """
         Adds the specified instance to the InstanceList
         """
-        self.append(row=(inst[0], "%08x" % inst[1], inst[1], "1", "0", ""))
+        self.append(row=(inst[0], "%08x" % inst[1], inst[1], "", "", "", ""))
 
     def get_values(self):
         """
@@ -151,7 +151,7 @@ class InstanceList(object):
         model = treeview.get_model()
         data = selection.data
         drop_info = treeview.get_dest_row_at_pos(x, y)
-        row_data = [data, "0", 0, "1", "0", ""]
+        row_data = [data, "0", 0, "1", "0", "", ""]
         if drop_info:
             path, position = drop_info
             if len(path) == 1:

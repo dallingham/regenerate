@@ -112,6 +112,7 @@ class UVM_Block_Registers(WriterBase):
                 for group_name in in_groups:
                     if not map_list or group_name in map_list:
                         in_maps.add(addr_map.name)
+            print ">",dbase.set_name, in_maps, in_groups
             self.write_dbase_block(dbase, of, in_maps)
 
         for group in self._project.get_grouping_list():
@@ -121,6 +122,7 @@ class UVM_Block_Registers(WriterBase):
                 if not map_list or group.name in map_list:
                     in_maps.add(addr_map.name)
 
+            print group.name, in_maps
             self.write_group_block(group, of, in_maps)
 
         self.write_toplevel_block(of)
@@ -255,10 +257,12 @@ class UVM_Block_Registers(WriterBase):
         of.write("endclass: %s_group_reg_block\n\n" % sname)
 
     def write_dbase_block(self, dbase, of, in_maps):
+        print '  class %s_reg_block extends uvm_reg_block;\n\n' % dbase.set_name
+
         of.write('  class %s_reg_block extends uvm_reg_block;\n\n'
-                 % dbase.module_name)
+                 % dbase.set_name)
         of.write('    `uvm_object_utils(%s_reg_block)\n\n'
-                 % dbase.module_name)
+                 % dbase.set_name)
 
         for key in dbase.get_keys():
             reg = dbase.get_register(key)
@@ -278,13 +282,13 @@ class UVM_Block_Registers(WriterBase):
 
         for key in dbase.get_keys():
             reg = dbase.get_register(key)
-            rname = "reg_%s_%s" % (dbase.module_name, reg.token.lower())
+            rname = "reg_%s_%s" % (dbase.set_name, reg.token.lower())
             of.write("    %s %s;\n" % (rname, reg.token.lower()))
 
         for item in in_maps:
             of.write("    uvm_reg_map %s_map;\n" % item)
 
-        mod = dbase.module_name
+        mod = dbase.set_name
         of.write('    %s_reg_access_wrapper %s_access_cg;\n\n' % (mod, mod))
         of.write('\n')
         of.write('    function new(string name = "%s_reg_block");\n' % mod)
@@ -301,7 +305,7 @@ class UVM_Block_Registers(WriterBase):
 
         for key in dbase.get_keys():
             reg = dbase.get_register(key)
-            rname = "reg_%s_%s" % (dbase.module_name, reg.token.lower())
+            rname = "reg_%s_%s" % (dbase.set_name, reg.token.lower())
 
             of.write('      %s = %s::type_id::create("%s", , get_full_name());\n' %
                      (reg.token.lower(), rname, reg.token.lower()))
@@ -347,16 +351,16 @@ class UVM_Block_Registers(WriterBase):
         of.write('       if(get_coverage(UVM_CVR_ALL)) begin\n')
         of.write('          if(map.get_name() == "default_map") begin\n')
         of.write('             %s_access_cg.sample(offset, is_read);\n' %
-                 dbase.module_name)
+                 dbase.set_name)
         of.write('          end\n')
         of.write('       end\n')
         of.write('    endfunction: sample\n\n')
 
-        of.write('  endclass : %s_reg_block\n\n' % dbase.module_name)
+        of.write('  endclass : %s_reg_block\n\n' % dbase.set_name)
 
     def write_register(self, reg, dbase, of):
 
-        rname = "reg_%s_%s" % (dbase.module_name, reg.token.lower())
+        rname = "reg_%s_%s" % (dbase.set_name, reg.token.lower())
 
         of.write("/*! \\class %s\n" % rname)
         of.write(" *  \\brief %s\n" % reg.description)
@@ -484,7 +488,7 @@ class UVM_Block_Registers(WriterBase):
 
     def generate_coverage(self, of, dbase):
 
-        base = dbase.module_name
+        base = dbase.set_name
         of.write("\n\n")
         of.write("class %s_reg_access_wrapper extends uvm_object;\n" % base)
         of.write("\n   `uvm_object_utils(%s_reg_access_wrapper)\n" % base)
