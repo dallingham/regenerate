@@ -129,11 +129,10 @@ class RegProject(object):
                     ofile.write('repeat="%s" repeat_offset="%s"' %
                                 (item.repeat, item.repeat_offset))
                     if item.hdl:
-                        ofile.write(' hdl="%s"/>\n' % item.hdl)
+                        ofile.write(' hdl="%s"' % item.hdl)
                     if item.format:
-                        ofile.write(' format="%s"/>\n' % item.format)
-                    else:
-                        ofile.write("/>\n")
+                        ofile.write(' format="%s"' % item.format)
+                    ofile.write("/>\n")
                 ofile.write('    </grouping>\n')
             else:
                 ofile.write('    <grouping name="%s" start="%x"/>\n' %

@@ -250,7 +250,8 @@ class Verilog(WriterBase):
 
         self.__sorted_regs = [
             dbase.get_register(key) for key in dbase.get_keys()
-            if not self._dbase.get_register(key).do_not_generate_code]
+            if not (self._dbase.get_register(key).do_not_generate_code or
+                    self._dbase.get_register(key).ram_size > 0)]
 
         self._coverage = self._dbase.enable_coverage
 

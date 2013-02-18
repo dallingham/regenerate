@@ -40,6 +40,7 @@ class Register(object):
         self.__dont_test = Value(False)
         self.__hide = Value(False)
         self.__bit_fields = {}
+        self.__ram_size = Value(0)
 
     def find_first_unused_bit(self):
         """
@@ -104,6 +105,31 @@ class Register(object):
     do_not_test = property(__get_dont_test, __set_dont_test, None,
                            "Indicates if the register should not be tested "
                            "by automatic tests")
+
+    def __set_ram_size(self, val):
+        """
+        Sets __ram_size. This cannot be accessed directly, but only
+        via the propery 'ram_size'.
+        """
+        self.__ram_size.set(val)
+
+    def __get_ram_size(self):
+        """
+        Returns the value of __ram_size. This cannot be accessed
+        directly, but only via the property 'ram_size'
+        """
+        return self.__ram_size.get()
+
+    def get_ram_size_obj(self):
+        """
+        Returns the actual lower level __ram_size object. This is needed to
+        set the modified flag and the last modified time stamp.
+        """
+        return self.__ram_size
+
+    ram_size = property(__get_ram_size, __set_ram_size, None,
+                        "Indicates if the register is a RAM, and what its"
+                        "length is")
 
     def __set_hide(self, val):
         """

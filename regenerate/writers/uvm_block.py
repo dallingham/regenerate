@@ -82,6 +82,17 @@ class UVM_Block_Registers(WriterBase):
         else:
             return (value[0], int(value[0], 16))
 
+    def _build_group_maps(self):
+        group_maps = {}
+        for group in self._project.get_grouping_list():
+            in_maps = set()
+            for addr_map in self._project.get_address_maps():
+                map_list = self._project.get_address_map_groups(addr_map.name)
+                if not map_list or group.name in map_list:
+                    in_maps.add(addr_map.name)
+            group_maps[group] = in_maps
+        return group_maps
+
     def write(self, filename):
 
         of = open(filename, "w")
@@ -92,38 +103,27 @@ class UVM_Block_Registers(WriterBase):
         of.write("  import uvm_pkg::*;\n\n")
         of.write('  `include "uvm_macros.svh"\n')
 
+        group_maps = self._build_group_maps()
+
         for dbase in self.dblist:
 
             self.generate_coverage(of, dbase)
 
             for key in dbase.get_keys():
                 reg = dbase.get_register(key)
-                self.write_register(reg, dbase, of)
+                if reg.ram_size:
+                    self.write_memory(reg, dbase, of)
+                else:
+                    self.write_register(reg, dbase, of)
 
-            in_groups = set()
-            in_maps = set()
             for group in self._project.get_grouping_list():
                 for grp in self._project.get_group_map(group.name):
                     if grp.set == dbase.set_name:
-                        in_groups.add(group.name)
+                        self.write_dbase_block(dbase, of, group.name,
+                                               group_maps[group])
 
-            for addr_map in self._project.get_address_maps():
-                map_list = self._project.get_address_map_groups(addr_map.name)
-                for group_name in in_groups:
-                    if not map_list or group_name in map_list:
-                        in_maps.add(addr_map.name)
-            print ">",dbase.set_name, in_maps, in_groups
-            self.write_dbase_block(dbase, of, in_maps)
-
-        for group in self._project.get_grouping_list():
-            in_maps = set()
-            for addr_map in self._project.get_address_maps():
-                map_list = self._project.get_address_map_groups(addr_map.name)
-                if not map_list or group.name in map_list:
-                    in_maps.add(addr_map.name)
-
-            print group.name, in_maps
-            self.write_group_block(group, of, in_maps)
+        for group in group_maps.keys():
+            self.write_group_block(group, of, group_maps[group])
 
         self.write_toplevel_block(of)
 
@@ -141,7 +141,7 @@ class UVM_Block_Registers(WriterBase):
         of.write("\n")
 
         for group_name in self._project.get_grouping_list():
-            of.write("   %s_group_reg_block %s;\n" %
+            of.write("   %s_grp_reg_blk %s;\n" %
                      (group_name[0], group_name[0]))
 
         for data in self._project.get_address_maps():
@@ -167,7 +167,7 @@ class UVM_Block_Registers(WriterBase):
         for group in self._project.get_grouping_list():
             name = group.name
 
-            of.write('      %s = %s_group_reg_block::type_id::create("%s");\n' %
+            of.write('      %s = %s_grp_reg_blk::type_id::create("%s");\n' %
                      (name, name, name))
             of.write('      %s.configure(this, "%s");\n' %
                      (name, group.hdl))
@@ -189,27 +189,27 @@ class UVM_Block_Registers(WriterBase):
     def write_group_block(self, group, of, in_maps):
 
         sname = group[0]
-        of.write("class %s_group_reg_block extends uvm_reg_block;\n" %
+        of.write("class %s_grp_reg_blk extends uvm_reg_block;\n" %
                  sname)
         of.write("\n")
-        of.write("   `uvm_object_utils(%s_group_reg_block)\n" % sname)
+        of.write("   `uvm_object_utils(%s_grp_reg_blk)\n" % sname)
         of.write("\n")
 
         for group_entry in self._project.get_group_map(group[0]):
             if group_entry.repeat > 1:
-                of.write("   %s_reg_block %s[%d];\n" %
-                         (group_entry.set, group_entry.set,
+                of.write("   %s_%s_reg_blk %s[%d];\n" %
+                         (sname, group_entry.set, group_entry.set,
                           group_entry.repeat))
             else:
-                of.write("   %s_reg_block %s;\n" %
-                         (group_entry.set, group_entry.set))
+                of.write("   %s_%s_reg_blk %s;\n" %
+                         (sname, group_entry.set, group_entry.set))
 
         of.write("\n")
         for item in in_maps:
             of.write("   uvm_reg_map %s_map;\n" % item)
 
         of.write("\n")
-        of.write('   function new(string name = "%s_group_reg_block");\n' %
+        of.write('   function new(string name = "%s_grp_reg_blk");\n' %
                  sname)
         of.write("      super.new(name, build_coverage(UVM_CVR_ADDR_MAP));\n")
         of.write("   endfunction : new\n")
@@ -231,8 +231,8 @@ class UVM_Block_Registers(WriterBase):
                 name = group_entry.set
                 of.write('      for(int i = 0; i < %d; i++) begin\n' %
                          group_entry.repeat)
-                of.write('         %s[i] = %s_reg_block::type_id::create($sformatf("%s[%%0d]", i));\n' %
-                         (name, name, name))
+                of.write('         %s[i] = %s_%s_reg_blk::type_id::create($sformatf("%s[%%0d]", i));\n' %
+                         (name, sname, name, name))
                 of.write('         %s[i].configure(this, $sformatf("%s", i));\n' %
                          (name, group_entry.hdl))
                 of.write("         %s[i].build();\n" % name)
@@ -242,8 +242,8 @@ class UVM_Block_Registers(WriterBase):
                 of.write('      end\n')
             else:
                 name = group_entry.set
-                of.write('      %s = %s_reg_block::type_id::create("%s");\n' %
-                         (name, name, name))
+                of.write('      %s = %s_%s_reg_blk::type_id::create("%s");\n' %
+                         (name, sname, name, name))
                 of.write('      %s.configure(this, "%s");\n' %
                          (name, group_entry.hdl))
                 of.write("      %s.build();\n" % name)
@@ -254,15 +254,13 @@ class UVM_Block_Registers(WriterBase):
 
         of.write("   endfunction: build\n")
         of.write("\n")
-        of.write("endclass: %s_group_reg_block\n\n" % sname)
+        of.write("endclass: %s_grp_reg_blk\n\n" % sname)
 
-    def write_dbase_block(self, dbase, of, in_maps):
-        print '  class %s_reg_block extends uvm_reg_block;\n\n' % dbase.set_name
-
-        of.write('  class %s_reg_block extends uvm_reg_block;\n\n'
-                 % dbase.set_name)
-        of.write('    `uvm_object_utils(%s_reg_block)\n\n'
-                 % dbase.set_name)
+    def write_dbase_block(self, dbase, of, group_name, in_maps):
+        of.write('  class %s_%s_reg_blk extends uvm_reg_block;\n\n'
+                 % (group_name, dbase.set_name))
+        of.write('    `uvm_object_utils(%s_%s_reg_blk)\n\n'
+                 % (group_name, dbase.set_name))
 
         for key in dbase.get_keys():
             reg = dbase.get_register(key)
@@ -282,7 +280,10 @@ class UVM_Block_Registers(WriterBase):
 
         for key in dbase.get_keys():
             reg = dbase.get_register(key)
-            rname = "reg_%s_%s" % (dbase.set_name, reg.token.lower())
+            if reg.ram_size:
+                rname = "mem_%s_%s" % (dbase.set_name, reg.token.lower())
+            else:
+                rname = "reg_%s_%s" % (dbase.set_name, reg.token.lower())
             of.write("    %s %s;\n" % (rname, reg.token.lower()))
 
         for item in in_maps:
@@ -291,7 +292,8 @@ class UVM_Block_Registers(WriterBase):
         mod = dbase.set_name
         of.write('    %s_reg_access_wrapper %s_access_cg;\n\n' % (mod, mod))
         of.write('\n')
-        of.write('    function new(string name = "%s_reg_block");\n' % mod)
+        of.write('    function new(string name = "%s_%s_reg_blk");\n' %
+                 (group_name, mod))
         of.write('      super.new(name,build_coverage(UVM_CVR_ALL));\n')
         of.write('    endfunction\n\n')
 
@@ -305,7 +307,10 @@ class UVM_Block_Registers(WriterBase):
 
         for key in dbase.get_keys():
             reg = dbase.get_register(key)
-            rname = "reg_%s_%s" % (dbase.set_name, reg.token.lower())
+            if reg.ram_size:
+                rname = "mem_%s_%s" % (dbase.set_name, reg.token.lower())
+            else:
+                rname = "reg_%s_%s" % (dbase.set_name, reg.token.lower())
 
             of.write('      %s = %s::type_id::create("%s", , get_full_name());\n' %
                      (reg.token.lower(), rname, reg.token.lower()))
@@ -320,16 +325,15 @@ class UVM_Block_Registers(WriterBase):
                                                          name, name))
 
             of.write('      %s.configure(this);\n' % reg.token.lower())
-            of.write('      %s.build();\n' % reg.token.lower())
-            if not reg.do_not_generate_code:
-                for key in reg.get_bit_field_keys():
-                    field = reg.get_bit_field(key)
-                    of.write('      %s.add_hdl_path_slice("r%02x_%s", %d, %d );\n'
-                             % (reg.token.lower(), reg.address,
-                                self._fix_name(field),
-                                field.start_position, field.width))
-                    of.write("\n")
-
+            if reg.ram_size == 0:
+                of.write('      %s.build();\n' % reg.token.lower())
+                if not reg.do_not_generate_code:
+                    for key in reg.get_bit_field_keys():
+                        field = reg.get_bit_field(key)
+                        of.write('      %s.add_hdl_path_slice("r%02x_%s", %d, %d );\n'
+                                 % (reg.token.lower(), reg.address,
+                                    self._fix_name(field),
+                                    field.start_position, field.width))
         of.write("\n")
 
         for item in in_maps:
@@ -339,8 +343,9 @@ class UVM_Block_Registers(WriterBase):
         for key in dbase.get_keys():
             reg = dbase.get_register(key)
             for item in in_maps:
-                of.write('      %s_map.add_reg(%s, \'h%04x, "RW");\n' %
-                         (item, reg.token.lower(), reg.address))
+                cmd = "add_mem" if reg.ram_size else "add_reg"
+                of.write('      %s_map.%s(%s, \'h%04x, "RW");\n' %
+                         (item, cmd, reg.token.lower(), reg.address))
         of.write('\n')
 
         of.write('      lock_model();\n')
@@ -356,7 +361,8 @@ class UVM_Block_Registers(WriterBase):
         of.write('       end\n')
         of.write('    endfunction: sample\n\n')
 
-        of.write('  endclass : %s_reg_block\n\n' % dbase.set_name)
+        of.write('  endclass : %s_%s_reg_blk\n\n' %
+                 (group_name, dbase.set_name))
 
     def write_register(self, reg, dbase, of):
 
@@ -483,6 +489,27 @@ class UVM_Block_Registers(WriterBase):
 
         of.write('      reset();\n')
         of.write('    endfunction : build\n\n')
+        of.write('  endclass : %s\n\n' % rname)
+        of.write('/*!@}*/\n')
+
+    def write_memory(self, reg, dbase, of):
+
+        rname = "mem_%s_%s" % (dbase.set_name, reg.token.lower())
+
+        of.write("/*! \\class %s\n" % rname)
+        of.write(" *  \\brief %s\n" % reg.description)
+        of.write(" *\n * \\addtogroup registers\n")
+        of.write(" * * @{\n")
+        of.write(" */\n")
+        of.write("  class %s extends uvm_mem;\n\n" % rname)
+        of.write("    `uvm_object_utils(%s);\n\n" % rname)
+        of.write('    function new(string name = "%s");\n' %
+                 reg.token.lower())
+        no_bytes = reg.width / 8
+        of.write('       super.new(name, %d, %d, "RW", UVM_NO_COVERAGE);\n'
+                 % (reg.ram_size / no_bytes, reg.width))
+        of.write('    endfunction : new\n\n')
+
         of.write('  endclass : %s\n\n' % rname)
         of.write('/*!@}*/\n')
 

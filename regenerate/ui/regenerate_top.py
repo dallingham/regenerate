@@ -922,9 +922,10 @@ class MainWindow(object):
         self.__set_register_warn_flags(register)
         self.set_modified()
 
-    def update_register_addr(self, register, new_addr):
+    def update_register_addr(self, register, new_addr, new_length=0):
         self.dbase.delete_register(register)
         register.address = new_addr
+        register.ram_size = new_length
         self.dbase.add_register(register)
 
     def on_duplicate_register_action_activate(self, obj):

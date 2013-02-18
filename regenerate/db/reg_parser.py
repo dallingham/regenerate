@@ -250,6 +250,12 @@ class RegParser(object):
         """
         set_modified(self.__reg.get_token_obj(), attrs)
 
+    def start_ram_size(self, attrs):
+        """
+        Called when the ram_size tag is encountered
+        """
+        set_modified(self.__reg.get_ram_size_obj(), attrs)
+
     def start_mneumonic(self, attrs):
         """
         Called when the token tag is encountered. Outdated and kept for
@@ -404,6 +410,13 @@ class RegParser(object):
         register token value.
         """
         self.__reg.token = text
+
+    def end_ram_size(self, text):
+        """
+        Called when the token tag is terminated. The text is the
+        register token value.
+        """
+        self.__reg.ram_size = int(text)
 
     def end_mneumonic(self, text):
         """

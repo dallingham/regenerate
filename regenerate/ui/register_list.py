@@ -86,7 +86,11 @@ class RegisterModel(gtk.ListStore):
         column.
         """
         icon = None
-        data = [icon, "%04x" % register.address, register.register_name,
+        if register.ram_size:
+            addr = "%04x:%x" % (register.address, register.ram_size)
+        else:
+            addr = "%04x" % register.address
+        data = [icon, addr, register.register_name,
                 register.token, self.STR2BIT[register.width],
                 register.address, None, register]
         path = self.get_path(self.append(row=data))
@@ -136,13 +140,16 @@ class RegisterModel(gtk.ListStore):
         """
         return self.reg2path[register]
 
-    def set_address_at_path(self, path, addr):
+    def set_address_at_path(self, path, addr, length):
         """
         Sets the address for a register, but also sets the corresponding
         value for the sort columns.
         """
         node = self.get_iter(path)
-        self.set(node, self.ADDR_COL, "%04x" % addr)
+        if length:
+            self.set(node, self.ADDR_COL, "%04x:%x" % (addr, length))
+        else:
+            self.set(node, self.ADDR_COL, "%04x" % addr)
         self.set(node, self.SORT_COL, addr)
 
 
@@ -153,13 +160,14 @@ class RegisterList(object):
     _COLS = (
         # Title,   Size, Column,                   Expand
         ('', 20, RegisterModel.ICON_COL, False, COL_ICON),
-        ('Address', 75, RegisterModel.SORT_COL, False, COL_TEXT),
+        ('Address', 100, RegisterModel.SORT_COL, False, COL_TEXT),
         ('Name', 175, RegisterModel.NAME_COL, True, COL_TEXT),
         ('Token', 175, RegisterModel.DEFINE_COL, True, COL_TEXT),
         ('Width', 75, -1, False, COL_COMBO),
         )
 
-    def __init__(self, obj, select_change_function, mod_function, update_addr):
+    def __init__(self, obj, select_change_function, mod_function,
+                 update_addr):
         self.__obj = obj
         self.__model = None
         self.__col = None
@@ -232,11 +240,13 @@ class RegisterList(object):
         return None
 
     def __reg_update_addr(self, reg, path, text):
+        (addr_str, len_str) = text.split(':')
         try:
-            new_addr = int(text, 16)
-            if new_addr != reg.address:
-                self.__update_addr(reg, new_addr)
-                self.__model.set_address_at_path(path, new_addr)
+            new_addr = int(addr_str, 16)
+            new_length = int(len_str, 16)
+            if new_addr != reg.address or new_length != reg.ram_size:
+                self.__update_addr(reg, new_addr, new_length)
+                self.__model.set_address_at_path(path, new_addr, new_length)
                 self.__set_modified()
         except KeyError:
             ErrorMsg("Internal Error",
@@ -266,28 +276,57 @@ class RegisterList(object):
 
     def __new_address_is_not_used(self, new_text, path):
         addr_list = set()
-        address = int(new_text, 16)
-        for data in self.__model:
-            if data == self.__model[path]:
+        for (index, data) in enumerate(self.__model):
+            if index == int(path):
                 continue
             reg = data[-1]
             for i in range(reg.address, reg.address + (reg.width / 8)):
                 addr_list.add(i)
-        return address not in addr_list
+
+        data = new_text.split(":")
+
+        if len(data) == 1:
+            length = 1
+        else:
+            length = int(data[1], 16)
+        start_address = int(data[0], 16)
+
+        for address in range(start_address, start_address + length):
+            if address in addr_list:
+                return False
+        return True
+
+    def __handle_edited_address(self, register, path, new_text):
+        try:
+            if ":" in new_text:
+                self.__handle_ram_address(register, path, new_text)
+            else:
+                self.__handle_reg_address(register, path, new_text)
+        except ValueError:
+            LOGGER.warning('Address %0x was not changed: invalid value "%s"'
+                           % (register.address, new_text))
+
+    def __handle_ram_address(self, register, path, new_text):
+        if self.__new_address_is_not_used(new_text, path):
+            self.__reg_update_addr(register, path, new_text)
+        else:
+            ErrorMsg("Address already used",
+                     "The address %0x is already used by another register"
+                     % int(new_text, 16))
+
+    def __handle_reg_address(self, register, path, new_text):
+        if self.__new_address_is_not_used(new_text, path):
+            self.__reg_update_addr(register, path, new_text)
+        else:
+            ErrorMsg("Address already used",
+                     "The address %0x is already used by another register"
+                     % int(new_text, 16))
 
     def __text_edited(self, cell, path, new_text, col):
         register = self.__model.get_register_at_path(path)
         new_text = new_text.strip()
         if col == RegisterModel.ADDR_COL:
-            try:
-                if self.__new_address_is_not_used(new_text, path):
-                    self.__reg_update_addr(register, path, new_text)
-                else:
-                    ErrorMsg("Address already used",
-                             "The address %0x is already used by another register" % int(new_text, 16))
-            except ValueError:
-                LOGGER.warning('Address %0x could not be changed: invalid hex value "%s"' %
-                               (register.address, new_text))
+            self.__handle_edited_address(register, path, new_text)
         elif col == RegisterModel.NAME_COL:
             self.__reg_update_name(register, path, new_text)
         elif col == RegisterModel.DEFINE_COL:

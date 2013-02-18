@@ -116,6 +116,10 @@ def write_register(ofile, reg, curtime):
     ofile.write('    <address modified="%d">%d</address>\n' %
                 (calc_mod_time(reg.get_address_obj(), curtime),
                  reg.address))
+    if reg.ram_size:
+        ofile.write('    <ram_size modified="%d">%d</ram_size>\n' %
+                    (calc_mod_time(reg.get_ram_size_obj(), curtime),
+                     reg.ram_size))
     ofile.write('    <width modified="%d">%s</width>\n' %
                 (calc_mod_time(reg.get_width_obj(), curtime),
                  reg.width))
