@@ -39,7 +39,7 @@ import spell
 from preferences import Preferences
 from bit_list import BitModel, BitList, bits, reset_value
 from register_list import RegisterModel, RegisterList, build_define
-from instance_list import InstanceModel, InstanceList
+from instance_list import InstMdl, InstanceList
 from addrmap_list import AddrMapList
 from regenerate.db import (RegWriter, RegisterDb, Register,
                            BitField, RegProject, LOGGER, TYPES)
@@ -299,6 +299,11 @@ class MainWindow(object):
 
     def on_add_map_clicked(self, obj):
         self.__addr_map_list.add_new_map()
+
+    def on_help_action_activate(self, obj):
+        from help_window import HelpWindow
+
+        HelpWindow(self.__builder, "regenerate_help.rst")
 
     def on_project_name_changed(self, obj):
         """
@@ -1109,7 +1114,7 @@ class MainWindow(object):
         self.__prj_loaded.set_sensitive(True)
 
     def __initialize_project_address_maps(self):
-        self.__instance_model = InstanceModel()
+        self.__instance_model = InstMdl()
         self.__instance_obj.set_model(self.__instance_model)
         self.__instance_obj.set_project(self.__prj)
 

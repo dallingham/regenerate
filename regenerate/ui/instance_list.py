@@ -23,14 +23,13 @@ from columns import EditableColumn
 from regenerate.db import GroupMapData, GroupData, LOGGER
 
 
-class InstanceModel(gtk.TreeStore):
+class InstMdl(gtk.TreeStore):
     """
     Provides the list of instances for the module. Instances consist of the
     symbolic ID name and the base address.
     """
 
-    (ID_COL, BASE_COL, SORT_COL, RPT_COL, RPT_OFF_COL,
-     FORMAT_COL, HDL_COL) = range(7)
+    (ID_COL, BASE_COL, SORT_COL, RPT_COL, OFF_COL, FMT_COL, HDL_COL) = range(7)
 
     def __init__(self):
         gtk.TreeStore.__init__(self, str, str, gobject.TYPE_UINT64, str,
@@ -41,21 +40,21 @@ class InstanceModel(gtk.TreeStore):
         Called when the ID of an instance has been edited in the InstanceList
         """
         node = self.get_iter(path)
-        self.set_value(node, InstanceModel.ID_COL, text)
+        self.set_value(node, InstMdl.ID_COL, text)
 
     def change_format(self, path, text):
         """
         Called when the ID of an instance has been edited in the InstanceList
         """
         node = self.get_iter(path)
-        self.set_value(node, InstanceModel.FORMAT_COL, text)
+        self.set_value(node, InstMdl.FMT_COL, text)
 
     def change_hdl(self, path, text):
         """
         Called when the ID of an instance has been edited in the InstanceList
         """
         node = self.get_iter(path)
-        self.set_value(node, InstanceModel.HDL_COL, text)
+        self.set_value(node, InstMdl.HDL_COL, text)
 
     def change_base(self, path, text):
         """
@@ -64,8 +63,8 @@ class InstanceModel(gtk.TreeStore):
         """
         node = self.get_iter(path)
         try:
-            self.set_value(node, InstanceModel.SORT_COL, int(text, 16))
-            self.set_value(node, InstanceModel.BASE_COL, text)
+            self.set_value(node, InstMdl.SORT_COL, int(text, 16))
+            self.set_value(node, InstMdl.BASE_COL, text)
         except ValueError:
             LOGGER.error('Illegal base address: "%s"' % text)
 
@@ -77,7 +76,7 @@ class InstanceModel(gtk.TreeStore):
         node = self.get_iter(path)
         try:
             int(text)
-            self.set_value(node, InstanceModel.RPT_COL, text)
+            self.set_value(node, InstMdl.RPT_COL, text)
         except ValueError:
             LOGGER.error('Illegal repeat count: "%s"' % text)
 
@@ -89,7 +88,7 @@ class InstanceModel(gtk.TreeStore):
         node = self.get_iter(path)
         try:
             value = int(text, 16)
-            self.set_value(node, InstanceModel.RPT_OFF_COL, "%x" % value)
+            self.set_value(node, InstMdl.OFF_COL, "%x" % value)
         except ValueError:
             LOGGER.error('Illegal repeat offset column: "%s"' % text)
 
@@ -106,12 +105,6 @@ class InstanceModel(gtk.TreeStore):
         Adds the specified instance to the InstanceList
         """
         self.append(row=(inst[0], "%08x" % inst[1], inst[1], "", "", "", ""))
-
-    def get_values(self):
-        """
-        Returns the list of instance tuples from the model.
-        """
-        return [(val[0], int(val[1], 16)) for val in self if val[0]]
 
 
 class InstanceList(object):
@@ -160,8 +153,8 @@ class InstanceList(object):
             else:
                 parent = self.__model.get_iter((path[0],))
                 node = self.__model.get_iter(path)
-                if (position == gtk.TREE_VIEW_DROP_BEFORE
-                    or position == gtk.TREE_VIEW_DROP_INTO_OR_BEFORE):
+                if position in (gtk.TREE_VIEW_DROP_BEFORE,
+                                gtk.TREE_VIEW_DROP_INTO_OR_BEFORE):
                     self.__model.insert_before(parent, node, row_data)
                 else:
                     model.insert_after(parent, node, row_data)
@@ -193,34 +186,32 @@ class InstanceList(object):
                                repeat_offset_changed, format_changed,
                                hdl_changed):
         column = EditableColumn('Subsystem/Instance', id_changed,
-                                InstanceModel.ID_COL)
-        column.set_sort_column_id(InstanceModel.ID_COL)
+                                InstMdl.ID_COL)
+        column.set_sort_column_id(InstMdl.ID_COL)
         self.__obj.append_column(column)
         self.__col = column
 
         column = EditableColumn('Address base (hex)', base_changed,
-                                InstanceModel.BASE_COL)
-        column.set_sort_column_id(InstanceModel.SORT_COL)
+                                InstMdl.BASE_COL)
+        column.set_sort_column_id(InstMdl.SORT_COL)
         self.__obj.append_column(column)
 
         column = EditableColumn('Repeat', repeat_changed,
-                                InstanceModel.RPT_COL)
+                                InstMdl.RPT_COL)
         self.__obj.append_column(column)
 
         column = EditableColumn('Repeat Offset (hex)', repeat_offset_changed,
-                                InstanceModel.RPT_OFF_COL)
+                                InstMdl.OFF_COL)
         self.__obj.append_column(column)
 
-        column = EditableColumn('ID Format', format_changed,
-                                InstanceModel.FORMAT_COL)
+        column = EditableColumn('ID Format', format_changed, InstMdl.FMT_COL)
         column.set_min_width(175)
-        column.set_sort_column_id(InstanceModel.FORMAT_COL)
+        column.set_sort_column_id(InstMdl.FMT_COL)
         self.__obj.append_column(column)
 
-        column = EditableColumn('HDL Path', hdl_changed,
-                                InstanceModel.HDL_COL)
+        column = EditableColumn('HDL Path', hdl_changed, InstMdl.HDL_COL)
         column.set_min_width(250)
-        column.set_sort_column_id(InstanceModel.HDL_COL)
+        column.set_sort_column_id(InstMdl.HDL_COL)
         self.__obj.append_column(column)
         self.__col = column
 
@@ -233,23 +224,22 @@ class InstanceList(object):
         groups = []
         group_map = {}
         while tree_iter is not None:
-            gname = self.__model.get_value(tree_iter, InstanceModel.ID_COL)
-            base = self.__model.get_value(tree_iter, InstanceModel.SORT_COL)
-            hdl = self.__model.get_value(tree_iter, InstanceModel.HDL_COL)
+            gname = self.__model.get_value(tree_iter, InstMdl.ID_COL)
+            base = self.__model.get_value(tree_iter, InstMdl.SORT_COL)
+            hdl = self.__model.get_value(tree_iter, InstMdl.HDL_COL)
 
             groups.append(GroupData(gname, base, hdl))
             group_map[gname] = []
 
             child = self.__model.iter_children(tree_iter)
             while child:
-                name = self.__model.get_value(child, InstanceModel.ID_COL)
-                base = self.__model.get_value(child, InstanceModel.SORT_COL)
-                rpt = int(self.__model.get_value(child, InstanceModel.RPT_COL))
-                offset_str = self.__model.get_value(child,
-                                                    InstanceModel.RPT_OFF_COL)
+                name = self.__model.get_value(child, InstMdl.ID_COL)
+                base = self.__model.get_value(child, InstMdl.SORT_COL)
+                rpt = int(self.__model.get_value(child, InstMdl.RPT_COL))
+                offset_str = self.__model.get_value(child, InstMdl.OFF_COL)
                 offset = int(offset_str, 16)
-                fmt = self.__model.get_value(child, InstanceModel.FORMAT_COL)
-                hdl = self.__model.get_value(child, InstanceModel.HDL_COL)
+                fmt = self.__model.get_value(child, InstMdl.FMT_COL)
+                hdl = self.__model.get_value(child, InstMdl.HDL_COL)
                 group_map[gname].append(
                     GroupMapData(name, base, rpt, offset, fmt, hdl))
                 child = self.__model.iter_next(child)
