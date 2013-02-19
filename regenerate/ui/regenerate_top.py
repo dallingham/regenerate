@@ -89,6 +89,12 @@ STR2SIZE = {
 
 
 class StatusHandler(logging.Handler):  # Inherit from logging.Handler
+    """
+    Status handler for the logger that displays the string in the
+    statusbar for 5 seconds
+    """
+
+    SECONDS = 5
 
     def __init__(self, status_obj):
         logging.Handler.__init__(self)
@@ -98,7 +104,7 @@ class StatusHandler(logging.Handler):  # Inherit from logging.Handler
 
     def emit(self, record):
         idval = self.status_obj.push(self.status_id, record.getMessage())
-        gobject.timeout_add(15 * 1000, self._clear, idval)
+        gobject.timeout_add(self.SECONDS * 1000, self._clear, idval)
 
     def _clear(self, idval):
         self.status_obj.remove(self.status_id, idval)
@@ -529,6 +535,7 @@ class MainWindow(object):
                 self.__bit_model[path][BitModel.RESET_COL] = reset_value(field)
                 self.set_modified()
             except ValueError:
+                LOGGER.error('Illegal reset value: "%s"' % new_text)
                 return
         elif field.reset_type == BitField.RESET_INPUT:
             field.reset_input = new_text
@@ -1396,7 +1403,7 @@ class MainWindow(object):
             self.dbase.address_bus_width = new_width
             self.set_modified()
         except ValueError:
-            pass  # keep old value
+            LOGGER.error('Illegal address width: "%s"' % obj.get_text())
 
     def on_write_strobe_changed(self, obj):
         self.dbase.write_strobe_name = obj.get_text()

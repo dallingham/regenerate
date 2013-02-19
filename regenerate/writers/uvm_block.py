@@ -179,8 +179,10 @@ class UVM_Block_Registers(WriterBase):
                 map_list = [group.name
                             for group in self._project.get_grouping_list()]
             for name in map_list:
-                of.write("      %s_map.add_submap(%s.%s_map, 0);\n" %
-                         (data.name, name, data.name))
+                grp_data = [grp for grp in self._project.get_grouping_list()
+                            if grp.name == name]
+                of.write("      %s_map.add_submap(%s.%s_map, 'h%x);\n" %
+                         (data.name, name, data.name, grp_data[0].base))
         of.write("\n")
         of.write("   endfunction: build\n")
         of.write("\n")

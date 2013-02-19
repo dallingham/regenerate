@@ -76,6 +76,14 @@ body{
 '''
 
 
+def reg_addr(register, offset):
+    base = register.address + offset
+    if register.ram_size:
+        return "%08x - %08x" % (base, base + register.ram_size)
+    else:
+        return "%08x" % base
+
+
 class RegisterRst:
     """
     Produces documentation from a register definition
@@ -118,7 +126,14 @@ class RegisterRst:
         o.write("   * - Token\n")
         o.write("     - %s\n" % self.text(self._reg.token))
         o.write("   * - Width\n")
-        o.write("     - %0d bits\n\n\n" % self._reg.width)
+        o.write("     - %0d bits\n" % self._reg.width)
+        if self._reg.ram_size:
+            width = self._reg.width / 8
+            o.write("   * - Locations\n")
+            o.write("     - %0d \n" % (self._reg.ram_size / width))
+            o.write("   * - Bytes\n")
+            o.write("     - %0d \n" % self._reg.ram_size)
+        o.write("\n\n")
 
         if self._show_defines:
             self._write_defines(o)
@@ -126,6 +141,12 @@ class RegisterRst:
         if self._show_uvm:
             self._write_uvm(o)
 
+        if self._reg.ram_size == 0:
+            self._write_bit_fields(o)
+
+        return o.getvalue()
+
+    def _write_bit_fields(self, o):
         o.write("Bit fields\n---------------\n")
         o.write(".. list-table::\n")
         o.write("   :widths: 10 10 5 25 50\n")
@@ -168,7 +189,7 @@ class RegisterRst:
             display_reserved(o, last_index, 0)
 
         o.write("\n")
-        return o.getvalue()
+
 
     def _write_defines(self, o):
 
@@ -190,25 +211,23 @@ class RegisterRst:
                                   self._regset_name, -1,
                                   inst.format)
                 o.write("   * - ``%s``\n" % self.text(name))
-                o.write("     - ``%s``\n" % self.text("0x%08x" %
-                                                      self._reg.address))
-                addr = self._reg.address + inst.offset + inst.base
+                o.write("     - ``%s``\n" % reg_addr(self._reg, 0))
                 for map_name in addr_maps:
-                    faddr = addr + self._prj.get_address_base(map_name.name)
-                    o.write("     - ``%s``\n" % self.text("0x%08x" % faddr))
+                    map_base = self._prj.get_address_base(map_name.name)
+                    offset = map_base + inst.offset + inst.base
+                    o.write("     - ``%s``\n" % reg_addr(self._reg, offset))
             else:
                 for i in range(0, inst.repeat):
                     name = full_token(inst.group, self._reg.token,
                                       self._regset_name, i,
                                       inst.format)
                     o.write("   * - ``%s``\n" % self.text(name))
-                    addr = self._reg.address + inst.base + \
-                           inst.offset  + (i * inst.roffset)
-                    o.write("     - ``%s``\n" % self.text("0x%08x" % addr))
+                    o.write("     - ``%s``\n" % reg_addr(self._reg, 0))
                     for map_name in addr_maps:
-                        faddr = addr + self._prj.get_address_base(map_name)
-                        o.write("     - ``%s``\n" % self.text("0x%08x" %
-                                                              faddr))
+                        base = self._prj.get_address_base(map_name.name)
+                        offset = inst.base + inst.offset + (i * inst.roffset)
+                        o.write("     - ``%s``\n" % reg_addr(self._reg,
+                                                             offset + base))
         o.write("\n\n")
 
     def _display_uvm_entry(self, inst, index, o):

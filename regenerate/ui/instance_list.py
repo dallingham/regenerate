@@ -20,7 +20,7 @@
 import gtk
 import gobject
 from columns import EditableColumn
-from regenerate.db import GroupMapData, GroupData
+from regenerate.db import GroupMapData, GroupData, LOGGER
 
 
 class InstanceModel(gtk.TreeStore):
@@ -67,7 +67,7 @@ class InstanceModel(gtk.TreeStore):
             self.set_value(node, InstanceModel.SORT_COL, int(text, 16))
             self.set_value(node, InstanceModel.BASE_COL, text)
         except ValueError:
-            return
+            LOGGER.error('Illegal base address: "%s"' % text)
 
     def change_repeat(self, path, text):
         """
@@ -79,7 +79,7 @@ class InstanceModel(gtk.TreeStore):
             int(text)
             self.set_value(node, InstanceModel.RPT_COL, text)
         except ValueError:
-            return
+            LOGGER.error('Illegal repeat count: "%s"' % text)
 
     def change_repeat_offset(self, path, text):
         """
@@ -91,7 +91,7 @@ class InstanceModel(gtk.TreeStore):
             value = int(text, 16)
             self.set_value(node, InstanceModel.RPT_OFF_COL, "%x" % value)
         except ValueError:
-            return
+            LOGGER.error('Illegal repeat offset column: "%s"' % text)
 
     def new_instance(self):
         """

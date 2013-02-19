@@ -23,6 +23,7 @@ Provides the Address List interface
 
 import gtk
 from columns import EditableColumn, ToggleColumn, ComboMapColumn
+from regenerate.db import LOGGER
 
 SIZE2STR = (
     ("32-bits", 4),
@@ -171,7 +172,8 @@ class AddrMapList(object):
         try:
             value = int(new_text, 16)
         except ValueError:
-            pass
+            LOGGER.error('Illegal address: "%s"' % new_text)
+            return
         if new_text:
             node = self.__model.get_iter(path)
             name = self.__model.get_value(node, AddrMapModel.NAME_COL)
