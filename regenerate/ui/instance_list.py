@@ -174,11 +174,16 @@ class InstanceList(object):
     def __populate(self):
         if self.__project is None:
             return
-        for item in self.__project.get_grouping_list():
+        group_list = sorted(self.__project.get_grouping_list(),
+                            key=lambda x: x.base)
+        for item in group_list:
             hval = "%x" % item.base
             node = self.__model.append(None, row=(item.name, hval, item.base,
                                                   "", "", "", item.hdl))
-            for entry in self.__project.get_group_map(item[0]):
+
+            entry_list = sorted(self.__project.get_group_map(item[0]),
+                                key=lambda x: x.offset)
+            for entry in entry_list:
                 self.__model.append(node, (entry.set, "%x" % entry.offset,
                                            entry.offset, "%d" % entry.repeat,
                                            "%x" % entry.repeat_offset,
