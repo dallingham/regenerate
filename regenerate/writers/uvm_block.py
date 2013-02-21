@@ -484,10 +484,7 @@ class UVM_Block_Registers(WriterBase):
 
         if reg.do_not_test or dont_test:
             of.write('      uvm_resource_db #(bit)::set({"REG::", '
-                     'get_full_name()}, "NO_REG_HW_RESET_TEST", 1);\n')
-        if reg.do_not_test or dont_test:
-            of.write('      uvm_resource_db #(bit)::set({"REG::", '
-                     'get_full_name()}, "NO_REG_BIT_BASH_TEST", 1);\n')
+                     'get_full_name()}, "NO_REG_TESTS", 1);\n')
 
         of.write('      reset();\n')
         of.write('    endfunction : build\n\n')
