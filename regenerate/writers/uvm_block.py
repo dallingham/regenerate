@@ -119,7 +119,7 @@ class UVM_Block_Registers(WriterBase):
             for group in self._project.get_grouping_list():
                 for grp in self._project.get_group_map(group.name):
                     if grp.set == dbase.set_name:
-                        self.write_dbase_block(dbase, of, group.name,
+                        self.write_dbase_block(dbase, of, group,
                                                group_maps[group])
 
         for group in group_maps.keys():
@@ -152,7 +152,7 @@ class UVM_Block_Registers(WriterBase):
                  "build_coverage(UVM_CVR_ADDR_MAP));\n")
         of.write("   endfunction : new\n")
         of.write("\n")
-        of.write("   function void build();\n")
+        of.write("   function void build();\n\n")
         of.write("      if(has_coverage(UVM_CVR_ADDR_MAP)) begin\n")
         of.write("         void'(set_coverage(UVM_CVR_ADDR_MAP));\n")
         of.write("      end\n")
@@ -258,11 +258,15 @@ class UVM_Block_Registers(WriterBase):
         of.write("\n")
         of.write("endclass: %s_grp_reg_blk\n\n" % sname)
 
-    def write_dbase_block(self, dbase, of, group_name, in_maps):
+    def write_dbase_block(self, dbase, of, group, in_maps):
+
+        gmap_list = self._project.get_group_map(group.name)
+        hdl_match = [grp.hdl for grp in gmap_list if grp.set == dbase.set_name]
+
         of.write('  class %s_%s_reg_blk extends uvm_reg_block;\n\n'
-                 % (group_name, dbase.set_name))
+                 % (group.name, dbase.set_name))
         of.write('    `uvm_object_utils(%s_%s_reg_blk)\n\n'
-                 % (group_name, dbase.set_name))
+                 % (group.name, dbase.set_name))
 
         for key in dbase.get_keys():
             reg = dbase.get_register(key)
@@ -295,7 +299,7 @@ class UVM_Block_Registers(WriterBase):
         of.write('    %s_reg_access_wrapper %s_access_cg;\n\n' % (mod, mod))
         of.write('\n')
         of.write('    function new(string name = "%s_%s_reg_blk");\n' %
-                 (group_name, mod))
+                 (group.name, mod))
         of.write('      super.new(name,build_coverage(UVM_CVR_ALL));\n')
         of.write('    endfunction\n\n')
 
@@ -348,6 +352,10 @@ class UVM_Block_Registers(WriterBase):
                 cmd = "add_mem" if reg.ram_size else "add_reg"
                 of.write('      %s_map.%s(%s, \'h%04x, "RW");\n' %
                          (item, cmd, reg.token.lower(), reg.address))
+
+        if not hdl_match[0]:
+            self.disable_access_tests(dbase, in_maps, of)
+
         of.write('\n')
 
         of.write('      lock_model();\n')
@@ -364,7 +372,16 @@ class UVM_Block_Registers(WriterBase):
         of.write('    endfunction: sample\n\n')
 
         of.write('  endclass : %s_%s_reg_blk\n\n' %
-                 (group_name, dbase.set_name))
+                 (group.name, dbase.set_name))
+
+    def disable_access_tests(self, dbase, in_maps, of):
+        for key in dbase.get_keys():
+            reg = dbase.get_register(key)
+            for item in in_maps:
+                test = "MEM" if reg.ram_size else "REG"
+                of.write('      uvm_resource_db #(bit)::set({"REG::", ')
+                of.write('get_full_name(), ".%s"}, "NO_%s_ACCESS_TEST", 1);\n' %
+                         (reg.token.lower(), test))
 
     def write_register(self, reg, dbase, of):
 
@@ -428,7 +445,6 @@ class UVM_Block_Registers(WriterBase):
         of.write('    endfunction : new\n\n')
 
         if grps:
-            of.write('\n')
             of.write('    function void sample(uvm_reg_data_t data,\n')
             of.write('                         uvm_reg_data_t byte_en,\n')
             of.write('                         bit            is_read,\n')
@@ -448,8 +464,11 @@ class UVM_Block_Registers(WriterBase):
             of.write(', , get_full_name());\n')
 
         dont_test = False
+        side_effects = False
+        no_reset_test = False
 
         field_keys = reg.get_bit_field_keys()
+
         for key in field_keys:
             field = reg.get_bit_field(key)
             size = field.width
@@ -466,9 +485,13 @@ class UVM_Block_Registers(WriterBase):
                 dont_test = True
                 continue
 
+            if field.output_has_side_effect:
+                side_effects = True
+
             volatile = is_volatile(field)
             has_reset = 1
             if field.reset_type == BitField.RESET_PARAMETER:
+                no_reset_test = True
                 if field.reset_parameter:
                     reset = field.reset_parameter
                 else:
@@ -485,6 +508,18 @@ class UVM_Block_Registers(WriterBase):
         if reg.do_not_test or dont_test:
             of.write('      uvm_resource_db #(bit)::set({"REG::", '
                      'get_full_name()}, "NO_REG_TESTS", 1);\n')
+        else:
+            if side_effects:
+                of.write('      uvm_resource_db #(bit)::set({"REG::", '
+                         'get_full_name()}, "NO_REG_BIT_BASH_TEST", 1);\n')
+                of.write('      uvm_resource_db #(bit)::set({"REG::", '
+                         'get_full_name()}, "NO_REG_ACCESS_TEST", 1);\n')
+                of.write('      uvm_resource_db #(bit)::set({"REG::", '
+                         'get_full_name()}, "NO_REG_SHARED_ACCESS_TEST", 1);\n')
+            if no_reset_test:
+                of.write('      uvm_resource_db #(bit)::set({"REG::", '
+                         'get_full_name()}, "NO_REG_HW_RESET_TEST", 1);\n')
+
 
         of.write('      reset();\n')
         of.write('    endfunction : build\n\n')
