@@ -146,14 +146,14 @@ Admonitions
     <range start="0" stop="0">
       <modified time="0"/>
       <name>ONE_BIT</name>
-      <signal enb="0" static="0" field_type="RW" side_effect="0" volatile="0">RW_1BIT</signal>
+      <signal enb="1" static="0" field_type="RW" side_effect="0" volatile="0">BUS[8]</signal>
       <reset type="0">0</reset>
       <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <modified time="0"/>
       <name>MULTI_BIT</name>
-      <signal enb="0" static="0" field_type="RW" side_effect="0" volatile="0">RW_MULTI_BIT</signal>
+      <signal enb="1" static="0" field_type="RW" side_effect="0" volatile="0">BUS[6:0]</signal>
       <reset type="0">0</reset>
       <description>Multiple bit within a single bit.</description>
     </range>
@@ -182,7 +182,7 @@ Admonitions
       <modified time="0"/>
       <name>ONE_BIT</name>
       <signal enb="0" static="0" field_type="RWLD" side_effect="0" volatile="0">RWLD_1BIT</signal>
-      <input load="RWLD_1BIT_LOAD">RWLD_1BIT_DATA_IN</input>
+      <input load="RWLD_1BIT_LOAD">TESTBUS[3]</input>
       <reset type="0">0</reset>
       <description>Single bit.</description>
     </range>
@@ -190,7 +190,7 @@ Admonitions
       <modified time="0"/>
       <name>MULTI_BIT</name>
       <signal enb="0" static="0" field_type="RWLD" side_effect="0" volatile="0">RWLD_MULTI_BIT</signal>
-      <input load="RWLD_MULTI_BIT_LD">RWLD_MULTI_BIT_DATA_IN</input>
+      <input load="RWLD_MULTI_BIT_LD">TESTBUS[11:5]</input>
       <reset type="0">0</reset>
       <description>Multiple bit within a single byte.</description>
     </range>

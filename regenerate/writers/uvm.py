@@ -366,7 +366,7 @@ def individual_access(field, reg):
     used_bytes = set()
 
     # get all the fields in the register
-    flds = [reg.get_bit_field(key) for key in reg.get_bit_fields()]
+    flds = reg.get_bit_fields()
 
     # loop through all fields are are not read only and are not the original
     # field we are checking for. Calculate the bytes used, and add them to the

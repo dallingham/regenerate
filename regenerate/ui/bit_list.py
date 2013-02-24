@@ -17,11 +17,15 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""
+Provides both the GTK ListStore and ListView for the bit fields.
+"""
+
 import gtk
 from regenerate.db import BitField, TYPES
 from columns import EditableColumn, ComboMapColumn
 
-TYPE2STR = [(i.description, i.type) for i in sorted(TYPES)]
+TYPE2STR = [(t.description, t.type) for t in sorted(TYPES)]
 (BIT_TITLE, BIT_SIZE, BIT_SORT, BIT_EXPAND) = range(4)
 
 

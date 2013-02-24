@@ -27,23 +27,20 @@ regenerate
 """
 
 import gtk
-import gobject
 import pango
-import xml
 import os
 import copy
 import re
-import string
-import logging
 import spell
+from status_logger import StatusHandler
 from preferences import Preferences
 from bit_list import BitModel, BitList, bits, reset_value
 from register_list import RegisterModel, RegisterList, build_define
 from instance_list import InstMdl, InstanceList
 from addrmap_list import AddrMapList
+from help_window import HelpWindow
 from regenerate.db import (RegWriter, RegisterDb, Register,
                            BitField, RegProject, LOGGER, TYPES)
-#from columns import EditableColumn, ToggleColumn, ComboMapColumn
 from regenerate.importers import IMPORTERS
 from regenerate.settings.paths import GLADE_TOP, INSTALL_PATH
 from regenerate.settings import ini
@@ -51,6 +48,8 @@ from regenerate import PROGRAM_VERSION, PROGRAM_NAME
 from error_dialogs import ErrorMsg, WarnMsg, Question
 from project import ProjectModel, ProjectList, update_file
 from preview_editor import PreviewEditor, PREVIEW_ENABLED
+from base_window import BaseWindow
+from filter_mgr import FilterManager, ADDR_FIELD, NAME_FIELD, TOKEN_FIELD
 
 TYPE_ENB = {}
 for data_type in TYPES:
@@ -59,12 +58,6 @@ for data_type in TYPES:
 
 DEF_EXT = '.rprj'
 DEF_MIME = "*" + DEF_EXT
-
-ADDR_FIELD = 1
-NAME_FIELD = 2
-TOKEN_FIELD = 3
-
-(AM_NAME, AM_ADDR, AM_FIXED, AM_WIDTH) = range(4)
 
 # Regular expressions to check the validity of entered names. This should
 # probably be configurable, but has not been implemented yet.
@@ -86,28 +79,6 @@ STR2SIZE = {
     "32-bits": 4,
     "64-bits": 8,
     }
-
-
-class StatusHandler(logging.Handler):  # Inherit from logging.Handler
-    """
-    Status handler for the logger that displays the string in the
-    statusbar for 5 seconds
-    """
-
-    SECONDS = 5
-
-    def __init__(self, status_obj):
-        logging.Handler.__init__(self)
-        self.status_obj = status_obj
-        self.status_id = status_obj.get_context_id(__name__)
-        self.timer = None
-
-    def emit(self, record):
-        idval = self.status_obj.push(self.status_id, record.getMessage())
-        gobject.timeout_add(self.SECONDS * 1000, self._clear, idval)
-
-    def _clear(self, idval):
-        self.status_obj.remove(self.status_id, idval)
 
 
 class DbaseStatus(object):
@@ -132,31 +103,27 @@ class DbaseStatus(object):
         self.node = None
 
 
-class MainWindow(object):
+class MainWindow(BaseWindow):
     """
     Main window of the Regenerate program
     """
 
     def __init__(self):
 
-        self.__model_search_fields = (ADDR_FIELD, NAME_FIELD, TOKEN_FIELD)
+        BaseWindow.__init__(self)
+
         self.__prj = None
         self.__builder = gtk.Builder()
         self.__builder.add_from_file(GLADE_TOP)
         self.__build_actions()
         self.__top_window = self.__builder.get_object("regenerate")
-        try:
-            self.__top_window.set_icon_from_file(
-                os.path.join(INSTALL_PATH, "media", "flop.svg"))
-        except:
-            self.__top_window.set_icon_from_file(
-                os.path.join(INSTALL_PATH, "media", "flop.png"))
+
+        self.configure(self.__top_window)
+
         self.__status_obj = self.__builder.get_object("statusbar")
         LOGGER.addHandler(StatusHandler(self.__status_obj))
         self.__reg_text_buf = self.__builder.get_object("register_text_buffer")
 
-        self.__filter = self.__builder.get_object("filter")
-        self.__filter.connect('changed', self.__filter_changed)
         self.__selected_dbase = self.__builder.get_object("selected_dbase")
 
         pango_font = pango.FontDescription("monospace")
@@ -181,8 +148,6 @@ class MainWindow(object):
         self.__preview_toggle = self.__builder.get_object('preview')
 
         self.build_project_tab()
-
-        self.__filter_text = ""
 
         self.__reglist_obj = RegisterList(
             self.__builder.get_object("register_list"),
@@ -211,7 +176,6 @@ class MainWindow(object):
         self.dbase = None
         self.__reg_model = None
         self.__bit_model = None
-        self.__modelfilter = None
         self.__modelsort = None
         self.__instance_model = None
 
@@ -266,6 +230,9 @@ class MainWindow(object):
         self.__builder.connect_signals(self)
         self.__build_import_menu()
 
+        filter_obj = self.__builder.get_object("filter")
+        self.__filter_manage = FilterManager(filter_obj)
+
     def build_project_tab(self):
         self.__prj_short_name_obj = self.__builder.get_object('short_name')
         self.__prj_name_obj = self.__builder.get_object('project_name')
@@ -285,13 +252,9 @@ class MainWindow(object):
         self.__prj.clear_modified()
 
     def on_addr_map_help_clicked(self, obj):
-        from help_window import HelpWindow
-
         HelpWindow(self.__builder, "addr_map_help.rst")
 
     def on_group_help_clicked(self, obj):
-        from help_window import HelpWindow
-
         HelpWindow(self.__builder, "project_group_help.rst")
 
     def on_remove_map_clicked(self, obj):
@@ -301,8 +264,6 @@ class MainWindow(object):
         self.__addr_map_list.add_new_map()
 
     def on_help_action_activate(self, obj):
-        from help_window import HelpWindow
-
         HelpWindow(self.__builder, "regenerate_help.rst")
 
     def on_project_name_changed(self, obj):
@@ -359,10 +320,6 @@ class MainWindow(object):
         if hpos:
             self.__builder.get_object('hpaned').set_position(hpos)
 
-    def __filter_changed(self, obj):
-        self.__filter_text = self.__filter.get_text()
-        self.__modelfilter.refilter()
-
     def __enable_registers(self, value):
         """
         Enables UI items when a database has been loaded. This includes
@@ -370,7 +327,7 @@ class MainWindow(object):
         the export menu.
         """
         self.__module_notebook.set_sensitive(value)
-        self.__database_selected.set_sensitive(value)
+        self.__db_selected.set_sensitive(value)
 
     def __enable_bit_fields(self, value):
         """
@@ -391,47 +348,37 @@ class MainWindow(object):
         Builds the action groups. These groups are used to control which
         buttons/functions are active at any given time. The groups are:
 
-        project_loaded    - A project has been loaded.
-        reg_selected      - A register is selected, so register operations are
-                            valid
-        database_selected - A database is selected, so registers can be added,
-                            checked, etc.
-        field_selected    - A bit field is selected, so a field can be removed
-                            or edited.
+        project_loaded - A project has been loaded.
+        reg_selected   - A register is selected, so register operations are
+                         valid
+        db_selected    - A database is selected, so registers can be added,
+                         checked, etc.
+        field_selected - A bit field is selected, so a field can be removed
+                         or edited.
         """
 
-        project_actions = ["save_project_action", "new_set_action",
-                           "add_set_action", "build_action",
-                           "reg_grouping_action", "project_prop_action" ]
+        prj_acn = ["save_project_action", "new_set_action",
+                   "add_set_action", "build_action",
+                   "reg_grouping_action", "project_prop_action"]
+        reg_acn = ['remove_register_action', 'summary_action',
+                   'duplicate_register_action', 'add_bit_action']
+        db_acn = ['add_register_action', 'remove_set_action',
+                  'import_action']
+        fld_acn = ['remove_bit_action', 'edit_bit_action']
+        svn_acn = ['update_svn', 'revert_svn']
+        file_acn = ['revert_action']
+
         if PREVIEW_ENABLED:
-            project_actions.append("preview_action")
+            prj_acn.append("preview_action")
         else:
             self.__build_group("unused", ["preview_action"])
 
-        self.__prj_loaded = self.__build_group("project_loaded",
-                                               project_actions)
-
-        self.__reg_selected = self.__build_group("reg_selected",
-                                                 ['remove_register_action',
-                                                  'duplicate_register_action',
-                                                  'summary_action',
-                                                  'add_bit_action'])
-
-        self.__database_selected = self.__build_group("database_selected",
-                                                      ['add_register_action',
-                                                       'remove_set_action',
-                                                       'import_action'])
-
-        self.__field_selected = self.__build_group("field_selected",
-                                                   ['remove_bit_action',
-                                                    'edit_bit_action'])
-
-        self.__svn_selected = self.__build_group("svn_enabled",
-                                                 ['update_svn',
-                                                  'revert_svn'])
-
-        self.__file_modified = self.__build_group("file_modified",
-                                                  ['revert_action'])
+        self.__prj_loaded = self.__build_group("project_loaded", prj_acn)
+        self.__reg_selected = self.__build_group("reg_selected", reg_acn)
+        self.__db_selected = self.__build_group("database_selected", db_acn)
+        self.__field_selected = self.__build_group("field_selected", fld_acn)
+        self.__svn_selected = self.__build_group("svn_enabled", svn_acn)
+        self.__file_modified = self.__build_group("file_modified", file_acn)
 
     def __build_data_width_box(self):
         """
@@ -626,28 +573,24 @@ class MainWindow(object):
 
     def on_address_token_name_toggled(self, obj):
         if obj.get_active():
-            self.__model_search_fields = (ADDR_FIELD, NAME_FIELD, TOKEN_FIELD)
-            self.__modelfilter.refilter()
+            self.__filter_manage.set_search_fields((ADDR_FIELD, NAME_FIELD,
+                                                    TOKEN_FIELD))
 
     def on_token_name_toggled(self, obj):
         if obj.get_active():
-            self.__model_search_fields = (NAME_FIELD, TOKEN_FIELD)
-            self.__modelfilter.refilter()
+            self.__filter_manage.set_search_fields((NAME_FIELD, TOKEN_FIELD))
 
     def on_token_toggled(self, obj):
         if obj.get_active():
-            self.__model_search_fields = (TOKEN_FIELD, )
-            self.__modelfilter.refilter()
+            self.__filter_manage.set_search_fields((TOKEN_FIELD, ))
 
     def on_address_toggled(self, obj):
         if obj.get_active():
-            self.__model_search_fields = (ADDR_FIELD, )
-            self.__modelfilter.refilter()
+            self.__filter_manage.set_search_fields((ADDR_FIELD, ))
 
     def on_name_toggled(self, obj):
         if obj.get_active():
-            self.__model_search_fields = (NAME_FIELD, )
-            self.__modelfilter.refilter()
+            self.__filter_manage.set_search_fields((NAME_FIELD, ))
 
     def __enable_preview(self):
         self.__prj_preview.enable()
@@ -669,6 +612,7 @@ class MainWindow(object):
 
     def on_summary_action_activate(self, obj):
         """
+        Displays the summary window
         """
         reg = self.__reglist_obj.get_selected_register()
 
@@ -781,10 +725,8 @@ class MainWindow(object):
             self.__reg_selected.set_sensitive(False)
 
     def __bit_changed(self, obj):
-        if self.__bitfield_obj.get_selected_row():
-            self.__field_selected.set_sensitive(True)
-        else:
-            self.__field_selected.set_sensitive(False)
+        active = len(self.__bitfield_obj.get_selected_row())
+        self.__field_selected.set_sensitive(active)
 
     def __prj_selection_changed(self, obj):
         data = self.__prj_obj.get_selected()
@@ -803,7 +745,8 @@ class MainWindow(object):
                 self.__file_modified.set_sensitive(row[ProjectModel.MODIFIED])
                 self.dbase = self.active.db
                 self.__reg_model = self.active.reg_model
-                self.__modelfilter = self.active.modelfilter
+
+                self.__filter_manage.change_filter(self.active.modelfilter)
                 self.__modelsort = self.active.modelsort
                 self.__reglist_obj.set_model(self.__modelsort)
                 self.__bit_model = self.active.bit_field_list
@@ -888,10 +831,10 @@ class MainWindow(object):
         """
         Clears the modified tag in the status bar.
         """
+        self.__modified = False
         if prj is None:
             prj = self.active
-        self.__modified = False
-        if prj:
+        else:
             self.__prj_model.set_markup(prj.node, False)
 
     def on_add_bit_action_activate(self, obj):
@@ -960,7 +903,6 @@ class MainWindow(object):
             title, self.__top_window, action,
             (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, icon, gtk.RESPONSE_OK))
         if m_name:
-            # Always add automatic (match all files) filter
             mime_filter = gtk.FileFilter()
             mime_filter.set_name(m_name)
             mime_filter.add_pattern(m_regex)
@@ -1133,9 +1075,9 @@ class MainWindow(object):
         self.dbase = RegisterDb()
         self.dbase.module_name = base
         self.__reg_model = RegisterModel()
-        self.__modelfilter = self.__reg_model.filter_new()
-        self.__modelsort = gtk.TreeModelSort(self.__modelfilter)
-        self.__modelfilter.set_visible_func(self.visible_cb)
+        mdl = self.__reg_model.filter_new()
+        self.__filter_manage.change_filter(mdl, True)
+        self.__modelsort = gtk.TreeModelSort(mdl)
         self.__reglist_obj.set_model(self.__modelsort)
 
         self.__bit_model = BitModel()
@@ -1144,7 +1086,8 @@ class MainWindow(object):
         self.__set_module_definition_warn_flag()
 
         self.active = DbaseStatus(self.dbase, name, base, self.__reg_model,
-                                  self.__modelsort, self.__modelfilter,
+                                  self.__modelsort,
+                                  self.__filter_manage.get_model(),
                                   self.__bit_model)
         self.active.node = self.__prj_model.add_dbase(name, self.active)
         self.__prj_obj.select(self.active.node)
@@ -1157,19 +1100,6 @@ class MainWindow(object):
         self.__set_module_definition_warn_flag()
         self.clear_modified()
 
-    def visible_cb(self, model, iter):
-        if self.__filter_text == "":
-            return True
-        else:
-            text = self.__filter_text.upper()
-            try:
-                for i in self.__model_search_fields:
-                    if model.get_value(iter, i).upper().find(text) != -1:
-                        return True
-                return False
-            except:
-                LOGGER.error("Error filtering")
-
     def __input_xml(self, name, load=True):
         self.__skip_changes = True
         self.dbase = RegisterDb()
@@ -1180,9 +1110,9 @@ class MainWindow(object):
                     'you change permissions.')
 
         self.__reg_model = RegisterModel()
-        self.__modelfilter = self.__reg_model.filter_new()
-        self.__modelsort = gtk.TreeModelSort(self.__modelfilter)
-        self.__modelfilter.set_visible_func(self.visible_cb)
+        mdl = self.__reg_model.filter_new()
+        self.__filter_manage.change_filter(mdl, True)
+        self.__modelsort = gtk.TreeModelSort(mdl)
         self.__bit_model = BitModel()
 
         if load:
@@ -1216,7 +1146,7 @@ class MainWindow(object):
             base = os.path.splitext(os.path.basename(name))[0]
             self.active = DbaseStatus(self.dbase, name, base, self.__reg_model,
                                       self.__modelsort,
-                                      self.__modelfilter,
+                                      self.__filter_manage.get_model(),
                                       self.__bit_model)
 
             self.active.node = self.__prj_model.add_dbase(name, self.active)
@@ -1229,11 +1159,11 @@ class MainWindow(object):
         """
         Reads the specified XML file, and redraws the screen.
         """
-        try:
-            self.dbase.read_xml(filename)
+        status = self.dbase.read_xml(filename)
+        if status:
+            ErrorMsg("Not a valid regenerate file", status)
+        else:
             self.__filename = filename
-        except xml.parsers.expat.ExpatError, msg:
-            ErrorMsg("Not a valid regenerate file", str(msg))
 
     def on_save_clicked(self, obj):
         """
@@ -1651,10 +1581,6 @@ class MainWindow(object):
             icon.set_tooltip_text("\n".join(msgs))
 
 
-def clean_ascii(value):
-    return value if value in string.printable else " "
-
-
 def build_new_name(name, reglist):
     match = REGNAME.match(name)
     if match:
@@ -1673,9 +1599,8 @@ def build_signal_set(dbase):
     the database.
     """
     signal_list = set()
-    for reg in [dbase.get_register(key) for key in dbase.get_keys()]:
-        for key in reg.get_bit_field_keys():
-            field = reg.get_bit_field(key)
+    for reg in dbase.get_all_registers():
+        for field in reg.get_bit_fields():
             if field.input_signal:
                 signal_list.add(field.input_signal)
             if field.output_signal:

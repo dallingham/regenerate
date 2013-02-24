@@ -305,7 +305,7 @@ class Register(object):
         Returns a dictionary of bit fields. The key is stop_position of the
         bit field.
         """
-        return self.__bit_fields
+        return self.__bit_fields.values()
 
     def get_bit_field(self, key):
         """

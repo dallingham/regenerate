@@ -25,7 +25,7 @@ import re
 import textwrap
 from regenerate.settings import ini
 from verilog_reg_def import REG
-from regenerate.db import BitField, TYPES
+from regenerate.db import BitField, TYPES, LOGGER
 
 from writer_base import WriterBase
 
@@ -42,23 +42,17 @@ MULTI_BIT = re.compile("\s*(\S+)\[(\d+):(\d+)\]")
 
 
 def binary(val, width):
-    """
-    Converts the integer value to a Verilog value
-    """
+    """Converts the integer value to a Verilog value"""
     return "%d'h%x" % (width, val)
 
 
 def errmsg(msg):
-    """
-    Displays an error message
-    """
-    print msg
+    """Displays an error message"""
+    LOGGER.error(msg)
 
 
 def get_width(field, start=-1, stop=-1, force_index=False):
-    """
-    Returns with width if the bit range is greater than one.
-    """
+    """Returns with width if the bit range is greater than one."""
     if stop == -1:
         start = field.start_position
         stop = field.stop_position
@@ -98,16 +92,14 @@ def read_strobe(address):
 
 
 def get_signal_offset(address):
-    """
-    Returns the offset of the signal.
-    """
+    """Returns the offset of the signal."""
+
     return address % 4
 
 
 def full_reset_value(field):
-    """
-    returns the full reset value for the entire field
-    """
+    """returns the full reset value for the entire field"""
+
     if field.reset_type == BitField.RESET_NUMERIC:
         return "%d'h%0x" % (field.width, field.reset_value)
     elif field.reset_type == BitField.RESET_INPUT:
@@ -117,9 +109,8 @@ def full_reset_value(field):
 
 
 def reset_value(field, start, stop):
-    """
-    returns the full reset value for the field up to a byte
-    """
+    """returns the full reset value for the field up to a byte"""
+
     if field.reset_type == BitField.RESET_NUMERIC:
         field_width = (stop - start) + 1
         reset = (field.reset_value >> (start - field.start_position))
@@ -192,7 +183,7 @@ def input_signal_port(field, port_list, control_set):
     Extracts the base signal of the input control signal, make sure
     that it is not in the existing set, and the adds it to the port list
     """
-    control = extract_base(field.input_signal)
+    control = field.input_signal  # extract_base(field.input_signal)
     if control not in control_set:
         port_list.append(('input', get_width(field), control, "input signal"))
         control_set.add(control)
@@ -402,7 +393,11 @@ class Verilog(WriterBase):
             if self._has_control[field.field_type]:
                 self._write_port('LD', field.control_signal)
             if self._has_input[field.field_type]:
-                self._write_port('IN', '%s%s' % (field.input_signal, index))
+                if index:
+                    signal = field.input_signal.split("[")[0]
+                else:
+                    signal = field.input_signal
+                self._write_port('IN', '%s%s' % (signal, index))
             if self._has_oneshot[field.field_type]:
                 base = get_base_signal(address, field)
                 one_shot_name = oneshot_name(base, start)
@@ -453,15 +448,14 @@ class Verilog(WriterBase):
         Breaks a set of bit fields along the specified boundary
         """
         item_list = {}
-        for register in self.__sorted_regs:
-            for field in [register.get_bit_field(field_key)
-                          for field_key in register.get_bit_field_keys()
-                          if self._has_rd[register.get_bit_field(field_key).field_type]]:
-
-                for lower in range(0, register.width, size):
+        for reg in self.__sorted_regs:
+            for field in [reg.get_bit_field(fkey)
+                          for fkey in reg.get_bit_field_keys()
+                          if self._has_rd[reg.get_bit_field(fkey).field_type]]:
+                for lower in range(0, reg.width, size):
                     if in_range(field.start_position, field.stop_position,
                                 lower, lower + size - 1):
-                        data = self._byte_info(field, register, lower, size)
+                        data = self._byte_info(field, reg, lower, size)
                         item_list.setdefault(data[F_ADDRESS], []).append(data)
         return item_list
 
@@ -637,7 +631,46 @@ class Verilog(WriterBase):
                 port_list.append((item[0], "[%d:%d]" %
                                   (item[1], item[2]), key, item[3]))
 
-        return port_list
+        return self._cleanup_port_list(port_list)
+
+    def _cleanup_port_list(self, port_list):
+        new_list = []
+        new_ports = {}
+        for port in port_list:
+            match = SINGLE_BIT.match(port[2])
+            if match:
+                groups = match.groups()
+                name = groups[0]
+                new_info = (port[0], int(groups[1]), -1, port[2])
+                if name in new_ports:
+                    new_ports[name].append(new_info)
+                else:
+                    new_ports[name] = [new_info]
+                continue
+            match = MULTI_BIT.match(port[2])
+            if match:
+                groups = match.groups()
+                name = groups[0]
+                new_info = (port[0], int(groups[1]), int(groups[2]), port[2])
+                if name in new_ports:
+                    new_ports[name].append(new_info)
+                else:
+                    new_ports[name] = [new_info]
+                continue
+            new_list.append(port)
+
+        for key in new_ports:
+            data = new_ports[key]
+            high_ports = [a[1] for a in data if a[1] != -1]
+            low_ports = [a[2] for a in data if a[2] != -1]
+            min_index = min(min(high_ports), min(low_ports))
+            max_index = max(max(high_ports), max(low_ports))
+
+            new_entry = (data[0][0], "[%d:%d]" % (max_index, min_index),
+                         key, data[0][3])
+            new_list.append(new_entry)
+
+        return new_list
 
     def _write_locals(self):
         """
@@ -692,7 +725,8 @@ class Verilog(WriterBase):
                 write_strobe(address), self._write_strobe, self._addr,
                 binary(address >> self._lower_bit, width)))
 
-        for address in sorted(self.__generate_read_strobes(self._data_width).keys()):
+        addr_keys = sorted(self.__generate_read_strobes(self._data_width))
+        for address in addr_keys:
             width = self._addr_width - self._lower_bit
             self._wrln("wire %s  = %s & (%s == %s);\n" % (
                 read_strobe(address), self._read_strobe, self._addr,

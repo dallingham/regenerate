@@ -17,6 +17,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""
+Provides TreeView column to simplify usage.
+"""
+
 import gtk
 import pango
 
@@ -56,9 +60,9 @@ class ComboMapColumn(gtk.TreeViewColumn):
     columns are passed and used to create the CellRenderer.
     """
 
-    def __init__(self, title, callback, data_list, source_column, t=int):
+    def __init__(self, title, callback, data_list, source_column, dtype=int):
         renderer = gtk.CellRendererCombo()
-        model = gtk.ListStore(str, t)
+        model = gtk.ListStore(str, dtype)
         for item in data_list:
             model.append(row=item)
         renderer.set_property("text-column", 0)

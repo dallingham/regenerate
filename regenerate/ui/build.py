@@ -17,6 +17,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""
+Provides the builder, which allows the user to construct rules that
+keeps track of when an output file should be rebuilt.
+"""
+
 import os
 import gtk
 from export_assistant import ExportAssistant
@@ -25,6 +30,7 @@ from regenerate.writers import (EXPORTERS, PRJ_EXPORTERS, EXP_CLASS,
                                 EXP_TYPE, EXP_ID, EXP_EXT)
 from columns import EditableColumn, ToggleColumn
 from error_dialogs import ErrorMsg
+from base_window import BaseWindow
 
 (MDL_MOD, MDL_BASE, MDL_FMT, MDL_DEST, MDL_CLASS, MDL_DBASE) = range(6)
 (OPTMAP_DESCRIPTION, OPTMAP_CLASS, OPTMAP_REGISTER_SET) = range(3)
@@ -32,19 +38,21 @@ from error_dialogs import ErrorMsg
 (DB_MAP_DBASE, DB_MAP_MODIFIED) = range(2)
 
 
-class Build(object):
+class Build(BaseWindow):
     """
     Builder interface. Allows the user to control exporters, building rules
     as to what should be built.
     """
 
     def __init__(self, project, dbmap):
+        BaseWindow.__init__(self)
+
         self.__dbmap = dbmap
-        self.__project = project
+        self.__prj = project
         self.__modlist = []
 
         self.__base2path = {}
-        for item in self.__project.get_register_set():
+        for item in self.__prj.get_register_set():
             base_path = os.path.splitext(os.path.basename(item))
             self.__base2path[base_path[0]] = item
 
@@ -89,8 +97,7 @@ class Build(object):
         self.__add_columns()
         self.__model = gtk.ListStore(bool, str, str, str, object, object)
         self.__build_list.set_model(self.__model)
-        self.__build_top.set_icon_from_file(
-            os.path.join(INSTALL_PATH, "media", "flop.svg"))
+        self.configure(self.__build_top)
         self.__build_top.show_all()
 
     def __add_item_to_list(self, full_path, option, dest):
@@ -109,9 +116,9 @@ class Build(object):
         database, except we have to compare dates on all files in the project,
         not just a single file.
         """
-        local_dest = os.path.join(os.path.dirname(self.__project.path), dest)
+        local_dest = os.path.join(os.path.dirname(self.__prj.path), dest)
 
-        register_set = self.__project.get_register_set()
+        register_set = self.__prj.get_register_set()
         mod = file_needs_rebuilt(local_dest, self.__dbmap, register_set)
         self.__modlist.append(mod)
         (fmt, cls, dbtype) = self.__optmap[option]
@@ -124,26 +131,26 @@ class Build(object):
         timestamps.
         """
         (base, db_file_mtime) = base_and_modtime(dbase_full_path)
-        local_dest = os.path.join(os.path.dirname(self.__project.path), dest)
+        local_dest = os.path.join(os.path.dirname(self.__prj.path), dest)
 
         mod = file_needs_rebuilt(local_dest, self.__dbmap, [dbase_full_path])
         self.__modlist.append(mod)
         (fmt, cls, rpttype) = self.__optmap[option]
         dbase = self.__dbmap[base][DB_MAP_DBASE].db
-        self.__model.append(row=[mod, base, fmt, dest, cls, dbase])
+        self.__model.append(row=(mod, base, fmt, dest, cls, dbase))
 
     def __populate(self):
         """
         Populate the display with the items stored in the project's
         export list.
         """
-        for item in self.__project.get_register_set():
-            for (option, dest) in self.__project.get_export_list(item):
+        for item in self.__prj.get_register_set():
+            for (option, dest) in self.__prj.get_export_list(item):
                 try:
                     self.__add_dbase_item_to_list(item, option, dest)
                 except KeyError:
                     pass
-        for (option, dest) in self.__project.get_project_export_list():
+        for (option, dest) in self.__prj.get_project_export_list():
             try:
                 self.__add_prj_item_to_list(option, dest)
             except KeyError:
@@ -243,16 +250,16 @@ class Build(object):
             writer_class = item[MDL_CLASS]
             dbase = item[MDL_DBASE]
             dest = os.path.abspath(
-                os.path.join(os.path.dirname(self.__project.path),
+                os.path.join(os.path.dirname(self.__prj.path),
                              item[MDL_DEST]))
 
             try:
                 if dbase:
-                    gen = writer_class(self.__project, dbase)
+                    gen = writer_class(self.__prj, dbase)
                 else:
                     db_list = [i[DB_MAP_DBASE].db
                                for i in self.__dbmap.values()]
-                    gen = writer_class(self.__project, db_list)
+                    gen = writer_class(self.__prj, db_list)
                 gen.write(dest)
                 item[MDL_MOD] = False
             except IOError, msg:
@@ -267,8 +274,8 @@ class Build(object):
                    for item in EXPORTERS] + [("%s (%s)" % item[EXP_TYPE], False, item[EXP_EXT])
                                              for item in PRJ_EXPORTERS]
         reglist = [os.path.splitext(os.path.basename(i))[0]
-                   for i in self.__project.get_register_set()]
-        ExportAssistant(self.__project.short_name, optlist, reglist,
+                   for i in self.__prj.get_register_set()]
+        ExportAssistant(self.__prj.short_name, optlist, reglist,
                         self.add_callback, self.run_callback)
 
     def add_callback(self, filename, export_format, register_set):
@@ -279,10 +286,10 @@ class Build(object):
         option = self.__mapopt[export_format][MAPOPT_ID]
         if self.__mapopt[export_format][MAPOPT_REGISTER_SET]:
             register_path = self.__base2path[register_set]
-            self.__project.add_to_export_list(register_path, option, filename)
+            self.__prj.add_to_export_list(register_path, option, filename)
         else:
             register_path = '<project>'
-            self.__project.add_to_project_export_list(option, filename)
+            self.__prj.add_to_project_export_list(option, filename)
         self.__add_item_to_list(register_path, option, filename)
 
     def run_callback(self, filename, export_format, register_set):
@@ -297,8 +304,8 @@ class Build(object):
             gen = wrclass(dbase)
         else:
             db_list = [i[DB_MAP_DBASE].db for i in self.__dbmap.values()]
-            gen = wrclass(self.__project, db_list)
-        gen.set_project(self.__project)
+            gen = wrclass(self.__prj, db_list)
+        gen.set_project(self.__prj)
         gen.write(filename)
 
     def on_remove_build_clicked(self, obj):
@@ -313,10 +320,10 @@ class Build(object):
         filename = data[MDL_DEST]
         if data[MDL_DBASE]:
             register_path = self.__base2path[data[MDL_BASE]]
-            self.__project.remove_from_export_list(register_path, option,
-                                                   filename)
+            self.__prj.remove_from_export_list(register_path, option,
+                                               filename)
         else:
-            self.__project.remove_from_project_export_list(option, filename)
+            self.__prj.remove_from_project_export_list(option, filename)
         self.__model.remove(sel[1])
 
     def on_close_clicked(self, obj):

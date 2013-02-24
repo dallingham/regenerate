@@ -83,8 +83,9 @@ class BitFieldEditor(object):
 
         self.__top_window.set_icon_from_file(
             os.path.join(INSTALL_PATH, "media", "flop.svg"))
-        self.__input_obj.set_sensitive(TYPE_TO_ENABLE[bit_field.field_type][0])
-        self.__control_obj.set_sensitive(TYPE_TO_ENABLE[bit_field.field_type][1])
+        (input_enb, control_enb) = TYPE_TO_ENABLE[bit_field.field_type]
+        self.__input_obj.set_sensitive(input_enb)
+        self.__control_obj.set_sensitive(control_enb)
 
         pango_font = pango.FontDescription("monospace")
         self.__builder.get_object("descr").modify_font(pango_font)
@@ -153,10 +154,11 @@ class BitFieldEditor(object):
         else:
             self.__reset_obj.set_text(bit_field.reset_parameter)
 
-        if TYPE_TO_ENABLE[bit_field.field_type][0] and not bit_field.input_signal:
+        (input_enb, control_enb) = TYPE_TO_ENABLE[bit_field.field_type]
+        if input_enb and not bit_field.input_signal:
             bit_field.input_signal = "%s_DATA_IN" % bit_field.field_name
 
-        if TYPE_TO_ENABLE[bit_field.field_type][1] and not bit_field.control_signal:
+        if control_enb and not bit_field.control_signal:
             bit_field.control_signal = "%s_LOAD" % bit_field.field_name
 
         self.__output_obj.set_text(bit_field.output_signal)

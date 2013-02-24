@@ -22,6 +22,7 @@ Provides the container database for a set of registers.
 """
 import re
 import os
+import xml
 from reg_parser import RegParser
 from reg_writer import RegWriter
 
@@ -76,6 +77,13 @@ class RegisterDb(object):
         """
         return sorted(self.__registers.keys())
 
+    def get_all_registers(self):
+        """
+        Returns the register keys, which is the address of the register
+        """
+        return [self.__registers[key]
+                for key in sorted(self.__registers.keys())]
+
     def get_register(self, key):
         """
         Returns the register from the specified key, which should be the
@@ -100,11 +108,15 @@ class RegisterDb(object):
         """
         Reads the XML file, loading the databsae.
         """
-        ifile = open(filename)
-        self.set_name = os.path.splitext(os.path.basename(filename))[0]
-        parser = RegParser(self)
-        parser.parse(ifile)
-        ifile.close()
+        try:
+            ifile = open(filename)
+            self.set_name = os.path.splitext(os.path.basename(filename))[0]
+            parser = RegParser(self)
+            parser.parse(ifile)
+            ifile.close()
+            return None
+        except xml.parsers.expat.ExpatError, msg:
+            return str(msg)
 
     def save_xml(self, filename):
         """

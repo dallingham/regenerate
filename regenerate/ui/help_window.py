@@ -17,6 +17,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""
+Provides a dialog window that displays the contents of a file, converting
+the contents from restructuredText to HTML.
+"""
 
 try:
     import webkit
@@ -24,13 +28,17 @@ try:
 except ImportError:
     WEBKIT = False
 
-from regenerate.settings.paths import HELP_PATH
+
 import os.path
+from regenerate.settings.paths import HELP_PATH
 from preview import html_string
+from base_window import BaseWindow
 
 
-class HelpWindow(object):
-
+class HelpWindow(BaseWindow):
+    """
+    Presents help contents in a window
+    """
     window = None
     wkit = None
     container = None
@@ -38,6 +46,7 @@ class HelpWindow(object):
 
     def __init__(self, builder, filename):
 
+        BaseWindow.__init__(self)
         if not WEBKIT:
             return
 
@@ -46,10 +55,11 @@ class HelpWindow(object):
             f = open(fname)
             data = f.read()
         except IOError, msg:
-            data = "Help file '%s' could not be found" % fname
+            data = "Help file '%s' could not be found\n%s" % (fname, str(msg))
 
         if HelpWindow.window is None:
             HelpWindow.window = builder.get_object("help_win")
+            self.configure(HelpWindow.window)
             HelpWindow.wkit = webkit.WebView()
             HelpWindow.container = builder.get_object('help_scroll')
             HelpWindow.container.add(HelpWindow.wkit)

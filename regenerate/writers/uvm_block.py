@@ -520,7 +520,6 @@ class UVM_Block_Registers(WriterBase):
                 of.write('      uvm_resource_db #(bit)::set({"REG::", '
                          'get_full_name()}, "NO_REG_HW_RESET_TEST", 1);\n')
 
-
         of.write('      reset();\n')
         of.write('    endfunction : build\n\n')
         of.write('  endclass : %s\n\n' % rname)
@@ -596,7 +595,7 @@ def individual_access(field, reg):
     used_bytes = set()
 
     # get all the fields in the register
-    flds = [reg.get_bit_field(key) for key in reg.get_bit_fields()]
+    flds = reg.get_bit_fields()
 
     # loop through all fields are are not read only and are not the original
     # field we are checking for. Calculate the bytes used, and add them to the
