@@ -109,8 +109,7 @@ class UVM_Block_Registers(WriterBase):
 
             self.generate_coverage(of, dbase)
 
-            for key in dbase.get_keys():
-                reg = dbase.get_register(key)
+            for reg in dbase.get_all_registers():
                 if reg.ram_size:
                     self.write_memory(reg, dbase, of)
                 else:
@@ -260,19 +259,17 @@ class UVM_Block_Registers(WriterBase):
 
     def write_dbase_block(self, dbase, of, group, in_maps):
 
+        sname = dbase.set_name
         gmap_list = self._project.get_group_map(group.name)
-        hdl_match = [grp.hdl for grp in gmap_list if grp.set == dbase.set_name]
+        hdl_match = [grp.hdl for grp in gmap_list if grp.set == sname]
 
         of.write('  class %s_%s_reg_blk extends uvm_reg_block;\n\n'
-                 % (group.name, dbase.set_name))
+                 % (group.name, sname))
         of.write('    `uvm_object_utils(%s_%s_reg_blk)\n\n'
-                 % (group.name, dbase.set_name))
+                 % (group.name, sname))
 
-        for key in dbase.get_keys():
-            reg = dbase.get_register(key)
-            field_keys = reg.get_bit_field_keys()
-            for key in field_keys:
-                field = reg.get_bit_field(key)
+        for reg in dbase.get_all_registers():
+            for field in reg.get_bit_fields():
                 if field.reset_parameter:
                     name = field.reset_parameter
                 else:
@@ -284,22 +281,19 @@ class UVM_Block_Registers(WriterBase):
                         of.write("    bit [%d:0] %s;\n"
                                  % (field.width - 1, name))
 
-        for key in dbase.get_keys():
-            reg = dbase.get_register(key)
-            if reg.ram_size:
-                rname = "mem_%s_%s" % (dbase.set_name, reg.token.lower())
-            else:
-                rname = "reg_%s_%s" % (dbase.set_name, reg.token.lower())
-            of.write("    %s %s;\n" % (rname, reg.token.lower()))
+        for reg in dbase.get_all_registers():
+            prefix = "mem" if reg.ram_size else "reg"
+            token = reg.token.lower()
+            rname = "%s_%s_%s" % (prefix, sname, token)
+            of.write("    %s %s;\n" % (rname, token))
 
         for item in in_maps:
             of.write("    uvm_reg_map %s_map;\n" % item)
 
-        mod = dbase.set_name
-        of.write('    %s_reg_access_wrapper %s_access_cg;\n\n' % (mod, mod))
+        of.write('    %s_reg_access_wrapper %s_access_cg;\n\n' % (sname, sname))
         of.write('\n')
         of.write('    function new(string name = "%s_%s_reg_blk");\n' %
-                 (group.name, mod))
+                 (group.name, sname))
         of.write('      super.new(name,build_coverage(UVM_CVR_ALL));\n')
         of.write('    endfunction\n\n')
 
@@ -307,47 +301,42 @@ class UVM_Block_Registers(WriterBase):
 
         of.write('      if(has_coverage(UVM_CVR_ALL)) begin\n')
         of.write('        %s_access_cg = %s_reg_access_wrapper::type_id::create("%s_access_cg");\n'
-                 % (mod, mod, mod))
+                 % (sname, sname, sname))
         of.write("        void'(set_coverage(UVM_CVR_ALL));\n")
         of.write('      end\n')
 
-        for key in dbase.get_keys():
-            reg = dbase.get_register(key)
-            if reg.ram_size:
-                rname = "mem_%s_%s" % (dbase.set_name, reg.token.lower())
-            else:
-                rname = "reg_%s_%s" % (dbase.set_name, reg.token.lower())
+        for reg in dbase.get_all_registers():
+            token = reg.token.lower()
+            prefix = "mem" if reg.ram_size else "reg"
+            rname = "%s_%s_%s" % (prefix, sname, token)
 
             of.write('      %s = %s::type_id::create("%s", , get_full_name());\n' %
-                     (reg.token.lower(), rname, reg.token.lower()))
-            for field_key in reg.get_bit_field_keys():
-                field = reg.get_bit_field(field_key)
+                     (token, rname, token))
+            for field in reg.get_bit_fields():
                 if field.reset_type == BitField.RESET_PARAMETER:
                     if field.reset_parameter:
                         name = field.reset_parameter
                     else:
                         name = "p%s" % field.field_name.upper()
-                    of.write('      %s.%s = %s;\n' % (reg.token.lower(),
-                                                         name, name))
+                    of.write('      %s.%s = %s;\n' % (token, name, name))
 
-            of.write('      %s.configure(this);\n' % reg.token.lower())
+            of.write('      %s.configure(this);\n' % token)
             if reg.ram_size == 0:
-                of.write('      %s.build();\n' % reg.token.lower())
+                of.write('      %s.build();\n' % token)
                 if not reg.do_not_generate_code:
-                    for key in reg.get_bit_field_keys():
-                        field = reg.get_bit_field(key)
+                    for field in reg.get_bit_fields():
                         of.write('      %s.add_hdl_path_slice("r%02x_%s", %d, %d );\n'
-                                 % (reg.token.lower(), reg.address,
-                                    self._fix_name(field),
+                                 % (token, reg.address, self._fix_name(field),
                                     field.start_position, field.width))
         of.write("\n")
 
         for item in in_maps:
-            of.write('      %s_map = create_map("%s_map", \'h0, %d, %s, 1);\n' %
-                     (item, item, self._project.get_address_width(item), self.endian))
+            mname = "%s_map" % item
+            of.write('      %s = create_map("%s", \'h0, %d, %s, 1);\n' %
+                     (mname, mname, self._project.get_address_width(item),
+                      self.endian))
 
-        for key in dbase.get_keys():
-            reg = dbase.get_register(key)
+        for reg in dbase.get_all_registers():
             for item in in_maps:
                 cmd = "add_mem" if reg.ram_size else "add_reg"
                 of.write('      %s_map.%s(%s, \'h%04x, "RW");\n' %
@@ -365,8 +354,8 @@ class UVM_Block_Registers(WriterBase):
                  'bit is_read, uvm_reg_map  map);\n')
         of.write('       if(get_coverage(UVM_CVR_ALL)) begin\n')
         of.write('          if(map.get_name() == "default_map") begin\n')
-        of.write('             %s_access_cg.sample(offset, is_read);\n' %
-                 dbase.set_name)
+        of.write('             %s_access_cg.sample(offset, is_read);\n'
+                 % sname)
         of.write('          end\n')
         of.write('       end\n')
         of.write('    endfunction: sample\n\n')
@@ -375,8 +364,7 @@ class UVM_Block_Registers(WriterBase):
                  (group.name, dbase.set_name))
 
     def disable_access_tests(self, dbase, in_maps, of):
-        for key in dbase.get_keys():
-            reg = dbase.get_register(key)
+        for reg in dbase.get_all_registers():
             for item in in_maps:
                 test = "MEM" if reg.ram_size else "REG"
                 of.write('      uvm_resource_db #(bit)::set({"REG::", ')
@@ -394,10 +382,8 @@ class UVM_Block_Registers(WriterBase):
         of.write(" */\n")
         of.write("  class %s extends uvm_reg;\n\n" % rname)
         of.write("    `uvm_object_utils(%s);\n\n" % rname)
-        field_keys = reg.get_bit_field_keys()
         field_list = []
-        for key in field_keys:
-            field = reg.get_bit_field(key)
+        for field in reg.get_bit_fields():
             of.write("    uvm_reg_field %s;\n" % self._fix_name(field))
             if field.reset_type == BitField.RESET_PARAMETER:
                 field_list.append(field)
@@ -416,8 +402,7 @@ class UVM_Block_Registers(WriterBase):
 
         grps = set()
 
-        for key in field_keys:
-            field = reg.get_bit_field(key)
+        for field in reg.get_bit_fields():
             if field.values:
                 n = self._fix_name(field)
                 grps.add("cov_%s" % n)
@@ -455,10 +440,7 @@ class UVM_Block_Registers(WriterBase):
 
         of.write('    virtual function void build();\n')
 
-        field_keys = reg.get_bit_field_keys()
-
-        for key in field_keys:
-            field = reg.get_bit_field(key)
+        for field in reg.get_bit_fields():
             of.write('      %s = uvm_reg_field::type_id::create("%s"' %
                      (self._fix_name(field), self._fix_name(field)))
             of.write(', , get_full_name());\n')
@@ -467,10 +449,7 @@ class UVM_Block_Registers(WriterBase):
         side_effects = False
         no_reset_test = False
 
-        field_keys = reg.get_bit_field_keys()
-
-        for key in field_keys:
-            field = reg.get_bit_field(key)
+        for field in reg.get_bit_fields():
             size = field.width
             if field.start_position >= reg.width:
                 lsb = field.start_position % reg.width
@@ -558,10 +537,9 @@ class UVM_Block_Registers(WriterBase):
         of.write("   option.per_instance = 1;\n")
         of.write("   option.name = name;\n\n")
         of.write("   ADDR: coverpoint addr {\n")
-        for key in dbase.get_keys():
-            reg = dbase.get_register(key)
+        for reg in dbase.get_all_registers():
             of.write("     bins r_%s = {'h%x};\n" % (reg.token.lower(),
-                                                        reg.address))
+                                                     reg.address))
         of.write("   }\n\n")
         of.write("   RW: coverpoint is_read {\n")
         of.write("      bins RD = {1};\n")

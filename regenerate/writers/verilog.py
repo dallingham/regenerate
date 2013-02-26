@@ -93,7 +93,6 @@ def read_strobe(address):
 
 def get_signal_offset(address):
     """Returns the offset of the signal."""
-
     return address % 4
 
 
@@ -183,7 +182,7 @@ def input_signal_port(field, port_list, control_set):
     Extracts the base signal of the input control signal, make sure
     that it is not in the existing set, and the adds it to the port list
     """
-    control = field.input_signal  # extract_base(field.input_signal)
+    control = field.input_signal
     if control not in control_set:
         port_list.append(('input', get_width(field), control, "input signal"))
         control_set.add(control)
@@ -240,9 +239,8 @@ class Verilog(WriterBase):
         self._always = 'always'
 
         self.__sorted_regs = [
-            dbase.get_register(key) for key in dbase.get_keys()
-            if not (self._dbase.get_register(key).do_not_generate_code or
-                    self._dbase.get_register(key).ram_size > 0)]
+            reg for reg in dbase.get_all_registers()
+            if not (reg.do_not_generate_code or reg.ram_size > 0)]
 
         self._coverage = self._dbase.enable_coverage
 
@@ -260,7 +258,7 @@ class Verilog(WriterBase):
             self._reset_condition = "~%s" % self._reset
 
         if dbase.byte_strobe_active_level:
-            self.__be_condition = "%s" % self._byte_enables
+            self.__be_condition = self._byte_enables
         else:
             self.__be_condition = "~%s" % self._byte_enables
 
@@ -433,9 +431,7 @@ class Verilog(WriterBase):
         """
         item_list = {}
         for register in self.__sorted_regs:
-            for field in [register.get_bit_field(field_key)
-                          for field_key in register.get_bit_field_keys()]:
-
+            for field in register.get_bit_fields():
                 for lower in range(0, register.width, size):
                     if in_range(field.start_position, field.stop_position,
                                 lower, lower + size - 1):
@@ -449,9 +445,8 @@ class Verilog(WriterBase):
         """
         item_list = {}
         for reg in self.__sorted_regs:
-            for field in [reg.get_bit_field(fkey)
-                          for fkey in reg.get_bit_field_keys()
-                          if self._has_rd[reg.get_bit_field(fkey).field_type]]:
+            for field in [field for field in reg.get_bit_fields()
+                          if self._has_rd[field.field_type]]:
                 for lower in range(0, reg.width, size):
                     if in_range(field.start_position, field.stop_position,
                                 lower, lower + size - 1):
@@ -515,10 +510,8 @@ class Verilog(WriterBase):
 
         plist = []
         blist = []
-        for register in [self._dbase.get_register(key)
-                         for key in self._dbase.get_keys()]:
-            for field in [register.get_bit_field(key)
-                          for key in register.get_bit_field_keys()]:
+        for register in self._dbase.get_all_registers():
+            for field in register.get_bit_fields():
                 if field.reset_type == BitField.RESET_PARAMETER:
                     if field.stop_position == field.start_position:
                         blist.append((field.reset_parameter,
@@ -585,8 +578,7 @@ class Verilog(WriterBase):
         for register in self.__sorted_regs:
 
             # loop through each bit field, looking for needed ports
-            for field in [register.get_bit_field(field_key)
-                          for field_key in register.get_bit_field_keys()]:
+            for field in register.get_bit_fields():
 
                 # A parallel load requires an input signal
                 if self._has_control[field.field_type]:
@@ -686,9 +678,7 @@ class Verilog(WriterBase):
         for register in self.__sorted_regs:
             addr = register.address
 
-            for field in [register.get_bit_field(k)
-                          for k in register.get_bit_field_keys()]:
-
+            for field in register.get_bit_fields():
                 sindex = get_width(field)
                 base = get_base_signal(addr, field)
 
@@ -781,8 +771,7 @@ class Verilog(WriterBase):
         and calls write_register to write the RTL code.
         """
         for reg in self.__sorted_regs:
-            for field in [reg.get_bit_field(k)
-                          for k in reg.get_bit_field_keys()]:
+            for field in reg.get_bit_fields():
                 self._write_field(reg, field)
 
     def _write_field(self, reg, field):
@@ -958,10 +947,8 @@ class Verilog2001(Verilog):
         """
         plist = []
         blist = []
-        for register in [self._dbase.get_register(key)
-                         for key in self._dbase.get_keys()]:
-            for field in [register.get_bit_field(key)
-                          for key in register.get_bit_field_keys()]:
+        for register in self._dbase.get_all_registers():
+            for field in register.get_bit_fields():
                 if field.reset_type == BitField.RESET_PARAMETER:
                     if field.stop_position == field.start_position:
                         blist.append((field.reset_parameter,
