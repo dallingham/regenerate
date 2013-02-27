@@ -655,8 +655,8 @@ class Verilog(WriterBase):
             data = new_ports[key]
             high_ports = [a[1] for a in data if a[1] != -1]
             low_ports = [a[2] for a in data if a[2] != -1]
-            min_index = min(min(high_ports), min(low_ports))
-            max_index = max(max(high_ports), max(low_ports))
+            min_index = min(high_ports + low_ports)
+            max_index = max(high_ports + low_ports)
 
             new_entry = (data[0][0], "[%d:%d]" % (max_index, min_index),
                          key, data[0][3])
