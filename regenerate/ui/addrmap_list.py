@@ -23,7 +23,7 @@ Provides the Address List interface
 
 import gtk
 from columns import EditableColumn, ToggleColumn, ComboMapColumn
-from regenerate.db import LOGGER
+from regenerate.db import LOGGER, AddrMapData
 
 SIZE2STR = (
     ("32-bits", 4),
@@ -144,6 +144,10 @@ class AddrMapList(object):
 
         self.__model.clear()
         for base in self.__project.get_address_maps():
+            if base.width not in INT2SIZE:
+                LOGGER.error('Illegal width (%d) for address map "%s"' %
+                             (base.width, base.name))
+                base = AddrMapData(base.name, base.base, 4, base.fixed)
             data = (base.name, "%x" % base.base, base.fixed,
                     INT2SIZE[base.width])
             node = self.__model.append(None, row=data)

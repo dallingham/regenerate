@@ -239,11 +239,25 @@ class RegisterList(object):
                 return store.get_value(node, RegisterModel.OBJ_COL)
         return None
 
-    def __reg_update_addr(self, reg, path, text):
+    def __ram_update_addr(self, reg, path, text):
         (addr_str, len_str) = text.split(':')
         try:
             new_addr = int(addr_str, 16)
             new_length = int(len_str, 16)
+            if new_addr != reg.address or new_length != reg.ram_size:
+                self.__update_addr(reg, new_addr, new_length)
+                self.__model.set_address_at_path(path, new_addr, new_length)
+                self.__set_modified()
+        except KeyError:
+            ErrorMsg("Internal Error",
+                     "Deleting the register caused an internal inconsistency.\n"
+                     "Please exit without saving to prevent any corruption to\n"
+                     "your database and report this error.")
+
+    def __reg_update_addr(self, reg, path, text):
+        try:
+            new_addr = int(text, 16)
+            new_length = 0
             if new_addr != reg.address or new_length != reg.ram_size:
                 self.__update_addr(reg, new_addr, new_length)
                 self.__model.set_address_at_path(path, new_addr, new_length)
@@ -308,7 +322,7 @@ class RegisterList(object):
 
     def __handle_ram_address(self, register, path, new_text):
         if self.__new_address_is_not_used(new_text, path):
-            self.__reg_update_addr(register, path, new_text)
+            self.__ram_update_addr(register, path, new_text)
         else:
             ErrorMsg("Address already used",
                      "The address %0x is already used by another register"
