@@ -25,9 +25,10 @@ except ImportError:
     WEBKIT = False
 
 import regenerate.extras
+from base_window import BaseWindow
 
 
-class SummaryWindow(object):
+class SummaryWindow(BaseWindow):
 
     window = None
     wkit = None
@@ -36,11 +37,13 @@ class SummaryWindow(object):
 
     def __init__(self, builder, reg, regset_name, project):
 
+        BaseWindow.__init__(self)
         if not WEBKIT:
             return
 
         if SummaryWindow.window is None:
             SummaryWindow.window = builder.get_object("summary_window")
+            self.configure(SummaryWindow.window)
             SummaryWindow.wkit = webkit.WebView()
             SummaryWindow.container = builder.get_object('summary_scroll')
             SummaryWindow.container.add(SummaryWindow.wkit)
