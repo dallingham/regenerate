@@ -116,8 +116,10 @@ class UVM_Block_Registers(WriterBase):
                     self.write_register(reg, dbase, of)
 
             for group in self._project.get_grouping_list():
+                used = set()
                 for grp in self._project.get_group_map(group.name):
-                    if grp.set == dbase.set_name:
+                    if grp.set == dbase.set_name and grp.set not in used:
+                        used.add(grp.set)
                         self.write_dbase_block(dbase, of, group,
                                                group_maps[group])
 
@@ -199,11 +201,11 @@ class UVM_Block_Registers(WriterBase):
         for group_entry in self._project.get_group_map(group[0]):
             if group_entry.repeat > 1:
                 of.write("   %s_%s_reg_blk %s[%d];\n" %
-                         (sname, group_entry.set, group_entry.set,
+                         (sname, group_entry.set, group_entry.inst,
                           group_entry.repeat))
             else:
                 of.write("   %s_%s_reg_blk %s;\n" %
-                         (sname, group_entry.set, group_entry.set))
+                         (sname, group_entry.set, group_entry.inst))
 
         of.write("\n")
         for item in in_maps:
@@ -233,24 +235,25 @@ class UVM_Block_Registers(WriterBase):
                 of.write('      for(int i = 0; i < %d; i++) begin\n' %
                          group_entry.repeat)
                 of.write('         %s[i] = %s_%s_reg_blk::type_id::create($sformatf("%s[%%0d]", i));\n' %
-                         (name, sname, name, name))
+                         (group_entry.inst, sname, name, group_entry.inst))
                 of.write('         %s[i].configure(this, $sformatf("%s", i));\n' %
-                         (name, group_entry.hdl))
-                of.write("         %s[i].build();\n" % name)
+                         (group_entry.inst, group_entry.hdl))
+                of.write("         %s[i].build();\n" % group_entry.inst)
                 for item in in_maps:
                     of.write("         %s_map.add_submap(%s[i].%s_map, 'h%x + (i * 'h%x));\n" %
-                             (item, name, item, group_entry.offset, group_entry.repeat_offset))
+                             (item, group_entry.inst, item, group_entry.offset,
+                              group_entry.repeat_offset))
                 of.write('      end\n')
             else:
                 name = group_entry.set
                 of.write('      %s = %s_%s_reg_blk::type_id::create("%s");\n' %
-                         (name, sname, name, name))
+                         (group_entry.inst, sname, name, name))
                 of.write('      %s.configure(this, "%s");\n' %
-                         (name, group_entry.hdl))
+                         (group_entry.inst, group_entry.hdl))
                 of.write("      %s.build();\n" % name)
                 for item in in_maps:
                     of.write("      %s_map.add_submap(%s.%s_map, 'h%x);\n" %
-                             (item, name, item, group_entry.offset))
+                             (item, group_entry.inst, item, group_entry.offset))
             of.write("\n")
 
         of.write("   endfunction: build\n")
@@ -260,6 +263,7 @@ class UVM_Block_Registers(WriterBase):
     def write_dbase_block(self, dbase, of, group, in_maps):
 
         sname = dbase.set_name
+
         gmap_list = self._project.get_group_map(group.name)
         hdl_match = [grp.hdl for grp in gmap_list if grp.set == sname]
 

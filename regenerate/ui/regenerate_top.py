@@ -215,6 +215,7 @@ class MainWindow(BaseWindow):
         self.__instance_obj = InstanceList(
             self.__builder.get_object('instances'),
             self.__instance_id_changed,
+            self.__instance_inst_changed,
             self.__instance_base_changed,
             self.__instance_repeat_changed,
             self.__instance_repeat_offset_changed,
@@ -516,6 +517,14 @@ class MainWindow(BaseWindow):
         Updates the data model when the text value is changed in the model.
         """
         self.__instance_model.change_id(path, new_text)
+        self.__set_module_definition_warn_flag()
+        self.__prj.set_modified()
+
+    def __instance_inst_changed(self, cell, path, new_text, col):
+        """
+        Updates the data model when the text value is changed in the model.
+        """
+        self.__instance_model.change_inst(path, new_text)
         self.__set_module_definition_warn_flag()
         self.__prj.set_modified()
 

@@ -29,7 +29,7 @@ from collections import namedtuple
 
 AddrMapData = namedtuple("AddrMapData", "name base width fixed")
 GroupMapData = namedtuple("GroupMapData",
-                          "set offset repeat repeat_offset format hdl")
+                          "set inst offset repeat repeat_offset format hdl")
 GroupData = namedtuple("GroupData", "name base hdl")
 
 
@@ -124,8 +124,8 @@ class RegProject(object):
                 ofile.write('    <grouping name="%s" start="%x" hdl="%s">\n' %
                             (group.name, group.base, group.hdl))
                 for item in self.__grouping_map[group.name]:
-                    ofile.write('      <map set="%s" offset="%x" ' %
-                                (item.set, item.offset))
+                    ofile.write('      <map set="%s" inst="%s" offset="%x" ' %
+                                (item.set, item.inst, item.offset))
                     ofile.write('repeat="%s" repeat_offset="%s"' %
                                 (item.repeat, item.repeat_offset))
                     if item.hdl:
@@ -377,7 +377,9 @@ class RegProject(object):
         self.__grouping_map[self._current_group] = []
 
     def start_map(self, attrs):
-        data = GroupMapData(attrs['set'],
+        sname = attrs['set']
+        data = GroupMapData(sname,
+                            attrs.get('inst', sname),
                             int(attrs['offset'], 16),
                             int(attrs['repeat']),
                             int(attrs['repeat_offset']),

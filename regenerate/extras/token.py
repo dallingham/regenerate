@@ -20,12 +20,12 @@
 from collections import namedtuple
 
 InstData = namedtuple("InstData",
-                      "group set base offset repeat roffset format")
+                      "group inst set base offset repeat roffset format")
 
-DEFAULT_FORMAT = "%(G)s%(D)s_%(R)s"
+DEFAULT_FORMAT = "%(I)s%(D)s_%(R)s"
 
 
-def full_token(group_name, reg_name, set_name, index, fmt_string):
+def full_token(group_name, inst_name, reg_name, set_name, index, fmt_string):
 
     if index >= 0:
         index_str = "%d" % index
@@ -37,6 +37,8 @@ def full_token(group_name, reg_name, set_name, index, fmt_string):
                  "D": index_str,
                  "R": reg_name.upper(),
                  "r": reg_name.lower(),
+                 "I": inst_name.upper(),
+                 "i": inst_name.lower(),
                  "S": set_name.upper(),
                  "s": set_name.lower()
                  }
@@ -65,7 +67,8 @@ def in_groups(regset_name, project):
                     else:
                         fmt = DEFAULT_FORMAT
                     groups.append(InstData(group_data.name,
-                                           regset_name,
+                                           regset.inst,
+                                           regset.set,
                                            group_data.base,
                                            regset.offset,
                                            regset.repeat,

@@ -1,4 +1,4 @@
-#
+2#
 # Manage registers in a hardware design
 #
 # Copyright (C) 2008  Donald N. Allingham
@@ -190,7 +190,6 @@ class RegisterRst:
 
         o.write("\n")
 
-
     def _write_defines(self, o):
 
         addr_maps = self._prj.get_address_maps()
@@ -208,19 +207,17 @@ class RegisterRst:
         for inst in in_groups(self._regset_name, self._prj):
             if inst.repeat == 1:
                 name = full_token(inst.group, self._reg.token,
-                                  self._regset_name, -1,
-                                  inst.format)
+                                  inst.inst, -1, inst.format)
                 o.write("   * - ``%s``\n" % self.text(name))
                 o.write("     - ``%s``\n" % reg_addr(self._reg, 0))
                 for map_name in addr_maps:
-                    map_base = self._prj.get_address_base(map_name.name)
+                    map_base = self._prj.gent_address_base(map_name.name)
                     offset = map_base + inst.offset + inst.base
                     o.write("     - ``%s``\n" % reg_addr(self._reg, offset))
             else:
                 for i in range(0, inst.repeat):
-                    name = full_token(inst.group, self._reg.token,
-                                      self._regset_name, i,
-                                      inst.format)
+                    name = full_token(inst.group, inst.inst, self._reg.token,
+                                      self._regset_name, i, inst.format)
                     o.write("   * - ``%s``\n" % self.text(name))
                     o.write("     - ``%s``\n" % reg_addr(self._reg, 0))
                     for map_name in addr_maps:
@@ -231,11 +228,11 @@ class RegisterRst:
         o.write("\n\n")
 
     def _display_uvm_entry(self, inst, index, o):
-        name = full_token(inst.group, self._reg.token,
+        name = full_token(inst.group, inst.inst, self._reg.token,
                           self._regset_name, index, inst.format)
         o.write("   * - ``%s``\n" % self.text(name))
-        name = uvm_name(inst.group, self._reg.token,
-                        self._regset_name, index, inst.format)
+        name = uvm_name(inst.group, self._reg.token, inst.inst, index,
+                        inst.format)
         o.write("     - ``%s``\n" % self.text(name))
 
     def _write_uvm(self, o):

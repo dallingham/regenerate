@@ -29,10 +29,11 @@ class InstMdl(gtk.TreeStore):
     symbolic ID name and the base address.
     """
 
-    (ID_COL, BASE_COL, SORT_COL, RPT_COL, OFF_COL, FMT_COL, HDL_COL) = range(7)
+    (INST_COL, ID_COL, BASE_COL, SORT_COL, RPT_COL, OFF_COL,
+     FMT_COL, HDL_COL) = range(8)
 
     def __init__(self):
-        gtk.TreeStore.__init__(self, str, str, gobject.TYPE_UINT64, str,
+        gtk.TreeStore.__init__(self, str, str, str, gobject.TYPE_UINT64, str,
                                str, str, str)
 
     def change_id(self, path, text):
@@ -41,6 +42,13 @@ class InstMdl(gtk.TreeStore):
         """
         node = self.get_iter(path)
         self.set_value(node, InstMdl.ID_COL, text)
+
+    def change_inst(self, path, text):
+        """
+        Called when the ID of an instance has been edited in the InstanceList
+        """
+        node = self.get_iter(path)
+        self.set_value(node, InstMdl.INST_COL, text)
 
     def change_format(self, path, text):
         """
@@ -109,15 +117,16 @@ class InstMdl(gtk.TreeStore):
 
 class InstanceList(object):
 
-    def __init__(self, obj, id_changed, base_changed, repeat_changed,
-                 repeat_offset_changed, format_changed, hdl_changed):
+    def __init__(self, obj, id_changed, inst_changed, base_changed,
+                 repeat_changed, repeat_offset_changed, format_changed,
+                 hdl_changed):
         self.__obj = obj
         self.__col = None
         self.__project = None
         self.__model = None
-        self.__build_instance_table(id_changed, base_changed, repeat_changed,
-                                    repeat_offset_changed, format_changed,
-                                    hdl_changed)
+        self.__build_instance_table(id_changed, inst_changed, base_changed,
+                                    repeat_changed, repeat_offset_changed,
+                                    format_changed, hdl_changed)
         self.__enable_dnd()
         self.__obj.set_sensitive(False)
 
@@ -144,7 +153,7 @@ class InstanceList(object):
         model = treeview.get_model()
         data = selection.data
         drop_info = treeview.get_dest_row_at_pos(x, y)
-        row_data = [data, "0", 0, "1", "0", "", ""]
+        row_data = [data, data, "0", 0, "1", "0", "", ""]
         if drop_info:
             path, position = drop_info
             if len(path) == 1:
@@ -171,25 +180,35 @@ class InstanceList(object):
                             key=lambda x: x.base)
         for item in group_list:
             hval = "%x" % item.base
-            node = self.__model.append(None, row=(item.name, hval, item.base,
-                                                  "", "", "", item.hdl))
+            node = self.__model.append(None, row=(item.name, "", hval,
+                                                  item.base,
+                                                  "", "", "",
+                                                  item.hdl))
 
             entry_list = sorted(self.__project.get_group_map(item[0]),
                                 key=lambda x: x.offset)
             for entry in entry_list:
-                self.__model.append(node, (entry.set, "%x" % entry.offset,
+                self.__model.append(node, (entry.inst, entry.set,
+                                           "%x" % entry.offset,
                                            entry.offset, "%d" % entry.repeat,
                                            "%x" % entry.repeat_offset,
                                            entry.format, entry.hdl))
 
-    def __build_instance_table(self, id_changed, base_changed, repeat_changed,
-                               repeat_offset_changed, format_changed,
-                               hdl_changed):
-        column = EditableColumn('Subsystem/Instance', id_changed,
-                                InstMdl.ID_COL)
-        column.set_sort_column_id(InstMdl.ID_COL)
+    def __build_instance_table(self, id_changed, inst_changed, base_changed,
+                               repeat_changed, repeat_offset_changed,
+                               format_changed, hdl_changed):
+        column = EditableColumn('Intance', inst_changed,
+                                InstMdl.INST_COL)
+        column.set_sort_column_id(InstMdl.INST_COL)
+        column.set_min_width(125)
         self.__obj.append_column(column)
         self.__col = column
+
+        column = EditableColumn('Subsystem', id_changed,
+                                InstMdl.ID_COL)
+        column.set_sort_column_id(InstMdl.ID_COL)
+        column.set_min_width(125)
+        self.__obj.append_column(column)
 
         column = EditableColumn('Address base (hex)', base_changed,
                                 InstMdl.BASE_COL)
@@ -224,7 +243,7 @@ class InstanceList(object):
         groups = []
         group_map = {}
         while tree_iter is not None:
-            gname = self.__model.get_value(tree_iter, InstMdl.ID_COL)
+            gname = self.__model.get_value(tree_iter, InstMdl.INST_COL)
             base = self.__model.get_value(tree_iter, InstMdl.SORT_COL)
             hdl = self.__model.get_value(tree_iter, InstMdl.HDL_COL)
 
@@ -233,6 +252,7 @@ class InstanceList(object):
 
             child = self.__model.iter_children(tree_iter)
             while child:
+                inst = self.__model.get_value(child, InstMdl.INST_COL)
                 name = self.__model.get_value(child, InstMdl.ID_COL)
                 base = self.__model.get_value(child, InstMdl.SORT_COL)
                 rpt = int(self.__model.get_value(child, InstMdl.RPT_COL))
@@ -241,7 +261,7 @@ class InstanceList(object):
                 fmt = self.__model.get_value(child, InstMdl.FMT_COL)
                 hdl = self.__model.get_value(child, InstMdl.HDL_COL)
                 group_map[gname].append(
-                    GroupMapData(name, base, rpt, offset, fmt, hdl))
+                    GroupMapData(name, inst, base, rpt, offset, fmt, hdl))
                 child = self.__model.iter_next(child)
             tree_iter = self.__model.iter_next(tree_iter)
         return (groups, group_map)
