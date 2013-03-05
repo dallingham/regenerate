@@ -1,4 +1,4 @@
-2#
+#
 # Manage registers in a hardware design
 #
 # Copyright (C) 2008  Donald N. Allingham
@@ -206,12 +206,12 @@ class RegisterRst:
             o.write("     - %s\n" % self.text(amap.name))
         for inst in in_groups(self._regset_name, self._prj):
             if inst.repeat == 1:
-                name = full_token(inst.group, self._reg.token,
-                                  inst.inst, -1, inst.format)
+                name = full_token(inst.group, inst.inst, self._reg.token,
+                                  self._regset_name, -1, inst.format)
                 o.write("   * - ``%s``\n" % self.text(name))
                 o.write("     - ``%s``\n" % reg_addr(self._reg, 0))
                 for map_name in addr_maps:
-                    map_base = self._prj.gent_address_base(map_name.name)
+                    map_base = self._prj.get_address_base(map_name.name)
                     offset = map_base + inst.offset + inst.base
                     o.write("     - ``%s``\n" % reg_addr(self._reg, offset))
             else:
