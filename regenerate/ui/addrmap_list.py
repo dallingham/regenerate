@@ -161,11 +161,16 @@ class AddrMapList(object):
         if len(path) != 1:
             return
 
-        node = self.__model.get_iter(path)
-        name = self.__model.get_value(node, AddrMapModel.NAME_COL)
-        self._prj.change_address_map_name(name, new_text)
-        self.__model[path][AddrMapModel.NAME_COL] = new_text
-        self._prj.set_modified()
+        current_maps = set([i.name for i in self._prj.get_address_maps()])
+        if new_text in current_maps:
+            LOGGER.error('"%s" has already been used as an address map name'
+                         % new_text)
+        else:
+            node = self.__model.get_iter(path)
+            name = self.__model.get_value(node, AddrMapModel.NAME_COL)
+            self._prj.change_address_map_name(name, new_text)
+            self.__model[path][AddrMapModel.NAME_COL] = new_text
+            self._prj.set_modified()
 
     def _base_changed(self, cell, path, new_text, col):
         """
