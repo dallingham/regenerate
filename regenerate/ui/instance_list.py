@@ -47,8 +47,18 @@ class InstMdl(gtk.TreeStore):
         """
         Called when the ID of an instance has been edited in the InstanceList
         """
-        node = self.get_iter(path)
-        self.set_value(node, InstMdl.INST_COL, text)
+
+        items = []
+        node = self.get_iter_root()
+        while node:
+            items.append(self.get_value(node, 0))
+            node = self.iter_next(node)
+
+        if text in set(items):
+            LOGGER.error('"%s" has already been used as a group name' % text)
+        else:
+            node = self.get_iter(path)
+            self.set_value(node, InstMdl.INST_COL, text)
 
     def change_format(self, path, text):
         """

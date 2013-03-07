@@ -516,9 +516,7 @@ class MainWindow(BaseWindow):
         """
         Updates the data model when the text value is changed in the model.
         """
-        self.__instance_model.change_id(path, new_text)
-        self.__set_module_definition_warn_flag()
-        self.__prj.set_modified()
+        LOGGER.error("Subsystem name cannot be changed")
 
     def __instance_inst_changed(self, cell, path, new_text, col):
         """
