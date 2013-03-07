@@ -25,6 +25,9 @@ Actual program. Parses the arguments, and initiates the main window
 from regenerate.db import BitField, TYPES, LOGGER
 from regenerate.writers.writer_base import WriterBase
 
+#
+# Map regenerate types to UVM type strings
+#
 access_map = {BitField.TYPE_READ_ONLY: "RO",
               BitField.TYPE_READ_ONLY_LOAD: "RO",
               BitField.TYPE_READ_ONLY_VALUE: "RO",
@@ -54,6 +57,13 @@ access_map = {BitField.TYPE_READ_ONLY: "RO",
 
 
 class UVM_Block_Registers(WriterBase):
+    """
+    Generates a SystemVerilog package representing the registers in
+    the UVM format.
+    """
+
+    # Provide a mapping reserved SystemVerilog keywords to alternatives
+    # to prevent syntax errors in the generated code.
 
     REMAP_NAME = {
         'interface': 'interface_',
@@ -63,13 +73,21 @@ class UVM_Block_Registers(WriterBase):
         }
 
     def __init__(self, project, dblist):
+        """
+        Initialize the object. At the current time, only little endian is
+        supported by the package
+        """
         WriterBase.__init__(self, project, None)
         self.endian = "UVM_LITTLE_ENDIAN"
         self.dblist = dblist
 
     def _fix_name(self, field):
-        name = field.field_name.lower()
-        name = "_".join(name.split())
+        """
+        Creates a name from the field. If there are any spaces (which the
+        UI should prevent), the are converted to underscores. We then replace
+        name names that are reserved SystemVerilog words with alternatives.
+        """
+        name = "_".join(field.field_name.lower().split())
 
         if name in self.REMAP_NAME:
             return self.REMAP_NAME[name]
@@ -94,42 +112,55 @@ class UVM_Block_Registers(WriterBase):
         return group_maps
 
     def write(self, filename):
+        """
+        Write the data to the file as a SystemVerilog package. This includes
+        a block of register definitions for each register and the associated
+        container blocks.
+        """
+
+        group_maps = self._build_group_maps()
 
         of = open(filename, "w")
-
         of.write(' /* \\defgroup registers Registers */\n')
-
         of.write("package %s_reg_pkg;\n\n" % self._project.short_name)
         of.write("  import uvm_pkg::*;\n\n")
         of.write('  `include "uvm_macros.svh"\n')
 
-        group_maps = self._build_group_maps()
-
+        # Write register blocks
         for dbase in self.dblist:
+            self.write_dbase_block(of, dbase, group_maps)
 
-            self.generate_coverage(of, dbase)
-
-            for reg in dbase.get_all_registers():
-                if reg.ram_size:
-                    self.write_memory(reg, dbase, of)
-                else:
-                    self.write_register(reg, dbase, of)
-
-            for group in self._project.get_grouping_list():
-                used = set()
-                for grp in self._project.get_group_map(group.name):
-                    if grp.set == dbase.set_name and grp.set not in used:
-                        used.add(grp.set)
-                        self.write_dbase_block(dbase, of, group,
-                                               group_maps[group])
-
-        for group in group_maps.keys():
+        # Write group/subsystem blocks
+        for group in group_maps:
             self.write_group_block(group, of, group_maps[group])
 
+        # Write top level wrapper block
         self.write_toplevel_block(of)
 
         of.write('endpackage : %s_reg_pkg\n' % self._project.short_name)
         of.close()
+
+    def write_dbase_block(self, of, dbase, group_maps):
+        """
+        Create a class for each register set (derived from uvm_reg_block),
+        each of which contains register classes (derivied from uvm_reg)
+        representing the register and fields.
+        """
+        self.generate_coverage(of, dbase)
+
+        for reg in dbase.get_all_registers():
+            if reg.ram_size:
+                self.write_memory(reg, dbase, of)
+            else:
+                self.write_register(reg, dbase, of)
+
+        for group in self._project.get_grouping_list():
+            used = set()
+            for grp in self._project.get_group_map(group.name):
+                if grp.set == dbase.set_name and grp.set not in used:
+                    used.add(grp.set)
+                    self.write_dbase_block(dbase, of, group,
+                                           group_maps[group])
 
     def write_toplevel_block(self, of):
 
@@ -347,7 +378,7 @@ class UVM_Block_Registers(WriterBase):
                          (item, cmd, reg.token.lower(), reg.address))
 
         if not hdl_match[0]:
-            self.disable_access_tests(dbase, in_maps, of)
+            self.disable_access_tests(dbase, of)
 
         of.write('\n')
 
@@ -367,13 +398,12 @@ class UVM_Block_Registers(WriterBase):
         of.write('  endclass : %s_%s_reg_blk\n\n' %
                  (group.name, dbase.set_name))
 
-    def disable_access_tests(self, dbase, in_maps, of):
+    def disable_access_tests(self, dbase, of):
         for reg in dbase.get_all_registers():
-            for item in in_maps:
-                test = "MEM" if reg.ram_size else "REG"
-                of.write('      uvm_resource_db #(bit)::set({"REG::", ')
-                of.write('get_full_name(), ".%s"}, "NO_%s_ACCESS_TEST", 1);\n' %
-                         (reg.token.lower(), test))
+            test = "MEM" if reg.ram_size else "REG"
+            of.write('      uvm_resource_db #(bit)::set({"REG::", ')
+            of.write('get_full_name(), ".%s"}, "NO_%s_ACCESS_TEST", 1);\n' %
+                     (reg.token.lower(), test))
 
     def write_register(self, reg, dbase, of):
 
