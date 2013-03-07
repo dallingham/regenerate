@@ -105,14 +105,8 @@ class InstMdl(gtk.TreeStore):
         Adds a new instance to the model. It is not added to the database until
         either the change_id or change_base is called.
         """
-        node = self.append(None, row=('', '0', 0, "", "", "", ""))
+        node = self.append(None, row=('', '', '0', 0, "", "", "", ""))
         return self.get_path(node)
-
-    def append_instance(self, inst):
-        """
-        Adds the specified instance to the InstanceList
-        """
-        self.append(row=(inst[0], "%08x" % inst[1], inst[1], "", "", "", ""))
 
 
 class InstanceList(object):
