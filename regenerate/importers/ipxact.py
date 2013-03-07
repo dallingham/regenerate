@@ -104,7 +104,7 @@ class IpXactParser(object):
 
     def end_spirit_field(self, text):
         self.__field.start_position = self.__field_start
-        self.__field.stop_position = self.__field_start + self.__field_width
+        self.__field.stop_position = self.__field_start + self.__field_width - 1
         self.__reg.add_bit_field(self.__field)
         self.__field = None
 

@@ -281,7 +281,7 @@ class UVM_Block_Registers(WriterBase):
                          (group_entry.inst, sname, name, name))
                 of.write('      %s.configure(this, "%s");\n' %
                          (group_entry.inst, group_entry.hdl))
-                of.write("      %s.build();\n" % name)
+                of.write("      %s.build();\n" % group_entry.inst)
                 for item in in_maps:
                     of.write("      %s_map.add_submap(%s.%s_map, 'h%x);\n" %
                              (item, group_entry.inst, item, group_entry.offset))
