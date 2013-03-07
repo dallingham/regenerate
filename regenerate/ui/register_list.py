@@ -17,20 +17,26 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""
+Provides the editing interface to the register table
+"""
+
 import gtk
-from columns import EditableColumn, ComboMapColumn
-from error_dialogs import ErrorMsg
+from regenerate.ui.columns import EditableColumn, ComboMapColumn
+from regenerate.ui.error_dialogs import ErrorMsg
 from regenerate.db import LOGGER
+
+BAD_TOKENS = ' /-@!#$%^&*()+=|{}[]:"\';\\,.?'
 
 REPLACE = {
     'ENABLE': 'EN', 'TRANSLATION': 'TRANS', 'ADDRESS': 'ADDR',
     'CONFIGURATION': 'CFG', 'CONFIG': 'CFG', 'SYSTEM': 'SYS',
     'CONTROL': 'CTRL', 'STATUS': 'STAT', 'DEBUG': 'DBG',
     'COMMAND': 'CMD', 'HEADER': 'HDR', 'PACKET': 'PKT',
-    'ERROR': 'ERR', 'INTERRUPT': 'INT', 'WRITE': 'WR',
+    'INTERRUPT': 'INT', 'WRITE': 'WR',
     'READ': 'RD', 'TRANSMIT': 'TX', 'RECEIVE': 'RX',
     'SOFTWARE': 'SW', 'HARDWARE': 'HW', 'SOURCE': 'SRC',
-    'DESTINATION': 'DEST', 'REGISTER': '', 'LOAD': 'LD',
+    'DESTINATION': 'DEST', 'REGISTER': '',
     'CLEAR': 'CLR', 'CURRENT': 'CUR', 'RANGE': 'RNG',
     'DELAY': 'DLY', 'ERROR': 'ERR', 'LOAD': 'LD',
     'PARITY': 'PAR', 'COMPARE': 'CMP', 'POINTER': 'PTR',
@@ -116,6 +122,9 @@ class RegisterModel(gtk.ListStore):
                 self.reg2path[reg] = (self.reg2path[reg][0] - 1,)
 
     def set_tooltip(self, reg, msg):
+        """
+        Sets the tooltip for the register.
+        """
         path = self.get_path_from_register(reg)
         self[path][self.TOOLTIP_COL] = msg
 
@@ -127,6 +136,9 @@ class RegisterModel(gtk.ListStore):
         return self[path][self.OBJ_COL]
 
     def set_warning_for_register(self, register, flag):
+        """
+        Sets the warning icon for the register in the table
+        """
         path = self.reg2path[register]
         if flag:
             self[path][self.ICON_COL] = gtk.STOCK_DIALOG_WARNING
@@ -154,6 +166,9 @@ class RegisterModel(gtk.ListStore):
 
 
 class RegisterList(object):
+    """
+    Provides the interface to the register table
+    """
 
     (COL_TEXT, COL_COMBO, COL_ICON) = range(3)
 
@@ -180,16 +195,28 @@ class RegisterList(object):
         self.__build_columns()
 
     def get_selected_row(self):
+        """
+        Returns the selected row
+        """
         return self.__selection.get_selected_rows()[1]
 
     def get_selected_node(self):
+        """
+        Returns the node of the selected row
+        """
         return self.__selection.get_selected()[1]
 
     def delete_selected_node(self):
+        """
+        Deletes the selected from from the table
+        """
         reg = self.get_selected_register()
         self.__model.delete_register(reg)
 
     def select_row(self, row):
+        """
+        Select the given row
+        """
         self.__selection.select_path(row)
 
     def __build_columns(self):
@@ -219,6 +246,9 @@ class RegisterList(object):
         self.__obj.set_tooltip_column(RegisterModel.TOOLTIP_COL)
 
     def set_model(self, model):
+        """
+        Sets the active model.
+        """
         self.__obj.set_model(model)
         if model:
             self.__model = model.get_model().get_model()
@@ -226,12 +256,19 @@ class RegisterList(object):
             self.__model = None
 
     def add_new_register(self, register):
+        """
+        Addes a new register to the model and set it to edit the
+        default column
+        """
         path = self.__model.append_register(register)
         self.__obj.set_cursor(path, focus_column=self.__col,
                               start_editing=True)
         return path
 
     def get_selected_register(self):
+        """
+        Returns the register associated with the selected row
+        """
         data = self.__selection.get_selected()
         if data:
             (store, node) = data
@@ -240,6 +277,9 @@ class RegisterList(object):
         return None
 
     def __ram_update_addr(self, reg, path, text):
+        """
+        Updates the address associated with a RAM address
+        """
         (addr_str, len_str) = text.split(':')
         try:
             new_addr = int(addr_str, 16)
@@ -255,6 +295,9 @@ class RegisterList(object):
                      "your database and report this error.")
 
     def __reg_update_addr(self, reg, path, text):
+        """
+        Updates the address associated with a register address
+        """
         try:
             new_addr = int(text, 16)
             new_length = 0
@@ -269,6 +312,10 @@ class RegisterList(object):
                      "your database and report this error.")
 
     def __reg_update_name(self, reg, path, text):
+        """
+        Updates the name associated with the register. Called after the text
+        has been edited
+        """
         if text != reg.register_name:
             reg.register_name = text
             self.__set_modified()
@@ -280,15 +327,23 @@ class RegisterList(object):
             self.__set_modified()
 
     def __reg_update_define(self, reg, path, text):
-        text = text.upper().replace(' ', '_')
-        text = text.replace('/', '_')
-        text = text.replace('-', '_')
+        """
+        Updates the token name associated with the register. Called after the
+        text has been edited
+        """
+        for i in BAD_TOKENS:
+            text = text.replace(i, '_')
+        text = text.upper()
         if text != reg.token:
             reg.token = text
             self.__set_modified()
         self.__model[path][RegisterModel.DEFINE_COL] = reg.token
 
     def __new_address_is_not_used(self, new_text, path):
+        """
+        Verifies that the new address has not been previously used, or
+        does not overlap with an existing address.
+        """
         addr_list = set()
         for (index, data) in enumerate(self.__model):
             if index == int(path):
@@ -311,6 +366,9 @@ class RegisterList(object):
         return True
 
     def __handle_edited_address(self, register, path, new_text):
+        """
+        Called when an address in the table has changed
+        """
         try:
             if ":" in new_text:
                 self.__handle_ram_address(register, path, new_text)
@@ -321,6 +379,9 @@ class RegisterList(object):
                            % (register.address, new_text))
 
     def __handle_ram_address(self, register, path, new_text):
+        """
+        Called when the RAM address in the table has changed
+        """
         if self.__new_address_is_not_used(new_text, path):
             self.__ram_update_addr(register, path, new_text)
         else:
@@ -329,6 +390,9 @@ class RegisterList(object):
                      % int(new_text, 16))
 
     def __handle_reg_address(self, register, path, new_text):
+        """
+        Called when the register address in the table has changed
+        """
         if self.__new_address_is_not_used(new_text, path):
             self.__reg_update_addr(register, path, new_text)
         else:
@@ -337,6 +401,10 @@ class RegisterList(object):
                      % int(new_text, 16))
 
     def __text_edited(self, cell, path, new_text, col):
+        """
+        Called when text has been edited. Selects the correct function
+        depending on the edited column
+        """
         register = self.__model.get_register_at_path(path)
         new_text = new_text.strip()
         if col == RegisterModel.ADDR_COL:
@@ -347,6 +415,9 @@ class RegisterList(object):
             self.__reg_update_define(register, path, new_text)
 
     def __combo_edited(self, cell, path, node, col):
+        """
+        Called when the combo box in the table has been altered
+        """
         model = cell.get_property('model')
         register = self.__model.get_register_at_path(path)
         self.__model[path][col] = model.get_value(node, 0)
@@ -355,8 +426,11 @@ class RegisterList(object):
 
 
 def build_define(text):
-    text = text.replace('/', ' ')
-    text = text.replace('-', ' ')
+    """
+    Converts a register name into a define token
+    """
+    for i in BAD_TOKENS:
+        text = text.replace(i, '_')
     return "_".join([REPLACE.get(i.upper(), i.upper())
                      for i in text.split()
                      if REPLACE.get(i.upper(), i.upper()) != ""])

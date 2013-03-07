@@ -19,7 +19,7 @@
 
 import gtk
 import gobject
-from columns import EditableColumn
+from regenerate.ui.columns import EditableColumn
 from regenerate.db import GroupMapData, GroupData, LOGGER
 
 

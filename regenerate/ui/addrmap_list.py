@@ -56,14 +56,14 @@ class AddrMapModel(gtk.TreeStore):
         Adds a new instance to the model. It is not added to the database until
         either the change_id or change_base is called.
         """
-        node = self.append(None, row=('', '0', False, ""))
+        node = self.append(None, row=('', '0', False, "32-bits"))
         return self.get_path(node)
 
     def append_instance(self, inst):
         """
         Adds the specified instance to the InstanceList
         """
-        self.append(row=(inst[0], "%08x" % inst[1], False, ""))
+        self.append(row=(inst[0], "%08x" % inst[1], False, "32-bits"))
 
     def get_values(self):
         """
@@ -80,7 +80,7 @@ class AddrMapList(object):
     def __init__(self, obj):
         self.__obj = obj
         self.__col = None
-        self.__project = None
+        self._prj = None
         self.__model = None
         self.__build_instance_table()
         self.__enable_dnd()
@@ -107,18 +107,18 @@ class AddrMapList(object):
         if drop_info:
             path, position = drop_info
             row_data = [data, "", "", ""]
-            group_names = [n.name for n in self.__project.get_grouping_list()]
+            group_names = [n.name for n in self._prj.get_grouping_list()]
             if data not in group_names:
                 return
             if len(path) == 1:
                 parent_name = self.__model[path][0]
-                if self.__project.add_address_map_group(parent_name, data):
+                if self._prj.add_address_map_group(parent_name, data):
                     node = self.__model.get_iter(path)
                     self.__model.append(node, row_data)
             else:
                 parent = self.__model.get_iter((path[0],))
                 parent_name = self.__model[path[0]][0]
-                if self.__project.add_address_map_group(parent_name, data):
+                if self._prj.add_address_map_group(parent_name, data):
                     node = self.__model.get_iter(path)
                     if (position == gtk.TREE_VIEW_DROP_BEFORE
                         or position == gtk.TREE_VIEW_DROP_INTO_OR_BEFORE):
@@ -131,7 +131,7 @@ class AddrMapList(object):
         Sets the project for the address map, and repopulates the list
         from the project.
         """
-        self.__project = project
+        self._prj = project
         self.__obj.set_sensitive(True)
         self.populate()
 
@@ -139,11 +139,11 @@ class AddrMapList(object):
         """
         Loads the data from the project
         """
-        if self.__project is None:
+        if self._prj is None:
             return
 
         self.__model.clear()
-        for base in self.__project.get_address_maps():
+        for base in self._prj.get_address_maps():
             if base.width not in INT2SIZE:
                 LOGGER.error('Illegal width (%d) for address map "%s"' %
                              (base.width, base.name))
@@ -151,7 +151,7 @@ class AddrMapList(object):
             data = (base.name, "%x" % base.base, base.fixed,
                     INT2SIZE[base.width])
             node = self.__model.append(None, row=data)
-            for name in self.__project.get_address_map_groups(base.name):
+            for name in self._prj.get_address_map_groups(base.name):
                 self.__model.append(node, row=[name, "", False, ""])
 
     def _name_changed(self, cell, path, new_text, col):
@@ -163,9 +163,9 @@ class AddrMapList(object):
 
         node = self.__model.get_iter(path)
         name = self.__model.get_value(node, AddrMapModel.NAME_COL)
-        self.__project.change_address_map_name(name, new_text)
+        self._prj.change_address_map_name(name, new_text)
         self.__model[path][AddrMapModel.NAME_COL] = new_text
-        self.__project.set_modified()
+        self._prj.set_modified()
 
     def _base_changed(self, cell, path, new_text, col):
         """
@@ -185,9 +185,9 @@ class AddrMapList(object):
             width = STR2SIZE[self.__model.get_value(node,
                                                     AddrMapModel.WIDTH_COL)]
 
-            self.__project.set_address_map(name, value, width, fixed)
+            self._prj.set_address_map(name, value, width, fixed)
             self.__model[path][AddrMapModel.BASE_COL] = new_text
-            self.__project.set_modified()
+            self._prj.set_modified()
 
     def _width_changed(self, cell, path, node, col):
         """
@@ -204,7 +204,7 @@ class AddrMapList(object):
         model = cell.get_property('model')
         self.__model[path][col] = model.get_value(node, 0)
         width = model.get_value(node, 1)
-        self.__project.set_address_map(name, int(value, 16), width, fixed)
+        self._prj.set_address_map(name, int(value, 16), width, fixed)
 
     def _fixed_changed(self, cell, path, source):
         """
@@ -219,7 +219,7 @@ class AddrMapList(object):
         fixed = self.__model.get_value(node, AddrMapModel.FIXED_COL)
         width = self.__model.get_value(node, AddrMapModel.WIDTH_COL)
         self.__model[path][AddrMapModel.FIXED_COL] = not fixed
-        self.__project.set_address_map(name, int(value, 16),
+        self._prj.set_address_map(name, int(value, 16),
                                        STR2SIZE[width], not fixed)
 
     def __build_instance_table(self):
@@ -279,18 +279,30 @@ class AddrMapList(object):
         else:
             name = model.get_value(node, AddrMapModel.NAME_COL)
             model.remove(node)
-            self.__project.set_modified()
-            self.__project.remove_address_map(name)
+            self._prj.set_modified()
+            self._prj.remove_address_map(name)
 
     def add_new_map(self):
         """
         Creates a new address map and adds it to the project. Uses default
         data, and sets the first field to start editing.
         """
-        node = self.__model.append(None, row=("NewMap", 0,
-                                              False, SIZE2STR[0][0]))
+        name = self._create_new_map_name()
+        node = self.__model.append(None, row=(name, 0, False,
+                                              SIZE2STR[0][0]))
         path = self.__model.get_path(node)
-        self.__project.set_modified()
-        self.__project.set_address_map('NewMap', 0, False, SIZE2STR[0][1])
+        self._prj.set_modified()
+        self._prj.set_address_map(name, 0, False, SIZE2STR[0][1])
         self.__obj.set_cursor(path, focus_column=self.__col,
                               start_editing=True)
+
+    def _create_new_map_name(self):
+        template = "NewMap"
+        index = 0
+        current_maps = set([i.name for i in self._prj.get_address_maps()])
+
+        name = template
+        while name in current_maps:
+            name = "%s%d" % (template, index)
+            index = index + 1
+        return name

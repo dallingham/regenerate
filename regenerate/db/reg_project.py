@@ -318,7 +318,7 @@ class RegProject(object):
             if (data.name == name):
                 del self.__addr_map_list[i]
                 if data.name in self.__addr_map_grps:
-                    self.__addr_map_grps[data.name]
+                    del self.__addr_map_grps[data.name]
 
     def startElement(self, tag, attrs):
         """
