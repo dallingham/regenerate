@@ -128,7 +128,21 @@ class UVM_Block_Registers(WriterBase):
 
         # Write register blocks
         for dbase in self.dblist:
-            self.write_dbase_block(of, dbase, group_maps)
+            self.generate_coverage(of, dbase)
+
+            for reg in dbase.get_all_registers():
+                if reg.ram_size:
+                    self.write_memory(reg, dbase, of)
+                else:
+                    self.write_register(reg, dbase, of)
+            
+            for group in self._project.get_grouping_list():
+                used = set()
+                for grp in self._project.get_group_map(group.name):
+                    if grp.set == dbase.set_name and grp.set not in used:
+                        used.add(grp.set)
+                        self.write_dbase_block(dbase, of, group,
+                                               group_maps[group])
 
         # Write group/subsystem blocks
         for group in group_maps:
@@ -139,28 +153,6 @@ class UVM_Block_Registers(WriterBase):
 
         of.write('endpackage : %s_reg_pkg\n' % self._project.short_name)
         of.close()
-
-    def write_dbase_block(self, of, dbase, group_maps):
-        """
-        Create a class for each register set (derived from uvm_reg_block),
-        each of which contains register classes (derivied from uvm_reg)
-        representing the register and fields.
-        """
-        self.generate_coverage(of, dbase)
-
-        for reg in dbase.get_all_registers():
-            if reg.ram_size:
-                self.write_memory(reg, dbase, of)
-            else:
-                self.write_register(reg, dbase, of)
-
-        for group in self._project.get_grouping_list():
-            used = set()
-            for grp in self._project.get_group_map(group.name):
-                if grp.set == dbase.set_name and grp.set not in used:
-                    used.add(grp.set)
-                    self.write_dbase_block(dbase, of, group,
-                                           group_maps[group])
 
     def write_toplevel_block(self, of):
 
