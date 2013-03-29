@@ -135,7 +135,7 @@ class UVM_Block_Registers(WriterBase):
                     self.write_memory(reg, dbase, of)
                 else:
                     self.write_register(reg, dbase, of)
-            
+
             for group in self._project.get_grouping_list():
                 used = set()
                 for grp in self._project.get_group_map(group.name):
@@ -379,11 +379,8 @@ class UVM_Block_Registers(WriterBase):
 
         of.write('    function void sample(uvm_reg_addr_t offset, '
                  'bit is_read, uvm_reg_map  map);\n')
-        of.write('       if(get_coverage(UVM_CVR_ALL)) begin\n')
-        of.write('          if(map.get_name() == "default_map") begin\n')
-        of.write('             %s_access_cg.sample(offset, is_read);\n'
-                 % sname)
-        of.write('          end\n')
+        of.write('       if (get_coverage(UVM_CVR_ALL)) begin\n')
+        of.write('          %s_access_cg.sample(offset, is_read);\n' % sname)
         of.write('       end\n')
         of.write('    endfunction: sample\n\n')
 
