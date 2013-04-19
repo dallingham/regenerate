@@ -32,6 +32,7 @@ import os
 import copy
 import re
 import spell
+import xml
 from status_logger import StatusHandler
 from preferences import Preferences
 from bit_list import BitModel, BitList, bits, reset_value
@@ -1039,15 +1040,27 @@ class MainWindow(BaseWindow):
         self.__loading_project = True
         self.__prj_model = ProjectModel(self.use_svn)
         self.__prj_obj.set_model(self.__prj_model)
-        self.__prj = RegProject(filename)
-        self.__initialize_project_address_maps()
+
+        try:
+            self.__prj = RegProject(filename)
+            self.__initialize_project_address_maps()
+        except xml.parsers.expat.ExpatError, msg:
+            ErrorMsg("%s was not a valid project file" % filename, 
+                     str(msg))
+            return
 
         ini.set("user", "last_project", filename)
         idval = self.__status_obj.get_context_id('mod')
         self.__status_obj.push(idval, "Loading %s ..." % filename)
         self.set_busy_cursor(True)
+        
         for f in self.__prj.get_register_set():
-            self.open_xml(f, False)
+            try:
+                self.open_xml(f, False)
+            except xml.parsers.expat.ExpatError, msg:
+                ErrorMsg("%s was not a valid register set file" % f)
+                continue
+            
         self.__loading_project = False
         self.__prj_obj.select_path(0)
         self.__prj_model.load_icons()

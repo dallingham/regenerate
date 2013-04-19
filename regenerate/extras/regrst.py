@@ -72,6 +72,25 @@ body{
     font-size: 10pt;
     font-family: Arial,Helvetica,Sans;
 }
+div.admonition, div.attention, div.caution, div.danger, div.error,
+div.hint, div.important, div.note, div.tip, div.warning {
+  margin: 2em ;
+  border: medium outset ;
+  padding: 1em }
+
+div.admonition p.admonition-title, div.hint p.admonition-title,
+div.important p.admonition-title, div.note p.admonition-title,
+div.tip p.admonition-title {
+  font-weight: bold ;
+  font-family: sans-serif }
+
+div.attention p.admonition-title, div.caution p.admonition-title,
+div.danger p.admonition-title, div.error p.admonition-title,
+div.warning p.admonition-title {
+  color: red ;
+  font-weight: bold ;
+  font-family: sans-serif }
+
 </style>
 '''
 
@@ -182,8 +201,13 @@ class RegisterRst:
                 o.write("\n")
                 for val in sorted(field.values,
                                   key=lambda x: int(int(x[0], 16))):
-                    o.write("       :%d: %s\n" % (int(val[0], 16),
-                                                  self.text(val[1])))
+                    if val[1]:
+                        o.write("       :%d: %s (%s)\n" % (int(val[0], 16),
+                                                           self.text(val[2]), 
+                                                           self.text(val[1])))
+                    else:
+                        o.write("       :%d: %s\n" % (int(val[0], 16),
+                                                      self.text(val[2]))) 
             last_index = start - 1
         if last_index >= 0:
             display_reserved(o, last_index, 0)
@@ -197,34 +221,37 @@ class RegisterRst:
             return
 
         o.write("\n\nAddresses\n---------\n")
-        o.write(".. list-table::\n")
-        o.write("   :header-rows: 1\n")
-        o.write("   :class: summary\n\n")
-        o.write("   * - ID\n")
-        o.write("     - Offset\n")
-        for amap in addr_maps:
-            o.write("     - %s\n" % self.text(amap.name))
-        for inst in in_groups(self._regset_name, self._prj):
-            if inst.repeat == 1:
-                name = full_token(inst.group, inst.inst, self._reg.token,
-                                  self._regset_name, -1, inst.format)
-                o.write("   * - ``%s``\n" % self.text(name))
-                o.write("     - ``%s``\n" % reg_addr(self._reg, 0))
-                for map_name in addr_maps:
-                    map_base = self._prj.get_address_base(map_name.name)
-                    offset = map_base + inst.offset + inst.base
-                    o.write("     - ``%s``\n" % reg_addr(self._reg, offset))
-            else:
-                for i in range(0, inst.repeat):
+        if not in_groups(self._regset_name, self._prj):
+            o.write(".. WARNING::\n   Register set was not added to any groups\n\n")
+        else:
+            o.write(".. list-table::\n")
+            o.write("   :header-rows: 1\n")
+            o.write("   :class: summary\n\n")
+            o.write("   * - ID\n")
+            o.write("     - Offset\n")
+            for amap in addr_maps:
+                o.write("     - %s\n" % self.text(amap.name))
+            for inst in in_groups(self._regset_name, self._prj):
+                if inst.repeat == 1:
                     name = full_token(inst.group, inst.inst, self._reg.token,
-                                      self._regset_name, i, inst.format)
+                                      self._regset_name, -1, inst.format)
                     o.write("   * - ``%s``\n" % self.text(name))
                     o.write("     - ``%s``\n" % reg_addr(self._reg, 0))
                     for map_name in addr_maps:
-                        base = self._prj.get_address_base(map_name.name)
-                        offset = inst.base + inst.offset + (i * inst.roffset)
-                        o.write("     - ``%s``\n" % reg_addr(self._reg,
-                                                             offset + base))
+                        map_base = self._prj.get_address_base(map_name.name)
+                        offset = map_base + inst.offset + inst.base
+                        o.write("     - ``%s``\n" % reg_addr(self._reg, offset))
+                else:
+                    for i in range(0, inst.repeat):
+                        name = full_token(inst.group, inst.inst, self._reg.token,
+                                          self._regset_name, i, inst.format)
+                        o.write("   * - ``%s``\n" % self.text(name))
+                        o.write("     - ``%s``\n" % reg_addr(self._reg, 0))
+                        for map_name in addr_maps:
+                            base = self._prj.get_address_base(map_name.name)
+                            offset = inst.base + inst.offset + (i * inst.roffset)
+                            o.write("     - ``%s``\n" % reg_addr(self._reg,
+                                                                 offset + base))
         o.write("\n\n")
 
     def _display_uvm_entry(self, inst, index, o):

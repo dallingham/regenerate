@@ -61,7 +61,7 @@ def in_groups(regset_name, project):
     if regset_name and project:
         for group_data in project.get_grouping_list():
             for regset in project.get_group_map(group_data.name):
-                if regset.set == regset_name:
+                if regset.inst == regset_name:
                     if regset.format:
                         fmt = regset.format
                     else:
