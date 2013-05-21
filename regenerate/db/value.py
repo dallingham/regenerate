@@ -21,17 +21,14 @@
 Value
 """
 
-from data_item import DataItem
-
-
-class Value(DataItem):
+class Value(object):
     """
     Encapsulates an item, adding the modification values from Dataitem.
     """
 
     def __init__(self, value=None):
         self.__value = value
-        DataItem.__init__(self)
+        self.modified = False
 
     def set(self, value):
         """

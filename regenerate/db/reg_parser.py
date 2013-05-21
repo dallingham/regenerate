@@ -68,16 +68,6 @@ def cnv_str(attrs, key, default=""):
     return attrs.get(key, default)
 
 
-def set_modified(obj, attrs):
-    """
-    Looks for the 'modified'in the attrs array, converting the string to an
-    integer if it exists, and assigning it to the objects last_modified
-    property
-    """
-    if 'modified' in attrs:
-        obj.last_modified = int(attrs['modified'])
-
-
 class RegParser(object):
     """
     Parses the XML file, loading up the register database.
@@ -244,50 +234,6 @@ class RegParser(object):
 
         self.__field.control_signal = cnv_str(attrs, 'load')
 
-    def start_token(self, attrs):
-        """
-        Called when the token tag is encountered
-        """
-        set_modified(self.__reg.get_token_obj(), attrs)
-
-    def start_ram_size(self, attrs):
-        """
-        Called when the ram_size tag is encountered
-        """
-        set_modified(self.__reg.get_ram_size_obj(), attrs)
-
-    def start_mneumonic(self, attrs):
-        """
-        Called when the token tag is encountered. Outdated and kept for
-        backward compatibility
-        """
-        set_modified(self.__reg.get_token_obj(), attrs)
-
-    def start_description(self, attrs):
-        """
-        Called when the description tag is encountered.
-        """
-        if not self.__field:
-            set_modified(self.__reg.get_description_obj(), attrs)
-
-    def start_address(self, attrs):
-        """
-        Called when the address tag is encountered.
-        """
-        set_modified(self.__reg.get_address_obj(), attrs)
-
-    def start_width(self, attrs):
-        """
-        Called when the width tag is encountered.
-        """
-        set_modified(self.__reg.get_width_obj(), attrs)
-
-    def start_name(self, attrs):
-        """
-        Called when the name tag is encountered.
-        """
-        set_modified(self.__reg.get_address_obj(), attrs)
-
     def start_register(self, attrs):
         """
         Called when the register tag is encountered. Attributes are:
@@ -316,15 +262,6 @@ class RegParser(object):
         """
         self.__current_val = attrs['val']
         self.__current_token = attrs.get('token', '')
-
-    def start_modified(self, attrs):
-        """
-        Called when the modified tag is encountered. Attributes are:
-
-          time
-        """
-        if 'time' in attrs and self.__field:
-            self.__field.last_modified = cnv_int(attrs, 'time')
 
     def start_range(self, attrs):
         """

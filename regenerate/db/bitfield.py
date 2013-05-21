@@ -25,9 +25,6 @@ feature allows us to use a named property like a class variable. When accessed,
 it calls the set/get function to handle any processing needed.
 """
 
-from data_item import DataItem
-
-
 def clean_signal(name):
     """
     Removes white space from a string, replacing them with underscores.
@@ -35,7 +32,7 @@ def clean_signal(name):
     return "_".join(name.strip().split())
 
 
-class BitField(DataItem):
+class BitField(object):
     """
     BitField - holds all the data related to a bit field (one or more bits
     of a register)
@@ -83,7 +80,7 @@ class BitField(DataItem):
     __slots__ = ('start_position', 'stop_position', 'field_name',
                  'use_output_enable', '__output_signal', '__input_signal',
                  'field_type', 'volatile', 'reset_value',
-                 'reset_input', 'reset_type',
+                 'reset_input', 'reset_type', 'modified', 
                  'reset_parameter', 'input_function',
                  'description', 'control_signal', 'output_is_static',
                  'output_has_side_effect', 'values')
@@ -91,7 +88,7 @@ class BitField(DataItem):
     def __init__(self, stop=0, start=0, name="",
                  sig_type=TYPE_READ_ONLY, descr="", reset=0):
 
-        DataItem.__init__(self)
+        self.modified = False
 
         self.__output_signal = ""
         self.__input_signal = ""

@@ -107,25 +107,14 @@ def write_register(ofile, reg, curtime):
     """
     ofile.write('  <register nocode="%d" dont_test="%d" hide="%d">\n' %
                 (reg.do_not_generate_code, reg.do_not_test, reg.hide))
-    ofile.write('    <token modified="%d">%s</token>\n' %
-                (calc_mod_time(reg.get_token_obj(), curtime),
-                 reg.token))
-    ofile.write('    <name modified="%d">%s</name>\n' %
-                (calc_mod_time(reg.get_name_obj(), curtime),
-                 reg.register_name))
-    ofile.write('    <address modified="%d">%d</address>\n' %
-                (calc_mod_time(reg.get_address_obj(), curtime),
-                 reg.address))
+    ofile.write('    <token>%s</token>\n' % reg.token)
+    ofile.write('    <name>%s</name>\n' % reg.register_name)
+    ofile.write('    <address>%d</address>\n' % reg.address)
     if reg.ram_size:
-        ofile.write('    <ram_size modified="%d">%d</ram_size>\n' %
-                    (calc_mod_time(reg.get_ram_size_obj(), curtime),
-                     reg.ram_size))
-    ofile.write('    <width modified="%d">%s</width>\n' %
-                (calc_mod_time(reg.get_width_obj(), curtime),
-                 reg.width))
-    ofile.write('    <description modified="%d">%s</description>\n' %
-                (calc_mod_time(reg.get_description_obj(), curtime),
-                 cleanup(reg.description)))
+        ofile.write('    <ram_size">%d</ram_size>\n' % reg.ram_size)
+    ofile.write('    <width>%s</width>\n' % reg.width)
+    ofile.write('    <description>%s</description>\n' % 
+                cleanup(reg.description))
     for field in [reg.get_bit_field(key)
                   for key in reg.get_bit_field_keys() ]:
         write_field(ofile, field, curtime)
@@ -146,12 +135,7 @@ def write_field(ofile, field, curtime):
     low = min(field.start_position, field.stop_position)
     high = max(field.start_position, field.stop_position)
 
-    if field.modified:
-        field.last_modified = curtime
-        field.modified = False
-
     ofile.write('    <range start="%d" stop="%d">\n' % (low, high))
-    ofile.write('      <modified time="%d"/>\n' % field.last_modified)
     ofile.write('      <name>%s</name>\n' % field.field_name)
     write_signal_info(ofile, field)
     write_input_info(ofile, field)
@@ -211,13 +195,3 @@ def write_value_list(ofile, field):
             ofile.write('        <value val="%s" token="%s">%s</value>\n' %
                         (value[0], value[1], cleanup(value[2])))
         ofile.write('      </values>\n')
-
-
-def calc_mod_time(obj, curtime):
-    """
-    Returns the modified time
-    """
-    if obj.modified:
-        return curtime
-    else:
-        return obj.last_modified
