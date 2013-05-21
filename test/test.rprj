@@ -8,7 +8,7 @@
   </address_maps>
   <groupings>
     <grouping name="GROUP" start="0" hdl="">
-      <map set="test" offset="0" repeat="1" repeat_offset="0"/>
+      <map set="test" inst="test" offset="0" repeat="1" repeat_offset="0"/>
     </grouping>
   </groupings>
   <registerset name="test.xml">

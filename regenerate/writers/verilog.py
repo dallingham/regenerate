@@ -65,7 +65,18 @@ def get_width(field, start=-1, stop=-1, force_index=False):
         signal = "[%d:%d]" % (stop, start)
     return signal
 
-
+def build_name(signal, field):
+    sigparts = signal.split("[*]")
+    if len(sigparts) == 1:
+        sig = field.output_signal
+    elif field.start_position != field.stop_position:
+        sig = "%s[%d:%d]" % (sigparts[0],
+                             field.stop_position,
+                             field.start_position)
+    else:
+        sig = "%s[%d]" % (sigparts[0], field.stop_position)
+    return sig
+        
 def oneshot_name(name, index=None):
     """
     Returns the name of the oneshot signal associated with the signal. In this
@@ -602,9 +613,9 @@ class Verilog(WriterBase):
                                       "one shot"))
 
                 # As do output enables
-                if field.use_output_enable:
+                if field.use_output_enable and field.output_signal:
                     port_list.append(('output', get_width(field),
-                                      field.output_signal,
+                                      build_name(field.output_signal, field),
                                       field.description))
 
                 if field.reset_type == BitField.RESET_INPUT:
@@ -771,7 +782,8 @@ class Verilog(WriterBase):
                     continue
 
                 self._wrln(fmt_string % (
-                    field.output_signal, get_base_signal(address, field)))
+                    build_name(field.output_signal, field),
+                    get_base_signal(address, field)))
 
         fmt_string = "assign %%-%ds = 1'b0;\n" % max_len
         for unused in self.__unused_ports:

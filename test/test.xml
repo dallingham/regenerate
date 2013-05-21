@@ -877,4 +877,46 @@ Admonitions
       <description></description>
     </range>
   </register>
+  <register nocode="0" dont_test="0" hide="0">
+    <token modified="0">BIT_SELECT_OUTPUTS</token>
+    <name modified="0">Bit Select Outputs</name>
+    <address modified="0">92</address>
+    <width modified="0">32</width>
+    <description modified="0"></description>
+    <range start="0" stop="0">
+      <modified time="0"/>
+      <name>BIT0</name>
+      <signal enb="1" static="0" field_type="RW" side_effect="0" volatile="0">BIT[*]</signal>
+      <reset type="0">0</reset>
+      <description></description>
+    </range>
+    <range start="1" stop="3">
+      <modified time="0"/>
+      <name>BIT3_1</name>
+      <signal enb="1" static="0" field_type="RW" side_effect="0" volatile="0">BIT[*]</signal>
+      <reset type="0">0</reset>
+      <description></description>
+    </range>
+    <range start="5" stop="5">
+      <modified time="0"/>
+      <name>BIT5</name>
+      <signal enb="1" static="0" field_type="RW" side_effect="0" volatile="0">BIT[*]</signal>
+      <reset type="0">0</reset>
+      <description></description>
+    </range>
+    <range start="8" stop="8">
+      <modified time="0"/>
+      <name>FIXED_BITS0</name>
+      <signal enb="1" static="0" field_type="RW" side_effect="0" volatile="0">FIXED_BITS[0]</signal>
+      <reset type="0">0</reset>
+      <description></description>
+    </range>
+    <range start="9" stop="9">
+      <modified time="0"/>
+      <name>FIXED_BITS1</name>
+      <signal enb="1" static="0" field_type="RW" side_effect="0" volatile="0">FIXED_BITS[1]</signal>
+      <reset type="0">0</reset>
+      <description></description>
+    </range>
+  </register>
 </module>
