@@ -40,7 +40,7 @@ STR2SIZE = {
     }
 
 
-class AddrMapModel(gtk.TreeStore):
+class AddrMapMdl(gtk.TreeStore):
     """
     Provides the list of instances for the module. Instances consist of the
     symbolic ID name and the base address.
@@ -78,25 +78,25 @@ class AddrMapList(object):
     """
 
     def __init__(self, obj):
-        self.__obj = obj
-        self.__col = None
+        self._obj = obj
+        self._col = None
         self._prj = None
-        self.__model = None
-        self.__build_instance_table()
-        self.__enable_dnd()
-        self.__obj.set_sensitive(False)
+        self._model = None
+        self._build_instance_table()
+        self._enable_dnd()
+        self._obj.set_sensitive(False)
 
-    def __enable_dnd(self):
+    def _enable_dnd(self):
         """
         Enables drag and drop
         """
-        self.__obj.enable_model_drag_dest([('text/plain', 0, 0)],
+        self._obj.enable_model_drag_dest([('text/plain', 0, 0)],
                                           gtk.gdk.ACTION_DEFAULT |
                                           gtk.gdk.ACTION_MOVE)
-        self.__obj.connect('drag-data-received',
-                           self.__drag_data_received_data)
+        self._obj.connect('drag-data-received',
+                           self._drag_data_received_data)
 
-    def __drag_data_received_data(self, treeview, context, x, y, selection,
+    def _drag_data_received_data(self, treeview, context, x, y, selection,
                                   info, etime):
         """
         Called when data is dropped.
@@ -111,18 +111,18 @@ class AddrMapList(object):
             if data not in group_names:
                 return
             if len(path) == 1:
-                parent_name = self.__model[path][0]
+                parent_name = self._model[path][0]
                 if self._prj.add_address_map_group(parent_name, data):
-                    node = self.__model.get_iter(path)
-                    self.__model.append(node, row_data)
+                    node = self._model.get_iter(path)
+                    self._model.append(node, row_data)
             else:
-                parent = self.__model.get_iter((path[0],))
-                parent_name = self.__model[path[0]][0]
+                parent = self._model.get_iter((path[0],))
+                parent_name = self._model[path[0]][0]
                 if self._prj.add_address_map_group(parent_name, data):
-                    node = self.__model.get_iter(path)
+                    node = self._model.get_iter(path)
                     if (position == gtk.TREE_VIEW_DROP_BEFORE
                         or position == gtk.TREE_VIEW_DROP_INTO_OR_BEFORE):
-                        self.__model.insert_before(parent, node, row_data)
+                        self._model.insert_before(parent, node, row_data)
                     else:
                         model.insert_after(parent, node, row_data)
 
@@ -132,7 +132,7 @@ class AddrMapList(object):
         from the project.
         """
         self._prj = project
-        self.__obj.set_sensitive(True)
+        self._obj.set_sensitive(True)
         self.populate()
 
     def populate(self):
@@ -142,7 +142,7 @@ class AddrMapList(object):
         if self._prj is None:
             return
 
-        self.__model.clear()
+        self._model.clear()
         for base in self._prj.get_address_maps():
             if base.width not in INT2SIZE:
                 LOGGER.error('Illegal width (%d) for address map "%s"' %
@@ -150,9 +150,9 @@ class AddrMapList(object):
                 base = AddrMapData(base.name, base.base, 4, base.fixed)
             data = (base.name, "%x" % base.base, base.fixed,
                     INT2SIZE[base.width])
-            node = self.__model.append(None, row=data)
+            node = self._model.append(None, row=data)
             for name in self._prj.get_address_map_groups(base.name):
-                self.__model.append(node, row=[name, "", False, ""])
+                self._model.append(node, row=[name, "", False, ""])
 
     def _name_changed(self, cell, path, new_text, col):
         """
@@ -166,10 +166,10 @@ class AddrMapList(object):
             LOGGER.error('"%s" has already been used as an address map name'
                          % new_text)
         else:
-            node = self.__model.get_iter(path)
-            name = self.__model.get_value(node, AddrMapModel.NAME_COL)
+            node = self._model.get_iter(path)
+            name = self._model.get_value(node, AddrMapMdl.NAME_COL)
             self._prj.change_address_map_name(name, new_text)
-            self.__model[path][AddrMapModel.NAME_COL] = new_text
+            self._model[path][AddrMapMdl.NAME_COL] = new_text
             self._prj.set_modified()
 
     def _base_changed(self, cell, path, new_text, col):
@@ -184,14 +184,14 @@ class AddrMapList(object):
             LOGGER.error('Illegal address: "%s"' % new_text)
             return
         if new_text:
-            node = self.__model.get_iter(path)
-            name = self.__model.get_value(node, AddrMapModel.NAME_COL)
-            fixed = self.__model.get_value(node, AddrMapModel.FIXED_COL)
-            width = STR2SIZE[self.__model.get_value(node,
-                                                    AddrMapModel.WIDTH_COL)]
+            node = self._model.get_iter(path)
+            name = self._model.get_value(node, AddrMapMdl.NAME_COL)
+            fixed = self._model.get_value(node, AddrMapMdl.FIXED_COL)
+            width = STR2SIZE[self._model.get_value(node,
+                                                   AddrMapMdl.WIDTH_COL)]
 
             self._prj.set_address_map(name, value, width, fixed)
-            self.__model[path][AddrMapModel.BASE_COL] = new_text
+            self._model[path][AddrMapMdl.BASE_COL] = new_text
             self._prj.set_modified()
 
     def _width_changed(self, cell, path, node, col):
@@ -201,13 +201,13 @@ class AddrMapList(object):
         """
         if len(path) != 1:
             return
-        nde = self.__model.get_iter(path)
-        name = self.__model.get_value(nde, AddrMapModel.NAME_COL)
-        value = self.__model.get_value(nde, AddrMapModel.BASE_COL)
-        fixed = self.__model.get_value(nde, AddrMapModel.FIXED_COL)
+        nde = self._model.get_iter(path)
+        name = self._model.get_value(nde, AddrMapMdl.NAME_COL)
+        value = self._model.get_value(nde, AddrMapMdl.BASE_COL)
+        fixed = self._model.get_value(nde, AddrMapMdl.FIXED_COL)
 
         model = cell.get_property('model')
-        self.__model[path][col] = model.get_value(node, 0)
+        self._model[path][col] = model.get_value(node, 0)
         width = model.get_value(node, 1)
         self._prj.set_address_map(name, int(value, 16), width, fixed)
 
@@ -218,62 +218,62 @@ class AddrMapList(object):
         """
         if len(path) != 1:
             return
-        node = self.__model.get_iter(path)
-        name = self.__model.get_value(node, AddrMapModel.NAME_COL)
-        value = self.__model.get_value(node, AddrMapModel.BASE_COL)
-        fixed = self.__model.get_value(node, AddrMapModel.FIXED_COL)
-        width = self.__model.get_value(node, AddrMapModel.WIDTH_COL)
-        self.__model[path][AddrMapModel.FIXED_COL] = not fixed
+        node = self._model.get_iter(path)
+        name = self._model.get_value(node, AddrMapMdl.NAME_COL)
+        value = self._model.get_value(node, AddrMapMdl.BASE_COL)
+        fixed = self._model.get_value(node, AddrMapMdl.FIXED_COL)
+        width = self._model.get_value(node, AddrMapMdl.WIDTH_COL)
+        self._model[path][AddrMapMdl.FIXED_COL] = not fixed
         self._prj.set_address_map(name, int(value, 16),
-                                       STR2SIZE[width], not fixed)
+                                  STR2SIZE[width], not fixed)
 
-    def __build_instance_table(self):
+    def _build_instance_table(self):
         """
         Builds the columns, adding them to the address map list.
         """
         column = EditableColumn('Map Name', self._name_changed,
-                                AddrMapModel.NAME_COL)
+                                AddrMapMdl.NAME_COL)
         column.set_min_width(240)
-        column.set_sort_column_id(AddrMapModel.NAME_COL)
-        self.__obj.append_column(column)
-        self.__col = column
+        column.set_sort_column_id(AddrMapMdl.NAME_COL)
+        self._obj.append_column(column)
+        self._col = column
 
         column = EditableColumn('Address base (hex)', self._base_changed,
-                                AddrMapModel.BASE_COL)
-        column.set_sort_column_id(AddrMapModel.BASE_COL)
-        self.__obj.append_column(column)
+                                AddrMapMdl.BASE_COL)
+        column.set_sort_column_id(AddrMapMdl.BASE_COL)
+        self._obj.append_column(column)
 
         column = ComboMapColumn('Access Width', self._width_changed,
-                                SIZE2STR, AddrMapModel.WIDTH_COL)
+                                SIZE2STR, AddrMapMdl.WIDTH_COL)
         column.set_min_width(250)
-        self.__obj.append_column(column)
+        self._obj.append_column(column)
 
         column = ToggleColumn('Fixed Address', self._fixed_changed,
-                              AddrMapModel.FIXED_COL)
+                              AddrMapMdl.FIXED_COL)
         column.set_max_width(200)
-        self.__obj.append_column(column)
+        self._obj.append_column(column)
 
-        self.__model = AddrMapModel()
-        self.__obj.set_model(self.__model)
+        self._model = AddrMapMdl()
+        self._obj.set_model(self._model)
 
     def clear(self):
         """
         Clears the data from the list
         """
-        self.__model.clear()
+        self._model.clear()
 
     def append(self, base, addr, fixed, width):
         """
         Add the data to the list.
         """
         data = (base, "%x" % addr, fixed, INT2SIZE[width])
-        self.__model.append(row=(data))
+        self._model.append(row=(data))
 
     def remove_selected(self):
         """
         Removes the selected node from the list
         """
-        (model, node) = self.__obj.get_selection().get_selected()
+        (model, node) = self._obj.get_selection().get_selected()
         if node is None:
             return
 
@@ -282,7 +282,7 @@ class AddrMapList(object):
             # remove group from address map
             pass
         else:
-            name = model.get_value(node, AddrMapModel.NAME_COL)
+            name = model.get_value(node, AddrMapMdl.NAME_COL)
             model.remove(node)
             self._prj.set_modified()
             self._prj.remove_address_map(name)
@@ -293,13 +293,13 @@ class AddrMapList(object):
         data, and sets the first field to start editing.
         """
         name = self._create_new_map_name()
-        node = self.__model.append(None, row=(name, 0, False,
-                                              SIZE2STR[0][0]))
-        path = self.__model.get_path(node)
+        node = self._model.append(None, row=(name, 0, False,
+                                             SIZE2STR[0][0]))
+        path = self._model.get_path(node)
         self._prj.set_modified()
         self._prj.set_address_map(name, 0, False, SIZE2STR[0][1])
-        self.__obj.set_cursor(path, focus_column=self.__col,
-                              start_editing=True)
+        self._obj.set_cursor(path, focus_column=self._col,
+                             start_editing=True)
 
     def _create_new_map_name(self):
         template = "NewMap"

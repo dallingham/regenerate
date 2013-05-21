@@ -21,7 +21,7 @@
 EquWriter - Writes out Assembler defines (based off the GNU assembler)
 """
 
-from writer_base import WriterBase     # IGNORE:W0403
+from regenerate.writers.writer_base import WriterBase
 
 
 class AsmEqu(WriterBase):

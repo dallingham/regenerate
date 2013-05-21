@@ -24,6 +24,8 @@ Parses the register database, loading the database.
 import xml.parsers.expat
 
 from regenerate.db import Register, BitField
+
+
 text2field = {
     "read-only": BitField.TYPE_READ_ONLY,
     "read-write": BitField.TYPE_READ_WRITE,
@@ -36,13 +38,13 @@ class IpXactParser(object):
     """
 
     def __init__(self, dbase):
-        self.__db = dbase
-        self.__reg = None
-        self.__field = None
-        self.__field_start = 0
-        self.__field_width = 0
-        self.__token_list = []
-        self.__in_maps = False
+        self._db = dbase
+        self._reg = None
+        self._field = None
+        self._fld_start = 0
+        self._fld_width = 0
+        self._token_list = []
+        self._in_maps = False
 
     def import_data(self, input_file):
         """
@@ -59,7 +61,7 @@ class IpXactParser(object):
         """
         Called every time an XML element begins
         """
-        self.__token_list = []
+        self._token_list = []
         mname = 'start_' + tag.replace(":", "_")
         if hasattr(self, mname):
             method = getattr(self, mname)
@@ -84,58 +86,58 @@ class IpXactParser(object):
         self.__token_list.append(data)
 
     def start_spirit_register(self, attrs):
-        self.__reg = Register()
+        self._reg = Register()
 
     def end_spirit_register(self, text):
-        self.__db.add_register(self.__reg)
-        self.__reg = None
+        self._db.add_register(self._reg)
+        self._reg = None
 
     def end_spirit_addressOffset(self, text):
-        if self.__reg:
-            self.__reg.address = int(text)
+        if self._reg:
+            self._reg.address = int(text)
 
     def end_spirit_size(self, text):
         size = int(text)
-        if self.__reg:
-            self.__reg.width = size
+        if self._reg:
+            self._reg.width = size
 
     def start_spirit_field(self, attrs):
-        self.__field = BitField()
+        self._field = BitField()
 
     def end_spirit_field(self, text):
-        self.__field.start_position = self.__field_start
-        self.__field.stop_position = self.__field_start + self.__field_width - 1
-        self.__reg.add_bit_field(self.__field)
-        self.__field = None
+        self._field.start_position = self._fld_start
+        self._field.stop_position = self._fld_start + self._fld_width - 1
+        self._reg.add_bit_field(self._field)
+        self._field = None
 
     def end_spirit_access(self, text):
-        if self.__field:
-            self.__field.field_type = text2field.get(text,
+        if self._field:
+            self._field.field_type = text2field.get(text,
                                                      BitField.TYPE_READ_ONLY)
 
     def end_spirit_name(self, text):
-        if self.__field:
-            self.__field.field_name = text.upper()
-        elif self.__reg:
-            self.__reg.register_name = text.upper()
-            self.__reg.token = text.upper()
-        elif not self.__in_maps:
-            self.__db.descriptive_title = text
+        if self._field:
+            self._field.field_name = text.upper()
+        elif self._reg:
+            self._reg.register_name = text.upper()
+            self._reg.token = text.upper()
+        elif not self._in_maps:
+            self._db.descriptive_title = text
 
     def end_spirit_description(self, text):
-        if self.__field:
-            self.__field.description = " ".join(text.split())
-        elif self.__reg:
-            self.__reg.description = " ".join(text.split())
+        if self._field:
+            self._field.description = " ".join(text.split())
+        elif self._reg:
+            self._reg.description = " ".join(text.split())
 
     def end_spirit_bitOffset(self, text):
-        self.__field_start = int(text)
+        self._fld_start = int(text)
 
     def end_spirit_bitWidth(self, text):
-        self.__field_width = int(text)
+        self._fld_width = int(text)
 
     def start_spirit_memoryMaps(self, attrs):
-        self.__in_maps = True
+        self._in_maps = True
 
     def end_spirit_memoryMaps(self, text):
-        self.__in_maps = False
+        self._in_maps = False

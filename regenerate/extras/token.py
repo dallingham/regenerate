@@ -27,10 +27,7 @@ DEFAULT_FORMAT = "%(I)s%(D)s_%(R)s"
 
 def full_token(group_name, inst_name, reg_name, set_name, index, fmt_string):
 
-    if index >= 0:
-        index_str = "%d" % index
-    else:
-        index_str = ""
+    index_str = "%d" % index if index >= 0 else ""
 
     name_data = {"G": group_name.upper(),
                  "g": group_name.lower(),

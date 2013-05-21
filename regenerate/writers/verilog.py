@@ -24,10 +24,10 @@ VerilogWriter - produces a verilog RTL description of the registers
 import re
 import textwrap
 from regenerate.settings import ini
-from verilog_reg_def import REG
+from regenerate.writers.verilog_reg_def import REG
 from regenerate.db import BitField, TYPES, LOGGER
 
-from writer_base import WriterBase
+from regenerate.writers.writer_base import WriterBase
 
 
 # Constants

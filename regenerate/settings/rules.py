@@ -28,7 +28,7 @@ the next update overwriting their modifications.
 
 import ConfigParser
 import os
-from paths import INSTALL_PATH
+from regenerate.settings.paths import INSTALL_PATH
 
 __Rules = ConfigParser.SafeConfigParser()
 

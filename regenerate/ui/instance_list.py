@@ -219,8 +219,7 @@ class InstanceList(object):
         column.set_sort_column_id(InstMdl.SORT_COL)
         self.__obj.append_column(column)
 
-        column = EditableColumn('Repeat', repeat_changed,
-                                InstMdl.RPT_COL)
+        column = EditableColumn('Repeat', repeat_changed, InstMdl.RPT_COL)
         self.__obj.append_column(column)
 
         column = EditableColumn('Repeat Offset (hex)', repeat_offset_changed,
