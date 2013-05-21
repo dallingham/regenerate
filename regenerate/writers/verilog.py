@@ -651,12 +651,25 @@ class Verilog(WriterBase):
                 continue
             new_list.append(port)
 
+        self.__unused_ports = []
+
         for key in new_ports:
             data = new_ports[key]
             high_ports = [a[1] for a in data if a[1] != -1]
             low_ports = [a[2] for a in data if a[2] != -1]
             min_index = min(high_ports + low_ports)
             max_index = max(high_ports + low_ports)
+
+            used_ports = set(range(min_index, max_index + 1))
+            for entry in data:
+                if entry[2] == -1:
+                    used_ports.remove(entry[1])
+                else:
+                    for i in range(entry[2], entry[1] + 1):
+                        used_ports.remove(i)
+
+            self.__unused_ports = self.__unused_ports + ["%s[%d]" % (key, i)
+                                                         for i in used_ports]
 
             new_entry = (data[0][0], "[%d:%d]" % (max_index, min_index),
                          key, data[0][3])
@@ -759,6 +772,10 @@ class Verilog(WriterBase):
 
                 self._wrln(fmt_string % (
                     field.output_signal, get_base_signal(address, field)))
+
+        fmt_string = "assign %%-%ds = 1'b0;\n" % max_len
+        for unused in self.__unused_ports:
+            self._wrln(fmt_string % unused)
 
         fmt_string = "assign %%-%ds = mux_%%s;\n" % max_len
         self._wrln(fmt_string % (self._data_out, self._data_out.lower()))
