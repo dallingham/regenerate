@@ -289,7 +289,7 @@ class BitFieldEditor(object):
         self.__modified()
 
     def on_side_effect_toggled(self, obj):
-        self.__bit_field.side_effect = obj.get_active()
+        self.__bit_field.output_has_side_effect = obj.get_active()
         self.__modified()
 
     def __update_values(self):
