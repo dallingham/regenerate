@@ -52,6 +52,7 @@ class PreviewEditor(object):
         self.__text_buffer.connect('changed', self._changed)
         self.__update = False
         self.__adjust = self.__container.get_vadjustment()
+        self.__active_db = None
 
     def __update_text(self):
         """
@@ -61,7 +62,16 @@ class PreviewEditor(object):
         text = self.__text_buffer.get_text(
             self.__text_buffer.get_start_iter(),
             self.__text_buffer.get_end_iter())
+        if self.__active_db:
+            data = []
+            fmt = ".. _`%s`: /\n"
+            for reg in self.__active_db.get_all_registers():
+                data.append(".. _`%s`: /" % reg.register_name)
+            text = text + "\n\n" + "\n".join(data)
         self.__webkit.load_string(html_string(text), "text/html", "utf-8", "")
+
+    def set_dbase(self, dbase):
+        self.__active_db = dbase
 
     def enable(self):
         """

@@ -117,11 +117,11 @@ class RegisterRst:
         self._show_defines = show_defines
         self._show_uvm = show_uvm
 
-    def html_css(self):
+    def html_css(self, text=""):
         """
         Returns the definition with the basic, default CSS provided
         """
-        return CSS + self.html()
+        return CSS + self.html(text)
 
     def text(self, line):
         if self._highlight:
@@ -130,7 +130,7 @@ class RegisterRst:
         else:
             return line
 
-    def restructured_text(self):
+    def restructured_text(self, text = ""):
         """
         Returns the defintion of the register in RestructuredText format
         """
@@ -162,7 +162,8 @@ class RegisterRst:
 
         if self._reg.ram_size == 0:
             self._write_bit_fields(o)
-
+            
+        o.write(text)
         return o.getvalue()
 
     def _write_bit_fields(self, o):
@@ -283,12 +284,12 @@ class RegisterRst:
                     self._display_uvm_entry(inst, i, o)
         o.write("\n\n")
 
-    def html(self):
+    def html(self, text=""):
         """
         Produces a HTML subsection of the document (no header/body).
         """
         if _HTML:
-            parts = publish_parts(self.restructured_text(), writer_name="html")
+            parts = publish_parts(self.restructured_text(text), writer_name="html")
             return parts['html_title'] + parts['html_subtitle'] + parts['body']
         else:
             return "<pre>" + self.restructured_text() + "</pre>"

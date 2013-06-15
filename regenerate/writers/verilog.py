@@ -65,6 +65,7 @@ def get_width(field, start=-1, stop=-1, force_index=False):
         signal = "[%d:%d]" % (stop, start)
     return signal
 
+
 def build_name(signal, field):
     sigparts = signal.split("[*]")
     if len(sigparts) == 1:
@@ -76,7 +77,8 @@ def build_name(signal, field):
     else:
         sig = "%s[%d]" % (sigparts[0], field.stop_position)
     return sig
-        
+
+
 def oneshot_name(name, index=None):
     """
     Returns the name of the oneshot signal associated with the signal. In this
@@ -389,7 +391,7 @@ class Verilog(WriterBase):
             self._write_port('CLK', self._clock, first=1)
             self._write_port('RSTn', self._reset)
 
-            lane = (reg_start_bit + start) / 8
+            lane = bus_start / self._data_width #(reg_start_bit + start) / 8
             if not self._is_read_only[field.field_type]:
                 self._write_port("WE", 'write_r%02x' % write_address)
                 self._write_port("DI", '%s%s' % (self._data_in, bus_index))
