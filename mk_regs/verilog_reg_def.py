@@ -753,6 +753,7 @@ endmodule
     input  BE,                  // Byte Enable
     input  WE,                  // Write Strobe
     input  [WIDTH-1:0] DI,      // Data In
+    output DO,                  // Data Out
     output DO_1S                // One Shot
     );
 
@@ -760,6 +761,7 @@ endmodule
    reg     ws_d;
 
    assign DO_1S = ws & !ws_d;
+   assign DO = 1'b0;
 
    always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
       if (%(RESET_CONDITION)sRSTn) begin

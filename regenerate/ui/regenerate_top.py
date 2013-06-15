@@ -754,6 +754,10 @@ class MainWindow(BaseWindow):
                 self.dbase = self.active.db
                 self.__reg_model = self.active.reg_model
 
+                self.__prj_preview.set_dbase(self.active.db)
+                self.__regset_preview.set_dbase(self.active.db)
+                self.__regdescr_preview.set_dbase(self.active.db)
+
                 self.__filter_manage.change_filter(self.active.modelfilter)
                 self.__modelsort = self.active.modelsort
                 self.__reglist_obj.set_model(self.__modelsort)
