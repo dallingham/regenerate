@@ -58,6 +58,12 @@ class FieldInfo:
         """
         self.software_access = text
 
+    def do_reset(self, text):
+        """
+        Assigns the text to the software_access field
+        """
+        self.reset = parse_hex_value(text)
+
     def dispatch(self, command, text):
         """
         Takes the command and text, calls the function associated with
@@ -84,13 +90,33 @@ class RDLParser:
         field = None
         field_list = []
         reg_list = []
+        default_reg = 32
+        regwidth = 32
 
         input_file = open(filename)
 
+        self.dbase.data_bus_width = default_reg
+
+        i = 0
         for line in input_file:
+            i += 1
             match = re.match("\s*reg\s+{", line)
             if match:
                 field_list = []
+                regwidth = default_reg
+                continue
+
+            match = re.search("\s*default\s+regwidth\s*=\s*(.*);", line)
+            if match:
+                groups = match.groups()
+                default_reg = int(groups[0])
+                self.dbase.data_bus_width = default_reg
+                continue
+
+            match = re.match("\s*regwidth\s*=\s*(.*);", line)
+            if match:
+                groups = match.groups()
+                regwidth = int(groups[0])
                 continue
 
             match = re.match("\s*field\s+{", line)
@@ -104,21 +130,20 @@ class RDLParser:
                 field.dispatch(groups[0], groups[1])
                 continue
 
-            match = re.match("\s*}\s*([^[]+)\[(\d+):(\d+)\]\s*=\s*([\dx]+)\s*;",
+            match = re.match("\s*}\s*([^[]+)\[(\d+):(\d+)\]\s*;",
                              line)
             if match:
                 groups = match.groups()
                 field.name = groups[0]
                 field.stop = int(groups[1])
                 field.start = int(groups[2])
-                field.reset = parse_hex_value(groups[3])
                 field_list.append(field)
                 continue
 
             match = re.match("\s*}\s*([A-Za-z_0-9]+)\s*@([\dx]+)\s*;", line)
             if match:
                 groups = match.groups()
-                reg_list.append((groups[0], groups[1], field_list[:]))
+                reg_list.append((groups[0], groups[1], regwidth, field_list[:]))
                 continue
 
         input_file.close()
@@ -133,10 +158,11 @@ class RDLParser:
                   'w': BitField.WRITE_ONLY,
                   'r': BitField.READ_ONLY}
 
-        for (reg_name, addr_txt, field_list) in reg_list:
+        for (reg_name, addr_txt, width, field_list) in reg_list:
             register = Register()
             register.address = int(addr_txt, 16)
             register.register_name = reg_name
+            register.width = width
             register.token = reg_name
             self.dbase.add_register(register)
 

@@ -391,7 +391,7 @@ class Verilog(WriterBase):
             self._write_port('CLK', self._clock, first=1)
             self._write_port('RSTn', self._reset)
 
-            lane = bus_start / self._data_width #(reg_start_bit + start) / 8
+            lane = bus_start / 8 
             if not self._is_read_only[field.field_type]:
                 self._write_port("WE", 'write_r%02x' % write_address)
                 self._write_port("DI", '%s%s' % (self._data_in, bus_index))
