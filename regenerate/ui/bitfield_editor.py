@@ -33,6 +33,7 @@ from regenerate.db import (BitField, TYPES, TYPE_TO_ID,
 from regenerate.settings.paths import GLADE_BIT, INSTALL_PATH
 from error_dialogs import ErrorMsg
 from regenerate.writers.verilog_reg_def import REG
+from help_window import HelpWindow
 
 try:
     from gtkcodebuffer import CodeBuffer, SyntaxLoader
@@ -52,12 +53,13 @@ class BitFieldEditor(object):
     Bit field editing class.
     """
 
-    def __init__(self, dbase, register, bit_field, modified):
+    def __init__(self, dbase, register, bit_field, modified, top_builder):
         self.__db = dbase
         self.__modified = modified
         self.__register = register
         self.__bit_field = bit_field
         self.__builder = gtk.Builder()
+        self.__top_builder = top_builder
         self.__builder.add_from_file(GLADE_BIT)
         self.__top_window = self.__builder.get_object("editfield")
         self.__control_obj = self.__builder.get_object('control')
@@ -171,6 +173,15 @@ class BitFieldEditor(object):
         self.__text_buffer.set_text(bit_field.description)
         self.__output_enable_obj.set_active(bit_field.use_output_enable)
         self.__control_obj.set_text(self.__bit_field.control_signal)
+
+    def on_help_clicked(self, obj):
+        HelpWindow(self.__top_builder, "bitfield_value_help.rst")
+
+    def on_property_help_clicked(self, obj):
+        HelpWindow(self.__top_builder, "bitfield_signal_prop_help.rst")
+
+    def on_signal_help_clicked(self, obj):
+        HelpWindow(self.__top_builder, "bitfield_signal_help.rst")
 
     def on_output_changed(self, obj):
         self.__bit_field.output_signal = obj.get_text()

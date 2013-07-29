@@ -865,7 +865,8 @@ class MainWindow(BaseWindow):
         if field:
             from bitfield_editor import BitFieldEditor
             BitFieldEditor(self.dbase, register, field,
-                           self.__set_field_modified)
+                           self.__set_field_modified,
+                           self.__builder)
 
     def __set_field_modified(self):
         reg = self.__reglist_obj.get_selected_register()
