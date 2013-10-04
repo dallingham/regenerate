@@ -140,7 +140,7 @@ class RDLParser:
                 field_list.append(field)
                 continue
 
-            match = re.match("\s*}\s*([A-Za-z_0-9]+)\s*@([\dx]+)\s*;", line)
+            match = re.match("\s*}\s*([A-Za-z_0-9]+)\s*@(.+)\s*;", line)
             if match:
                 groups = match.groups()
                 reg_list.append((groups[0], groups[1], regwidth, field_list[:]))
@@ -154,9 +154,11 @@ class RDLParser:
         Converts the extracted data into register and bit field values, and
         loads the new data into the database.
         """
-        lookup = {'rw': BitField.READ_WRITE,
-                  'w': BitField.WRITE_ONLY,
-                  'r': BitField.READ_ONLY}
+        lookup = {
+            '"rw"': BitField.TYPE_READ_WRITE,
+            '"w"': BitField.TYPE_WRITE_ONLY,
+            '"r"': BitField.TYPE_READ_ONLY
+            }
 
         for (reg_name, addr_txt, width, field_list) in reg_list:
             register = Register()
@@ -169,8 +171,11 @@ class RDLParser:
             for item in field_list:
                 field = BitField()
                 field.field_name = item.name
-                field.field_type = lookup.get(item.software_access,
-                                              BitField.READ_ONLY)
+                try:
+                    field.field_type = lookup[item.software_access]
+                except IndexError:
+                    field.field_type = BitField.TYPE_READ_ONLY
+                    
                 field.start_position = item.start
                 field.stop_position = item.stop
                 field.reset_value = item.reset

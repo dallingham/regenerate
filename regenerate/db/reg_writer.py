@@ -111,7 +111,7 @@ def write_register(ofile, reg, curtime):
     ofile.write('    <name>%s</name>\n' % reg.register_name)
     ofile.write('    <address>%d</address>\n' % reg.address)
     if reg.ram_size:
-        ofile.write('    <ram_size">%d</ram_size>\n' % reg.ram_size)
+        ofile.write('    <ram_size>%d</ram_size>\n' % reg.ram_size)
     ofile.write('    <width>%s</width>\n' % reg.width)
     ofile.write('    <description>%s</description>\n' % 
                 cleanup(reg.description))
