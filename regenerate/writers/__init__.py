@@ -84,19 +84,6 @@ EXPORTERS.append((AsmEqu, ("Header files", "Assembler Source"),
 
 #-----------------------------------------------------------------------------
 #
-#  Synthesis constraints
-#
-#-----------------------------------------------------------------------------
-try:
-    from regenerate.site_local.sdc import Sdc
-    LOGGER.info("Found site_local sdc")
-except ImportError:
-    from sdc import Sdc
-EXPORTERS.append((Sdc, ("Synthesis", "SDC Constraints"), "SDC files",
-                  ".sdc", 'syn-constraints'))
-
-#-----------------------------------------------------------------------------
-#
 #  C definition exporting
 #
 #-----------------------------------------------------------------------------
@@ -182,3 +169,31 @@ from uvm_block import UVM_Block_Registers
 
 PRJ_EXPORTERS.append((UVM_Block_Registers, ("Test", "UVM Registers"),
                       "SystemVerilog files", ".sv", 'proj-uvm'))
+
+#-----------------------------------------------------------------------------
+#
+#  Synthesis constraints
+#
+#-----------------------------------------------------------------------------
+try:
+    from regenerate.site_local.sdc import Sdc
+    LOGGER.info("Found site_local sdc")
+except ImportError:
+    from sdc import Sdc
+PRJ_EXPORTERS.append((Sdc, ("Synthesis", "SDC Constraints"), "SDC files",
+                      ".sdc", 'syn-constraints'))
+
+
+#-----------------------------------------------------------------------------
+#
+#  Synthesis constraints
+#
+#-----------------------------------------------------------------------------
+try:
+    from regenerate.site_local.spyglass import Spyglass
+    LOGGER.info("Found site_local spyglass")
+except ImportError:
+    from spyglass import Spyglass
+PRJ_EXPORTERS.append((Spyglass, ("CDC Checking", "SGDC Constraints"), "SGDC files",
+                      ".sgdc", 'spy-constraints'))
+

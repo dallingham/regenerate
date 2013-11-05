@@ -24,7 +24,7 @@ Sdc - Writes out synthesis constraints
 from writer_base import WriterBase     # IGNORE:W0403
 
 
-class Sdc(WriterBase):
+class Spyglass(WriterBase):
     """
     Output file creation class that writes a set of synthesis constraints
     """
@@ -58,6 +58,29 @@ class Sdc(WriterBase):
             group_maps[group] = in_maps
         return group_maps
 
+    def _build_name(self, field, i, grp):
+
+        hdl_fields = grp.hdl.split(".")
+        new_fields = []
+        found = False
+        for f in hdl_fields:
+            if not found and "[" in f:
+                new_fields.append("\\" + f)
+            else:
+                new_fields.append(f)
+
+        base = field.output_signal.split('*')
+        if len(base) > 1:
+            base = "%s%d%s" % (base[0], field.start_position, base[1])
+        else:
+            base = base[0]
+        if grp.repeat > 1:
+            path = ".".join(new_fields) % i
+            return "\"%s. %s\"" % (path, base)
+        else:
+            path = ".".join(new_fields)
+            return "%s.%s" % (path, base)
+
     def write(self, filename):
         """
         Writes the output file
@@ -70,7 +93,6 @@ class Sdc(WriterBase):
             for group in self._project.get_grouping_list():
                 used = set()
                 for grp in self._project.get_group_map(group.name):
-                    print grp
                     if grp.set == dbase.set_name and grp.set not in used:
                         used.add(grp.set)
                         for reg in dbase.get_all_registers():
@@ -78,16 +100,6 @@ class Sdc(WriterBase):
                                 if (field.use_output_enable and field.output_signal and
                                     field.output_is_static):
                                     for i in range(0, grp.repeat):
-                                        base = field.output_signal.split('*')
-                                        print base 
-                                        if len(base) > 1:
-                                            base = "%s%d%s" % (base[0], field.start_positionq, base[1])
-                                        else:
-                                            base = base[0]
-                                        if grp.repeat > 1:
-                                            path = grp.hdl % i
-                                        else:
-                                            path = grp.hdl
-                                        signal_name = "%s.%s" % (path, base)
-                                        of.write("set_multicycle -from %s;\n" % signal_name)
+                                        signal_name = self._build_name(field, i, grp)
+                                        of.write("quasi_static -name %s\n" % signal_name)
         of.close()
