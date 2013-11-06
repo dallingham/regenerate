@@ -65,11 +65,15 @@ class ExportAssistant(gtk.Assistant):
         if page == self.page2:
             filename = self.choose.get_filename()
             if not filename:
-                model = self.register_combo.get_model()
-                active_iter = self.register_combo.get_active_iter()
-                value = model.get_value(active_iter, 0)
-                ext = self.selected_extension()
-                filename = value + ext
+
+                if self.selected_export_is_project():
+                    value = self.project_name
+                else:
+                    model = self.register_combo.get_model()
+                    active_iter = self.register_combo.get_active_iter()
+                    value = model.get_value(active_iter, 0)
+
+                filename = value + self.selected_extension()
                 self.choose.set_current_name(filename)
 
     def forward(self, current_page):
