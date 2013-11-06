@@ -81,6 +81,15 @@ class Spyglass(WriterBase):
             path = ".".join(new_fields)
             return "%s.%s" % (path, base)
 
+    def get_static_ports(self, dbase):
+        fields = []
+        for reg in dbase.get_all_registers():
+            for field in reg.get_bit_fields():
+                if (field.use_output_enable and field.output_signal and
+                    field.output_is_static):
+                    fields.append(field)
+        return fields
+
     def write(self, filename):
         """
         Writes the output file
@@ -95,11 +104,8 @@ class Spyglass(WriterBase):
                 for grp in self._project.get_group_map(group.name):
                     if grp.set == dbase.set_name and grp.set not in used:
                         used.add(grp.set)
-                        for reg in dbase.get_all_registers():
-                            for field in reg.get_bit_fields():
-                                if (field.use_output_enable and field.output_signal and
-                                    field.output_is_static):
-                                    for i in range(0, grp.repeat):
-                                        signal_name = self._build_name(field, i, grp)
-                                        of.write("quasi_static -name %s\n" % signal_name)
+                        for field in self.get_static_ports(dbase):
+                            for i in range(0, grp.repeat):
+                                signal_name = self._build_name(field, i, grp)
+                                of.write("quasi_static -name %s\n" % signal_name)
         of.close()
