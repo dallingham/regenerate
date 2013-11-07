@@ -389,16 +389,25 @@ class RegisterList(object):
                      "The address %0x is already used by another register"
                      % int(new_text, 16))
 
+    def __check_address_align(self, address, width):
+        align = width / 8
+        return address % align == 0
+
     def __handle_reg_address(self, register, path, new_text):
         """
         Called when the register address in the table has changed
         """
-        if self.__new_address_is_not_used(new_text, path):
-            self.__reg_update_addr(register, path, new_text)
-        else:
+        address = int(new_text, 16)
+        if not self.__check_address_align(address, register.width):
+            ErrorMsg("Address does not match register width",
+                     "The address %04x is not aligned to a %d bit boundary"
+                     % (address, register.width))
+        elif not self.__new_address_is_not_used(new_text, path):
             ErrorMsg("Address already used",
                      "The address %0x is already used by another register"
-                     % int(new_text, 16))
+                     % (address, 16))
+        else:
+            self.__reg_update_addr(register, path, new_text)
 
     def __text_edited(self, cell, path, new_text, col):
         """
@@ -420,9 +429,17 @@ class RegisterList(object):
         """
         model = cell.get_property('model')
         register = self.__model.get_register_at_path(path)
-        self.__model[path][col] = model.get_value(node, 0)
-        register.width = model.get_value(node, 1)
-        self.__set_modified()
+
+        new_width =  model.get_value(node, 1)
+        print register.address, new_width
+        if not self.__check_address_align(register.address, new_width):
+            ErrorMsg("Address does not match register width",
+                     "The address %04x is not aligned to a %d bit boundary"
+                     % (register.address, new_width))
+        else:
+            self.__model[path][col] = model.get_value(node, 0)
+            register.width = new_width
+            self.__set_modified()
 
 
 def build_define(text):
