@@ -548,7 +548,7 @@ class MainWindow(BaseWindow):
         """
         Updates the data model when the text value is changed in the model.
         """
-        self.__instance_model.change_hdl(path, new_text)
+        self.__instance_model.change_hdl(path, new_text.replace("/", "."))
         self.__set_module_definition_warn_flag()
         self.__prj.set_modified()
 

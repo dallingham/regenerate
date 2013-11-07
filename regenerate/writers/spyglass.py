@@ -66,6 +66,7 @@ class Spyglass(WriterBase):
         for f in hdl_fields:
             if not found and "[" in f:
                 new_fields.append("\\" + f)
+                found = True
             else:
                 new_fields.append(f)
 
@@ -74,7 +75,7 @@ class Spyglass(WriterBase):
             base = "%s%d%s" % (base[0], field.start_position, base[1])
         else:
             base = base[0]
-        if grp.repeat > 1:
+        if found:
             path = ".".join(new_fields) % i
             return "\"%s. %s\"" % (path, base)
         else:
@@ -102,7 +103,8 @@ class Spyglass(WriterBase):
             for group in self._project.get_grouping_list():
                 used = set()
                 for grp in self._project.get_group_map(group.name):
-                    if grp.set == dbase.set_name and grp.set not in used:
+                    if (grp.set == dbase.set_name and grp.set not in used 
+                        and grp.hdl != ""):
                         used.add(grp.set)
                         for field in self.get_static_ports(dbase):
                             for i in range(0, grp.repeat):
