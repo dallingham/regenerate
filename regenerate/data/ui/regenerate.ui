@@ -657,7 +657,6 @@
                   <object class="GtkMenu" id="view_menu">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="ubuntu_local">True</property>
                     <child>
                       <object class="GtkImageMenuItem" id="menuitem20">
                         <property name="visible">True</property>
@@ -823,6 +822,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="tooltip_markup">Build generated files</property>
+                <property name="tooltip_text" translatable="yes">Display the builder tool</property>
                 <property name="related_action">build_action</property>
                 <property name="label" translatable="yes">Build</property>
                 <property name="use_underline">True</property>
@@ -874,6 +874,7 @@
               <object class="GtkToolButton" id="toolbutton2">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="tooltip_text" translatable="yes">Display help</property>
                 <property name="related_action">help_action</property>
                 <property name="label" translatable="yes">toolbutton2</property>
                 <property name="use_underline">True</property>
@@ -937,6 +938,7 @@
                           <object class="GtkEntry" id="filter">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
+                            <property name="tooltip_text" translatable="yes">Filter the Address, Name, and Token fields</property>
                             <property name="invisible_char">•</property>
                             <property name="invisible_char_set">True</property>
                             <property name="primary_icon_stock">gtk-find</property>
