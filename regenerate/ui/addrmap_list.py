@@ -239,7 +239,7 @@ class AddrMapList(object):
         self._col = column
 
         column = EditableColumn('Address base (hex)', self._base_changed,
-                                AddrMapMdl.BASE_COL)
+                                AddrMapMdl.BASE_COL, True)
         column.set_sort_column_id(AddrMapMdl.BASE_COL)
         self._obj.append_column(column)
 
