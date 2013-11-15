@@ -26,7 +26,7 @@ from regenerate.db import BitField, TYPES
 from columns import EditableColumn, ComboMapColumn
 
 TYPE2STR = [(t.description, t.type) for t in sorted(TYPES)]
-(BIT_TITLE, BIT_SIZE, BIT_SORT, BIT_EXPAND) = range(4)
+(BIT_TITLE, BIT_SIZE, BIT_SORT, BIT_EXPAND, BIT_MONO) = range(5)
 
 
 class BitModel(gtk.ListStore):
@@ -81,13 +81,13 @@ class BitList(object):
     """
 
     BIT_COLS = (
-        # Title, Size, Sort, Expand
-        ('', 20, -1, False),
-        ('Bits', 60, BitModel.SORT_COL, False),
-        ('Name', 125, BitModel.NAME_COL, True),
-        ('Type', 325, -1, True),
-        ('Reset', 100, -1, False),
-        ('Reset Type', 75, -1, False),
+        # Title, Size, Sort, Expand, Monospace
+        ('', 20, -1, False, False),
+        ('Bits', 60, BitModel.SORT_COL, False, True),
+        ('Name', 125, BitModel.NAME_COL, True, False),
+        ('Type', 325, -1, True, False),
+        ('Reset', 100, -1, False, True),
+        ('Reset Type', 75, -1, False, False),
         )
 
     def __init__(self, obj, combo_edit, text_edit, selection_changed):
@@ -128,7 +128,8 @@ class BitList(object):
                 renderer = gtk.CellRendererPixbuf()
                 column = gtk.TreeViewColumn("", renderer, stock_id=i)
             else:
-                column = EditableColumn(col[BIT_TITLE], text_edit, i)
+                column = EditableColumn(col[BIT_TITLE], text_edit, i,
+                                        col[BIT_MONO])
             if i == BitModel.BIT_COL:
                 self.__col = column
             if col[BIT_SORT] >= 0:

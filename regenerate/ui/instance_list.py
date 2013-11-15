@@ -214,16 +214,17 @@ class InstanceList(object):
         column.set_min_width(125)
         self.__obj.append_column(column)
 
-        column = EditableColumn('Address base (hex)', base_changed,
-                                InstMdl.BASE_COL)
+        column = EditableColumn('Address base', base_changed,
+                                InstMdl.BASE_COL, True)
         column.set_sort_column_id(InstMdl.SORT_COL)
         self.__obj.append_column(column)
 
-        column = EditableColumn('Repeat', repeat_changed, InstMdl.RPT_COL)
+        column = EditableColumn('Repeat', repeat_changed, 
+                                InstMdl.RPT_COL, True)
         self.__obj.append_column(column)
 
-        column = EditableColumn('Repeat Offset (hex)', repeat_offset_changed,
-                                InstMdl.OFF_COL)
+        column = EditableColumn('Repeat Offset', repeat_offset_changed,
+                                InstMdl.OFF_COL, True)
         self.__obj.append_column(column)
 
         column = EditableColumn('ID Format', format_changed, InstMdl.FMT_COL)
