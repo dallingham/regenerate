@@ -194,6 +194,6 @@ try:
     LOGGER.info("Found site_local spyglass")
 except ImportError:
     from spyglass import Spyglass
-PRJ_EXPORTERS.append((Spyglass, ("CDC Checking", "SGDC Constraints"), "SGDC files",
+PRJ_EXPORTERS.append((Spyglass, ("Spyglass CDC Checking", "SGDC Constraints"), "SGDC files",
                       ".sgdc", 'spy-constraints'))
 
