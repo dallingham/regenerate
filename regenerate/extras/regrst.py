@@ -299,7 +299,7 @@ def display_reserved(o, stop, start):
     if stop == start:
         o.write("   * - ``%d``\n" % stop)
     else:
-        o.write("   * - ``%d:%d``\n" % (start, stop))
+        o.write("   * - ``%d:%d``\n" % (stop, start))
     o.write('     - ``0x0``\n')
     o.write('     - ``RO``\n')
     o.write('     - \n')
