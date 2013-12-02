@@ -130,7 +130,7 @@ class RegisterRst:
         else:
             return line
 
-    def restructured_text(self, text = ""):
+    def restructured_text(self, text=""):
         """
         Returns the defintion of the register in RestructuredText format
         """
@@ -140,19 +140,9 @@ class RegisterRst:
         o.write(" " + self.text(self._reg.register_name))
         o.write("\n%s\n" % ("=" * rlen))
         o.write("\n%s\n\n" % self.text(self._reg.description))
-        o.write(".. list-table::\n")
-        o.write("   :class: summary\n\n")
-        o.write("   * - Token\n")
-        o.write("     - %s\n" % self.text(self._reg.token))
-        o.write("   * - Width\n")
-        o.write("     - %0d bits\n" % self._reg.width)
-        if self._reg.ram_size:
-            width = self._reg.width / 8
-            o.write("   * - Locations\n")
-            o.write("     - %0d \n" % (self._reg.ram_size / width))
-            o.write("   * - Bytes\n")
-            o.write("     - %0d \n" % self._reg.ram_size)
-        o.write("\n\n")
+
+        if self._reg.ram_size == 0:
+            self._write_bit_fields(o)
 
         if self._show_defines:
             self._write_defines(o)
@@ -160,16 +150,14 @@ class RegisterRst:
         if self._show_uvm:
             self._write_uvm(o)
 
-        if self._reg.ram_size == 0:
-            self._write_bit_fields(o)
-            
         o.write(text)
         return o.getvalue()
 
     def _write_bit_fields(self, o):
         o.write("Bit fields\n---------------\n")
         o.write(".. list-table::\n")
-        o.write("   :widths: 10 10 5 25 50\n")
+        o.write("   :widths: 8 10 7 25 50\n")
+        o.write("   :class: bit_table\n")
         o.write("   :header-rows: 1\n\n")
         o.write("   * - Bit(s)\n")
         o.write("     - Reset\n")
@@ -188,7 +176,7 @@ class RegisterRst:
                 display_reserved(o, last_index, stop + 1)
 
             if start == stop:
-                o.write("   * - ``%d``\n" % start )
+                o.write("   * - ``%d``\n" % start)
             else:
                 o.write("   * - ``%d:%d``\n" % (stop, start))
             o.write("     - ``0x%x``\n" % field.reset_value)
@@ -204,11 +192,11 @@ class RegisterRst:
                                   key=lambda x: int(int(x[0], 16))):
                     if val[1]:
                         o.write("       :%d: %s (%s)\n" % (int(val[0], 16),
-                                                           self.text(val[2]), 
+                                                           self.text(val[2]),
                                                            self.text(val[1])))
                     else:
                         o.write("       :%d: %s\n" % (int(val[0], 16),
-                                                      self.text(val[2]))) 
+                                                      self.text(val[2])))
             last_index = start - 1
         if last_index >= 0:
             display_reserved(o, last_index, 0)
@@ -288,8 +276,10 @@ class RegisterRst:
         """
         Produces a HTML subsection of the document (no header/body).
         """
+
         if _HTML:
-            parts = publish_parts(self.restructured_text(text), writer_name="html")
+            parts = publish_parts(self.restructured_text(text),
+                                  writer_name="html")
             return parts['html_title'] + parts['html_subtitle'] + parts['body']
         else:
             return "<pre>" + self.restructured_text() + "</pre>"
