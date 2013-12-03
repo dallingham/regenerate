@@ -431,7 +431,6 @@ class RegisterList(object):
         register = self.__model.get_register_at_path(path)
 
         new_width =  model.get_value(node, 1)
-        print register.address, new_width
         if not self.__check_address_align(register.address, new_width):
             ErrorMsg("Address does not match register width",
                      "The address %04x is not aligned to a %d bit boundary"

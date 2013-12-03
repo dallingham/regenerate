@@ -33,7 +33,7 @@ from cStringIO import StringIO
 from regenerate.db import TYPE_TO_SIMPLE_TYPE
 import re
 from token import full_token, in_groups, uvm_name
-
+from types import *
 
 CSS = '''
 <style type="text/css">
@@ -109,13 +109,23 @@ class RegisterRst:
     """
 
     def __init__(self, register, regset_name=None, project=None,
-                 highlight=None, show_defines=True, show_uvm=False):
+                 highlight=None, show_defines=True, show_uvm=False,
+                 decode=None, group=None):
         self._reg = register
         self._highlight = highlight
         self._prj = project
         self._regset_name = regset_name
         self._show_defines = show_defines
         self._show_uvm = show_uvm
+        self._group = group
+        if decode:
+            if type(decode) is StringType:
+                decode = int(decode, 16)
+            elif type(decode) is IntType:
+                decode = decode
+            else:
+                decode = None
+        self._decode = decode
 
     def html_css(self, text=""):
         """
@@ -125,8 +135,9 @@ class RegisterRst:
 
     def text(self, line):
         if self._highlight:
-            return re.sub(self._highlight, ":search:``%s``" % self._highlight,
+            line = re.sub(self._highlight, "\ :search:`%s`" % self._highlight,
                           line)
+            return re.sub(r"_\\ ", r"\\_\\ ", line)
         else:
             return line
 
@@ -136,6 +147,7 @@ class RegisterRst:
         """
         o = StringIO()
         rlen = len(self._reg.register_name) + 2
+        o.write(".. role:: search\n\n")
         o.write("%s\n" % ("=" * rlen))
         o.write(" " + self.text(self._reg.register_name))
         o.write("\n%s\n" % ("=" * rlen))
@@ -150,7 +162,6 @@ class RegisterRst:
         if self._show_uvm:
             self._write_uvm(o)
 
-        o.write(text)
         return o.getvalue()
 
     def _write_bit_fields(self, o):
@@ -160,7 +171,10 @@ class RegisterRst:
         o.write("   :class: bit_table\n")
         o.write("   :header-rows: 1\n\n")
         o.write("   * - Bit(s)\n")
-        o.write("     - Reset\n")
+        if self._decode:
+            o.write("     - Decode\n")
+        else:
+            o.write("     - Reset\n")
         o.write("     - Type\n")
         o.write("     - Name\n")
         o.write("     - Description\n")
@@ -176,13 +190,22 @@ class RegisterRst:
                 display_reserved(o, last_index, stop + 1)
 
             if start == stop:
-                o.write("   * - ``%d``\n" % start)
+                o.write("   * - %d\n" % start)
             else:
-                o.write("   * - ``%d:%d``\n" % (stop, start))
-            o.write("     - ``0x%x``\n" % field.reset_value)
-            o.write("     - ``%s``\n" %
+                o.write("   * - %d:%d\n" % (stop, start))
+
+            if self._decode:
+                dec_val = (self._decode & mask(stop, start)) >> start
+                if dec_val != field.reset_value:
+                    o.write("     - **0x%x**\n" % dec_val)
+                else:
+                    o.write("     - 0x%x\n" % dec_val)
+            else:
+                o.write("     - 0x%x\n" % field.reset_value)
+
+            o.write("     - %s\n" %
                     self.text(TYPE_TO_SIMPLE_TYPE[field.field_type]))
-            o.write("     - ``%s``\n" % self.text(field.field_name))
+            o.write("     - %s\n" % self.text(field.field_name))
             descr = self.text(field.description)
             marked_descr = "\n       ".join(descr.split("\n"))
             o.write("     - %s\n" % marked_descr)
@@ -217,39 +240,38 @@ class RegisterRst:
             o.write("   :header-rows: 1\n")
             o.write("   :class: summary\n\n")
             o.write("   * - ID\n")
-            o.write("     - Offset\n")
             for amap in addr_maps:
                 o.write("     - %s\n" % self.text(amap.name))
             for inst in in_groups(self._regset_name, self._prj):
+                if self._group and inst.group != self._group:
+                    continue
                 if inst.repeat == 1:
                     name = full_token(inst.group, inst.inst, self._reg.token,
                                       self._regset_name, -1, inst.format)
-                    o.write("   * - ``%s``\n" % self.text(name))
-                    o.write("     - ``%s``\n" % reg_addr(self._reg, 0))
+                    o.write("   * - %s\n" % self.text(name))
                     for map_name in addr_maps:
                         map_base = self._prj.get_address_base(map_name.name)
                         offset = map_base + inst.offset + inst.base
-                        o.write("     - ``%s``\n" % reg_addr(self._reg, offset))
+                        o.write("     - %s\n" % reg_addr(self._reg, offset))
                 else:
                     for i in range(0, inst.repeat):
                         name = full_token(inst.group, inst.inst, self._reg.token,
                                           self._regset_name, i, inst.format)
-                        o.write("   * - ``%s``\n" % self.text(name))
-                        o.write("     - ``%s``\n" % reg_addr(self._reg, 0))
+                        o.write("   * - %s\n" % self.text(name))
                         for map_name in addr_maps:
                             base = self._prj.get_address_base(map_name.name)
                             offset = inst.base + inst.offset + (i * inst.roffset)
-                            o.write("     - ``%s``\n" % reg_addr(self._reg,
+                            o.write("     - %s\n" % reg_addr(self._reg,
                                                                  offset + base))
         o.write("\n\n")
 
     def _display_uvm_entry(self, inst, index, o):
         name = full_token(inst.group, inst.inst, self._reg.token,
                           self._regset_name, index, inst.format)
-        o.write("   * - ``%s``\n" % self.text(name))
+        o.write("   * - %s\n" % self.text(name))
         name = uvm_name(inst.group, self._reg.token, inst.inst, index,
                         inst.format)
-        o.write("     - ``%s``\n" % self.text(name))
+        o.write("     - %s\n" % self.text(name))
 
     def _write_uvm(self, o):
         """
@@ -265,6 +287,8 @@ class RegisterRst:
         o.write("   * - ID\n")
         o.write("     - UVM name\n")
         for inst in in_groups(self._regset_name, self._prj):
+            if self._group and inst.group != self._group:
+                continue
             if inst.repeat == 1:
                 self._display_uvm_entry(inst, -1, o)
             else:
@@ -287,10 +311,18 @@ class RegisterRst:
 
 def display_reserved(o, stop, start):
     if stop == start:
-        o.write("   * - ``%d``\n" % stop)
+        o.write("   * - %d\n" % stop)
     else:
-        o.write("   * - ``%d:%d``\n" % (stop, start))
-    o.write('     - ``0x0``\n')
-    o.write('     - ``RO``\n')
+        o.write("   * - %d:%d\n" % (stop, start))
+    o.write('     - 0x0\n')
+    o.write('     - RO\n')
     o.write('     - \n')
     o.write('     - *reserved*\n')
+
+def mask(stop, start):
+    value = 0
+    for i in range(start, stop + 1):
+        value |= (1 << i)
+    return value
+
+    
