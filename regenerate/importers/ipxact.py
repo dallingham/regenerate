@@ -71,7 +71,7 @@ class IpXactParser(object):
         """
         Called every time an XML element end
         """
-        text = ''.join(self.__token_list)
+        text = ''.join(self._token_list)
         mname = 'end_' + tag.replace(":", "_")
         if hasattr(self, mname):
             method = getattr(self, mname)
@@ -83,7 +83,7 @@ class IpXactParser(object):
         in how it is called, so we must collect the information for assembly
         later.
         """
-        self.__token_list.append(data)
+        self._token_list.append(data)
 
     def start_spirit_register(self, attrs):
         self._reg = Register()

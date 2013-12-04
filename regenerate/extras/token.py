@@ -22,7 +22,7 @@ from collections import namedtuple
 InstData = namedtuple("InstData",
                       "group inst set base offset repeat roffset format")
 
-DEFAULT_FORMAT = "%(I)s%(D)s_%(R)s"
+DEFAULT_FORMAT = "%(G)s_%(I)s%(D)s_%(R)s"
 
 
 def full_token(group_name, inst_name, reg_name, set_name, index, fmt_string):
@@ -53,22 +53,19 @@ def uvm_name(group_name, reg_name, set_name, index, fmt_string):
                                    reg_name.lower())
 
 
-def in_groups(regset_name, project):
+def in_groups(name, project):
     groups = []
-    if regset_name and project:
-        for group_data in project.get_grouping_list():
-            for regset in project.get_group_map(group_data.name):
-                if regset.inst == regset_name:
-                    if regset.format:
-                        fmt = regset.format
-                    else:
-                        fmt = DEFAULT_FORMAT
-                    groups.append(InstData(group_data.name,
-                                           regset.inst,
-                                           regset.set,
-                                           group_data.base,
-                                           regset.offset,
-                                           regset.repeat,
-                                           regset.repeat_offset,
-                                           fmt))
+    if name and project:
+        for group in project.get_grouping_list():
+            for regset in [rs for rs in project.get_group_map(group.name)
+                           if rs.set == name]:
+                fmt = regset.format if regset.format else DEFAULT_FORMAT
+                groups.append(InstData(group.name,
+                                       regset.inst,
+                                       regset.set,
+                                       group.base,
+                                       regset.offset,
+                                       regset.repeat,
+                                       regset.repeat_offset,
+                                       fmt))
     return groups
