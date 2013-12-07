@@ -308,8 +308,11 @@ class RegisterRst:
         """
 
         if _HTML:
-            parts = publish_parts(self.restructured_text(text),
-                                  writer_name="html")
+            parts = publish_parts(
+                self.restructured_text(text),
+                writer_name="html",
+                settings_overrides={'report_level': 'quiet'},
+                )
             return parts['html_title'] + parts['html_subtitle'] + parts['body']
         else:
             return "<pre>" + self.restructured_text() + "</pre>"
