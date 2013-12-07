@@ -108,7 +108,7 @@ class RegisterRst:
     Produces documentation from a register definition
     """
 
-    def __init__(self, register, regset_name=None, project=None,
+    def __init__(self, register, regset_name=None, project=None, inst=None,
                  highlight=None, show_defines=True, show_uvm=False,
                  decode=None, group=None):
         self._reg = register
@@ -118,6 +118,7 @@ class RegisterRst:
         self._show_defines = show_defines
         self._show_uvm = show_uvm
         self._group = group
+        self._inst = inst
         if decode:
             if type(decode) is StringType:
                 decode = int(decode, 16)
@@ -162,6 +163,7 @@ class RegisterRst:
         if self._show_uvm:
             self._write_uvm(o)
 
+        o.write(text)
         return o.getvalue()
 
     def _write_bit_fields(self, o):
@@ -245,6 +247,8 @@ class RegisterRst:
             for inst in in_groups(self._regset_name, self._prj):
                 if self._group and inst.group != self._group:
                     continue
+                if self._inst and inst.inst != self._inst:
+                    continue
                 if inst.repeat == 1:
                     name = full_token(inst.group, inst.inst, self._reg.token,
                                       self._regset_name, -1, inst.format)
@@ -288,6 +292,8 @@ class RegisterRst:
         o.write("     - UVM name\n")
         for inst in in_groups(self._regset_name, self._prj):
             if self._group and inst.group != self._group:
+                continue
+            if self._inst and inst.inst != self._inst:
                 continue
             if inst.repeat == 1:
                 self._display_uvm_entry(inst, -1, o)
