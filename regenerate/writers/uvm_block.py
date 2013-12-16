@@ -360,7 +360,7 @@ class UVM_Block_Registers(WriterBase):
         for item in in_maps:
             mname = "%s_map" % item
             of.write('      %s = create_map("%s", \'h0, %d, %s, 1);\n' %
-                     (mname, mname, self._project.get_address_width(item),
+                     (mname, mname, dbase.data_bus_width / 8,
                       self.endian))
 
         for reg in dbase.get_all_registers():
@@ -540,9 +540,9 @@ class UVM_Block_Registers(WriterBase):
         of.write("    `uvm_object_utils(%s);\n\n" % rname)
         of.write('    function new(string name = "%s");\n' %
                  reg.token.lower())
-        no_bytes = reg.width / 8
+        num_bytes = reg.width / 8
         of.write('       super.new(name, %d, %d, "RW", UVM_NO_COVERAGE);\n'
-                 % (reg.ram_size / no_bytes, reg.width))
+                 % (reg.ram_size / num_bytes, reg.width))
         of.write('    endfunction : new\n\n')
 
         of.write('  endclass : %s\n\n' % rname)

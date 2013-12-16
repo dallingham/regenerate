@@ -77,7 +77,7 @@ class Spyglass(WriterBase):
             base = base[0]
         if found:
             path = ".".join(new_fields) % i
-            return "\"%s. %s\"" % (path, base)
+            return "\"%s .%s\"" % (path, base)
         else:
             path = ".".join(new_fields)
             return "%s.%s" % (path, base)
@@ -96,16 +96,18 @@ class Spyglass(WriterBase):
         Writes the output file
         """
         of = open(filename, "w")
+        of.write("current_design %s\n\n" % self._project.short_name)
 
         # Write register blocks
         for dbase in self.dblist:
 
+            of.write("\n# %s\n\n" % dbase.set_name)
             for group in self._project.get_grouping_list():
                 used = set()
                 for grp in self._project.get_group_map(group.name):
-                    if (grp.set == dbase.set_name and grp.set not in used 
+                    if (grp.set == dbase.set_name and grp.inst not in used 
                         and grp.hdl != ""):
-                        used.add(grp.set)
+                        used.add(grp.inst)
                         for field in self.get_static_ports(dbase):
                             for i in range(0, grp.repeat):
                                 signal_name = self._build_name(field, i, grp)
