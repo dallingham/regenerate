@@ -91,13 +91,13 @@ class AddrMapList(object):
         Enables drag and drop
         """
         self._obj.enable_model_drag_dest([('text/plain', 0, 0)],
-                                          gtk.gdk.ACTION_DEFAULT |
-                                          gtk.gdk.ACTION_MOVE)
+                                         gtk.gdk.ACTION_DEFAULT |
+                                         gtk.gdk.ACTION_MOVE)
         self._obj.connect('drag-data-received',
-                           self._drag_data_received_data)
+                          self._drag_data_received_data)
 
     def _drag_data_received_data(self, treeview, context, x, y, selection,
-                                  info, etime):
+                                 info, etime):
         """
         Called when data is dropped.
         """
