@@ -721,7 +721,8 @@ class Verilog(WriterBase):
         if local_regs:
             self._comment(['Register Declarations'], precede_blank=1)
             self._wrln("\n".join(local_regs))
-        self._wrln("\nreg [%d:0]      mux_%s;\n" % (self._data_width - 1,
+        self._wrln("\nreg prev_write, prev_read;\n\n")
+        self._wrln("reg [%d:0]      mux_%s;\n" % (self._data_width - 1,
                                                     self._data_out.lower()))
 
         if local_wires:
@@ -736,7 +737,7 @@ class Verilog(WriterBase):
 
         for address in sorted(self._word_fields.keys()):
             width = self._addr_width - self._lower_bit
-            self._wrln("wire %s = %s & (%s == %s);\n" % (
+            self._wrln("wire %s = (~prev_write & %s) & (%s == %s);\n" % (
                 write_strobe(address), self._write_strobe, self._addr,
                 binary(address >> self._lower_bit, width)))
 
@@ -905,7 +906,6 @@ class Verilog(WriterBase):
         """
         self._comment(["Ensure that internal write is one clock wide"],
                       border="-")
-        self._wrln("\nreg prev_write, prev_read;\n\n")
         self._wrln('%s @(posedge %s or %s) begin\n' %
                    (self._always, self._clock, self._reset_edge))
         self._wrln('  if (%s) begin\n' % self._reset_condition)
