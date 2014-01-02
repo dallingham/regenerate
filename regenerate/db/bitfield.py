@@ -80,7 +80,7 @@ class BitField(object):
     __slots__ = ('start_position', 'stop_position', 'field_name',
                  'use_output_enable', '__output_signal', '__input_signal',
                  'field_type', 'volatile', 'reset_value',
-                 'reset_input', 'reset_type', 'modified', 
+                 'reset_input', 'reset_type', 'modified',
                  'reset_parameter', 'input_function',
                  'description', 'control_signal', 'output_is_static',
                  'output_has_side_effect', 'values')

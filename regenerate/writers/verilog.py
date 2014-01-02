@@ -26,7 +26,6 @@ import textwrap
 from regenerate.settings import ini
 from regenerate.writers.verilog_reg_def import REG
 from regenerate.db import BitField, TYPES, LOGGER
-
 from regenerate.writers.writer_base import WriterBase
 
 
@@ -391,7 +390,7 @@ class Verilog(WriterBase):
             self._write_port('CLK', self._clock, first=1)
             self._write_port('RSTn', self._reset)
 
-            lane = bus_start / 8 
+            lane = bus_start / 8
             if not self._is_read_only[field.field_type]:
                 self._write_port("WE", 'write_r%02x' % write_address)
                 self._write_port("DI", '%s%s' % (self._data_in, bus_index))
@@ -540,7 +539,7 @@ class Verilog(WriterBase):
         if plist or blist:
             params = ["parameter %s = %d'h%x" % item for item in blist] + \
                      ["parameter [%d:%d] %s = %d'h%x" % item for item in plist]
-            self._wrln('module %s #(\n  ' % self._module )
+            self._wrln('module %s #(\n  ' % self._module)
             self._wrln(",\n    ".join(params))
             self._wrln('\n  )(\n')
         else:
@@ -576,7 +575,7 @@ class Verilog(WriterBase):
         reset_set = {}
         addr_width = '[%d:%d]' % (self._addr_width - 1, self._lower_bit)
         data_width = "[%d:0]" % (self._data_width - 1)
-        be_width   = "[%d:0]" % ((self._data_width / 8) - 1)
+        be_width = "[%d:0]" % ((self._data_width / 8) - 1)
 
         port_list = [
             ("input", '', self._clock, "Input clock"),
@@ -778,7 +777,7 @@ class Verilog(WriterBase):
                                                           field.stop_position)
                     names = " | ".join([oneshot_name(base, pos[0])
                                         for pos in boundaries])
-                    self._wrln(fmt_string  % (
+                    self._wrln(fmt_string % (
                         oneshot_name(field.output_signal), names))
                 if not field.use_output_enable:
                     continue
@@ -890,7 +889,7 @@ class Verilog(WriterBase):
                                             field_info[F_STOP])
                 self._wrln("\n                  ")
                 self._wrln("%s" % (name_info[1]))
-                current_pos = start  - 1
+                current_pos = start - 1
 
             if current_pos != -1:
                 self._wrln(",\n                  ")
@@ -995,11 +994,11 @@ class Verilog2001(Verilog):
         if plist or blist:
             params = ["parameter %s = %d'h%x" % item for item in blist] + \
                 ["parameter [%d:%d] %s = %d'h%x" % item for item in plist]
-            self._wrln('module %s #(\n  ' % self._module )
+            self._wrln('module %s #(\n  ' % self._module)
             self._wrln(",\n    ".join(params))
             self._wrln('\n  )(\n')
         else:
-            self._wrln('module %s (\n' % self._module )
+            self._wrln('module %s (\n' % self._module)
 
         csep = "\n" + " " * 48 + "// "
         sep = ", "
