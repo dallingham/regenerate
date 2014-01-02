@@ -68,8 +68,14 @@ def html_string(text):
     Converts the strng from restructuredText to HTML and prepends
     the CSS string.
     """
-    return __CSS + publish_string(
-        text,
-        writer_name="html",
-        settings_overrides={'report_level': 'quiet'},
-        )
+    try:
+        return __CSS + publish_string(
+            text,
+            writer_name="html",
+            settings_overrides={'report_level': 'quiet'},
+            )
+    except TypeError:
+        return __CSS + publish_string(
+            text,
+            writer_name="html"
+            )
