@@ -183,10 +183,10 @@ class UVM_Block_Registers(WriterBase):
         of.write("\n")
 
         for data in self._project.get_address_maps():
-            print "data", data
             name = "%s_map" % data.name
             of.write('      %s = create_map("%s", \'h%x, %d, %s);\n' %
-                     (name, name, data.base, self._project.get_address_width(data.name), self.endian))
+                     (name, name, data.base,
+                      self._project.get_address_width(data.name), self.endian))
         of.write("\n")
 
         for group in self._project.get_grouping_list():
@@ -248,7 +248,6 @@ class UVM_Block_Registers(WriterBase):
         of.write("\n")
 
         for item in in_maps:
-            print "item", item
             of.write('      %s_map = create_map("%s_map", 0, %d, %s);\n' %
                      (item, item, self._project.get_address_width(item),
                       self.endian))

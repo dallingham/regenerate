@@ -556,19 +556,17 @@ class MainWindow(BaseWindow):
         """
         Updates the data model when the text value is changed in the model.
         """
-        if len(path) > 1:
-            self.__instance_model.change_repeat(path, new_text)
-            self.__set_module_definition_warn_flag()
-            self.__prj.set_modified()
+        self.__instance_model.change_repeat(path, new_text)
+        self.__set_module_definition_warn_flag()
+        self.__prj.set_modified()
 
     def __instance_repeat_offset_changed(self, cell, path, new_text, col):
         """
         Updates the data model when the text value is changed in the model.
         """
-        if len(path) > 1:
-            self.__instance_model.change_repeat_offset(path, new_text)
-            self.__set_module_definition_warn_flag()
-            self.__prj.set_modified()
+        self.__instance_model.change_repeat_offset(path, new_text)
+        self.__set_module_definition_warn_flag()
+        self.__prj.set_modified()
 
     def on_filter_icon_press(self, obj, icon, event):
         if icon == gtk.ENTRY_ICON_SECONDARY:

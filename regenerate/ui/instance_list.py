@@ -183,20 +183,26 @@ class InstanceList(object):
         group_list = sorted(self.__project.get_grouping_list(),
                             key=lambda x: x.base)
         for item in group_list:
-            hval = "%x" % item.base
-            node = self.__model.append(None, row=(item.name, "", hval,
+            node = self.__model.append(None, row=(item.name,
+                                                  "",
+                                                  "%x" % item.base,
                                                   item.base,
-                                                  "", "", "",
+                                                  "%d" % item.repeat,
+                                                  "%x" % item.repeat_offset,
+                                                  "",
                                                   item.hdl))
 
             entry_list = sorted(self.__project.get_group_map(item[0]),
                                 key=lambda x: x.offset)
             for entry in entry_list:
-                self.__model.append(node, (entry.inst, entry.set,
+                self.__model.append(node, (entry.inst,
+                                           entry.set,
                                            "%x" % entry.offset,
-                                           entry.offset, "%d" % entry.repeat,
+                                           entry.offset,
+                                           "%d" % entry.repeat,
                                            "%x" % entry.repeat_offset,
-                                           entry.format, entry.hdl))
+                                           entry.format,
+                                           entry.hdl))
 
     def __build_instance_table(self, id_changed, inst_changed, base_changed,
                                repeat_changed, repeat_offset_changed,
@@ -219,7 +225,7 @@ class InstanceList(object):
         column.set_sort_column_id(InstMdl.SORT_COL)
         self.__obj.append_column(column)
 
-        column = EditableColumn('Repeat', repeat_changed, 
+        column = EditableColumn('Repeat', repeat_changed,
                                 InstMdl.RPT_COL, True)
         self.__obj.append_column(column)
 
@@ -250,8 +256,11 @@ class InstanceList(object):
             gname = self.__model.get_value(tree_iter, InstMdl.INST_COL)
             base = self.__model.get_value(tree_iter, InstMdl.SORT_COL)
             hdl = self.__model.get_value(tree_iter, InstMdl.HDL_COL)
+            repeat = int(self.__model.get_value(tree_iter, InstMdl.RPT_COL))
+            repeat_offset = int(self.__model.get_value(tree_iter,
+                                                       InstMdl.OFF_COL), 16)
 
-            groups.append(GroupData(gname, base, hdl))
+            groups.append(GroupData(gname, base, hdl, repeat, repeat_offset))
             group_map[gname] = []
 
             child = self.__model.iter_children(tree_iter)
