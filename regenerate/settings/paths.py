@@ -46,6 +46,7 @@ def getdatapath():
 
 INSTALL_PATH = getdatapath()
 GLADE_TOP = os.path.join(INSTALL_PATH, "ui", "regenerate.ui")
+GLADE_GTXT = os.path.join(INSTALL_PATH, "ui", "group_text.ui")
 GLADE_BIT = os.path.join(INSTALL_PATH, "ui", "bitfield.ui")
 GLADE_CHK = os.path.join(INSTALL_PATH, "ui", "check.ui")
 GLADE_PROP = os.path.join(INSTALL_PATH, "ui", "properties.ui")
