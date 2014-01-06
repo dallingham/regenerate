@@ -115,7 +115,7 @@ class InstMdl(gtk.TreeStore):
         Adds a new instance to the model. It is not added to the database until
         either the change_id or change_base is called.
         """
-        node = self.append(None, row=('', '', '0', 0, "", "", "", ""))
+        node = self.append(None, row=('', '', '0', 0, "1", "0", "", ""))
         return self.get_path(node)
 
 
@@ -157,7 +157,8 @@ class InstanceList(object):
         model = treeview.get_model()
         data = selection.data
         drop_info = treeview.get_dest_row_at_pos(x, y)
-        row_data = [data, data, "0", 0, "1", "0", "", ""]
+        (name, width) = data.split(":")
+        row_data = [name, name, "0", 0, "1", width, "", ""]
         if drop_info:
             path, position = drop_info
             if len(path) == 1:
@@ -256,9 +257,16 @@ class InstanceList(object):
             gname = self.__model.get_value(tree_iter, InstMdl.INST_COL)
             base = self.__model.get_value(tree_iter, InstMdl.SORT_COL)
             hdl = self.__model.get_value(tree_iter, InstMdl.HDL_COL)
-            repeat = int(self.__model.get_value(tree_iter, InstMdl.RPT_COL))
-            repeat_offset = int(self.__model.get_value(tree_iter,
-                                                       InstMdl.OFF_COL), 16)
+            try:
+                repeat = int(self.__model.get_value(tree_iter, InstMdl.RPT_COL))
+            except ValueError:
+                repeat = 1
+
+            try:
+                repeat_offset = int(self.__model.get_value(tree_iter,
+                                                           InstMdl.OFF_COL), 16)
+            except ValueError:
+                repeat_offset = 0
 
             groups.append(GroupData(gname, base, hdl, repeat, repeat_offset))
             group_map[gname] = []

@@ -125,7 +125,9 @@ class ProjectList(object):
 
         tselection = treeview.get_selection()
         model, tree_iter = tselection.get_selected()
-        data = model.get_value(tree_iter, 0)
+        data = "%s:%x" % (model.get_value(tree_iter, ProjectModel.NAME),
+                          1 << model.get_value(tree_iter, 
+                                               ProjectModel.OBJ).db.address_bus_width)
         selection.set(selection.target, 8, data)
 
     def set_model(self, model):

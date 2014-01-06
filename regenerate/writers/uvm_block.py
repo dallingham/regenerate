@@ -171,7 +171,7 @@ class UVM_Block_Registers(WriterBase):
         for data in self._project.get_address_maps():
             of.write('   uvm_reg_map %s_map;\n' % data.name)
 
-        of.write('   function new(string name = "%s_reg_block");\n' % sname)
+        of.write('\n   function new(string name = "%s_reg_block");\n' % sname)
         of.write("      super.new(name, "
                  "build_coverage(UVM_CVR_ADDR_MAP));\n")
         of.write("   endfunction : new\n")
@@ -192,11 +192,21 @@ class UVM_Block_Registers(WriterBase):
         for group in self._project.get_grouping_list():
             name = group.name
 
-            of.write('      %s = %s_grp_reg_blk::type_id::create("%s");\n' %
-                     (name, name, name))
-            of.write('      %s.configure(this, "%s");\n' %
-                     (name, group.hdl))
-            of.write("      %s.build();\n" % name)
+            if group.repeat <= 1:
+                of.write('      %s = %s_grp_reg_blk::type_id::create("%s");\n' %
+                         (name, name, name))
+                of.write('      %s.configure(this, "%s");\n' %
+                         (name, group.hdl))
+                of.write("      %s.build();\n" % name)
+            else:
+                of.write('      foreach (%s[i]) begin\n' % name)
+                of.write('         %s[i] = %s_grp_reg_blk::type_id::create($sformatf("%s[%%d]", i));\n' %
+                         (name, name, name))
+                of.write('         %s[i].configure(this, "%s");\n' %
+                         (name, group.hdl))
+                of.write("         %s[i].build();\n" % name)
+                of.write("      end\n")
+                
 
         for data in self._project.get_address_maps():
             map_list = self._project.get_address_map_groups(data.name)
@@ -206,8 +216,15 @@ class UVM_Block_Registers(WriterBase):
             for name in map_list:
                 grp_data = [grp for grp in self._project.get_grouping_list()
                             if grp.name == name]
-                of.write("      %s_map.add_submap(%s.%s_map, 'h%x);\n" %
-                         (data.name, name, data.name, grp_data[0].base))
+                print grp_data
+                if grp_data[0].repeat <= 1:
+                    of.write("      %s_map.add_submap(%s.%s_map, 'h%x);\n" %
+                             (data.name, name, data.name, grp_data[0].base))
+                else:
+                    of.write("      foreach (%s[i]) begin\n" % name)
+                    of.write("        %s_map.add_submap(%s[i].%s_map, 'h%x + (i * 'h%x));\n" %
+                             (data.name, name, data.name, grp_data[0].base, grp_data[0].repeat_offset))
+                    of.write("      end\n")
         of.write("\n")
         of.write("   endfunction: build\n")
         of.write("\n")
