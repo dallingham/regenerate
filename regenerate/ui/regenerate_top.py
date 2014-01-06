@@ -43,7 +43,7 @@ from help_window import HelpWindow
 from regenerate.db import (RegWriter, RegisterDb, Register,
                            BitField, RegProject, LOGGER, TYPES)
 from regenerate.importers import IMPORTERS
-from regenerate.settings.paths import GLADE_TOP, INSTALL_PATH
+from regenerate.settings.paths import GLADE_TOP, INSTALL_PATH, GLADE_GTXT
 from regenerate.settings import ini
 from regenerate import PROGRAM_VERSION, PROGRAM_NAME
 from error_dialogs import ErrorMsg, WarnMsg, Question
@@ -138,6 +138,7 @@ class MainWindow(BaseWindow):
                                      self.__prj_selection_changed)
         self.__module_notebook = self.__builder.get_object("module_notebook")
         self.__reg_notebook = self.__builder.get_object("reg_notebook")
+        self.__top_notebook = self.__builder.get_object("notebook1")
         self.__no_rtl = self.__builder.get_object('no_rtl')
         self.__no_test = self.__builder.get_object('no_test')
         self.__hide = self.__builder.get_object('hide_doc')
@@ -234,6 +235,13 @@ class MainWindow(BaseWindow):
 
         filter_obj = self.__builder.get_object("filter")
         self.__filter_manage = FilterManager(filter_obj)
+
+    def on_group_doc_clicked(self, obj):
+        builder = gtk.Builder()
+        builder.add_from_file(GLADE_GTXT)
+        group_doc = builder.get_object('group_text')
+        group_doc.show()
+        group_doc.run()
 
     def build_project_tab(self):
         self.__prj_short_name_obj = self.__builder.get_object('short_name')
@@ -883,10 +891,11 @@ class MainWindow(BaseWindow):
         self.set_modified()
 
     def __insert_new_register(self, register):
-        self.__reglist_obj.add_new_register(register)
-        self.dbase.add_register(register)
-        self.__set_register_warn_flags(register)
-        self.set_modified()
+        if self.__top_notebook.get_current_page() == 0:
+            self.__reglist_obj.add_new_register(register)
+            self.dbase.add_register(register)
+            self.__set_register_warn_flags(register)
+            self.set_modified()
 
     def update_register_addr(self, register, new_addr, new_length=0):
         self.dbase.delete_register(register)
@@ -1329,11 +1338,12 @@ class MainWindow(BaseWindow):
         """
         Deletes the selected object (either a register or a bit range)
         """
-        reg = self.__reglist_obj.get_selected_register()
-        if reg:
-            self.__reglist_obj.delete_selected_node()
-            self.dbase.delete_register(reg)
-            self.set_modified()
+        if self.__top_notebook.get_current_page() == 0:
+            reg = self.__reglist_obj.get_selected_register()
+            if reg:
+                self.__reglist_obj.delete_selected_node()
+                self.dbase.delete_register(reg)
+                self.set_modified()
 
     def on_data_width_changed(self, obj):
         if obj.get_active():
