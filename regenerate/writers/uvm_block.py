@@ -164,9 +164,11 @@ class UVM_Block_Registers(WriterBase):
         of.write("   `uvm_object_utils(%s_reg_block)\n" % sname)
         of.write("\n")
 
-        for group_name in self._project.get_grouping_list():
-            of.write("   %s_grp_reg_blk %s;\n" %
-                     (group_name[0], group_name[0]))
+        for group in self._project.get_grouping_list():
+            if group.repeat > 1:
+                of.write("   %s_grp_reg_blk %s[%0d];\n" % (group.name, group.name, group.repeat))
+            else:
+                of.write("   %s_grp_reg_blk %s;\n" % (group.name, group.name))
 
         for data in self._project.get_address_maps():
             of.write('   uvm_reg_map %s_map;\n' % data.name)
@@ -216,7 +218,6 @@ class UVM_Block_Registers(WriterBase):
             for name in map_list:
                 grp_data = [grp for grp in self._project.get_grouping_list()
                             if grp.name == name]
-                print grp_data
                 if grp_data[0].repeat <= 1:
                     of.write("      %s_map.add_submap(%s.%s_map, 'h%x);\n" %
                              (data.name, name, data.name, grp_data[0].base))
@@ -288,7 +289,7 @@ class UVM_Block_Registers(WriterBase):
             else:
                 name = group_entry.set
                 of.write('      %s = %s_%s_reg_blk::type_id::create("%s");\n' %
-                         (group_entry.inst, sname, name, name))
+                         (group_entry.inst, sname, name, group_entry.inst))
                 of.write('      %s.configure(this, "%s");\n' %
                          (group_entry.inst, group_entry.hdl))
                 of.write("      %s.build();\n" % group_entry.inst)

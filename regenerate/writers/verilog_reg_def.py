@@ -753,22 +753,22 @@ endmodule
     input  BE,                  // Byte Enable
     input  WE,                  // Write Strobe
     input  [WIDTH-1:0] DI,      // Data In
-    output DO,                  // Data Out
-    output DO_1S                // One Shot
+    output [WIDTH-1:0] DO       // Data Out
     );
 
-   reg     ws;
-   reg     ws_d;
+   reg [WIDTH-1:0] ws;
+   reg [WIDTH-1:0] ws_d;
 
-   assign DO_1S = ws & !ws_d;
-   assign DO = 1'b0;
+   assign DO = ws & !ws_d;
 
    always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
       if (%(RESET_CONDITION)sRSTn) begin
-         ws <= 1'b0;
-         ws_d <= 1'b0;
+         ws <= {WIDTH{1'b0}};
+         ws_d <= {WIDTH{1'b0}};
       end else begin
-         ws <= WE & %(BE_LEVEL)sBE && DI != {WIDTH{1'b0}};
+         if (WE & %(BE_LEVEL)sBE) begin
+            ws <= DI;
+         end
          ws_d <= ws;
       end
    end
