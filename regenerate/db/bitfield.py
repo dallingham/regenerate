@@ -83,7 +83,7 @@ class BitField(object):
                  'reset_input', 'reset_type', 'modified',
                  'reset_parameter', 'input_function',
                  'description', 'control_signal', 'output_is_static',
-                 'output_has_side_effect', 'values')
+                 'output_has_side_effect', 'values', 'is_error_field')
 
     def __init__(self, stop=0, start=0, name="",
                  sig_type=TYPE_READ_ONLY, descr="", reset=0):
@@ -99,6 +99,7 @@ class BitField(object):
         self.use_output_enable = False
         self.field_type = sig_type
         self.volatile = False
+        self.is_error_field = False
         self.reset_value = reset
         self.reset_input = ""
         self.reset_type = BitField.RESET_NUMERIC

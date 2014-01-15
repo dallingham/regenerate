@@ -159,6 +159,7 @@ class RegParser(object):
         self.__field.output_is_static = cnv_bool(attrs, 'static')
         self.__field.output_has_side_effect = cnv_bool(attrs, 'side_effect')
         self.__field.volatile = cnv_bool(attrs, 'volatile')
+        self.__field.is_error_field = cnv_bool(attrs, 'error_field')
         if attrs.get('type'):
             t = cnv_int(attrs, 'type')
             oneshot = cnv_int(attrs, 'oneshot')

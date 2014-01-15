@@ -166,6 +166,7 @@ def write_signal_info(ofile, field):
                 % (field.use_output_enable, field.output_is_static))
     ofile.write('field_type="%s" ' % TYPE_TO_ID[field.field_type])
     ofile.write('side_effect="%d" ' % field.output_has_side_effect)
+    ofile.write('error_field="%d" ' % field.is_error_field)
     ofile.write('volatile="%d">' % field.volatile)
     ofile.write('%s</signal>\n' % field.output_signal)
 
