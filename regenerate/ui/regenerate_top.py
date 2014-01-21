@@ -43,7 +43,7 @@ from help_window import HelpWindow
 from regenerate.db import (RegWriter, RegisterDb, Register,
                            BitField, RegProject, LOGGER, TYPES)
 from regenerate.importers import IMPORTERS
-from regenerate.settings.paths import GLADE_TOP, INSTALL_PATH, GLADE_GTXT
+from regenerate.settings.paths import GLADE_TOP, INSTALL_PATH
 from regenerate.settings import ini
 from regenerate import PROGRAM_VERSION, PROGRAM_NAME
 from error_dialogs import ErrorMsg, WarnMsg, Question
@@ -237,11 +237,11 @@ class MainWindow(BaseWindow):
         self.__filter_manage = FilterManager(filter_obj)
 
     def on_group_doc_clicked(self, obj):
-        builder = gtk.Builder()
-        builder.add_from_file(GLADE_GTXT)
-        group_doc = builder.get_object('group_text')
-        group_doc.show()
-        group_doc.run()
+        from group_doc import GroupDocEditor
+
+        (mdl, node) = self.__instance_obj.get_selected_instance()
+        inst = mdl.get_value(node, InstMdl.OBJ_COL)
+        GroupDocEditor(inst)
 
     def build_project_tab(self):
         self.__prj_short_name_obj = self.__builder.get_object('short_name')
@@ -1212,9 +1212,8 @@ class MainWindow(BaseWindow):
                     ErrorMsg("Could not save database", str(msg))
 
         self.__prj.set_new_order([item[0] for item in self.__prj_model])
-        (grps, gmap) = self.__instance_obj.get_groups()
+        grps = self.__instance_obj.get_groups()
         self.__prj.set_grouping_list(grps)
-        self.__prj.set_grouping_map(gmap)
         self.__prj.save()
         self.active.modified = False
 

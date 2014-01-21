@@ -113,10 +113,10 @@ def write_register(ofile, reg, curtime):
     if reg.ram_size:
         ofile.write('    <ram_size>%d</ram_size>\n' % reg.ram_size)
     ofile.write('    <width>%s</width>\n' % reg.width)
-    ofile.write('    <description>%s</description>\n' % 
+    ofile.write('    <description>%s</description>\n' %
                 cleanup(reg.description))
     for field in [reg.get_bit_field(key)
-                  for key in reg.get_bit_field_keys() ]:
+                  for key in reg.get_bit_field_keys()]:
         write_field(ofile, field, curtime)
     ofile.write('  </register>\n')
 

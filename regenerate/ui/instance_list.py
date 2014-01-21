@@ -30,11 +30,11 @@ class InstMdl(gtk.TreeStore):
     """
 
     (INST_COL, ID_COL, BASE_COL, SORT_COL, RPT_COL, OFF_COL,
-     FMT_COL, HDL_COL) = range(8)
+     FMT_COL, HDL_COL, OBJ_COL) = range(9)
 
     def __init__(self):
         gtk.TreeStore.__init__(self, str, str, str, gobject.TYPE_UINT64, str,
-                               str, str, str)
+                               str, str, str, object)
 
     def change_id(self, path, text):
         """
@@ -115,7 +115,16 @@ class InstMdl(gtk.TreeStore):
         Adds a new instance to the model. It is not added to the database until
         either the change_id or change_base is called.
         """
-        node = self.append(None, row=('', '', '0', 0, "1", "0", "", ""))
+        new_grp = GroupData("new_group")
+        node = self.append(None, row=(new_grp.name,
+                                      "",
+                                      "%x" % new_grp.base,
+                                      new_grp.base,
+                                      "%d" % new_grp.repeat,
+                                      "%x" % new_grp.repeat_offset,
+                                      "",
+                                      new_grp.hdl,
+                                      GroupData()))
         return self.get_path(node)
 
 
@@ -158,7 +167,7 @@ class InstanceList(object):
         data = selection.data
         drop_info = treeview.get_dest_row_at_pos(x, y)
         (name, width) = data.split(":")
-        row_data = [name, name, "0", 0, "1", width, "", ""]
+        row_data = [name, name, "0", 0, "1", width, "", "", None]
         if drop_info:
             path, position = drop_info
             if len(path) == 1:
@@ -191,10 +200,10 @@ class InstanceList(object):
                                                   "%d" % item.repeat,
                                                   "%x" % item.repeat_offset,
                                                   "",
-                                                  item.hdl))
+                                                  item.hdl,
+                                                  item))
 
-            entry_list = sorted(self.__project.get_group_map(item[0]),
-                                key=lambda x: x.offset)
+            entry_list = sorted(item.register_sets, key=lambda x: x.offset)
             for entry in entry_list:
                 self.__model.append(node, (entry.inst,
                                            entry.set,
@@ -203,7 +212,8 @@ class InstanceList(object):
                                            "%d" % entry.repeat,
                                            "%x" % entry.repeat_offset,
                                            entry.format,
-                                           entry.hdl))
+                                           entry.hdl,
+                                           None))
 
     def __build_instance_table(self, id_changed, inst_changed, base_changed,
                                repeat_changed, repeat_offset_changed,
@@ -215,8 +225,7 @@ class InstanceList(object):
         self.__obj.append_column(column)
         self.__col = column
 
-        column = EditableColumn('Subsystem', id_changed,
-                                InstMdl.ID_COL)
+        column = EditableColumn('Subsystem', id_changed, InstMdl.ID_COL)
         column.set_sort_column_id(InstMdl.ID_COL)
         column.set_min_width(125)
         self.__obj.append_column(column)
@@ -252,9 +261,7 @@ class InstanceList(object):
     def get_groups(self):
         tree_iter = self.__model.get_iter_first()
         groups = []
-        group_map = {}
         while tree_iter is not None:
-            gname = self.__model.get_value(tree_iter, InstMdl.INST_COL)
             base = self.__model.get_value(tree_iter, InstMdl.SORT_COL)
             hdl = self.__model.get_value(tree_iter, InstMdl.HDL_COL)
             try:
@@ -268,8 +275,8 @@ class InstanceList(object):
             except ValueError:
                 repeat_offset = 0
 
-            groups.append(GroupData(gname, base, hdl, repeat, repeat_offset))
-            group_map[gname] = []
+            current_group = self.__model.get_value(tree_iter, InstMdl.OBJ_COL)
+            groups.append(current_group)
 
             child = self.__model.iter_children(tree_iter)
             while child:
@@ -281,11 +288,11 @@ class InstanceList(object):
                 offset = int(offset_str, 16)
                 fmt = self.__model.get_value(child, InstMdl.FMT_COL)
                 hdl = self.__model.get_value(child, InstMdl.HDL_COL)
-                group_map[gname].append(
+                current_group.register_sets.append(
                     GroupMapData(name, inst, base, rpt, offset, fmt, hdl))
                 child = self.__model.iter_next(child)
             tree_iter = self.__model.iter_next(tree_iter)
-        return (groups, group_map)
+        return groups
 
     def new_instance(self):
         self.__obj.set_cursor(self.__model.new_instance(),

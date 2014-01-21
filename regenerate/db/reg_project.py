@@ -30,7 +30,26 @@ from collections import namedtuple
 AddrMapData = namedtuple("AddrMapData", "name base width fixed")
 GroupMapData = namedtuple("GroupMapData",
                           "set inst offset repeat repeat_offset format hdl")
-GroupData = namedtuple("GroupData", "name base hdl repeat repeat_offset")
+
+
+def cleanup(data):
+    data = data.replace(u"\u2013", "-")
+    data = data.replace(u"\u201c", "\"")
+    data = data.replace(u"\ue280a2", "*")
+    return escape(data.replace(u"\u201d", "\""))
+
+
+class GroupData(object):
+
+    def __init__(self, name="", base=0, hdl="", repeat=1,
+                 repeat_offset=0x10000):
+        self.name = name
+        self.base = base
+        self.hdl = hdl
+        self.repeat = repeat
+        self.repeat_offset = repeat_offset
+        self.register_sets = []
+        self.docs = ""
 
 
 class RegProject(object):
@@ -48,7 +67,6 @@ class RegProject(object):
         self.documentation = ""
         self.__filelist = []
         self.__groupings = []
-        self.__grouping_map = {}
         self.__addr_map_list = []
         self.__addr_map_grps = {}
         self.__exports = {}
@@ -120,25 +138,24 @@ class RegProject(object):
         """
         ofile.write('  <groupings>\n')
         for group in self.__groupings:
-            if group.name in self.__grouping_map:
-                ofile.write('    <grouping name="%s" start="%x" hdl="%s"' %
-                            (group.name, group.base, group.hdl))
-                ofile.write(' repeat="%d" repeat_offset="%d">\n' %
-                            (group.repeat, group.repeat_offset))
-                for item in self.__grouping_map[group.name]:
-                    ofile.write('      <map set="%s" inst="%s" offset="%x" ' %
-                                (item.set, item.inst, item.offset))
-                    ofile.write('repeat="%s" repeat_offset="%s"' %
-                                (item.repeat, item.repeat_offset))
-                    if item.hdl:
-                        ofile.write(' hdl="%s"' % item.hdl)
-                    if item.format:
-                        ofile.write(' format="%s"' % item.format)
-                    ofile.write("/>\n")
-                ofile.write('    </grouping>\n')
-            else:
-                ofile.write('    <grouping name="%s" start="%x"/>\n' %
-                            (group.name, group.base))
+            ofile.write('    <grouping name="%s" start="%x" hdl="%s"' %
+                        (group.name, group.base, group.hdl))
+            ofile.write(' repeat="%d" repeat_offset="%d">\n' %
+                        (group.repeat, group.repeat_offset))
+            if group.docs:
+                ofile.write("<overview>%s</overview>" %
+                            cleanup(group.docs))
+            for item in group.register_sets:
+                ofile.write('      <map set="%s" inst="%s" offset="%x" ' %
+                            (item.set, item.inst, item.offset))
+                ofile.write('repeat="%s" repeat_offset="%s"' %
+                            (item.repeat, item.repeat_offset))
+                if item.hdl:
+                    ofile.write(' hdl="%s"' % item.hdl)
+                if item.format:
+                    ofile.write(' format="%s"' % item.format)
+                ofile.write("/>\n")
+            ofile.write('    </grouping>\n')
         ofile.write('  </groupings>\n')
 
     def open(self, name):
@@ -235,11 +252,11 @@ class RegProject(object):
     def set_grouping_list(self, glist):
         self.__groupings = glist
 
-    def get_group_map(self, name):
-        return self.__grouping_map.get(name, [])
+#    def get_group_map(self, name):
+#        return self.__grouping_map.get(name, [])
 
-    def set_grouping_map(self, gmap):
-        self.__grouping_map = gmap
+#    def set_grouping_map(self, gmap):
+#        self.__grouping_map = gmap
 
     def set_grouping(self, index, name, start, hdl, repeat, repeat_offset):
         self.__modified = True
@@ -376,14 +393,13 @@ class RegProject(object):
         self.__project_exports.append(value)
 
     def start_grouping(self, attrs):
-        self.__groupings.append(GroupData(attrs['name'],
-                                          int(attrs['start'], 16),
-                                          attrs.get('hdl', ""),
-                                          int(attrs.get('repeat', 1)),
-                                          int(attrs.get('repeat_offset',
-                                                        0x10000))))
-        self._current_group = attrs['name']
-        self.__grouping_map[self._current_group] = []
+        self._current_group = GroupData(attrs['name'],
+                                        int(attrs['start'], 16),
+                                        attrs.get('hdl', ""),
+                                        int(attrs.get('repeat', 1)),
+                                        int(attrs.get('repeat_offset',
+                                                      0x10000)))
+        self.__groupings.append(self._current_group)
 
     def start_map(self, attrs):
         sname = attrs['set']
@@ -394,7 +410,7 @@ class RegProject(object):
                             int(attrs['repeat_offset']),
                             attrs.get("format", ""),
                             attrs.get("hdl", ""))
-        self.__grouping_map[self._current_group].append(data)
+        self._current_group.register_sets.append(data)
 
     def start_address_map(self, attrs):
         data = AddrMapData(attrs['name'],
@@ -404,6 +420,9 @@ class RegProject(object):
         self.__addr_map_list.append(data)
         self.__addr_map_grps[data.name] = []
         self.__current_map = data.name
+
+    def end_overview(self, text):
+        self._current_group.docs = text
 
     def end_map_group(self, text):
         self.__addr_map_grps[self.__current_map].append(text)
