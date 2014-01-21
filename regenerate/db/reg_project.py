@@ -252,12 +252,6 @@ class RegProject(object):
     def set_grouping_list(self, glist):
         self.__groupings = glist
 
-#    def get_group_map(self, name):
-#        return self.__grouping_map.get(name, [])
-
-#    def set_grouping_map(self, gmap):
-#        self.__grouping_map = gmap
-
     def set_grouping(self, index, name, start, hdl, repeat, repeat_offset):
         self.__modified = True
         self.__groupings[index] = GroupData(name, start, hdl,
