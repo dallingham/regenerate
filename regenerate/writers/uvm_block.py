@@ -138,7 +138,7 @@ class UVM_Block_Registers(WriterBase):
 
             for group in self._project.get_grouping_list():
                 used = set()
-                for grp in self._project.get_group_map(group.name):
+                for grp in group.register_sets:
                     if grp.set == dbase.set_name and grp.set not in used:
                         used.add(grp.set)
                         self.write_dbase_block(dbase, of, group,
@@ -233,14 +233,14 @@ class UVM_Block_Registers(WriterBase):
 
     def write_group_block(self, group, of, in_maps):
 
-        sname = group[0]
+        sname = group.name
         of.write("class %s_grp_reg_blk extends uvm_reg_block;\n" %
                  sname)
         of.write("\n")
         of.write("   `uvm_object_utils(%s_grp_reg_blk)\n" % sname)
         of.write("\n")
 
-        for group_entry in self._project.get_group_map(group[0]):
+        for group_entry in group.register_sets:
             if group_entry.repeat > 1:
                 of.write("   %s_%s_reg_blk %s[%d];\n" %
                          (sname, group_entry.set, group_entry.inst,
@@ -271,7 +271,7 @@ class UVM_Block_Registers(WriterBase):
                       self.endian))
         of.write("\n")
 
-        for group_entry in self._project.get_group_map(group[0]):
+        for group_entry in group.register_sets:
             if group_entry.repeat > 1:
                 name = group_entry.set
                 of.write('      for(int i = 0; i < %d; i++) begin\n' %
@@ -306,7 +306,7 @@ class UVM_Block_Registers(WriterBase):
 
         sname = dbase.set_name
 
-        gmap_list = self._project.get_group_map(group.name)
+        gmap_list = group.register_sets
         hdl_match = [grp.hdl for grp in gmap_list if grp.set == sname]
 
         of.write('  class %s_%s_reg_blk extends uvm_reg_block;\n\n'
