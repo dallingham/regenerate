@@ -405,7 +405,7 @@ class RegisterList(object):
         elif not self.__new_address_is_not_used(new_text, path):
             ErrorMsg("Address already used",
                      "The address %0x is already used by another register"
-                     % (address, 16))
+                     % int(address, 16))
         else:
             self.__reg_update_addr(register, path, new_text)
 

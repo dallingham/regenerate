@@ -1212,8 +1212,7 @@ class MainWindow(BaseWindow):
                     ErrorMsg("Could not save database", str(msg))
 
         self.__prj.set_new_order([item[0] for item in self.__prj_model])
-#        grps = self.__instance_obj.get_groups()
-#        self.__prj.set_grouping_list(grps)
+        self.__instance_obj.get_groups()
         self.__prj.save()
         self.active.modified = False
 

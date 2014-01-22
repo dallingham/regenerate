@@ -51,7 +51,7 @@ class InstMdl(gtk.TreeStore):
         items = []
         node = self.get_iter_root()
         while node:
-            items.append(self.get_value(node, 0))
+            items.append(self.get_value(node, InstMdl.INST_COL))
             node = self.iter_next(node)
 
         if text in set(items):
@@ -276,7 +276,7 @@ class InstanceList(object):
                 repeat_offset = 0
 
             current_group = self.__model.get_value(tree_iter, InstMdl.OBJ_COL)
-            groups.append(current_group)
+            current_group.register_sets = []
 
             child = self.__model.iter_children(tree_iter)
             while child:

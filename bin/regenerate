@@ -50,7 +50,12 @@ def run_gui(args):
 
     edit = MainWindow()
     if args:
-        edit.open_project(args[0], "file:///" + args[0])
+        try:
+            edit.open_project(args[0], "file:///" + args[0])
+        except IOError, msg:
+            sys.stderr.write("regenerate: error: could not project file: ")
+            sys.stderr.write("%s\n" % str(msg))
+            sys.exit(1)
     elif ini.get("user", "load_last_project", False):
         filename = ini.get("user", "last_project", None)
         if filename and os.path.exists(filename):
