@@ -378,9 +378,10 @@ class UVM_Block_Registers(WriterBase):
 
         for item in in_maps:
             mname = "%s_map" % item
+            width = min (dbase.data_bus_width / 8, 
+                         self._project.get_address_width(item))
             of.write('      %s = create_map("%s", \'h0, %d, %s, 1);\n' %
-                     (mname, mname, self._project.get_address_width(item),
-                      self.endian))
+                     (mname, mname, width, self.endian))
 
         for reg in dbase.get_all_registers():
             for item in in_maps:

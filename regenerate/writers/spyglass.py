@@ -104,7 +104,7 @@ class Spyglass(WriterBase):
             of.write("\n# %s\n\n" % dbase.set_name)
             for group in self._project.get_grouping_list():
                 used = set()
-                for grp in self._project.get_group_map(group.name):
+                for grp in group.register_sets:
                     if (grp.set == dbase.set_name and grp.inst not in used 
                         and grp.hdl != ""):
                         used.add(grp.inst)
