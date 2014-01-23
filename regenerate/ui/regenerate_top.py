@@ -638,7 +638,8 @@ class MainWindow(BaseWindow):
         from build import Build
 
         dbmap = {}
-        for item in self.__prj_model:
+        item_list = self.__prj_model
+        for item in item_list:
             name = item[ProjectModel.NAME]
             modified = item[ProjectModel.MODIFIED]
             obj = item[ProjectModel.OBJ]
@@ -1057,7 +1058,7 @@ class MainWindow(BaseWindow):
             self.__prj = RegProject(filename)
             self.__initialize_project_address_maps()
         except xml.parsers.expat.ExpatError, msg:
-            ErrorMsg("%s was not a valid project file" % filename, 
+            ErrorMsg("%s was not a valid project file" % filename,
                      str(msg))
             return
 
@@ -1065,8 +1066,10 @@ class MainWindow(BaseWindow):
         idval = self.__status_obj.get_context_id('mod')
         self.__status_obj.push(idval, "Loading %s ..." % filename)
         self.set_busy_cursor(True)
-        
-        for f in self.__prj.get_register_set():
+
+        for f in sorted(self.__prj.get_register_set(),
+                        lambda x, y: cmp(os.path.basename(x),
+                                         os.path.basename(y))):
             try:
                 self.open_xml(f, False)
             except xml.parsers.expat.ExpatError, msg:

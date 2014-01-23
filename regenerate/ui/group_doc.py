@@ -24,6 +24,7 @@ text is converted from restructuredText to HTML.
 """
 
 import gtk
+from spell import Spell
 from preview_editor import PreviewEditor, PREVIEW_ENABLED
 from regenerate.settings.paths import GLADE_GTXT
 
@@ -51,7 +52,17 @@ class GroupDocEditor(object):
             self.__prj_preview.enable()
         else:
             self.__prj_preview.disable()
+        self.__spell = Spell(builder.get_object('overview1'))
+
+        self.group_doc.connect('delete-event', self.on_delete_event)
+        self.group_doc.connect('destroy-event', self.on_destroy_event)
         self.group_doc.show()
+
+    def on_destroy_event(self, obj):
+        self.__spell.detach()
+
+    def on_delete_event(self, obj, event):
+        self.__spell.detach()
 
     def _cancel(self, obj, data):
         self.group_doc.destroy()
