@@ -268,6 +268,10 @@ class RegProject(object):
         self.__groupings.remove(GroupData(name, start, hdl,
                                           repeat, repeat_offset))
 
+    def remove_group_from_grouping_list(self, g):
+        self.__modified = True
+        self.__groupings.remove(g)
+
     def get_address_maps(self):
         return self.__addr_map_list
 

@@ -59,6 +59,9 @@ class InstMdl(gtk.TreeStore):
         else:
             node = self.get_iter(path)
             self.set_value(node, InstMdl.INST_COL, text)
+            obj = self.get_value(node, InstMdl.OBJ_COL)
+            if obj:
+                obj.inst = text
 
     def change_format(self, path, text):
         """
@@ -73,6 +76,9 @@ class InstMdl(gtk.TreeStore):
         """
         node = self.get_iter(path)
         self.set_value(node, InstMdl.HDL_COL, text)
+        obj = self.get_value(node, InstMdl.OBJ_COL)
+        if obj:
+            obj.hdl = text
 
     def change_base(self, path, text):
         """
@@ -85,6 +91,9 @@ class InstMdl(gtk.TreeStore):
             self.set_value(node, InstMdl.BASE_COL, text)
         except ValueError:
             LOGGER.error('Illegal base address: "%s"' % text)
+        obj = self.get_value(node, InstMdl.OBJ_COL)
+        if obj:
+            obj.base = int(text, 16)
 
     def change_repeat(self, path, text):
         """
@@ -97,6 +106,9 @@ class InstMdl(gtk.TreeStore):
             self.set_value(node, InstMdl.RPT_COL, text)
         except ValueError:
             LOGGER.error('Illegal repeat count: "%s"' % text)
+        obj = self.get_value(node, InstMdl.OBJ_COL)
+        if obj:
+            obj.repeat = int(text)
 
     def change_repeat_offset(self, path, text):
         """
@@ -109,6 +121,9 @@ class InstMdl(gtk.TreeStore):
             self.set_value(node, InstMdl.OFF_COL, "%x" % value)
         except ValueError:
             LOGGER.error('Illegal repeat offset column: "%s"' % text)
+        obj = self.get_value(node, InstMdl.OBJ_COL)
+        if obj:
+            obj.repeat_offset = int(text, 16)
 
     def new_instance(self):
         """

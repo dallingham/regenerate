@@ -268,6 +268,7 @@ class MainWindow(BaseWindow):
         HelpWindow(self.__builder, "project_group_help.rst")
 
     def on_remove_map_clicked(self, obj):
+        self.__prj.set_modified()
         self.__addr_map_list.remove_selected()
 
     def on_add_map_clicked(self, obj):
@@ -694,7 +695,9 @@ class MainWindow(BaseWindow):
         """
         selected = self.__instance_obj.get_selected_instance()
         if selected and selected[1]:
+            g = selected[0].get_value(selected[1], InstMdl.OBJ_COL)
             self.__instance_model.remove(selected[1])
+            self.__prj.remove_group_from_grouping_list(g)
             self.__set_module_definition_warn_flag()
             self.__prj.set_modified()
 
@@ -1075,7 +1078,7 @@ class MainWindow(BaseWindow):
             except xml.parsers.expat.ExpatError, msg:
                 ErrorMsg("%s was not a valid register set file" % f)
                 continue
-            
+
         self.__loading_project = False
         self.__prj_obj.select_path(0)
         self.__prj_model.load_icons()
