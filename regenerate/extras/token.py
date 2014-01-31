@@ -57,7 +57,7 @@ def in_groups(name, project):
     groups = []
     if name and project:
         for group in project.get_grouping_list():
-            for regset in [rs for rs in project.get_group_map(group.name)
+            for regset in [rs for rs in group.register_sets
                            if rs.set == name]:
                 fmt = regset.format if regset.format else DEFAULT_FORMAT
                 groups.append(InstData(group.name,
