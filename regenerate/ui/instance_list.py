@@ -61,7 +61,7 @@ class InstMdl(gtk.TreeStore):
             self.set_value(node, InstMdl.INST_COL, text)
             obj = self.get_value(node, InstMdl.OBJ_COL)
             if obj:
-                obj.inst = text
+                obj.name = text
 
     def change_format(self, path, text):
         """
@@ -233,7 +233,7 @@ class InstanceList(object):
     def __build_instance_table(self, id_changed, inst_changed, base_changed,
                                repeat_changed, repeat_offset_changed,
                                format_changed, hdl_changed):
-        column = EditableColumn('Intance', inst_changed,
+        column = EditableColumn('Instance', inst_changed,
                                 InstMdl.INST_COL)
         column.set_sort_column_id(InstMdl.INST_COL)
         column.set_min_width(125)
