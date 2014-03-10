@@ -1,8 +1,9 @@
 /* Read Only with one shot on read */
-module %(MODULE)s_ro1s_reg #(
-                           parameter WIDTH = 1,
-                           parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                           )
+module %(MODULE)s_ro1s_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -26,10 +27,11 @@ module %(MODULE)s_ro1s_reg #(
 endmodule
 
 /* Read/Write */
-module %(MODULE)s_rw_reg #(
-                           parameter WIDTH = 1,
-                           parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                           )
+module %(MODULE)s_rw_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -52,10 +54,11 @@ module %(MODULE)s_rw_reg #(
 endmodule
 
 /* Read/Write with one shot on write */
-module %(MODULE)s_rw1s_reg #(
-                             parameter WIDTH = 1,
-                             parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                             )
+module %(MODULE)s_rw1s_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -96,10 +99,11 @@ module %(MODULE)s_rw1s_reg #(
 endmodule
 
 /* Read/Write with one shot on write */
-module %(MODULE)s_rw1s1_reg #(
-                              parameter WIDTH = 1,
-                              parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                              )
+module %(MODULE)s_rw1s1_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -140,10 +144,11 @@ module %(MODULE)s_rw1s1_reg #(
 endmodule
 
 /* Read/Write with parallel load */
-module %(MODULE)s_rwld_reg #(
-                             parameter WIDTH = 1,
-                             parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                             )
+module %(MODULE)s_rwld_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -170,10 +175,11 @@ module %(MODULE)s_rwld_reg #(
 endmodule
 
 /* Read/Write with parallel load, with one shot on write */
-module %(MODULE)s_rwld1s_reg #(
-                               parameter WIDTH = 1,
-                               parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                               )
+module %(MODULE)s_rwld1s_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -216,10 +222,11 @@ module %(MODULE)s_rwld1s_reg #(
 endmodule
 
 /* Read/Write with parallel load, with one shot on write */
-module %(MODULE)s_rwld1s1_reg #(
-                                parameter WIDTH = 1,
-                                parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                                )
+module %(MODULE)s_rwld1s1_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -262,10 +269,11 @@ module %(MODULE)s_rwld1s1_reg #(
 endmodule
 
 /* Read/write with input signal that sets bits on one */
-module %(MODULE)s_rws_reg #(
-                            parameter WIDTH = 1,
-                            parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                            )
+module %(MODULE)s_rws_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -291,10 +299,11 @@ module %(MODULE)s_rws_reg #(
 endmodule
 
 /* Read/write with input signal that sets bits on one, one shot on write */
-module %(MODULE)s_rws1s_reg #(
-                              parameter WIDTH = 1,
-                              parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                              )
+module %(MODULE)s_rws1s_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -336,10 +345,11 @@ module %(MODULE)s_rws1s_reg #(
 endmodule
 
 /* Read/write with input signal that sets bits on one, one shot on write of 1 */
-module %(MODULE)s_rws1s1_reg #(
-                               parameter WIDTH = 1,
-                               parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                               )
+module %(MODULE)s_rws1s1_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -381,10 +391,11 @@ module %(MODULE)s_rws1s1_reg #(
 endmodule
 
 /* Write 1 to clear, bits set on input value */
-module %(MODULE)s_w1cs_reg #(
-                             parameter WIDTH = 1,
-                             parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                             )
+module %(MODULE)s_w1cs_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -415,10 +426,11 @@ module %(MODULE)s_w1cs_reg #(
 endmodule
 
 /* Write 1 to clear, bits set on input, one shot on write */
-module %(MODULE)s_w1cs1s_reg #(
-                               parameter WIDTH = 1,
-                               parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                               )
+module %(MODULE)s_w1cs1s_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -465,10 +477,11 @@ module %(MODULE)s_w1cs1s_reg #(
 endmodule
 
 /* Write 1 to clear, bits set on input, one shot on write */
-module %(MODULE)s_w1cs1s1_reg #(
-                                parameter WIDTH = 1,
-                                parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                                )
+module %(MODULE)s_w1cs1s1_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -515,10 +528,11 @@ module %(MODULE)s_w1cs1s1_reg #(
 endmodule
 
 /* Write 1 to clear, bits set on load */
-module %(MODULE)s_w1cld_reg #(
-                              parameter WIDTH = 1,
-                              parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                              )
+module %(MODULE)s_w1cld_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -550,10 +564,11 @@ module %(MODULE)s_w1cld_reg #(
 endmodule
 
 /* Write 1 to clear, bits set on input, one shot on write */
-module %(MODULE)s_w1cld1s_reg #(
-                                parameter WIDTH = 1,
-                                parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                                )
+module %(MODULE)s_w1cld1s_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -601,10 +616,11 @@ module %(MODULE)s_w1cld1s_reg #(
 endmodule
 
 /* Write 1 to clear, bits set on input, one shot on write */
-module %(MODULE)s_w1cld1s1_reg #(
-                                 parameter WIDTH = 1,
-                                 parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                                 )
+module %(MODULE)s_w1cld1s1_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -652,10 +668,11 @@ module %(MODULE)s_w1cld1s1_reg #(
 endmodule
 
 /* Read only, loaded on a control signal */
-module %(MODULE)s_rold_reg #(
-                             parameter WIDTH = 1,
-                             parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                             )
+module %(MODULE)s_rold_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -675,10 +692,11 @@ module %(MODULE)s_rold_reg #(
 endmodule
 
 /* Read only, loaded on a control signal, clear on read */
-module %(MODULE)s_rcld_reg #(
-                             parameter WIDTH = 1,
-                             parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                             )
+module %(MODULE)s_rcld_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -703,10 +721,11 @@ module %(MODULE)s_rcld_reg #(
 endmodule
 
 /* Read only, loaded on a control signal, clear on read */
-module %(MODULE)s_rv1s_reg #(
-                             parameter WIDTH = 1,
-                             parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                             )
+module %(MODULE)s_rv1s_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input              CLK,  // Clock
     input              RSTn, // Reset
@@ -735,10 +754,11 @@ module %(MODULE)s_rv1s_reg #(
 endmodule
 
 /* Read only, bits set on input, clear on read */
-module %(MODULE)s_rcs_reg #(
-                            parameter WIDTH = 1,
-                            parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                            )
+module %(MODULE)s_rcs_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -762,10 +782,11 @@ module %(MODULE)s_rcs_reg #(
 
 endmodule
 
-module %(MODULE)s_wo_reg #(
-                           parameter WIDTH = 1,
-                           parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                           )
+module %(MODULE)s_wo_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input  CLK,                 // Clock
     input  RSTn,                // Reset
@@ -797,10 +818,11 @@ module %(MODULE)s_wo_reg #(
 endmodule
 
 
-module %(MODULE)s_w1s_reg #(
-                            parameter WIDTH = 1,
-                            parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                            )
+module %(MODULE)s_w1s_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -825,10 +847,11 @@ module %(MODULE)s_w1s_reg #(
 
 endmodule
 
-module %(MODULE)s_w1s1s1_reg #(
-                               parameter WIDTH = 1,
-                               parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                               )
+module %(MODULE)s_w1s1s1_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input      CLK,     // Clock
     input      RSTn,    // Reset
@@ -869,10 +892,11 @@ module %(MODULE)s_w1s1s1_reg #(
 
 endmodule
 
-module %(MODULE)s_w1s1s_reg #(
-                              parameter WIDTH = 1,
-                              parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                              )
+module %(MODULE)s_w1s1s_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input      CLK,  // Clock
     input      RSTn, // Reset
@@ -914,10 +938,11 @@ module %(MODULE)s_w1s1s_reg #(
 endmodule
 
 /* Read/write with input signal that clears bits on one */
-module %(MODULE)s_rwc_reg #(
-                            parameter WIDTH = 1,
-                            parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                            )
+module %(MODULE)s_rwc_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,  // Clock
     input                  RSTn, // Reset
@@ -943,10 +968,11 @@ module %(MODULE)s_rwc_reg #(
 endmodule
 
 /* Read/write with input signal that clears bits on one, one shot on any write */
-module %(MODULE)s_rwc1s_reg #(
-                              parameter WIDTH = 1,
-                              parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                              )
+module %(MODULE)s_rwc1s_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,  // Clock
     input                  RSTn, // Reset
@@ -988,10 +1014,11 @@ module %(MODULE)s_rwc1s_reg #(
 endmodule
 
 /* Read/write with input signal that clears bits on one, one shot on write of 1 */
-module %(MODULE)s_rwc1s1_reg #(
-                               parameter WIDTH = 1,
-                               parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                               )
+module %(MODULE)s_rwc1s1_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,  // Clock
     input                  RSTn, // Reset
@@ -1033,10 +1060,11 @@ module %(MODULE)s_rwc1s1_reg #(
 endmodule
 
 /* Read/write when reset, reset on complement */
-module %(MODULE)s_rwrc_reg #(
-                             parameter WIDTH = 1,
-                             parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                             )
+module %(MODULE)s_rwrc_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,  // Clock
     input                  RSTn, // Reset

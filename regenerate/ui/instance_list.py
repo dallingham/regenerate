@@ -139,8 +139,8 @@ class InstMdl(gtk.TreeStore):
                                       "%x" % new_grp.repeat_offset,
                                       "",
                                       new_grp.hdl,
-                                      GroupData()))
-        return self.get_path(node)
+                                      new_grp)) 
+        return (self.get_path(node), new_grp)
 
 
 class InstanceList(object):
@@ -310,8 +310,9 @@ class InstanceList(object):
         return groups
 
     def new_instance(self):
-        self.__obj.set_cursor(self.__model.new_instance(),
-                              focus_column=self.__col, start_editing=True)
+        pos, grp = self.__model.new_instance()
+        self.__project.get_grouping_list().append(grp)
+        self.__obj.set_cursor(pos, focus_column=self.__col, start_editing=True)
 
     def get_selected_instance(self):
         return self.__obj.get_selection().get_selected()

@@ -1,8 +1,9 @@
 REG = {
-    "ro1s" : """module %(MODULE)s_ro1s_reg #(
-                           parameter WIDTH = 1,
-                           parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                           )
+    "ro1s" : """module %(MODULE)s_ro1s_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -25,10 +26,11 @@ REG = {
 
 endmodule
 """,
-    "rw" : """module %(MODULE)s_rw_reg #(
-                           parameter WIDTH = 1,
-                           parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                           )
+    "rw" : """module %(MODULE)s_rw_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -50,10 +52,11 @@ endmodule
 
 endmodule
 """,
-    "rw1s" : """module %(MODULE)s_rw1s_reg #(
-                             parameter WIDTH = 1,
-                             parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                             )
+    "rw1s" : """module %(MODULE)s_rw1s_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -93,10 +96,11 @@ endmodule
 
 endmodule
 """,
-    "rw1s1" : """module %(MODULE)s_rw1s1_reg #(
-                              parameter WIDTH = 1,
-                              parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                              )
+    "rw1s1" : """module %(MODULE)s_rw1s1_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -136,10 +140,11 @@ endmodule
 
 endmodule
 """,
-    "rwld" : """module %(MODULE)s_rwld_reg #(
-                             parameter WIDTH = 1,
-                             parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                             )
+    "rwld" : """module %(MODULE)s_rwld_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -165,10 +170,11 @@ endmodule
 
 endmodule
 """,
-    "rwld1s" : """module %(MODULE)s_rwld1s_reg #(
-                               parameter WIDTH = 1,
-                               parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                               )
+    "rwld1s" : """module %(MODULE)s_rwld1s_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -210,10 +216,11 @@ endmodule
 
 endmodule
 """,
-    "rwld1s1" : """module %(MODULE)s_rwld1s1_reg #(
-                                parameter WIDTH = 1,
-                                parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                                )
+    "rwld1s1" : """module %(MODULE)s_rwld1s1_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -255,10 +262,11 @@ endmodule
 
 endmodule
 """,
-    "rws" : """module %(MODULE)s_rws_reg #(
-                            parameter WIDTH = 1,
-                            parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                            )
+    "rws" : """module %(MODULE)s_rws_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -283,10 +291,11 @@ endmodule
 
 endmodule
 """,
-    "rws1s" : """module %(MODULE)s_rws1s_reg #(
-                              parameter WIDTH = 1,
-                              parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                              )
+    "rws1s" : """module %(MODULE)s_rws1s_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -327,10 +336,11 @@ endmodule
 
 endmodule
 """,
-    "rws1s1" : """module %(MODULE)s_rws1s1_reg #(
-                               parameter WIDTH = 1,
-                               parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                               )
+    "rws1s1" : """module %(MODULE)s_rws1s1_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -371,10 +381,11 @@ endmodule
 
 endmodule
 """,
-    "w1cs" : """module %(MODULE)s_w1cs_reg #(
-                             parameter WIDTH = 1,
-                             parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                             )
+    "w1cs" : """module %(MODULE)s_w1cs_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -404,10 +415,11 @@ endmodule
 
 endmodule
 """,
-    "w1cs1s" : """module %(MODULE)s_w1cs1s_reg #(
-                               parameter WIDTH = 1,
-                               parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                               )
+    "w1cs1s" : """module %(MODULE)s_w1cs1s_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -453,10 +465,11 @@ endmodule
 
 endmodule
 """,
-    "w1cs1s1" : """module %(MODULE)s_w1cs1s1_reg #(
-                                parameter WIDTH = 1,
-                                parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                                )
+    "w1cs1s1" : """module %(MODULE)s_w1cs1s1_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -502,10 +515,11 @@ endmodule
 
 endmodule
 """,
-    "w1cld" : """module %(MODULE)s_w1cld_reg #(
-                              parameter WIDTH = 1,
-                              parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                              )
+    "w1cld" : """module %(MODULE)s_w1cld_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -536,10 +550,11 @@ endmodule
 
 endmodule
 """,
-    "w1cld1s" : """module %(MODULE)s_w1cld1s_reg #(
-                                parameter WIDTH = 1,
-                                parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                                )
+    "w1cld1s" : """module %(MODULE)s_w1cld1s_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -586,10 +601,11 @@ endmodule
 
 endmodule
 """,
-    "w1cld1s1" : """module %(MODULE)s_w1cld1s1_reg #(
-                                 parameter WIDTH = 1,
-                                 parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                                 )
+    "w1cld1s1" : """module %(MODULE)s_w1cld1s1_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -636,10 +652,11 @@ endmodule
 
 endmodule
 """,
-    "rold" : """module %(MODULE)s_rold_reg #(
-                             parameter WIDTH = 1,
-                             parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                             )
+    "rold" : """module %(MODULE)s_rold_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -658,10 +675,11 @@ endmodule
 
 endmodule
 """,
-    "rcld" : """module %(MODULE)s_rcld_reg #(
-                             parameter WIDTH = 1,
-                             parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                             )
+    "rcld" : """module %(MODULE)s_rcld_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -685,10 +703,11 @@ endmodule
 
 endmodule
 """,
-    "rv1s" : """module %(MODULE)s_rv1s_reg #(
-                             parameter WIDTH = 1,
-                             parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                             )
+    "rv1s" : """module %(MODULE)s_rv1s_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input              CLK,  // Clock
     input              RSTn, // Reset
@@ -716,10 +735,11 @@ endmodule
 
 endmodule
 """,
-    "rcs" : """module %(MODULE)s_rcs_reg #(
-                            parameter WIDTH = 1,
-                            parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                            )
+    "rcs" : """module %(MODULE)s_rcs_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -743,10 +763,11 @@ endmodule
 
 endmodule
 """,
-    "wo" : """module %(MODULE)s_wo_reg #(
-                           parameter WIDTH = 1,
-                           parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                           )
+    "wo" : """module %(MODULE)s_wo_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input  CLK,                 // Clock
     input  RSTn,                // Reset
@@ -777,10 +798,11 @@ endmodule
 
 endmodule
 """,
-    "w1s" : """module %(MODULE)s_w1s_reg #(
-                            parameter WIDTH = 1,
-                            parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                            )
+    "w1s" : """module %(MODULE)s_w1s_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,         // Clock
     input                  RSTn,        // Reset
@@ -805,10 +827,11 @@ endmodule
 
 endmodule
 """,
-    "w1s1s1" : """module %(MODULE)s_w1s1s1_reg #(
-                               parameter WIDTH = 1,
-                               parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                               )
+    "w1s1s1" : """module %(MODULE)s_w1s1s1_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input      CLK,     // Clock
     input      RSTn,    // Reset
@@ -849,10 +872,11 @@ endmodule
 
 endmodule
 """,
-    "w1s1s" : """module %(MODULE)s_w1s1s_reg #(
-                              parameter WIDTH = 1,
-                              parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                              )
+    "w1s1s" : """module %(MODULE)s_w1s1s_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input      CLK,  // Clock
     input      RSTn, // Reset
@@ -893,10 +917,11 @@ endmodule
 
 endmodule
 """,
-    "rwc" : """module %(MODULE)s_rwc_reg #(
-                            parameter WIDTH = 1,
-                            parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                            )
+    "rwc" : """module %(MODULE)s_rwc_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,  // Clock
     input                  RSTn, // Reset
@@ -921,10 +946,11 @@ endmodule
 
 endmodule
 """,
-    "rwc1s" : """module %(MODULE)s_rwc1s_reg #(
-                              parameter WIDTH = 1,
-                              parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                              )
+    "rwc1s" : """module %(MODULE)s_rwc1s_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,  // Clock
     input                  RSTn, // Reset
@@ -965,10 +991,11 @@ endmodule
 
 endmodule
 """,
-    "rwc1s1" : """module %(MODULE)s_rwc1s1_reg #(
-                               parameter WIDTH = 1,
-                               parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                               )
+    "rwc1s1" : """module %(MODULE)s_rwc1s1_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,  // Clock
     input                  RSTn, // Reset
@@ -1009,10 +1036,11 @@ endmodule
 
 endmodule
 """,
-    "rwrc" : """module %(MODULE)s_rwrc_reg #(
-                             parameter WIDTH = 1,
-                             parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
-                             )
+    "rwrc" : """module %(MODULE)s_rwrc_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
    (
     input                  CLK,  // Clock
     input                  RSTn, // Reset
