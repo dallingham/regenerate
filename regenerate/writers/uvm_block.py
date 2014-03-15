@@ -202,7 +202,7 @@ class UVM_Block_Registers(WriterBase):
                 of.write("      %s.build();\n" % name)
             else:
                 of.write('      foreach (%s[i]) begin\n' % name)
-                of.write('         %s[i] = %s_grp_reg_blk::type_id::create($sformatf("%s[%%d]", i));\n' %
+                of.write('         %s[i] = %s_grp_reg_blk::type_id::create($sformatf("%s[%%0d]", i));\n' %
                          (name, name, name))
                 of.write('         %s[i].configure(this, "%s");\n' %
                          (name, group.hdl))

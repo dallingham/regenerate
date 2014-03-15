@@ -528,17 +528,27 @@ class Verilog(WriterBase):
 
         plist = []
         blist = []
+        bad_param = 0
         for register in self._dbase.get_all_registers():
             for field in register.get_bit_fields():
                 if field.reset_type == BitField.RESET_PARAMETER:
+
+                    if field.reset_parameter.strip() == "":
+                        param_name = "UNDEFINED_PARAMETER%d" % bad_param
+                        bad_param = bad_param + 1
+                        errmsg("Register %s, field %s did not have a parameter name specified" %
+                               (register.register_name, field.field_name))
+                    else:
+                        param_name = field.reset_parameter
+
                     if field.stop_position == field.start_position:
-                        blist.append((field.reset_parameter,
+                        blist.append((param_name,
                                       field.width,
                                       field.reset_value))
                     else:
                         plist.append((field.stop_position,
                                       field.start_position,
-                                      field.reset_parameter,
+                                      param_name,
                                       field.width,
                                       field.reset_value))
 
@@ -984,23 +994,32 @@ class Verilog2001(Verilog):
         """
         plist = []
         blist = []
+        bad_param = 0
         for register in self._dbase.get_all_registers():
             for field in register.get_bit_fields():
                 if field.reset_type == BitField.RESET_PARAMETER:
+                    if field.reset_parameter.strip() == "":
+                        param_name = "UNDEFINED_PARAMETER%d" % bad_param
+                        bad_param = bad_param + 1
+                        errmsg("Register %s, field %s did not have a parameter name specified" %
+                               (register.register_name, field.field_name))
+                    else:
+                        param_name = field.reset_parameter
+
                     if field.stop_position == field.start_position:
-                        blist.append((field.reset_parameter,
+                        blist.append((param_name,
                                       field.width,
                                       field.reset_value))
                     else:
                         plist.append((field.stop_position,
                                       field.start_position,
-                                      field.reset_parameter,
+                                      param_name,
                                       field.width,
                                       field.reset_value))
 
         if plist or blist:
-            params = ["parameter %s = %d'h%x" % item for item in blist] + \
-                ["parameter [%d:%d] %s = %d'h%x" % item for item in plist]
+            params = ["bit %s = %d'h%x" % item for item in blist] + \
+                ["bit [%d:%d] %s = %d'h%x" % item for item in plist]
             self._wrln('module %s\n   #(\n    ' % self._module)
             self._wrln(",\n    ".join(params))
             self._wrln('\n   )\n   (\n')
