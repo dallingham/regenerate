@@ -23,7 +23,7 @@ Parses the register database, loading the database.
 
 import xml.parsers.expat
 
-from register import Register
+from regenerate.db.register import Register
 from regenerate.db import BitField, ID_TO_TYPE
 
 
@@ -34,7 +34,7 @@ def cnv_hex(attrs, key, default=0):
     """
     try:
         return int(attrs[key], 16)
-    except:
+    except ValueError:
         return default
 
 
@@ -45,7 +45,7 @@ def cnv_int(attrs, key, default=0):
     """
     try:
         return int(attrs.get(key))
-    except:
+    except ValueError:
         return default
 
 
@@ -56,7 +56,9 @@ def cnv_bool(attrs, key, default=False):
     """
     try:
         return bool(int(attrs[key]))
-    except:
+    except ValueError:
+        return default
+    except KeyError:
         return default
 
 
@@ -161,25 +163,25 @@ class RegParser(object):
         self.__field.volatile = cnv_bool(attrs, 'volatile')
         self.__field.is_error_field = cnv_bool(attrs, 'error_field')
         if attrs.get('type'):
-            t = cnv_int(attrs, 'type')
+            tval = cnv_int(attrs, 'type')
             oneshot = cnv_int(attrs, 'oneshot')
-            if t == BitField.READ_ONLY:
+            if tval == BitField.READ_ONLY:
                 self.__field.field_type = BitField.TYPE_READ_ONLY
-            elif t == BitField.READ_WRITE:
+            elif tval == BitField.READ_WRITE:
                 if oneshot == BitField.ONE_SHOT_ANY:
                     self.__field.field_type = BitField.TYPE_READ_WRITE_1S
                 elif oneshot == BitField.ONE_SHOT_ONE:
                     self.__field.field_type = BitField.TYPE_READ_WRITE_1S_1
                 else:
                     self.__field.field_type = BitField.TYPE_READ_WRITE
-            elif t == BitField.WRITE_1_TO_CLEAR:
+            elif tval == BitField.WRITE_1_TO_CLEAR:
                 if oneshot == BitField.ONE_SHOT_ANY:
                     self.__field.field_type = BitField.TYPE_WRITE_1_TO_CLEAR_SET_1S
                 elif oneshot == BitField.ONE_SHOT_ONE:
                     self.__field.field_type = BitField.TYPE_WRITE_1_TO_CLEAR_SET_1S_1
                 else:
                     self.__field.field_type = BitField.TYPE_WRITE_1_TO_CLEAR_SET
-            elif t == BitField.WRITE_1_TO_SET:
+            elif tval == BitField.WRITE_1_TO_SET:
                 self.__field.field_type = BitField.TYPE_WRITE_1_TO_SET
             else:
                 self.__field.field_type = BitField.TYPE_WRITE_ONLY

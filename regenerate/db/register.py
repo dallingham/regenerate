@@ -22,7 +22,7 @@ Provides the register description. Contains the general information about the
 register, including the list of bit fields.
 """
 
-from value import Value
+from regenerate.db.value import Value
 
 
 class Register(object):
@@ -58,9 +58,9 @@ class Register(object):
             for val in range(field.start_position, field.stop_position + 1):
                 bit.add(val)
         all_bits = set(range(0, self.width))
-        l = sorted(list(bit.difference(all_bits)))
-        if l:
-            return l[0]
+        sorted_bits = sorted(list(bit.difference(all_bits)))
+        if sorted_bits:
+            return sorted_bits[0]
         else:
             return 0
 

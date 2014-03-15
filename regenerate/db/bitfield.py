@@ -25,6 +25,7 @@ feature allows us to use a named property like a class variable. When accessed,
 it calls the set/get function to handle any processing needed.
 """
 
+
 def clean_signal(name):
     """
     Removes white space from a string, replacing them with underscores.

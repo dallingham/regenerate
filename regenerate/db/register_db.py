@@ -23,8 +23,8 @@ Provides the container database for a set of registers.
 import re
 import os
 import xml
-from reg_parser import RegParser
-from reg_writer import RegWriter
+from regenerate.db.reg_parser import RegParser
+from regenerate.db.reg_writer import RegWriter
 
 from regenerate.settings import rules
 

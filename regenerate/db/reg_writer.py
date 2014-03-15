@@ -21,7 +21,6 @@
 Writes the XML file containing all the information in the register database
 """
 
-import time
 import os
 from xml.sax.saxutils import escape
 from regenerate.db import BitField, TYPE_TO_ID
@@ -51,8 +50,6 @@ class RegWriter(object):
         """
         Saves the data to the specified XML file.
         """
-        curtime = int(time.time())
-
         create_backup_file(filename)
         ofile = open(filename, "w")
         ofile.write('<?xml version="1.0"?>\n')
@@ -68,7 +65,7 @@ class RegWriter(object):
         ofile.write("  <overview>%s</overview>\n" %
                     cleanup(self.dbase.overview_text))
 
-        self.write_signal_list(ofile, curtime)
+        self.write_signal_list(ofile)
         ofile.write('</module>\n')
         ofile.close()
 
@@ -92,16 +89,16 @@ class RegWriter(object):
                     (self.dbase.reset_active_level, self.dbase.reset_name))
         ofile.write('  </ports>\n')
 
-    def write_signal_list(self, ofile, curtime):
+    def write_signal_list(self, ofile):
         """
         Writes the signal list to the output file
         """
         for reg in [self.dbase.get_register(rkey)
                     for rkey in self.dbase.get_keys()]:
-            write_register(ofile, reg, curtime)
+            write_register(ofile, reg)
 
 
-def write_register(ofile, reg, curtime):
+def write_register(ofile, reg):
     """
     Writes the specified register to the output file
     """
@@ -117,18 +114,19 @@ def write_register(ofile, reg, curtime):
                 cleanup(reg.description))
     for field in [reg.get_bit_field(key)
                   for key in reg.get_bit_field_keys()]:
-        write_field(ofile, field, curtime)
+        write_field(ofile, field)
     ofile.write('  </register>\n')
 
 
 def cleanup(data):
+    "Remove some unicode characters with standard ASCII characters"
     data = data.replace(u"\u2013", "-")
     data = data.replace(u"\u201c", "\"")
     data = data.replace(u"\ue280a2", "*")
     return escape(data.replace(u"\u201d", "\""))
 
 
-def write_field(ofile, field, curtime):
+def write_field(ofile, field):
     """
     Writes the specified bit field to the output file
     """
@@ -152,10 +150,11 @@ def write_input_info(ofile, field):
     """
     if field.input_signal:
         if field.control_signal:
-            ld = ' load="%s"' % field.control_signal
+            ldstr = ' load="%s"' % field.control_signal
         else:
-            ld = ""
-        ofile.write('      <input%s>%s</input>\n' % (ld, field.input_signal))
+            ldstr = ""
+        ofile.write('      <input%s>%s</input>\n' % (ldstr,
+                                                     field.input_signal))
 
 
 def write_signal_info(ofile, field):

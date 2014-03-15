@@ -33,6 +33,7 @@ GroupMapData = namedtuple("GroupMapData",
 
 
 def cleanup(data):
+    "Convert some unicode characters to standard ASCII"
     data = data.replace(u"\u2013", "-")
     data = data.replace(u"\u201c", "\"")
     data = data.replace(u"\ue280a2", "*")
@@ -40,7 +41,7 @@ def cleanup(data):
 
 
 class GroupData(object):
-
+    """Basic group information"""
     def __init__(self, name="", base=0, hdl="", repeat=1,
                  repeat_offset=0x10000):
         self.name = name
@@ -268,9 +269,9 @@ class RegProject(object):
         self.__groupings.remove(GroupData(name, start, hdl,
                                           repeat, repeat_offset))
 
-    def remove_group_from_grouping_list(self, g):
+    def remove_group_from_grouping_list(self, grp):
         self.__modified = True
-        self.__groupings.remove(g)
+        self.__groupings.remove(grp)
 
     def get_address_maps(self):
         return self.__addr_map_list
