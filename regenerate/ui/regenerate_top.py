@@ -1554,6 +1554,16 @@ class MainWindow(BaseWindow):
                               % (field.stop_position, field.start_position)
                     msg.append(txt)
                     warn_bit = True
+                if check_reset(field):
+                    txt = "Missing reset parameter name for '%s'" % \
+                          field.field_name
+                    if field.start_position == field.stop_position:
+                        txt = txt + " (bit %d)" % field.start_position
+                    else:
+                        txt = txt + "(bits [%d:%d])" \
+                              % (field.stop_position, field.start_position)
+                    msg.append(txt)
+                    warn_bit = True
         if mark and not self.__loading_project:
             self.__warn_reg_descr.set_property('visible', warn_reg)
             self.__warn_bit_list.set_property('visible', warn_bit)
@@ -1714,7 +1724,13 @@ def duplicate_register(dbase, reg):
 
 
 def check_field(field):
-    if field.description:
-        return None
-    else:
+    if field.description.strip() == "":
         return gtk.STOCK_DIALOG_WARNING
+    return None
+
+
+def check_reset(field):
+    if (field.reset_type == BitField.RESET_PARAMETER and
+        field.reset_parameter.strip() == ""):
+        return gtk.STOCK_DIALOG_WARNING
+    return None

@@ -48,13 +48,13 @@ class BitModel(gtk.ListStore):
         Initialize the base class with the object types that we are going to
         be adding to the model.
         """
-        gtk.ListStore.__init__(self, str, str, str, str, str, str, int, object)
+        gtk.ListStore.__init__(self, str, str, str, str, str, str,
+                               int, object)
 
     def append_field(self, field):
         """
         Adds the field to the model, filling out the fields in the model.
         """
-
         node = self.append(row=[
             None,
             bits(field),
