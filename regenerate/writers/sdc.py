@@ -53,18 +53,24 @@ class Sdc(WriterBase):
                             for i in range(0, grp.repeat):
                                 base = get_signal_base(field)
                                 for j in range(0, group.repeat):
-                                    path = build_format(grp.hdl, j, i)
+                                    path = build_format(group.hdl, j, grp.hdl, i)
                                     signal_name = "%s/%s" % (path, base)
                                     of.write("set_multicycle -from [get_cells(%s)] -setup 2\n" % signal_name)
         of.close()
 
-def build_format(hdl, top_count, lower_count):
-    hdl = hdl.replace(".", "/")
-    hdl = hdl.replace("%0g", "%(g)d")
-    hdl = hdl.replace("%g", "%(g)d")
-    hdl = hdl.replace("%0d", "%(d)d")
-    hdl = hdl.replace("%d", "%(d)d")
-    return hdl % { 'g': top_count, 'd': lower_count } 
+def build_format(top_hdl, top_count, lower_hdl, lower_count):
+    if top_hdl and lower_hdl:
+        top_hdl = top_hdl.replace("%0d", "%(d)d")
+        top_hdl = top_hdl.replace(".", "/") % { 'd' : top_count }
+        lower_hdl = lower_hdl.replace("%0d", "%(d)d")
+        lower_hdl = lower_hdl.replace(".", "/") % { 'd' : lower_count}
+        return "%s/%s" % (top_hdl, lower_hdl)
+    elif lower_hdl:
+        lower_hdl = lower_hdl.replace("%0d", "%(d)d")
+        print lower_hdl
+        lower_hdl = lower_hdl.replace(".", "/") % { 'd' : lower_count}
+    else:
+        return ""
 
 def all_fields(dbase):
     f = []
