@@ -408,7 +408,7 @@ module %(MODULE)s_w1cs_reg
 
    genvar                  i;
    generate
-      for(i = 0; i < WIDTH; i = i + 1) begin
+      for(i = 0; i < WIDTH; i = i + 1) begin : u
          always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
             if (%(RESET_CONDITION)sRSTn) begin
                DO[i] <= RVAL[i];
@@ -447,7 +447,7 @@ module %(MODULE)s_w1cs1s_reg
 
    genvar                  i;
    generate
-      for(i = 0; i < WIDTH; i = i + 1) begin
+      for(i = 0; i < WIDTH; i = i + 1) begin : u
          always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
             if (%(RESET_CONDITION)sRSTn) begin
                DO[i] <= RVAL[i];
@@ -498,7 +498,7 @@ module %(MODULE)s_w1cs1s1_reg
 
    genvar                  i;
    generate
-      for(i = 0; i < WIDTH; i = i + 1) begin
+      for(i = 0; i < WIDTH; i = i + 1) begin : u
          always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
             if (%(RESET_CONDITION)sRSTn) begin
                DO[i] <= RVAL[i];
@@ -546,7 +546,7 @@ module %(MODULE)s_w1cld_reg
 
    genvar                  i;
    generate
-      for(i = 0; i < WIDTH; i = i + 1) begin
+      for(i = 0; i < WIDTH; i = i + 1) begin : u
          always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
             if (%(RESET_CONDITION)sRSTn) begin
                DO[i] <= RVAL[i];
@@ -586,7 +586,7 @@ module %(MODULE)s_w1cld1s_reg
 
    genvar                  i;
    generate
-      for(i = 0; i < WIDTH; i = i + 1) begin
+      for(i = 0; i < WIDTH; i = i + 1) begin : u
          always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
             if (%(RESET_CONDITION)sRSTn) begin
                DO[i] <= RVAL[i];
@@ -638,7 +638,7 @@ module %(MODULE)s_w1cld1s1_reg
 
    genvar                  i;
    generate
-      for(i = 0; i < WIDTH; i = i + 1) begin
+      for(i = 0; i < WIDTH; i = i + 1) begin : u
          always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
             if (%(RESET_CONDITION)sRSTn) begin
                DO[i] <= RVAL[i];

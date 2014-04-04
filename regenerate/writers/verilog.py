@@ -131,7 +131,6 @@ def reset_value(field, start, stop):
             return "%s" % (field.reset_input)
         else:
             return "%s[%d:%d]" % (field.reset_input, stop, start)
-        end
     else:
         if stop == start:
             return "%s" % (field.reset_parameter)
