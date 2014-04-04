@@ -45,6 +45,8 @@ class IpXactParser(object):
         self._fld_width = 0
         self._token_list = []
         self._in_maps = False
+        self._block_offset = 0
+        self._block_list = [0]
 
     def import_data(self, input_file):
         """
@@ -94,10 +96,17 @@ class IpXactParser(object):
 
     def end_spirit_addressOffset(self, text):
         if self._reg:
-            self._reg.address = int(text)
+            self._reg.address = int(text, 0) + self._block_offset
+
+    def end_spirit_addressBlock(self, text):
+        self._block_offset = self._block_list.pop()
+
+    def end_spirit_baseAddress(self, text):
+        self._block_list.append(self._block_offset)
+        self._block_offset = self._block_offset + int(text, 0)
 
     def end_spirit_size(self, text):
-        size = int(text)
+        size = int(text, 0)
         if self._reg:
             self._reg.width = size
 
@@ -131,10 +140,10 @@ class IpXactParser(object):
             self._reg.description = " ".join(text.split())
 
     def end_spirit_bitOffset(self, text):
-        self._fld_start = int(text)
+        self._fld_start = int(text, 0)
 
     def end_spirit_bitWidth(self, text):
-        self._fld_width = int(text)
+        self._fld_width = int(text, 0)
 
     def start_spirit_memoryMaps(self, attrs):
         self._in_maps = True
