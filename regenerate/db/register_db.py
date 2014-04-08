@@ -72,6 +72,14 @@ class RegisterDb(object):
         self.__registers = {}
         self.set_name = ""
 
+    def total_bits(self):
+        bits = 0
+        for key in self.__registers.keys():
+            reg = self.__registers[key]
+            for field in reg.get_bit_fields():
+                bits += field.width
+        return bits
+
     def get_keys(self):
         """
         Returns the register keys, which is the address of the register
