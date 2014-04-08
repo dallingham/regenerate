@@ -736,7 +736,16 @@ class MainWindow(BaseWindow):
         submenu.show()
         menu.set_submenu(submenu)
 
+    def update_bit_count(self):
+        if self.dbase:
+            text = "%d" % self.dbase.total_bits()
+        else:
+            text = ""
+        self.__builder.get_object('reg_count').set_text(text)
+
     def on_notebook_switch_page(self, obj, page, page_num):
+        if page_num == 1:
+            self.update_bit_count()
         if self.__reglist_obj.get_selected_register():
             self.__reg_selected.set_sensitive(page_num == 0)
         else:
@@ -1305,6 +1314,8 @@ class MainWindow(BaseWindow):
         self.__address_width_obj.set_text(str(self.dbase.address_bus_width))
         self.__data_width_obj.set_active(self.dbase.data_bus_width != 32)
         self.__byte_level_obj.set_active(self.dbase.byte_strobe_active_level)
+
+        self.update_bit_count()
 
         self.__set_description_warn_flag()
         self.__set_module_definition_warn_flag()
