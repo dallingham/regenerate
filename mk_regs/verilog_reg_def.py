@@ -76,8 +76,6 @@ endmodule
       end else begin
          if (WE & %(BE_LEVEL)sBE) begin
             DO <= DI;
-         end else begin
-            DO <= DO;
          end
       end
    end
@@ -668,8 +666,8 @@ endmodule
    always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
       if (%(RESET_CONDITION)sRSTn) begin
          DO <= RVAL;
-      end else begin
-         DO <= (LD) ? IN : DO;
+      end else if (LD) begin
+         DO <= IN;
       end
    end
 
