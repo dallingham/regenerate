@@ -127,9 +127,15 @@ def reset_value(field, start, stop):
         reset = (field.reset_value >> (start - field.start_position))
         return "%d'h%x" % (field_width, reset & 0xff)
     elif field.reset_type == BitField.RESET_INPUT:
-        return "%s[%d:%d]" % (field.reset_input, stop, start)
+        if stop == start:
+            return "%s" % (field.reset_input)
+        else:
+            return "%s[%d:%d]" % (field.reset_input, stop, start)
     else:
-        return "%s[%d:%d]" % (field.reset_parameter, stop, start)
+        if stop == start:
+            return "%s" % (field.reset_parameter)
+        else:
+            return "%s[%d:%d]" % (field.reset_parameter, stop, start)
 
 
 def break_on_byte_boundaries(start, stop):

@@ -35,29 +35,6 @@ class Sdc(WriterBase):
         self.dblist = dblist
         self._ofile = None
 
-    def find_static_outputs(self):
-        static_signals = set()
-
-        for reg in [self._dbase.get_register(reg_key)
-                    for reg_key in self._dbase.get_keys()]:
-            for field in [reg.get_bit_field(field_key)
-                          for field_key in reg.get_bit_field_keys()]:
-                if field.use_output_enable and field.output_is_static:
-                    if field.output_signal:
-                        static_signals.add(field.output_signal)
-        return static_signals
-
-    def _build_group_maps(self):
-        group_maps = {}
-        for group in self._project.get_grouping_list():
-            in_maps = set()
-            for addr_map in self._project.get_address_maps():
-                map_list = self._project.get_address_map_groups(addr_map.name)
-                if not map_list or group.name in map_list:
-                    in_maps.add(addr_map.name)
-            group_maps[group] = in_maps
-        return group_maps
-
     def write(self, filename):
         """
         Writes the output file
@@ -69,25 +46,49 @@ class Sdc(WriterBase):
 
             for group in self._project.get_grouping_list():
                 used = set()
-                for grp in self._project.get_group_map(group.name):
-                    print grp
-                    if grp.set == dbase.set_name and grp.set not in used:
+                for grp in group.register_sets:
+                    if grp.set == dbase.set_name and grp.set not in used and grp.hdl:
                         used.add(grp.set)
-                        for reg in dbase.get_all_registers():
-                            for field in reg.get_bit_fields():
-                                if (field.use_output_enable and field.output_signal and
-                                    field.output_is_static):
-                                    for i in range(0, grp.repeat):
-                                        base = field.output_signal.split('*')
-                                        print base 
-                                        if len(base) > 1:
-                                            base = "%s%d%s" % (base[0], field.start_positionq, base[1])
-                                        else:
-                                            base = base[0]
-                                        if grp.repeat > 1:
-                                            path = grp.hdl % i
-                                        else:
-                                            path = grp.hdl
-                                        signal_name = "%s.%s" % (path, base)
-                                        of.write("set_multicycle -from %s;\n" % signal_name)
+                        for field in all_fields(dbase):
+                            for i in range(0, grp.repeat):
+                                base = get_signal_base(field)
+                                for j in range(0, group.repeat):
+                                    path = build_format(group.hdl, j, grp.hdl, i)
+                                    signal_name = "%s/%s" % (path, base)
+                                    of.write("set_multicycle -from [get_cells(%s)] -setup 2\n" % signal_name)
         of.close()
+
+def build_format(top_hdl, top_count, lower_hdl, lower_count):
+    if top_hdl and lower_hdl:
+        top_hdl = top_hdl.replace("%0d", "%(d)d")
+        top_hdl = top_hdl.replace(".", "/") % { 'd' : top_count }
+        lower_hdl = lower_hdl.replace("%0d", "%(d)d")
+        lower_hdl = lower_hdl.replace(".", "/") % { 'd' : lower_count}
+        return "%s/%s" % (top_hdl, lower_hdl)
+    elif lower_hdl:
+        lower_hdl = lower_hdl.replace("%0d", "%(d)d")
+        print lower_hdl
+        lower_hdl = lower_hdl.replace(".", "/") % { 'd' : lower_count}
+    else:
+        return ""
+
+def all_fields(dbase):
+    f = []
+    for reg in dbase.get_all_registers():
+        for field in reg.get_bit_fields():
+            if has_static_output(field):
+                f.append(field)
+    return f
+
+def has_static_output(field):
+    return (field.use_output_enable and field.output_signal and 
+            field.output_is_static)
+
+
+def get_signal_base(field):
+    base = field.output_signal.split('*')
+    if len(base) > 1:
+        base = "%s%d%s" % (base[0], field.start_position, base[1])
+    else:
+        base = base[0]
+    return base

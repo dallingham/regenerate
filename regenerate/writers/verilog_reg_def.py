@@ -76,8 +76,6 @@ endmodule
       end else begin
          if (WE & %(BE_LEVEL)sBE) begin
             DO <= DI;
-         end else begin
-            DO <= DO;
          end
       end
    end
@@ -398,7 +396,7 @@ endmodule
 
    genvar                  i;
    generate
-      for(i = 0; i < WIDTH; i = i + 1) begin
+      for(i = 0; i < WIDTH; i = i + 1) begin : u
          always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
             if (%(RESET_CONDITION)sRSTn) begin
                DO[i] <= RVAL[i];
@@ -436,7 +434,7 @@ endmodule
 
    genvar                  i;
    generate
-      for(i = 0; i < WIDTH; i = i + 1) begin
+      for(i = 0; i < WIDTH; i = i + 1) begin : u
          always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
             if (%(RESET_CONDITION)sRSTn) begin
                DO[i] <= RVAL[i];
@@ -486,7 +484,7 @@ endmodule
 
    genvar                  i;
    generate
-      for(i = 0; i < WIDTH; i = i + 1) begin
+      for(i = 0; i < WIDTH; i = i + 1) begin : u
          always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
             if (%(RESET_CONDITION)sRSTn) begin
                DO[i] <= RVAL[i];
@@ -533,7 +531,7 @@ endmodule
 
    genvar                  i;
    generate
-      for(i = 0; i < WIDTH; i = i + 1) begin
+      for(i = 0; i < WIDTH; i = i + 1) begin : u
          always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
             if (%(RESET_CONDITION)sRSTn) begin
                DO[i] <= RVAL[i];
@@ -572,7 +570,7 @@ endmodule
 
    genvar                  i;
    generate
-      for(i = 0; i < WIDTH; i = i + 1) begin
+      for(i = 0; i < WIDTH; i = i + 1) begin : u
          always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
             if (%(RESET_CONDITION)sRSTn) begin
                DO[i] <= RVAL[i];
@@ -623,7 +621,7 @@ endmodule
 
    genvar                  i;
    generate
-      for(i = 0; i < WIDTH; i = i + 1) begin
+      for(i = 0; i < WIDTH; i = i + 1) begin : u
          always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
             if (%(RESET_CONDITION)sRSTn) begin
                DO[i] <= RVAL[i];
@@ -668,8 +666,8 @@ endmodule
    always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
       if (%(RESET_CONDITION)sRSTn) begin
          DO <= RVAL;
-      end else begin
-         DO <= (LD) ? IN : DO;
+      end else if (LD) begin
+         DO <= IN;
       end
    end
 

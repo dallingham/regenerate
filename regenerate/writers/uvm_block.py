@@ -205,8 +205,11 @@ class UVMBlockRegisters(WriterBase):
                 of.write('      foreach (%s[i]) begin\n' % name)
                 of.write('         %s[i] = %s_grp_reg_blk::type_id::create($sformatf("%s[%%0d]", i));\n' %
                          (name, name, name))
-                of.write('         %s[i].configure(this, "%s");\n' %
-                         (name, group.hdl))
+                if group.hdl:
+                    of.write('         %s[i].configure(this, $sformatf("%s", i));\n' %
+                             (name, group.hdl))
+                else:
+                    of.write('         %s[i].configure(this, "");\n' % name)
                 of.write("         %s[i].build();\n" % name)
                 of.write("      end\n")
 
@@ -227,6 +230,7 @@ class UVMBlockRegisters(WriterBase):
                              (data.name, name, data.name, grp_data[0].base,
                               grp_data[0].repeat_offset))
                     of.write("      end\n")
+        of.write('      lock_model();\n')
         of.write("\n")
         of.write("   endfunction: build\n")
         of.write("\n")
@@ -279,8 +283,11 @@ class UVMBlockRegisters(WriterBase):
                          group_entry.repeat)
                 of.write('         %s[i] = %s_%s_reg_blk::type_id::create($sformatf("%s[%%0d]", i));\n' %
                          (group_entry.inst, sname, name, group_entry.inst))
-                of.write('         %s[i].configure(this, $sformatf("%s", i));\n' %
-                         (group_entry.inst, group_entry.hdl))
+                if group_entry.hdl:
+                    of.write('         %s[i].configure(this, $sformatf("%s", i));\n' %
+                             (group_entry.inst, group_entry.hdl))
+                else:
+                    of.write('         %s[i].configure(this, "");\n' % group_entry.inst)
                 of.write("         %s[i].build();\n" % group_entry.inst)
                 for item in in_maps:
                     of.write("         %s_map.add_submap(%s[i].%s_map, 'h%x + (i * 'h%x));\n" %
@@ -397,7 +404,6 @@ class UVMBlockRegisters(WriterBase):
 
         of.write('\n')
 
-        of.write('      lock_model();\n')
         of.write('    endfunction : build\n\n')
 
         of.write('    function void sample(uvm_reg_addr_t offset, '
