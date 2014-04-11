@@ -256,13 +256,14 @@ class OdtDoc(WriterBase):
                 table_cell = TXTCNTS
                 table_end_cell = TXTEND
 
-            text = calc_range(bit_range.stop_position, bit_range.start_position)
+            text = calc_range(bit_range.stop_position,
+                              bit_range.start_position)
             self.write_table_cell(table_cell, CELLBODY, text)
 
             if bit_range.reset_type == BitField.RESET_NUMERIC:
-                cols = [ TYPE_MAP[bit_range.field_type],
-                         rst_val(bit_range.reset_value),
-                         bit_range.field_name]
+                cols = [TYPE_MAP[bit_range.field_type],
+                        rst_val(bit_range.reset_value),
+                        bit_range.field_name]
                 description = bit_range.description
             else:
                 cols = [TYPE_MAP[bit_range.field_type],

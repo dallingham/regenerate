@@ -731,7 +731,7 @@ class Verilog(WriterBase):
                                                           field.stop_position)
                     for pos in boundaries:
                         val = "   %s %-10s %s;" % (self._wire_type, "",
-                                                  oneshot_name(base, pos[0]))
+                                                   oneshot_name(base, pos[0]))
                         local_regs.append(val)
 
         if local_regs:
@@ -754,16 +754,16 @@ class Verilog(WriterBase):
 
         for address in sorted(self._word_fields.keys()):
             width = self._addr_width - self._lower_bit
-            self._wrln("   wire %s = (~prev_write & %s) & (%s == %s);\n" % (
-                    write_strobe(address), self._write_strobe, self._addr,
-                    binary(address >> self._lower_bit, width)))
+            self._wrln("   wire %s = (~prev_write & %s) & (%s == %s);\n" %
+                       (write_strobe(address), self._write_strobe, self._addr,
+                        binary(address >> self._lower_bit, width)))
 
         addr_keys = sorted(self.__generate_read_strobes(self._data_width))
         for address in addr_keys:
             width = self._addr_width - self._lower_bit
-            self._wrln("   wire %s  = %s & (%s == %s);\n" % (
-                    read_strobe(address), self._read_strobe, self._addr,
-                    binary(address >> self._lower_bit, width)))
+            self._wrln("   wire %s  = %s & (%s == %s);\n" %
+                       (read_strobe(address), self._read_strobe, self._addr,
+                        binary(address >> self._lower_bit, width)))
 
     def _write_output_assignments(self):
         """
@@ -960,7 +960,8 @@ class Verilog(WriterBase):
                    (data_out.lower(), self._data_width))
         self._wrln('            endcase\n')
         self._wrln('         end else begin\n')
-        self._wrln('            mux_%s <= %d\'h0;\n' % (dout, self._data_width))
+        self._wrln('            mux_%s <= %d\'h0;\n' %
+                   (dout, self._data_width))
         self._wrln('         end\n')
         self._wrln('      end\n')
         self._wrln('   end\n\n')
@@ -1032,15 +1033,15 @@ class Verilog2001(Verilog):
         total = len(ports)
 
         max_len = max([len(d[2]) for d in ports]) + 2
-        max_type = max([len(d[0] ) for d in ports])
-        max_slice = max([len(d[1] ) for d in ports])
+        max_type = max([len(d[0]) for d in ports])
+        max_slice = max([len(d[1]) for d in ports])
         max_col = max_len + max_type + max_slice + 8
         csep = "\n" + " " * (max_col-1) + "// "
 
         commenter = textwrap.TextWrapper(width=max_col)
 
-        fmt_string = "    %%-%ds %%-%ds %%-%ds // %%s\n" % (max_type, max_slice, max_len)
-
+        fmt_string = "    %%-%ds %%-%ds %%-%ds // %%s\n" % (
+            max_type, max_slice, max_len)
 
         for data in ports:
             comment = csep.join(commenter.wrap(data[3]))
@@ -1126,8 +1127,8 @@ class SystemVerilog(Verilog2001):
                    (dout, self._data_width))
         self._wrln('           endcase\n')
         self._wrln('         end else begin\n')
-        self._wrln('            mux_%s <= %d\'h0;\n' % (dout, self._data_width))
+        self._wrln('            mux_%s <= %d\'h0;\n' % (dout,
+                                                        self._data_width))
         self._wrln('         end\n')
         self._wrln('      end\n')
         self._wrln('   end\n\n')
-

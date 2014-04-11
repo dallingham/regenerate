@@ -2,12 +2,14 @@ from distutils.core import setup
 
 setup(
     name='regenerate',
-    version='0.9.6',
+    version='0.9.7',
     license='License.txt',
     author='Donald N. Allingham',
     author_email='dallingham@gmail.com',
     description='Register editor for ASIC/FPGA designs',
-    long_description='Allows users to manange registers for ASIC and FPGA designs. Capable of generating Verilog RTL, test code, C and assembler header files, and documentation.',
+    long_description='Allows users to manange registers for '
+    'ASIC and FPGA designs. Capable of generating Verilog '
+    'RTL, test code, C and assembler header files, and documentation.',
     packages=["regenerate",
               "regenerate.db",
               "regenerate.importers",
@@ -28,4 +30,3 @@ setup(
         'Programming Language :: Python',
         ],
     )
-

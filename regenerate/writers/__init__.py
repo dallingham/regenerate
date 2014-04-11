@@ -165,9 +165,9 @@ except ImportError:
 PRJ_EXPORTERS.append((OdtSpec, ("Specification", "OpenDocument"),
                       "OpenDocument files", ".odt", 'spec-odt'))
 
-from uvm_block import UVM_Block_Registers
+from uvm_block import UVMBlockRegisters
 
-PRJ_EXPORTERS.append((UVM_Block_Registers, ("Test", "UVM Registers"),
+PRJ_EXPORTERS.append((UVMBlockRegisters, ("Test", "UVM Registers"),
                       "SystemVerilog files", ".sv", 'proj-uvm'))
 
 #-----------------------------------------------------------------------------
