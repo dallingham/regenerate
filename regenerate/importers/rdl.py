@@ -143,7 +143,8 @@ class RDLParser:
             match = re.match("\s*}\s*([A-Za-z_0-9]+)\s*@(.+)\s*;", line)
             if match:
                 groups = match.groups()
-                reg_list.append((groups[0], groups[1], regwidth, field_list[:]))
+                reg_list.append((groups[0], groups[1],
+                                 regwidth, field_list[:]))
                 continue
 
         input_file.close()
@@ -175,7 +176,7 @@ class RDLParser:
                     field.field_type = lookup[item.software_access]
                 except IndexError:
                     field.field_type = BitField.TYPE_READ_ONLY
-                    
+
                 field.start_position = item.start
                 field.stop_position = item.stop
                 field.reset_value = item.reset

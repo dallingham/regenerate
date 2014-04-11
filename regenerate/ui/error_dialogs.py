@@ -67,8 +67,8 @@ class Question(gtk.MessageDialog):
     """
 
     DISCARD = -1
-    CANCEL  = -2
-    SAVE    = -3
+    CANCEL = -2
+    SAVE = -3
 
     def __init__(self, err, msg):
         gtk.MessageDialog.__init__(self, type=gtk.MESSAGE_QUESTION)

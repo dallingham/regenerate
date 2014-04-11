@@ -24,6 +24,7 @@ Imports data from a Denali RDL file
 from regenerate.db import Register, BitField
 import re
 
+
 class RegInfo:
 
     def __init__(self):
@@ -67,6 +68,7 @@ class RegInfo:
         if text[0] == '"':
             text = text[1:]
         self.reg_name = text
+
 
 class FieldInfo:
     """
@@ -149,8 +151,8 @@ class DenaliRDLParser:
         field = None
         reg = None
         reg_list = []
-        addr = 0;
-        
+        addr = 0
+
         input_file = open(filename)
 
         for line in input_file:
@@ -158,7 +160,7 @@ class DenaliRDLParser:
             if match:
                 groups = match.groups()
                 self.dbase.descriptive_title = groups[0].strip()
-                self.dbase.data_bus_width = int(groups[1]);
+                self.dbase.data_bus_width = int(groups[1])
                 continue
 
             match = re.match("\s*reg\s+{", line)
@@ -175,7 +177,7 @@ class DenaliRDLParser:
                 reg.token = groups[0]
                 reg.reg_name = reg.token
                 reg.address = addr
-                addr = reg.address + (reg.width/8);
+                addr = reg.address + (reg.width/8)
                 reg_list.append(reg)
                 continue
 
@@ -219,8 +221,8 @@ class DenaliRDLParser:
             if match:
                 groups = match.groups()
                 reg.reg_name = groups[0]
-                reg.address = int(groups[1],16)
-                addr = reg.address + (reg.width/8);
+                reg.address = int(groups[1], 16)
+                addr = reg.address + (reg.width/8)
                 continue
 
             match = re.match("\s*}\s*;", line)
@@ -261,7 +263,7 @@ class DenaliRDLParser:
             else:
                 register.description = reg.reg_name
             register.width = self.dbase.data_bus_width
-            
+
             for item in reg.field_list:
                 if item.name.startswith("OBSOLETE"):
                     continue
@@ -277,7 +279,6 @@ class DenaliRDLParser:
                     name = "%s_%d" % (item.name, index)
                 else:
                     name = item.name
-                width = (item.stop - item.start) + 1
 
                 field = BitField()
                 field.field_name = name

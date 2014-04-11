@@ -69,6 +69,7 @@ class UVMBlockRegisters(WriterBase):
         'interface': 'interface_',
         'class': 'class_',
         'package': 'package_',
+        'set': 'set_',
         'edge': 'edge_',
         }
 

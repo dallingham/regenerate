@@ -33,7 +33,6 @@ from cStringIO import StringIO
 from regenerate.db import TYPE_TO_SIMPLE_TYPE
 import re
 from token import full_token, in_groups, uvm_name
-from types import *
 
 CSS = '''
 <style type="text/css">
@@ -120,9 +119,9 @@ class RegisterRst:
         self._group = group
         self._inst = inst
         if decode:
-            if type(decode) is StringType:
+            if isinstance(decode, str):
                 decode = int(decode, 16)
-            elif type(decode) is IntType:
+            elif isinstance(decode, int):
                 decode = decode
             else:
                 decode = None
@@ -266,7 +265,7 @@ class RegisterRst:
                             base = self._prj.get_address_base(map_name.name)
                             offset = inst.base + inst.offset + (i * inst.roffset)
                             o.write("     - %s\n" % reg_addr(self._reg,
-                                                                 offset + base))
+                                                             offset + base))
         o.write("\n\n")
 
     def _display_uvm_entry(self, inst, index, o):
@@ -333,10 +332,9 @@ def display_reserved(o, stop, start):
     o.write('     - \n')
     o.write('     - *reserved*\n')
 
+
 def mask(stop, start):
     value = 0
     for i in range(start, stop + 1):
         value |= (1 << i)
     return value
-
-    

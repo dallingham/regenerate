@@ -21,7 +21,7 @@ import logging
 import gobject
 
 
-class StatusHandler(logging.Handler): 
+class StatusHandler(logging.Handler):
     """
     Status handler for the logger that displays the string in the
     statusbar for 5 seconds

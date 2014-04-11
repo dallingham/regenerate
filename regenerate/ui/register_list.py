@@ -290,8 +290,9 @@ class RegisterList(object):
                 self.__set_modified()
         except KeyError:
             ErrorMsg("Internal Error",
-                     "Deleting the register caused an internal inconsistency.\n"
-                     "Please exit without saving to prevent any corruption to\n"
+                     "Deleting the register caused an internal "
+                     "inconsistency.\nPlease exit without saving "
+                     "to prevent any corruption to\n"
                      "your database and report this error.")
 
     def __reg_update_addr(self, reg, path, text):
@@ -307,8 +308,9 @@ class RegisterList(object):
                 self.__set_modified()
         except KeyError:
             ErrorMsg("Internal Error",
-                     "Deleting the register caused an internal inconsistency.\n"
-                     "Please exit without saving to prevent any corruption to\n"
+                     "Deleting the register caused an internal "
+                     "inconsistency.\nPlease exit without saving to "
+                     "prevent any corruption to\n"
                      "your database and report this error.")
 
     def __reg_update_name(self, reg, path, text):
@@ -404,7 +406,8 @@ class RegisterList(object):
                      % (address, register.width))
         elif not self.__new_address_is_not_used(new_text, path):
             ErrorMsg("Address already used",
-                     "The address %0x is already used by another register" % address)
+                     "The address %0x is already used by another register" %
+                     address)
         else:
             self.__reg_update_addr(register, path, new_text)
 
@@ -429,7 +432,7 @@ class RegisterList(object):
         model = cell.get_property('model')
         register = self.__model.get_register_at_path(path)
 
-        new_width =  model.get_value(node, 1)
+        new_width = model.get_value(node, 1)
         if not self.__check_address_align(register.address, new_width):
             ErrorMsg("Address does not match register width",
                      "The address %04x is not aligned to a %d bit boundary"
