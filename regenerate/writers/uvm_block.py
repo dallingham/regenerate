@@ -557,6 +557,15 @@ class UVM_Block_Registers(WriterBase):
 
         rname = "mem_%s_%s" % (dbase.set_name, reg.token.lower())
 
+        access_types = set()
+        for field in reg.get_bit_fields():
+            access_types.add(access_map[field.field_type])
+
+        if len(access_types) == 1:
+            access = list(access_types)[0]
+        else:
+            access = "RW"
+
         of.write("/*! \\class %s\n" % rname)
         of.write(" *  \\brief %s\n" % reg.description)
         of.write(" *\n * \\addtogroup registers\n")
@@ -567,8 +576,8 @@ class UVM_Block_Registers(WriterBase):
         of.write('    function new(string name = "%s");\n' %
                  reg.token.lower())
         num_bytes = reg.width / 8
-        of.write('       super.new(name, %d, %d, "RW", UVM_NO_COVERAGE);\n'
-                 % (reg.ram_size / num_bytes, reg.width))
+        of.write('       super.new(name, %d, %d, "%s", UVM_NO_COVERAGE);\n'
+                 % (reg.ram_size / num_bytes, reg.width, access))
         of.write('    endfunction : new\n\n')
 
         of.write('  endclass : %s\n\n' % rname)

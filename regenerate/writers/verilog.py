@@ -125,7 +125,7 @@ def reset_value(field, start, stop):
     if field.reset_type == BitField.RESET_NUMERIC:
         field_width = (stop - start) + 1
         reset = (field.reset_value >> (start - field.start_position))
-        return "%d'h%x" % (field_width, reset & 0xff)
+        return "%d'h%x" % (field_width, reset & ((2 ** field_width) - 1))
     elif field.reset_type == BitField.RESET_INPUT:
         if stop == start:
             return "%s" % (field.reset_input)

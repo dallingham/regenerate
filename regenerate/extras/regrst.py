@@ -308,11 +308,6 @@ class RegisterRst:
         """
 
         if _HTML:
-
-            o = open("/home/dona/xxx.rst", "w")
-            o.write(self.restructured_text(text))
-            o.close()
-
             parts = publish_parts(
                 self.restructured_text(text),
                 writer_name="html",
