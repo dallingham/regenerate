@@ -80,7 +80,7 @@ try:
 except ImportError:
     from asm_equ import AsmEqu
 EXPORTERS.append((AsmEqu, ("Header files", "Assembler Source"),
-                  "Assembler files", ".s", 'headers-asm' ))
+                  "Assembler files", ".s", 'headers-asm'))
 
 #-----------------------------------------------------------------------------
 #
@@ -93,7 +93,7 @@ try:
 except ImportError:
     from c_defines import CDefines
 EXPORTERS.append((CDefines, ("Header files", "C Source"), "C header files",
-                  ".h", 'headers-c' ))
+                  ".h", 'headers-c'))
 
 #-----------------------------------------------------------------------------
 #
@@ -105,9 +105,11 @@ try:
     LOGGER.info("Found site_local reg_pkg")
     from regenerate.site_local.reg_pkg_wrap import VerilogRegPackage
     LOGGER.info("Found site_local reg_pkg_wrap")
-    PRJ_EXPORTERS.append((VerilogRegPackage, ("Headers",
-                                              "SystemVerilog Symbolic Register Mappings"),
-                          "SystemVerilog files", ".sv", 'headers-system-verilog-wrap'))
+    PRJ_EXPORTERS.append((VerilogRegPackage,
+                          ("Headers",
+                           "SystemVerilog Symbolic Register Mappings"),
+                          "SystemVerilog files", ".sv",
+                          'headers-system-verilog-wrap'))
 #-----------------------------------------------------------------------------
 #
 #  Verilog constant headers
@@ -115,9 +117,10 @@ try:
 #-----------------------------------------------------------------------------
 except:
     from reg_pkg import VerilogConstRegPackage
-    
-PRJ_EXPORTERS.append((VerilogConstRegPackage, ("Headers",
-                                               "SystemVerilog Register Constants"),
+
+PRJ_EXPORTERS.append((VerilogConstRegPackage,
+                      ("Headers",
+                       "SystemVerilog Register Constants"),
                       "SystemVerilog files", ".sv", 'headers-system-verilog'))
 
 try:
@@ -146,7 +149,7 @@ try:
 except ImportError:
     from verilog_defs import VerilogDefines
 EXPORTERS.append((VerilogDefines, ("RTL", "Verilog defines"),
-                  "Verilog header files", ".vh", 'rtl-verilog-defines' ))
+                  "Verilog header files", ".vh", 'rtl-verilog-defines'))
 
 try:
     from regenerate.site_local.verilog_param import VerilogParameters
@@ -165,9 +168,9 @@ except ImportError:
 PRJ_EXPORTERS.append((OdtSpec, ("Specification", "OpenDocument"),
                       "OpenDocument files", ".odt", 'spec-odt'))
 
-from uvm_block import UVM_Block_Registers
+from uvm_block import UVMBlockRegisters
 
-PRJ_EXPORTERS.append((UVM_Block_Registers, ("Test", "UVM Registers"),
+PRJ_EXPORTERS.append((UVMBlockRegisters, ("Test", "UVM Registers"),
                       "SystemVerilog files", ".sv", 'proj-uvm'))
 
 #-----------------------------------------------------------------------------
@@ -194,6 +197,5 @@ try:
     LOGGER.info("Found site_local spyglass")
 except ImportError:
     from spyglass import Spyglass
-PRJ_EXPORTERS.append((Spyglass, ("Spyglass CDC Checking", "SGDC Constraints"), "SGDC files",
-                      ".sgdc", 'spy-constraints'))
-
+PRJ_EXPORTERS.append((Spyglass, ("Spyglass CDC Checking", "SGDC Constraints"),
+                      "SGDC files", ".sgdc", 'spy-constraints'))

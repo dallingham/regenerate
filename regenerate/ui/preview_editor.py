@@ -64,7 +64,6 @@ class PreviewEditor(object):
             self.__text_buffer.get_end_iter())
         if self.__active_db:
             data = []
-            fmt = ".. _`%s`: /\n"
             for reg in self.__active_db.get_all_registers():
                 data.append(".. _`%s`: /" % reg.register_name)
             text = text + "\n\n" + "\n".join(data)

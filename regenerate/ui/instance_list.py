@@ -139,7 +139,7 @@ class InstMdl(gtk.TreeStore):
                                       "%x" % new_grp.repeat_offset,
                                       "",
                                       new_grp.hdl,
-                                      new_grp)) 
+                                      new_grp))
         return (self.get_path(node), new_grp)
 
 
@@ -279,16 +279,6 @@ class InstanceList(object):
         while tree_iter is not None:
             base = self.__model.get_value(tree_iter, InstMdl.SORT_COL)
             hdl = self.__model.get_value(tree_iter, InstMdl.HDL_COL)
-            try:
-                repeat = int(self.__model.get_value(tree_iter, InstMdl.RPT_COL))
-            except ValueError:
-                repeat = 1
-
-            try:
-                repeat_offset = int(self.__model.get_value(tree_iter,
-                                                           InstMdl.OFF_COL), 16)
-            except ValueError:
-                repeat_offset = 0
 
             current_group = self.__model.get_value(tree_iter, InstMdl.OBJ_COL)
             current_group.register_sets = []

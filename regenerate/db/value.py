@@ -21,6 +21,7 @@
 Value
 """
 
+
 class Value(object):
     """
     Encapsulates an item, adding the modification values from Dataitem.

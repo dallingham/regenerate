@@ -28,7 +28,7 @@ except ImportError:
     LOGGER.warning("docutils is not installed, preview of formatted "
                    "comments will not be available")
 
-    def publish_string (text, writer_name):
+    def publish_string(text, writer_name):
         """
         Provides an alternative publish_string function if docutils is
         not available. Simply returns the text.

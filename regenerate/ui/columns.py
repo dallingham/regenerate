@@ -45,8 +45,8 @@ class EditableColumn(gtk.TreeViewColumn):
     columns are passed and used to create the CellRenderer.
     """
 
-    def __init__(self, title, change_callback, source_column, 
-                 monospace = False):
+    def __init__(self, title, change_callback, source_column,
+                 monospace=False):
         renderer = gtk.CellRendererText()
         if change_callback:
             renderer.set_property('editable', True)

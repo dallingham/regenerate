@@ -28,7 +28,7 @@ from regenerate.writers.writer_base import WriterBase
 #
 # Map regenerate types to UVM type strings
 #
-access_map = {BitField.TYPE_READ_ONLY: "RO",
+ACCESS_MAP = {BitField.TYPE_READ_ONLY: "RO",
               BitField.TYPE_READ_ONLY_LOAD: "RO",
               BitField.TYPE_READ_ONLY_VALUE: "RO",
               BitField.TYPE_READ_ONLY_CLEAR_LOAD: "RC",
@@ -56,7 +56,7 @@ access_map = {BitField.TYPE_READ_ONLY: "RO",
               }
 
 
-class UVM_Block_Registers(WriterBase):
+class UVMBlockRegisters(WriterBase):
     """
     Generates a SystemVerilog package representing the registers in
     the UVM format.
@@ -69,6 +69,7 @@ class UVM_Block_Registers(WriterBase):
         'interface': 'interface_',
         'class': 'class_',
         'package': 'package_',
+        'set': 'set_',
         'edge': 'edge_',
         }
 
@@ -166,7 +167,8 @@ class UVM_Block_Registers(WriterBase):
 
         for group in self._project.get_grouping_list():
             if group.repeat > 1:
-                of.write("   %s_grp_reg_blk %s[%0d];\n" % (group.name, group.name, group.repeat))
+                of.write("   %s_grp_reg_blk %s[%0d];\n" %
+                         (group.name, group.name, group.repeat))
             else:
                 of.write("   %s_grp_reg_blk %s;\n" % (group.name, group.name))
 
@@ -211,7 +213,6 @@ class UVM_Block_Registers(WriterBase):
                     of.write('         %s[i].configure(this, "");\n' % name)
                 of.write("         %s[i].build();\n" % name)
                 of.write("      end\n")
-                
 
         for data in self._project.get_address_maps():
             map_list = self._project.get_address_map_groups(data.name)
@@ -227,7 +228,8 @@ class UVM_Block_Registers(WriterBase):
                 else:
                     of.write("      foreach (%s[i]) begin\n" % name)
                     of.write("        %s_map.add_submap(%s[i].%s_map, 'h%x + (i * 'h%x));\n" %
-                             (data.name, name, data.name, grp_data[0].base, grp_data[0].repeat_offset))
+                             (data.name, name, data.name, grp_data[0].base,
+                              grp_data[0].repeat_offset))
                     of.write("      end\n")
         of.write('      lock_model();\n')
         of.write("\n")
@@ -302,7 +304,8 @@ class UVM_Block_Registers(WriterBase):
                 of.write("      %s.build();\n" % group_entry.inst)
                 for item in in_maps:
                     of.write("      %s_map.add_submap(%s.%s_map, 'h%x);\n" %
-                             (item, group_entry.inst, item, group_entry.offset))
+                             (item, group_entry.inst, item,
+                              group_entry.offset))
             of.write("\n")
 
         of.write("   endfunction: build\n")
@@ -343,7 +346,8 @@ class UVM_Block_Registers(WriterBase):
         for item in in_maps:
             of.write("    uvm_reg_map %s_map;\n" % item)
 
-        of.write('    %s_reg_access_wrapper %s_access_cg;\n\n' % (sname, sname))
+        of.write('    %s_reg_access_wrapper %s_access_cg;\n\n' %
+                 (sname, sname))
         of.write('\n')
         of.write('    function new(string name = "%s_%s_reg_blk");\n' %
                  (group.name, sname))
@@ -385,8 +389,8 @@ class UVM_Block_Registers(WriterBase):
 
         for item in in_maps:
             mname = "%s_map" % item
-            width = min (dbase.data_bus_width / 8, 
-                         self._project.get_address_width(item))
+            width = min(dbase.data_bus_width / 8,
+                        self._project.get_address_width(item))
             of.write('      %s = create_map("%s", \'h0, %d, %s, 1);\n' %
                      (mname, mname, width, self.endian))
 
@@ -508,7 +512,7 @@ class UVM_Block_Registers(WriterBase):
             else:
                 lsb = field.start_position
 
-            access = access_map.get(field.field_type, None)
+            access = ACCESS_MAP.get(field.field_type, None)
             if access is None:
                 dont_test = True
                 continue

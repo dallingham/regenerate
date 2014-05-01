@@ -122,7 +122,7 @@ class IpXactParser(object):
     def end_spirit_access(self, text):
         if self._field:
             self._field.field_type = text2field.get(text,
-                                                     BitField.TYPE_READ_ONLY)
+                                                    BitField.TYPE_READ_ONLY)
 
     def end_spirit_name(self, text):
         if self._field:

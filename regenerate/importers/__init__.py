@@ -36,8 +36,10 @@ from ipxact import IpXactParser
 #
 
 IMPORTERS = [
-    (RDLParser, "SystemRDL", "SystemRDL files", ".rdl", '-r', '--import-rdl'),
-    (DenaliRDLParser, "DenaliRDL", "SystemRDL files", ".rdl", '-r', '--import-drdl'),
-    (CerteCSVParser, "Certe CSV", "CSV files", ".csv", '-c', '--import-csv'),
-    (IpXactParser, "IP-XACT XML", "IP-XACT files", ".xml", '-s', '--import-ipxact'),
+    (RDLParser,
+     "SystemRDL", "SystemRDL files", ".rdl", '-r', '--import-rdl'),
+    (DenaliRDLParser,
+     "DenaliRDL", "SystemRDL files", ".rdl", '-r', '--import-drdl'),
+    (IpXactParser,
+     "IP-XACT XML", "IP-XACT files", ".xml", '-s', '--import-ipxact'),
 ]

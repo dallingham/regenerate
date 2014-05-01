@@ -118,7 +118,7 @@ class BitFieldEditor(object):
             name_map = {'MODULE': self.__db.module_name,
                         'BE_LEVEL': be_level,
                         'RESET_CONDITION': condition,
-                        'RESET_EDGE': edge }
+                        'RESET_EDGE': edge}
             text = REG[TYPE_TO_ID[bit_field.field_type].lower()] % name_map
         except KeyError:
             text = ""
