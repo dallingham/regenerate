@@ -29,7 +29,7 @@ from collections import namedtuple
 
 AddrMapData = namedtuple("AddrMapData", "name base width fixed")
 GroupMapData = namedtuple("GroupMapData",
-                          "set inst offset repeat repeat_offset format hdl")
+                          "set inst offset repeat repeat_offset format hdl no_uvm")
 
 
 def cleanup(data):
@@ -153,6 +153,8 @@ class RegProject(object):
                             (item.repeat, item.repeat_offset))
                 if item.hdl:
                     ofile.write(' hdl="%s"' % item.hdl)
+                if item.no_uvm:
+                    ofile.write(' no_uvm="%s"' % int(item.no_uvm))
                 if item.format:
                     ofile.write(' format="%s"' % item.format)
                 ofile.write("/>\n")
@@ -408,7 +410,8 @@ class RegProject(object):
                             int(attrs['repeat']),
                             int(attrs['repeat_offset']),
                             attrs.get("format", ""),
-                            attrs.get("hdl", ""))
+                            attrs.get("hdl", ""),
+                            int(attrs.get("no_uvm", "0")))
         self._current_group.register_sets.append(data)
 
     def start_address_map(self, attrs):

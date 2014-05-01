@@ -222,7 +222,8 @@ class MainWindow(BaseWindow):
             self.__instance_repeat_changed,
             self.__instance_repeat_offset_changed,
             self.__instance_format_changed,
-            self.__instance_hdl_changed)
+            self.__instance_hdl_changed,
+            self.__instance_uvm_changed)
 
         self.__build_data_width_box()
         self.__restore_position_and_size()
@@ -558,6 +559,14 @@ class MainWindow(BaseWindow):
         Updates the data model when the text value is changed in the model.
         """
         self.__instance_model.change_hdl(path, new_text.replace("/", "."))
+        self.__set_module_definition_warn_flag()
+        self.__prj.set_modified()
+
+    def __instance_uvm_changed(self, cell, path, col): #cell, path, new_text, col, arg):
+        """
+        Updates the data model when the text value is changed in the model.
+        """
+        self.__instance_model.change_uvm(cell, path)
         self.__set_module_definition_warn_flag()
         self.__prj.set_modified()
 

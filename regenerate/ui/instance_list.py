@@ -19,7 +19,7 @@
 
 import gtk
 import gobject
-from regenerate.ui.columns import EditableColumn
+from regenerate.ui.columns import EditableColumn, ToggleColumn
 from regenerate.db import GroupMapData, GroupData, LOGGER
 
 
@@ -30,11 +30,11 @@ class InstMdl(gtk.TreeStore):
     """
 
     (INST_COL, ID_COL, BASE_COL, SORT_COL, RPT_COL, OFF_COL,
-     FMT_COL, HDL_COL, OBJ_COL) = range(9)
+     FMT_COL, HDL_COL, UVM_COL, OBJ_COL) = range(10)
 
     def __init__(self):
         gtk.TreeStore.__init__(self, str, str, str, gobject.TYPE_UINT64, str,
-                               str, str, str, object)
+                               str, str, str, bool, object)
 
     def change_id(self, path, text):
         """
@@ -79,6 +79,12 @@ class InstMdl(gtk.TreeStore):
         obj = self.get_value(node, InstMdl.OBJ_COL)
         if obj:
             obj.hdl = text
+
+    def change_uvm(self, cell, path):
+        """
+        Called when the ID of an instance has been edited in the InstanceList
+        """
+        self[path][InstMdl.UVM_COL] = not self[path][InstMdl.UVM_COL]
 
     def change_base(self, path, text):
         """
@@ -147,14 +153,14 @@ class InstanceList(object):
 
     def __init__(self, obj, id_changed, inst_changed, base_changed,
                  repeat_changed, repeat_offset_changed, format_changed,
-                 hdl_changed):
+                 hdl_changed, uvm_changed):
         self.__obj = obj
         self.__col = None
         self.__project = None
         self.__model = None
         self.__build_instance_table(id_changed, inst_changed, base_changed,
                                     repeat_changed, repeat_offset_changed,
-                                    format_changed, hdl_changed)
+                                    format_changed, hdl_changed, uvm_changed)
         self.__enable_dnd()
         self.__obj.set_sensitive(False)
 
@@ -216,6 +222,7 @@ class InstanceList(object):
                                                   "%x" % item.repeat_offset,
                                                   "",
                                                   item.hdl,
+                                                  0,
                                                   item))
 
             entry_list = sorted(item.register_sets, key=lambda x: x.offset)
@@ -228,11 +235,12 @@ class InstanceList(object):
                                            "%x" % entry.repeat_offset,
                                            entry.format,
                                            entry.hdl,
+                                           entry.no_uvm,
                                            None))
 
     def __build_instance_table(self, id_changed, inst_changed, base_changed,
                                repeat_changed, repeat_offset_changed,
-                               format_changed, hdl_changed):
+                               format_changed, hdl_changed, uvm_changed):
         column = EditableColumn('Instance', inst_changed,
                                 InstMdl.INST_COL)
         column.set_sort_column_id(InstMdl.INST_COL)
@@ -269,6 +277,10 @@ class InstanceList(object):
         self.__obj.append_column(column)
         self.__col = column
 
+        column = ToggleColumn('UVM Exclude', uvm_changed, InstMdl.UVM_COL)
+        column.set_min_width(100)
+        self.__obj.append_column(column)
+
     def set_model(self, model):
         self.__obj.set_model(model)
         self.__model = model
@@ -293,8 +305,9 @@ class InstanceList(object):
                 offset = int(offset_str, 16)
                 fmt = self.__model.get_value(child, InstMdl.FMT_COL)
                 hdl = self.__model.get_value(child, InstMdl.HDL_COL)
+                uvm = self.__model.get_value(child, InstMdl.UVM_COL)
                 current_group.register_sets.append(
-                    GroupMapData(name, inst, base, rpt, offset, fmt, hdl))
+                    GroupMapData(name, inst, base, rpt, offset, fmt, hdl, uvm))
                 child = self.__model.iter_next(child)
             tree_iter = self.__model.iter_next(tree_iter)
         return groups

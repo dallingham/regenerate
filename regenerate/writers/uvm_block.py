@@ -278,6 +278,8 @@ class UVMBlockRegisters(WriterBase):
         of.write("\n")
 
         for group_entry in group.register_sets:
+            if group_entry.no_uvm:
+                continue
             if group_entry.repeat > 1:
                 name = group_entry.set
                 of.write('      for(int i = 0; i < %d; i++) begin\n' %
