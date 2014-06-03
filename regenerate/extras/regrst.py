@@ -151,7 +151,7 @@ class RegisterRst:
         o.write("%s\n" % ("=" * rlen))
         o.write(" " + self.text(self._reg.register_name))
         o.write("\n%s\n" % ("=" * rlen))
-        o.write("\n%s\n\n" % self.text(self._reg.description))
+        o.write("\n%s\n\n" % self.text(self._reg.description.encode('ascii', 'replace')))
 
         if self._reg.ram_size == 0:
             self._write_bit_fields(o)
@@ -163,6 +163,7 @@ class RegisterRst:
             self._write_uvm(o)
 
         o.write(text)
+
         return o.getvalue()
 
     def _write_bit_fields(self, o):
@@ -209,7 +210,7 @@ class RegisterRst:
             o.write("     - %s\n" % self.text(field.field_name))
             descr = self.text(field.description)
             marked_descr = "\n       ".join(descr.split("\n"))
-            o.write("     - %s\n" % marked_descr)
+            o.write("     - %s\n" % marked_descr.encode('ascii', 'replace'))
             if field.values:
                 o.write("\n")
                 for val in sorted(field.values,
@@ -229,7 +230,16 @@ class RegisterRst:
 
     def _write_defines(self, o):
 
-        addr_maps = self._prj.get_address_maps()
+        x_addr_maps = self._prj.get_address_maps()
+        instances = in_groups(self._regset_name, self._prj)
+        addr_maps = set([])
+
+        for inst in instances:
+            for x in x_addr_maps:
+                groups_in_addr_map = self._prj.get_address_map_groups(x.name)
+                if inst.group in groups_in_addr_map:
+                    addr_maps.add(x)
+
         if not addr_maps:
             return
 

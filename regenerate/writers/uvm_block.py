@@ -278,8 +278,6 @@ class UVMBlockRegisters(WriterBase):
         of.write("\n")
 
         for group_entry in group.register_sets:
-            if group_entry.no_uvm:
-                continue
             if group_entry.repeat > 1:
                 name = group_entry.set
                 of.write('      for(int i = 0; i < %d; i++) begin\n' %
@@ -296,6 +294,9 @@ class UVMBlockRegisters(WriterBase):
                     of.write("         %s_map.add_submap(%s[i].%s_map, 'h%x + (i * 'h%x));\n" %
                              (item, group_entry.inst, item, group_entry.offset,
                               group_entry.repeat_offset))
+                    if group_entry.no_uvm:
+                        of.write('        uvm_resource_db#(bit)::set({"REG::",%s[i].get_full_name(),".*"},\n' % group_entry.inst)
+                        of.write('                                    "NO_REG_TESTS", 1, this);\n')
                 of.write('      end\n')
             else:
                 name = group_entry.set
@@ -308,6 +309,9 @@ class UVMBlockRegisters(WriterBase):
                     of.write("      %s_map.add_submap(%s.%s_map, 'h%x);\n" %
                              (item, group_entry.inst, item,
                               group_entry.offset))
+                if group_entry.no_uvm:
+                    of.write('      uvm_resource_db#(bit)::set({"REG::",%s.get_full_name(),".*"},' % group_entry.inst)
+                    of.write(' "NO_REG_TESTS", 1, this);\n')
             of.write("\n")
 
         of.write("   endfunction: build\n")
@@ -565,7 +569,7 @@ class UVMBlockRegisters(WriterBase):
 
         access_types = set()
         for field in reg.get_bit_fields():
-            access_types.add(access_map[field.field_type])
+            access_types.add(ACCESS_MAP[field.field_type])
 
         if len(access_types) == 1:
             access = list(access_types)[0]

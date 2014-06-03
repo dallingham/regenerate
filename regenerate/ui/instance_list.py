@@ -145,6 +145,7 @@ class InstMdl(gtk.TreeStore):
                                       "%x" % new_grp.repeat_offset,
                                       "",
                                       new_grp.hdl,
+                                      False,
                                       new_grp))
         return (self.get_path(node), new_grp)
 
@@ -188,7 +189,7 @@ class InstanceList(object):
         data = selection.data
         drop_info = treeview.get_dest_row_at_pos(x, y)
         (name, width) = data.split(":")
-        row_data = [name, name, "0", 0, "1", width, "", "", None]
+        row_data = [name, name, "0", 0, "1", width, "", "", False, None]
         if drop_info:
             path, position = drop_info
             if len(path) == 1:
