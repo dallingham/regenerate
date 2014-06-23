@@ -174,6 +174,8 @@ class UVMBlockRegisters(WriterBase):
 
         for data in self._project.get_address_maps():
             of.write('   uvm_reg_map %s_map;\n' % data.name)
+        for data in self._project.get_address_maps():
+            of.write('   bit disable_%s_map = 1\'b0;\n' % data.name)
 
         of.write('\n   function new(string name = "%s_reg_block");\n' % sname)
         of.write("      super.new(name, "
@@ -186,11 +188,15 @@ class UVMBlockRegisters(WriterBase):
         of.write("      end\n")
         of.write("\n")
 
+        maps = set()
         for data in self._project.get_address_maps():
             name = "%s_map" % data.name
-            of.write('      %s = create_map("%s", \'h%x, %d, %s);\n' %
+            maps.add(name)
+            of.write('      if (!disable_%s) begin\n' % name)
+            of.write('         %s = create_map("%s", \'h%x, %d, %s);\n' %
                      (name, name, data.base,
                       self._project.get_address_width(data.name), self.endian))
+            of.write('      end\n')
         of.write("\n")
 
         for group in self._project.get_grouping_list():
@@ -201,7 +207,10 @@ class UVMBlockRegisters(WriterBase):
                          (name, name, name))
                 of.write('      %s.configure(this, "%s");\n' %
                          (name, group.hdl))
+                for mname in maps:
+                    of.write("      %s.disable_%s = disable_%s;\n" % (name, mname, mname))
                 of.write("      %s.build();\n" % name)
+                    
             else:
                 of.write('      foreach (%s[i]) begin\n' % name)
                 of.write('         %s[i] = %s_grp_reg_blk::type_id::create($sformatf("%s[%%0d]", i));\n' %
@@ -211,6 +220,8 @@ class UVMBlockRegisters(WriterBase):
                              (name, group.hdl))
                 else:
                     of.write('         %s[i].configure(this, "");\n' % name)
+                for mname in maps:
+                    of.write("         %s[i].disable_%s_map = disable_%s_map;\n" % (name, mname, mname))
                 of.write("         %s[i].build();\n" % name)
                 of.write("      end\n")
 
@@ -223,13 +234,17 @@ class UVMBlockRegisters(WriterBase):
                 grp_data = [grp for grp in self._project.get_grouping_list()
                             if grp.name == name]
                 if grp_data[0].repeat <= 1:
-                    of.write("      %s_map.add_submap(%s.%s_map, 'h%x);\n" %
+                    of.write('      if (!disable_%s_map) begin\n' % data.name)
+                    of.write("         %s_map.add_submap(%s.%s_map, 'h%x);\n" %
                              (data.name, name, data.name, grp_data[0].base))
+                    of.write('      end\n')
                 else:
                     of.write("      foreach (%s[i]) begin\n" % name)
-                    of.write("        %s_map.add_submap(%s[i].%s_map, 'h%x + (i * 'h%x));\n" %
+                    of.write('         if (!disable_%s_map) begin\n' % data.name)
+                    of.write("            %s_map.add_submap(%s[i].%s_map, 'h%x + (i * 'h%x));\n" %
                              (data.name, name, data.name, grp_data[0].base,
                               grp_data[0].repeat_offset))
+                    of.write("         end\n")
                     of.write("      end\n")
         of.write('      lock_model();\n')
         of.write("\n")
@@ -258,6 +273,7 @@ class UVMBlockRegisters(WriterBase):
         of.write("\n")
         for item in in_maps:
             of.write("   uvm_reg_map %s_map;\n" % item)
+            of.write("   bit disable_%s_map = 1'b0;\n" % item)
 
         of.write("\n")
         of.write('   function new(string name = "%s_grp_reg_blk");\n' %
@@ -272,9 +288,11 @@ class UVMBlockRegisters(WriterBase):
         of.write("\n")
 
         for item in in_maps:
-            of.write('      %s_map = create_map("%s_map", 0, %d, %s);\n' %
+            of.write('      if (!disable_%s_map) begin\n' % item)
+            of.write('         %s_map = create_map("%s_map", 0, %d, %s);\n' %
                      (item, item, self._project.get_address_width(item),
                       self.endian))
+            of.write('      end\n')
         of.write("\n")
 
         for group_entry in group.register_sets:
@@ -289,11 +307,16 @@ class UVMBlockRegisters(WriterBase):
                              (group_entry.inst, group_entry.hdl))
                 else:
                     of.write('         %s[i].configure(this, "");\n' % group_entry.inst)
+                for item in in_maps:
+                    of.write("         %s[i].disable_%s_map = disable_%s_map;\n" % (group_entry.inst,
+                                                                                    item, item))
                 of.write("         %s[i].build();\n" % group_entry.inst)
                 for item in in_maps:
-                    of.write("         %s_map.add_submap(%s[i].%s_map, 'h%x + (i * 'h%x));\n" %
+                    of.write("         if (!disable_%s_map) begin\n" % item)
+                    of.write("            %s_map.add_submap(%s[i].%s_map, 'h%x + (i * 'h%x));\n" %
                              (item, group_entry.inst, item, group_entry.offset,
                               group_entry.repeat_offset))
+                    of.write("         end\n")
                     if group_entry.no_uvm:
                         of.write('        uvm_resource_db#(bit)::set({"REG::",%s[i].get_full_name(),".*"},\n' % group_entry.inst)
                         of.write('                                    "NO_REG_TESTS", 1, this);\n')
@@ -304,11 +327,16 @@ class UVMBlockRegisters(WriterBase):
                          (group_entry.inst, sname, name, group_entry.inst))
                 of.write('      %s.configure(this, "%s");\n' %
                          (group_entry.inst, group_entry.hdl))
+                for item in in_maps:
+                    of.write("      %s.disable_%s_map = disable_%s_map;\n" % (group_entry.inst,
+                                                                              item, item))
                 of.write("      %s.build();\n" % group_entry.inst)
                 for item in in_maps:
-                    of.write("      %s_map.add_submap(%s.%s_map, 'h%x);\n" %
+                    of.write("      if (!disable_%s_map) begin\n" % item)
+                    of.write("         %s_map.add_submap(%s.%s_map, 'h%x);\n" %
                              (item, group_entry.inst, item,
                               group_entry.offset))
+                    of.write("      end\n")
                 if group_entry.no_uvm:
                     of.write('      uvm_resource_db#(bit)::set({"REG::",%s.get_full_name(),".*"},' % group_entry.inst)
                     of.write(' "NO_REG_TESTS", 1, this);\n')
@@ -351,6 +379,7 @@ class UVMBlockRegisters(WriterBase):
 
         for item in in_maps:
             of.write("    uvm_reg_map %s_map;\n" % item)
+            of.write("    bit disable_%s_map = 1'b0;\n" % item)
 
         of.write('    %s_reg_access_wrapper %s_access_cg;\n\n' %
                  (sname, sname))
@@ -395,16 +424,21 @@ class UVMBlockRegisters(WriterBase):
 
         for item in in_maps:
             mname = "%s_map" % item
+            
+            of.write('      if (!disable_%s_map) begin;\n' % item)
             width = min(dbase.data_bus_width / 8,
                         self._project.get_address_width(item))
-            of.write('      %s = create_map("%s", \'h0, %d, %s, 1);\n' %
+            of.write('         %s = create_map("%s", \'h0, %d, %s, 1);\n' %
                      (mname, mname, width, self.endian))
+            of.write('      end\n')
 
         for reg in dbase.get_all_registers():
             for item in in_maps:
                 cmd = "add_mem" if reg.ram_size else "add_reg"
-                of.write('      %s_map.%s(%s, \'h%04x, "RW");\n' %
+                of.write('      if (!disable_%s_map) begin\n' % item)
+                of.write('         %s_map.%s(%s, \'h%04x, "RW");\n' %
                          (item, cmd, reg.token.lower(), reg.address))
+                of.write('      end\n')
 
         if not hdl_match[0]:
             self.disable_access_tests(dbase, of)
