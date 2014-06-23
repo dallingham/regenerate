@@ -188,10 +188,17 @@ class UVMBlockRegisters(WriterBase):
         of.write("      end\n")
         of.write("\n")
 
-        maps = set()
+        map2grp = {}
+
         for data in self._project.get_address_maps():
-            name = "%s_map" % data.name
-            maps.add(name)
+            map2grp[data.name] = self._project.get_address_map_groups(data.name)
+            if not map2grp[data.name]:
+                map2grp[data.name] = [group.name
+                                      for group in self._project.get_grouping_list()]
+        print map2grp
+
+        for key in map2grp:
+            name = "%s_map" % key
             of.write('      if (!disable_%s) begin\n' % name)
             of.write('         %s = create_map("%s", \'h%x, %d, %s);\n' %
                      (name, name, data.base,
@@ -207,8 +214,9 @@ class UVMBlockRegisters(WriterBase):
                          (name, name, name))
                 of.write('      %s.configure(this, "%s");\n' %
                          (name, group.hdl))
-                for mname in maps:
-                    of.write("      %s.disable_%s = disable_%s;\n" % (name, mname, mname))
+                for mname in map2grp:
+                    if name in map2grp[mname]:
+                        of.write("      %s.disable_%s_map = disable_%s_map;\n" % (name, mname, mname))
                 of.write("      %s.build();\n" % name)
                     
             else:
@@ -220,8 +228,9 @@ class UVMBlockRegisters(WriterBase):
                              (name, group.hdl))
                 else:
                     of.write('         %s[i].configure(this, "");\n' % name)
-                for mname in maps:
-                    of.write("         %s[i].disable_%s_map = disable_%s_map;\n" % (name, mname, mname))
+                for mname in map2grp:
+                    if name in map2grp[mname]:
+                        of.write("         %s[i].disable_%s_map = disable_%s_map;\n" % (name, mname, mname))
                 of.write("         %s[i].build();\n" % name)
                 of.write("      end\n")
 
