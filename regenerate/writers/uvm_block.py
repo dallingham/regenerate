@@ -195,7 +195,6 @@ class UVMBlockRegisters(WriterBase):
             if not map2grp[data.name]:
                 map2grp[data.name] = [group.name
                                       for group in self._project.get_grouping_list()]
-        print map2grp
 
         for key in map2grp:
             name = "%s_map" % key
