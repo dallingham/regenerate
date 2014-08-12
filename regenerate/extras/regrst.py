@@ -157,13 +157,14 @@ class RegisterRst:
             self._write_bit_fields(o)
 
         if self._show_defines:
-            self._write_defines(o)
+            self._write_defines(o, True)
 
-        if self._show_uvm:
-            self._write_uvm(o)
+#        if self._show_uvm:
+#            self._write_uvm(o)
 
         o.write(text)
 
+        print o.getvalue()
         return o.getvalue()
 
     def _write_bit_fields(self, o):
@@ -228,7 +229,7 @@ class RegisterRst:
 
         o.write("\n")
 
-    def _write_defines(self, o):
+    def _write_defines(self, o, use_uvm = True, use_id = True):
 
         x_addr_maps = self._prj.get_address_maps()
         instances = in_groups(self._regset_name, self._prj)
@@ -250,7 +251,13 @@ class RegisterRst:
             o.write(".. list-table::\n")
             o.write("   :header-rows: 1\n")
             o.write("   :class: summary\n\n")
-            o.write("   * - ID\n")
+            o.write("   *")
+            if use_uvm:
+                o.write(" - Register Name\n")
+            if use_id:
+                if use_uvm:
+                    o.write("    ")
+                o.write(" - ID\n")
             for amap in addr_maps:
                 o.write("     - %s\n" % self.text(amap.name))
             for inst in in_groups(self._regset_name, self._prj):
@@ -259,18 +266,34 @@ class RegisterRst:
                 if self._inst and inst.inst != self._inst:
                     continue
                 if inst.repeat == 1:
-                    name = full_token(inst.group, inst.inst, self._reg.token,
-                                      self._regset_name, -1, inst.format)
-                    o.write("   * - %s\n" % self.text(name))
+                    o.write("   *");
+                    if use_uvm:
+                        name = uvm_name(inst.group, self._reg.token, inst.inst, -1,
+                                        inst.format)
+                        o.write(" - %s\n" % self.text(name))
+                    if use_id:
+                        name = full_token(inst.group, inst.inst, self._reg.token,
+                                          self._regset_name, -1, inst.format)
+                        if use_uvm:
+                            o.write("    ")
+                        o.write(" - %s\n" % self.text(name))
                     for map_name in addr_maps:
                         map_base = self._prj.get_address_base(map_name.name)
                         offset = map_base + inst.offset + inst.base
                         o.write("     - %s\n" % reg_addr(self._reg, offset))
                 else:
                     for i in range(0, inst.repeat):
-                        name = full_token(inst.group, inst.inst, self._reg.token,
-                                          self._regset_name, i, inst.format)
-                        o.write("   * - %s\n" % self.text(name))
+                        o.write("   *");
+                        if use_uvm:
+                            name = full_token(inst.group, inst.inst, self._reg.token,
+                                              self._regset_name, i, inst.format)
+                            o.write(" - %s\n" % self.text(name))
+                        else:
+                            name = full_token(inst.group, inst.inst, self._reg.token,
+                                              self._regset_name, i, inst.format)
+                            if not use_uvm:
+                                o.write("   ")
+                            o.write(" - %s\n" % self.text(name))
                         for map_name in addr_maps:
                             base = self._prj.get_address_base(map_name.name)
                             offset = inst.base + inst.offset + (i * inst.roffset)
