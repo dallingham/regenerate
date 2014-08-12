@@ -189,9 +189,11 @@ class UVMBlockRegisters(WriterBase):
         of.write("\n")
 
         map2grp = {}
+        map2base = {}
 
         for data in self._project.get_address_maps():
             map2grp[data.name] = self._project.get_address_map_groups(data.name)
+            map2base[data.name] = data.base
             if not map2grp[data.name]:
                 map2grp[data.name] = [group.name
                                       for group in self._project.get_grouping_list()]
@@ -200,8 +202,8 @@ class UVMBlockRegisters(WriterBase):
             name = "%s_map" % key
             of.write('      if (!disable_%s) begin\n' % name)
             of.write('         %s = create_map("%s", \'h%x, %d, %s);\n' %
-                     (name, name, data.base,
-                      self._project.get_address_width(data.name), self.endian))
+                     (name, name, map2base[key],
+                      self._project.get_address_width(key), self.endian))
             of.write('      end\n')
         of.write("\n")
 

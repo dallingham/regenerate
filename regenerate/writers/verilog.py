@@ -962,8 +962,12 @@ class Verilog(WriterBase):
             self._wrln('            %s: mux_%s <= r%02x;\n' %
                        (binary(addr >> self._lower_bit, width),
                         data_out.lower(), addr))
-        self._wrln('            default: mux_%s <= %d\'h0;\n' %
-                   (data_out.lower(), self._data_width))
+        if self._data_width == 64:
+            self._wrln('            default: mux_%s <= {2{32\'hdeadbeef}};\n' %
+                       data_out.lower())
+        else:
+            self._wrln('            default: mux_%s <= 32\'hdeadbeef;\n' %
+                       data_out.lower())
         self._wrln('            endcase\n')
         self._wrln('         end else begin\n')
         self._wrln('            mux_%s <= %d\'h0;\n' %

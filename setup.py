@@ -24,7 +24,7 @@ setup(
                                  'data/extra/*.odt',
                                  'data/*.*']},
     url="https://github.com/dallingham/regenerate",
-    scripts=['bin/regenerate'],
+    scripts=['bin/regenerate', "bin/regbuild"],
     classifiers=[
         'Operating System :: POSIX',
         'Programming Language :: Python',

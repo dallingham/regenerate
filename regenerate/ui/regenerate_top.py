@@ -1217,7 +1217,7 @@ class MainWindow(BaseWindow):
         """
         status = self.dbase.read_xml(filename)
         if status:
-            ErrorMsg("Not a valid regenerate file", status)
+            ErrorMsg("%s is not a valid regenerate file" % filename, status)
         else:
             self.__filename = filename
 

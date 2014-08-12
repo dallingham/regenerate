@@ -63,7 +63,7 @@ class RegisterDb(object):
 
         self.reset_active_level = 0
         self.data_bus_width = 32
-        self.address_bus_width = 32
+        self.address_bus_width = 12
         self.owner = ""
         self.byte_strobe_active_level = 1
         self.__title = ""
