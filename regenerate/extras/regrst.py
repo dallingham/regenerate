@@ -164,7 +164,6 @@ class RegisterRst:
 
         o.write(text)
 
-        print o.getvalue()
         return o.getvalue()
 
     def _write_bit_fields(self, o):
