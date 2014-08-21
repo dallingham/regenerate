@@ -454,6 +454,7 @@ class MainWindow(BaseWindow):
         the start or start and stop positions, and alter the model and the
         corresponding field.
         """
+
         match = VALID_BITS.match(new_text)
         if match:
             groups = match.groups()

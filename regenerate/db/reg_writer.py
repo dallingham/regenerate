@@ -112,8 +112,7 @@ def write_register(ofile, reg):
     ofile.write('    <width>%s</width>\n' % reg.width)
     ofile.write('    <description>%s</description>\n' %
                 cleanup(reg.description))
-    for field in [reg.get_bit_field(key)
-                  for key in reg.get_bit_field_keys()]:
+    for field in reg.get_bit_fields():
         write_field(ofile, field)
     ofile.write('  </register>\n')
 

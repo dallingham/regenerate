@@ -183,8 +183,9 @@ class RegisterRst:
 
         last_index = self._reg.width - 1
 
-        for key in reversed(self._reg.get_bit_field_keys()):
-            field = self._reg.get_bit_field(key)
+        for field in reversed(self._reg.get_bit_fields()):
+            print field.start_position, field.stop_position
+
             start = field.start_position
             stop = field.stop_position
 
