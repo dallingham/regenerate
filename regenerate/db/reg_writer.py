@@ -147,13 +147,15 @@ def write_input_info(ofile, field):
     """
     Writes the input information to the output file
     """
+    if field.control_signal:
+        ldstr = ' load="%s"' % field.control_signal
+    else:
+        ldstr = ""
     if field.input_signal:
-        if field.control_signal:
-            ldstr = ' load="%s"' % field.control_signal
-        else:
-            ldstr = ""
         ofile.write('      <input%s>%s</input>\n' % (ldstr,
                                                      field.input_signal))
+    elif ldstr:
+        ofile.write('      <input%s/>\n' % ldstr)
 
 
 def write_signal_info(ofile, field):
