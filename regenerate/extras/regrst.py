@@ -284,14 +284,14 @@ class RegisterRst:
                     for i in range(0, inst.repeat):
                         o.write("   *");
                         if use_uvm:
-                            name = full_token(inst.group, inst.inst, self._reg.token,
-                                              self._regset_name, i, inst.format)
+                            name = uvm_name(inst.group, self._reg.token, inst.inst, 
+                                            i, inst.format)
                             o.write(" - %s\n" % self.text(name))
-                        else:
+                        if use_id:
                             name = full_token(inst.group, inst.inst, self._reg.token,
                                               self._regset_name, i, inst.format)
-                            if not use_uvm:
-                                o.write("   ")
+                            if use_uvm:
+                                o.write("    ")
                             o.write(" - %s\n" % self.text(name))
                         for map_name in addr_maps:
                             base = self._prj.get_address_base(map_name.name)
