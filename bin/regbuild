@@ -1,0 +1,111 @@
+#! /usr/bin/env python
+#
+# Manage registers in a hardware design
+#
+# Copyright (C) 2008  Donald N. Allingham
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+"""
+Actual program. Parses the arguments, and initiates the main window
+"""
+
+import os
+import sys
+from regenerate.db.reg_project import RegProject
+from regenerate.db.register_db import RegisterDb
+
+if os.path.dirname(sys.argv[0]) != ".":
+    if sys.argv[0][0] == "/":
+        fullPath = os.path.dirname(sys.argv[0])
+    else:
+        fullPath = os.path.join(os.getcwd(),os.path.dirname(sys.argv[0]))
+else:
+    fullPath = os.getcwd()
+sys.path.insert(0, os.path.dirname(fullPath))
+
+from regenerate.writers import (EXPORTERS, PRJ_EXPORTERS, EXP_CLASS,
+                                EXP_TYPE, EXP_ID, EXP_EXT)
+
+def run():
+    """
+    main program
+    """
+    from optparse import OptionParser
+    import regenerate.writers
+    from regenerate import PROGRAM_VERSION
+    import sys
+
+    prjmap = {}
+    for item in PRJ_EXPORTERS:
+        prjmap[item[EXP_ID]] = (item[EXP_CLASS], item[EXP_TYPE][1])
+
+    parser = OptionParser(
+        usage="%prog [project file]",
+        description="Builds a UVM register package from a regenerate database",
+        prog="regbuild",
+        version=PROGRAM_VERSION
+        )
+    parser.add_option("-f", "--force", action="store_true", dest="force",
+                      help="Force rebuilding even if up to date")
+
+    (options, args) = parser.parse_args()
+
+    if len(args) != 1:
+        parser.print_help()
+        sys.exit(1)
+
+    project = RegProject(args[0])
+    dbase_list = []
+    mod_times = []
+    for dbase_name in project.get_register_set():
+        dbase = RegisterDb()
+        db_file_mtime = os.path.getmtime(dbase_name)
+        mod_times.append(db_file_mtime)
+        dbase.read_xml(dbase_name)
+        dbase_list.append(dbase)
+
+    mod_times.sort()
+    min_mod_time = mod_times[0]
+
+    for item in project.get_project_export_list():
+        if item[0] == "proj-uvm":
+            rebuild = False
+            writer, descript = prjmap[item[0]]
+            dest = os.path.abspath(
+                os.path.join(os.path.dirname(project.path),
+                             item[1]))
+
+            if not os.path.exists(dest):
+                rebuild = True
+            else:
+                dest_time = os.path.getmtime(dest)
+                rebuild = dest_time < min_mod_time
+
+            if rebuild or options.force:
+                print "Generating %s: %s" % (descript, dest)
+                gen = writer(project, dbase_list)
+                gen.write(dest)
+            else:
+                print "%s up to date. use -f to force rebuilding" % descript
+
+if __name__ == "__main__":
+    try:
+        run()
+        sys.exit(0)
+    except IOError, msg:
+        sys.stderr.write(str(msg) + "\n")
+        sys.exit(1)
+
