@@ -36,8 +36,11 @@ from regenerate.writers.verilog_reg_def import REG
 from help_window import HelpWindow
 
 try:
-    from gtkcodebuffer import CodeBuffer, SyntaxLoader
+    from pygments import highlight
+    from pygments.lexers import VerilogLexer
+    from pygments.styles.emacs import EmacsStyle
     USE_HIGHLIGHT = True
+    STYLE = EmacsStyle
 except ImportError:
     USE_HIGHLIGHT = False
 
@@ -123,14 +126,34 @@ class BitFieldEditor(object):
         except KeyError:
             text = ""
 
+        buf = self.__verilog_obj.get_buffer()
         if USE_HIGHLIGHT:
-            buff = CodeBuffer(lang=SyntaxLoader("verilog"))
-            self.__verilog_obj.set_buffer(buff)
-        else:
-            self.__verilog_obj.modify_font(pango_font)
-            buff = self.__verilog_obj.get_buffer()
 
-        buff.set_text(text)
+            styles = {}
+            for token, value in VerilogLexer().get_tokens(text):
+                while not STYLE.styles_token(token) and token.parent:
+                    token = token.parent
+                if token not in styles:
+                    styles[token] = buf.create_tag()
+                start = buf.get_end_iter()
+                buf.insert_with_tags(start, value.encode('utf-8'), styles[token])
+
+                for token, tag in styles.iteritems():
+                    style = STYLE.style_for_token(token)
+                    if style['bgcolor']:
+                        tag.set_property('background', '#' + style['bgcolor'])
+                    if style['color']:
+                        tag.set_property('foreground', '#' + style['color'])
+                    if style['bold']:
+                        tag.set_property('weight', pango.WEIGHT_BOLD)
+                    if style['italic']:
+                        tag.set_property('style', pango.STYLE_ITALIC)
+                    if style['underline']:
+                        tag.set_property('underline', pango.UNDERLINE_SINGLE)
+        else:
+            buf.set_text(text)
+
+        self.__verilog_obj.modify_font(pango_font)
         self.__builder.connect_signals(self)
         self.__top_window.show_all()
 
