@@ -19,10 +19,6 @@
 
 """
 Provides the definition of a Bit Field,
-
-This class makes extensive use of the 'property' feature in python. This
-feature allows us to use a named property like a class variable. When accessed,
-it calls the set/get function to handle any processing needed.
 """
 
 
@@ -120,21 +116,15 @@ class BitField(object):
         return (self.field_type == BitField.TYPE_READ_ONLY or
                 self.field_type == BitField.TYPE_READ_ONLY_LOAD)
 
-    def __get_width(self):
+    @property
+    def width(self):
         """
         Returns the width in bits of the bit field.
         """
         return self.stop_position - self.start_position + 1
 
-    width = property(__get_width, None, None, "Width of the data field")
-
-    def __set_output_signal(self, output):
-        """
-        Sets the output signal associated with the bit range.
-        """
-        self.__output_signal = clean_signal(output)
-
-    def __get_output_signal(self):
+    @property
+    def output_signal(self):
         """
         Gets the output signal associated with the bit range. If the user has
         not specified the name, assume that it is the same as the name of the
@@ -145,20 +135,23 @@ class BitField(object):
         else:
             return clean_signal(self.field_name)
 
-    output_signal = property(__get_output_signal, __set_output_signal,
-                             None, "Name of the output signal")
-
-    def __set_input_signal(self, input_signal):
+    @output_signal.setter
+    def output_signal(self, output):
         """
-        Sets the name of the input signal.
+        Sets the output signal associated with the bit range.
         """
-        self.__input_signal = clean_signal(input_signal)
+        self.__output_signal = clean_signal(output)
 
-    def __get_input_signal(self):
+    @property
+    def input_signal(self):
         """
         Gets the name of the input signal, if it exists.
         """
         return self.__input_signal
 
-    input_signal = property(__get_input_signal, __set_input_signal,
-                            None, "Name of the input signal")
+    @input_signal.setter
+    def input_signal(self, input_signal):
+        """
+        Sets the name of the input signal.
+        """
+        self.__input_signal = clean_signal(input_signal)

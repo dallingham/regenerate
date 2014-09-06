@@ -38,9 +38,9 @@ from help_window import HelpWindow
 try:
     from pygments import highlight
     from pygments.lexers import VerilogLexer
-    from pygments.styles.emacs import EmacsStyle
+    from pygments.styles import get_style_by_name
     USE_HIGHLIGHT = True
-    STYLE = EmacsStyle
+    STYLE = get_style_by_name('emacs')
 except ImportError:
     USE_HIGHLIGHT = False
 
@@ -285,10 +285,7 @@ class BitFieldEditor(object):
         last -= 1
         if (last == -1 or self.__list_model[last][0] or
             self.__list_model[last][1] or self.__list_model[last][2]):
-            if largest >= max_values:
-                new_val = ""
-            else:
-                new_val = "%x" % (largest + 1,)
+            new_val = "" if largest >= max_values else "%x" % (largest + 1,)
             node = self.__list_model.append(row=(new_val, '', ''))
             path = self.__list_model.get_path(node)
         else:

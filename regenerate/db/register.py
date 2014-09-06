@@ -81,19 +81,21 @@ class Register(object):
         else:
             return 0
 
-    def __set_dont_test(self, val):
-        """
-        Sets the __dont_test flag. This cannot be accessed directly, but only
-        via the propery 'do_not_test'.
-        """
-        self.__dont_test.set(val)
-
-    def __get_dont_test(self):
+    @property
+    def do_not_test(self):
         """
         Returns the value of the __dont_test flag. This cannot be accessed
         directly, but only via the property 'do_not_test'
         """
         return self.__dont_test.get()
+
+    @do_not_test.setter
+    def do_not_test(self, val):
+        """
+        Sets the __dont_test flag. This cannot be accessed directly, but only
+        via the propery 'do_not_test'.
+        """
+        self.__dont_test.set(val)
 
     def get_dont_test_obj(self):
         """
@@ -102,23 +104,21 @@ class Register(object):
         """
         return self.__dont_test
 
-    do_not_test = property(__get_dont_test, __set_dont_test, None,
-                           "Indicates if the register should not be tested "
-                           "by automatic tests")
-
-    def __set_ram_size(self, val):
-        """
-        Sets __ram_size. This cannot be accessed directly, but only
-        via the propery 'ram_size'.
-        """
-        self.__ram_size.set(val)
-
-    def __get_ram_size(self):
+    @property
+    def ram_size(self):
         """
         Returns the value of __ram_size. This cannot be accessed
         directly, but only via the property 'ram_size'
         """
         return self.__ram_size.get()
+
+    @ram_size.setter
+    def ram_size(self, val):
+        """
+        Sets __ram_size. This cannot be accessed directly, but only
+        via the propery 'ram_size'.
+        """
+        self.__ram_size.set(val)
 
     def get_ram_size_obj(self):
         """
@@ -127,23 +127,21 @@ class Register(object):
         """
         return self.__ram_size
 
-    ram_size = property(__get_ram_size, __set_ram_size, None,
-                        "Indicates if the register is a RAM, and what its"
-                        "length is")
-
-    def __set_hide(self, val):
-        """
-        Sets the __hide flag . This cannot be accessed directly, but only
-        via the propery 'hide'.
-        """
-        self.__hide.set(val)
-
-    def __get_hide(self):
+    @property
+    def hide(self):
         """
         Returns the value of the __hide flag. This cannot be accessed
         directly, but only via the property 'hide'
         """
         return self.__hide.get()
+
+    @hide.setter
+    def hide(self, val):
+        """
+        Sets the __hide flag . This cannot be accessed directly, but only
+        via the propery 'hide'.
+        """
+        self.__hide.set(val)
 
     def get_hide_obj(self):
         """
@@ -152,23 +150,21 @@ class Register(object):
         """
         return self.__dont_test
 
-    hide = property(__get_hide, __set_hide, None,
-                    "Indicates if the register should be hidden "
-                    "from documentation")
-
-    def __set_no_code(self, val):
-        """
-        Sets the __nocode flag. This cannot be accessed directly, but only
-        via the propery 'do_not_generate_code'
-        """
-        self.__nocode.set(bool(val))
-
-    def __get_no_code(self):
+    @property
+    def do_not_generate_code(self):
         """
         Returns the value of the __nocode flag. This cannot be accessed
         directly, but only via the property 'do_not_generate_code'
         """
         return self.__nocode.get()
+
+    @do_not_generate_code.setter
+    def do_not_generate_code(self, val):
+        """
+        Sets the __nocode flag. This cannot be accessed directly, but only
+        via the propery 'do_not_generate_code'
+        """
+        self.__nocode.set(bool(val))
 
     def get_no_code_obj(self):
         """
@@ -177,23 +173,21 @@ class Register(object):
         """
         return self.__nocode
 
-    do_not_generate_code = property(__get_no_code, __set_no_code, None,
-                                    "Indicates if code generation should be "
-                                    "suppressed")
-
-    def __set_token(self, val):
-        """
-        Sets the __token flag. This cannot be accessed directly, but only
-        via the propery 'token'
-        """
-        self.__token.set(val.strip().upper())
-
-    def __get_token(self):
+    @property
+    def token(self):
         """
         Returns the value of the __token flag. This cannot be accessed
         directly, but only via the property 'token'
         """
         return self.__token.get()
+
+    @token.setter
+    def token(self, val):
+        """
+        Sets the __token flag. This cannot be accessed directly, but only
+        via the propery 'token'
+        """
+        self.__token.set(val.strip().upper())
 
     def get_token_obj(self):
         """
@@ -202,22 +196,21 @@ class Register(object):
         """
         return self.__token
 
-    token = property(__get_token, __set_token, None,
-                     "token name of the register")
-
-    def __set_name(self, name):
-        """
-        Sets the __name flag. This cannot be accessed directly, but only
-        via the propery 'register_name'
-        """
-        self.__name.set(name.strip())
-
-    def __get_name(self):
+    @property
+    def register_name(self):
         """
         Returns the value of the __name flag. This cannot be accessed
         directly, but only via the property 'register_name'
         """
         return self.__name.get()
+
+    @register_name.setter
+    def register_name(self, name):
+        """
+        Sets the __name flag. This cannot be accessed directly, but only
+        via the propery 'register_name'
+        """
+        self.__name.set(name.strip())
 
     def get_name_obj(self):
         """
@@ -226,22 +219,21 @@ class Register(object):
         """
         return self.__name
 
-    register_name = property(__get_name, __set_name, None,
-                             "Name of the register")
-
-    def __set_address(self, addr):
-        """
-        Sets the __address flag. This cannot be accessed directly, but only
-        via the propery 'address'
-        """
-        self.__address.set(addr)
-
-    def __get_address(self):
+    @property
+    def address(self):
         """
         Returns the value of the __address flag. This cannot be accessed
         directly, but only via the property 'address'
         """
         return self.__address.get()
+
+    @address.setter
+    def address(self, addr):
+        """
+        Sets the __address flag. This cannot be accessed directly, but only
+        via the propery 'address'
+        """
+        self.__address.set(addr)
 
     def get_address_obj(self):
         """
@@ -250,22 +242,21 @@ class Register(object):
         """
         return self.__address
 
-    address = property(__get_address, __set_address, None,
-                       "Address of the register")
-
-    def __set_description(self, description):
-        """
-        Sets the __description flag. This cannot be accessed directly, but
-        only via the propery 'Description'
-        """
-        self.__description.set(description)
-
-    def __get_description(self):
+    @property
+    def description(self):
         """
         Returns the value of the __description flag. This cannot be accessed
         directly, but only via the property 'description'
         """
         return self.__description.get()
+
+    @description.setter
+    def description(self, description):
+        """
+        Sets the __description flag. This cannot be accessed directly, but
+        only via the propery 'Description'
+        """
+        self.__description.set(description)
 
     def get_description_obj(self):
         """
@@ -274,22 +265,21 @@ class Register(object):
         """
         return self.__description
 
-    description = property(__get_description, __set_description, None,
-                           "description of the register")
-
-    def __set_width(self, width):
-        """
-        Sets the __width flag. This cannot be accessed directly, but
-        only via the propery 'width'
-        """
-        self.__width.set(width)
-
-    def __get_width(self):
+    @property
+    def width(self):
         """
         Returns the value of the __width flag. This cannot be accessed
         directly, but only via the property 'width'
         """
         return self.__width.get()
+
+    @width.setter
+    def width(self, width):
+        """
+        Sets the __width flag. This cannot be accessed directly, but
+        only via the propery 'width'
+        """
+        self.__width.set(width)
 
     def get_width_obj(self):
         """
@@ -297,8 +287,6 @@ class Register(object):
         set the modified flag and the last modified time stamp.
         """
         return self.__width
-
-    width = property(__get_width, __set_width, None, "Width of the register")
 
     def get_bit_fields(self):
         """
