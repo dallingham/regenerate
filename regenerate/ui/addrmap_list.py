@@ -170,7 +170,7 @@ class AddrMapList(object):
             name = self._model.get_value(node, AddrMapMdl.NAME_COL)
             self._prj.change_address_map_name(name, new_text)
             self._model[path][AddrMapMdl.NAME_COL] = new_text
-            self._prj.set_modified()
+            self._prj.modified = True
 
     def _base_changed(self, cell, path, new_text, col):
         """
@@ -192,7 +192,7 @@ class AddrMapList(object):
 
             self._prj.set_address_map(name, value, width, fixed)
             self._model[path][AddrMapMdl.BASE_COL] = new_text
-            self._prj.set_modified()
+            self._prj.modified = True
 
     def _width_changed(self, cell, path, node, col):
         """
@@ -284,7 +284,7 @@ class AddrMapList(object):
         else:
             name = model.get_value(node, AddrMapMdl.NAME_COL)
             model.remove(node)
-            self._prj.set_modified()
+            self._prj.modified = True
             self._prj.remove_address_map(name)
 
     def add_new_map(self):
@@ -296,7 +296,7 @@ class AddrMapList(object):
         node = self._model.append(None, row=(name, 0, False,
                                              SIZE2STR[0][0]))
         path = self._model.get_path(node)
-        self._prj.set_modified()
+        self._prj.modified = True
         self._prj.set_address_map(name, 0, False, SIZE2STR[0][1])
         self._obj.set_cursor(path, focus_column=self._col,
                              start_editing=True)

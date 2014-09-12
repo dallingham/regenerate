@@ -429,7 +429,7 @@ class UVMBlockRegisters(WriterBase):
                     for field in reg.get_bit_fields():
                         of.write('      %s.add_hdl_path_slice("r%02x_%s", %d, %d );\n'
                                  % (token, reg.address, self._fix_name(field),
-                                    field.start_position, field.width))
+                                    field.lsb, field.width))
         of.write("\n")
 
         for item in in_maps:
@@ -554,13 +554,13 @@ class UVMBlockRegisters(WriterBase):
 
         for field in reg.get_bit_fields():
             size = field.width
-            if field.start_position >= reg.width:
-                lsb = field.start_position % reg.width
+            if field.lsb >= reg.width:
+                lsb = field.lsb % reg.width
                 tok = reg.token
                 msg = "%s has bits that exceed the register width" % tok
                 LOGGER.warning(msg)
             else:
-                lsb = field.start_position
+                lsb = field.lsb
 
             access = ACCESS_MAP.get(field.field_type, None)
             if access is None:
@@ -692,12 +692,12 @@ def individual_access(field, reg):
     # used_bytes set
 
     for f in [fld for fld in flds if fld != field and not is_readonly(fld)]:
-        for pos in range(f.start_position, f.stop_position + 1):
+        for pos in range(f.lsb, f.msb + 1):
             used_bytes.add(pos / 8)
 
     # loop through the bytes used by the current field, and make sure they
     # do match any of the bytes used by other fields
-    for pos in range(field.start_position, field.stop_position + 1):
+    for pos in range(field.lsb, field.msb + 1):
         if (pos / 8) in used_bytes:
             return False
     return True

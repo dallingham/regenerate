@@ -35,9 +35,6 @@ class BitField(object):
     of a register)
     """
 
-    (READ_ONLY, READ_WRITE, WRITE_1_TO_CLEAR,
-     WRITE_1_TO_SET, WRITE_ONLY) = range(5)
-
     (TYPE_READ_ONLY,
      TYPE_READ_ONLY_VALUE,
      TYPE_READ_ONLY_LOAD,
@@ -76,34 +73,23 @@ class BitField(object):
 
     (RESET_NUMERIC, RESET_INPUT, RESET_PARAMETER) = range(3)
 
-    __slots__ = ('start_position', 'stop_position', 'field_name',
-                 'use_output_enable', '__output_signal', '__input_signal',
-                 'field_type', 'volatile', 'reset_value',
-                 'reset_input', 'reset_type', 'modified',
-                 'reset_parameter', 'input_function',
-                 'description', 'control_signal', 'output_is_static',
-                 'output_has_side_effect', 'values', 'is_error_field')
-
-    def __init__(self, stop=0, start=0, name="",
-                 sig_type=TYPE_READ_ONLY, descr="", reset=0):
+    def __init__(self, stop=0, start=0):
 
         self.modified = False
-
         self.__output_signal = ""
         self.__input_signal = ""
-
         self.start_position = start
         self.stop_position = stop
-        self.field_name = name
+        self.field_name = ""
         self.use_output_enable = False
-        self.field_type = sig_type
+        self.field_type = BitField.TYPE_READ_ONLY
         self.volatile = False
         self.is_error_field = False
-        self.reset_value = reset
+        self.reset_value = 0
         self.reset_input = ""
         self.reset_type = BitField.RESET_NUMERIC
         self.reset_parameter = ""
-        self.description = descr
+        self.description = ""
         self.control_signal = ""
         self.output_is_static = False
         self.output_has_side_effect = False
@@ -115,6 +101,44 @@ class BitField(object):
         """
         return (self.field_type == BitField.TYPE_READ_ONLY or
                 self.field_type == BitField.TYPE_READ_ONLY_LOAD)
+
+    def full_field_name(self):
+        """
+        Builds the name of the field, including bit positions if needed
+        """
+        if self.width == 1:
+            return self.field_name
+        else:
+            return "%s[%d:%d]" % (self.field_name, self.msb, self.lsb)
+
+    def bit_range(self):
+        """
+        Retruns the bit range of the field
+        """
+        if self.width == 1:
+            return "%d" % self.lsb
+        else:
+            return "[%d:%d]" % (self.msb, self.lsb)
+
+    @property
+    def msb(self):
+        """Returns the most significant bit of the field"""
+        return self.stop_position
+
+    @msb.setter
+    def msb(self, value):
+        """Sets the most significant bit of the field"""
+        self.stop_position = value
+
+    @property
+    def lsb(self):
+        """Returns the least significant bit of the field"""
+        return self.start_position
+
+    @lsb.setter
+    def lsb(self, value):
+        """Setsx the least significant bit of the field"""
+        self.start_position = value
 
     @property
     def width(self):

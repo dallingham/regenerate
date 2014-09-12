@@ -93,8 +93,7 @@ class RegWriter(object):
         """
         Writes the signal list to the output file
         """
-        for reg in [self.dbase.get_register(rkey)
-                    for rkey in self.dbase.get_keys()]:
+        for reg in self.dbase.get_all_registers():
             write_register(ofile, reg)
 
 

@@ -232,7 +232,7 @@ class CTest(WriterBase):
                                   BitField.TYPE_READ_WRITE_SET_1S, BitField.TYPE_READ_WRITE_SET_1S_1,
                                   BitField.TYPE_READ_WRITE_CLR,
                                   BitField.TYPE_READ_WRITE_CLR_1S, BitField.TYPE_READ_WRITE_CLR_1S_1):
-                for i in range(rng.start_position, rng.stop_position + 1):
+                for i in range(rng.lsb, rng.msb + 1):
                     value = value | (1 << i)
         return value
 
@@ -248,7 +248,7 @@ class CTest(WriterBase):
             cfile.write("\n// %s\n\n" % inst)
             for key in dbase.get_keys():
                 register = dbase.get_register(key)
-                addr = offset + register.address;
+                addr = offset + register.address
 
                 if register.do_not_test:
                     continue

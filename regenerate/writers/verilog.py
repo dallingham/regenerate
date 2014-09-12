@@ -53,8 +53,8 @@ def errmsg(msg):
 def get_width(field, start=-1, stop=-1, force_index=False):
     """Returns with width if the bit range is greater than one."""
     if stop == -1:
-        start = field.start_position
-        stop = field.stop_position
+        start = field.lsb
+        stop = field.msb
 
     if field.width == 1 and not force_index:
         signal = ""
@@ -69,12 +69,10 @@ def build_name(signal, field):
     sigparts = signal.split("[*]")
     if len(sigparts) == 1:
         sig = field.output_signal
-    elif field.start_position != field.stop_position:
-        sig = "%s[%d:%d]" % (sigparts[0],
-                             field.stop_position,
-                             field.start_position)
+    elif field.lsb != field.msb:
+        sig = "%s[%d:%d]" % (sigparts[0], field.msb, field.lsb)
     else:
-        sig = "%s[%d]" % (sigparts[0], field.stop_position)
+        sig = "%s[%d]" % (sigparts[0], field.msb)
     return sig
 
 
@@ -124,7 +122,7 @@ def reset_value(field, start, stop):
 
     if field.reset_type == BitField.RESET_NUMERIC:
         field_width = (stop - start) + 1
-        reset = (field.reset_value >> (start - field.start_position))
+        reset = (field.reset_value >> (start - field.lsb))
         return "%d'h%x" % (field_width, reset & ((2 ** field_width) - 1))
     elif field.reset_type == BitField.RESET_INPUT:
         if stop == start:
@@ -233,7 +231,7 @@ def add_reset_input(reset_set, field):
             reset = data[0]
             (start, stop) = (int(data[2]), int(data[1]))
         else:
-            (start, stop) = (field.start_position, field.stop_position)
+            (start, stop) = (field.lsb, field.msb)
 
     if reset in reset_set:
         values = reset_set[reset]
@@ -368,8 +366,7 @@ class Verilog(WriterBase):
         self._used_types.add(field.field_type)
         nbytes = self._data_width / 8
 
-        for (start, stop) in break_on_byte_boundaries(field.start_position,
-                                                      field.stop_position):
+        for (start, stop) in break_on_byte_boundaries(field.lsb, field.msb):
             parameters = []
             if start >= self._data_width:
                 write_address = address + ((start / self._data_width) *
@@ -439,8 +436,8 @@ class Verilog(WriterBase):
         Returns the basic information from a field, broken out into byte
         quantities
         """
-        start = max(field.start_position, lower)
-        stop = min(field.stop_position, lower + size - 1)
+        start = max(field.lsb, lower)
+        stop = min(field.msb, lower + size - 1)
 
         nbytes = size / 8
         address = (register.address / nbytes) * nbytes
@@ -457,7 +454,7 @@ class Verilog(WriterBase):
         for register in self.__sorted_regs:
             for field in register.get_bit_fields():
                 for lower in range(0, register.width, size):
-                    if in_range(field.start_position, field.stop_position,
+                    if in_range(field.lsb, field.msb,
                                 lower, lower + size - 1):
                         data = self._byte_info(field, register, lower, size)
                         item_list.setdefault(data[F_ADDRESS], []).append(data)
@@ -472,7 +469,7 @@ class Verilog(WriterBase):
             for field in [field for field in reg.get_bit_fields()
                           if self._has_rd[field.field_type]]:
                 for lower in range(0, reg.width, size):
-                    if in_range(field.start_position, field.stop_position,
+                    if in_range(field.lsb, field.msb,
                                 lower, lower + size - 1):
                         data = self._byte_info(field, reg, lower, size)
                         item_list.setdefault(data[F_ADDRESS], []).append(data)
@@ -547,13 +544,13 @@ class Verilog(WriterBase):
                     else:
                         param_name = field.reset_parameter
 
-                    if field.stop_position == field.start_position:
+                    if field.msb == field.lsb:
                         blist.append((param_name,
                                       field.width,
                                       field.reset_value))
                     else:
-                        plist.append((field.stop_position,
-                                      field.start_position,
+                        plist.append((field.msb,
+                                      field.lsb,
                                       param_name,
                                       field.width,
                                       field.reset_value))
@@ -733,8 +730,7 @@ class Verilog(WriterBase):
                 local_regs.append(val)
 
                 if self._has_oneshot[field.field_type]:
-                    boundaries = break_on_byte_boundaries(field.start_position,
-                                                          field.stop_position)
+                    boundaries = break_on_byte_boundaries(field.lsb, field.msb)
                     for pos in boundaries:
                         val = "   %s %-10s %s;" % (self._wire_type, "",
                                                    oneshot_name(base, pos[0]))
@@ -797,8 +793,7 @@ class Verilog(WriterBase):
                 field = register.get_bit_field(field_key)
                 if self._has_oneshot[field.field_type]:
                     base = get_base_signal(address, field)
-                    boundaries = break_on_byte_boundaries(field.start_position,
-                                                          field.stop_position)
+                    boundaries = break_on_byte_boundaries(field.lsb, field.msb)
                     names = " | ".join([oneshot_name(base, pos[0])
                                         for pos in boundaries])
                     self._wrln(fmt_string % (
@@ -833,7 +828,7 @@ class Verilog(WriterBase):
         Writes the register range that is specified
         """
         self._write_field_comment(reg.register_name, reg.address, field,
-                                  field.start_position, field.stop_position)
+                                  field.lsb, field.msb)
         func = self._field_type_map.get(field.field_type,
                                         self._register_normal)
         func(reg.address, field)
@@ -1017,13 +1012,13 @@ class Verilog2001(Verilog):
                     else:
                         param_name = field.reset_parameter
 
-                    if field.stop_position == field.start_position:
+                    if field.msb == field.lsb:
                         blist.append((param_name,
                                       field.width,
                                       field.reset_value))
                     else:
-                        plist.append((field.stop_position,
-                                      field.start_position,
+                        plist.append((field.msb,
+                                      field.lsb,
                                       param_name,
                                       field.width,
                                       field.reset_value))

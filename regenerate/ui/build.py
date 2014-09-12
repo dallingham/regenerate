@@ -145,12 +145,12 @@ class Build(BaseWindow):
         export list.
         """
         for item in self.__prj.get_register_set():
-            for (option, dest) in self.__prj.get_export_list(item):
+            for (option, dest) in self.__prj.get_exports(item):
                 try:
                     self.__add_dbase_item_to_list(item, option, dest)
                 except KeyError:
                     pass
-        for (option, dest) in self.__prj.get_project_export_list():
+        for (option, dest) in self.__prj.get_project_exports():
             try:
                 self.__add_prj_item_to_list(option, dest)
             except KeyError:

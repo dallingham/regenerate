@@ -260,7 +260,7 @@ class MainWindow(BaseWindow):
         company = self.__prj.company_name
         self.__prj_company_name_obj.set_text(company)
         self.__addr_map_list.set_project(self.__prj)
-        self.__prj.clear_modified()
+        self.__prj.modified = False
 
     def on_addr_map_help_clicked(self, obj):
         HelpWindow(self.__builder, "addr_map_help.rst")
@@ -269,7 +269,7 @@ class MainWindow(BaseWindow):
         HelpWindow(self.__builder, "project_group_help.rst")
 
     def on_remove_map_clicked(self, obj):
-        self.__prj.set_modified()
+        self.__prj.modified = True
         self.__addr_map_list.remove_selected()
 
     def on_add_map_clicked(self, obj):
@@ -284,7 +284,7 @@ class MainWindow(BaseWindow):
         When the name is changed, it is immediately updated in the project
         object.
         """
-        self.__prj.set_modified()
+        self.__prj.modified = True
         self.__prj.name = obj.get_text()
 
     def on_company_name_changed(self, obj):
@@ -293,7 +293,7 @@ class MainWindow(BaseWindow):
         When the name is changed, it is immediately updated in the project
         object.
         """
-        self.__prj.set_modified()
+        self.__prj.modified = True
         self.__prj.company_name = obj.get_text()
 
     def on_offset_insert_text(self, obj, new_text, pos, *extra):
@@ -303,7 +303,7 @@ class MainWindow(BaseWindow):
             obj.stop_emission('insert-text')
 
     def on_project_documentation_changed(self, obj):
-        self.__prj.set_modified()
+        self.__prj.modified = True
         self.__prj.documentation = obj.get_text(obj.get_start_iter(),
                                                 obj.get_end_iter())
 
@@ -315,7 +315,7 @@ class MainWindow(BaseWindow):
         spaces.
         """
         self.__prj.short_name = obj.get_text().replace(' ', '').strip()
-        self.__prj.set_modified()
+        self.__prj.modified = True
         obj.set_text(self.__prj.short_name)
 
     def __restore_position_and_size(self):
@@ -461,17 +461,15 @@ class MainWindow(BaseWindow):
             if groups[2]:
                 stop = int(groups[0])
                 start = int(groups[2])
-                if (stop != field.stop_position or
-                    start != field.start_position):
-                    field.stop_position = stop
-                    field.start_position = start
+                if (stop != field.msb or start != field.lsb):
+                    field.msb = stop
+                    field.lsb = start
                     self.set_modified()
             else:
                 start = int(groups[0])
-                if (start != field.stop_position or
-                    start != field.start_position):
-                    field.stop_position = start
-                    field.start_position = start
+                if (start != field.msb or start != field.lsb):
+                    field.msb = start
+                    field.lsb = start
                     self.set_modified()
             self.__bit_model[path][BitModel.BIT_COL] = bits(field)
             self.__bit_model[path][BitModel.SORT_COL] = field.start_position
@@ -536,7 +534,7 @@ class MainWindow(BaseWindow):
         """
         self.__instance_model.change_inst(path, new_text)
         self.__set_module_definition_warn_flag()
-        self.__prj.set_modified()
+        self.__prj.modified = True
 
     def __instance_base_changed(self, cell, path, new_text, col):
         """
@@ -544,7 +542,7 @@ class MainWindow(BaseWindow):
         """
         self.__instance_model.change_base(path, new_text)
         self.__set_module_definition_warn_flag()
-        self.__prj.set_modified()
+        self.__prj.modified = True
 
     def __instance_format_changed(self, cell, path, new_text, col):
         """
@@ -553,7 +551,7 @@ class MainWindow(BaseWindow):
         if len(path) > 1:
             self.__instance_model.change_format(path, new_text)
             self.__set_module_definition_warn_flag()
-            self.__prj.set_modified()
+            self.__prj.modified = True
 
     def __instance_hdl_changed(self, cell, path, new_text, col):
         """
@@ -561,15 +559,15 @@ class MainWindow(BaseWindow):
         """
         self.__instance_model.change_hdl(path, new_text.replace("/", "."))
         self.__set_module_definition_warn_flag()
-        self.__prj.set_modified()
+        self.__prj.modified = True
 
-    def __instance_uvm_changed(self, cell, path, col): #cell, path, new_text, col, arg):
+    def __instance_uvm_changed(self, cell, path, col):
         """
         Updates the data model when the text value is changed in the model.
         """
         self.__instance_model.change_uvm(cell, path)
         self.__set_module_definition_warn_flag()
-        self.__prj.set_modified()
+        self.__prj.modified = True
 
     def __instance_repeat_changed(self, cell, path, new_text, col):
         """
@@ -577,7 +575,7 @@ class MainWindow(BaseWindow):
         """
         self.__instance_model.change_repeat(path, new_text)
         self.__set_module_definition_warn_flag()
-        self.__prj.set_modified()
+        self.__prj.modified = True
 
     def __instance_repeat_offset_changed(self, cell, path, new_text, col):
         """
@@ -585,7 +583,7 @@ class MainWindow(BaseWindow):
         """
         self.__instance_model.change_repeat_offset(path, new_text)
         self.__set_module_definition_warn_flag()
-        self.__prj.set_modified()
+        self.__prj.modified = True
 
     def on_filter_icon_press(self, obj, icon, event):
         if icon == gtk.ENTRY_ICON_SECONDARY:
@@ -709,12 +707,12 @@ class MainWindow(BaseWindow):
             self.__instance_model.remove(selected[1])
             self.__prj.remove_group_from_grouping_list(g)
             self.__set_module_definition_warn_flag()
-            self.__prj.set_modified()
+            self.__prj.modified = True
 
     def on_add_instance_clicked(self, obj):
         self.__instance_obj.new_instance()
         self.__set_module_definition_warn_flag()
-        self.__prj.set_modified()
+        self.__prj.modified = True
 
     def __data_changed(self, obj):
         """
@@ -881,8 +879,8 @@ class MainWindow(BaseWindow):
     def on_add_bit_action_activate(self, obj):
         register = self.__reglist_obj.get_selected_register()
         field = BitField()
-        field.start_position = register.find_next_unused_bit()
-        field.stop_position = field.start_position
+        field.lsb = register.find_next_unused_bit()
+        field.msb = field.lsb
         register.add_bit_field(field)
         self.__bitfield_obj.add_new_field(field)
         self.set_modified()
@@ -1345,7 +1343,7 @@ class MainWindow(BaseWindow):
         data needs to be saved first.
         """
         if (self.__modified or self.__prj_model.is_not_saved() or
-            (self.__prj and self.__prj.is_not_saved())):
+            (self.__prj and self.__prj.modified)):
             dialog = Question('Save Changes?',
                               "The file has been modified. "
                               "Do you want to save your changes?")
@@ -1568,21 +1566,19 @@ class MainWindow(BaseWindow):
                 if check_field(field):
                     txt = "Missing field description for '%s'" % \
                           field.field_name
-                    if field.start_position == field.stop_position:
-                        txt = txt + " (bit %d)" % field.start_position
+                    if field.width == 1:
+                        txt = txt + " (bit %d)" % field.lsb
                     else:
-                        txt = txt + "(bits [%d:%d])" \
-                              % (field.stop_position, field.start_position)
+                        txt = txt + "(bits [%d:%d])" % (field.msb, field.lsb)
                     msg.append(txt)
                     warn_bit = True
                 if check_reset(field):
                     txt = "Missing reset parameter name for '%s'" % \
                           field.field_name
-                    if field.start_position == field.stop_position:
-                        txt = txt + " (bit %d)" % field.start_position
+                    if field.lsb == field.msb:
+                        txt = txt + " (bit %d)" % field.lsb
                     else:
-                        txt = txt + "(bits [%d:%d])" \
-                              % (field.stop_position, field.start_position)
+                        txt = txt + "(bits [%d:%d])" % (field.msb, field.lsb)
                     msg.append(txt)
                     warn_bit = True
         if mark and not self.__loading_project:

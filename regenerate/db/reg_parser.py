@@ -162,31 +162,7 @@ class RegParser(object):
         self.__field.output_has_side_effect = cnv_bool(attrs, 'side_effect')
         self.__field.volatile = cnv_bool(attrs, 'volatile')
         self.__field.is_error_field = cnv_bool(attrs, 'error_field')
-        if attrs.get('type'):
-            tval = cnv_int(attrs, 'type')
-            oneshot = cnv_int(attrs, 'oneshot')
-            if tval == BitField.READ_ONLY:
-                self.__field.field_type = BitField.TYPE_READ_ONLY
-            elif tval == BitField.READ_WRITE:
-                if oneshot == BitField.ONE_SHOT_ANY:
-                    self.__field.field_type = BitField.TYPE_READ_WRITE_1S
-                elif oneshot == BitField.ONE_SHOT_ONE:
-                    self.__field.field_type = BitField.TYPE_READ_WRITE_1S_1
-                else:
-                    self.__field.field_type = BitField.TYPE_READ_WRITE
-            elif tval == BitField.WRITE_1_TO_CLEAR:
-                if oneshot == BitField.ONE_SHOT_ANY:
-                    self.__field.field_type = BitField.TYPE_WRITE_1_TO_CLEAR_SET_1S
-                elif oneshot == BitField.ONE_SHOT_ONE:
-                    self.__field.field_type = BitField.TYPE_WRITE_1_TO_CLEAR_SET_1S_1
-                else:
-                    self.__field.field_type = BitField.TYPE_WRITE_1_TO_CLEAR_SET
-            elif tval == BitField.WRITE_1_TO_SET:
-                self.__field.field_type = BitField.TYPE_WRITE_1_TO_SET
-            else:
-                self.__field.field_type = BitField.TYPE_WRITE_ONLY
-        else:
-            self.__field.field_type = ID_TO_TYPE[attrs.get('field_type', 'RO')]
+        self.__field.field_type = ID_TO_TYPE[attrs.get('field_type', 'RO')]
 
     def start_input(self, attrs):
         """
@@ -195,46 +171,6 @@ class RegParser(object):
           function
           load
         """
-        if attrs.get('function'):
-            old_type = self.__field.field_type
-
-            func = cnv_int(attrs, 'function', BitField.FUNC_ASSIGNMENT)
-            if old_type == BitField.TYPE_READ_ONLY:
-                if func == BitField.FUNC_PARALLEL:
-                    self.__field.field_type = BitField.TYPE_READ_ONLY_LOAD
-                elif func == BitField.FUNC_SET_BITS:
-                    self.__field.field_type = BitField.TYPE_READ_ONLY_VALUE
-            elif old_type == BitField.TYPE_READ_WRITE:
-                if func == BitField.FUNC_SET_BITS:
-                    self.__field.field_type = BitField.TYPE_READ_WRITE_SET
-                elif func == BitField.FUNC_CLEAR_BITS:
-                    self.__field.field_type = BitField.TYPE_READ_WRITE_CLR
-                elif func == BitField.FUNC_PARALLEL:
-                    self.__field.field_type = BitField.TYPE_READ_WRITE_LOAD
-            elif old_type == BitField.TYPE_READ_WRITE_1S:
-                if func == BitField.FUNC_SET_BITS:
-                    self.__field.field_type = BitField.TYPE_READ_WRITE_SET_1S
-                elif func == BitField.FUNC_CLEAR_BITS:
-                    self.__field.field_type = BitField.TYPE_READ_WRITE_CLR_1S
-                elif func == BitField.FUNC_PARALLEL:
-                    self.__field.field_type = BitField.TYPE_READ_WRITE_LOAD_1S
-            elif old_type == BitField.TYPE_READ_WRITE_1S_1:
-                if func == BitField.FUNC_SET_BITS:
-                    self.__field.field_type = BitField.TYPE_READ_WRITE_SET_1S_1
-                elif func == BitField.FUNC_CLEAR_BITS:
-                    self.__field.field_type = BitField.TYPE_READ_WRITE_CLR_1S_1
-                elif func == BitField.FUNC_PARALLEL:
-                    self.__field.field_type = BitField.TYPE_READ_WRITE_LOAD_1S_1
-            elif old_type == BitField.TYPE_WRITE_1_TO_CLEAR_SET:
-                if func == BitField.FUNC_PARALLEL:
-                    self.__field.field_type = BitField.TYPE_WRITE_1_TO_CLEAR_LOAD
-            elif old_type == BitField.TYPE_WRITE_1_TO_CLEAR_SET_1S:
-                if func == BitField.FUNC_PARALLEL:
-                    self.__field.field_type = BitField.TYPE_WRITE_1_TO_CLEAR_LOAD_1S
-            elif old_type == BitField.TYPE_WRITE_1_TO_CLEAR_SET_1S_1:
-                if func == BitField.FUNC_PARALLEL:
-                    self.__field.field_type = BitField.TYPE_WRITE_1_TO_CLEAR_LOAD_1S_1
-
         self.__field.control_signal = cnv_str(attrs, 'load')
 
     def start_register(self, attrs):

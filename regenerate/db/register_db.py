@@ -73,6 +73,7 @@ class RegisterDb(object):
         self.set_name = ""
 
     def total_bits(self):
+        """Returns bits in register"""
         bits = 0
         for key in self.__registers.keys():
             reg = self.__registers[key]
@@ -84,21 +85,20 @@ class RegisterDb(object):
         """
         Returns the register keys, which is the address of the register
         """
-        return sorted(self.__registers.keys())
+        return iter(sorted(self.__registers.keys()))
 
     def get_all_registers(self):
         """
         Returns the register keys, which is the address of the register
         """
-        return [self.__registers[key]
-                for key in sorted(self.__registers.keys())]
+        return iter([self.__registers[key]
+                     for key in sorted(self.__registers.keys())])
 
     def get_register(self, key):
         """
         Returns the register from the specified key, which should be the
         address.
         """
-        assert (key == self.__registers.get(key).address)
         return self.__registers.get(key)
 
     def add_register(self, reg):

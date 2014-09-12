@@ -334,13 +334,9 @@ class OdtSpec(WriterBase):
 
             bit_range = reg.get_bit_field(key)
 
-            if bit_range.stop_position != last_index:
-                if last_index - bit_range.stop_position >= 2:
-                    rng = "%d:%d" % (last_index, bit_range.stop_position+1)
-                else:
-                    rng = "%d" % last_index
-                self.print_reserved(rng)
-            last_index = bit_range.start_position - 1
+            if bit_range.msb != last_index:
+                self.print_reserved(bit_range.bit_range())
+            last_index = bit_range.lsb - 1
 
             self.start_row()
             if last:
@@ -350,8 +346,7 @@ class OdtSpec(WriterBase):
                 table_cell = TXTCNTS
                 table_end_cell = TXTEND
 
-            text = calc_range(bit_range.stop_position,
-                              bit_range.start_position)
+            text = bit_range.bit_range()
             self.write_table_cell(table_cell, CELLBODY, text)
 
             if bit_range.reset_type == BitField.RESET_NUMERIC:
@@ -467,7 +462,7 @@ class OdtSpec(WriterBase):
             for reg in category:
                 self._dbase = reg[0]
                 self._set_values_init(self._dbase, reg[1])
-                if  self._dbase.descriptive_title :
+                if self._dbase.descriptive_title:
                     title = self._dbase.descriptive_title
                 else:
                     title = self._dbase.module_name
@@ -547,15 +542,6 @@ def rst_val(val):
     else:
         return "%x" % val
 
-def calc_range(stop, start):
-    """
-    returns a range in the form of [stop:start] if the start and stop values
-    are not identical
-    """
-    if stop != start:
-        return "%d:%d" % (stop, start)
-    else:
-        return "%d" % stop
 
 class StylesXmlParser(object):
     """

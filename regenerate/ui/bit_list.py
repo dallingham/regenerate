@@ -61,7 +61,7 @@ class BitModel(gtk.ListStore):
                 TYPE2STR[field.field_type][0],
                 get_field_reset_data(field),
                 self.RESET2STR[field.reset_type][0],
-                field.start_position,
+                field.lsb,
                 field]
 
         node = self.append(row=data)
@@ -181,19 +181,18 @@ def bits(field):
     """
     Returns a text representation of the bit field range
     """
-    if field.start_position == field.stop_position:
-        return "%d" % field.start_position
+    if field.lsb == field.msb:
+        return "%d" % field.lsb
     else:
-        return "%d:%d" % (field.stop_position, field.start_position)
+        return "%d:%d" % (field.msb, field.lsb)
 
 
 def reset_value(field):
     """
     Returns a string representation of the reset value.
     """
-    width = (field.stop_position - field.start_position) + 1
     strval = "%x" % field.reset_value
-    return strval.zfill(width / 4)
+    return strval.zfill(field.width / 4)
 
 
 def get_field_reset_data(field):
