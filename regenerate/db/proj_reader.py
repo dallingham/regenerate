@@ -91,8 +91,8 @@ class ProjectReader(object):
 
     def start_registerset(self, attrs):
         """Called when a registerset tag is found"""
-        self.__current = attrs['name']
-        self._prj.append_register_set_to_list(self.__current)
+        self._current = attrs['name']
+        self._prj.append_register_set_to_list(self._current)
 
     def start_export(self, attrs):
         """Called when an export tag is found"""
@@ -135,7 +135,7 @@ class ProjectReader(object):
             int(attrs.get('width', 4)),
             int(attrs.get('fixed', 1)))
 
-        self.__current_map = attrs['name']
+        self._current_map = attrs['name']
 
     def end_documentation(self, text):
         """
@@ -156,4 +156,4 @@ class ProjectReader(object):
         Called when the map_group XML tag is encountered. Assigns the
         current text string to the current group's docs variable
         """
-        self._prj.add_address_map_group(self.__current_map, text)
+        self._prj.add_address_map_group(self._current_map, text)
