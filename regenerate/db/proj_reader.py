@@ -92,17 +92,17 @@ class ProjectReader(object):
     def start_registerset(self, attrs):
         """Called when a registerset tag is found"""
         self.__current = attrs['name']
-        self._prj.add_register_set(self.__current)
+        self._prj.append_register_set_to_list(self.__current)
 
     def start_export(self, attrs):
         """Called when an export tag is found"""
         path = attrs['path']
         option = attrs['option']
-        self._prj.add_to_export_list(path, option, self._current)
+        self._prj.append_to_export_list(path, option, self._current)
 
     def start_project_export(self, attrs):
         """Called when a project_export tag is found"""
-        self._prj.add_to_project_export_list(attrs['option'], attrs['path'])
+        self._prj.append_to_project_export_list(attrs['option'], attrs['path'])
 
     def start_grouping(self, attrs):
         """Called when a grouping tag is found"""

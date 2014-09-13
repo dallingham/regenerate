@@ -21,7 +21,6 @@
 RegProject is the container object for a regenerate project
 """
 
-import xml.parsers.expat
 from xml.sax.saxutils import escape
 import os.path
 from regenerate.db import LOGGER
@@ -81,16 +80,6 @@ class RegProject(object):
         reader = ProjectReader(self)
         self.path = name
         reader.open(name)
-        return
-        self.__modified = False
-
-        with open(self.path) as ofile:
-
-            parser = xml.parsers.expat.ParserCreate()
-            parser.StartElementHandler = self.startElement
-            parser.EndElementHandler = self.endElement
-            parser.CharacterDataHandler = self.characters
-            parser.ParseFile(ofile)
 
     def set_new_order(self, new_order):
         """
@@ -102,17 +91,18 @@ class RegProject(object):
             htbl[os.path.splitext(os.path.basename(i))[0]] = i
         self.__filelist = [htbl[i] for i in new_order]
 
-    def add_register_set(self, path):
+    def append_register_set_to_list(self, name):
+        self.__filelist.append(name)
+        self.__exports[name] = []
+
+    def add_register_set(self, path, alter_path=True):
         """
         Adds a new register set to the project. Note that this only records
         the filename, and does not actually keep a reference to the RegisterDb.
         """
         self.__modified = True
-        self.__current = os.path.join(os.path.dirname(self.path), path)
-        self.__current = os.path.relpath(self.__current,
-                                         os.path.dirname(self.path))
-        self.__filelist.append(self.__current)
-        self.__exports[self.__current] = []
+        self.__current = os.path.relpath(path, os.path.dirname(self.path))
+        self.append_register_set_to_list(self.__current)
 
     def remove_register_set(self, path):
         """
@@ -139,6 +129,20 @@ class RegProject(object):
         """
         return tuple(self.__project_exports)
 
+    def append_to_export_list(self, path, option, dest):
+        """
+        For internal use only.
+
+        Adds an export to the export list. The exporter will only operation
+        on the specified register database (XML file).
+
+        path - path to the the register XML file. Converted to a relative path
+        option - the chosen export option (exporter)
+        dest - destination output name
+        """
+        self.__modified = True
+        self.__exports[dest].append((option, path))
+
     def add_to_export_list(self, path, option, dest):
         """
         Adds an export to the export list. The exporter will only operation
@@ -152,6 +156,18 @@ class RegProject(object):
         path = os.path.relpath(path, os.path.dirname(self.path))
         dest = os.path.relpath(dest, os.path.dirname(self.path))
         self.__exports[path].append((option, dest))
+
+    def append_to_project_export_list(self, option, dest):
+        """
+        Adds a export to the project export list. Project exporters operation
+        on the entire project, not just a specific register database (XML file)
+
+        path - path to the the register XML file. Converted to a relative path
+        option - the chosen export option (exporter)
+        dest - destination output name
+        """
+        self.__modified = True
+        self.__project_exports.append((option, dest))
 
     def add_to_project_export_list(self, option, dest):
         """
