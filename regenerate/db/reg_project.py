@@ -26,6 +26,8 @@ from xml.sax.saxutils import escape
 import os.path
 from regenerate.db import LOGGER
 from regenerate.db.proj_writer import ProjectWriter
+from regenerate.db.proj_reader import ProjectReader
+from regenerate.db.group_data import GroupData
 from collections import namedtuple
 
 AddrMapData = namedtuple("AddrMapData", "name base width fixed")
@@ -39,19 +41,6 @@ def cleanup(data):
     data = data.replace(u"\u201c", "\"")
     data = data.replace(u"\ue280a2", "*")
     return escape(data.replace(u"\u201d", "\""))
-
-
-class GroupData(object):
-    """Basic group information"""
-    def __init__(self, name="", base=0, hdl="", repeat=1,
-                 repeat_offset=0x10000):
-        self.name = name
-        self.base = base
-        self.hdl = hdl
-        self.repeat = repeat
-        self.repeat_offset = repeat_offset
-        self.register_sets = []
-        self.docs = ""
 
 
 class RegProject(object):
@@ -88,8 +77,12 @@ class RegProject(object):
         """
         Opens and reads an XML file
         """
-        self.__modified = False
+
+        reader = ProjectReader(self)
         self.path = name
+        reader.open(name)
+        return
+        self.__modified = False
 
         with open(self.path) as ofile:
 
@@ -115,7 +108,9 @@ class RegProject(object):
         the filename, and does not actually keep a reference to the RegisterDb.
         """
         self.__modified = True
-        self.__current = os.path.relpath(path, os.path.dirname(self.path))
+        self.__current = os.path.join(os.path.dirname(self.path), path)
+        self.__current = os.path.relpath(self.__current,
+                                         os.path.dirname(self.path))
         self.__filelist.append(self.__current)
         self.__exports[self.__current] = []
 
@@ -217,7 +212,14 @@ class RegProject(object):
         self.__groupings[index] = GroupData(name, start, hdl,
                                             repeat, repeat_offset)
 
-    def add_to_grouping_list(self, name, start, hdl, repeat, repeat_offset):
+    def add_to_grouping_list(self, group_data):
+        """
+        Adds a new grouping to the grouping list
+        """
+        self.__modified = True
+        self.__groupings.append(group_data)
+
+    def _add_to_grouping_list(self, name, start, hdl, repeat, repeat_offset):
         """
         Adds a new grouping to the grouping list
         """
@@ -330,110 +332,6 @@ class RegProject(object):
                 del self.__addr_map_list[i]
                 if data.name in self.__addr_map_grps:
                     del self.__addr_map_grps[data.name]
-
-    def startElement(self, tag, attrs):  # pylint: disable=invalid-name
-        """
-        Called every time an XML element begins
-        """
-        self.__token_list = []
-        mname = 'start_' + tag
-        if hasattr(self, mname):
-            method = getattr(self, mname)
-            method(attrs)
-
-    def endElement(self, tag):  # pylint: disable=invalid-name
-        """
-        Called every time an XML element end
-        """
-        text = ''.join(self.__token_list)
-        mname = 'end_' + tag
-        if hasattr(self, mname):
-            method = getattr(self, mname)
-            method(text)
-
-    def characters(self, data):
-        """
-        Called with segments of the character data. This is not predictable
-        in how it is called, so we must collect the information for assembly
-        later.
-        """
-        self.__token_list.append(data)
-
-    def start_project(self, attrs):
-        """Called when a project tag is found"""
-        self.name = attrs['name']
-        self.short_name = attrs.get('short_name', '')
-        self.company_name = attrs.get('company_name', '')
-
-    def start_registerset(self, attrs):
-        """Called when a registerset tag is found"""
-        self.__filelist.append(attrs['name'])
-        self.__current = attrs['name']
-        self.__exports[self.__current] = []
-
-    def start_export(self, attrs):
-        """Called when an export tag is found"""
-        value = (attrs['option'], attrs['path'])
-        self.__exports[self.__current].append(value)
-
-    def start_project_export(self, attrs):
-        """Called when a project_export tag is found"""
-        value = (attrs['option'], attrs['path'])
-        self.__project_exports.append(value)
-
-    def start_grouping(self, attrs):
-        """Called when a grouping tag is found"""
-        self._current_group = GroupData(attrs['name'],
-                                        int(attrs['start'], 16),
-                                        attrs.get('hdl', ""),
-                                        int(attrs.get('repeat', 1)),
-                                        int(attrs.get('repeat_offset',
-                                                      0x10000)))
-        self.__groupings.append(self._current_group)
-
-    def start_map(self, attrs):
-        """Called when a map tag is found"""
-        sname = attrs['set']
-        data = GroupMapData(sname,
-                            attrs.get('inst', sname),
-                            int(attrs['offset'], 16),
-                            int(attrs['repeat']),
-                            int(attrs['repeat_offset']),
-                            attrs.get("format", ""),
-                            attrs.get("hdl", ""),
-                            int(attrs.get("no_uvm", "0")))
-        self._current_group.register_sets.append(data)
-
-    def start_address_map(self, attrs):
-        """Called when an address tag is found"""
-        data = AddrMapData(attrs['name'],
-                           int(attrs.get('base', 0), 16),
-                           int(attrs.get('width', 4)),
-                           int(attrs.get('fixed', 1)))
-        self.__addr_map_list.append(data)
-        self.__addr_map_grps[data.name] = []
-        self.__current_map = data.name
-
-    def end_documentation(self, text):
-        """
-        Called when the documentation XML tag is encountered. Assigns the
-        current text string to the documentation variable
-        """
-        self.documentation = text
-
-    def end_overview(self, text):
-        """
-        Called when the overview XML tag is encountered. Assigns the
-        current text string to the current group's docs variable
-        """
-        self._current_group.docs = text
-
-    def end_map_group(self, text):
-        """
-        Called when the map_group XML tag is encountered. Assigns the
-        current text string to the current group's docs variable
-        """
-        self.__addr_map_grps[self.__current_map].append(text)
 
     @property
     def files(self):

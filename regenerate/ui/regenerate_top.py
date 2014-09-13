@@ -1090,6 +1090,7 @@ class MainWindow(BaseWindow):
         for f in sorted(self.__prj.get_register_set(),
                         lambda x, y: cmp(os.path.basename(x),
                                          os.path.basename(y))):
+
             try:
                 self.open_xml(f, False)
             except xml.parsers.expat.ExpatError, msg:
@@ -1198,6 +1199,7 @@ class MainWindow(BaseWindow):
                 self.__input_xml(name, load)
             except IOError, msg:
                 ErrorMsg("Could not load existing register set", str(msg))
+
             base = os.path.splitext(os.path.basename(name))[0]
             self.active = DbaseStatus(self.dbase, name, base, self.__reg_model,
                                       self.__modelsort,
@@ -1561,8 +1563,7 @@ class MainWindow(BaseWindow):
             warn_bit = True
             msg.append("No bit fields exist for the register")
         else:
-            for key in reg.get_bit_field_keys():
-                field = reg.get_bit_field(key)
+            for field in reg.get_bit_fields():
                 if check_field(field):
                     txt = "Missing field description for '%s'" % \
                           field.field_name
