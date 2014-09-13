@@ -78,8 +78,8 @@ class BitField(object):
         self.modified = False
         self.__output_signal = ""
         self.__input_signal = ""
-        self.start_position = start
-        self.stop_position = stop
+        self.lsb = start
+        self.msb = stop
         self.field_name = ""
         self.use_output_enable = False
         self.field_type = BitField.TYPE_READ_ONLY
@@ -121,31 +121,31 @@ class BitField(object):
             return "[%d:%d]" % (self.msb, self.lsb)
 
     @property
-    def msb(self):
+    def stop_position(self):
         """Returns the most significant bit of the field"""
-        return self.stop_position
+        return self.msb
 
-    @msb.setter
-    def msb(self, value):
+    @stop_position.setter
+    def stop_position(self, value):
         """Sets the most significant bit of the field"""
-        self.stop_position = value
+        self.msb = value
 
     @property
-    def lsb(self):
+    def start_position(self):
         """Returns the least significant bit of the field"""
-        return self.start_position
+        return self.lsb
 
-    @lsb.setter
-    def lsb(self, value):
+    @start_position.setter
+    def start_position(self, value):
         """Setsx the least significant bit of the field"""
-        self.start_position = value
+        self.lsb = value
 
     @property
     def width(self):
         """
         Returns the width in bits of the bit field.
         """
-        return self.stop_position - self.start_position + 1
+        return self.msb - self.lsb + 1
 
     @property
     def output_signal(self):
