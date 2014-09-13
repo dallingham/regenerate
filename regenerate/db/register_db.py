@@ -60,22 +60,22 @@ class RegisterDb(object):
         self.__be = rules.get('rules', 'byte_strobe_default', DEF_BE_NAME)
         self.__ack = rules.get('rule', 'ack_default', DEF_ACK_NAME)
         self.__module = "unnamed_regs"
+        self.__title = ""
+        self.__registers = {}
 
         self.reset_active_level = 0
         self.data_bus_width = 32
         self.address_bus_width = 12
         self.owner = ""
         self.byte_strobe_active_level = 1
-        self.__title = ""
         self.overview_text = ""
         self.enable_coverage = False
-        self.__registers = {}
         self.set_name = ""
 
     def total_bits(self):
         """Returns bits in register"""
         bits = 0
-        for key in self.__registers.keys():
+        for key in self.__registers:
             reg = self.__registers[key]
             for field in reg.get_bit_fields():
                 bits += field.width

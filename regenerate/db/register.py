@@ -191,6 +191,6 @@ class Register(object):
         Removes the specified bit field from the dictionary. We cannot
         use the msb, since it may have changed.
         """
-        for key in self.__bit_fields.keys():
+        for key in self.__bit_fields:
             if self.__bit_fields[key] == field:
                 del self.__bit_fields[key]
