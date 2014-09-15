@@ -58,6 +58,7 @@ class IpXactParser(object):
         parser.CharacterDataHandler = self.characters
         f = open(input_file)
         parser.ParseFile(f)
+        f.close()
 
     def start_element(self, tag, attrs):
         """

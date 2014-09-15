@@ -19,10 +19,6 @@
 
 """
 Provides the definition of a Bit Field,
-
-This class makes extensive use of the 'property' feature in python. This
-feature allows us to use a named property like a class variable. When accessed,
-it calls the set/get function to handle any processing needed.
 """
 
 
@@ -38,9 +34,6 @@ class BitField(object):
     BitField - holds all the data related to a bit field (one or more bits
     of a register)
     """
-
-    (READ_ONLY, READ_WRITE, WRITE_1_TO_CLEAR,
-     WRITE_1_TO_SET, WRITE_ONLY) = range(5)
 
     (TYPE_READ_ONLY,
      TYPE_READ_ONLY_VALUE,
@@ -80,34 +73,23 @@ class BitField(object):
 
     (RESET_NUMERIC, RESET_INPUT, RESET_PARAMETER) = range(3)
 
-    __slots__ = ('start_position', 'stop_position', 'field_name',
-                 'use_output_enable', '__output_signal', '__input_signal',
-                 'field_type', 'volatile', 'reset_value',
-                 'reset_input', 'reset_type', 'modified',
-                 'reset_parameter', 'input_function',
-                 'description', 'control_signal', 'output_is_static',
-                 'output_has_side_effect', 'values', 'is_error_field')
-
-    def __init__(self, stop=0, start=0, name="",
-                 sig_type=TYPE_READ_ONLY, descr="", reset=0):
+    def __init__(self, stop=0, start=0):
 
         self.modified = False
-
         self.__output_signal = ""
         self.__input_signal = ""
-
-        self.start_position = start
-        self.stop_position = stop
-        self.field_name = name
+        self.lsb = start
+        self.msb = stop
+        self.field_name = ""
         self.use_output_enable = False
-        self.field_type = sig_type
+        self.field_type = BitField.TYPE_READ_ONLY
         self.volatile = False
         self.is_error_field = False
-        self.reset_value = reset
+        self.reset_value = 0
         self.reset_input = ""
         self.reset_type = BitField.RESET_NUMERIC
         self.reset_parameter = ""
-        self.description = descr
+        self.description = ""
         self.control_signal = ""
         self.output_is_static = False
         self.output_has_side_effect = False
@@ -120,21 +102,53 @@ class BitField(object):
         return (self.field_type == BitField.TYPE_READ_ONLY or
                 self.field_type == BitField.TYPE_READ_ONLY_LOAD)
 
-    def __get_width(self):
+    def full_field_name(self):
+        """
+        Builds the name of the field, including bit positions if needed
+        """
+        if self.width == 1:
+            return self.field_name
+        else:
+            return "%s[%d:%d]" % (self.field_name, self.msb, self.lsb)
+
+    def bit_range(self):
+        """
+        Retruns the bit range of the field
+        """
+        if self.width == 1:
+            return "%d" % self.lsb
+        else:
+            return "[%d:%d]" % (self.msb, self.lsb)
+
+    @property
+    def stop_position(self):
+        """Returns the most significant bit of the field"""
+        return self.msb
+
+    @stop_position.setter
+    def stop_position(self, value):
+        """Sets the most significant bit of the field"""
+        self.msb = value
+
+    @property
+    def start_position(self):
+        """Returns the least significant bit of the field"""
+        return self.lsb
+
+    @start_position.setter
+    def start_position(self, value):
+        """Setsx the least significant bit of the field"""
+        self.lsb = value
+
+    @property
+    def width(self):
         """
         Returns the width in bits of the bit field.
         """
-        return self.stop_position - self.start_position + 1
+        return self.msb - self.lsb + 1
 
-    width = property(__get_width, None, None, "Width of the data field")
-
-    def __set_output_signal(self, output):
-        """
-        Sets the output signal associated with the bit range.
-        """
-        self.__output_signal = clean_signal(output)
-
-    def __get_output_signal(self):
+    @property
+    def output_signal(self):
         """
         Gets the output signal associated with the bit range. If the user has
         not specified the name, assume that it is the same as the name of the
@@ -145,20 +159,23 @@ class BitField(object):
         else:
             return clean_signal(self.field_name)
 
-    output_signal = property(__get_output_signal, __set_output_signal,
-                             None, "Name of the output signal")
-
-    def __set_input_signal(self, input_signal):
+    @output_signal.setter
+    def output_signal(self, output):
         """
-        Sets the name of the input signal.
+        Sets the output signal associated with the bit range.
         """
-        self.__input_signal = clean_signal(input_signal)
+        self.__output_signal = clean_signal(output)
 
-    def __get_input_signal(self):
+    @property
+    def input_signal(self):
         """
         Gets the name of the input signal, if it exists.
         """
         return self.__input_signal
 
-    input_signal = property(__get_input_signal, __set_input_signal,
-                            None, "Name of the input signal")
+    @input_signal.setter
+    def input_signal(self, input_signal):
+        """
+        Sets the name of the input signal.
+        """
+        self.__input_signal = clean_signal(input_signal)

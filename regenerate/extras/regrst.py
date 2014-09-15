@@ -185,23 +185,20 @@ class RegisterRst:
 
         for field in reversed(self._reg.get_bit_fields()):
 
-            start = field.start_position
-            stop = field.stop_position
+            if field.msb != last_index:
+                display_reserved(o, last_index, field.msb + 1)
 
-            if stop != last_index:
-                display_reserved(o, last_index, stop + 1)
-
-            if start == stop:
-                o.write("   * - %d\n" % start)
+            if field.width == 1:
+                o.write("   * - %d\n" % field.lsb)
             else:
-                o.write("   * - %d:%d\n" % (stop, start))
+                o.write("   * - %d:%d\n" % (field.msb, field.lsb))
 
             if self._decode:
-                dec_val = (self._decode & mask(stop, start)) >> start
-                if dec_val != field.reset_value:
-                    o.write("     - **0x%x**\n" % dec_val)
+                val = (self._decode & mask(field.msb, field.lsb)) >> field.lsb
+                if val != field.reset_value:
+                    o.write("     - **0x%x**\n" % val)
                 else:
-                    o.write("     - 0x%x\n" % dec_val)
+                    o.write("     - 0x%x\n" % val)
             else:
                 o.write("     - 0x%x\n" % field.reset_value)
 
@@ -222,13 +219,13 @@ class RegisterRst:
                     else:
                         o.write("       :%d: %s\n" % (int(val[0], 16),
                                                       self.text(val[2])))
-            last_index = start - 1
+            last_index = field.lsb - 1
         if last_index >= 0:
             display_reserved(o, last_index, 0)
 
         o.write("\n")
 
-    def _write_defines(self, o, use_uvm = True, use_id = True):
+    def _write_defines(self, o, use_uvm=True, use_id=True):
 
         x_addr_maps = self._prj.get_address_maps()
         instances = in_groups(self._regset_name, self._prj)
@@ -265,14 +262,15 @@ class RegisterRst:
                 if self._inst and inst.inst != self._inst:
                     continue
                 if inst.repeat == 1:
-                    o.write("   *");
+                    o.write("   *")
                     if use_uvm:
-                        name = uvm_name(inst.group, self._reg.token, inst.inst, -1,
-                                        inst.format)
+                        name = uvm_name(inst.group, self._reg.token,
+                                        inst.inst, -1, inst.format)
                         o.write(" - %s\n" % self.text(name))
                     if use_id:
-                        name = full_token(inst.group, inst.inst, self._reg.token,
-                                          self._regset_name, -1, inst.format)
+                        name = full_token(inst.group, inst.inst,
+                                          self._reg.token, self._regset_name,
+                                          -1, inst.format)
                         if use_uvm:
                             o.write("    ")
                         o.write(" - %s\n" % self.text(name))
@@ -282,14 +280,16 @@ class RegisterRst:
                         o.write("     - %s\n" % reg_addr(self._reg, offset))
                 else:
                     for i in range(0, inst.repeat):
-                        o.write("   *");
+                        o.write("   *")
                         if use_uvm:
-                            name = uvm_name(inst.group, self._reg.token, inst.inst, 
-                                            i, inst.format)
+                            name = uvm_name(inst.group, self._reg.token,
+                                            inst.inst, i, inst.format)
                             o.write(" - %s\n" % self.text(name))
                         if use_id:
-                            name = full_token(inst.group, inst.inst, self._reg.token,
-                                              self._regset_name, i, inst.format)
+                            name = full_token(inst.group, inst.inst,
+                                              self._reg.token,
+                                              self._regset_name,
+                                              i, inst.format)
                             if use_uvm:
                                 o.write("    ")
                             o.write(" - %s\n" % self.text(name))

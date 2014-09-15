@@ -93,7 +93,7 @@ class CerteCSVParser:
         input_file = open(filename, "rU")
 
         titles = input_file.readline().split(",")
-        for (i,name) in enumerate(titles):
+        for (i, name) in enumerate(titles):
             col[name] = i
 
         r_addr_col = col.get(REG_ADDR, -1)
@@ -124,7 +124,7 @@ class CerteCSVParser:
                 r_width = parse_hex_value(data[r_width_col])
             else:
                 r_width = 32
-                
+
             if r_descr_col == -1:
                 r_descr = ""
             else:

@@ -36,8 +36,10 @@ from regenerate.writers.verilog_reg_def import REG
 from help_window import HelpWindow
 
 try:
-    from gtkcodebuffer import CodeBuffer, SyntaxLoader
+    from pygments.lexers import VerilogLexer
+    from pygments.styles import get_style_by_name
     USE_HIGHLIGHT = True
+    STYLE = get_style_by_name('emacs')
 except ImportError:
     USE_HIGHLIGHT = False
 
@@ -123,14 +125,35 @@ class BitFieldEditor(object):
         except KeyError:
             text = ""
 
+        buf = self.__verilog_obj.get_buffer()
         if USE_HIGHLIGHT:
-            buff = CodeBuffer(lang=SyntaxLoader("verilog"))
-            self.__verilog_obj.set_buffer(buff)
-        else:
-            self.__verilog_obj.modify_font(pango_font)
-            buff = self.__verilog_obj.get_buffer()
 
-        buff.set_text(text)
+            styles = {}
+            for token, value in VerilogLexer().get_tokens(text):
+                while not STYLE.styles_token(token) and token.parent:
+                    token = token.parent
+                if token not in styles:
+                    styles[token] = buf.create_tag()
+                start = buf.get_end_iter()
+                buf.insert_with_tags(start, value.encode('utf-8'),
+                                     styles[token])
+
+                for token, tag in styles.iteritems():
+                    style = STYLE.style_for_token(token)
+                    if style['bgcolor']:
+                        tag.set_property('background', '#' + style['bgcolor'])
+                    if style['color']:
+                        tag.set_property('foreground', '#' + style['color'])
+                    if style['bold']:
+                        tag.set_property('weight', pango.WEIGHT_BOLD)
+                    if style['italic']:
+                        tag.set_property('style', pango.STYLE_ITALIC)
+                    if style['underline']:
+                        tag.set_property('underline', pango.UNDERLINE_SINGLE)
+        else:
+            buf.set_text(text)
+
+        self.__verilog_obj.modify_font(pango_font)
         self.__builder.connect_signals(self)
         self.__top_window.show_all()
 
@@ -142,14 +165,7 @@ class BitFieldEditor(object):
                                      self.__register.register_name)
         self.__register_obj.set_use_markup(True)
 
-        start = self.__bit_field.start_position
-        stop = self.__bit_field.stop_position
-        if start == stop:
-            name = bit_field.field_name
-        else:
-            name = "%s[%d:%d]" % (bit_field.field_name, stop, start)
-
-        self.__name_obj.set_text(name)
+        self.__name_obj.set_text(bit_field.full_field_name())
         self.__type_obj.set_text(TYPE_TO_DESCR[bit_field.field_type])
 
         if bit_field.reset_type == BitField.RESET_NUMERIC:
@@ -243,10 +259,8 @@ class BitFieldEditor(object):
         in the list, finding the next highest value to use as the default.
         """
 
-        start = self.__bit_field.start_position
-        stop = self.__bit_field.stop_position
         last = len(self.__list_model)
-        max_values = 2 ** (stop - start + 1)
+        max_values = 2 ** self.__bit_field.width
 
         if last >= max_values:
             ErrorMsg("Maximum number of values reached",
@@ -262,10 +276,7 @@ class BitFieldEditor(object):
         last -= 1
         if (last == -1 or self.__list_model[last][0] or
             self.__list_model[last][1] or self.__list_model[last][2]):
-            if largest >= max_values:
-                new_val = ""
-            else:
-                new_val = "%x" % (largest + 1,)
+            new_val = "" if largest >= max_values else "%x" % (largest + 1,)
             node = self.__list_model.append(row=(new_val, '', ''))
             path = self.__list_model.get_path(node)
         else:
@@ -290,8 +301,8 @@ class BitFieldEditor(object):
         """
         new_text = new_text.strip()
 
-        start = self.__bit_field.start_position
-        stop = self.__bit_field.stop_position
+        start = self.__bit_field.lsb
+        stop = self.__bit_field.msb
         maxval = (2 ** (stop - start + 1)) - 1
 
         try:

@@ -1,4 +1,3 @@
-#! /usr/bin/python
 #
 # Manage registers in a hardware design
 #
@@ -120,120 +119,92 @@ class UVMBlockRegisters(WriterBase):
         """
 
         group_maps = self._build_group_maps()
+        name = self._project.short_name
 
-        of = open(filename, "w")
-        of.write(' /* \\defgroup registers Registers */\n')
-        of.write("package %s_reg_pkg;\n\n" % self._project.short_name)
-        of.write("  import uvm_pkg::*;\n\n")
-        of.write('  `include "uvm_macros.svh"\n')
+        with open(filename, "w") as of:
+            of.write(' /* \\defgroup registers Registers */\n')
+            of.write("package {0}_reg_pkg;\n\n".format(name))
+            of.write("  import uvm_pkg::*;\n\n")
+            of.write('  `include "uvm_macros.svh"\n')
 
-        # Write register blocks
-        for dbase in self.dblist:
-            self.generate_coverage(of, dbase)
+            # Write register blocks
+            for dbase in self.dblist:
+                self.write_db_coverage(of, dbase)
+                self.write_db_registers(of, dbase)
+                self.write_db_groups(of, dbase, group_maps)
 
-            for reg in dbase.get_all_registers():
-                if reg.ram_size:
-                    self.write_memory(reg, dbase, of)
-                else:
-                    self.write_register(reg, dbase, of)
+            # Write group/subsystem blocks
+            for group in group_maps:
+                self.write_group_block(group, of, group_maps[group])
 
-            for group in self._project.get_grouping_list():
-                used = set()
-                for grp in group.register_sets:
-                    if grp.set == dbase.set_name and grp.set not in used:
-                        used.add(grp.set)
-                        self.write_dbase_block(dbase, of, group,
-                                               group_maps[group])
+            # Write top level wrapper block
+            self.write_toplevel_block(of)
 
-        # Write group/subsystem blocks
-        for group in group_maps:
-            self.write_group_block(group, of, group_maps[group])
+            of.write('endpackage : {0}_reg_pkg\n'.format(name))
 
-        # Write top level wrapper block
-        self.write_toplevel_block(of)
-
-        of.write('endpackage : %s_reg_pkg\n' % self._project.short_name)
-        of.close()
-
-    def write_toplevel_block(self, of):
-
-        sname = self._project.short_name
-
-        of.write("/*\n * Top level register block\n */\n\n")
-        of.write("class %s_reg_block extends uvm_reg_block;\n" % sname)
-        of.write("\n")
-        of.write("   `uvm_object_utils(%s_reg_block)\n" % sname)
-        of.write("\n")
-
-        for group in self._project.get_grouping_list():
-            if group.repeat > 1:
-                of.write("   %s_grp_reg_blk %s[%0d];\n" %
-                         (group.name, group.name, group.repeat))
+    def write_db_registers(self, of, dbase):
+        """
+        Loop through all registers, writing either the memory block
+        or a register
+        """
+        for reg in dbase.get_all_registers():
+            if reg.ram_size:
+                self.write_memory(reg, dbase, of)
             else:
-                of.write("   %s_grp_reg_blk %s;\n" % (group.name, group.name))
+                self.write_register(reg, dbase, of)
 
-        for data in self._project.get_address_maps():
-            of.write('   uvm_reg_map %s_map;\n' % data.name)
-        for data in self._project.get_address_maps():
-            of.write('   bit disable_%s_map = 1\'b0;\n' % data.name)
+    def write_db_groups(self, of, dbase, group_maps):
+        for group in self._project.get_grouping_list():
+            used = set()
+            for grp in group.register_sets:
+                if grp.set == dbase.set_name and grp.set not in used:
+                    used.add(grp.set)
+                    self.write_dbase_block(dbase, of, group, group_maps[group])
 
-        of.write('\n   function new(string name = "%s_reg_block");\n' % sname)
-        of.write("      super.new(name, "
-                 "build_coverage(UVM_CVR_ADDR_MAP));\n")
-        of.write("   endfunction : new\n")
-        of.write("\n")
-        of.write("   function void build();\n\n")
-        of.write("      if(has_coverage(UVM_CVR_ADDR_MAP)) begin\n")
-        of.write("         void'(set_coverage(UVM_CVR_ADDR_MAP));\n")
-        of.write("      end\n")
-        of.write("\n")
+    def write_toplevel_block_new(self, of):
+        func_def = (
+            "",
+            '   function new(string name = "{}_reg_block");',
+            '      super.new(name, build_coverage(UVM_CVR_ADDR_MAP));',
+            '   endfunction : new',
+            ''
+            )
 
-        map2grp = {}
-        map2base = {}
+        for line in func_def:
+            of.write(line.format(self._project.short_name))
+            of.write("\n")
 
-        for data in self._project.get_address_maps():
-            map2grp[data.name] = self._project.get_address_map_groups(data.name)
-            map2base[data.name] = data.base
-            if not map2grp[data.name]:
-                map2grp[data.name] = [group.name
-                                      for group in self._project.get_grouping_list()]
+    def write_toplevel_block_build(self, of):
+        func_def = (
+            '   function void build();',
+            '',
+            '      if (has_coverage(UVM_CVR_ADDR_MAP)) begin',
+            "         void'(set_coverage(UVM_CVR_ADDR_MAP));",
+            "      end",
+            "",
+            )
+
+        for line in func_def:
+            of.write(line.format(self._project.short_name))
+            of.write("\n")
+
+        map2grp = self.build_map_name_to_groups()
+        map2base = self.build_map_name_to_base_address()
 
         for key in map2grp:
-            name = "%s_map" % key
-            of.write('      if (!disable_%s) begin\n' % name)
-            of.write('         %s = create_map("%s", \'h%x, %d, %s);\n' %
-                     (name, name, map2base[key],
-                      self._project.get_address_width(key), self.endian))
+            map_name = "{}_map".format(key)
+            of.write('      if (!disable_{}) begin\n'.format(map_name))
+            of.write('         {0} = create_map("{0}", \'h{1:x}, {2:d}, {3});\n'.format(
+                    map_name, map2base[key], self._project.get_address_width(key), 
+                    self.endian))
             of.write('      end\n')
         of.write("\n")
 
         for group in self._project.get_grouping_list():
-            name = group.name
-
             if group.repeat <= 1:
-                of.write('      %s = %s_grp_reg_blk::type_id::create("%s");\n' %
-                         (name, name, name))
-                of.write('      %s.configure(this, "%s");\n' %
-                         (name, group.hdl))
-                for mname in map2grp:
-                    if name in map2grp[mname]:
-                        of.write("      %s.disable_%s_map = disable_%s_map;\n" % (name, mname, mname))
-                of.write("      %s.build();\n" % name)
-                    
+                self.build_and_configure_group(of, group, map2grp)
             else:
-                of.write('      foreach (%s[i]) begin\n' % name)
-                of.write('         %s[i] = %s_grp_reg_blk::type_id::create($sformatf("%s[%%0d]", i));\n' %
-                         (name, name, name))
-                if group.hdl:
-                    of.write('         %s[i].configure(this, $sformatf("%s", i));\n' %
-                             (name, group.hdl))
-                else:
-                    of.write('         %s[i].configure(this, "");\n' % name)
-                for mname in map2grp:
-                    if name in map2grp[mname]:
-                        of.write("         %s[i].disable_%s_map = disable_%s_map;\n" % (name, mname, mname))
-                of.write("         %s[i].build();\n" % name)
-                of.write("      end\n")
+                self.build_and_configure_group_array(of, group, map2grp)
 
         for data in self._project.get_address_maps():
             map_list = self._project.get_address_map_groups(data.name)
@@ -243,51 +214,147 @@ class UVMBlockRegisters(WriterBase):
             for name in map_list:
                 grp_data = [grp for grp in self._project.get_grouping_list()
                             if grp.name == name]
-                if grp_data[0].repeat <= 1:
-                    of.write('      if (!disable_%s_map) begin\n' % data.name)
-                    of.write("         %s_map.add_submap(%s.%s_map, 'h%x);\n" %
-                             (data.name, name, data.name, grp_data[0].base))
-                    of.write('      end\n')
-                else:
-                    of.write("      foreach (%s[i]) begin\n" % name)
-                    of.write('         if (!disable_%s_map) begin\n' % data.name)
-                    of.write("            %s_map.add_submap(%s[i].%s_map, 'h%x + (i * 'h%x));\n" %
-                             (data.name, name, data.name, grp_data[0].base,
-                              grp_data[0].repeat_offset))
-                    of.write("         end\n")
-                    of.write("      end\n")
+                self.connect_submaps(of, grp_data[0], data.name, name)
+
         of.write('      lock_model();\n')
         of.write("\n")
         of.write("   endfunction: build\n")
+
+    def connect_submaps(self, of, grp_data, data_name, name):
+        disable = "disable_{0}_map".format(data_name)
+        mapname = "{0}_map".format(data_name)
+
+        if grp_data.repeat <= 1:
+            of.write('      if (!{0}) begin\n'.format(disable))
+            of.write("         {0}.add_submap({1}.{0}, 'h{2:x});\n".format(
+                     mapname, name, grp_data.base))
+            of.write('      end\n')
+        else:
+            of.write('      foreach ({0}[i]) begin\n'.format(name))
+            of.write('         if (!{0}) begin\n'.format(disable))
+            of.write("            {0}.add_submap({1}[i].{0}, 'h{2:x} + (i * 'h{3:x}));\n".format(
+                     data_name, name, grp_data.base, grp_data.repeat_offset))
+            of.write("         end\n")
+            of.write("      end\n")
+
+    def build_and_configure_group(self, of, group, map2grp):
+        name = group.name
+        cls = "{0}_grp_reg_blk".format(name)
+        of.write('      {0} = {1}::type_id::create("{0}");\n'.format(name, cls))
+        of.write('      {0}.configure(this, "{1}");\n'.format(name, group.hdl))
+        for mname in map2grp:
+            if name in map2grp[mname]:
+                disable = "disable_{0}_map".format(mname)
+                of.write("      {0}.{1} = {1};\n".format(name, disable))
+        of.write("      {0}.build();\n".format(name))
+
+    def build_and_configure_group_array(self, of, group, map2grp):
+        name = group.name
+        cls = "{0}_grp_reg_blk".format(name)
+
+        of.write('      foreach ({}[i]) begin\n'.format(name))
+        of.write('         {0}[i] = {1}::type_id::create($sformatf("{0}[%0d]", i));\n'.format(name, cls))
+        if group.hdl:
+            of.write('         {0}[i].configure(this, $sformatf("{1}", i));\n'.format(name, group.hdl))
+        else:
+            of.write('         {0}[i].configure(this, "");\n'.format(name))
+
+        for mname in map2grp:
+            if name in map2grp[mname]:
+                disable = "disable_{0}_map".format(mname)
+                of.write("         {0}[i].{1} = {1};\n".format(name, disable))
+        of.write("         {0}[i].build();\n".format(name))
+        of.write("      end\n")
+
+    def build_map_name_to_groups(self):
+        map2grp = {}
+        all_groups = [grp.name for grp in self._project.get_grouping_list()]
+
+        for data in self._project.get_address_maps():
+            name = data.name
+            map2grp[name] = self._project.get_address_map_groups(name)
+            if not map2grp[name]:
+                map2grp[name] = all_groups
+        return map2grp
+
+    def build_map_name_to_base_address(self):
+        map2base = {}
+
+        for data in self._project.get_address_maps():
+            map2base[data.name] = data.base
+        return map2base
+
+    def write_toplevel_block(self, of):
+
+        header = (
+            "/*",
+            " * Top level register block",
+            " */",
+            "",
+            "class {}_reg_block extends uvm_reg_block;",
+            "",
+            "   `uvm_object_utils({}_reg_block)",
+            "",
+            )
+
+        # Write class header
+        for line in header:
+            of.write(line.format(self._project.short_name))
+            of.write("\n")
+
+        # Declare class instances for the sub blocks
+        for group in self._project.get_grouping_list():
+            gclass = "{}_grp_reg_blk".format(group.name)
+            gname = group.name
+            repeat = group.repeat
+
+            if repeat > 1:
+                of.write("   {0} {1}[{2}];\n".format(gclass, gname, repeat))
+            else:
+                of.write("   {0} {1};\n".format(gclass, gname))
+
+        # Declare register maps
+        for data in self._project.get_address_maps():
+            of.write('   uvm_reg_map {}_map;\n'.format(data.name))
+
+        # Declare variables to enable/disable register maps
+        for data in self._project.get_address_maps():
+            of.write('   bit disable_{}_map = 1\'b0;\n'.format(data.name))
+
+        # Create new and build functions
+        self.write_toplevel_block_new(of)
+        self.write_toplevel_block_build(of)
+
+        # End the class declaration
         of.write("\n")
-        of.write("endclass: %s_reg_block\n\n" % sname)
+        of.write("endclass: {}_reg_block\n\n".format(self._project.short_name))
 
     def write_group_block(self, group, of, in_maps):
 
+        class_name = "{}_grp_reg_blk".format(group.name)
+
         sname = group.name
-        of.write("class %s_grp_reg_blk extends uvm_reg_block;\n" %
-                 sname)
+        of.write("class {} extends uvm_reg_block;\n".format(class_name))
         of.write("\n")
-        of.write("   `uvm_object_utils(%s_grp_reg_blk)\n" % sname)
+        of.write("   `uvm_object_utils({})\n".format(class_name))
         of.write("\n")
 
         for group_entry in group.register_sets:
             if group_entry.repeat > 1:
-                of.write("   %s_%s_reg_blk %s[%d];\n" %
-                         (sname, group_entry.set, group_entry.inst,
-                          group_entry.repeat))
+                of.write("   {0}_{1}_reg_blk {2}[{3}];\n".format(
+                         sname, group_entry.set, group_entry.inst,
+                         group_entry.repeat))
             else:
-                of.write("   %s_%s_reg_blk %s;\n" %
-                         (sname, group_entry.set, group_entry.inst))
+                of.write("   {0}_{1}_reg_blk {2};\n".format(
+                         sname, group_entry.set, group_entry.inst))
 
         of.write("\n")
         for item in in_maps:
-            of.write("   uvm_reg_map %s_map;\n" % item)
-            of.write("   bit disable_%s_map = 1'b0;\n" % item)
+            of.write("   uvm_reg_map {0}_map;\n".format(item))
+            of.write("   bit disable_{0}_map = 1'b0;\n".format(item))
 
         of.write("\n")
-        of.write('   function new(string name = "%s_grp_reg_blk");\n' %
-                 sname)
+        of.write('   function new(string name = "{}");\n'.format(class_name))
         of.write("      super.new(name, build_coverage(UVM_CVR_ADDR_MAP));\n")
         of.write("   endfunction : new\n")
         of.write("\n")
@@ -298,63 +365,65 @@ class UVMBlockRegisters(WriterBase):
         of.write("\n")
 
         for item in in_maps:
-            of.write('      if (!disable_%s_map) begin\n' % item)
-            of.write('         %s_map = create_map("%s_map", 0, %d, %s);\n' %
-                     (item, item, self._project.get_address_width(item),
-                      self.endian))
+            of.write('      if (!disable_{0}_map) begin\n'.format(item))
+            of.write('         {0}_map = create_map("{0}_map", 0, {1}, {2});\n'.format(
+                     item, self._project.get_address_width(item), self.endian))
             of.write('      end\n')
         of.write("\n")
 
         for group_entry in group.register_sets:
+            name = group_entry.set
+            inst = group_entry.inst
             if group_entry.repeat > 1:
-                name = group_entry.set
-                of.write('      for(int i = 0; i < %d; i++) begin\n' %
-                         group_entry.repeat)
-                of.write('         %s[i] = %s_%s_reg_blk::type_id::create($sformatf("%s[%%0d]", i));\n' %
-                         (group_entry.inst, sname, name, group_entry.inst))
+                of.write('      for(int i = 0; i < {0}; i++) begin\n'.format(
+                         group_entry.repeat))
+                of.write('         {0}[i] = {1}_{2}_reg_blk::type_id::create($sformatf("{0}[%0d]", i));\n'.format(
+                         inst, sname, name))
                 if group_entry.hdl:
-                    of.write('         %s[i].configure(this, $sformatf("%s", i));\n' %
-                             (group_entry.inst, group_entry.hdl))
+                    of.write('         {0}[i].configure(this, $sformatf("{1}", i));\n'.format(
+                             inst, group_entry.hdl))
                 else:
-                    of.write('         %s[i].configure(this, "");\n' % group_entry.inst)
+                    of.write('         {0}[i].configure(this, "");\n'.format(inst))
+
                 for item in in_maps:
-                    of.write("         %s[i].disable_%s_map = disable_%s_map;\n" % (group_entry.inst,
-                                                                                    item, item))
-                of.write("         %s[i].build();\n" % group_entry.inst)
+                    disable = "disable_{0}_map".format(item)
+                    of.write("         {0}[i].{1} = {1};\n".format(inst, disable))
+
+                of.write("         {0}[i].build();\n".format(inst))
+
                 for item in in_maps:
-                    of.write("         if (!disable_%s_map) begin\n" % item)
-                    of.write("            %s_map.add_submap(%s[i].%s_map, 'h%x + (i * 'h%x));\n" %
-                             (item, group_entry.inst, item, group_entry.offset,
-                              group_entry.repeat_offset))
+                    disable = "disable_{0}_map".format(item)
+                    mname = "{0}_map".format(item)
+
+                    of.write("         if (!{0}) begin\n".format(disable))
+                    of.write("            {0}_map.add_submap({1}[i].{0}_map, 'h{2:x} + (i * 'h{3:x}));\n".format(
+                             item, inst, group_entry.offset, group_entry.repeat_offset))
                     of.write("         end\n")
                     if group_entry.no_uvm:
-                        of.write('        uvm_resource_db#(bit)::set({"REG::",%s[i].get_full_name(),".*"},\n' % group_entry.inst)
+                        of.write('        uvm_resource_db#(bit)::set({{"REG::",{0}[i].get_full_name(),".*"}},\n'.format(inst))
                         of.write('                                    "NO_REG_TESTS", 1, this);\n')
                 of.write('      end\n')
             else:
-                name = group_entry.set
-                of.write('      %s = %s_%s_reg_blk::type_id::create("%s");\n' %
-                         (group_entry.inst, sname, name, group_entry.inst))
-                of.write('      %s.configure(this, "%s");\n' %
-                         (group_entry.inst, group_entry.hdl))
+                of.write('      {0} = {1}_{2}_reg_blk::type_id::create("{0}");\n'.format(
+                         inst, sname, name))
+                of.write('      {0}.configure(this, "{1}");\n'.format(
+                         inst, group_entry.hdl))
                 for item in in_maps:
-                    of.write("      %s.disable_%s_map = disable_%s_map;\n" % (group_entry.inst,
-                                                                              item, item))
-                of.write("      %s.build();\n" % group_entry.inst)
+                    of.write("      {0}.disable_{1}_map = disable_{1}_map;\n".format(inst, item))
+                of.write("      {0}.build();\n".format(inst))
                 for item in in_maps:
-                    of.write("      if (!disable_%s_map) begin\n" % item)
-                    of.write("         %s_map.add_submap(%s.%s_map, 'h%x);\n" %
-                             (item, group_entry.inst, item,
-                              group_entry.offset))
+                    of.write("      if (!disable_{0}_map) begin\n".format(item))
+                    of.write("         {0}_map.add_submap({1}.{0}_map, 'h{2:x});\n".format(
+                             item, inst, group_entry.offset))
                     of.write("      end\n")
                 if group_entry.no_uvm:
-                    of.write('      uvm_resource_db#(bit)::set({"REG::",%s.get_full_name(),".*"},' % group_entry.inst)
+                    of.write('      uvm_resource_db#(bit)::set({{"REG::",{0}.get_full_name(),".*"}},'.format(inst))
                     of.write(' "NO_REG_TESTS", 1, this);\n')
             of.write("\n")
 
         of.write("   endfunction: build\n")
         of.write("\n")
-        of.write("endclass: %s_grp_reg_blk\n\n" % sname)
+        of.write("endclass: {}\n\n".format(class_name))
 
     def write_dbase_block(self, dbase, of, group, in_maps):
 
@@ -363,89 +432,88 @@ class UVMBlockRegisters(WriterBase):
         gmap_list = group.register_sets
         hdl_match = [grp.hdl for grp in gmap_list if grp.set == sname]
 
-        of.write('  class %s_%s_reg_blk extends uvm_reg_block;\n\n'
-                 % (group.name, sname))
-        of.write('    `uvm_object_utils(%s_%s_reg_blk)\n\n'
-                 % (group.name, sname))
+        of.write('  class {0}_{1}_reg_blk extends uvm_reg_block;\n\n'.format(
+                 group.name, sname))
+        of.write('    `uvm_object_utils({0}_{1}_reg_blk)\n\n'.format(
+                 group.name, sname))
 
         for reg in dbase.get_all_registers():
             for field in reg.get_bit_fields():
                 if field.reset_parameter:
                     name = field.reset_parameter
                 else:
-                    name = "p%s" % field.field_name.upper()
+                    name = "p{}".format(field.field_name.upper())
                 if field.reset_type == BitField.RESET_PARAMETER:
                     if field.width == 1:
-                        of.write("    bit %s;\n" % name)
+                        of.write("    bit {};\n".format(name))
                     else:
-                        of.write("    bit [%d:0] %s;\n"
-                                 % (field.width - 1, name))
+                        of.write("    bit [{0:d}:0] {1};\n".format(
+                                 field.width - 1, name))
 
         for reg in dbase.get_all_registers():
             prefix = "mem" if reg.ram_size else "reg"
             token = reg.token.lower()
-            rname = "%s_%s_%s" % (prefix, sname, token)
-            of.write("    %s %s;\n" % (rname, token))
+            rname = "_".join((prefix, sname, token))
+            of.write("    {0} {1};\n".format(rname, token))
 
         for item in in_maps:
-            of.write("    uvm_reg_map %s_map;\n" % item)
-            of.write("    bit disable_%s_map = 1'b0;\n" % item)
+            of.write("    uvm_reg_map {0}_map;\n".format(item))
+            of.write("    bit disable_{0}_map = 1'b0;\n".format(item))
 
-        of.write('    %s_reg_access_wrapper %s_access_cg;\n\n' %
-                 (sname, sname))
+        of.write('    {0}_reg_access_wrapper {0}_access_cg;\n\n'.format(sname))
         of.write('\n')
-        of.write('    function new(string name = "%s_%s_reg_blk");\n' %
-                 (group.name, sname))
+        of.write('    function new(string name = "{0}_{1}_reg_blk");\n'.format(
+                 group.name, sname))
         of.write('      super.new(name,build_coverage(UVM_CVR_ALL));\n')
         of.write('    endfunction\n\n')
 
         of.write('    virtual function void build();\n\n')
 
         of.write('      if(has_coverage(UVM_CVR_ALL)) begin\n')
-        of.write('        %s_access_cg = %s_reg_access_wrapper::type_id::create("%s_access_cg");\n'
-                 % (sname, sname, sname))
+        of.write('        {0}_access_cg = {0}_reg_access_wrapper::type_id::create("{0}_access_cg");\n'.format(
+                 sname))
         of.write("        void'(set_coverage(UVM_CVR_ALL));\n")
         of.write('      end\n')
 
         for reg in dbase.get_all_registers():
             token = reg.token.lower()
             prefix = "mem" if reg.ram_size else "reg"
-            rname = "%s_%s_%s" % (prefix, sname, token)
+            rname = "_".join((prefix, sname, token))
 
-            of.write('      %s = %s::type_id::create("%s", , get_full_name());\n' %
-                     (token, rname, token))
+            of.write('      {0} = {1}::type_id::create("{0}", , get_full_name());\n'.format(
+                     token, rname, token))
             for field in reg.get_bit_fields():
                 if field.reset_type == BitField.RESET_PARAMETER:
                     if field.reset_parameter:
                         name = field.reset_parameter
                     else:
-                        name = "p%s" % field.field_name.upper()
-                    of.write('      %s.%s = %s;\n' % (token, name, name))
+                        name = "".join(["p", field.field_name.upper()])
+                    of.write('      {0}.{1} = {1};\n'.format(token, name))
 
-            of.write('      %s.configure(this);\n' % token)
+            of.write('      {0}.configure(this);\n'.format(token))
             if reg.ram_size == 0:
-                of.write('      %s.build();\n' % token)
+                of.write('      {0}.build();\n'.format(token))
                 if not reg.do_not_generate_code:
                     for field in reg.get_bit_fields():
                         of.write('      %s.add_hdl_path_slice("r%02x_%s", %d, %d );\n'
                                  % (token, reg.address, self._fix_name(field),
-                                    field.start_position, field.width))
+                                    field.lsb, field.width))
         of.write("\n")
 
         for item in in_maps:
-            mname = "%s_map" % item
-            
-            of.write('      if (!disable_%s_map) begin;\n' % item)
+            mname = "{0}_map".format(item)
+
+            of.write('      if (!disable_{0}_map) begin;\n'.format(item))
             width = min(dbase.data_bus_width / 8,
                         self._project.get_address_width(item))
-            of.write('         %s = create_map("%s", \'h0, %d, %s, 1);\n' %
-                     (mname, mname, width, self.endian))
+            of.write('         {0} = create_map("{0}", \'h0, {1:d}, {2}, 1);\n'.format(
+                     mname, width, self.endian))
             of.write('      end\n')
 
         for reg in dbase.get_all_registers():
             for item in in_maps:
                 cmd = "add_mem" if reg.ram_size else "add_reg"
-                of.write('      if (!disable_%s_map) begin\n' % item)
+                of.write('      if (!disable_{0}_map) begin\n'.format(item))
                 of.write('         %s_map.%s(%s, \'h%04x, "RW");\n' %
                          (item, cmd, reg.token.lower(), reg.address))
                 of.write('      end\n')
@@ -454,40 +522,36 @@ class UVMBlockRegisters(WriterBase):
             self.disable_access_tests(dbase, of)
 
         of.write('\n')
-
         of.write('    endfunction : build\n\n')
-
         of.write('    function void sample(uvm_reg_addr_t offset, '
                  'bit is_read, uvm_reg_map  map);\n')
         of.write('       if (get_coverage(UVM_CVR_ALL)) begin\n')
-        of.write('          %s_access_cg.sample(offset, is_read);\n' % sname)
+        of.write('          {0}_access_cg.sample(offset, is_read);\n'.format(sname))
         of.write('       end\n')
         of.write('    endfunction: sample\n\n')
-
-        of.write('  endclass : %s_%s_reg_blk\n\n' %
-                 (group.name, dbase.set_name))
+        of.write('  endclass : {0}_{1}_reg_blk\n\n'.format(group.name, dbase.set_name))
 
     def disable_access_tests(self, dbase, of):
         for reg in dbase.get_all_registers():
             test = "MEM" if reg.ram_size else "REG"
             of.write('      uvm_resource_db #(bit)::set({"REG::", ')
-            of.write('get_full_name(), ".%s"}, "NO_%s_ACCESS_TEST", 1);\n' %
-                     (reg.token.lower(), test))
+            of.write('get_full_name(), ".{0}"}}, "NO_{1}_ACCESS_TEST", 1);\n'.format(
+                     reg.token.lower(), test))
 
     def write_register(self, reg, dbase, of):
 
-        rname = "reg_%s_%s" % (dbase.set_name, reg.token.lower())
+        rname = "reg_{0}_{1}".format(dbase.set_name, reg.token.lower())
 
-        of.write("/*! \\class %s\n" % rname)
-        of.write(" *  \\brief %s\n" % reg.description)
+        of.write("/*! \\class {0}\n".format(rname))
+        of.write(" *  \\brief {0}\n".format(reg.description))
         of.write(" *\n * \\addtogroup registers\n")
         of.write(" * * @{\n")
         of.write(" */\n")
-        of.write("  class %s extends uvm_reg;\n\n" % rname)
-        of.write("    `uvm_object_utils(%s);\n\n" % rname)
+        of.write("  class {0} extends uvm_reg;\n\n".format(rname))
+        of.write("    `uvm_object_utils({0});\n\n".format(rname))
         field_list = []
         for field in reg.get_bit_fields():
-            of.write("    uvm_reg_field %s;\n" % self._fix_name(field))
+            of.write("    uvm_reg_field {0};\n".format(self._fix_name(field)))
             if field.reset_type == BitField.RESET_PARAMETER:
                 field_list.append(field)
 
@@ -495,39 +559,39 @@ class UVMBlockRegisters(WriterBase):
             if field.reset_parameter:
                 name = field.reset_parameter
             else:
-                name = "p%s" % field.field_name.upper()
+                name = "".join(["p", field.field_name.upper()])
 
             if field.width == 1:
-                of.write("    bit %s = 1'b0;\n" % name)
+                of.write("    bit {0} = 1'b0;\n".format(name))
             else:
-                of.write("    bit [%d:0] %s = '0;\n" % (field.width - 1,
-                                                        name))
+                of.write("    bit [{0}:0] {1} = '0;\n".format(field.width - 1,
+                                                              name))
 
         grps = set()
 
         for field in reg.get_bit_fields():
             if field.values:
                 n = self._fix_name(field)
-                grps.add("cov_%s" % n)
-                of.write("\n      covergroup cov_%s;\n" % n)
+                grps.add("cov_{0}".format(n))
+                of.write("\n      covergroup cov_{0};\n".format(n))
                 of.write("         option.per_instance = 1;\n")
-                of.write("         %s: coverpoint %s.value {\n" %
-                         (n.upper(), n.lower()))
+                of.write("         {0}: coverpoint {1}.value {{\n".format(
+                         n.upper(), n.lower()))
                 for value in field.values:
                     of.write("            bins bin_%s = {'h%x};\n" %
                              self.mk_coverpt(value))
                 of.write("      }\n")
-                of.write("      endgroup : cov_%s\n" % n)
+                of.write("      endgroup : cov_{0}\n".format(n))
 
-        of.write('\n    function new(string name = "%s");\n' %
-                 reg.token.lower())
+        of.write('\n    function new(string name = "{0}");\n'.format(
+                 reg.token.lower()))
         if grps:
-            of.write('       super.new(name, %d, ' % reg.width)
+            of.write('       super.new(name, {0}, '.format(reg.width))
             of.write('build_coverage(UVM_CVR_FIELD_VALS));\n')
             for item in grps:
-                of.write('       %s = new;\n' % item)
+                of.write('       {0} = new;\n'.format(item))
         else:
-            of.write('      super.new(name, %d' % reg.width)
+            of.write('      super.new(name, {0}'.format(reg.width))
             of.write(', UVM_NO_COVERAGE);\n')
 
         of.write('    endfunction : new\n\n')
@@ -538,14 +602,15 @@ class UVMBlockRegisters(WriterBase):
             of.write('                         bit            is_read,\n')
             of.write('                         uvm_reg_map    map);\n')
             for item in grps:
-                of.write('     %s.sample();\n' % item)
+                of.write('     {0}.sample();\n'.format(item))
             of.write('    endfunction: sample\n\n')
 
         of.write('    virtual function void build();\n')
 
         for field in reg.get_bit_fields():
-            of.write('      %s = uvm_reg_field::type_id::create("%s"' %
-                     (self._fix_name(field), self._fix_name(field)))
+            field_name = self._fix_name(field)
+            of.write('      {0} = uvm_reg_field::type_id::create("{0}"'.format(
+                     field_name))
             of.write(', , get_full_name());\n')
 
         dont_test = False
@@ -554,13 +619,13 @@ class UVMBlockRegisters(WriterBase):
 
         for field in reg.get_bit_fields():
             size = field.width
-            if field.start_position >= reg.width:
-                lsb = field.start_position % reg.width
+            if field.lsb >= reg.width:
+                lsb = field.lsb % reg.width
                 tok = reg.token
-                msg = "%s has bits that exceed the register width" % tok
+                msg = "{0} has bits that exceed the register width".format(tok)
                 LOGGER.warning(msg)
             else:
-                lsb = field.start_position
+                lsb = field.lsb
 
             access = ACCESS_MAP.get(field.field_type, None)
             if access is None:
@@ -577,9 +642,9 @@ class UVMBlockRegisters(WriterBase):
                 if field.reset_parameter:
                     reset = field.reset_parameter
                 else:
-                    reset = "p%s" % field.field_name.upper()
+                    reset = "".join(["p", field.field_name.upper()])
             else:
-                reset = "%d'h%x" % (field.width, field.reset_value)
+                reset = "{0:d}'h{1:x}".format(field.width, field.reset_value)
             is_rand = 0
             ind_access = individual_access(field, reg)
 
@@ -604,12 +669,12 @@ class UVMBlockRegisters(WriterBase):
 
         of.write('      reset();\n')
         of.write('    endfunction : build\n\n')
-        of.write('  endclass : %s\n\n' % rname)
+        of.write('  endclass : {0}\n\n'.format(rname))
         of.write('/*!@}*/\n')
 
     def write_memory(self, reg, dbase, of):
 
-        rname = "mem_%s_%s" % (dbase.set_name, reg.token.lower())
+        rname = "mem_{0}_{1}".format(dbase.set_name, reg.token.lower())
 
         access_types = set()
         for field in reg.get_bit_fields():
@@ -620,29 +685,28 @@ class UVMBlockRegisters(WriterBase):
         else:
             access = "RW"
 
-        of.write("/*! \\class %s\n" % rname)
-        of.write(" *  \\brief %s\n" % reg.description)
+        of.write("/*! \\class {0}\n".format(rname))
+        of.write(" *  \\brief {0}\n".format(reg.description))
         of.write(" *\n * \\addtogroup registers\n")
         of.write(" * * @{\n")
         of.write(" */\n")
-        of.write("  class %s extends uvm_mem;\n\n" % rname)
-        of.write("    `uvm_object_utils(%s);\n\n" % rname)
-        of.write('    function new(string name = "%s");\n' %
-                 reg.token.lower())
+        of.write("  class {0} extends uvm_mem;\n\n".format(rname))
+        of.write("    `uvm_object_utils({0});\n\n".format(rname))
+        of.write('    function new(string name = "{0}");\n'.format(reg.token.lower()))
         num_bytes = reg.width / 8
-        of.write('       super.new(name, %d, %d, "%s", UVM_NO_COVERAGE);\n'
-                 % (reg.ram_size / num_bytes, reg.width, access))
+        of.write('       super.new(name, {0}, {1}, "{2}", UVM_NO_COVERAGE);\n'.format(
+                 reg.ram_size / num_bytes, reg.width, access))
         of.write('    endfunction : new\n\n')
 
-        of.write('  endclass : %s\n\n' % rname)
+        of.write('  endclass : {0}\n\n'.format(rname))
         of.write('/*!@}*/\n')
 
-    def generate_coverage(self, of, dbase):
+    def write_db_coverage(self, of, dbase):
 
         base = dbase.set_name
         of.write("\n\n")
-        of.write("class %s_reg_access_wrapper extends uvm_object;\n" % base)
-        of.write("\n   `uvm_object_utils(%s_reg_access_wrapper)\n" % base)
+        of.write("class {0}_reg_access_wrapper extends uvm_object;\n".format(base))
+        of.write("\n   `uvm_object_utils({0}_reg_access_wrapper)\n".format(base))
         of.write("\n   static int s_num = 0;\n\n")
         of.write("   covergroup ra_cov(string name) with function "
                  "sample(uvm_reg_addr_t addr, bit is_read);\n\n")
@@ -650,8 +714,8 @@ class UVMBlockRegisters(WriterBase):
         of.write("   option.name = name;\n\n")
         of.write("   ADDR: coverpoint addr {\n")
         for reg in dbase.get_all_registers():
-            of.write("     bins r_%s = {'h%x};\n" % (reg.token.lower(),
-                                                     reg.address))
+            of.write("     bins r_{0} = {{'h{1:x}}};\n".format(reg.token.lower(),
+                                                               reg.address))
         of.write("   }\n\n")
         of.write("   RW: coverpoint is_read {\n")
         of.write("      bins RD = {1};\n")
@@ -659,14 +723,13 @@ class UVMBlockRegisters(WriterBase):
         of.write("   }\n\n")
         of.write("   ACCESS: cross ADDR, RW;\n\n")
         of.write("   endgroup : ra_cov\n\n")
-        of.write('   function new(string name = "%s_reg_access_wrapper");\n' %
-                 base)
+        of.write('   function new(string name = "{0}_reg_access_wrapper");\n'.format(base))
         of.write('      ra_cov = new($sformatf("%s_%0d", name, s_num++));\n')
         of.write('   endfunction : new\n\n')
         of.write('   function void sample(uvm_reg_addr_t offset, bit is_read);\n')
         of.write('      ra_cov.sample(offset, is_read);\n')
         of.write('   endfunction: sample\n\n')
-        of.write('endclass : %s_reg_access_wrapper\n\n' % base)
+        of.write('endclass : {0}_reg_access_wrapper\n\n'.format( base))
 
 
 def is_volatile(field):
@@ -692,12 +755,12 @@ def individual_access(field, reg):
     # used_bytes set
 
     for f in [fld for fld in flds if fld != field and not is_readonly(fld)]:
-        for pos in range(f.start_position, f.stop_position + 1):
+        for pos in range(f.lsb, f.msb + 1):
             used_bytes.add(pos / 8)
 
     # loop through the bytes used by the current field, and make sure they
     # do match any of the bytes used by other fields
-    for pos in range(field.start_position, field.stop_position + 1):
+    for pos in range(field.lsb, field.msb + 1):
         if (pos / 8) in used_bytes:
             return False
     return True

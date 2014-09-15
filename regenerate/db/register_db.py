@@ -60,21 +60,22 @@ class RegisterDb(object):
         self.__be = rules.get('rules', 'byte_strobe_default', DEF_BE_NAME)
         self.__ack = rules.get('rule', 'ack_default', DEF_ACK_NAME)
         self.__module = "unnamed_regs"
+        self.__title = ""
+        self.__registers = {}
 
         self.reset_active_level = 0
         self.data_bus_width = 32
         self.address_bus_width = 12
         self.owner = ""
         self.byte_strobe_active_level = 1
-        self.__title = ""
         self.overview_text = ""
         self.enable_coverage = False
-        self.__registers = {}
         self.set_name = ""
 
     def total_bits(self):
+        """Returns bits in register"""
         bits = 0
-        for key in self.__registers.keys():
+        for key in self.__registers:
             reg = self.__registers[key]
             for field in reg.get_bit_fields():
                 bits += field.width
@@ -84,21 +85,20 @@ class RegisterDb(object):
         """
         Returns the register keys, which is the address of the register
         """
-        return sorted(self.__registers.keys())
+        return iter(sorted(self.__registers.keys()))
 
     def get_all_registers(self):
         """
         Returns the register keys, which is the address of the register
         """
-        return [self.__registers[key]
-                for key in sorted(self.__registers.keys())]
+        return iter([self.__registers[key]
+                     for key in sorted(self.__registers.keys())])
 
     def get_register(self, key):
         """
         Returns the register from the specified key, which should be the
         address.
         """
-        assert (key == self.__registers.get(key).address)
         return self.__registers.get(key)
 
     def add_register(self, reg):
@@ -134,174 +134,163 @@ class RegisterDb(object):
         writer = RegWriter(self)
         writer.save(filename)
 
-    def __get_write_data(self):
+    @property
+    def write_data_name(self):
         """
         Gets __write_data, which is accessed via the write_data_name property
         """
         return self.__write_data
 
-    def __set_write_data(self, name):
+    @write_data_name.setter
+    def write_data_name(self, name):
         """
         Sets __write_data, which is accessed via the write_data_name property
         """
         self.__write_data = name.strip()
 
-    write_data_name = property(__get_write_data, __set_write_data, None,
-                               "Name of the write data signal")
-
-    def __get_read_data(self):
+    @property
+    def read_data_name(self):
         """
         Gets __read_data, which is accessed via the read_data_name property
         """
         return self.__read_data
 
-    def __set_read_data(self, name):
+    @read_data_name.setter
+    def read_data_name(self, name):
         """
         Sets __read_data, which is accessed via the read_data_name property
         """
         self.__read_data = name.strip()
 
-    read_data_name = property(__get_read_data, __set_read_data, None,
-                              "Name of the read data signal")
-
-    def __get_write_strobe(self):
+    @property
+    def write_strobe_name(self):
         """
         Gets __write_strobe, which is accessed via the write_strobe_name
         property
         """
         return self.__write_strobe
 
-    def __set_write_strobe(self, name):
+    @write_strobe_name.setter
+    def write_strobe_name(self, name):
         """
         Sets __write_strobe, which is accessed via the write_strobe_name
         property
         """
         self.__write_strobe = name.strip()
 
-    write_strobe_name = property(__get_write_strobe, __set_write_strobe, None,
-                                 "Name of the write strobe")
-
-    def __get_ack(self):
+    @property
+    def acknowledge_name(self):
         """
         Gets __ack, which is accessed via the acknowledge_name property
         """
         return self.__ack
 
-    def __set_ack(self, name):
+    @acknowledge_name.setter
+    def acknowledge_name(self, name):
         """
         Sets __ack, which is accessed via the acknowledge_name property
         """
         self.__ack = name.strip()
 
-    acknowledge_name = property(__get_ack, __set_ack, None,
-                                "Name of the acknowledge")
-
-    def __get_read_strobe(self):
+    @property
+    def read_strobe_name(self):
         """
         Gets __read_strobe, which is accessed via the read_strobe_name
         property
         """
         return self.__read_strobe
 
-    def __set_read_strobe(self, name):
+    @read_strobe_name.setter
+    def read_strobe_name(self, name):
         """
         Sets __read_strobe, which is accessed via the read_strobe_name
         property
         """
         self.__read_strobe = name.strip()
 
-    read_strobe_name = property(__get_read_strobe, __set_read_strobe, None,
-                                "Name of the read strobe")
-
-    def __get_addr(self):
+    @property
+    def address_bus_name(self):
         """
         Gets __addr, which is accessed via the address_bus_name property
         """
         return self.__addr
 
-    def __set_addr(self, name):
+    @address_bus_name.setter
+    def address_bus_name(self, name):
         """
         Sets __addr, which is accessed via the address_bus_name property
         """
         self.__addr = name.strip()
 
-    address_bus_name = property(__get_addr, __set_addr, None,
-                                "Name of the address bus")
-
-    def __get_be(self):
+    @property
+    def byte_strobe_name(self):
         """
-        Gets __be, which is accessed via the byte_strobe_named property
+        Gets __be, which is accessed via the byte_strobe_name property
         """
         return self.__be
 
-    def __set_be(self, name):
+    @byte_strobe_name.setter
+    def byte_strobe_name(self, name):
         """
         Sets __be, which is accessed via the byte_strobe_named property
         """
         self.__be = name.strip()
 
-    byte_strobe_name = property(__get_be, __set_be, None,
-                                "Name of the byte enables")
-
-    def __set_module(self, name):
-        """
-        Sets __module, which is accessed via the module_name property
-        """
-        self.__module = name.replace(' ', '_')
-
-    def __get_module(self):
+    @property
+    def module_name(self):
         """
         Gets __module, which is accessed via the module_name property
         """
         return self.__module
 
-    module_name = property(__get_module, __set_module, None,
-                           "Name of the module")
-
-    def __set_clock(self, name):
+    @module_name.setter
+    def module_name(self, name):
         """
-        Sets __clock, which is accessed via the clock_name property
+        Sets __module, which is accessed via the module_name property
         """
-        self.__clock = name.strip()
+        self.__module = name.replace(' ', '_')
 
-    def __get_clock(self):
+    @property
+    def clock_name(self):
         """
         Gets __clock, which is accessed via the clock_name property
         """
         return self.__clock
 
-    clock_name = property(__get_clock, __set_clock, None,
-                          "Signal name of the clock")
-
-    def __set_reset(self, name):
+    @clock_name.setter
+    def clock_name(self, name):
         """
-        Sets __reset, which is accessed via the reset_name property
+        Sets __clock, which is accessed via the clock_name property
         """
-        self.__reset = name.strip()
+        self.__clock = name.strip()
 
-    def __get_reset(self):
+    @property
+    def reset_name(self):
         """
         Gets __reset, which is accessed via the reset_name property
         """
         return self.__reset
 
-    reset_name = property(__get_reset, __set_reset, None,
-                          "Signal name of the reset")
-
-    def __set_title(self, name):
+    @reset_name.setter
+    def reset_name(self, name):
         """
-        Sets __title, which is accessed via the descriptive_title property
+        Sets __reset, which is accessed via the reset_name property
         """
-        self.__title = name.strip()
+        self.__reset = name.strip()
 
-    def __get_title(self):
+    @property
+    def descriptive_title(self):
         """
         Gets __title, which is accessed via the descriptive_title property
         """
         return self.__title
 
-    descriptive_title = property(__get_title, __set_title, None,
-                                 "Description of the module")
+    @descriptive_title.setter
+    def descriptive_title(self, name):
+        """
+        Sets __title, which is accessed via the descriptive_title property
+        """
+        self.__title = name.strip()
 
     def find_register_by_name(self, name):
         """Finds a register with the given name, or None if not found"""

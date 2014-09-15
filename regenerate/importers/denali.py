@@ -153,83 +153,82 @@ class DenaliRDLParser:
         reg_list = []
         addr = 0
 
-        input_file = open(filename)
+        with open(filename) as input_file:
 
-        for line in input_file:
-            match = re.match("addrmap\s+(.*)\s*{\s*default\s+regwidth\s*=\s*(\d+)\s*;", line)
-            if match:
-                groups = match.groups()
-                self.dbase.descriptive_title = groups[0].strip()
-                self.dbase.data_bus_width = int(groups[1])
-                continue
+            for line in input_file:
+                match = re.match("addrmap\s+(.*)\s*{\s*default\s+regwidth\s*=\s*(\d+)\s*;", line)
+                if match:
+                    groups = match.groups()
+                    self.dbase.descriptive_title = groups[0].strip()
+                    self.dbase.data_bus_width = int(groups[1])
+                    continue
 
-            match = re.match("\s*reg\s+{", line)
-            if match:
-                reg = RegInfo()
-                reg_list.append(reg)
-                reg.address = addr
-                continue
+                match = re.match("\s*reg\s+{", line)
+                if match:
+                    reg = RegInfo()
+                    reg_list.append(reg)
+                    reg.address = addr
+                    continue
 
-            match = re.match("\s*reg\s+(\S+)\s*{", line)
-            if match:
-                groups = match.groups()
-                reg = RegInfo()
-                reg.token = groups[0]
-                reg.reg_name = reg.token
-                reg.address = addr
-                addr = reg.address + (reg.width/8)
-                reg_list.append(reg)
-                continue
+                match = re.match("\s*reg\s+(\S+)\s*{", line)
+                if match:
+                    groups = match.groups()
+                    reg = RegInfo()
+                    reg.token = groups[0]
+                    reg.reg_name = reg.token
+                    reg.address = addr
+                    addr = reg.address + (reg.width/8)
+                    reg_list.append(reg)
+                    continue
 
-            match = re.match("\s*field\s+{", line)
-            if match:
-                field = FieldInfo()
-                continue
+                match = re.match("\s*field\s+{", line)
+                if match:
+                    field = FieldInfo()
+                    continue
 
-            match = re.match("\s*(\S+)\s*=\s*(.*);", line)
-            if match:
-                groups = match.groups()
-                if field:
-                    field.dispatch(groups[0], groups[1])
-                elif reg:
-                    reg.dispatch(groups[0], groups[1])
-                continue
+                match = re.match("\s*(\S+)\s*=\s*(.*);", line)
+                if match:
+                    groups = match.groups()
+                    if field:
+                        field.dispatch(groups[0], groups[1])
+                    elif reg:
+                        reg.dispatch(groups[0], groups[1])
+                    continue
 
-            match = re.match("\s*}\s*([^[]+)\[(\d+):(\d+)\]\s*=\s*([\dx]+)\s*;",
-                             line)
-            if match:
-                groups = match.groups()
-                field.name = groups[0].strip()
-                field.stop = int(groups[1])
-                field.start = int(groups[2])
-                field.reset = parse_hex_value(groups[3])
-                reg.field_list.append(field)
-                continue
+                match = re.match("\s*}\s*([^[]+)\[(\d+):(\d+)\]\s*=\s*([\dx]+)\s*;",
+                                 line)
+                if match:
+                    groups = match.groups()
+                    field.name = groups[0].strip()
+                    field.stop = int(groups[1])
+                    field.start = int(groups[2])
+                    field.reset = parse_hex_value(groups[3])
+                    reg.field_list.append(field)
+                    continue
 
-            match = re.match("\s*}\s*([^[]+)\[(\d+):(\d+)\]\s*;", line)
-            if match:
-                groups = match.groups()
-                field.name = groups[0].strip()
-                field.stop = int(groups[1])
-                field.start = int(groups[2])
-                reg.field_list.append(field)
-                field = None
-                continue
+                match = re.match("\s*}\s*([^[]+)\[(\d+):(\d+)\]\s*;", line)
+                if match:
+                    groups = match.groups()
+                    field.name = groups[0].strip()
+                    field.stop = int(groups[1])
+                    field.start = int(groups[2])
+                    reg.field_list.append(field)
+                    field = None
+                    continue
 
-            match = re.match("\s*}\s*([_A-Za-z_0-9]+)\s*@([0-9A-Fa-fx]+)\s*;",
-                             line)
-            if match:
-                groups = match.groups()
-                reg.reg_name = groups[0]
-                reg.address = int(groups[1], 16)
-                addr = reg.address + (reg.width/8)
-                continue
+                match = re.match("\s*}\s*([_A-Za-z_0-9]+)\s*@([0-9A-Fa-fx]+)\s*;",
+                                 line)
+                if match:
+                    groups = match.groups()
+                    reg.reg_name = groups[0]
+                    reg.address = int(groups[1], 16)
+                    addr = reg.address + (reg.width/8)
+                    continue
 
-            match = re.match("\s*}\s*;", line)
-            if match:
-                continue
+                match = re.match("\s*}\s*;", line)
+                if match:
+                    continue
 
-        input_file.close()
         self.save(reg_list)
 
     def save(self, reg_list):
