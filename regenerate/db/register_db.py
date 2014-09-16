@@ -20,14 +20,11 @@
 """
 Provides the container database for a set of registers.
 """
-import re
 import os
-import xml
-from regenerate.db.reg_parser import RegParser
-from regenerate.db.reg_writer import RegWriter
-
+import re
+import regenerate.db
 from regenerate.settings import rules
-
+import xml
 
 DEF_CLK_NAME = "CLK"
 DEF_RST_NAME = "RSTn"
@@ -120,18 +117,18 @@ class RegisterDb(object):
         try:
             ifile = open(filename)
             self.set_name = os.path.splitext(os.path.basename(filename))[0]
-            parser = RegParser(self)
+            parser = regenerate.db.RegParser(self)
             parser.parse(ifile)
             ifile.close()
             return None
-        except xml.parsers.expat.ExpatError, msg:
+        except xml.parsers.expat.ExpatError as msg:
             return str(msg)
 
     def save_xml(self, filename):
         """
         Saves the database to the specified XML file
         """
-        writer = RegWriter(self)
+        writer = regenerate.db.RegWriter(self)
         writer.save(filename)
 
     @property

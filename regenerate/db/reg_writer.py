@@ -21,9 +21,10 @@
 Writes the XML file containing all the information in the register database
 """
 
+from regenerate.db import BitField
+from regenerate.db import TYPE_TO_ID
 import os
-from xml.sax.saxutils import escape
-from regenerate.db import BitField, TYPE_TO_ID
+import xml.sax.saxutils
 
 
 def create_backup_file(filename):
@@ -121,7 +122,7 @@ def cleanup(data):
     data = data.replace(u"\u2013", "-")
     data = data.replace(u"\u201c", "\"")
     data = data.replace(u"\ue280a2", "*")
-    return escape(data.replace(u"\u201d", "\""))
+    return xml.sax.saxutils.escape(data.replace(u"\u201d", "\""))
 
 
 def write_field(ofile, field):

@@ -58,19 +58,20 @@ class Sdc(WriterBase):
                                     of.write("set_multicycle -from [get_cells(%s)] -setup 2\n" % signal_name)
         of.close()
 
+
 def build_format(top_hdl, top_count, lower_hdl, lower_count):
     if top_hdl and lower_hdl:
         top_hdl = top_hdl.replace("%0d", "%(d)d")
-        top_hdl = top_hdl.replace(".", "/") % { 'd' : top_count }
+        top_hdl = top_hdl.replace(".", "/") % {'d': top_count}
         lower_hdl = lower_hdl.replace("%0d", "%(d)d")
-        lower_hdl = lower_hdl.replace(".", "/") % { 'd' : lower_count}
+        lower_hdl = lower_hdl.replace(".", "/") % {'d': lower_count}
         return "%s/%s" % (top_hdl, lower_hdl)
     elif lower_hdl:
         lower_hdl = lower_hdl.replace("%0d", "%(d)d")
-        print lower_hdl
-        lower_hdl = lower_hdl.replace(".", "/") % { 'd' : lower_count}
+        lower_hdl = lower_hdl.replace(".", "/") % {'d': lower_count}
     else:
         return ""
+
 
 def all_fields(dbase):
     f = []
@@ -80,8 +81,9 @@ def all_fields(dbase):
                 f.append(field)
     return f
 
+
 def has_static_output(field):
-    return (field.use_output_enable and field.output_signal and 
+    return (field.use_output_enable and field.output_signal and
             field.output_is_static)
 
 

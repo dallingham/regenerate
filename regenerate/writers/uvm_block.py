@@ -195,8 +195,8 @@ class UVMBlockRegisters(WriterBase):
             map_name = "{}_map".format(key)
             of.write('      if (!disable_{}) begin\n'.format(map_name))
             of.write('         {0} = create_map("{0}", \'h{1:x}, {2:d}, {3});\n'.format(
-                    map_name, map2base[key], self._project.get_address_width(key), 
-                    self.endian))
+                     map_name, map2base[key], self._project.get_address_width(key),
+                     self.endian))
             of.write('      end\n')
         of.write("\n")
 
@@ -396,8 +396,8 @@ class UVMBlockRegisters(WriterBase):
                     mname = "{0}_map".format(item)
 
                     of.write("         if (!{0}) begin\n".format(disable))
-                    of.write("            {0}_map.add_submap({1}[i].{0}_map, 'h{2:x} + (i * 'h{3:x}));\n".format(
-                             item, inst, group_entry.offset, group_entry.repeat_offset))
+                    of.write("            {0}.add_submap({1}[i].{0}, 'h{2:x} + (i * 'h{3:x}));\n".format(
+                             mname, inst, group_entry.offset, group_entry.repeat_offset))
                     of.write("         end\n")
                     if group_entry.no_uvm:
                         of.write('        uvm_resource_db#(bit)::set({{"REG::",{0}[i].get_full_name(),".*"}},\n'.format(inst))
@@ -729,7 +729,7 @@ class UVMBlockRegisters(WriterBase):
         of.write('   function void sample(uvm_reg_addr_t offset, bit is_read);\n')
         of.write('      ra_cov.sample(offset, is_read);\n')
         of.write('   endfunction: sample\n\n')
-        of.write('endclass : {0}_reg_access_wrapper\n\n'.format( base))
+        of.write('endclass : {0}_reg_access_wrapper\n\n'.format(base))
 
 
 def is_volatile(field):

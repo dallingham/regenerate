@@ -44,7 +44,6 @@ class VerilogDefines(WriterBase):
 
     def __init__(self, dbase):
         WriterBase.__init__(self, dbase)
-        #self._prefix = ""
         self._ofile = None
 
     def write_def(self, reg, prefix, offset):
@@ -68,7 +67,7 @@ class VerilogDefines(WriterBase):
         """
         try:
             self._ofile = open(filename, "w")
-        except IOError, msg:
+        except IOError as msg:
             import gtk
             errd = gtk.MessageDialog(type=gtk.MESSAGE_ERROR)
             errd.set_markup("Could not create %s" % filename)

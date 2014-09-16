@@ -49,7 +49,7 @@ class VerilogParameters(WriterBase):
         """
         try:
             self._ofile = open(filename, "w")
-        except IOError, msg:
+        except IOError as msg:
             import gtk
             errd = gtk.MessageDialog(type=gtk.MESSAGE_ERROR)
             errd.set_markup("Could not create %s" % filename)

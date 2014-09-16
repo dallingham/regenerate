@@ -21,10 +21,16 @@
 Includes the base instances in the module
 """
 
-__all__ = ["bitfield", "register_db", "register", "reg_parser",
-           "reg_writer", "reg_project", "LOGGER"]
-
+from bitfield import BitField
+from bitfield_types import *
+from group_data import GroupData
 import logging
+from register import Register
+from reg_parser import RegParser
+from reg_project import RegProject, AddrMapData, GroupMapData
+from reg_writer import RegWriter
+from register_db import RegisterDb
+
 LOGGER = logging.getLogger('regenerate')
 
 # create console handler and set level to debug
@@ -36,10 +42,3 @@ __ch.setFormatter(__formatter)
 # add ch to logger
 LOGGER.addHandler(__ch)
 
-from bitfield import BitField
-from bitfield_types import *
-from register_db import RegisterDb
-from register import Register
-from reg_parser import RegParser
-from reg_writer import RegWriter
-from reg_project import RegProject, AddrMapData, GroupMapData, GroupData

@@ -23,9 +23,7 @@ Provides the definition of a Bit Field,
 
 
 def clean_signal(name):
-    """
-    Removes white space from a string, replacing them with underscores.
-    """
+    "Removes white space from a string, replacing them with underscores."
     return "_".join(name.strip().split())
 
 
@@ -122,29 +120,27 @@ class BitField(object):
 
     @property
     def stop_position(self):
-        """Returns the most significant bit of the field"""
+        """Returns the most significant bit of the field."""
         return self.msb
 
     @stop_position.setter
     def stop_position(self, value):
-        """Sets the most significant bit of the field"""
+        """Sets the most significant bit of the field."""
         self.msb = value
 
     @property
     def start_position(self):
-        """Returns the least significant bit of the field"""
+        """Returns the least significant bit of the field."""
         return self.lsb
 
     @start_position.setter
     def start_position(self, value):
-        """Setsx the least significant bit of the field"""
+        """Sets the least significant bit of the field."""
         self.lsb = value
 
     @property
     def width(self):
-        """
-        Returns the width in bits of the bit field.
-        """
+        """Returns the width in bits of the bit field."""
         return self.msb - self.lsb + 1
 
     @property

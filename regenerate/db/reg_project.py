@@ -21,13 +21,12 @@
 RegProject is the container object for a regenerate project
 """
 
-from xml.sax.saxutils import escape
-import os.path
-from regenerate.db import LOGGER
-from regenerate.db.proj_writer import ProjectWriter
-from regenerate.db.proj_reader import ProjectReader
-from regenerate.db.group_data import GroupData
 from collections import namedtuple
+import regenerate.db
+from regenerate.db.proj_reader import ProjectReader
+from regenerate.db.proj_writer import ProjectWriter
+import os.path
+import xml.sax.saxutils
 
 AddrMapData = namedtuple("AddrMapData", "name base width fixed")
 GroupMapData = namedtuple("GroupMapData",
@@ -39,7 +38,7 @@ def cleanup(data):
     data = data.replace(u"\u2013", "-")
     data = data.replace(u"\u201c", "\"")
     data = data.replace(u"\ue280a2", "*")
-    return escape(data.replace(u"\u201d", "\""))
+    return xml.sax.saxutils.escape(data.replace(u"\u201d", "\""))
 
 
 class RegProject(object):
@@ -111,8 +110,8 @@ class RegProject(object):
         try:
             path2remove = os.path.relpath(path, os.path.dirname(self.path))
             self._filelist.remove(path2remove)
-        except ValueError, msg:
-            LOGGER.error(str(msg))
+        except ValueError as msg:
+            regenerate.db.LOGGER.error(str(msg))
 
     def get_exports(self, path):
         """
@@ -224,8 +223,8 @@ class RegProject(object):
         Modifies an existing grouping.
         """
         self._modified = True
-        self._groupings[index] = GroupData(name, start, hdl,
-                                           repeat, repeat_offset)
+        self._groupings[index] = regenerate.db.GroupData(name, start, hdl,
+                                                         repeat, repeat_offset)
 
     def add_to_grouping_list(self, group_data):
         """
@@ -239,8 +238,8 @@ class RegProject(object):
         Adds a new grouping to the grouping list
         """
         self._modified = True
-        self._groupings.append(GroupData(name, start, hdl,
-                                         repeat, repeat_offset))
+        self._groupings.append(regenerate.db.GroupData(name, start, hdl,
+                                                       repeat, repeat_offset))
 
     def remove_group_from_grouping_list(self, grp):
         """

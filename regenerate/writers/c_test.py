@@ -21,8 +21,7 @@
 Actual program. Parses the arguments, and initiates the main window
 """
 
-import os
-from regenerate.db import BitField, RegisterDb
+from regenerate.db import BitField
 from writer_base import WriterBase
 
 support_code = [

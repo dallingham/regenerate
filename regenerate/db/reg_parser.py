@@ -21,10 +21,9 @@
 Parses the register database, loading the database.
 """
 
-import xml.parsers.expat
-
-from regenerate.db.register import Register
+from regenerate.db import Register
 from regenerate.db import BitField, ID_TO_TYPE
+import xml.parsers.expat
 
 
 def cnv_hex(attrs, key, default=0):
