@@ -233,7 +233,7 @@ class UVMBlockRegisters(WriterBase):
             of.write('      foreach ({0}[i]) begin\n'.format(name))
             of.write('         if (!{0}) begin\n'.format(disable))
             of.write("            {0}.add_submap({1}[i].{0}, 'h{2:x} + (i * 'h{3:x}));\n".format(
-                     data_name, name, grp_data.base, grp_data.repeat_offset))
+                     mapname, name, grp_data.base, grp_data.repeat_offset))
             of.write("         end\n")
             of.write("      end\n")
 
