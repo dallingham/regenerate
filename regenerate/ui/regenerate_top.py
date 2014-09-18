@@ -1681,7 +1681,6 @@ def calculate_next_address(dbase):
     used.
     """
     keys = dbase.get_keys()
-    keys.sort()
     if keys:
         last_reg = dbase.get_register(keys[-1])
         addr = last_reg.address + last_reg.width / 8
