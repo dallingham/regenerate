@@ -82,7 +82,7 @@ class RegisterDb(object):
         """
         Returns the register keys, which is the address of the register
         """
-        return iter(sorted(self.__registers.keys()))
+        return sorted(self.__registers.keys())
 
     def get_all_registers(self):
         """
