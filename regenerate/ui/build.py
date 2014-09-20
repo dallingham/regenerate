@@ -135,7 +135,6 @@ class Build(BaseWindow):
         (base, db_file_mtime) = base_and_modtime(dbase_full_path)
         local_dest = os.path.join(os.path.dirname(self.__prj.path), dest)
 
-        print local_dest
         mod = file_needs_rebuilt(local_dest, self.__dbmap, [dbase_full_path])
         self.__modlist.append(mod)
         (fmt, cls, rpttype) = self.__optmap[option]
