@@ -63,7 +63,7 @@ class AddrMapMdl(gtk.TreeStore):
         """
         Adds the specified instance to the InstanceList
         """
-        self.append(row=(inst[0], "%08x" % inst[1], False, "32-bits"))
+        self.append(row=(inst[0], "{0:08x}".format(inst[1]), False, "32-bits"))
 
     def get_values(self):
         """
@@ -120,8 +120,8 @@ class AddrMapList(object):
                 parent_name = self._model[path[0]][0]
                 if self._prj.add_address_map_group(parent_name, data):
                     node = self._model.get_iter(path)
-                    if (position == gtk.TREE_VIEW_DROP_BEFORE
-                        or position == gtk.TREE_VIEW_DROP_INTO_OR_BEFORE):
+                    if (position == gtk.TREE_VIEW_DROP_BEFORE or
+                        position == gtk.TREE_VIEW_DROP_INTO_OR_BEFORE):
                         self._model.insert_before(parent, node, row_data)
                     else:
                         model.insert_after(parent, node, row_data)
@@ -145,10 +145,10 @@ class AddrMapList(object):
         self._model.clear()
         for base in self._prj.get_address_maps():
             if base.width not in INT2SIZE:
-                LOGGER.error('Illegal width (%d) for address map "%s"' %
-                             (base.width, base.name))
+                LOGGER.error('Illegal width ({0}) for address map "{1}"'.format(
+                             base.width, base.name))
                 base = AddrMapData(base.name, base.base, 4, base.fixed)
-            data = (base.name, "%x" % base.base, base.fixed,
+            data = (base.name, "{0:x}".format(base.base), base.fixed,
                     INT2SIZE[base.width])
             node = self._model.append(None, row=data)
             for name in self._prj.get_address_map_groups(base.name):
@@ -163,8 +163,8 @@ class AddrMapList(object):
 
         current_maps = set([i.name for i in self._prj.get_address_maps()])
         if new_text in current_maps:
-            LOGGER.error('"%s" has already been used as an address map name'
-                         % new_text)
+            LOGGER.error('"{}" has already been used as an address map name'.format(
+                         new_text))
         else:
             node = self._model.get_iter(path)
             name = self._model.get_value(node, AddrMapMdl.NAME_COL)
@@ -181,7 +181,7 @@ class AddrMapList(object):
         try:
             value = int(new_text, 16)
         except ValueError:
-            LOGGER.error('Illegal address: "%s"' % new_text)
+            LOGGER.error('Illegal address: "{0}"'.format(new_text))
             return
         if new_text:
             node = self._model.get_iter(path)
@@ -266,7 +266,7 @@ class AddrMapList(object):
         """
         Add the data to the list.
         """
-        data = (base, "%x" % addr, fixed, INT2SIZE[width])
+        data = (base, "{0:x}".format(addr), fixed, INT2SIZE[width])
         self._model.append(row=(data))
 
     def remove_selected(self):
@@ -293,13 +293,11 @@ class AddrMapList(object):
         data, and sets the first field to start editing.
         """
         name = self._create_new_map_name()
-        node = self._model.append(None, row=(name, 0, False,
-                                             SIZE2STR[0][0]))
+        node = self._model.append(None, row=(name, 0, False, SIZE2STR[0][0]))
         path = self._model.get_path(node)
         self._prj.modified = True
         self._prj.set_address_map(name, 0, False, SIZE2STR[0][1])
-        self._obj.set_cursor(path, focus_column=self._col,
-                             start_editing=True)
+        self._obj.set_cursor(path, focus_column=self._col, start_editing=True)
 
     def _create_new_map_name(self):
         template = "NewMap"
@@ -308,6 +306,6 @@ class AddrMapList(object):
 
         name = template
         while name in current_maps:
-            name = "%s%d" % (template, index)
+            name = "{0}{1}".format(template, index)
             index = index + 1
         return name

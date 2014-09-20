@@ -48,7 +48,7 @@ class ExportAssistant(gtk.Assistant):
 
     def selected_export_is_project(self):
         model = self.export_combo.get_model()
-        return model.get_value(self.export_combo.get_active_iter(), 1)
+        return not model.get_value(self.export_combo.get_active_iter(), 1)
 
     def selected_extension(self):
         model = self.export_combo.get_model()
@@ -66,12 +66,15 @@ class ExportAssistant(gtk.Assistant):
             filename = self.choose.get_filename()
             if not filename:
 
+                print ">", filename
                 if self.selected_export_is_project():
+                    print ">> is project", self.project_name
                     value = self.project_name
                 else:
                     model = self.register_combo.get_model()
                     active_iter = self.register_combo.get_active_iter()
                     value = model.get_value(active_iter, 0)
+                    print ">> not project", value
 
                 filename = value + self.selected_extension()
                 self.choose.set_current_name(filename)
@@ -125,6 +128,7 @@ class ExportAssistant(gtk.Assistant):
 
         cell = gtk.CellRendererText()
         model = gtk.ListStore(str, bool, str)
+
         for item in optlist:
             model.append(row=item)
         self.export_combo.pack_start(cell, True)

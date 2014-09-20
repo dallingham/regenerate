@@ -124,15 +124,18 @@ class Build(BaseWindow):
         (fmt, cls, dbtype) = self.__optmap[option]
         self.__model.append(row=[mod, "<project>", fmt, dest, cls, None])
 
-    def __add_dbase_item_to_list(self, dbase_full_path, option, dest):
+    def __add_dbase_item_to_list(self, dbase_rel_path, option, dest):
         """
         Adds the specific item to the build list. We have to check to see
         if the file needs rebuilt, depending on modification flags a file
         timestamps.
         """
+        dbase_full_path = os.path.join(os.path.dirname(self.__prj.path),
+                                       dbase_rel_path)
         (base, db_file_mtime) = base_and_modtime(dbase_full_path)
         local_dest = os.path.join(os.path.dirname(self.__prj.path), dest)
 
+        print local_dest
         mod = file_needs_rebuilt(local_dest, self.__dbmap, [dbase_full_path])
         self.__modlist.append(mod)
         (fmt, cls, rpttype) = self.__optmap[option]
@@ -145,9 +148,10 @@ class Build(BaseWindow):
         export list.
         """
         for item in self.__prj.get_register_set():
-            for (option, dest) in self.__prj.get_exports(item):
+            path = os.path.relpath(item, os.path.dirname(self.__prj.path))
+            for (option, dest) in self.__prj.get_exports(path):
                 try:
-                    self.__add_dbase_item_to_list(item, option, dest)
+                    self.__add_dbase_item_to_list(path, option, dest)
                 except KeyError:
                     pass
         for (option, dest) in self.__prj.get_project_exports():
@@ -271,7 +275,8 @@ class Build(BaseWindow):
         to add to the builder.
         """
         optlist = [("%s (%s)" % item[EXP_TYPE], True, item[EXP_EXT])
-                   for item in EXPORTERS] + [("%s (%s)" % item[EXP_TYPE], False, item[EXP_EXT])
+                   for item in EXPORTERS] + [("%s (%s)" % item[EXP_TYPE],
+                                             False, item[EXP_EXT])
                                              for item in PRJ_EXPORTERS]
         reglist = [os.path.splitext(os.path.basename(i))[0]
                    for i in self.__prj.get_register_set()]

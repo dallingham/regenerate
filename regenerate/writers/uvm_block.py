@@ -164,7 +164,7 @@ class UVMBlockRegisters(WriterBase):
     def write_toplevel_block_new(self, of):
         func_def = (
             "",
-            '   function new(string name = "{}_reg_block");',
+            '   function new(string name = "{0}_reg_block");',
             '      super.new(name, build_coverage(UVM_CVR_ADDR_MAP));',
             '   endfunction : new',
             ''
@@ -192,8 +192,8 @@ class UVMBlockRegisters(WriterBase):
         map2base = self.build_map_name_to_base_address()
 
         for key in map2grp:
-            map_name = "{}_map".format(key)
-            of.write('      if (!disable_{}) begin\n'.format(map_name))
+            map_name = "{0}_map".format(key)
+            of.write('      if (!disable_{0}) begin\n'.format(map_name))
             of.write('         {0} = create_map("{0}", \'h{1:x}, {2:d}, {3});\n'.format(
                      map_name, map2base[key], self._project.get_address_width(key),
                      self.endian))
@@ -252,7 +252,7 @@ class UVMBlockRegisters(WriterBase):
         name = group.name
         cls = "{0}_grp_reg_blk".format(name)
 
-        of.write('      foreach ({}[i]) begin\n'.format(name))
+        of.write('      foreach ({0}[i]) begin\n'.format(name))
         of.write('         {0}[i] = {1}::type_id::create($sformatf("{0}[%0d]", i));\n'.format(name, cls))
         if group.hdl:
             of.write('         {0}[i].configure(this, $sformatf("{1}", i));\n'.format(name, group.hdl))
@@ -291,9 +291,9 @@ class UVMBlockRegisters(WriterBase):
             " * Top level register block",
             " */",
             "",
-            "class {}_reg_block extends uvm_reg_block;",
+            "class {0}_reg_block extends uvm_reg_block;",
             "",
-            "   `uvm_object_utils({}_reg_block)",
+            "   `uvm_object_utils({0}_reg_block)",
             "",
             )
 
@@ -304,7 +304,7 @@ class UVMBlockRegisters(WriterBase):
 
         # Declare class instances for the sub blocks
         for group in self._project.get_grouping_list():
-            gclass = "{}_grp_reg_blk".format(group.name)
+            gclass = "{0}_grp_reg_blk".format(group.name)
             gname = group.name
             repeat = group.repeat
 
@@ -315,11 +315,11 @@ class UVMBlockRegisters(WriterBase):
 
         # Declare register maps
         for data in self._project.get_address_maps():
-            of.write('   uvm_reg_map {}_map;\n'.format(data.name))
+            of.write('   uvm_reg_map {0}_map;\n'.format(data.name))
 
         # Declare variables to enable/disable register maps
         for data in self._project.get_address_maps():
-            of.write('   bit disable_{}_map = 1\'b0;\n'.format(data.name))
+            of.write('   bit disable_{0}_map = 1\'b0;\n'.format(data.name))
 
         # Create new and build functions
         self.write_toplevel_block_new(of)
@@ -327,16 +327,16 @@ class UVMBlockRegisters(WriterBase):
 
         # End the class declaration
         of.write("\n")
-        of.write("endclass: {}_reg_block\n\n".format(self._project.short_name))
+        of.write("endclass: {0}_reg_block\n\n".format(self._project.short_name))
 
     def write_group_block(self, group, of, in_maps):
 
-        class_name = "{}_grp_reg_blk".format(group.name)
+        class_name = "{0}_grp_reg_blk".format(group.name)
 
         sname = group.name
-        of.write("class {} extends uvm_reg_block;\n".format(class_name))
+        of.write("class {0} extends uvm_reg_block;\n".format(class_name))
         of.write("\n")
-        of.write("   `uvm_object_utils({})\n".format(class_name))
+        of.write("   `uvm_object_utils({0})\n".format(class_name))
         of.write("\n")
 
         for group_entry in group.register_sets:
@@ -354,7 +354,7 @@ class UVMBlockRegisters(WriterBase):
             of.write("   bit disable_{0}_map = 1'b0;\n".format(item))
 
         of.write("\n")
-        of.write('   function new(string name = "{}");\n'.format(class_name))
+        of.write('   function new(string name = "{0}");\n'.format(class_name))
         of.write("      super.new(name, build_coverage(UVM_CVR_ADDR_MAP));\n")
         of.write("   endfunction : new\n")
         of.write("\n")
@@ -423,7 +423,7 @@ class UVMBlockRegisters(WriterBase):
 
         of.write("   endfunction: build\n")
         of.write("\n")
-        of.write("endclass: {}\n\n".format(class_name))
+        of.write("endclass: {0}\n\n".format(class_name))
 
     def write_dbase_block(self, dbase, of, group, in_maps):
 
@@ -442,10 +442,10 @@ class UVMBlockRegisters(WriterBase):
                 if field.reset_parameter:
                     name = field.reset_parameter
                 else:
-                    name = "p{}".format(field.field_name.upper())
+                    name = "p{0}".format(field.field_name.upper())
                 if field.reset_type == BitField.RESET_PARAMETER:
                     if field.width == 1:
-                        of.write("    bit {};\n".format(name))
+                        of.write("    bit {0};\n".format(name))
                     else:
                         of.write("    bit [{0:d}:0] {1};\n".format(
                                  field.width - 1, name))

@@ -115,7 +115,9 @@ class MainWindow(BaseWindow):
 
         self.__prj = None
         self.__builder = gtk.Builder()
+
         self.__builder.add_from_file(GLADE_TOP)
+
         self.__build_actions()
         self.__top_window = self.__builder.get_object("regenerate")
 

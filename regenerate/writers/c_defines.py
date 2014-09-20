@@ -69,6 +69,7 @@ class CDefines(WriterBase):
 
         #define register (address)
         """
+
         address = reg.address + base + data.base
         if data.repeat > 1:
             for i in range(0, data.repeat):
@@ -80,7 +81,7 @@ class CDefines(WriterBase):
                                   (name, REG_TYPE[reg.width], address))
         else:
             name = full_token(data.group, reg.token,
-                              self._dbase.short_name,
+                              self._dbase.module_name,
                               -1, data.format)
             self._ofile.write("#define %-30s (*((volatile %s)0x%x))\n" %
                               (name, REG_TYPE[reg.width], address))
@@ -90,28 +91,18 @@ class CDefines(WriterBase):
         Writes the output file
         """
         self._filename = os.path.basename(filename)
-        self._ofile = open(filename, "w")
-        self.write_header(self._ofile, "".join(HEADER))
 
-        addr_maps = self._project.get_address_maps().keys()
+        with open(filename, "w") as self._ofile:
+            self.write_header(self._ofile, "".join(HEADER))
 
-        if len(addr_maps) > 0:
-            base = self._project.get_address_base(addr_maps[0])
-            for data in in_groups(self._dbase.module_name, self._project):
-                name = full_token(data.group, "BASE_PTR",
-                                  self._dbase.module_name,
-                                  -1, data.format)
+            addr_maps = self._project.get_address_maps()
 
-                self._ofile.write("// Base address of the block\n")
-                address = base + data.offset
-                self._ofile.write("#define %-30s (0x%x)\n" %
-                                  (name, address))
+            if len(addr_maps) > 0:
+                base = self._project.get_address_base(addr_maps[0].name)
+                for data in in_groups(self._dbase.module_name, self._project):
+                    for register in self._dbase.get_all_registers():
+                        self.write_def(register, data, base)
+                    self._ofile.write('\n')
 
-                for reg_key in self._dbase.get_keys():
-                    register = self._dbase.get_register(reg_key)
-                    self.write_def(register, data, base)
-                self._ofile.write('\n')
-
-        for line in TRAILER:
-            self._ofile.write('%s\n' % line.replace('$M$', self._module))
-        self._ofile.close()
+            for line in TRAILER:
+                self._ofile.write('%s\n' % line.replace('$M$', self._module))
