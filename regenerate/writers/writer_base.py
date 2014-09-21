@@ -60,7 +60,6 @@ class WriterBase(object):   # IGNORE:R0921 - we know this is a abstract class
         self._clock = dbase.clock_name
         self._addr = dbase.address_bus_name
         self._addr_width = dbase.address_bus_width
-        prefix = ""
 
         self._data_width = dbase.data_bus_width
         self._reset = dbase.reset_name
@@ -76,10 +75,7 @@ class WriterBase(object):   # IGNORE:R0921 - we know this is a abstract class
         self._local_path = os.path.join(INSTALL_PATH, "site_local")
         self._data_path = os.path.join(INSTALL_PATH, "data")
 
-        if prefix:
-            self._prefix = "%s_" % prefix.replace(' ', '_').upper()
-        else:
-            self._prefix = ""
+        self._prefix = ""
 
     def _write_header_comment(self, ofile, default_path, comment_char='#'):
         """
