@@ -66,15 +66,12 @@ class ExportAssistant(gtk.Assistant):
             filename = self.choose.get_filename()
             if not filename:
 
-                print ">", filename
                 if self.selected_export_is_project():
-                    print ">> is project", self.project_name
                     value = self.project_name
                 else:
                     model = self.register_combo.get_model()
                     active_iter = self.register_combo.get_active_iter()
                     value = model.get_value(active_iter, 0)
-                    print ">> not project", value
 
                 filename = value + self.selected_extension()
                 self.choose.set_current_name(filename)

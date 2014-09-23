@@ -52,7 +52,7 @@ class Properties(object):
 
         for base in project.get_address_maps():
             addr = project.get_address_base(base)
-            self.__model.append(row=(base, "%x" % addr, addr))
+            self.__model.append(row=(base, "{0:x}".format(addr), addr))
 
         self.__properties.show()
 
@@ -74,7 +74,7 @@ class Properties(object):
             pass
         if new_text:
             self.__project.set_address_map(new_text, value)
-            self.__model[path][1] = "%x" % value
+            self.__model[path][1] = "{0:x}".format(value)
             self.__model[path][2] = value
 
     def on_remove_map_clicked(self, obj):

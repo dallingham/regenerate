@@ -72,7 +72,7 @@ class Question(gtk.MessageDialog):
 
     def __init__(self, err, msg):
         gtk.MessageDialog.__init__(self, type=gtk.MESSAGE_QUESTION)
-        self.set_markup('<span weight="bold" size="larger">%s</span>' % err)
+        self.set_markup('<span weight="bold" size="larger">{0}</span>'.format(err))
         self.format_secondary_markup(msg)
         self.add_button('Discard Changes', self.DISCARD)
         self.add_button(gtk.STOCK_CANCEL, self.CANCEL)
