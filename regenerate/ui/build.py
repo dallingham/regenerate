@@ -265,7 +265,7 @@ class Build(BaseWindow):
                     gen = writer_class(self.__prj, db_list)
                 gen.write(dest)
                 item[MDL_MOD] = False
-            except IOError, msg:
+            except IOError as msg:
                 ErrorMsg("Error running exporter", str(msg))
 
     def on_add_build_clicked(self, obj):
