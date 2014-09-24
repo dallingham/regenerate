@@ -35,6 +35,12 @@ class InstMdl(gtk.TreeStore):
     def __init__(self):
         gtk.TreeStore.__init__(self, str, str, str, gobject.TYPE_UINT64, str,
                                str, str, str, bool, object)
+        self.callback = self.__null_callback()
+
+
+    def __null_callback(self):
+        """Does nothing, should be overridden"""
+        pass
 
     def change_id(self, path, text):
         """
@@ -42,6 +48,7 @@ class InstMdl(gtk.TreeStore):
         """
         node = self.get_iter(path)
         self.set_value(node, InstMdl.ID_COL, text)
+        self.callback()
 
     def change_inst(self, path, text):
         """
@@ -55,10 +62,11 @@ class InstMdl(gtk.TreeStore):
             node = self.iter_next(node)
 
         if text in set(items):
-            LOGGER.error('"%s" has already been used as a group name' % text)
+            LOGGER.error('"{0}" has already been used as a group name'.format(text))
         else:
             node = self.get_iter(path)
             self.set_value(node, InstMdl.INST_COL, text)
+            self.callback()
             obj = self.get_value(node, InstMdl.OBJ_COL)
             if obj:
                 obj.name = text
@@ -69,6 +77,7 @@ class InstMdl(gtk.TreeStore):
         """
         node = self.get_iter(path)
         self.set_value(node, InstMdl.FMT_COL, text)
+        self.callback()
 
     def change_hdl(self, path, text):
         """
@@ -76,6 +85,7 @@ class InstMdl(gtk.TreeStore):
         """
         node = self.get_iter(path)
         self.set_value(node, InstMdl.HDL_COL, text)
+        self.callback()
         obj = self.get_value(node, InstMdl.OBJ_COL)
         if obj:
             obj.hdl = text
@@ -85,6 +95,7 @@ class InstMdl(gtk.TreeStore):
         Called when the ID of an instance has been edited in the InstanceList
         """
         self[path][InstMdl.UVM_COL] = not self[path][InstMdl.UVM_COL]
+        self.callback()
 
     def change_base(self, path, text):
         """
@@ -95,8 +106,9 @@ class InstMdl(gtk.TreeStore):
         try:
             self.set_value(node, InstMdl.SORT_COL, int(text, 16))
             self.set_value(node, InstMdl.BASE_COL, text)
+            self.callback()
         except ValueError:
-            LOGGER.error('Illegal base address: "%s"' % text)
+            LOGGER.error('Illegal base address: "{0}"'.format(text))
         obj = self.get_value(node, InstMdl.OBJ_COL)
         if obj:
             obj.base = int(text, 16)
@@ -110,8 +122,9 @@ class InstMdl(gtk.TreeStore):
         try:
             int(text)
             self.set_value(node, InstMdl.RPT_COL, text)
+            self.callback()
         except ValueError:
-            LOGGER.error('Illegal repeat count: "%s"' % text)
+            LOGGER.error('Illegal repeat count: "{0}"'.format(text))
         obj = self.get_value(node, InstMdl.OBJ_COL)
         if obj:
             obj.repeat = int(text)
@@ -124,9 +137,10 @@ class InstMdl(gtk.TreeStore):
         node = self.get_iter(path)
         try:
             value = int(text, 16)
-            self.set_value(node, InstMdl.OFF_COL, "%x" % value)
+            self.set_value(node, InstMdl.OFF_COL, "{0:x}".format(value))
+            self.callback()
         except ValueError:
-            LOGGER.error('Illegal repeat offset column: "%s"' % text)
+            LOGGER.error('Illegal repeat offset column: "{0}"'.format(text))
         obj = self.get_value(node, InstMdl.OBJ_COL)
         if obj:
             obj.repeat_offset = int(text, 16)
@@ -137,16 +151,12 @@ class InstMdl(gtk.TreeStore):
         either the change_id or change_base is called.
         """
         new_grp = GroupData("new_group")
-        node = self.append(None, row=(new_grp.name,
-                                      "",
-                                      "%x" % new_grp.base,
-                                      new_grp.base,
-                                      "%d" % new_grp.repeat,
-                                      "%x" % new_grp.repeat_offset,
-                                      "",
-                                      new_grp.hdl,
-                                      False,
-                                      new_grp))
+        row = build_row_data(new_grp.name, new_grp.name, new_grp.base, 
+                             new_grp.repeat, new_grp.repeat_offset, "", 
+                             new_grp.hdl, False, new_grp)
+
+        node = self.append(None, row=row)
+        self.callback()
         return (self.get_path(node), new_grp)
 
 
@@ -165,6 +175,55 @@ class InstanceList(object):
         self.__enable_dnd()
         self.__obj.set_sensitive(False)
 
+    def modified_callback(self):
+        if self.__project:
+            self.__project.modified = True
+
+    def set_project(self, project):
+        self.__project = project
+        self.__obj.set_sensitive(True)
+        self.__populate()
+
+    def set_model(self, model):
+        self.__obj.set_model(model)
+        self.__model = model
+        self.__model.callback = self.modified_callback
+
+    def get_groups(self):
+        tree_iter = self.__model.get_iter_first()
+        groups = []
+        while tree_iter is not None:
+            base = self.__model.get_value(tree_iter, InstMdl.SORT_COL)
+            hdl = self.__model.get_value(tree_iter, InstMdl.HDL_COL)
+
+            current_group = self.__model.get_value(tree_iter, InstMdl.OBJ_COL)
+            current_group.register_sets = []
+
+            child = self.__model.iter_children(tree_iter)
+            while child:
+                inst = self.__model.get_value(child, InstMdl.INST_COL)
+                name = self.__model.get_value(child, InstMdl.ID_COL)
+                base = self.__model.get_value(child, InstMdl.SORT_COL)
+                rpt = int(self.__model.get_value(child, InstMdl.RPT_COL))
+                offset_str = self.__model.get_value(child, InstMdl.OFF_COL)
+                offset = int(offset_str, 16)
+                fmt = self.__model.get_value(child, InstMdl.FMT_COL)
+                hdl = self.__model.get_value(child, InstMdl.HDL_COL)
+                uvm = self.__model.get_value(child, InstMdl.UVM_COL)
+                current_group.register_sets.append(
+                    GroupMapData(name, inst, base, rpt, offset, fmt, hdl, uvm))
+                child = self.__model.iter_next(child)
+            tree_iter = self.__model.iter_next(tree_iter)
+        return groups
+
+    def new_instance(self):
+        pos, grp = self.__model.new_instance()
+        self.__project.get_grouping_list().append(grp)
+        self.__obj.set_cursor(pos, focus_column=self.__col, start_editing=True)
+
+    def get_selected_instance(self):
+        return self.__obj.get_selection().get_selected()
+
     def __enable_dnd(self):
         self.__obj.enable_model_drag_dest([('text/plain', 0, 0)],
                                           gtk.gdk.ACTION_DEFAULT |
@@ -175,9 +234,9 @@ class InstanceList(object):
         self.__obj.enable_model_drag_source(
             gtk.gdk.BUTTON1_MASK, [('text/plain', 0, 0)],
             gtk.gdk.ACTION_DEFAULT | gtk.gdk.ACTION_MOVE)
-        self.__obj.connect('drag-data-get', self.drag_data_get)
+        self.__obj.connect('drag-data-get', self.__drag_data_get)
 
-    def drag_data_get(self, treeview, context, selection, target_id, etime):
+    def __drag_data_get(self, treeview, context, selection, target_id, etime):
         tselection = treeview.get_selection()
         model, tree_iter = tselection.get_selected()
         data = model.get_value(tree_iter, 0)
@@ -189,9 +248,10 @@ class InstanceList(object):
         data = selection.data
         drop_info = treeview.get_dest_row_at_pos(x, y)
         (name, width) = data.split(":")
-        row_data = [name, name, "0", 0, "1", width, "", "", False, None]
+        row_data = build_row_data(name, name, 0, 1, int(width), "", "", False, None)
         if drop_info:
             path, position = drop_info
+            self.modified_callback()
             if len(path) == 1:
                 node = self.__model.get_iter(path)
                 self.__model.append(node, row_data)
@@ -204,44 +264,29 @@ class InstanceList(object):
                 else:
                     model.insert_after(parent, node, row_data)
 
-    def set_project(self, project):
-        self.__project = project
-        self.__obj.set_sensitive(True)
-        self.__populate()
-
     def __populate(self):
         if self.__project is None:
             return
         group_list = sorted(self.__project.get_grouping_list(),
                             key=lambda x: x.base)
         for item in group_list:
-            node = self.__model.append(None, row=(item.name,
-                                                  "",
-                                                  "%x" % item.base,
-                                                  item.base,
-                                                  "%d" % item.repeat,
-                                                  "%x" % item.repeat_offset,
-                                                  "",
-                                                  item.hdl,
-                                                  0,
-                                                  item))
+
+            row = build_row_data(item.name, "", item.base, item.repeat,
+                                 item.repeat_offset, "", item.hdl, 0, item)
+            node = self.__model.append(None, row=row)
 
             entry_list = sorted(item.register_sets, key=lambda x: x.offset)
             for entry in entry_list:
-                self.__model.append(node, (entry.inst,
-                                           entry.set,
-                                           "%x" % entry.offset,
-                                           entry.offset,
-                                           "%d" % entry.repeat,
-                                           "%x" % entry.repeat_offset,
-                                           entry.format,
-                                           entry.hdl,
-                                           entry.no_uvm,
-                                           None))
+                row = build_row_data(entry.inst, entry.set, entry.offset,
+                                     entry.repeat, entry.repeat_offset, 
+                                     entry.format, entry.hdl, entry.no_uvm,
+                                     None)
+                self.__model.append(node, row=row)
 
     def __build_instance_table(self, id_changed, inst_changed, base_changed,
                                repeat_changed, repeat_offset_changed,
                                format_changed, hdl_changed, uvm_changed):
+
         column = EditableColumn('Instance', inst_changed,
                                 InstMdl.INST_COL)
         column.set_sort_column_id(InstMdl.INST_COL)
@@ -282,41 +327,8 @@ class InstanceList(object):
         column.set_min_width(100)
         self.__obj.append_column(column)
 
-    def set_model(self, model):
-        self.__obj.set_model(model)
-        self.__model = model
 
-    def get_groups(self):
-        tree_iter = self.__model.get_iter_first()
-        groups = []
-        while tree_iter is not None:
-            base = self.__model.get_value(tree_iter, InstMdl.SORT_COL)
-            hdl = self.__model.get_value(tree_iter, InstMdl.HDL_COL)
-
-            current_group = self.__model.get_value(tree_iter, InstMdl.OBJ_COL)
-            current_group.register_sets = []
-
-            child = self.__model.iter_children(tree_iter)
-            while child:
-                inst = self.__model.get_value(child, InstMdl.INST_COL)
-                name = self.__model.get_value(child, InstMdl.ID_COL)
-                base = self.__model.get_value(child, InstMdl.SORT_COL)
-                rpt = int(self.__model.get_value(child, InstMdl.RPT_COL))
-                offset_str = self.__model.get_value(child, InstMdl.OFF_COL)
-                offset = int(offset_str, 16)
-                fmt = self.__model.get_value(child, InstMdl.FMT_COL)
-                hdl = self.__model.get_value(child, InstMdl.HDL_COL)
-                uvm = self.__model.get_value(child, InstMdl.UVM_COL)
-                current_group.register_sets.append(
-                    GroupMapData(name, inst, base, rpt, offset, fmt, hdl, uvm))
-                child = self.__model.iter_next(child)
-            tree_iter = self.__model.iter_next(tree_iter)
-        return groups
-
-    def new_instance(self):
-        pos, grp = self.__model.new_instance()
-        self.__project.get_grouping_list().append(grp)
-        self.__obj.set_cursor(pos, focus_column=self.__col, start_editing=True)
-
-    def get_selected_instance(self):
-        return self.__obj.get_selection().get_selected()
+def build_row_data(inst, name, offset, rpt, rpt_offset, fmt, hdl, uvm, obj):
+    row = (inst, name, "{0:x}".format(offset), offset, "{0:d}".format(rpt), 
+           "{0:x}".format(rpt_offset), fmt, hdl, uvm, obj)
+    return row
