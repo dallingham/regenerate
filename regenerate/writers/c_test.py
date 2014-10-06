@@ -22,9 +22,12 @@ Actual program. Parses the arguments, and initiates the main window
 """
 
 from regenerate.db import BitField
+from regenerate.db import GroupMapData
 from writer_base import WriterBase
 
 support_code = [
+    "",
+    "// Macros to handle base addresses and types",
     "#define REG_UINT8_PTR(addr)     ( (volatile uint8  *)(ADDRBASE + addr))",
     "#define REG_UINT16_PTR(addr)    ( (volatile uint16 *)(ADDRBASE + addr))",
     "#define REG_UINT32_PTR(addr)    ( (volatile uint32 *)(ADDRBASE + addr))",
@@ -42,23 +45,19 @@ code_reg32 = [
     "{",
     "  uint32 current_address;",
     "",
-    "#ifndef FAST",
     "  volatile uint8* byte_ptr = (volatile uint8*) addr_ptr;",
     "  volatile uint16* word_ptr = (volatile uint16*) addr_ptr;",
-    "#endif",
     "",
     "  current_address = (uint32) addr_ptr;",
     "",
     "  if (*addr_ptr     != defval) return 1;",
     ""
-    "#ifndef FAST",
     "  if (*word_ptr     != (uint16) (defval & 0xffff)) return 2;",
     "  if (*(word_ptr+1) != (uint16) ((defval>>16) & 0xffff)) return 3;",
     "  if (*byte_ptr     != (uint8) (defval & 0xff)) return 4;",
     "  if (*(byte_ptr+1) != (uint8) ((defval>>8) & 0xff)) return 5;",
     "  if (*(byte_ptr+2) != (uint8) ((defval>>16) & 0xff)) return 6;",
     "  if (*(byte_ptr+3) != (uint8) ((defval>>24) & 0xff)) return 7;",
-    "#endif",
     ""
     "  *addr_ptr = 0xffffffff;",
     "  if ((*addr_ptr & ro_mask) != ro_mask) return 8;",
@@ -69,7 +68,6 @@ code_reg32 = [
     "  *addr_ptr = defval;",
     "  if (*addr_ptr != defval) return 9;",
     "",
-    "#ifndef FAST",
     "  *word_ptr = 0xffff;",
     "  if ((*word_ptr & ro_mask & 0xffff) != (uint16) (ro_mask & 0xffff)) return 10;",
     ""
@@ -119,7 +117,6 @@ code_reg32 = [
     "",
     "  *addr_ptr = defval;",
     "  if (*addr_ptr != defval) return 17;",
-    "#endif",
     "",
     "  return 0;",
     "}",
@@ -205,8 +202,8 @@ code_reg8 = [
 
 class CTest(WriterBase):
 
-    def __init__(self, dbase):
-        WriterBase.__init__(self, dbase)
+    def __init__(self, project, dbase):
+        WriterBase.__init__(self, project, dbase)
         self._offset = 0
         self._ofile = None
         self.module_set = set()
@@ -224,13 +221,20 @@ class CTest(WriterBase):
 
         for rng in [register.get_bit_field(key)
                     for key in register.get_bit_field_keys()]:
-            if rng.field_type in (BitField.TYPE_READ_WRITE, BitField.TYPE_WRITE_1S,
-                                  BitField.TYPE_READ_WRITE_1S, BitField.TYPE_READ_WRITE_1S_1,
-                                  BitField.TYPE_READ_WRITE_LOAD, BitField.TYPE_READ_WRITE_LOAD_1S,
-                                  BitField.TYPE_READ_WRITE_LOAD_1S_1, BitField.TYPE_READ_WRITE_SET,
-                                  BitField.TYPE_READ_WRITE_SET_1S, BitField.TYPE_READ_WRITE_SET_1S_1,
+            if rng.field_type in (BitField.TYPE_READ_WRITE,
+                                  BitField.TYPE_READ_WRITE_1S,
+                                  BitField.TYPE_READ_WRITE_1S_1,
+                                  BitField.TYPE_READ_WRITE_LOAD,
+                                  BitField.TYPE_READ_WRITE_LOAD_1S,
+                                  BitField.TYPE_READ_WRITE_LOAD_1S_1,
+                                  BitField.TYPE_READ_WRITE_SET,
+                                  BitField.TYPE_READ_WRITE_SET_1S,
+                                  BitField.TYPE_READ_WRITE_SET_1S_1,
                                   BitField.TYPE_READ_WRITE_CLR,
-                                  BitField.TYPE_READ_WRITE_CLR_1S, BitField.TYPE_READ_WRITE_CLR_1S_1):
+                                  BitField.TYPE_READ_WRITE_CLR_1S,
+                                  BitField.TYPE_READ_WRITE_PROTECT,
+                                  BitField.TYPE_READ_WRITE_PROTECT_1S,
+                                  BitField.TYPE_READ_WRITE_CLR_1S_1):
                 for i in range(rng.lsb, rng.msb + 1):
                     value = value | (1 << i)
         return value
@@ -241,26 +245,40 @@ class CTest(WriterBase):
 
         ext_opt = {8: "", 16: "", 32: "", 64: "LL"}
 
-        cfile.write("\nint\ncheck_%s (void)\n" % dbase.module_name)
-        cfile.write("{\n")
-        for (inst, offset) in self._dbase.instances:
-            cfile.write("\n// %s\n\n" % inst)
-            for key in dbase.get_keys():
-                register = dbase.get_register(key)
-                addr = offset + register.address
+        valid_groups = set([])
+        for group in self._project.get_grouping_list():
+            for gmap in group.register_sets:
+                if gmap.set == dbase.module_name:
+                    valid_groups.add(gmap)
+        if not valid_groups:
+            valid_groups = (GroupMapData("", "", 0, 0, 0, "", "", True))
 
-                if register.do_not_test:
-                    continue
-                default = self.calc_default_value(register)
-                mask = self.calc_ro_mask(register)
-                if first:
-                    cfile.write("   uint8 val;\n\n")
-                    first = False
-                width = register.width
-                ext = ext_opt[width]
-                cfile.write("   val = check_reg%d(REG_UINT%d_PTR(0x%x), 0x%x%s, 0x%x%s);\n" %
-                            (width, width, addr, default, ext, mask, ext))
-                cfile.write("   if (val) return val;\n\n")
+        cfile.write("\n")
+        cfile.write("int\n")
+        cfile.write("check_{0} (void)\n".format(dbase.module_name))
+        cfile.write("{\n")
+
+        for group in valid_groups:
+            repeat = group.repeat if group.repeat > 0 else 1
+
+            for rpt in range(0, repeat):
+                for register in dbase.get_all_registers():
+
+                    addr = group.offset + group.repeat_offset * rpt + register.address
+
+                    if register.do_not_test:
+                        continue
+                    default = self.calc_default_value(register)
+                    mask = self.calc_ro_mask(register)
+                    if first:
+                        cfile.write("   uint8 val;\n\n")
+                        first = False
+                    width = register.width
+                    ext = ext_opt[width]
+                    cfile.write("   val = check_reg%d(REG_UINT%d_PTR(0x%x), 0x%x%s, 0x%x%s);\n" %
+                                (width, width, addr, default, ext, mask, ext))
+                    cfile.write("   if (val) return val;\n\n")
+
         cfile.write("   return 0;\n")
         cfile.write("}\n")
 
@@ -274,10 +292,10 @@ class CTest(WriterBase):
 
         if address_maps:
             token = "#ifdef"
-            for key in address_maps:
-                cfile.write("%s %s_MAP\n" % (token, key.upper()))
+            for amap in address_maps:
+                cfile.write("%s %s_MAP\n" % (token, amap.name.upper()))
                 token = "#elif"
-                cfile.write(" #define ADDRBASE (0x%x)\n" % address_maps[key])
+                cfile.write(" #define ADDRBASE (0x%x)\n" % amap.base)
             cfile.write("#else\n")
             cfile.write(" #define ADDRBASE (0)\n")
             cfile.write("#endif\n")
@@ -290,8 +308,7 @@ class CTest(WriterBase):
 
         use = {8: False, 16: False, 32: False, 64: False}
 
-        for key in self._dbase.get_keys():
-            temp_reg = self._dbase.get_register(key)
+        for temp_reg in self._dbase.get_all_registers():
             if not temp_reg.do_not_test:
                 use[temp_reg.width] = True
         if use[64]:

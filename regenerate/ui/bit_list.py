@@ -182,16 +182,16 @@ def bits(field):
     Returns a text representation of the bit field range
     """
     if field.lsb == field.msb:
-        return "%d" % field.lsb
+        return "{0:d}".format(field.lsb)
     else:
-        return "%d:%d" % (field.msb, field.lsb)
+        return "{0:d}:{0:d}".format(field.msb, field.lsb)
 
 
 def reset_value(field):
     """
     Returns a string representation of the reset value.
     """
-    strval = "%x" % field.reset_value
+    strval = "{0:x}".format(field.reset_value)
     return strval.zfill(field.width / 4)
 
 

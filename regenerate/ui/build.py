@@ -75,11 +75,11 @@ class Build(BaseWindow):
         self.__optmap = {}
         self.__mapopt = {}
         for item in EXPORTERS:
-            value = "%s (%s)" % item[EXP_TYPE]
+            value = "{0} ({1})".format(item[EXP_TYPE][0], item[EXP_TYPE][1])
             self.__optmap[item[EXP_ID]] = (value, item[EXP_CLASS], True)
             self.__mapopt[value] = (item[EXP_ID], item[EXP_CLASS], True)
         for item in PRJ_EXPORTERS:
-            value = "%s (%s)" % item[EXP_TYPE]
+            value = exp_type_fmt(item[EXP_TYPE])
             self.__optmap[item[EXP_ID]] = (value, item[EXP_CLASS], False)
             self.__mapopt[value] = (item[EXP_ID], item[EXP_CLASS], False)
 
@@ -124,12 +124,14 @@ class Build(BaseWindow):
         (fmt, cls, dbtype) = self.__optmap[option]
         self.__model.append(row=[mod, "<project>", fmt, dest, cls, None])
 
-    def __add_dbase_item_to_list(self, dbase_full_path, option, dest):
+    def __add_dbase_item_to_list(self, dbase_rel_path, option, dest):
         """
         Adds the specific item to the build list. We have to check to see
         if the file needs rebuilt, depending on modification flags a file
         timestamps.
         """
+        dbase_full_path = os.path.join(os.path.dirname(self.__prj.path),
+                                       dbase_rel_path)
         (base, db_file_mtime) = base_and_modtime(dbase_full_path)
         local_dest = os.path.join(os.path.dirname(self.__prj.path), dest)
 
@@ -145,9 +147,10 @@ class Build(BaseWindow):
         export list.
         """
         for item in self.__prj.get_register_set():
-            for (option, dest) in self.__prj.get_exports(item):
+            path = os.path.relpath(item, os.path.dirname(self.__prj.path))
+            for (option, dest) in self.__prj.get_exports(path):
                 try:
-                    self.__add_dbase_item_to_list(item, option, dest)
+                    self.__add_dbase_item_to_list(path, option, dest)
                 except KeyError:
                     pass
         for (option, dest) in self.__prj.get_project_exports():
@@ -262,7 +265,7 @@ class Build(BaseWindow):
                     gen = writer_class(self.__prj, db_list)
                 gen.write(dest)
                 item[MDL_MOD] = False
-            except IOError, msg:
+            except IOError as msg:
                 ErrorMsg("Error running exporter", str(msg))
 
     def on_add_build_clicked(self, obj):
@@ -270,8 +273,9 @@ class Build(BaseWindow):
         Brings up the export assistant, to help the user build a new rule
         to add to the builder.
         """
-        optlist = [("%s (%s)" % item[EXP_TYPE], True, item[EXP_EXT])
-                   for item in EXPORTERS] + [("%s (%s)" % item[EXP_TYPE], False, item[EXP_EXT])
+        optlist = [(exp_type_fmt(item[EXP_TYPE]), True, item[EXP_EXT])
+                   for item in EXPORTERS] + [(exp_type_fmt(item[EXP_TYPE]),
+                                              False, item[EXP_EXT])
                                              for item in PRJ_EXPORTERS]
         reglist = [os.path.splitext(os.path.basename(i))[0]
                    for i in self.__prj.get_register_set()]
@@ -361,3 +365,6 @@ def file_needs_rebuilt(local_dest, dbmap, db_paths):
             if db_file_mtime > dest_mtime or dbmap[base][DB_MAP_MODIFIED]:
                 mod = True
     return mod
+
+def exp_type_fmt(item):
+    return "{0} ({1})".format(item[0], item[1])

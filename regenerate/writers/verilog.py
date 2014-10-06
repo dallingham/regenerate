@@ -59,9 +59,9 @@ def get_width(field, start=-1, stop=-1, force_index=False):
     if field.width == 1 and not force_index:
         signal = ""
     elif start == stop:
-        signal = "[%d]" % stop
+        signal = "[{0}]".format(stop)
     else:
-        signal = "[%d:%d]" % (stop, start)
+        signal = "[{0}:{1}]".format(stop, start)
     return signal
 
 
@@ -70,9 +70,9 @@ def build_name(signal, field):
     if len(sigparts) == 1:
         sig = field.output_signal
     elif field.lsb != field.msb:
-        sig = "%s[%d:%d]" % (sigparts[0], field.msb, field.lsb)
+        sig = "{0}[{1}:{2}]".format(sigparts[0], field.msb, field.lsb)
     else:
-        sig = "%s[%d]" % (sigparts[0], field.msb)
+        sig = "{0}[{1}]".format(sigparts[0], field.msb)
     return sig
 
 
@@ -84,21 +84,21 @@ def oneshot_name(name, index=None):
     if index is None:
         return name + "_1S"
     else:
-        return "%s_%d_1S" % (name, index)
+        return "{0}_{1}_1S".format(name, index)
 
 
 def write_strobe(address):
     """
     Generates the write strobe signal associated with a particular address.
     """
-    return "write_r%02x" % address
+    return "write_r{0:02x}".format(address)
 
 
 def read_strobe(address):
     """
     Generates the read strobe signal associated with a particular address.
     """
-    return "read_r%02x" % address
+    return "read_r{0:02x}".format(address)
 
 
 def get_signal_offset(address):
@@ -110,7 +110,7 @@ def full_reset_value(field):
     """returns the full reset value for the entire field"""
 
     if field.reset_type == BitField.RESET_NUMERIC:
-        return "%d'h%0x" % (field.width, field.reset_value)
+        return "{0}'h{1:0x}".format(field.width, field.reset_value)
     elif field.reset_type == BitField.RESET_INPUT:
         return field.reset_input
     else:
@@ -123,17 +123,18 @@ def reset_value(field, start, stop):
     if field.reset_type == BitField.RESET_NUMERIC:
         field_width = (stop - start) + 1
         reset = (field.reset_value >> (start - field.lsb))
-        return "%d'h%x" % (field_width, reset & ((2 ** field_width) - 1))
+        return "{0}'h{1:x}".format(field_width,
+                                   reset & ((2 ** field_width) - 1))
     elif field.reset_type == BitField.RESET_INPUT:
         if stop == start:
-            return "%s" % (field.reset_input)
+            return field.reset_input
         else:
-            return "%s[%d:%d]" % (field.reset_input, stop, start)
+            return "{0}[{1}:{2}]".format(field.reset_input, stop, start)
     else:
         if stop == start:
-            return "%s" % (field.reset_parameter)
+            return field.reset_parameter
         else:
-            return "%s[%d:%d]" % (field.reset_parameter, stop, start)
+            return "{0}[{1}:{2}]".format(field.reset_parameter, stop, start)
 
 
 def break_on_byte_boundaries(start, stop):
@@ -154,7 +155,7 @@ def get_base_signal(address, field):
     """
     Returns the base signal derived from the address and the output field
     """
-    return "r%02x_%s" % (address, field.field_name.lower())
+    return "r{0:02x}_{1}".format(address, field.field_name.lower())
 
 
 def get_signal_info(address, field, start=-1, stop=-1):
@@ -237,11 +238,11 @@ def add_reset_input(reset_set, field):
         values = reset_set[reset]
         reset_set[reset] = ('input', max(stop, values[1]),
                             min(start, values[2]),
-                            "%s, %s" % (values[3], field.field_name)
+                            "{0}, {1}".format(values[3], field.field_name)
                             )
     else:
         reset_set[reset] = ('input', stop, start,
-                            "reset value for %s" % field.field_name)
+                            "reset value for {0}".format(field.field_name))
 
 
 class Verilog(WriterBase):
@@ -273,16 +274,16 @@ class Verilog(WriterBase):
             self._max_column = 80
 
         if dbase.reset_active_level:
-            self._reset_edge = "posedge %s" % self._reset
+            self._reset_edge = "posedge {0}".format(self._reset)
             self._reset_condition = self._reset
         else:
-            self._reset_edge = "negedge %s" % self._reset
-            self._reset_condition = "~%s" % self._reset
+            self._reset_edge = "negedge {0}".format(self._reset)
+            self._reset_condition = "~{0}".format(self._reset)
 
         if dbase.byte_strobe_active_level:
             self.__be_condition = self._byte_enables
         else:
-            self.__be_condition = "~%s" % self._byte_enables
+            self.__be_condition = "~{0}".format(self._byte_enables)
 
         self._ofile = None
         self._lower_bit = LOWER_BIT[self._data_width]
@@ -325,10 +326,10 @@ class Verilog(WriterBase):
         if text_list:
             if precede_blank:
                 self._wrln('\n')
-            self._wrln("/*%s\n * " % border_string)
+            self._wrln("/*{0}\n * ".format(border_string))
             self._wrln("\n * ".join(text_list))
             if border:
-                text = "\n *%s" % border_string
+                text = "\n *{0}".format(border_string)
                 self._wrln(text.rstrip())
             self._wrln("\n */\n")
 

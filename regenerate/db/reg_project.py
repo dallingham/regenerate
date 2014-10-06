@@ -119,7 +119,6 @@ class RegProject(object):
         Converts the exports to be relative to the passed path. Returns a
         read-only tuple
         """
-        path = os.path.relpath(path, os.path.dirname(self.path))
         return tuple(self._exports.get(path, []))
 
     def get_project_exports(self):

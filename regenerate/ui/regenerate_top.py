@@ -115,7 +115,9 @@ class MainWindow(BaseWindow):
 
         self.__prj = None
         self.__builder = gtk.Builder()
+
         self.__builder.add_from_file(GLADE_TOP)
+
         self.__build_actions()
         self.__top_window = self.__builder.get_object("regenerate")
 
@@ -1077,7 +1079,7 @@ class MainWindow(BaseWindow):
         try:
             self.__prj = RegProject(filename)
             self.__initialize_project_address_maps()
-        except xml.parsers.expat.ExpatError, msg:
+        except xml.parsers.expat.ExpatError as msg:
             ErrorMsg("%s was not a valid project file" % filename,
                      str(msg))
             return
@@ -1093,7 +1095,7 @@ class MainWindow(BaseWindow):
 
             try:
                 self.open_xml(f, False)
-            except xml.parsers.expat.ExpatError, msg:
+            except xml.parsers.expat.ExpatError as msg:
                 ErrorMsg("%s was not a valid register set file" % f)
                 continue
 
@@ -1197,7 +1199,7 @@ class MainWindow(BaseWindow):
         if name:
             try:
                 self.__input_xml(name, load)
-            except IOError, msg:
+            except IOError as msg:
                 ErrorMsg("Could not load existing register set", str(msg))
 
             base = os.path.splitext(os.path.basename(name))[0]
@@ -1233,7 +1235,7 @@ class MainWindow(BaseWindow):
                     writer = RegWriter(item[ProjectModel.OBJ].db)
                     writer.save(item[ProjectModel.OBJ].path)
                     self.clear_modified(item[ProjectModel.OBJ])
-                except IOError, msg:
+                except IOError as msg:
                     ErrorMsg("Could not save database", str(msg))
 
         self.__prj.set_new_order([item[0] for item in self.__prj_model])
@@ -1294,7 +1296,7 @@ class MainWindow(BaseWindow):
             importer.import_data(name)
             self.__update_display()
             self.set_modified()
-        except IOError, msg:
+        except IOError as msg:
             ErrorMsg("Could not create %s " % name, str(msg))
 
     def redraw(self):

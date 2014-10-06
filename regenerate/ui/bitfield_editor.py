@@ -81,8 +81,8 @@ class BitFieldEditor(object):
         self.__error_field_obj = self.__builder.get_object('error_bit')
         self.__col = None
         self.__top_window.set_title(
-            "Edit Bit Field - [%02x] %s" % (register.address,
-                                            register.register_name))
+            "Edit Bit Field - [{0:02x}] {1}".format(register.address,
+                                                    register.register_name))
 
         self.__spell = Spell(self.__builder.get_object("descr"))
 
@@ -161,24 +161,24 @@ class BitFieldEditor(object):
         """
         Initializes the dialog's data fields from the object
         """
-        self.__register_obj.set_text("<b>%s</b>" %
-                                     self.__register.register_name)
+        self.__register_obj.set_text("<b>{0}</b>".format(
+                                     self.__register.register_name))
         self.__register_obj.set_use_markup(True)
 
         self.__name_obj.set_text(bit_field.full_field_name())
         self.__type_obj.set_text(TYPE_TO_DESCR[bit_field.field_type])
 
         if bit_field.reset_type == BitField.RESET_NUMERIC:
-            self.__reset_obj.set_text("%x" % bit_field.reset_value)
+            self.__reset_obj.set_text("{0:x}".format(bit_field.reset_value))
         else:
             self.__reset_obj.set_text(bit_field.reset_parameter)
 
         (input_enb, control_enb) = TYPE_TO_ENABLE[bit_field.field_type]
         if input_enb and not bit_field.input_signal:
-            bit_field.input_signal = "%s_DATA_IN" % bit_field.field_name
+            bit_field.input_signal = "{0}_DATA_IN".format(bit_field.field_name)
 
         if control_enb and not bit_field.control_signal:
-            bit_field.control_signal = "%s_LOAD" % bit_field.field_name
+            bit_field.control_signal = "{0}_LOAD".format(bit_field.field_name)
 
         self.__output_obj.set_text(bit_field.output_signal)
         self.__input_obj.set_text(bit_field.input_signal)
@@ -264,7 +264,7 @@ class BitFieldEditor(object):
 
         if last >= max_values:
             ErrorMsg("Maximum number of values reached",
-                     "The width of the field only allows for %d values" % last)
+                     "The width of the field only allows for {0} values".format(last))
             return
 
         try:
@@ -276,7 +276,7 @@ class BitFieldEditor(object):
         last -= 1
         if (last == -1 or self.__list_model[last][0] or
             self.__list_model[last][1] or self.__list_model[last][2]):
-            new_val = "" if largest >= max_values else "%x" % (largest + 1,)
+            new_val = "" if largest >= max_values else "{0:x}".format(largest + 1)
             node = self.__list_model.append(row=(new_val, '', ''))
             path = self.__list_model.get_path(node)
         else:
@@ -332,7 +332,7 @@ class BitFieldEditor(object):
         """
         if new_text in self.__used_tokens:
             ErrorMsg("Duplicate token",
-                     'The token "%s" has already been used' % new_text)
+                     'The token "{0}" has already been used'.format(new_text))
         else:
             node = self.__list_model.get_iter(path)
             old_text = self.__list_model.get_value(node, 1)

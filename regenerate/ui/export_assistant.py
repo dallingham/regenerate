@@ -48,7 +48,7 @@ class ExportAssistant(gtk.Assistant):
 
     def selected_export_is_project(self):
         model = self.export_combo.get_model()
-        return model.get_value(self.export_combo.get_active_iter(), 1)
+        return not model.get_value(self.export_combo.get_active_iter(), 1)
 
     def selected_extension(self):
         model = self.export_combo.get_model()
@@ -125,6 +125,7 @@ class ExportAssistant(gtk.Assistant):
 
         cell = gtk.CellRendererText()
         model = gtk.ListStore(str, bool, str)
+
         for item in optlist:
             model.append(row=item)
         self.export_combo.pack_start(cell, True)

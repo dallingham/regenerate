@@ -22,10 +22,10 @@ from collections import namedtuple
 InstData = namedtuple("InstData",
                       "group inst set base offset repeat roffset format")
 
-DEFAULT_FORMAT = "%(G)s_%(I)s%(D)s_%(R)s"
+DEFAULT_FORMAT = "%(G)s_%(S)s%(D)s_%(R)s"
 
 
-def full_token(group_name, inst_name, reg_name, set_name, index, fmt_string):
+def full_token(group_name, reg_name, set_name, index, fmt_string):
 
     index_str = "%d" % index if index >= 0 else ""
 
@@ -34,8 +34,6 @@ def full_token(group_name, inst_name, reg_name, set_name, index, fmt_string):
                  "D": index_str,
                  "R": reg_name.upper(),
                  "r": reg_name.lower(),
-                 "I": inst_name.upper(),
-                 "i": inst_name.lower(),
                  "S": set_name.upper(),
                  "s": set_name.lower()
                  }
