@@ -125,7 +125,7 @@ class OdtSpec(WriterBase):
     """
 
     def __init__(self, project, dblist):
-        WriterBase.__init__(self, None)
+        WriterBase.__init__(self, project, None)
         self.tblcnt = 0
         self.project = project
         self.dblist = dblist
@@ -442,7 +442,8 @@ class OdtSpec(WriterBase):
 
         addr_rng = {}
         for rng in self.project.get_grouping_list():
-            addr_rng[rng[0]] = (rng[1], rng[2])
+            print rng
+            addr_rng[rng.name] = (rng[1], rng[2])
 
         for my_db in self.dblist:
             db[my_db.module_name] = my_db

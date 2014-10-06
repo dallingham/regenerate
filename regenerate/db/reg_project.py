@@ -90,6 +90,7 @@ class RegProject(object):
         self._filelist = [htbl[i] for i in new_order]
 
     def append_register_set_to_list(self, name):
+        self._modified = True
         self._filelist.append(name)
         self._exports[name] = []
 
