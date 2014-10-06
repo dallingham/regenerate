@@ -1,0 +1,278 @@
+#! /usr/bin/env python
+#
+# Manage registers in a hardware design
+#
+# Copyright (C) 2008  Donald N. Allingham
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+"""
+Actual program. Parses the arguments, and initiates the main window
+"""
+
+import os
+import sys
+from regenerate.db.reg_project import RegProject
+from regenerate.db.register_db import RegisterDb
+
+if os.path.dirname(sys.argv[0]) != ".":
+    if sys.argv[0][0] == "/":
+        fullPath = os.path.dirname(sys.argv[0])
+    else:
+        fullPath = os.path.join(os.getcwd(),os.path.dirname(sys.argv[0]))
+else:
+    fullPath = os.getcwd()
+sys.path.insert(0, os.path.dirname(fullPath))
+
+
+def run():
+    """
+    main program
+    """
+    from optparse import OptionParser
+    import regenerate.writers
+    from regenerate import PROGRAM_VERSION
+    import sys
+
+    parser = OptionParser(
+        usage="%prog [old project file] [new project file]",
+        description="Compares two project files, reporting differences",
+        prog="regdiff",
+        version=PROGRAM_VERSION
+        )
+
+    (options, args) = parser.parse_args()
+
+    if len(args) != 2:
+        parser.print_help()
+        sys.exit(1)
+
+    old_project = RegProject(args[0])
+    new_project = RegProject(args[1])
+
+    check_register_sets(old_project, new_project)
+
+    compare_groupings(old_project.get_grouping_list(),
+                      new_project.get_grouping_list())
+
+
+def print_header(dbname):
+    print("\n{0} Changed".format(dbname))
+    print("============================================\n")
+
+def check_registers(dbname, old_db, new_db):
+
+    need_header = True
+    old_reg_names = set([(r.register_name) for r in old_db.get_all_registers()])
+    new_reg_names = set([(r.register_name) for r in new_db.get_all_registers()])
+
+    old_reg_map = {}
+    for r in old_db.get_all_registers():
+        old_reg_map[r.register_name] = r
+
+    new_reg_map = {}
+    for r in new_db.get_all_registers():
+        new_reg_map[r.register_name] = r
+
+
+    removed_regs = old_reg_names - new_reg_names
+    added_regs = new_reg_names - old_reg_names
+    common_regs = old_reg_names & new_reg_names
+
+    if removed_regs:
+        if need_header:
+            print_header(dbname)
+            need_header = False
+        print("\nRegisters removed")
+        print("---------------------\n")
+
+        for reg_name in removed_regs:
+            print("* {0} - address {1:x}".format(reg_name,
+                                                 old_reg_map[reg_name].address))
+
+    if added_regs:
+        if need_header:
+            print_header(dbname)
+            need_header = False
+        print("\nRegisters added")
+        print("---------------------\n")
+
+        for reg_name in added_regs:
+            print("* {0} - address {1:x}".format(reg_name,
+                                                 new_reg_map[reg_name].address))
+
+
+def check_register_sets(old_project, new_project):
+
+    old_list = [RegisterDb(item) for item in old_project.get_register_set()]
+    new_list = [RegisterDb(item) for item in new_project.get_register_set()]
+
+    old_set = set([item.set_name for item in old_list])
+    new_set = set([item.set_name for item in new_list])
+
+    removed = old_set - new_set
+    added = new_set - old_set
+
+    if removed or added:
+        print("\nRegister Sets")
+        print("=======================\n")
+
+    if removed:
+        print("\nRegister sets removed")
+        print("---------------------\n")
+        for s in sorted(removed):
+            print("* {0}".format(s))
+
+    if added:
+        print("\nRegister sets added")
+        print("---------------------\n")
+        for s in sorted(added):
+            print("* {0}".format(s))
+
+    common = new_set & old_set
+    
+    old_dbs = {}
+    for db in old_list:
+        if db.set_name in common:
+             old_dbs[db.set_name] = db
+
+    new_dbs = {}
+    for db in new_list:
+        if db.set_name in common:
+            new_dbs[db.set_name] = db
+
+    for dbname in common:
+        check_registers(dbname, old_dbs[dbname], new_dbs[dbname])
+
+
+def compare_groupings(old_list, new_list):
+
+    old_names = set([g.name for g in old_list])
+    new_names = set([g.name for g in new_list])
+
+    added_names = new_names - old_names
+    removed_names = old_names - new_names
+    common_names = new_names & old_names
+
+    old_common = {}
+    for grp in old_list:
+        old_common[grp.name] = grp
+
+    new_common = {}
+    for grp in new_list:
+        new_common[grp.name] = grp
+
+    if added_names or removed_names:
+        print("\nGroups")
+        print("====================================");
+
+    if added_names:
+        print("\nGroups added")
+        print("------------------------------------\n")
+        for s in sorted(added_names):
+            print("* {0}".format(s))
+
+    if removed_names:
+        print("\nGroups removed")
+        print("------------------------------------\n")
+        for s in sorted(removed_names):
+            print("* {0}".format(s))
+
+    header = False
+    for name in common_names:
+        o = old_common[name]
+        n = new_common[name]
+
+        if o == n:
+            continue
+
+        if not header:
+            print("\nGroups that changed")
+            print("---------------------\n")
+            header = True
+        print("{0}\n____________________".format(name))
+
+        if o.base != n.base:
+            print("* Base changed from {0:x} to {1:x}".format(o.base, n.base))
+        if o.hdl != n.hdl:
+            print('* HDL path changed from "{0}" to "{1}"'.format(o.hdl, n.hdl))
+        if o.repeat != n.repeat:
+            print("* Repeat changed from {0} to {1}".format(o.repeat, n.repeat))
+        if o.repeat_offset != n.repeat_offset:
+            print("* Repeat offset changed from {0:x} to {1:x}".format(o.repeat_offset, n.repeat_offset))
+        if o.docs != n.docs:
+            print("* Documentation changed")
+
+        o_set_names = set([x.set for x in o.register_sets])
+        n_set_names = set([x.set for x in n.register_sets])
+
+        removed_sets = o_set_names - n_set_names
+        if removed_sets:
+            print("* Register set removed : {0}".format(", ".join(list(removed_sets))))
+
+        added_sets = n_set_names - o_set_names
+        if added_sets:
+            print("* Register set added : {0}".format(", ".join(list(added_sets))))
+
+        common_sets = o_set_names & n_set_names
+
+        old_dict = {}
+        for nmp in o.register_sets:
+            if nmp.set in common_sets:
+                old_dict[nmp.set] = nmp
+
+        new_dict = {}
+        for nmp in n.register_sets:
+            if nmp.set in common_sets:
+                new_dict[nmp.set] = nmp
+
+        hdr = False
+        for n in common_sets:
+            ng = new_dict[n]
+            og = old_dict[n]
+
+            if ng != og:
+                if hdr == False:
+                    print('\nChanged Register sets')
+                    print('^^^^^^^^^^^^^^^^^^^^^^^^\n')
+                    hdr = True
+                print("* {0}".format(n))
+
+                if ng.inst != og.inst:
+                    print("  - Instance name changed from {0} to {1}".format(og.inst, ng.inst))
+                if ng.offset != og.offset:
+                    print("  - Instance offset changed from {0:x} to {1:x}".format(og.offset, ng.offset))
+                if ng.repeat != og.repeat:
+                    print("  - Instance repeat changed from {0} to {1}".format(og.repeat, ng.repeat))
+                if ng.repeat_offset != og.repeat_offset:
+                    print("  - Instance repeat offset changed from {0} to {1}".format(og.repeat_offset, ng.repeat_offset))
+                if ng.format != og.format:
+                    print('  - Instance format changed from "{0}" to "{1}"'.format(og.format, ng.format))
+                if ng.hdl != og.hdl:
+                    print('  - Instance HDL path changed from "{0}" to "{1}"'.format(og.hdl, ng.hdl))
+                if ng.no_uvm != og.no_uvm:
+                    print('  - Instance UVM exclude changed from "{0}" to "{1}"'.format(og.no_uvm, ng.no_uvm))
+
+        print("")
+
+
+if __name__ == "__main__":
+    try:
+        run()
+        sys.exit(0)
+    except IOError, msg:
+        sys.stderr.write(str(msg) + "\n")
+        sys.exit(1)
+
