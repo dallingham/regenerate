@@ -1218,11 +1218,11 @@ class MainWindow(BaseWindow):
         """
         Reads the specified XML file, and redraws the screen.
         """
-        status = self.dbase.read_xml(filename)
-        if status:
-            ErrorMsg("%s is not a valid regenerate file" % filename, status)
-        else:
+        try:
+            self.dbase.read_xml(filename)
             self.__filename = filename
+        except xml.parsers.expat.ExpatError as msg:
+            ErrorMsg("%s is not a valid regenerate file" % filename, msg)
 
     def on_save_clicked(self, obj):
         """

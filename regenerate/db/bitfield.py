@@ -93,6 +93,45 @@ class BitField(object):
         self.output_has_side_effect = False
         self.values = []
 
+    def __eq__(self, other):
+        if self.__output_signal != other.__output_signal:
+            return False
+        if self.__input_signal != other.__input_signal:
+            return False
+        if (self.lsb, self.msb) != (other.lsb, other.msb):
+            return False
+        if self.field_name != other.field_name:
+            return False
+        if self.use_output_enable != other.use_output_enable:
+            return False
+        if self.field_type != other.field_type:
+            return False
+        if self.volatile != other.volatile:
+            return False
+        if self.is_error_field != other.is_error_field:
+            return False
+        if self.reset_value != other.reset_value:
+            return False
+        if self.reset_input != other.reset_input:
+            return False
+        if self.reset_type != other.reset_type:
+            return False
+        if self.reset_parameter != other.reset_parameter:
+            return False
+        if self.description != other.description:
+            return False
+        if self.control_signal != other.control_signal:
+            return False
+        if self.output_is_static != other.output_is_static:
+            return False
+        if self.output_has_side_effect != other.output_has_side_effect:
+            return False
+        if self.values != other.values:
+            return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def is_constant(self):
         """
         Indicates the the value is a constant value.
