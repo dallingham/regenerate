@@ -39,8 +39,7 @@ else:
 
 class WriterBase(object):   # IGNORE:R0921 - we know this is a abstract class
     """
-    Writes the register information to the output file determined
-    by the derived class.
+    Writes the register information to the output file determined    by the derived class.
     """
 
     def __init__(self, project, dbase):
