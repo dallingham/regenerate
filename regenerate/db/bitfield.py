@@ -21,6 +21,8 @@
 Provides the definition of a Bit Field,
 """
 
+import uuid
+
 
 def clean_signal(name):
     "Removes white space from a string, replacing them with underscores."
@@ -76,6 +78,7 @@ class BitField(object):
         self.modified = False
         self.__output_signal = ""
         self.__input_signal = ""
+        self.__id = ""
         self.lsb = start
         self.msb = stop
         self.field_name = ""
@@ -156,6 +159,16 @@ class BitField(object):
             return "%d" % self.lsb
         else:
             return "[%d:%d]" % (self.msb, self.lsb)
+
+    @property
+    def uuid(self):
+        if not self.__id:
+            self.__id = uuid.uuid4().hex
+        return self.__id
+
+    @uuid.setter
+    def uuid(self, value):
+        self.__id = value
 
     @property
     def stop_position(self):

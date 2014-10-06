@@ -69,23 +69,22 @@ def run():
 
 
 def print_header(dbname):
-    print("\n{0} Changed".format(dbname))
+    print("\n{0} changed".format(dbname))
     print("============================================\n")
 
 def check_registers(dbname, old_db, new_db):
 
     need_header = True
-    old_reg_names = set([(r.register_name) for r in old_db.get_all_registers()])
-    new_reg_names = set([(r.register_name) for r in new_db.get_all_registers()])
+    old_reg_names = set([(r.uuid) for r in old_db.get_all_registers()])
+    new_reg_names = set([(r.uuid) for r in new_db.get_all_registers()])
 
     old_reg_map = {}
     for r in old_db.get_all_registers():
-        old_reg_map[r.register_name] = r
+        old_reg_map[r.uuid] = r
 
     new_reg_map = {}
     for r in new_db.get_all_registers():
-        new_reg_map[r.register_name] = r
-
+        new_reg_map[r.uuid] = r
 
     removed_regs = old_reg_names - new_reg_names
     added_regs = new_reg_names - old_reg_names
@@ -98,9 +97,9 @@ def check_registers(dbname, old_db, new_db):
         print("\nRegisters removed")
         print("---------------------\n")
 
-        for reg_name in removed_regs:
-            print("* {0} - address {1:x}".format(reg_name,
-                                                 old_reg_map[reg_name].address))
+        for uuid in removed_regs:
+            print("* {0} - address {1:x}".format(old_reg_map[uuid].register_name,
+                                                 old_reg_map[uuid].address))
 
     if added_regs:
         if need_header:
@@ -109,9 +108,9 @@ def check_registers(dbname, old_db, new_db):
         print("\nRegisters added")
         print("---------------------\n")
 
-        for reg_name in added_regs:
-            print("* {0} - address {1:x}".format(reg_name,
-                                                 new_reg_map[reg_name].address))
+        for uuid in added_regs:
+            print("* {0} - address {1:x}".format(new_reg_map[uuid].register_name,
+                                                 new_reg_map[uuid].address))
 
 
 def check_register_sets(old_project, new_project):

@@ -122,8 +122,14 @@ def cleanup(data):
     "Remove some unicode characters with standard ASCII characters"
     data = data.replace(u"\u2013", "-")
     data = data.replace(u"\u201c", "\"")
+    data = data.replace(u"\u2019", "'")
+    data = data.replace(u"\u2018", "'")
+    data = data.replace(u"\u201c", "\"")
+    data = data.replace(u"\u201f", "\"")
+    data = data.replace(u"\u2022", "*")
+    data = data.replace(u"\u201d", "\"")
     data = data.replace(u"\ue280a2", "*")
-    return xml.sax.saxutils.escape(data.replace(u"\u201d", "\""))
+    return xml.sax.saxutils.escape(data)
 
 
 def write_field(ofile, field):
@@ -135,6 +141,7 @@ def write_field(ofile, field):
 
     ofile.write('    <range start="%d" stop="%d">\n' % (low, high))
     ofile.write('      <name>%s</name>\n' % field.field_name)
+    ofile.write('      <uuid>%s</uuid>\n' % field.uuid)
     write_signal_info(ofile, field)
     write_input_info(ofile, field)
     write_reset_type(ofile, field)
