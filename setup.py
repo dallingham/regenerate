@@ -26,6 +26,7 @@ setup(
     url="https://github.com/dallingham/regenerate",
     scripts=["bin/regenerate",
              "bin/regbuild",
+             "bin/regupdate",
              "bin/regdiff"],
     classifiers=[
         'Operating System :: POSIX',
