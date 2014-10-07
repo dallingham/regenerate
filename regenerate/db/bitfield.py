@@ -131,6 +131,7 @@ class BitField(object):
             return False
         if self.values != other.values:
             return False
+        return True
 
     def __ne__(self, other):
         return not self.__eq__(other)

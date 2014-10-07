@@ -26,6 +26,7 @@ import os
 import sys
 from regenerate.db.reg_project import RegProject
 from regenerate.db.register_db import RegisterDb
+from regenerate.db.bitfield_types import TYPE_TO_DESCR
 
 if os.path.dirname(sys.argv[0]) != ".":
     if sys.argv[0][0] == "/":
@@ -72,6 +73,7 @@ def print_header(dbname):
     print("\n{0} changed".format(dbname))
     print("============================================\n")
 
+
 def check_registers(dbname, old_db, new_db):
 
     need_header = True
@@ -112,6 +114,116 @@ def check_registers(dbname, old_db, new_db):
             print("* {0} - address {1:x}".format(new_reg_map[uuid].register_name,
                                                  new_reg_map[uuid].address))
 
+    if common_regs:
+        for uuid in common_regs:
+            new_reg = new_reg_map[uuid]
+            old_reg = old_reg_map[uuid]
+            if new_reg != old_reg:
+                if need_header:
+                    print_header(dbname)
+                    need_header = False
+                print("* {0} changed".format(new_reg.register_name))
+                dump_register_changes(new_reg, old_reg)
+
+
+def dump_register_changes(new_reg, old_reg):
+
+    if new_reg.register_name != old_reg.register_name:
+        print('  - Name changed from "{0}" to "{1}"'.format(old_reg.register_name,
+                                                           new_reg.register_name))
+    if new_reg.address != old_reg.address:
+        print('  - Address changed from {0:x} to {1:x}'.format(old_reg.address,
+                                                                   new_reg.address))
+    if new_reg.ram_size != old_reg.ram_size:
+        print('  - RAM size changed from {0:x} to {1:x}'.format(old_reg.ram_size,
+                                                                     new_reg.ram_size))
+    if new_reg.width != old_reg.width:
+        print('  - Width changed from {0}-bits to {1}-bits'.format(old_reg.width,
+                                                                   new_reg.width))
+    if new_reg.description != old_reg.description:
+        print('  - Description changed')
+    if new_reg.do_not_generate_code != old_reg.do_not_generate_code:
+        print('  - Code generation flag changed from {0} to {1}'.format(old_reg.do_not_generate_code,
+                                                                        new_reg.do_not_generate_code))
+    if new_reg.do_not_test != old_reg.do_not_test:
+        print('  - Test suppression flag changed from {0} to {1}'.format(old_reg.do_not_test,
+                                                                         new_reg.do_not_test))
+    if new_reg.hide != old_reg.hide:
+        print('  - Documentation suppression flag changed from {0} to {1}'.format(old_reg.hide,
+                                                                                  new_reg.hide))
+    if new_reg.token != old_reg.token:
+        print('  - Token changed from {0} to {1}'.format(old_reg.token,
+                                                         new_reg.token))
+
+    old_field_ids = set([i.uuid for i in old_reg.get_bit_fields()])
+    new_field_ids = set([i.uuid for i in new_reg.get_bit_fields()])
+
+    old_fields = {}
+    for i in old_reg.get_bit_fields():
+        old_fields[i.uuid] = i;
+
+    new_fields = {}
+    for i in new_reg.get_bit_fields():
+        new_fields[i.uuid] = i;
+
+    removed = old_field_ids - new_field_ids
+    for i in removed:
+        print('  - Field "{0}" removed'.format(old_fields[i].field_name))
+
+    added = new_field_ids - old_field_ids
+    for i in added:
+        print('  - Field "{0}" added'.format(new_fields[i].field_name))
+
+    for uuid in old_field_ids & new_field_ids:
+        dump_field_changes(old_fields[uuid], new_fields[uuid])
+    
+
+def dump_field_changes(old_field, new_field):
+    
+    if old_field.field_name != new_field.field_name:
+        print('  - Field "{0}" renamed from "{1}"'.format(new_field.field_name,
+                                                          old_field.field_name))
+    if (old_field.msb, old_field.lsb) != (new_field.msb, new_field.lsb):
+        print('  - Field "{0}" bit fields changed from [{1}:{2}] to [{3}:{4}]'.format(new_field.field_name,
+                                                                                      old_field.msb,
+                                                                                      old_field.lsb,
+                                                                                      new_field.msb,
+                                                                                      new_field.lsb))
+
+    if old_field.reset_type != new_field.reset_type:
+        print('  - Field "{0}" reset type changed'.format(new_field.field_name))
+    else:
+        if old_field.reset_value != new_field.reset_value:
+            print('  - Field "{0}" reset value changed from {1:x} to {2:X}'.format(new_field.field_name,
+                                                                                   old_field.reset_value,
+                                                                                   new_field.reset_value))
+        if old_field.reset_input != new_field.reset_input:
+            print('  - Field "{0}" reset input value changed from "{1}" to "{2}"'.format(new_field.field_name,
+                                                                                         old_field.reset_input,
+                                                                                         new_field.reset_input))
+        if old_field.reset_parameter != new_field.reset_parameter:
+            print('  - Field "{0}" reset parameter value changed from "{1}" to "{2}"'.format(new_field.field_name,
+                                                                                             old_field.reset_input,
+                                                                                             new_field.reset_input))
+
+    if old_field.use_output_enable != new_field.use_output_enable:
+        print('  - Field "{0}" output enable changed from {1} to {2}'.format(new_field.field_name,
+                                                                             old_field.use_output_enable,
+                                                                             new_field.use_output_enable))
+    elif old_field.output_signal != new_field.output_signal:
+        print('  - Field "{0}" output signal changed from "{1}" to "{2}"'.format(new_field.field_name,
+                                                                                 old_field.output_signal,
+                                                                                 new_field.output_signal))
+
+        
+    if old_field.description != new_field.description:
+        print('  - Field "{0}" documentation changed'.format(new_field.field_name))
+
+    if old_field.field_type != new_field.field_type:
+        print('  - Field "{0}" changed from "{1}" to "{2}"'.format(new_field.field_name,
+                                                                   TYPE_TO_DESCR[old_field.field_type],
+                                                                   TYPE_TO_DESCR[new_field.field_type]))
+        
 
 def check_register_sets(old_project, new_project):
 
