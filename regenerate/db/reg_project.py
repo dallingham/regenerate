@@ -25,6 +25,7 @@ from collections import namedtuple
 import regenerate.db
 from regenerate.db.proj_reader import ProjectReader
 from regenerate.db.proj_writer import ProjectWriter
+from regenerate.db.textutils import clean_text
 import os.path
 import xml.sax.saxutils
 
@@ -35,10 +36,7 @@ GroupMapData = namedtuple("GroupMapData",
 
 def cleanup(data):
     "Convert some unicode characters to standard ASCII"
-    data = data.replace(u"\u2013", "-")
-    data = data.replace(u"\u201c", "\"")
-    data = data.replace(u"\ue280a2", "*")
-    return xml.sax.saxutils.escape(data.replace(u"\u201d", "\""))
+    return xml.sax.saxutils.escape(clean_text(data))
 
 
 class RegProject(object):

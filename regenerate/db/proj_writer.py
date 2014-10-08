@@ -22,14 +22,14 @@ RegProject is the container object for a regenerate project
 """
 
 from xml.sax.saxutils import escape
+from regenerate.db.textutils import clean_text
 
-
-def cleanup(data):
-    "Convert some unicode characters to standard ASCII"
-    data = data.replace(u"\u2013", "-")
-    data = data.replace(u"\u201c", "\"")
-    data = data.replace(u"\ue280a2", "*")
-    return escape(data.replace(u"\u201d", "\""))
+# def cleanup(data):
+#     "Convert some unicode characters to standard ASCII"
+#     data = data.replace(u"\u2013", "-")
+#     data = data.replace(u"\u201c", "\"")
+#     data = data.replace(u"\ue280a2", "*")
+#     return escape(data.replace(u"\u201d", "\""))
 
 
 class ProjectWriter(object):
@@ -112,7 +112,7 @@ class ProjectWriter(object):
                         (group.repeat, group.repeat_offset))
             if group.docs:
                 ofile.write("<overview>%s</overview>" %
-                            cleanup(group.docs))
+                            clean_text(group.docs))
             for item in group.register_sets:
                 ofile.write('      <map set="%s" inst="%s" offset="%x" ' %
                             (item.set, item.inst, item.offset))

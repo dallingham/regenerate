@@ -23,6 +23,7 @@ Writes the XML file containing all the information in the register database
 
 from regenerate.db import BitField
 from regenerate.db import TYPE_TO_ID
+from regenerate.db.textutils import clean_text
 import os
 import xml.sax.saxutils
 
@@ -120,16 +121,7 @@ def write_register(ofile, reg):
 
 def cleanup(data):
     "Remove some unicode characters with standard ASCII characters"
-    data = data.replace(u"\u2013", "-")
-    data = data.replace(u"\u201c", "\"")
-    data = data.replace(u"\u2019", "'")
-    data = data.replace(u"\u2018", "'")
-    data = data.replace(u"\u201c", "\"")
-    data = data.replace(u"\u201f", "\"")
-    data = data.replace(u"\u2022", "*")
-    data = data.replace(u"\u201d", "\"")
-    data = data.replace(u"\ue280a2", "*")
-    return xml.sax.saxutils.escape(data)
+    return xml.sax.saxutils.escape(clean_text(data))
 
 
 def write_field(ofile, field):
