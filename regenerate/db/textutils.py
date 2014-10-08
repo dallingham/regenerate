@@ -17,27 +17,20 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""
-Includes the base instances in the module
-"""
 
-from bitfield import BitField
-from bitfield_types import *
-from group_data import GroupData
-import logging
-from register import Register
-from reg_parser import RegParser
-from reg_project import RegProject, AddrMapData, GroupMapData
-from reg_writer import RegWriter
-from register_db import RegisterDb
+__convert = [
+    (u"\u2013", "-")
+    (u"\u2018", "'")
+    (u"\u2019", "'")
+    (u"\u201c", "\"")
+    (u"\u201d", "\"")
+    (u"\u201f", "\"")
+    (u"\u2022", "*")
+    (u"\ue280a2", "*")
+    ]
 
-LOGGER = logging.getLogger('regenerate')
 
-# create console handler and set level to debug
-__ch = logging.StreamHandler()
-__formatter = logging.Formatter('%(asctime)s - %(name)s - '
-                                '%(levelname)s - %(message)s')
-# add formatter to ch
-__ch.setFormatter(__formatter)
-# add ch to logger
-LOGGER.addHandler(__ch)
+def clean_text(text):
+    for (s, d) in __convert:
+        text = text.replace(s, d)
+    return text.encode('ascii', 'replace')

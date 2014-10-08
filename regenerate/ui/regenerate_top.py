@@ -1222,7 +1222,7 @@ class MainWindow(BaseWindow):
             self.dbase.read_xml(filename)
             self.__filename = filename
         except xml.parsers.expat.ExpatError as msg:
-            ErrorMsg("%s is not a valid regenerate file" % filename, msg)
+            ErrorMsg("%s is not a valid regenerate file" % filename, str(msg))
 
     def on_save_clicked(self, obj):
         """
