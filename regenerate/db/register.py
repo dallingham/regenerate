@@ -92,7 +92,7 @@ class Register(object):
     def do_not_generate_code(self, val):
         """
         Sets the __do_not_generate_code flag. This cannot be accessed
-        directly, but only via the propery 'do_not_generate_code'
+        directly, but only via the property 'do_not_generate_code'
         """
         self.__do_not_generate_code = bool(val)
 
@@ -108,7 +108,7 @@ class Register(object):
     def do_not_test(self, val):
         """
         Sets the __do_not_generate_code flag. This cannot be accessed
-        directly, but only via the propery 'do_not_test'
+        directly, but only via the property 'do_not_test'
         """
         self.__do_not_test = bool(val)
 
@@ -124,7 +124,7 @@ class Register(object):
     def hide(self, val):
         """
         Sets the __hide flag. This cannot be accessed directly, but only
-        via the propery 'hide'
+        via the property 'hide'
         """
         self.__hide = bool(val)
 
@@ -140,7 +140,7 @@ class Register(object):
     def token(self, val):
         """
         Sets the __token flag. This cannot be accessed directly, but only
-        via the propery 'token'
+        via the property 'token'
         """
         self.__token = val.strip().upper()
 
@@ -156,7 +156,7 @@ class Register(object):
     def register_name(self, name):
         """
         Sets the __name flag. This cannot be accessed directly, but only
-        via the propery 'register_name'
+        via the property 'register_name'
         """
         self.__name = name.strip()
 
