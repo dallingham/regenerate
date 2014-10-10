@@ -24,7 +24,6 @@ import os
 import re
 import regenerate.db
 from regenerate.settings import rules
-import xml
 
 DEF_CLK_NAME = "CLK"
 DEF_RST_NAME = "RSTn"
@@ -42,7 +41,7 @@ class RegisterDb(object):
     Container database for a set of registers.
     """
 
-    def __init__(self):
+    def __init__(self, filename=None):
         self.__clock = rules.get('rules', 'clock_default', DEF_CLK_NAME)
         self.__reset = rules.get('rules', 'reset_default', DEF_RST_NAME)
         self.__write_data = rules.get('rules', 'write_data_default',
@@ -68,6 +67,9 @@ class RegisterDb(object):
         self.overview_text = ""
         self.enable_coverage = False
         self.set_name = ""
+
+        if filename is not None:
+            self.read_xml(filename)
 
     def total_bits(self):
         """Returns bits in register"""
@@ -114,15 +116,11 @@ class RegisterDb(object):
         """
         Reads the XML file, loading the databsae.
         """
-        try:
-            ifile = open(filename)
+        with open(filename) as ifile:
             self.set_name = os.path.splitext(os.path.basename(filename))[0]
             parser = regenerate.db.RegParser(self)
             parser.parse(ifile)
-            ifile.close()
-            return None
-        except xml.parsers.expat.ExpatError as msg:
-            return str(msg)
+        return self
 
     def save_xml(self, filename):
         """

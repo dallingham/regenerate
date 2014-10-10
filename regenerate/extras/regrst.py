@@ -265,12 +265,11 @@ class RegisterRst:
                     o.write("   *")
                     if use_uvm:
                         name = uvm_name(inst.group, self._reg.token,
-                                        inst.inst, -1, inst.format)
+                                        inst.inst, -1)
                         o.write(" - %s\n" % self.text(name))
                     if use_id:
-                        name = full_token(inst.group, inst.inst,
-                                          self._reg.token, self._regset_name,
-                                          -1, inst.format)
+                        name = full_token(inst.group, self._reg.token, 
+                                          inst.inst, -1, inst.format)
                         if use_uvm:
                             o.write("    ")
                         o.write(" - %s\n" % self.text(name))
@@ -283,13 +282,11 @@ class RegisterRst:
                         o.write("   *")
                         if use_uvm:
                             name = uvm_name(inst.group, self._reg.token,
-                                            inst.inst, i, inst.format)
+                                            inst.inst, i)
                             o.write(" - %s\n" % self.text(name))
                         if use_id:
-                            name = full_token(inst.group, inst.inst,
-                                              self._reg.token,
-                                              self._regset_name,
-                                              i, inst.format)
+                            name = full_token(inst.group, self._reg.token,
+                                              self._regset_name, i, inst.format)
                             if use_uvm:
                                 o.write("    ")
                             o.write(" - %s\n" % self.text(name))
@@ -301,11 +298,10 @@ class RegisterRst:
         o.write("\n\n")
 
     def _display_uvm_entry(self, inst, index, o):
-        name = full_token(inst.group, inst.inst, self._reg.token,
+        name = full_token(inst.group, self._reg.token,
                           self._regset_name, index, inst.format)
         o.write("   * - %s\n" % self.text(name))
-        name = uvm_name(inst.group, self._reg.token, inst.inst, index,
-                        inst.format)
+        name = uvm_name(inst.group, self._reg.token, inst.inst, index)
         o.write("     - %s\n" % self.text(name))
 
     def _write_uvm(self, o):

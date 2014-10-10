@@ -23,6 +23,7 @@ Writes the XML file containing all the information in the register database
 
 from regenerate.db import BitField
 from regenerate.db import TYPE_TO_ID
+from regenerate.db.textutils import clean_text
 import os
 import xml.sax.saxutils
 
@@ -105,6 +106,7 @@ def write_register(ofile, reg):
     ofile.write('  <register nocode="%d" dont_test="%d" hide="%d">\n' %
                 (reg.do_not_generate_code, reg.do_not_test, reg.hide))
     ofile.write('    <token>%s</token>\n' % reg.token)
+    ofile.write('    <uuid>%s</uuid>\n' % reg.uuid)
     ofile.write('    <name>%s</name>\n' % reg.register_name)
     ofile.write('    <address>%d</address>\n' % reg.address)
     if reg.ram_size:
@@ -119,10 +121,7 @@ def write_register(ofile, reg):
 
 def cleanup(data):
     "Remove some unicode characters with standard ASCII characters"
-    data = data.replace(u"\u2013", "-")
-    data = data.replace(u"\u201c", "\"")
-    data = data.replace(u"\ue280a2", "*")
-    return xml.sax.saxutils.escape(data.replace(u"\u201d", "\""))
+    return xml.sax.saxutils.escape(clean_text(data))
 
 
 def write_field(ofile, field):
@@ -134,6 +133,7 @@ def write_field(ofile, field):
 
     ofile.write('    <range start="%d" stop="%d">\n' % (low, high))
     ofile.write('      <name>%s</name>\n' % field.field_name)
+    ofile.write('      <uuid>%s</uuid>\n' % field.uuid)
     write_signal_info(ofile, field)
     write_input_info(ofile, field)
     write_reset_type(ofile, field)

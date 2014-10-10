@@ -286,6 +286,16 @@ class RegParser(object):
         """
         self.__reg.token = text
 
+    def end_uuid(self, text):
+        """
+        Called when the token tag is terminated. The text is the
+        register token value.
+        """
+        if self.__field:
+            self.__field.uuid = text
+        else:
+            self.__reg.uuid = text
+
     def end_ram_size(self, text):
         """
         Called when the token tag is terminated. The text is the

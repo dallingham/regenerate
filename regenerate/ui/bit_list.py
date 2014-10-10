@@ -184,7 +184,7 @@ def bits(field):
     if field.lsb == field.msb:
         return "{0:d}".format(field.lsb)
     else:
-        return "{0:d}:{0:d}".format(field.msb, field.lsb)
+        return "{0:d}:{1:d}".format(field.msb, field.lsb)
 
 
 def reset_value(field):

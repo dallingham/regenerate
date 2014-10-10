@@ -160,13 +160,13 @@ EXPORTERS.append((VerilogParameters, ("RTL", "Verilog parameters"),
                   "Verilog header files", ".vh", 'rtl-verilog-parmaeters'))
 
 try:
-    from regenerate.site_local.odt_spec import OdtSpec
-    LOGGER.info("Found site_local odt_spec")
+    from regenerate.site_local.rst_doc import RstDoc
+    LOGGER.info("Found site_local rst_doc")
 except ImportError:
-    from odt_spec import OdtSpec
+    from rst_doc import RstDoc
 
-PRJ_EXPORTERS.append((OdtSpec, ("Specification", "OpenDocument"),
-                      "OpenDocument files", ".odt", 'spec-odt'))
+PRJ_EXPORTERS.append((RstDoc, ("Specification", "RestructuredText"),
+                      "RestructuredText files", ".rest", 'spec-rst'))
 
 from uvm_block import UVMBlockRegisters
 

@@ -21,6 +21,8 @@
 Provides the definition of a Bit Field,
 """
 
+import uuid
+
 
 def clean_signal(name):
     "Removes white space from a string, replacing them with underscores."
@@ -76,6 +78,7 @@ class BitField(object):
         self.modified = False
         self.__output_signal = ""
         self.__input_signal = ""
+        self.__id = ""
         self.lsb = start
         self.msb = stop
         self.field_name = ""
@@ -92,6 +95,46 @@ class BitField(object):
         self.output_is_static = False
         self.output_has_side_effect = False
         self.values = []
+
+    def __eq__(self, other):
+        if self.__output_signal != other.__output_signal:
+            return False
+        if self.__input_signal != other.__input_signal:
+            return False
+        if (self.lsb, self.msb) != (other.lsb, other.msb):
+            return False
+        if self.field_name != other.field_name:
+            return False
+        if self.use_output_enable != other.use_output_enable:
+            return False
+        if self.field_type != other.field_type:
+            return False
+        if self.volatile != other.volatile:
+            return False
+        if self.is_error_field != other.is_error_field:
+            return False
+        if self.reset_value != other.reset_value:
+            return False
+        if self.reset_input != other.reset_input:
+            return False
+        if self.reset_type != other.reset_type:
+            return False
+        if self.reset_parameter != other.reset_parameter:
+            return False
+        if self.description != other.description:
+            return False
+        if self.control_signal != other.control_signal:
+            return False
+        if self.output_is_static != other.output_is_static:
+            return False
+        if self.output_has_side_effect != other.output_has_side_effect:
+            return False
+        if self.values != other.values:
+            return False
+        return True
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     def is_constant(self):
         """
@@ -117,6 +160,16 @@ class BitField(object):
             return "%d" % self.lsb
         else:
             return "[%d:%d]" % (self.msb, self.lsb)
+
+    @property
+    def uuid(self):
+        if not self.__id:
+            self.__id = uuid.uuid4().hex
+        return self.__id
+
+    @uuid.setter
+    def uuid(self, value):
+        self.__id = value
 
     @property
     def stop_position(self):

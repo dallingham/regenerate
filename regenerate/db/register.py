@@ -22,6 +22,8 @@ Provides the register description. Contains the general information about the
 register, including the list of bit fields.
 """
 
+import uuid
+
 
 class Register(object):
     """
@@ -33,6 +35,7 @@ class Register(object):
         self.ram_size = 0
         self.description = ""
         self.width = width
+        self.__id = ""
 
         self.__token = ""
         self.__do_not_test = False
@@ -40,6 +43,63 @@ class Register(object):
         self.__hide = False
         self.__do_not_generate_code = False
         self.__bit_fields = {}
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __eq__(self, other):
+        if self.address != other.address:
+            return False
+
+        if self.__name != other.__name:
+            return False
+
+        if self.ram_size != other.ram_size:
+            return False
+
+        if self.description != other.description:
+            return False
+
+        if self.width != other.width:
+            return False
+
+        if self.__token != other.token:
+            return False
+
+        if self.__do_not_test != other.__do_not_test:
+            return False
+
+        if self.__hide != other.hide:
+            return False
+
+        if self.__do_not_generate_code != other.__do_not_generate_code:
+            return False
+
+        if len(self.__bit_fields) != len(other.__bit_fields):
+            return False
+
+        other_fields = set([i.uuid for i in other.get_bit_fields()])
+        my_fields = set([i.uuid for i in self.get_bit_fields()])
+
+        if (my_fields - other_fields) or (other_fields - my_fields):
+            return False
+
+        common = other_fields & my_fields
+
+        old_fields = {}
+        new_fields = {}
+
+        for field in other.get_bit_fields():
+            old_fields[field.uuid] = field
+
+        for field in self.get_bit_fields():
+            new_fields[field.uuid] = field
+
+        for uuid in common:
+            if new_fields[uuid] != old_fields[uuid]:
+                return False
+
+        return True
 
     def find_first_unused_bit(self):
         """
@@ -79,6 +139,16 @@ class Register(object):
                 return lbits[-1] + 1
         else:
             return 0
+
+    @property
+    def uuid(self):
+        if not self.__id:
+            self.__id = uuid.uuid4().hex
+        return self.__id
+
+    @uuid.setter
+    def uuid(self, value):
+        self.__id = value
 
     @property
     def do_not_generate_code(self):
