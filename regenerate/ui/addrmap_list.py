@@ -25,19 +25,16 @@ import gtk
 from columns import EditableColumn, ToggleColumn, ComboMapColumn
 from regenerate.db import LOGGER, AddrMapData
 
+_BITS32 = "32-bits"
+_BITS64 = "64-bits"
+
 SIZE2STR = (
-    ("32-bits", 4),
-    ("64-bits", 8))
+    (_BITS32, 4),
+    (_BITS64, 8)
+    )
 
-INT2SIZE = {
-    4: "32-bits",
-    8: "64-bits",
-    }
-
-STR2SIZE = {
-    "32-bits": 4,
-    "64-bits": 8,
-    }
+INT2SIZE = dict((_i[1], _i[0]) for _i in SIZE2STR)
+STR2SIZE = dict((_i[0], _i[1]) for _i in SIZE2STR)
 
 
 class AddrMapMdl(gtk.TreeStore):
@@ -56,14 +53,14 @@ class AddrMapMdl(gtk.TreeStore):
         Adds a new instance to the model. It is not added to the database until
         either the change_id or change_base is called.
         """
-        node = self.append(None, row=('', '0', False, "32-bits"))
+        node = self.append(None, row=('', '0', False, _BITS32))
         return self.get_path(node)
 
     def append_instance(self, inst):
         """
         Adds the specified instance to the InstanceList
         """
-        self.append(row=(inst[0], "{0:08x}".format(inst[1]), False, "32-bits"))
+        self.append(row=(inst[0], "{0:08x}".format(inst[1]), False, _BITS32))
 
     def get_values(self):
         """

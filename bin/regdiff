@@ -71,56 +71,53 @@ def run():
 def print_header(dbname):
     print("\n# {0} changed".format(dbname))
 
+
 def check_registers(dbname, old_db, new_db):
 
     need_header = True
-    old_reg_names = set([(r.uuid) for r in old_db.get_all_registers()])
-    new_reg_names = set([(r.uuid) for r in new_db.get_all_registers()])
 
-    old_reg_map = {}
-    for r in old_db.get_all_registers():
-        old_reg_map[r.uuid] = r
+    or_map = dict((r.uuid, r) for r in old_db.get_all_registers())
+    nr_map = dict((r.uuid, r) for r in new_db.get_all_registers())
 
-    new_reg_map = {}
-    for r in new_db.get_all_registers():
-        new_reg_map[r.uuid] = r
+    or_names = set(or_map.keys())
+    nr_names = set(nr_map.keys())
 
-    removed_regs = old_reg_names - new_reg_names
-    added_regs = new_reg_names - old_reg_names
-    common_regs = old_reg_names & new_reg_names
+    removed = or_names - nr_names
+    added = nr_names - or_names
+    common = or_names & nr_names
 
-    if removed_regs:
+    if removed:
         if need_header:
             print_header(dbname)
             need_header = False
         print("\n## Registers removed")
 
-        for uuid in removed_regs:
+        for uuid in removed:
             print("- {0} - address {1:x}".format(
-                    old_reg_map[uuid].register_name,
-                    old_reg_map[uuid].address))
+                    or_map[uuid].register_name,
+                    or_map[uuid].address))
 
-    if added_regs:
+    if added:
         if need_header:
             print_header(dbname)
             need_header = False
         print("\n## Registers added")
 
-        for uuid in added_regs:
+        for uuid in added:
             print("- {0} - address {1:x}".format(
-                    new_reg_map[uuid].register_name,
-                    new_reg_map[uuid].address))
+                    nr_map[uuid].register_name,
+                    nr_map[uuid].address))
 
-    if common_regs:
-        for uuid in common_regs:
-            new_reg = new_reg_map[uuid]
-            old_reg = old_reg_map[uuid]
-            if new_reg != old_reg:
+    if common:
+        for uuid in common:
+            nreg = nr_map[uuid]
+            oreg = or_map[uuid]
+            if nreg != oreg:
                 if need_header:
                     print_header(dbname)
                     need_header = False
-                print("- {0} changed".format(new_reg.register_name))
-                dump_register_changes(new_reg, old_reg)
+                print("- {0} changed".format(nreg.register_name))
+                dump_register_changes(nreg, oreg)
 
 
 def dump_register_changes(new_reg, old_reg):
@@ -155,13 +152,8 @@ def dump_register_changes(new_reg, old_reg):
     old_field_ids = set([i.uuid for i in old_reg.get_bit_fields()])
     new_field_ids = set([i.uuid for i in new_reg.get_bit_fields()])
 
-    old_fields = {}
-    for i in old_reg.get_bit_fields():
-        old_fields[i.uuid] = i;
-
-    new_fields = {}
-    for i in new_reg.get_bit_fields():
-        new_fields[i.uuid] = i;
+    old_fields = dict((i.uuid, i) for i in old_reg.get_bit_fields())
+    new_fields = dict((i.uuid, i) for i in new_reg.get_bit_fields())
 
     removed = old_field_ids - new_field_ids
     for i in removed:
@@ -267,16 +259,12 @@ def check_register_sets(old_project, new_project, verbose):
         print("\n##Register sets that did not change")
         for s in sorted(common):
             print("- {0}".format(s))
-    
-    old_dbs = {}
-    for db in old_list:
-        if db.set_name in common:
-             old_dbs[db.set_name] = db
 
-    new_dbs = {}
-    for db in new_list:
-        if db.set_name in common:
-            new_dbs[db.set_name] = db
+    old_dbs = dict((db.set_name, db) for db in old_list
+                   if db.set_name in common)
+
+    new_dbs = dict((db.set_name, db) for db in new_list
+                   if db.set_name in common)
 
     for dbname in common:
         check_registers(dbname, old_dbs[dbname], new_dbs[dbname])
@@ -291,13 +279,8 @@ def compare_groupings(old_list, new_list):
     removed_names = old_names - new_names
     common_names = new_names & old_names
 
-    old_common = {}
-    for grp in old_list:
-        old_common[grp.name] = grp
-
-    new_common = {}
-    for grp in new_list:
-        new_common[grp.name] = grp
+    old_common = dict((grp.name, grp) for grp in old_list)
+    new_common = dict((grp.name, grp) for grp in new_list)
 
     if added_names or removed_names:
         print("# Groups")
@@ -350,15 +333,11 @@ def compare_groupings(old_list, new_list):
 
         common_sets = o_set_names & n_set_names
 
-        old_dict = {}
-        for nmp in o.register_sets:
-            if nmp.set in common_sets:
-                old_dict[nmp.set] = nmp
+        old_dict = dict((nmp.set, nmp) for nmp in o.register_sets
+                        if nmp.set in common_sets)
 
-        new_dict = {}
-        for nmp in n.register_sets:
-            if nmp.set in common_sets:
-                new_dict[nmp.set] = nmp
+        new_dict = dict((nmp.set, nmp) for nmp in n.register_sets
+                        if nmp.set in common_sets)
 
         hdr = False
         for n in common_sets:
