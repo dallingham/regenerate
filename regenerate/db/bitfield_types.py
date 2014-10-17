@@ -135,6 +135,9 @@ TYPES = (
                  "Read/Write, Read only on control signal, "
                  "one shot on any valid write",
                  "RWPR1S"),
+    BitFieldInfo(BitField.TYPE_WRITE_1_TO_CLEAR_SET_CLR,
+                 "W1CSC", True, True, False, True, True, False, False,
+                 "Write 1 to Clear, bits set on input signal, soft clear", "W1C"),
     )
 
 TYPE_TO_ID = dict((__i.type, __i.id) for __i in TYPES)
