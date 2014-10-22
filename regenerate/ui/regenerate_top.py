@@ -942,6 +942,7 @@ class MainWindow(BaseWindow):
         choose = gtk.FileChooserDialog(
             title, self.__top_window, action,
             (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, icon, gtk.RESPONSE_OK))
+        choose.set_current_folder(os.curdir)
         if m_name:
             mime_filter = gtk.FileFilter()
             mime_filter.set_name(m_name)

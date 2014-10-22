@@ -96,7 +96,7 @@ class BitField(object):
         self._id = ""
         self.lsb = start
         self.msb = stop
-        self.field_name = ""
+        self._field_name = ""
         self.use_output_enable = False
         self.field_type = BitField.TYPE_READ_ONLY
         self.volatile = False
@@ -133,9 +133,9 @@ class BitField(object):
         Builds the name of the field, including bit positions if needed
         """
         if self.width == 1:
-            return self.field_name
+            return self._field_name
         else:
-            return "%s[%d:%d]" % (self.field_name, self.msb, self.lsb)
+            return "%s[%d:%d]" % (self._field_name, self.msb, self.lsb)
 
     def bit_range(self):
         """
@@ -181,6 +181,14 @@ class BitField(object):
         """Returns the width in bits of the bit field."""
         return self.msb - self.lsb + 1
 
+    @property 
+    def field_name(self):
+        return self._field_name
+
+    @field_name.setter
+    def field_name(self, value):
+        self._field_name = value.strip()
+
     @property
     def output_signal(self):
         """
@@ -191,7 +199,7 @@ class BitField(object):
         if self._output_signal:
             return self._output_signal
         else:
-            return clean_signal(self.field_name)
+            return clean_signal(self._field_name)
 
     @output_signal.setter
     def output_signal(self, output):

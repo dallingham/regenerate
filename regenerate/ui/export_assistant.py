@@ -175,6 +175,7 @@ class ExportAssistant(gtk.Assistant):
         # Construct page 0
         self.choose = gtk.FileChooserWidget(
             action=gtk.FILE_CHOOSER_ACTION_SAVE)
+        self.choose.set_current_folder(os.curdir)
         self.choose.show()
         self.choose.set_border_width(12)
         self.append_page(self.choose)
