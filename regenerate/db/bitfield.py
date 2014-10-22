@@ -76,7 +76,7 @@ class BitField(object):
 
     full_compare = (
         "_output_signal", "_input_signal", "_id", "lsb",
-        "msb", "field_name", "use_output_enable",
+        "msb", "_field_name", "use_output_enable",
         "field_type", "volatile", "is_error_field",
         "reset_value", "reset_input", "reset_type",
         "reset_parameter", "description", "control_signal",
@@ -84,7 +84,7 @@ class BitField(object):
         "values")
 
     doc_compare = (
-        "_id", "lsb", "msb", "field_name", "field_type",
+        "_id", "lsb", "msb", "_field_name", "field_type",
         "is_error_field", "reset_value", "reset_input", "reset_type",
         "reset_parameter", "description", "values")
 
