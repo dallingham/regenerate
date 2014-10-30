@@ -115,9 +115,10 @@ class IpXactParser(object):
         self._field = BitField()
 
     def end_spirit_field(self, text):
-        self._field.start_position = self._fld_start
-        self._field.stop_position = self._fld_start + self._fld_width - 1
-        self._reg.add_bit_field(self._field)
+        if not self._field.field_name.startswith("RESERVED"):
+            self._field.start_position = self._fld_start
+            self._field.stop_position = self._fld_start + self._fld_width - 1
+            self._reg.add_bit_field(self._field)
         self._field = None
 
     def end_spirit_access(self, text):
@@ -129,7 +130,7 @@ class IpXactParser(object):
         if self._field:
             self._field.field_name = text.upper()
         elif self._reg:
-            self._reg.register_name = text.upper()
+            self._reg.register_name = text.replace('_', ' ')
             self._reg.token = text.upper()
         elif not self._in_maps:
             self._db.descriptive_title = text
