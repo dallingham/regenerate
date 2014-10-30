@@ -495,6 +495,42 @@ module %(MODULE)s_w1cs_reg
 
 endmodule
 
+/* Write 1 to clear, bits set on input value, soft clear */
+module %(MODULE)s_w1csc_reg
+  #(
+    parameter             WIDTH = 1,
+    parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
+    )
+   (
+    input                  CLK,         // Clock
+    input                  RSTn,        // Reset
+    input                  BE,          // Byte Enable
+    input                  WE,          // Write Strobe
+    input                  LD,          // Soft Clear
+    input [WIDTH-1:0]      DI,          // Data In
+    input [WIDTH-1:0]      IN,          // Load Data
+    output reg [WIDTH-1:0] DO           // Data Out
+    );
+
+   genvar                  i;
+   generate
+      for(i = 0; i < WIDTH; i = i + 1) begin : u
+         always @(posedge CLK or %(RESET_EDGE)s RSTn) begin
+            if (%(RESET_CONDITION)sRSTn) begin
+               DO[i] <= RVAL[i];
+            end else begin
+               if ((WE & %(BE_LEVEL)sBE & DI[i]) | LD) begin
+                  DO[i] <= 1'b0;
+               end else begin
+                  DO[i] <= IN[i] | DO[i];
+               end
+            end
+         end
+      end
+   endgenerate
+
+endmodule
+
 /* Write 1 to clear, bits set on input, one shot on write */
 module %(MODULE)s_w1cs1s_reg
   #(

@@ -37,7 +37,6 @@ class InstMdl(gtk.TreeStore):
                                str, str, str, bool, object)
         self.callback = self.__null_callback()
 
-
     def __null_callback(self):
         """Does nothing, should be overridden"""
         pass
@@ -151,8 +150,8 @@ class InstMdl(gtk.TreeStore):
         either the change_id or change_base is called.
         """
         new_grp = GroupData("new_group")
-        row = build_row_data(new_grp.name, new_grp.name, new_grp.base, 
-                             new_grp.repeat, new_grp.repeat_offset, "", 
+        row = build_row_data(new_grp.name, new_grp.name, new_grp.base,
+                             new_grp.repeat, new_grp.repeat_offset, "",
                              new_grp.hdl, False, new_grp)
 
         node = self.append(None, row=row)
@@ -248,7 +247,8 @@ class InstanceList(object):
         data = selection.data
         drop_info = treeview.get_dest_row_at_pos(x, y)
         (name, width) = data.split(":")
-        row_data = build_row_data(name, name, 0, 1, int(width), "", "", False, None)
+        row_data = build_row_data(name, name, 0, 1, int(width), "",
+                                  "", False, None)
         if drop_info:
             path, position = drop_info
             self.modified_callback()
@@ -278,7 +278,7 @@ class InstanceList(object):
             entry_list = sorted(item.register_sets, key=lambda x: x.offset)
             for entry in entry_list:
                 row = build_row_data(entry.inst, entry.set, entry.offset,
-                                     entry.repeat, entry.repeat_offset, 
+                                     entry.repeat, entry.repeat_offset,
                                      entry.format, entry.hdl, entry.no_uvm,
                                      None)
                 self.__model.append(node, row=row)
@@ -329,6 +329,6 @@ class InstanceList(object):
 
 
 def build_row_data(inst, name, offset, rpt, rpt_offset, fmt, hdl, uvm, obj):
-    row = (inst, name, "{0:x}".format(offset), offset, "{0:d}".format(rpt), 
+    row = (inst, name, "{0:x}".format(offset), offset, "{0:d}".format(rpt),
            "{0:x}".format(rpt_offset), fmt, hdl, uvm, obj)
     return row

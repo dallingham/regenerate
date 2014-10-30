@@ -33,12 +33,11 @@ REPLACE = {
     'CONFIGURATION': 'CFG', 'CONFIG': 'CFG', 'SYSTEM': 'SYS',
     'CONTROL': 'CTRL', 'STATUS': 'STAT', 'DEBUG': 'DBG',
     'COMMAND': 'CMD', 'HEADER': 'HDR', 'PACKET': 'PKT',
-    'INTERRUPT': 'INT', 'WRITE': 'WR',
-    'READ': 'RD', 'TRANSMIT': 'TX', 'RECEIVE': 'RX',
-    'SOFTWARE': 'SW', 'HARDWARE': 'HW', 'SOURCE': 'SRC',
-    'DESTINATION': 'DEST', 'REGISTER': '',
-    'CLEAR': 'CLR', 'CURRENT': 'CUR', 'RANGE': 'RNG',
-    'DELAY': 'DLY', 'ERROR': 'ERR', 'LOAD': 'LD',
+    'INTERRUPT': 'INT', 'WRITE': 'WR', 'READ': 'RD',
+    'TRANSMIT': 'TX', 'RECEIVE': 'RX', 'SOFTWARE': 'SW',
+    'HARDWARE': 'HW', 'SOURCE': 'SRC', 'DESTINATION': 'DEST',
+    'REGISTER': '', 'CLEAR': 'CLR', 'CURRENT': 'CUR',
+    'RANGE': 'RNG', 'DELAY': 'DLY', 'ERROR': 'ERR', 'LOAD': 'LD',
     'PARITY': 'PAR', 'COMPARE': 'CMP', 'POINTER': 'PTR',
     'SELECT': 'SEL', 'COUNT': 'CNT', 'COUNTER': 'CNTR',
     'VALUE': 'VAL', 'MESSAGE': 'MSG', 'ERRORS': 'ERRS',
@@ -324,6 +323,7 @@ class RegisterList(object):
         self.__model[path][RegisterModel.NAME_COL] = reg.register_name
         if reg.token == "":
             value = build_define(reg.register_name)
+            print reg.register_name, value
             self.__model[path][RegisterModel.DEFINE_COL] = value
             reg.token = value
             self.__set_modified()
@@ -450,5 +450,5 @@ def build_define(text):
     for i in BAD_TOKENS:
         text = text.replace(i, '_')
     return "_".join([REPLACE.get(i.upper(), i.upper())
-                     for i in text.split()
+                     for i in text.split('_')
                      if REPLACE.get(i.upper(), i.upper()) != ""])

@@ -90,8 +90,7 @@ class RegisterDb(object):
         """
         Returns the register keys, which is the address of the register
         """
-        return iter([self.__registers[key]
-                     for key in sorted(self.__registers.keys())])
+        return iter(sorted(self.__registers.values()))
 
     def get_register(self, key):
         """

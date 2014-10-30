@@ -67,19 +67,16 @@ VALID_SIGNAL = re.compile("^[A-Za-z][A-Za-z0-9_]*$")
 VALID_BITS = re.compile("^\s*[\(\[]?(\d+)(\s*[-:]\s*(\d+))?[\)\]]?\s*$")
 REGNAME = re.compile("^(.*)(\d+)(.*)$")
 
+_BITS32 = "32-bits"
+_BITS64 = "64-bits"
+
 SIZE2STR = (
-    ("32-bits", 4),
-    ("64-bits", 8))
+    (_BITS32, 4),
+    (_BITS64, 8)
+    )
 
-INT2SIZE = {
-    4: "32-bits",
-    8: "64-bits",
-    }
-
-STR2SIZE = {
-    "32-bits": 4,
-    "64-bits": 8,
-    }
+INT2SIZE = dict((_i[1], _i[0]) for _i in SIZE2STR)
+STR2SIZE = dict((_i[0], _i[1]) for _i in SIZE2STR)
 
 
 class DbaseStatus(object):
@@ -945,6 +942,7 @@ class MainWindow(BaseWindow):
         choose = gtk.FileChooserDialog(
             title, self.__top_window, action,
             (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, icon, gtk.RESPONSE_OK))
+        choose.set_current_folder(os.curdir)
         if m_name:
             mime_filter = gtk.FileFilter()
             mime_filter.set_name(m_name)

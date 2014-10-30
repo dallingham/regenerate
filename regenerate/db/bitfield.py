@@ -64,7 +64,8 @@ class BitField(object):
      TYPE_WRITE_ONLY,
      TYPE_READ_WRITE_RESET_ON_COMP,
      TYPE_READ_WRITE_PROTECT,
-     TYPE_READ_WRITE_PROTECT_1S) = range(30)
+     TYPE_READ_WRITE_PROTECT_1S,
+     TYPE_WRITE_1_TO_CLEAR_SET_CLR) = range(31)
 
     (FUNC_SET_BITS, FUNC_CLEAR_BITS, FUNC_PARALLEL, FUNC_ASSIGNMENT) = range(4)
 
@@ -73,15 +74,29 @@ class BitField(object):
 
     (RESET_NUMERIC, RESET_INPUT, RESET_PARAMETER) = range(3)
 
+    full_compare = (
+        "_output_signal", "_input_signal", "_id", "lsb",
+        "msb", "_field_name", "use_output_enable",
+        "field_type", "volatile", "is_error_field",
+        "reset_value", "reset_input", "reset_type",
+        "reset_parameter", "description", "control_signal",
+        "output_is_static", "output_has_side_effect",
+        "values")
+
+    doc_compare = (
+        "_id", "lsb", "msb", "_field_name", "field_type",
+        "is_error_field", "reset_value", "reset_input", "reset_type",
+        "reset_parameter", "description", "values")
+
     def __init__(self, stop=0, start=0):
 
         self.modified = False
-        self.__output_signal = ""
-        self.__input_signal = ""
-        self.__id = ""
+        self._output_signal = ""
+        self._input_signal = ""
+        self._id = ""
         self.lsb = start
         self.msb = stop
-        self.field_name = ""
+        self._field_name = ""
         self.use_output_enable = False
         self.field_type = BitField.TYPE_READ_ONLY
         self.volatile = False
@@ -97,44 +112,14 @@ class BitField(object):
         self.values = []
 
     def __eq__(self, other):
-        if self.__output_signal != other.__output_signal:
-            return False
-        if self.__input_signal != other.__input_signal:
-            return False
-        if (self.lsb, self.msb) != (other.lsb, other.msb):
-            return False
-        if self.field_name != other.field_name:
-            return False
-        if self.use_output_enable != other.use_output_enable:
-            return False
-        if self.field_type != other.field_type:
-            return False
-        if self.volatile != other.volatile:
-            return False
-        if self.is_error_field != other.is_error_field:
-            return False
-        if self.reset_value != other.reset_value:
-            return False
-        if self.reset_input != other.reset_input:
-            return False
-        if self.reset_type != other.reset_type:
-            return False
-        if self.reset_parameter != other.reset_parameter:
-            return False
-        if self.description != other.description:
-            return False
-        if self.control_signal != other.control_signal:
-            return False
-        if self.output_is_static != other.output_is_static:
-            return False
-        if self.output_has_side_effect != other.output_has_side_effect:
-            return False
-        if self.values != other.values:
-            return False
-        return True
+        return all(self.__dict__[i] == other.__dict__[i]
+                   for i in self.full_compare)
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
+    def __cmp__(self, other):
+        return cmp(self.msb, other.msb)
 
     def is_constant(self):
         """
@@ -148,9 +133,9 @@ class BitField(object):
         Builds the name of the field, including bit positions if needed
         """
         if self.width == 1:
-            return self.field_name
+            return self._field_name
         else:
-            return "%s[%d:%d]" % (self.field_name, self.msb, self.lsb)
+            return "%s[%d:%d]" % (self._field_name, self.msb, self.lsb)
 
     def bit_range(self):
         """
@@ -163,13 +148,13 @@ class BitField(object):
 
     @property
     def uuid(self):
-        if not self.__id:
-            self.__id = uuid.uuid4().hex
-        return self.__id
+        if not self._id:
+            self._id = uuid.uuid4().hex
+        return self._id
 
     @uuid.setter
     def uuid(self, value):
-        self.__id = value
+        self._id = value
 
     @property
     def stop_position(self):
@@ -196,6 +181,14 @@ class BitField(object):
         """Returns the width in bits of the bit field."""
         return self.msb - self.lsb + 1
 
+    @property 
+    def field_name(self):
+        return self._field_name
+
+    @field_name.setter
+    def field_name(self, value):
+        self._field_name = value.strip()
+
     @property
     def output_signal(self):
         """
@@ -203,28 +196,28 @@ class BitField(object):
         not specified the name, assume that it is the same as the name of the
         bit field.
         """
-        if self.__output_signal:
-            return self.__output_signal
+        if self._output_signal:
+            return self._output_signal
         else:
-            return clean_signal(self.field_name)
+            return clean_signal(self._field_name)
 
     @output_signal.setter
     def output_signal(self, output):
         """
         Sets the output signal associated with the bit range.
         """
-        self.__output_signal = clean_signal(output)
+        self._output_signal = clean_signal(output)
 
     @property
     def input_signal(self):
         """
         Gets the name of the input signal, if it exists.
         """
-        return self.__input_signal
+        return self._input_signal
 
     @input_signal.setter
     def input_signal(self, input_signal):
         """
         Sets the name of the input signal.
         """
-        self.__input_signal = clean_signal(input_signal)
+        self._input_signal = clean_signal(input_signal)

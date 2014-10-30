@@ -135,24 +135,17 @@ TYPES = (
                  "Read/Write, Read only on control signal, "
                  "one shot on any valid write",
                  "RWPR1S"),
+    BitFieldInfo(BitField.TYPE_WRITE_1_TO_CLEAR_SET_CLR,
+                 "W1CSC", True, True, False, True, True, False, False,
+                 "Write 1 to Clear, bits set on input signal, soft clear", "W1C"),
     )
 
-TYPE_TO_ID = {}
-for __i in TYPES:
-    TYPE_TO_ID[__i.type] = __i.id
+TYPE_TO_ID = dict((__i.type, __i.id) for __i in TYPES)
 
-ID_TO_TYPE = {}
-for __i in TYPES:
-    ID_TO_TYPE[__i.id] = __i.type
+ID_TO_TYPE = dict((__i.id, __i.type) for __i in TYPES)
 
-TYPE_TO_SIMPLE_TYPE = {}
-for __i in TYPES:
-    TYPE_TO_SIMPLE_TYPE[__i.type] = __i.simple_type
+TYPE_TO_SIMPLE_TYPE = dict((__i.type, __i.simple_type) for __i in TYPES)
 
-TYPE_TO_DESCR = {}
-for __i in TYPES:
-    TYPE_TO_DESCR[__i.type] = __i.description
+TYPE_TO_DESCR = dict((__i.type, __i.description) for __i in TYPES)
 
-TYPE_TO_ENABLE = {}
-for i in TYPES:
-    TYPE_TO_ENABLE[i.type] = (i.input, i.control)
+TYPE_TO_ENABLE = dict((__i.type, (__i.input, __i.control)) for __i in TYPES)

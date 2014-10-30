@@ -30,76 +30,38 @@ class Register(object):
     Defines a hardware register.
     """
 
+    full_compare = ("address", "ram_size", "description",
+                    "width", "_id", "_token", "_do_not_test",
+                    "_name", "_hide", "_do_not_generate_code")
+
+    doc_compare = ("address", "ram_size", "description",
+                   "width", "_id", "_token", "_name", "_hide")
+
     def __init__(self, address=0, width=32, name=""):
         self.address = address
         self.ram_size = 0
         self.description = ""
         self.width = width
-        self.__id = ""
+        self._id = ""
 
-        self.__token = ""
-        self.__do_not_test = False
-        self.__name = name
-        self.__hide = False
-        self.__do_not_generate_code = False
+        self._token = ""
+        self._do_not_test = False
+        self._name = name
+        self._hide = False
+        self._do_not_generate_code = False
         self.__bit_fields = {}
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def __eq__(self, other):
-        if self.address != other.address:
+        if not all(self.__dict__[i] == other.__dict__[i]
+                   for i in self.full_compare):
             return False
+        return self.get_bit_fields() == other.get_bit_fields()
 
-        if self.__name != other.__name:
-            return False
-
-        if self.ram_size != other.ram_size:
-            return False
-
-        if self.description != other.description:
-            return False
-
-        if self.width != other.width:
-            return False
-
-        if self.__token != other.token:
-            return False
-
-        if self.__do_not_test != other.__do_not_test:
-            return False
-
-        if self.__hide != other.hide:
-            return False
-
-        if self.__do_not_generate_code != other.__do_not_generate_code:
-            return False
-
-        if len(self.__bit_fields) != len(other.__bit_fields):
-            return False
-
-        other_fields = set([i.uuid for i in other.get_bit_fields()])
-        my_fields = set([i.uuid for i in self.get_bit_fields()])
-
-        if (my_fields - other_fields) or (other_fields - my_fields):
-            return False
-
-        common = other_fields & my_fields
-
-        old_fields = {}
-        new_fields = {}
-
-        for field in other.get_bit_fields():
-            old_fields[field.uuid] = field
-
-        for field in self.get_bit_fields():
-            new_fields[field.uuid] = field
-
-        for uuid in common:
-            if new_fields[uuid] != old_fields[uuid]:
-                return False
-
-        return True
+    def __cmp__(self, other):
+        return cmp(self.address, other.address)
 
     def find_first_unused_bit(self):
         """
@@ -142,21 +104,21 @@ class Register(object):
 
     @property
     def uuid(self):
-        if not self.__id:
-            self.__id = uuid.uuid4().hex
-        return self.__id
+        if not self._id:
+            self._id = uuid.uuid4().hex
+        return self._id
 
     @uuid.setter
     def uuid(self, value):
-        self.__id = value
+        self._id = value
 
     @property
     def do_not_generate_code(self):
         """
-        Returns the value of the __do_not_generate_code flag. This cannot
+        Returns the value of the _do_not_generate_code flag. This cannot
         be accessed directly, but only via the property 'do_not_generate_code'
         """
-        return self.__do_not_generate_code
+        return self._do_not_generate_code
 
     @do_not_generate_code.setter
     def do_not_generate_code(self, val):
@@ -164,15 +126,15 @@ class Register(object):
         Sets the __do_not_generate_code flag. This cannot be accessed
         directly, but only via the property 'do_not_generate_code'
         """
-        self.__do_not_generate_code = bool(val)
+        self._do_not_generate_code = bool(val)
 
     @property
     def do_not_test(self):
         """
-        Returns the value of the __do_not_generate_code flag. This
+        Returns the value of the _do_not_generate_code flag. This
         cannot be accessed directly, but only via the property 'do_not_test'
         """
-        return self.__do_not_test
+        return self._do_not_test
 
     @do_not_test.setter
     def do_not_test(self, val):
@@ -180,15 +142,15 @@ class Register(object):
         Sets the __do_not_generate_code flag. This cannot be accessed
         directly, but only via the property 'do_not_test'
         """
-        self.__do_not_test = bool(val)
+        self._do_not_test = bool(val)
 
     @property
     def hide(self):
         """
-        Returns the value of the __hide flag. This cannot be accessed
+        Returns the value of the _hide flag. This cannot be accessed
         directly, but only via the property 'hide'
         """
-        return self.__hide
+        return self._hide
 
     @hide.setter
     def hide(self, val):
@@ -196,15 +158,15 @@ class Register(object):
         Sets the __hide flag. This cannot be accessed directly, but only
         via the property 'hide'
         """
-        self.__hide = bool(val)
+        self._hide = bool(val)
 
     @property
     def token(self):
         """
-        Returns the value of the __token flag. This cannot be accessed
+        Returns the value of the _token flag. This cannot be accessed
         directly, but only via the property 'token'
         """
-        return self.__token
+        return self._token
 
     @token.setter
     def token(self, val):
@@ -212,15 +174,15 @@ class Register(object):
         Sets the __token flag. This cannot be accessed directly, but only
         via the property 'token'
         """
-        self.__token = val.strip().upper()
+        self._token = val.strip().upper()
 
     @property
     def register_name(self):
         """
-        Returns the value of the __name flag. This cannot be accessed
+        Returns the value of the _name flag. This cannot be accessed
         directly, but only via the property 'register_name'
         """
-        return self.__name
+        return self._name
 
     @register_name.setter
     def register_name(self, name):
@@ -228,15 +190,14 @@ class Register(object):
         Sets the __name flag. This cannot be accessed directly, but only
         via the property 'register_name'
         """
-        self.__name = name.strip()
+        self._name = name.strip()
 
     def get_bit_fields(self):
         """
         Returns a dictionary of bit fields. The key is msb of the
         bit field.
         """
-        return sorted(self.__bit_fields.values(),
-                      key=lambda x: x.msb)
+        return sorted(self.__bit_fields.values())
 
     def get_bit_field(self, key):
         """

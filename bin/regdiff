@@ -42,190 +42,194 @@ def run():
     """
     main program
     """
-    from optparse import OptionParser
+    from argparse import ArgumentParser
     import regenerate.writers
     from regenerate import PROGRAM_VERSION
     import sys
 
-    parser = OptionParser(
-        usage="%prog [old project file] [new project file]",
+    parser = ArgumentParser(
         description="Compares two project files, reporting differences",
         prog="regdiff",
         version=PROGRAM_VERSION
         )
 
-    (options, args) = parser.parse_args()
+    parser.add_argument("--verbose", action="store_true")
+    parser.add_argument("old_project", help="Original project", type=str)
+    parser.add_argument("new_project", help="Updated project", type=str)
 
-    if len(args) != 2:
-        parser.print_help()
-        sys.exit(1)
+    options = parser.parse_args()
 
-    old_project = RegProject(args[0])
-    new_project = RegProject(args[1])
+    old_project = RegProject(options.old_project)
+    new_project = RegProject(options.new_project)
 
-    check_register_sets(old_project, new_project)
+    check_register_sets(old_project, new_project, options.verbose)
 
     compare_groupings(old_project.get_grouping_list(),
                       new_project.get_grouping_list())
 
 
 def print_header(dbname):
-    print("\n{0} changed".format(dbname))
-    print("============================================\n")
+    print("\n# {0} changed".format(dbname))
 
 
 def check_registers(dbname, old_db, new_db):
 
     need_header = True
-    old_reg_names = set([(r.uuid) for r in old_db.get_all_registers()])
-    new_reg_names = set([(r.uuid) for r in new_db.get_all_registers()])
 
-    old_reg_map = {}
-    for r in old_db.get_all_registers():
-        old_reg_map[r.uuid] = r
+    or_map = dict((r.uuid, r) for r in old_db.get_all_registers())
+    nr_map = dict((r.uuid, r) for r in new_db.get_all_registers())
 
-    new_reg_map = {}
-    for r in new_db.get_all_registers():
-        new_reg_map[r.uuid] = r
+    or_names = set(or_map.keys())
+    nr_names = set(nr_map.keys())
 
-    removed_regs = old_reg_names - new_reg_names
-    added_regs = new_reg_names - old_reg_names
-    common_regs = old_reg_names & new_reg_names
+    removed = or_names - nr_names
+    added = nr_names - or_names
+    common = or_names & nr_names
 
-    if removed_regs:
+    if removed:
         if need_header:
             print_header(dbname)
             need_header = False
-        print("\nRegisters removed")
-        print("---------------------\n")
+        print("\n## Registers removed")
 
-        for uuid in removed_regs:
-            print("* {0} - address {1:x}".format(old_reg_map[uuid].register_name,
-                                                 old_reg_map[uuid].address))
+        for uuid in removed:
+            print("- {0} - address {1:x}".format(
+                    or_map[uuid].register_name,
+                    or_map[uuid].address))
 
-    if added_regs:
+    if added:
         if need_header:
             print_header(dbname)
             need_header = False
-        print("\nRegisters added")
-        print("---------------------\n")
+        print("\n## Registers added")
 
-        for uuid in added_regs:
-            print("* {0} - address {1:x}".format(new_reg_map[uuid].register_name,
-                                                 new_reg_map[uuid].address))
+        for uuid in added:
+            print("- {0} - address {1:x}".format(
+                    nr_map[uuid].register_name,
+                    nr_map[uuid].address))
 
-    if common_regs:
-        for uuid in common_regs:
-            new_reg = new_reg_map[uuid]
-            old_reg = old_reg_map[uuid]
-            if new_reg != old_reg:
+    if common:
+        for uuid in common:
+            nreg = nr_map[uuid]
+            oreg = or_map[uuid]
+            if nreg != oreg:
                 if need_header:
                     print_header(dbname)
                     need_header = False
-                print("* {0} changed".format(new_reg.register_name))
-                dump_register_changes(new_reg, old_reg)
+                print("- {0} changed".format(nreg.register_name))
+                dump_register_changes(nreg, oreg)
 
 
 def dump_register_changes(new_reg, old_reg):
 
     if new_reg.register_name != old_reg.register_name:
-        print('  - Name changed from "{0}" to "{1}"'.format(old_reg.register_name,
-                                                           new_reg.register_name))
+        print('   - Name changed from "{0}" to "{1}"'.format(
+                old_reg.register_name, new_reg.register_name))
     if new_reg.address != old_reg.address:
-        print('  - Address changed from {0:x} to {1:x}'.format(old_reg.address,
-                                                                   new_reg.address))
+        print('   - Address changed from {0:x} to {1:x}'.format(
+                old_reg.address, new_reg.address))
     if new_reg.ram_size != old_reg.ram_size:
-        print('  - RAM size changed from {0:x} to {1:x}'.format(old_reg.ram_size,
-                                                                     new_reg.ram_size))
+        print('   - RAM size changed from {0:x} to {1:x}'.format(
+                old_reg.ram_size, new_reg.ram_size))
     if new_reg.width != old_reg.width:
-        print('  - Width changed from {0}-bits to {1}-bits'.format(old_reg.width,
-                                                                   new_reg.width))
+        print('   - Width changed from {0}-bits to {1}-bits'.format(
+                old_reg.width, new_reg.width))
     if new_reg.description != old_reg.description:
-        print('  - Description changed')
+        print('   - Description changed')
     if new_reg.do_not_generate_code != old_reg.do_not_generate_code:
-        print('  - Code generation flag changed from {0} to {1}'.format(old_reg.do_not_generate_code,
-                                                                        new_reg.do_not_generate_code))
+        print('   - Code generation flag changed from {0} to {1}'.format(
+                old_reg.do_not_generate_code, new_reg.do_not_generate_code))
     if new_reg.do_not_test != old_reg.do_not_test:
-        print('  - Test suppression flag changed from {0} to {1}'.format(old_reg.do_not_test,
-                                                                         new_reg.do_not_test))
+        print('   - Test suppression flag changed from {0} to {1}'.format(
+                old_reg.do_not_test, new_reg.do_not_test))
     if new_reg.hide != old_reg.hide:
-        print('  - Documentation suppression flag changed from {0} to {1}'.format(old_reg.hide,
-                                                                                  new_reg.hide))
+        print('   - Documentation suppression flag changed from {0} to {1}'.format(
+                old_reg.hide, new_reg.hide))
     if new_reg.token != old_reg.token:
-        print('  - Token changed from {0} to {1}'.format(old_reg.token,
-                                                         new_reg.token))
+        print('   - Token changed from {0} to {1}'.format(
+                old_reg.token, new_reg.token))
 
     old_field_ids = set([i.uuid for i in old_reg.get_bit_fields()])
     new_field_ids = set([i.uuid for i in new_reg.get_bit_fields()])
 
-    old_fields = {}
-    for i in old_reg.get_bit_fields():
-        old_fields[i.uuid] = i;
-
-    new_fields = {}
-    for i in new_reg.get_bit_fields():
-        new_fields[i.uuid] = i;
+    old_fields = dict((i.uuid, i) for i in old_reg.get_bit_fields())
+    new_fields = dict((i.uuid, i) for i in new_reg.get_bit_fields())
 
     removed = old_field_ids - new_field_ids
     for i in removed:
-        print('  - Field "{0}" removed'.format(old_fields[i].field_name))
+        print('   - Field "{0}" removed'.format(old_fields[i].field_name))
 
     added = new_field_ids - old_field_ids
     for i in added:
-        print('  - Field "{0}" added'.format(new_fields[i].field_name))
+        print('   - Field "{0}" added'.format(new_fields[i].field_name))
 
     for uuid in old_field_ids & new_field_ids:
         dump_field_changes(old_fields[uuid], new_fields[uuid])
     
 
-def dump_field_changes(old_field, new_field):
+def dump_field_changes(ofld, nfld):
     
-    if old_field.field_name != new_field.field_name:
-        print('  - Field "{0}" renamed from "{1}"'.format(new_field.field_name,
-                                                          old_field.field_name))
-    if (old_field.msb, old_field.lsb) != (new_field.msb, new_field.lsb):
-        print('  - Field "{0}" bit fields changed from [{1}:{2}] to [{3}:{4}]'.format(new_field.field_name,
-                                                                                      old_field.msb,
-                                                                                      old_field.lsb,
-                                                                                      new_field.msb,
-                                                                                      new_field.lsb))
+    if ofld.field_name != nfld.field_name:
+        print('   - Field "{0}" renamed from "{1}"'.format(
+                nfld.field_name, ofld.field_name))
+    if (ofld.msb, ofld.lsb) != (nfld.msb, nfld.lsb):
+        print('   - Field "{0}" bit fields changed from [{1}:{2}] to [{3}:{4}]'.format(
+                nfld.field_name, ofld.msb, ofld.lsb,
+                nfld.msb, nfld.lsb))
 
-    if old_field.reset_type != new_field.reset_type:
-        print('  - Field "{0}" reset type changed'.format(new_field.field_name))
+    if ofld.reset_type != nfld.reset_type:
+        print('   - Field "{0}" reset type changed'.format(nfld.field_name))
     else:
-        if old_field.reset_value != new_field.reset_value:
-            print('  - Field "{0}" reset value changed from {1:x} to {2:X}'.format(new_field.field_name,
-                                                                                   old_field.reset_value,
-                                                                                   new_field.reset_value))
-        if old_field.reset_input != new_field.reset_input:
-            print('  - Field "{0}" reset input value changed from "{1}" to "{2}"'.format(new_field.field_name,
-                                                                                         old_field.reset_input,
-                                                                                         new_field.reset_input))
-        if old_field.reset_parameter != new_field.reset_parameter:
-            print('  - Field "{0}" reset parameter value changed from "{1}" to "{2}"'.format(new_field.field_name,
-                                                                                             old_field.reset_input,
-                                                                                             new_field.reset_input))
+        if ofld.reset_value != nfld.reset_value:
+            print('   - Field "{0}" reset value changed from {1:x} to {2:X}'.format(
+                    nfld.field_name, ofld.reset_value, nfld.reset_value))
+        if ofld.reset_input != nfld.reset_input:
+            print('   - Field "{0}" reset input value changed from "{1}" to "{2}"'.format(
+                    nfld.field_name, ofld.reset_input, nfld.reset_input))
+        if ofld.reset_parameter != nfld.reset_parameter:
+            print('   - Field "{0}" reset parameter value changed from "{1}" to "{2}"'.format(
+                    nfld.field_name, ofld.reset_input, nfld.reset_input))
 
-    if old_field.use_output_enable != new_field.use_output_enable:
-        print('  - Field "{0}" output enable changed from {1} to {2}'.format(new_field.field_name,
-                                                                             old_field.use_output_enable,
-                                                                             new_field.use_output_enable))
-    elif old_field.output_signal != new_field.output_signal:
-        print('  - Field "{0}" output signal changed from "{1}" to "{2}"'.format(new_field.field_name,
-                                                                                 old_field.output_signal,
-                                                                                 new_field.output_signal))
-
+    if ofld.use_output_enable != nfld.use_output_enable:
+        print('   - Field "{0}" output enable changed from {1} to {2}'.format(
+                nfld.field_name, ofld.use_output_enable,
+                nfld.use_output_enable))
+    elif ofld.output_signal != nfld.output_signal:
+        print('   - Field "{0}" output signal changed from "{1}" to "{2}"'.format(
+                nfld.field_name, ofld.output_signal, nfld.output_signal))
         
-    if old_field.description != new_field.description:
-        print('  - Field "{0}" documentation changed'.format(new_field.field_name))
+    if ofld.description != nfld.description:
+        print('   - Field "{0}" documentation changed'.format(nfld.field_name))
 
-    if old_field.field_type != new_field.field_type:
-        print('  - Field "{0}" changed from "{1}" to "{2}"'.format(new_field.field_name,
-                                                                   TYPE_TO_DESCR[old_field.field_type],
-                                                                   TYPE_TO_DESCR[new_field.field_type]))
+    if ofld.field_type != nfld.field_type:
+        print('   - Field "{0}" changed from "{1}" to "{2}"'.format(
+                nfld.field_name, TYPE_TO_DESCR[ofld.field_type],
+                TYPE_TO_DESCR[nfld.field_type]))
+
+    if ofld.volatile != nfld.volatile:
+        print('   - Field "{0}" volatile flag changed from {1} to {2}'.format(
+                nfld.field_name, ofld.volatile, nfld.volatile))
+
+    if ofld.control_signal != nfld.control_signal:
+        print('   - Field "{0}" control signal changed from "{1}" to "{2}"'.format(
+                nfld.field_name, ofld.control_signal, nfld.control_signal))
+
+    if ofld.output_is_static != nfld.output_is_static:
+        print('   - Field "{0}" output static flag changed from {1} to {2}'.format(
+                nfld.field_name, ofld.output_is_static,
+                nfld.output_is_static))
+
+    if ofld.output_has_side_effect != nfld.output_has_side_effect:
+        print('   - Field "{0}" output side effect flag changed from {1} to {2}'.format(
+                nfld.field_name, ofld.output_has_side_effect,
+                nfld.output_has_side_effect))
+
+    if ofld.values != nfld.values:
+        print('   - Field "{0}" value definitions changed'.format(
+                nfld.field_name))
         
 
-def check_register_sets(old_project, new_project):
+def check_register_sets(old_project, new_project, verbose):
 
     old_list = [RegisterDb(item) for item in old_project.get_register_set()]
     new_list = [RegisterDb(item) for item in new_project.get_register_set()]
@@ -237,32 +241,30 @@ def check_register_sets(old_project, new_project):
     added = new_set - old_set
 
     if removed or added:
-        print("\nRegister Sets")
-        print("=======================\n")
+        print("\n# Register Sets")
 
     if removed:
-        print("\nRegister sets removed")
-        print("---------------------\n")
+        print("\n## Register sets removed")
         for s in sorted(removed):
-            print("* {0}".format(s))
+            print("- {0}".format(s))
 
     if added:
-        print("\nRegister sets added")
-        print("---------------------\n")
+        print("\n##Register sets added")
         for s in sorted(added):
-            print("* {0}".format(s))
+            print("- {0}".format(s))
 
     common = new_set & old_set
-    
-    old_dbs = {}
-    for db in old_list:
-        if db.set_name in common:
-             old_dbs[db.set_name] = db
 
-    new_dbs = {}
-    for db in new_list:
-        if db.set_name in common:
-            new_dbs[db.set_name] = db
+    if verbose:
+        print("\n##Register sets that did not change")
+        for s in sorted(common):
+            print("- {0}".format(s))
+
+    old_dbs = dict((db.set_name, db) for db in old_list
+                   if db.set_name in common)
+
+    new_dbs = dict((db.set_name, db) for db in new_list
+                   if db.set_name in common)
 
     for dbname in common:
         check_registers(dbname, old_dbs[dbname], new_dbs[dbname])
@@ -277,29 +279,21 @@ def compare_groupings(old_list, new_list):
     removed_names = old_names - new_names
     common_names = new_names & old_names
 
-    old_common = {}
-    for grp in old_list:
-        old_common[grp.name] = grp
-
-    new_common = {}
-    for grp in new_list:
-        new_common[grp.name] = grp
+    old_common = dict((grp.name, grp) for grp in old_list)
+    new_common = dict((grp.name, grp) for grp in new_list)
 
     if added_names or removed_names:
-        print("\nGroups")
-        print("====================================");
+        print("# Groups")
 
     if added_names:
-        print("\nGroups added")
-        print("------------------------------------\n")
+        print("\n## Groups added")
         for s in sorted(added_names):
-            print("* {0}".format(s))
+            print("- {0}".format(s))
 
     if removed_names:
-        print("\nGroups removed")
-        print("------------------------------------\n")
+        print("## Groups removed")
         for s in sorted(removed_names):
-            print("* {0}".format(s))
+            print("- {0}".format(s))
 
     header = False
     for name in common_names:
@@ -310,44 +304,40 @@ def compare_groupings(old_list, new_list):
             continue
 
         if not header:
-            print("\nGroups that changed")
-            print("---------------------\n")
+            print("\n## Groups that changed")
             header = True
-        print("{0}\n____________________".format(name))
+        print("### {0}".format(name))
 
         if o.base != n.base:
-            print("* Base changed from {0:x} to {1:x}".format(o.base, n.base))
+            print("- Base changed from {0:x} to {1:x}".format(o.base, n.base))
         if o.hdl != n.hdl:
-            print('* HDL path changed from "{0}" to "{1}"'.format(o.hdl, n.hdl))
+            print('- HDL path changed from "{0}" to "{1}"'.format(o.hdl, n.hdl))
         if o.repeat != n.repeat:
-            print("* Repeat changed from {0} to {1}".format(o.repeat, n.repeat))
+            print("- Repeat changed from {0} to {1}".format(o.repeat, n.repeat))
         if o.repeat_offset != n.repeat_offset:
-            print("* Repeat offset changed from {0:x} to {1:x}".format(o.repeat_offset, n.repeat_offset))
+            print("- Repeat offset changed from {0:x} to {1:x}".format(
+                    o.repeat_offset, n.repeat_offset))
         if o.docs != n.docs:
-            print("* Documentation changed")
+            print("- Documentation changed")
 
         o_set_names = set([x.set for x in o.register_sets])
         n_set_names = set([x.set for x in n.register_sets])
 
         removed_sets = o_set_names - n_set_names
         if removed_sets:
-            print("* Register set removed : {0}".format(", ".join(list(removed_sets))))
+            print("- Register set removed : {0}".format(", ".join(list(removed_sets))))
 
         added_sets = n_set_names - o_set_names
         if added_sets:
-            print("* Register set added : {0}".format(", ".join(list(added_sets))))
+            print("- Register set added : {0}".format(", ".join(list(added_sets))))
 
         common_sets = o_set_names & n_set_names
 
-        old_dict = {}
-        for nmp in o.register_sets:
-            if nmp.set in common_sets:
-                old_dict[nmp.set] = nmp
+        old_dict = dict((nmp.set, nmp) for nmp in o.register_sets
+                        if nmp.set in common_sets)
 
-        new_dict = {}
-        for nmp in n.register_sets:
-            if nmp.set in common_sets:
-                new_dict[nmp.set] = nmp
+        new_dict = dict((nmp.set, nmp) for nmp in n.register_sets
+                        if nmp.set in common_sets)
 
         hdr = False
         for n in common_sets:
@@ -356,25 +346,31 @@ def compare_groupings(old_list, new_list):
 
             if ng != og:
                 if hdr == False:
-                    print('\nChanged Register sets')
-                    print('^^^^^^^^^^^^^^^^^^^^^^^^\n')
+                    print('\n#### Changed Register sets')
                     hdr = True
-                print("* {0}".format(n))
+                print("- {0}".format(n))
 
                 if ng.inst != og.inst:
-                    print("  - Instance name changed from {0} to {1}".format(og.inst, ng.inst))
+                    print("   - Instance name changed from {0} to {1}".format(
+                            og.inst, ng.inst))
                 if ng.offset != og.offset:
-                    print("  - Instance offset changed from {0:x} to {1:x}".format(og.offset, ng.offset))
+                    print("   - Instance offset changed from {0:x} to {1:x}".format(
+                            og.offset, ng.offset))
                 if ng.repeat != og.repeat:
-                    print("  - Instance repeat changed from {0} to {1}".format(og.repeat, ng.repeat))
+                    print("   - Instance repeat changed from {0} to {1}".format(
+                            og.repeat, ng.repeat))
                 if ng.repeat_offset != og.repeat_offset:
-                    print("  - Instance repeat offset changed from {0} to {1}".format(og.repeat_offset, ng.repeat_offset))
+                    print("   - Instance repeat offset changed from {0} to {1}".format(
+                            og.repeat_offset, ng.repeat_offset))
                 if ng.format != og.format:
-                    print('  - Instance format changed from "{0}" to "{1}"'.format(og.format, ng.format))
+                    print('   - Instance format changed from "{0}" to "{1}"'.format(
+                            og.format, ng.format))
                 if ng.hdl != og.hdl:
-                    print('  - Instance HDL path changed from "{0}" to "{1}"'.format(og.hdl, ng.hdl))
+                    print('   - Instance HDL path changed from "{0}" to "{1}"'.format(
+                            og.hdl, ng.hdl))
                 if ng.no_uvm != og.no_uvm:
-                    print('  - Instance UVM exclude changed from "{0}" to "{1}"'.format(og.no_uvm, ng.no_uvm))
+                    print('   - Instance UVM exclude changed from "{0}" to "{1}"'.format(
+                            og.no_uvm, ng.no_uvm))
 
         print("")
 

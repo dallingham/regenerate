@@ -45,9 +45,7 @@ except ImportError:
 
 VALID_SIGNAL = re.compile("^[A-Za-z][A-Za-z0-9_]*$")
 
-TYPE_ENB = {}
-for i in TYPES:
-    TYPE_ENB[i.type] = (i.input, i.control)
+TYPE_ENB = [(__i.type, (__i.input, __i.control)) for __i in TYPES]
 
 
 class BitFieldEditor(object):
