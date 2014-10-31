@@ -56,9 +56,9 @@ class IpXactParser(object):
         parser.StartElementHandler = self.start_element
         parser.EndElementHandler = self.end_element
         parser.CharacterDataHandler = self.characters
-        f = open(input_file)
-        parser.ParseFile(f)
-        f.close()
+        with open(input_file) as f:
+            parser.ParseFile(f)
+        crossreference(self._db)
 
     def start_element(self, tag, attrs):
         """
@@ -132,14 +132,14 @@ class IpXactParser(object):
         elif self._reg:
             self._reg.register_name = text.replace('_', ' ')
             self._reg.token = text.upper()
-        elif not self._in_maps:
-            self._db.descriptive_title = text
+        elif not self._in_maps and not self._db.descriptive_title:
+            self._db.descriptive_title = text.strip()
 
     def end_spirit_description(self, text):
         if self._field:
-            self._field.description = " ".join(text.split())
+            self._field.description = text.strip()
         elif self._reg:
-            self._reg.description = " ".join(text.split())
+            self._reg.description = text.strip()
 
     def end_spirit_bitOffset(self, text):
         self._fld_start = int(text, 0)
@@ -152,3 +152,22 @@ class IpXactParser(object):
 
     def end_spirit_memoryMaps(self, text):
         self._in_maps = False
+
+
+import re
+
+
+def crossreference(db):
+    names = sorted([reg.register_name
+                    for reg in db.get_all_registers()],
+                   key=len, reverse=True)
+
+    re_list = [r'([^`])({0}) ((R|r)egister)'.format(name) for name in names]
+
+    for reg in db.get_all_registers():
+        for regex in re_list:
+            reg.description = re.sub(regex, r'\1`\2`_ \3', reg.description)
+        for field in reg.get_bit_fields():
+            for regex in re_list:
+                field.description = re.sub(regex, r'\1`\2`_ \3',
+                                           field.description)
