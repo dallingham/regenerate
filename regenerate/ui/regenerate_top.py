@@ -1012,6 +1012,7 @@ class MainWindow(BaseWindow):
             "New", self.__top_window, gtk.FILE_CHOOSER_ACTION_SAVE,
             (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_SAVE,
              gtk.RESPONSE_OK))
+        choose.set_current_folder(os.curdir)
         choose.show()
 
         response = choose.run()
