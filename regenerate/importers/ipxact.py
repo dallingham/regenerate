@@ -47,6 +47,9 @@ class IpXactParser(object):
         self._in_maps = False
         self._block_offset = 0
         self._block_list = [0]
+        self._in_field_reset = False
+        self._in_reg_reset = False
+        self._reg_reset = (False, 0)
 
     def import_data(self, input_file):
         """
@@ -94,6 +97,7 @@ class IpXactParser(object):
     def end_spirit_register(self, text):
         self._db.add_register(self._reg)
         self._reg = None
+        self._reg_reset = (False, 0)
 
     def end_spirit_addressOffset(self, text):
         if self._reg:
@@ -111,6 +115,24 @@ class IpXactParser(object):
         if self._reg:
             self._reg.width = size
 
+    def start_spirit_reset(self, attrs):
+        if self._field:
+            self._in_field_reset = True
+        elif self._reg:
+            self._in_reg_reset = True
+
+    def end_spirit_reset(self, text):
+        self._in_field_reset = False
+        self._in_reg_reset = False
+
+    def end_spirit_value(self, text):
+        if self._in_field_reset:
+            if self._field:
+                self._field.reset_value = int(text, 16)
+                self._field.reset_type = BitField.RESET_NUMERIC
+        elif self._in_reg_reset:
+            self._reg_reset = (True, int(text,16))
+
     def start_spirit_field(self, attrs):
         self._field = BitField()
 
@@ -119,6 +141,10 @@ class IpXactParser(object):
             self._field.start_position = self._fld_start
             self._field.stop_position = self._fld_start + self._fld_width - 1
             self._reg.add_bit_field(self._field)
+            if self._reg_reset[0]:
+                self._field.reset_value = (self._reg_reset[1] >> self._fld_start) & ((1 << self._field.width) - 1)
+                self._field.reset_type = BitField.RESET_NUMERIC
+
         self._field = None
 
     def end_spirit_access(self, text):

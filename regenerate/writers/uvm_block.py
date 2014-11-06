@@ -68,6 +68,7 @@ class UVMBlockRegisters(WriterBase):
     REMAP_NAME = {
         'interface': 'interface_',
         'class': 'class_',
+        'do': 'do_',
         'package': 'package_',
         'set': 'set_',
         'edge': 'edge_',
