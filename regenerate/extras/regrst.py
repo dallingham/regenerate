@@ -135,8 +135,8 @@ class RegisterRst:
 
     def text(self, line):
         if self._highlight:
-            line = re.sub(self._highlight, "\ :search:`%s`" % self._highlight,
-                          line)
+            replacer = re.compile(self._highlight, re.IGNORECASE)
+            line = replacer.sub(lambda m: '\ :search:`%s`\ ' % m.group(0), line)
             return re.sub(r"_\\ ", r"\\_\\ ", line)
         else:
             return line

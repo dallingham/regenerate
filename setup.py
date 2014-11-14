@@ -27,6 +27,7 @@ setup(
     scripts=["bin/regenerate",
              "bin/regbuild",
              "bin/regupdate",
+             "bin/regxref",
              "bin/regdiff"],
     classifiers=[
         'Operating System :: POSIX',
