@@ -159,9 +159,6 @@ class RegisterRst:
         if self._show_defines:
             self._write_defines(o, True)
 
-#        if self._show_uvm:
-#            self._write_uvm(o)
-
         o.write(text)
 
         return o.getvalue()
@@ -213,12 +210,12 @@ class RegisterRst:
                 for val in sorted(field.values,
                                   key=lambda x: int(int(x[0], 16))):
                     if val[1]:
-                        o.write("       :%d: %s (%s)\n" % (int(val[0], 16),
-                                                           self.text(val[2]),
-                                                           self.text(val[1])))
+                        o.write("       :0x%x: %s (%s)\n" % (int(val[0], 16),
+                                                             self.text(val[2]),
+                                                             self.text(val[1])))
                     else:
-                        o.write("       :%d: %s\n" % (int(val[0], 16),
-                                                      self.text(val[2])))
+                        o.write("       :0x%x: %s\n" % (int(val[0], 16),
+                                                        self.text(val[2])))
             last_index = field.lsb - 1
         if last_index >= 0:
             display_reserved(o, last_index, 0)
@@ -286,7 +283,7 @@ class RegisterRst:
                             o.write(" - %s\n" % self.text(name))
                         if use_id:
                             name = full_token(inst.group, self._reg.token,
-                                              self._regset_name, i, inst.format)
+                                              inst.inst, i, inst.format)
                             if use_uvm:
                                 o.write("    ")
                             o.write(" - %s\n" % self.text(name))
