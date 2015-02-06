@@ -34,6 +34,8 @@ class GroupData(object):
         return not self.__eq__(other)
 
     def __eq__(self, other):
+        if other is None:
+            return False
         if self.name != other.name:
             return False
         if self.base != other.base:

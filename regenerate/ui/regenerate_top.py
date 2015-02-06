@@ -128,6 +128,7 @@ class MainWindow(BaseWindow):
 
         pango_font = pango.FontDescription("monospace")
         self.__builder.get_object('overview').modify_font(pango_font)
+        self.__builder.get_object('project_doc').modify_font(pango_font)
 
         self.__overview_buf = self.__builder.get_object('overview_buffer')
         self.__overview_buf.connect('changed', self.__overview_changed)
