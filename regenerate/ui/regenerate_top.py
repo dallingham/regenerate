@@ -67,10 +67,14 @@ VALID_SIGNAL = re.compile("^[A-Za-z][A-Za-z0-9_]*$")
 VALID_BITS = re.compile("^\s*[\(\[]?(\d+)(\s*[-:]\s*(\d+))?[\)\]]?\s*$")
 REGNAME = re.compile("^(.*)(\d+)(.*)$")
 
+_BITS8  = "8-bits"
+_BITS16 = "16-bits"
 _BITS32 = "32-bits"
 _BITS64 = "64-bits"
 
 SIZE2STR = (
+    (_BITS8,  1),
+    (_BITS16, 2),
     (_BITS32, 4),
     (_BITS64, 8)
     )
@@ -402,6 +406,8 @@ class MainWindow(BaseWindow):
         the numerical value.
         """
         store = gtk.ListStore(str, int)
+        store.append(row=["8 bits", 8])
+        store.append(row=["16 bits", 16])
         store.append(row=["32 bits", 32])
         store.append(row=["64 bits", 64])
         self.__data_width_obj.set_model(store)
@@ -766,7 +772,6 @@ class MainWindow(BaseWindow):
     def __prj_selection_changed(self, obj):
         data = self.__prj_obj.get_selected()
         old_skip = self.__skip_changes
-        self.__skip_changes = True
         if (data):
             (store, node) = data
             if self.active:
@@ -1112,6 +1117,7 @@ class MainWindow(BaseWindow):
         self.__status_obj.pop(idval)
         self.load_project_tab()
         self.__prj_loaded.set_sensitive(True)
+        self.__skip_changes = False
 
     def __initialize_project_address_maps(self):
         self.__instance_model = InstMdl()
@@ -1159,6 +1165,7 @@ class MainWindow(BaseWindow):
         self.clear_modified()
 
     def __input_xml(self, name, load=True):
+        old_skip = self.__skip_changes
         self.__skip_changes = True
         self.dbase = RegisterDb()
         self.__load_database(name)
@@ -1179,9 +1186,11 @@ class MainWindow(BaseWindow):
 
         self.__update_display()
         self.clear_modified()
+        self.__skip_changes = old_skip
 
     def __update_display(self):
-
+        old_skip = self.__skip_changes
+        self.__skip_changes = True
         if self.__reg_model:
             self.__reg_model.clear()
             for key in self.dbase.get_keys():
@@ -1189,7 +1198,7 @@ class MainWindow(BaseWindow):
                 self.__reg_model.append_register(register)
                 self.__set_register_warn_flags(register)
         self.redraw()
-        self.__skip_changes = False
+        self.__skip_changes = old_skip
 
     def open_xml(self, name, load=True):
         """
@@ -1306,7 +1315,6 @@ class MainWindow(BaseWindow):
         self.__module_entry_obj.set_text(self.dbase.module_name)
         self.__owner_entry_obj.set_text(self.dbase.owner)
         self.__title_entry_obj.set_text(self.dbase.descriptive_title)
-        self.__data_width_obj.set_active((self.dbase.data_bus_width / 32) - 1)
 
         self.__overview_buf.set_text(self.dbase.overview_text)
         self.__overview_buf.set_modified(False)
@@ -1324,7 +1332,8 @@ class MainWindow(BaseWindow):
 
         self.__address_bus_obj.set_text(self.dbase.address_bus_name)
         self.__address_width_obj.set_text(str(self.dbase.address_bus_width))
-        self.__data_width_obj.set_active(self.dbase.data_bus_width != 32)
+        self.__data_width_obj.set_active(bus_index(self.dbase.data_bus_width))
+
         self.__byte_level_obj.set_active(self.dbase.byte_strobe_active_level)
 
         self.update_bit_count()
@@ -1373,10 +1382,15 @@ class MainWindow(BaseWindow):
                 self.set_modified()
 
     def on_data_width_changed(self, obj):
-        if obj.get_active():
-            self.dbase.data_bus_width = 64
-        else:
+        val = obj.get_active()
+        if val == 0:
+            self.dbase.data_bus_width = 8
+        elif val == 1:
+            self.dbase.data_bus_width = 16
+        elif val == 2:
             self.dbase.data_bus_width = 32
+        else:
+            self.dbase.data_bus_width = 64
         self.set_modified()
 
     def on_byte_en_level_toggled(self, obj):
@@ -1479,6 +1493,7 @@ class MainWindow(BaseWindow):
         address
         """
         register = Register()
+        register.width = self.dbase.data_bus_width
         register.address = calculate_next_address(self.dbase)
         self.__insert_new_register(register)
 
@@ -1753,3 +1768,14 @@ def check_reset(field):
         field.reset_parameter.strip() == ""):
         return gtk.STOCK_DIALOG_WARNING
     return None
+
+
+def bus_index(value):
+    if value == 8:
+        return 0
+    elif value == 16:
+        return 1
+    elif value == 32:
+        return 2
+    else:
+        return 3

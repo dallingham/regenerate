@@ -323,7 +323,6 @@ class RegisterList(object):
         self.__model[path][RegisterModel.NAME_COL] = reg.register_name
         if reg.token == "":
             value = build_define(reg.register_name)
-            print reg.register_name, value
             self.__model[path][RegisterModel.DEFINE_COL] = value
             reg.token = value
             self.__set_modified()
