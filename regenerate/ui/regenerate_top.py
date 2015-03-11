@@ -1237,7 +1237,7 @@ class MainWindow(BaseWindow):
                     self.clear_modified(item[ProjectModel.OBJ])
                 except IOError as msg:
                     ErrorMsg("Could not save database", str(msg))
-
+                    
         self.__prj.set_new_order([item[0] for item in self.__prj_model])
         self.__instance_obj.get_groups()
         self.__prj.save()
@@ -1282,6 +1282,10 @@ class MainWindow(BaseWindow):
                                              "*" + data[3])
         response = choose.run()
         if response == gtk.RESPONSE_OK:
+            choose.hide()
+            while gtk.events_pending():
+                gtk.main_iteration()
+
             filename = choose.get_filename()
             if filename:
                 self.__import_using_importer(filename, data[0])

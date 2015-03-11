@@ -24,6 +24,7 @@ text is converted from restructuredText to HTML.
 """
 
 import gtk
+import pango
 from spell import Spell
 from preview_editor import PreviewEditor, PREVIEW_ENABLED
 from regenerate.settings.paths import GLADE_GTXT
@@ -38,6 +39,9 @@ class GroupDocEditor(object):
         self.group_doc = builder.get_object('group_text')
         self.group_inst = group_inst
         self.buffer = builder.get_object('overview1').get_buffer()
+        pango_font = pango.FontDescription("monospace")
+        builder.get_object('overview1').modify_font(pango_font)
+
         self.__prj_preview = PreviewEditor(
             self.buffer,
             builder.get_object('scroll_webkit1'))

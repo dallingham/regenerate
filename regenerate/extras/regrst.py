@@ -136,10 +136,10 @@ class RegisterRst:
     def text(self, line):
         if self._highlight:
             replacer = re.compile(self._highlight, re.IGNORECASE)
-            line = replacer.sub(lambda m: '\ :search:`%s`\ ' % m.group(0), line)
+            line = replacer.sub(lambda m: '\ :search:`%s`\ ' % m.group(0), line.strip())
             return re.sub(r"_\\ ", r"\\_\\ ", line)
         else:
-            return line
+            return line.strip()
 
     def restructured_text(self, text=""):
         """
@@ -181,7 +181,6 @@ class RegisterRst:
         last_index = self._reg.width - 1
 
         for field in reversed(self._reg.get_bit_fields()):
-
             if field.msb != last_index:
                 display_reserved(o, last_index, field.msb + 1)
 
@@ -258,40 +257,48 @@ class RegisterRst:
                     continue
                 if self._inst and inst.inst != self._inst:
                     continue
-                if inst.repeat == 1:
-                    o.write("   *")
-                    if use_uvm:
-                        name = uvm_name(inst.group, self._reg.token,
-                                        inst.inst, -1)
-                        o.write(" - %s\n" % self.text(name))
-                    if use_id:
-                        name = full_token(inst.group, self._reg.token, 
-                                          inst.inst, -1, inst.format)
-                        if use_uvm:
-                            o.write("    ")
-                        o.write(" - %s\n" % self.text(name))
-                    for map_name in addr_maps:
-                        map_base = self._prj.get_address_base(map_name.name)
-                        offset = map_base + inst.offset + inst.base
-                        o.write("     - %s\n" % reg_addr(self._reg, offset))
-                else:
-                    for i in range(0, inst.repeat):
+
+                for grp_inst in range(0, inst.grpt):
+                    if inst.grpt == 1:
+                        u_grp_name = inst.group
+                        t_grp_name = inst.group
+                    else:
+                        u_grp_name = "{0}[{1}]".format(inst.group, grp_inst)
+                        t_grp_name = "{0}{1}".format(inst.group, grp_inst)
+
+                    if inst.repeat == 1:
                         o.write("   *")
                         if use_uvm:
-                            name = uvm_name(inst.group, self._reg.token,
-                                            inst.inst, i)
+                            name = uvm_name(u_grp_name, self._reg.token,
+                                            inst.inst, -1)
                             o.write(" - %s\n" % self.text(name))
                         if use_id:
-                            name = full_token(inst.group, self._reg.token,
-                                              inst.inst, i, inst.format)
+                            name = full_token(t_grp_name, self._reg.token, 
+                                              inst.inst, -1, inst.format)
                             if use_uvm:
                                 o.write("    ")
                             o.write(" - %s\n" % self.text(name))
                         for map_name in addr_maps:
-                            base = self._prj.get_address_base(map_name.name)
-                            offset = inst.base + inst.offset + (i * inst.roffset)
-                            o.write("     - %s\n" % reg_addr(self._reg,
-                                                             offset + base))
+                            map_base = self._prj.get_address_base(map_name.name)
+                            offset = map_base + inst.offset + inst.base + (grp_inst * inst.grpt_offset)
+                            o.write("     - %s\n" % reg_addr(self._reg, offset))
+                    else:
+                        for i in range(0, inst.repeat):
+                            o.write("   *")
+                            if use_uvm:
+                                name = uvm_name(u_grp_name, self._reg.token,
+                                                inst.inst, i)
+                                o.write(" - %s\n" % self.text(name))
+                            if use_id:
+                                name = full_token(t_grp_name, self._reg.token,
+                                                  inst.inst, i, inst.format)
+                                if use_uvm:
+                                    o.write("    ")
+                                o.write(" - %s\n" % self.text(name))
+                            for map_name in addr_maps:
+                                base = self._prj.get_address_base(map_name.name)
+                                offset = inst.base + inst.offset + (i * inst.roffset) + (grp_inst * inst.grpt_offset)
+                                o.write("     - %s\n" % reg_addr(self._reg, offset + base))
         o.write("\n\n")
 
     def _display_uvm_entry(self, inst, index, o):

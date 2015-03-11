@@ -20,7 +20,7 @@
 from collections import namedtuple
 
 InstData = namedtuple("InstData",
-                      "group inst set base offset repeat roffset format")
+                      "group inst set base offset repeat roffset format grpt grpt_offset")
 
 DEFAULT_FORMAT = "%(G)s_%(S)s%(D)s_%(R)s"
 
@@ -65,5 +65,8 @@ def in_groups(name, project):
                                        regset.offset,
                                        regset.repeat,
                                        regset.repeat_offset,
-                                       fmt))
+                                       fmt,
+                                       group.repeat,
+                                       group.repeat_offset))
+
     return groups
