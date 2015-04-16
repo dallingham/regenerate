@@ -1025,8 +1025,8 @@ class Verilog2001(Verilog):
                                       field.reset_value))
 
         if plist or blist:
-            params = ["bit %s = %d'h%x" % item for item in blist] + \
-                ["bit [%d:%d] %s = %d'h%x" % item for item in plist]
+            params = ["parameter bit %s = %d'h%x" % item for item in blist] + \
+                ["parameter bit [%d:%d] %s = %d'h%x" % item for item in plist]
             self._wrln('module %s\n   #(\n    ' % self._module)
             self._wrln(",\n    ".join(params))
             self._wrln('\n   )\n   (\n')
