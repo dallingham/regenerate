@@ -21,8 +21,7 @@ Parses the register database, loading the database.
 """
 
 import xml.parsers.expat
-
-from regenerate.db import Register, BitField
+from regenerate.db import Register, BitField, LOGGER
 
 text2field = {
     "read-only": BitField.TYPE_READ_ONLY,
@@ -59,7 +58,7 @@ class IpXactParser(object):
         parser.CharacterDataHandler = self.characters
         with open(input_file) as f:
             parser.ParseFile(f)
-        crossreference(self._db)
+        #crossreference(self._db)
 
     def start_element(self, tag, attrs):
         """
@@ -190,10 +189,16 @@ def crossreference(db):
 
     re_list = [r'([^`])({0}) ((R|r)egister)'.format(name) for name in names]
 
+    LOGGER.info("Cross Referencing...")
+    while gtk.events_pending():
+        gtk.main_iteration()
+    
     for reg in db.get_all_registers():
+        print reg
         for regex in re_list:
             reg.description = re.sub(regex, r'\1`\2`_ \3', reg.description)
         for field in reg.get_bit_fields():
+            print field
             for regex in re_list:
                 field.description = re.sub(regex, r'\1`\2`_ \3',
                                            field.description)

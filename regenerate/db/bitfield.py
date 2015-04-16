@@ -20,6 +20,7 @@
 Provides the definition of a Bit Field,
 """
 
+
 import uuid
 
 
@@ -33,6 +34,7 @@ class BitField(object):
     BitField - holds all the data related to a bit field (one or more bits
     of a register)
     """
+    PARAMETERS = {}
 
     (TYPE_READ_ONLY, TYPE_READ_ONLY_VALUE, TYPE_READ_ONLY_LOAD,
      TYPE_READ_ONLY_CLEAR_LOAD, TYPE_READ_ONLY_VALUE_1S, TYPE_READ_WRITE,
@@ -54,16 +56,19 @@ class BitField(object):
 
     (RESET_NUMERIC, RESET_INPUT, RESET_PARAMETER) = range(3)
 
-    full_compare = ("_output_signal", "_input_signal", "_id", "lsb", "msb",
-                    "_field_name", "use_output_enable", "field_type",
-                    "volatile", "is_error_field", "reset_value", "reset_input",
-                    "reset_type", "reset_parameter", "description",
-                    "control_signal", "output_is_static",
-                    "output_has_side_effect", "values")
+    full_compare = (
+        "_output_signal", "_input_signal", "_id", "lsb",
+        "msb", "_field_name", "use_output_enable",
+        "field_type", "volatile", "is_error_field",
+        "_reset_value", "reset_input", "reset_type",
+        "reset_parameter", "description", "control_signal",
+        "output_is_static", "output_has_side_effect",
+        "values")
 
-    doc_compare = ("_id", "lsb", "msb", "_field_name", "field_type",
-                   "is_error_field", "reset_value", "reset_input",
-                   "reset_type", "reset_parameter", "description", "values")
+    doc_compare = (
+        "_id", "lsb", "msb", "_field_name", "field_type",
+        "is_error_field", "_reset_value", "reset_input", "reset_type",
+        "reset_parameter", "description", "values")
 
     def __init__(self, stop=0, start=0):
 
@@ -78,7 +83,7 @@ class BitField(object):
         self.field_type = BitField.TYPE_READ_ONLY
         self.volatile = False
         self.is_error_field = False
-        self.reset_value = 0
+        self._reset_value = 0
         self.reset_input = ""
         self.reset_type = BitField.RESET_NUMERIC
         self.reset_parameter = ""
@@ -87,6 +92,10 @@ class BitField(object):
         self.output_is_static = False
         self.output_has_side_effect = False
         self.values = []
+
+    @staticmethod
+    def set_parameters(values):
+        BitField.PARAMETERS = values
 
     def __eq__(self, other):
         return all(self.__dict__[i] == other.__dict__[i]
@@ -122,6 +131,17 @@ class BitField(object):
             return "%d" % self.lsb
         else:
             return "[%d:%d]" % (self.msb, self.lsb)
+
+    @property
+    def reset_value(self):
+        if self.reset_type == BitField.RESET_PARAMETER:
+            return BitField.PARAMETERS.get(self.reset_parameter, 0)
+        else:
+            return self._reset_value
+
+    @reset_value.setter
+    def reset_value(self, value):
+        self._reset_value = value
 
     @property
     def uuid(self):

@@ -30,11 +30,11 @@ class InstMdl(gtk.TreeStore):
     """
 
     (INST_COL, ID_COL, BASE_COL, SORT_COL, RPT_COL, OFF_COL, FMT_COL, HDL_COL,
-     UVM_COL, OBJ_COL) = range(10)
+     UVM_COL, ARRAY_COL, OBJ_COL) = range(11)
 
     def __init__(self):
         gtk.TreeStore.__init__(self, str, str, str, gobject.TYPE_UINT64, str,
-                               str, str, str, bool, object)
+                               str, str, str, bool, bool, object)
         self.callback = self.__null_callback()
 
     def __null_callback(self):
@@ -97,6 +97,13 @@ class InstMdl(gtk.TreeStore):
         self[path][InstMdl.UVM_COL] = not self[path][InstMdl.UVM_COL]
         self.callback()
 
+    def change_array(self, cell, path):
+        """
+        Called when the ID of an instance has been edited in the InstanceList
+        """
+        self[path][InstMdl.ARRAY_COL] = not self[path][InstMdl.ARRAY_COL]
+        self.callback()
+
     def change_base(self, path, text):
         """
         Called when the base address of an instance has been edited in the
@@ -153,7 +160,7 @@ class InstMdl(gtk.TreeStore):
         new_grp = GroupData("new_group")
         row = build_row_data(new_grp.name, new_grp.name, new_grp.base,
                              new_grp.repeat, new_grp.repeat_offset, "",
-                             new_grp.hdl, False, new_grp)
+                             new_grp.hdl, False, False, new_grp)
 
         node = self.append(None, row=row)
         self.callback()
@@ -163,14 +170,16 @@ class InstMdl(gtk.TreeStore):
 class InstanceList(object):
     def __init__(self, obj, id_changed, inst_changed, base_changed,
                  repeat_changed, repeat_offset_changed, format_changed,
-                 hdl_changed, uvm_changed):
+                 hdl_changed, uvm_changed, array_changed):
         self.__obj = obj
         self.__col = None
         self.__project = None
         self.__model = None
         self.__build_instance_table(id_changed, inst_changed, base_changed,
                                     repeat_changed, repeat_offset_changed,
-                                    format_changed, hdl_changed, uvm_changed)
+                                    format_changed, hdl_changed, uvm_changed,
+                                    array_changed
+        )
         self.__enable_dnd()
         self.__obj.set_sensitive(False)
 
@@ -209,8 +218,10 @@ class InstanceList(object):
                 fmt = self.__model.get_value(child, InstMdl.FMT_COL)
                 hdl = self.__model.get_value(child, InstMdl.HDL_COL)
                 uvm = self.__model.get_value(child, InstMdl.UVM_COL)
+                array = self.__model.get_value(child, InstMdl.ARRAY_COL)
                 current_group.register_sets.append(
-                    GroupMapData(name, inst, base, rpt, offset, fmt, hdl, uvm))
+                    GroupMapData(name, inst, base, rpt, offset, fmt,
+                                 hdl, uvm, array))
                 child = self.__model.iter_next(child)
             tree_iter = self.__model.iter_next(tree_iter)
         return groups
@@ -248,7 +259,7 @@ class InstanceList(object):
         drop_info = treeview.get_dest_row_at_pos(x, y)
         (name, width) = data.split(":")
         row_data = build_row_data(name, name, 0, 1, int(width), "", "", False,
-                                  None)
+                                  False, None)
         if drop_info:
             path, position = drop_info
             self.modified_callback()
@@ -272,7 +283,8 @@ class InstanceList(object):
         for item in group_list:
 
             row = build_row_data(item.name, "", item.base, item.repeat,
-                                 item.repeat_offset, "", item.hdl, 0, item)
+                                 item.repeat_offset, "", item.hdl,
+                                 False, False, item)
             node = self.__model.append(None, row=row)
 
             entry_list = sorted(item.register_sets, key=lambda x: x.offset)
@@ -280,12 +292,13 @@ class InstanceList(object):
                 row = build_row_data(entry.inst, entry.set, entry.offset,
                                      entry.repeat, entry.repeat_offset,
                                      entry.format, entry.hdl, entry.no_uvm,
-                                     None)
+                                     entry.array, None)
                 self.__model.append(node, row=row)
 
     def __build_instance_table(self, id_changed, inst_changed, base_changed,
                                repeat_changed, repeat_offset_changed,
-                               format_changed, hdl_changed, uvm_changed):
+                               format_changed, hdl_changed, uvm_changed,
+                               array_changed):
 
         column = EditableColumn('Instance', inst_changed, InstMdl.INST_COL)
         column.set_sort_column_id(InstMdl.INST_COL)
@@ -326,8 +339,12 @@ class InstanceList(object):
         column.set_min_width(100)
         self.__obj.append_column(column)
 
+        column = ToggleColumn('Force arrays', array_changed, InstMdl.ARRAY_COL)
+        column.set_min_width(100)
+        self.__obj.append_column(column)
 
-def build_row_data(inst, name, offset, rpt, rpt_offset, fmt, hdl, uvm, obj):
+
+def build_row_data(inst, name, offset, rpt, rpt_offset, fmt, hdl, uvm, array, obj):
     row = (inst, name, "{0:x}".format(offset), offset, "{0:d}".format(rpt),
-           "{0:x}".format(rpt_offset), fmt, hdl, uvm, obj)
+           "{0:x}".format(rpt_offset), fmt, hdl, uvm, array, obj)
     return row

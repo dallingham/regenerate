@@ -1013,8 +1013,8 @@ class Verilog2001(Verilog):
                                       field.width, field.reset_value))
 
         if plist or blist:
-            params = ["bit %s = %d'h%x" % item for item in blist] + \
-                ["bit [%d:%d] %s = %d'h%x" % item for item in plist]
+            params = ["parameter bit %s = %d'h%x" % item for item in blist] + \
+                ["parameter bit [%d:%d] %s = %d'h%x" % item for item in plist]
             self._wrln('module %s\n   #(\n    ' % self._module)
             self._wrln(",\n    ".join(params))
             self._wrln('\n   )\n   (\n')
@@ -1112,12 +1112,12 @@ class SystemVerilog(Verilog2001):
         self._wrln('      end else begin\n')
 
         self._wrln("        if (%s) begin\n" % self._dbase.read_strobe_name)
-        self._wrln('           case (%s)\n' % addr_bus)
+        self._wrln('           unique case (%s)\n' % addr_bus)
         for addr in out_address:
             width = addr_width - self._lower_bit
             self._wrln('              %s: mux_%s <= r%02x;\n' %
                        (binary(addr >> self._lower_bit, width), dout, addr))
-        self._wrln('               default: mux_%s <= %d\'h0;\n' %
+        self._wrln('             default: mux_%s <= %d\'h0;\n' %
                    (dout, self._data_width))
         self._wrln('           endcase\n')
         self._wrln('         end else begin\n')

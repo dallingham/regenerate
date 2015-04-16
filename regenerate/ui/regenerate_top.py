@@ -217,7 +217,7 @@ class MainWindow(BaseWindow):
             self.__instance_repeat_changed,
             self.__instance_repeat_offset_changed,
             self.__instance_format_changed, self.__instance_hdl_changed,
-            self.__instance_uvm_changed)
+            self.__instance_uvm_changed, self.__instance_array_changed)
 
         self.__build_data_width_box()
         self.__restore_position_and_size()
@@ -563,6 +563,14 @@ class MainWindow(BaseWindow):
         self.__set_module_definition_warn_flag()
         self.__prj.modified = True
 
+    def __instance_array_changed(self, cell, path, col):
+        """
+        Updates the data model when the text value is changed in the model.
+        """
+        self.__instance_model.change_array(cell, path)
+        self.__set_module_definition_warn_flag()
+        self.__prj.modified = True
+
     def __instance_repeat_changed(self, cell, path, new_text, col):
         """
         Updates the data model when the text value is changed in the model.
@@ -760,6 +768,7 @@ class MainWindow(BaseWindow):
     def __prj_selection_changed(self, obj):
         data = self.__prj_obj.get_selected()
         old_skip = self.__skip_changes
+        self.__skip_changes = True
         if (data):
             (store, node) = data
             if self.active:
@@ -1090,7 +1099,6 @@ class MainWindow(BaseWindow):
                 ErrorMsg("%s was not a valid register set file" % f)
                 continue
 
-        self.__loading_project = False
         self.__prj_obj.select_path(0)
         self.__prj_model.load_icons()
         if self.__recent_manager and uri:
@@ -1103,6 +1111,7 @@ class MainWindow(BaseWindow):
         self.__status_obj.pop(idval)
         self.load_project_tab()
         self.__prj_loaded.set_sensitive(True)
+        self.__loading_project = False
         self.__skip_changes = False
 
     def __initialize_project_address_maps(self):
@@ -1232,7 +1241,7 @@ class MainWindow(BaseWindow):
                     self.clear_modified(item[ProjectModel.OBJ])
                 except IOError as msg:
                     ErrorMsg("Could not save database", str(msg))
-
+                    
         self.__prj.set_new_order([item[0] for item in self.__prj_model])
         self.__instance_obj.get_groups()
         self.__prj.save()
@@ -1277,6 +1286,10 @@ class MainWindow(BaseWindow):
                                              "*" + data[3])
         response = choose.run()
         if response == gtk.RESPONSE_OK:
+            choose.hide()
+            while gtk.events_pending():
+                gtk.main_iteration()
+
             filename = choose.get_filename()
             if filename:
                 self.__import_using_importer(filename, data[0])

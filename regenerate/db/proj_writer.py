@@ -119,6 +119,8 @@ class ProjectWriter(object):
                     ofile.write(' hdl="%s"' % item.hdl)
                 if item.no_uvm:
                     ofile.write(' no_uvm="%s"' % int(item.no_uvm))
+                if item.array:
+                    ofile.write(' array="%s"' % int(item.array))
                 if item.format:
                     ofile.write(' format="%s"' % item.format)
                 ofile.write("/>\n")

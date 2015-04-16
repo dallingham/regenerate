@@ -300,7 +300,7 @@ class UVMBlockRegisters(WriterBase):
             gclass = "{0}_grp_reg_blk".format(group.name)
             gname = group.name
             repeat = group.repeat
-
+            
             if repeat > 1:
                 of.write("   {0} {1}[{2}];\n".format(gclass, gname, repeat))
             else:
@@ -333,7 +333,7 @@ class UVMBlockRegisters(WriterBase):
         of.write("\n")
 
         for group_entry in group.register_sets:
-            if group_entry.repeat > 1:
+            if group_entry.repeat > 1 or group_entry.array:
                 of.write("   {0}_{1}_reg_blk {2}[{3}];\n".format(
                     sname, group_entry.set, group_entry.inst,
                     group_entry.repeat))
