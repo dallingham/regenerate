@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 OdtDoc - Writes out an OpenDocument document that contains the register
              descriptions
@@ -26,6 +25,7 @@ from regenerate.settings.paths import ODTFILE, USERODTFILE
 from regenerate.writers.writer_base import WriterBase
 from regenerate.db import BitField
 from regenerate.db import RegisterDb
+
 
 class RstDoc(WriterBase):
     """
@@ -52,13 +52,15 @@ class RstDoc(WriterBase):
 
         with open(filename, "w") as f:
             f.write("\n")
-            f.write("=========================================================\n")
-            f.write("{} - {}\n".format(self.project.short_name, self.project.name))
-            f.write("=========================================================\n\n")
+            f.write(
+                "=========================================================\n")
+            f.write("{} - {}\n".format(self.project.short_name,
+                                       self.project.name))
+            f.write(
+                "=========================================================\n\n")
 
             f.write("Project Information\n")
             f.write(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n")
-
 
             f.write("Description\n")
             f.write("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n")
@@ -69,7 +71,6 @@ class RstDoc(WriterBase):
             f.write("\n=================================\n")
             f.write("Top level blocks")
             f.write("\n=================================\n")
-
 
             for group in self.project.get_grouping_list():
                 f.write("{}\n".format(group.name))
@@ -83,6 +84,3 @@ class RstDoc(WriterBase):
 
                 f.write("Subblocks\n")
                 f.write("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n")
-
-
-

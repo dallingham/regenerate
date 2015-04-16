@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 Produces RestructuredText documentation from the definition of the register.
 Docutils is used to convert the output to the desired format. Currently, only
@@ -107,9 +106,15 @@ class RegisterRst:
     Produces documentation from a register definition
     """
 
-    def __init__(self, register, regset_name=None, project=None, inst=None,
-                 highlight=None, show_defines=True, show_uvm=False,
-                 decode=None, group=None):
+    def __init__(self, register,
+                 regset_name=None,
+                 project=None,
+                 inst=None,
+                 highlight=None,
+                 show_defines=True,
+                 show_uvm=False,
+                 decode=None,
+                 group=None):
         self._reg = register
         self._highlight = highlight
         self._prj = project
@@ -151,7 +156,8 @@ class RegisterRst:
         o.write("%s\n" % ("=" * rlen))
         o.write(" " + self.text(self._reg.register_name))
         o.write("\n%s\n" % ("=" * rlen))
-        o.write("\n%s\n\n" % self.text(self._reg.description.encode('ascii', 'replace')))
+        o.write("\n%s\n\n" %
+                self.text(self._reg.description.encode('ascii', 'replace')))
 
         if self._reg.ram_size == 0:
             self._write_bit_fields(o)
@@ -199,8 +205,8 @@ class RegisterRst:
             else:
                 o.write("     - 0x%x\n" % field.reset_value)
 
-            o.write("     - %s\n" %
-                    self.text(TYPE_TO_SIMPLE_TYPE[field.field_type]))
+            o.write(
+                "     - %s\n" % self.text(TYPE_TO_SIMPLE_TYPE[field.field_type]))
             o.write("     - %s\n" % self.text(field.field_name))
             descr = self.text(field.description)
             marked_descr = "\n       ".join(descr.split("\n"))
@@ -210,12 +216,12 @@ class RegisterRst:
                 for val in sorted(field.values,
                                   key=lambda x: int(int(x[0], 16))):
                     if val[1]:
-                        o.write("       :0x%x: %s (%s)\n" % (int(val[0], 16),
-                                                             self.text(val[2]),
-                                                             self.text(val[1])))
+                        o.write("       :0x%x: %s (%s)\n" %
+                                (int(val[0], 16), self.text(val[2]),
+                                 self.text(val[1])))
                     else:
-                        o.write("       :0x%x: %s\n" % (int(val[0], 16),
-                                                        self.text(val[2])))
+                        o.write("       :0x%x: %s\n" %
+                                (int(val[0], 16), self.text(val[2])))
             last_index = field.lsb - 1
         if last_index >= 0:
             display_reserved(o, last_index, 0)
@@ -239,7 +245,8 @@ class RegisterRst:
 
         o.write("\n\nAddresses\n---------\n")
         if not in_groups(self._regset_name, self._prj):
-            o.write(".. WARNING::\n   Register set was not added to any groups\n\n")
+            o.write(
+                ".. WARNING::\n   Register set was not added to any groups\n\n")
         else:
             o.write(".. list-table::\n")
             o.write("   :header-rows: 1\n")
@@ -261,11 +268,11 @@ class RegisterRst:
                 if inst.repeat == 1:
                     o.write("   *")
                     if use_uvm:
-                        name = uvm_name(inst.group, self._reg.token,
-                                        inst.inst, -1)
+                        name = uvm_name(inst.group, self._reg.token, inst.inst,
+                                        -1)
                         o.write(" - %s\n" % self.text(name))
                     if use_id:
-                        name = full_token(inst.group, self._reg.token, 
+                        name = full_token(inst.group, self._reg.token,
                                           inst.inst, -1, inst.format)
                         if use_uvm:
                             o.write("    ")
@@ -290,13 +297,13 @@ class RegisterRst:
                         for map_name in addr_maps:
                             base = self._prj.get_address_base(map_name.name)
                             offset = inst.base + inst.offset + (i * inst.roffset)
-                            o.write("     - %s\n" % reg_addr(self._reg,
-                                                             offset + base))
+                            o.write("     - %s\n" % reg_addr(self._reg, offset
+                                                             + base))
         o.write("\n\n")
 
     def _display_uvm_entry(self, inst, index, o):
-        name = full_token(inst.group, self._reg.token,
-                          self._regset_name, index, inst.format)
+        name = full_token(inst.group, self._reg.token, self._regset_name,
+                          index, inst.format)
         o.write("   * - %s\n" % self.text(name))
         name = uvm_name(inst.group, self._reg.token, inst.inst, index)
         o.write("     - %s\n" % self.text(name))
@@ -335,8 +342,7 @@ class RegisterRst:
             parts = publish_parts(
                 self.restructured_text(text),
                 writer_name="html",
-                settings_overrides={'report_level': 'quiet'},
-                )
+                settings_overrides={'report_level': 'quiet'}, )
             return parts['html_title'] + parts['html_subtitle'] + parts['body']
         else:
             return "<pre>" + self.restructured_text() + "</pre>"

@@ -1,4 +1,4 @@
-1#
+1  #
 # Manage registers in a hardware design
 #
 # Copyright (C) 2008  Donald N. Allingham
@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 OdtDoc - Writes out an OpenDocument document that contains the register
              descriptions
@@ -30,7 +29,7 @@ from cStringIO import StringIO
 
 from regenerate.settings.paths import ODTFILE, USERODTFILE
 
-from writer_base import WriterBase         # IGNORE:W0403
+from writer_base import WriterBase  # IGNORE:W0403
 from regenerate.db import BitField
 
 TYPE_MAP = ["R", "R/W", "W1C", "W1S", "WO"]
@@ -40,20 +39,19 @@ HEADING2 = "Heading_20_2"
 CELLHEAD = "Table_20_Heading"
 CELLBODY = "Table_20_Contents"
 CELLITEM = "Table_20_Contents_20_Item"
-DEFAULT  = "Default"
-REGADDR  = "RegAddress"
-REGNAME  = "RegMnemonic"
-PARHEAD  = "ParentHead"
-PAREND   = "ParentEnd"
-PARTBL   = "ParentTable"
-BTMCNTS  = "BottomContents"
-TXTCNTS  = "TextContents"
-BTMEND   = "BottomEnd"
-TXTEND   = "TextEnd"
+DEFAULT = "Default"
+REGADDR = "RegAddress"
+REGNAME = "RegMnemonic"
+PARHEAD = "ParentHead"
+PAREND = "ParentEnd"
+PARTBL = "ParentTable"
+BTMCNTS = "BottomContents"
+TXTCNTS = "TextContents"
+BTMEND = "BottomEnd"
+TXTEND = "TextEnd"
 
-NEEDED_FORMATS = [HEADING1, HEADING2, CELLHEAD, CELLBODY,
-                  CELLITEM, REGADDR, REGNAME]
-
+NEEDED_FORMATS = [HEADING1, HEADING2, CELLHEAD, CELLBODY, CELLITEM, REGADDR,
+                  REGNAME]
 
 HEAD = '''<?xml version="1.0" encoding="UTF-8"?>
 <office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0" xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0" xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0" xmlns:number="urn:oasis:names:tc:opendocument:xmlns:datastyle:1.0" xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0" xmlns:chart="urn:oasis:names:tc:opendocument:xmlns:chart:1.0" xmlns:dr3d="urn:oasis:names:tc:opendocument:xmlns:dr3d:1.0" xmlns:math="http://www.w3.org/1998/Math/MathML" xmlns:form="urn:oasis:names:tc:opendocument:xmlns:form:1.0" xmlns:script="urn:oasis:names:tc:opendocument:xmlns:script:1.0" xmlns:dom="http://www.w3.org/2001/xml-events" xmlns:xforms="http://www.w3.org/2002/xforms" office:class="text" office:version="1.0">
@@ -175,8 +173,8 @@ class OdtDoc(WriterBase):
                     self.write_paragraph(CELLITEM,
                                          "<b>%s</b>: \t[<b>%s</b>] %s" % value)
                 else:
-                    self.write_paragraph(CELLITEM,
-                                         "<b>%s</b>: \t%s" % (value[0], value[2]))
+                    self.write_paragraph(CELLITEM, "<b>%s</b>: \t%s" %
+                                         (value[0], value[2]))
         self.cnt.write('</table:table-cell>')
 
     def __write_register_header(self, reg):
@@ -188,8 +186,7 @@ class OdtDoc(WriterBase):
 
         caddr = reg.address + self._offset
         self.write_paragraph(REGADDR, '<b>Address</b>:\t0x%08x' % caddr)
-        self.write_paragraph(REGNAME,
-                             '<b>Mnemonic:</b>\t%s' % reg.token)
+        self.write_paragraph(REGNAME, '<b>Mnemonic:</b>\t%s' % reg.token)
         descr = reg.description
         if descr:
             self.write_paragraph(DEFAULT, descr)
@@ -203,9 +200,8 @@ class OdtDoc(WriterBase):
         self.start_table()
         self.start_row(True)
 
-        headers = [('Bit(s)', PARHEAD), ('R/W', PARHEAD),
-                   ('Reset', PARHEAD), ('Name', PARHEAD),
-                   ('Description/Function', PAREND)]
+        headers = [('Bit(s)', PARHEAD), ('R/W', PARHEAD), ('Reset', PARHEAD),
+                   ('Name', PARHEAD), ('Description/Function', PAREND)]
 
         for name in headers:
             self.write_table_cell(name[1], CELLHEAD, name[0])
@@ -257,20 +253,18 @@ class OdtDoc(WriterBase):
 
             if bit_range.reset_type == BitField.RESET_NUMERIC:
                 cols = [TYPE_MAP[bit_range.field_type],
-                        rst_val(bit_range.reset_value),
-                        bit_range.field_name]
+                        rst_val(bit_range.reset_value), bit_range.field_name]
                 description = bit_range.description
             else:
-                cols = [TYPE_MAP[bit_range.field_type],
-                        "-",  bit_range.field_name]
-                description =  '%s\n\nReset value is loaded from the input "%s"' % \
+                cols = [TYPE_MAP[bit_range.field_type], "-",
+                        bit_range.field_name]
+                description = '%s\n\nReset value is loaded from the input "%s"' % \
                               (bit_range.description, bit_range.reset_input)
 
             for val in cols:
                 self.write_table_cell(table_cell, CELLBODY, val)
 
-            self.write_table_cell(table_end_cell, CELLBODY,
-                                  description,
+            self.write_table_cell(table_end_cell, CELLBODY, description,
                                   bit_range.values)
             self.end_row()
 
@@ -286,8 +280,8 @@ class OdtDoc(WriterBase):
         Prints a row for reserved bits
         """
         self.start_row()
-        cols = [(rng, TXTCNTS), ('R', TXTCNTS), ("0", TXTCNTS),
-                ("",  TXTCNTS), ("unused", TXTEND)]
+        cols = [(rng, TXTCNTS), ('R', TXTCNTS), ("0", TXTCNTS), ("", TXTCNTS),
+                ("unused", TXTEND)]
         for (val, style) in cols:
             self.write_table_cell(style, CELLBODY, val)
         self.end_row()
@@ -377,9 +371,7 @@ def find_odt_template():
         from ui.error_dialogs import ErrorMsg
         ErrorMsg('Bad OpenDocument template',
                  'The %s file is missing the following '
-                 'paragraph formats:\n' % odtfile +
-                 "\n".join(status)
-                 )
+                 'paragraph formats:\n' % odtfile + "\n".join(status))
         return None
     return original
 

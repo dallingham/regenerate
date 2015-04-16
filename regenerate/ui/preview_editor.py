@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 Provides a preview editor, tying a text buffer to a webkit display. All
 changes to the buffer cause an update on the webkit display, after the
@@ -59,9 +58,8 @@ class PreviewEditor(object):
         Extracts text from the buffer, converts it to HTML, and loads it
         into the webkit display
         """
-        text = self.__text_buffer.get_text(
-            self.__text_buffer.get_start_iter(),
-            self.__text_buffer.get_end_iter())
+        text = self.__text_buffer.get_text(self.__text_buffer.get_start_iter(),
+                                           self.__text_buffer.get_end_iter())
         if self.__active_db:
             data = []
             for reg in self.__active_db.get_all_registers():

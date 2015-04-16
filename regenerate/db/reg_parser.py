@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 Parses the register database, loading the database.
 """
@@ -331,8 +330,8 @@ class RegParser(object):
         Called when the value tag is terminated. The value, token and text
         value are added to the field's value list.
         """
-        self.__field.values.append((self.__current_val,
-                                    self.__current_token, text))
+        self.__field.values.append((self.__current_val, self.__current_token,
+                                    text))
 
     def end_input(self, text):
         """

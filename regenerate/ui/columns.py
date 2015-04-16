@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 Provides TreeView column to simplify usage.
 """
@@ -45,8 +44,7 @@ class EditableColumn(gtk.TreeViewColumn):
     columns are passed and used to create the CellRenderer.
     """
 
-    def __init__(self, title, change_callback, source_column,
-                 monospace=False):
+    def __init__(self, title, change_callback, source_column, monospace=False):
         renderer = gtk.CellRendererText()
         if change_callback:
             renderer.set_property('editable', True)

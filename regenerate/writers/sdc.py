@@ -16,12 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 Sdc - Writes out synthesis constraints
 """
 
-from writer_base import WriterBase     # IGNORE:W0403
+from writer_base import WriterBase  # IGNORE:W0403
 
 
 class Sdc(WriterBase):
@@ -53,9 +52,12 @@ class Sdc(WriterBase):
                             for i in range(0, grp.repeat):
                                 base = get_signal_base(field)
                                 for j in range(0, group.repeat):
-                                    path = build_format(group.hdl, j, grp.hdl, i)
+                                    path = build_format(group.hdl, j, grp.hdl,
+                                                        i)
                                     signal_name = "%s/%s" % (path, base)
-                                    of.write("set_multicycle -from [get_cells(%s)] -setup 2\n" % signal_name)
+                                    of.write(
+                                        "set_multicycle -from [get_cells(%s)] -setup 2\n"
+                                        % signal_name)
         of.close()
 
 

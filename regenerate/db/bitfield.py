@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 Provides the definition of a Bit Field,
 """
@@ -35,58 +34,36 @@ class BitField(object):
     of a register)
     """
 
-    (TYPE_READ_ONLY,
-     TYPE_READ_ONLY_VALUE,
-     TYPE_READ_ONLY_LOAD,
-     TYPE_READ_ONLY_CLEAR_LOAD,
-     TYPE_READ_ONLY_VALUE_1S,
-     TYPE_READ_WRITE,
-     TYPE_READ_WRITE_1S,
-     TYPE_READ_WRITE_1S_1,
-     TYPE_READ_WRITE_LOAD,
-     TYPE_READ_WRITE_LOAD_1S,
-     TYPE_READ_WRITE_LOAD_1S_1,
-     TYPE_READ_WRITE_SET,
-     TYPE_READ_WRITE_SET_1S,
-     TYPE_READ_WRITE_SET_1S_1,
-     TYPE_READ_WRITE_CLR,
-     TYPE_READ_WRITE_CLR_1S,
-     TYPE_READ_WRITE_CLR_1S_1,
-     TYPE_WRITE_1_TO_CLEAR_SET,
-     TYPE_WRITE_1_TO_CLEAR_SET_1S,
-     TYPE_WRITE_1_TO_CLEAR_SET_1S_1,
-     TYPE_WRITE_1_TO_CLEAR_LOAD,
-     TYPE_WRITE_1_TO_CLEAR_LOAD_1S,
-     TYPE_WRITE_1_TO_CLEAR_LOAD_1S_1,
-     TYPE_WRITE_1_TO_SET,
-     TYPE_WRITE_1_TO_SET_1S,
-     TYPE_WRITE_1_TO_SET_1S1,
-     TYPE_WRITE_ONLY,
-     TYPE_READ_WRITE_RESET_ON_COMP,
-     TYPE_READ_WRITE_PROTECT,
-     TYPE_READ_WRITE_PROTECT_1S,
-     TYPE_WRITE_1_TO_CLEAR_SET_CLR) = range(31)
+    (TYPE_READ_ONLY, TYPE_READ_ONLY_VALUE, TYPE_READ_ONLY_LOAD,
+     TYPE_READ_ONLY_CLEAR_LOAD, TYPE_READ_ONLY_VALUE_1S, TYPE_READ_WRITE,
+     TYPE_READ_WRITE_1S, TYPE_READ_WRITE_1S_1, TYPE_READ_WRITE_LOAD,
+     TYPE_READ_WRITE_LOAD_1S, TYPE_READ_WRITE_LOAD_1S_1, TYPE_READ_WRITE_SET,
+     TYPE_READ_WRITE_SET_1S, TYPE_READ_WRITE_SET_1S_1, TYPE_READ_WRITE_CLR,
+     TYPE_READ_WRITE_CLR_1S, TYPE_READ_WRITE_CLR_1S_1,
+     TYPE_WRITE_1_TO_CLEAR_SET, TYPE_WRITE_1_TO_CLEAR_SET_1S,
+     TYPE_WRITE_1_TO_CLEAR_SET_1S_1, TYPE_WRITE_1_TO_CLEAR_LOAD,
+     TYPE_WRITE_1_TO_CLEAR_LOAD_1S, TYPE_WRITE_1_TO_CLEAR_LOAD_1S_1,
+     TYPE_WRITE_1_TO_SET, TYPE_WRITE_1_TO_SET_1S, TYPE_WRITE_1_TO_SET_1S1,
+     TYPE_WRITE_ONLY, TYPE_READ_WRITE_RESET_ON_COMP, TYPE_READ_WRITE_PROTECT,
+     TYPE_READ_WRITE_PROTECT_1S, TYPE_WRITE_1_TO_CLEAR_SET_CLR) = range(31)
 
     (FUNC_SET_BITS, FUNC_CLEAR_BITS, FUNC_PARALLEL, FUNC_ASSIGNMENT) = range(4)
 
-    (ONE_SHOT_NONE, ONE_SHOT_ANY, ONE_SHOT_ONE,
-     ONE_SHOT_ZERO, ONE_SHOT_TOGGLE) = range(5)
+    (ONE_SHOT_NONE, ONE_SHOT_ANY, ONE_SHOT_ONE, ONE_SHOT_ZERO,
+     ONE_SHOT_TOGGLE) = range(5)
 
     (RESET_NUMERIC, RESET_INPUT, RESET_PARAMETER) = range(3)
 
-    full_compare = (
-        "_output_signal", "_input_signal", "_id", "lsb",
-        "msb", "_field_name", "use_output_enable",
-        "field_type", "volatile", "is_error_field",
-        "reset_value", "reset_input", "reset_type",
-        "reset_parameter", "description", "control_signal",
-        "output_is_static", "output_has_side_effect",
-        "values")
+    full_compare = ("_output_signal", "_input_signal", "_id", "lsb", "msb",
+                    "_field_name", "use_output_enable", "field_type",
+                    "volatile", "is_error_field", "reset_value", "reset_input",
+                    "reset_type", "reset_parameter", "description",
+                    "control_signal", "output_is_static",
+                    "output_has_side_effect", "values")
 
-    doc_compare = (
-        "_id", "lsb", "msb", "_field_name", "field_type",
-        "is_error_field", "reset_value", "reset_input", "reset_type",
-        "reset_parameter", "description", "values")
+    doc_compare = ("_id", "lsb", "msb", "_field_name", "field_type",
+                   "is_error_field", "reset_value", "reset_input",
+                   "reset_type", "reset_parameter", "description", "values")
 
     def __init__(self, stop=0, start=0):
 
@@ -181,7 +158,7 @@ class BitField(object):
         """Returns the width in bits of the bit field."""
         return self.msb - self.lsb + 1
 
-    @property 
+    @property
     def field_name(self):
         return self._field_name
 

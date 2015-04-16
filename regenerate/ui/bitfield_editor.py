@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 Provides the edit dialog that allows the user to edit the bit field
 information.
@@ -28,8 +27,8 @@ import pango
 import os
 from spell import Spell
 
-from regenerate.db import (BitField, TYPES, TYPE_TO_ID,
-                           TYPE_TO_DESCR, TYPE_TO_ENABLE)
+from regenerate.db import (BitField, TYPES, TYPE_TO_ID, TYPE_TO_DESCR,
+                           TYPE_TO_ENABLE)
 from regenerate.settings.paths import GLADE_BIT, INSTALL_PATH
 from error_dialogs import ErrorMsg
 from regenerate.writers.verilog_reg_def import REG
@@ -78,9 +77,8 @@ class BitFieldEditor(object):
         self.__volatile_obj = self.__builder.get_object('volatile')
         self.__error_field_obj = self.__builder.get_object('error_bit')
         self.__col = None
-        self.__top_window.set_title(
-            "Edit Bit Field - [{0:02x}] {1}".format(register.address,
-                                                    register.register_name))
+        self.__top_window.set_title("Edit Bit Field - [{0:02x}] {1}".format(
+            register.address, register.register_name))
 
         self.__spell = Spell(self.__builder.get_object("descr"))
 
@@ -115,10 +113,12 @@ class BitFieldEditor(object):
             condition = "" if self.__db.reset_active_level else "~"
             be_level = "" if self.__db.byte_strobe_active_level else "~"
 
-            name_map = {'MODULE': self.__db.module_name,
-                        'BE_LEVEL': be_level,
-                        'RESET_CONDITION': condition,
-                        'RESET_EDGE': edge}
+            name_map = {
+                'MODULE': self.__db.module_name,
+                'BE_LEVEL': be_level,
+                'RESET_CONDITION': condition,
+                'RESET_EDGE': edge
+            }
             text = REG[TYPE_TO_ID[bit_field.field_type].lower()] % name_map
         except KeyError:
             text = ""
@@ -159,8 +159,8 @@ class BitFieldEditor(object):
         """
         Initializes the dialog's data fields from the object
         """
-        self.__register_obj.set_text("<b>{0}</b>".format(
-                                     self.__register.register_name))
+        self.__register_obj.set_text(
+            "<b>{0}</b>".format(self.__register.register_name))
         self.__register_obj.set_use_markup(True)
 
         self.__name_obj.set_text(bit_field.full_field_name())
@@ -261,8 +261,9 @@ class BitFieldEditor(object):
         max_values = 2 ** self.__bit_field.width
 
         if last >= max_values:
-            ErrorMsg("Maximum number of values reached",
-                     "The width of the field only allows for {0} values".format(last))
+            ErrorMsg(
+                "Maximum number of values reached",
+                "The width of the field only allows for {0} values".format(last))
             return
 
         try:
@@ -274,13 +275,15 @@ class BitFieldEditor(object):
         last -= 1
         if (last == -1 or self.__list_model[last][0] or
             self.__list_model[last][1] or self.__list_model[last][2]):
-            new_val = "" if largest >= max_values else "{0:x}".format(largest + 1)
+            new_val = "" if largest >= max_values else "{0:x}".format(
+                largest + 1)
             node = self.__list_model.append(row=(new_val, '', ''))
             path = self.__list_model.get_path(node)
         else:
             path = (last, )
 
-        self.__value_tree_obj.set_cursor(path, focus_column=self.__col,
+        self.__value_tree_obj.set_cursor(path,
+                                         focus_column=self.__col,
                                          start_editing=True)
         self.__modified()
 

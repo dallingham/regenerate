@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 OdtDoc - Writes out an OpenDocument document that contains the register
              descriptions
@@ -37,7 +36,7 @@ from regenerate.writers.writer_base import WriterBase
 from regenerate.db import BitField
 from regenerate.db import RegisterDb
 
-TYPE_MAP = [ "R", "R/W", "W1C", "W1S", "WO" ]
+TYPE_MAP = ["R", "R/W", "W1C", "W1S", "WO"]
 
 HEADING1 = "Heading_20_1"
 HEADING2 = "Heading_20_2"
@@ -45,28 +44,29 @@ HEADING3 = "Heading_20_3"
 CELLHEAD = "Table_20_Heading"
 CELLBODY = "Table_20_Contents"
 CELLITEM = "Table_20_Contents_20_Item"
-DEFAULT  = "Default"
-REGADDR  = "RegAddress"
-REGNAME  = "RegMnemonic"
-PARHEAD  = "ParentHead"
-PAREND   = "ParentEnd"
-PARTBL   = "ParentTable"
-BTMCNTS  = "BottomContents"
-TXTCNTS  = "TextContents"
-BTMEND   = "BottomEnd"
-TXTEND   = "TextEnd"
+DEFAULT = "Default"
+REGADDR = "RegAddress"
+REGNAME = "RegMnemonic"
+PARHEAD = "ParentHead"
+PAREND = "ParentEnd"
+PARTBL = "ParentTable"
+BTMCNTS = "BottomContents"
+TXTCNTS = "TextContents"
+BTMEND = "BottomEnd"
+TXTEND = "TextEnd"
+
 
 def find_range(address, range_map):
     for i in range_map:
         lower, upper = range_map[i]
         if (lower <= address <= upper):
-            return i;
+            return i
     else:
         return None
 
-NEEDED_FORMATS = [ HEADING1, HEADING2, HEADING3, CELLHEAD, CELLBODY,
-                   CELLITEM, REGADDR, REGNAME ]
 
+NEEDED_FORMATS = [HEADING1, HEADING2, HEADING3, CELLHEAD, CELLBODY, CELLITEM,
+                  REGADDR, REGNAME]
 
 HEAD = '''<?xml version="1.0" encoding="UTF-8"?>
 <office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0" xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0" xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0" xmlns:number="urn:oasis:names:tc:opendocument:xmlns:datastyle:1.0" xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0" xmlns:chart="urn:oasis:names:tc:opendocument:xmlns:chart:1.0" xmlns:dr3d="urn:oasis:names:tc:opendocument:xmlns:dr3d:1.0" xmlns:math="http://www.w3.org/1998/Math/MathML" xmlns:form="urn:oasis:names:tc:opendocument:xmlns:form:1.0" xmlns:script="urn:oasis:names:tc:opendocument:xmlns:script:1.0" xmlns:dom="http://www.w3.org/2001/xml-events" xmlns:xforms="http://www.w3.org/2002/xforms" office:class="text" office:version="1.0">
@@ -117,6 +117,7 @@ TAIL = '''</office:text>
   </office:body>
 </office:document-content>
 '''
+
 
 class OdtSpec(WriterBase):
     """
@@ -169,15 +170,20 @@ class OdtSpec(WriterBase):
         height = img.get_height()
 
         self.cnt.write('<text:p text:style-name="Default">\n')
-        self.cnt.write('<draw:frame draw:style-name="fr1" draw:name="graphics%d" ' % self.img_cnt)
+        self.cnt.write(
+            '<draw:frame draw:style-name="fr1" draw:name="graphics%d" ' % self.
+            img_cnt)
         self.cnt.write('svg:width="%.2fin" svg:height="%.2fin" ' %
                        (width / 144.0, height / 144.0))
         self.cnt.write('text:anchor-type="paragraph" draw:z-index="0">\n')
-        self.cnt.write('<draw:image xlink:href="Pictures/graphics%d.png" ' % self.img_cnt)
-        self.cnt.write('xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad"/>\n')
+        self.cnt.write(
+            '<draw:image xlink:href="Pictures/graphics%d.png" ' % self.img_cnt)
+        self.cnt.write(
+            'xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad"/>\n')
         self.cnt.write('</draw:frame>\n')
         self.cnt.write('</text:p>\n')
-        self.images.append(("Pictures/graphics%d.png" %  self.img_cnt, file(path).read()))
+        self.images.append(
+            ("Pictures/graphics%d.png" % self.img_cnt, file(path).read()))
         self.img_cnt += 1
 
     def write_paragraph(self, para_name, text, level=0, new_id=None):
@@ -195,12 +201,15 @@ class OdtSpec(WriterBase):
         text = text.replace("\t", "<text:tab/>")
         text = text.replace('&lt;/b&gt;', '</text:span>')
         if new_id:
-            hashid = hashlib.md5("%s-%s" % (self._dbase.module_name, new_id)).hexdigest()
-            self.cnt.write('<text:bookmark-start text:name="__RefHeading__%s"/>' % hashid)
-            self.cnt.write(text.encode('ascii','replace'))
-            self.cnt.write('<text:bookmark-end text:name="__RefHeading__%s"/>' % hashid)
+            hashid = hashlib.md5("%s-%s" %
+                                 (self._dbase.module_name, new_id)).hexdigest()
+            self.cnt.write(
+                '<text:bookmark-start text:name="__RefHeading__%s"/>' % hashid)
+            self.cnt.write(text.encode('ascii', 'replace'))
+            self.cnt.write(
+                '<text:bookmark-end text:name="__RefHeading__%s"/>' % hashid)
         else:
-            self.cnt.write(text.encode('ascii','replace'))
+            self.cnt.write(text.encode('ascii', 'replace'))
         if level:
             self.cnt.write('</text:h>')
         else:
@@ -220,8 +229,8 @@ class OdtSpec(WriterBase):
                                          "<b>%s</b>: \t[<b>%s</b>] %s" % value)
                 else:
                     descr = value[2].encode('ascii', 'replace')
-                    self.write_paragraph(CELLITEM,
-                                         "<b>%s</b>: \t%s" % (value[0], descr))
+                    self.write_paragraph(CELLITEM, "<b>%s</b>: \t%s" %
+                                         (value[0], descr))
         self.cnt.write('</table:table-cell>')
 
     def __write_register_header(self, reg, new_id=None):
@@ -234,7 +243,8 @@ class OdtSpec(WriterBase):
         offset_addr = reg.address + self._offset
         name = "%s%s" % (self._prefix, reg.token)
         self.write_paragraph(REGNAME, '<b>Define:</b>\t%s' % name)
-        self.write_paragraph(REGADDR, '<b>Offset Address</b>:\t0x%08x' % offset_addr)
+        self.write_paragraph(REGADDR,
+                             '<b>Offset Address</b>:\t0x%08x' % offset_addr)
         addr_map = self.project.get_address_maps()
         for i in addr_map:
             self.write_paragraph(REGADDR, '<b>%s Address</b>:\t0x%08x' %
@@ -280,9 +290,8 @@ class OdtSpec(WriterBase):
         self.start_table()
         self.start_row(True)
 
-        headers = [ ('Bit(s)', PARHEAD), ('R/W', PARHEAD),
-                    ('Reset', PARHEAD), ('Name', PARHEAD),
-                    ('Description/Function', PAREND) ]
+        headers = [('Bit(s)', PARHEAD), ('R/W', PARHEAD), ('Reset', PARHEAD),
+                   ('Name', PARHEAD), ('Description/Function', PAREND)]
 
         for name in headers:
             self.write_table_cell(name[1], CELLHEAD, name[0])
@@ -312,13 +321,17 @@ class OdtSpec(WriterBase):
                 self._write_register_table(reg)
 
     def _write_register_reference(self, reg, new_id):
-        hashid = hashlib.md5("%s-%s" % (self._dbase.module_name, new_id)).hexdigest()
+        hashid = hashlib.md5("%s-%s" %
+                             (self._dbase.module_name, new_id)).hexdigest()
         self.cnt.write('<text:p text:stype-name="Default">See section ')
-        self.cnt.write('<text:bookmark-ref text:reference-format="number-all-superior" ')
-        self.cnt.write('text:ref-name="__RefHeading__%s">1.1</text:bookmark-ref>' % hashid)
+        self.cnt.write(
+            '<text:bookmark-ref text:reference-format="number-all-superior" ')
+        self.cnt.write(
+            'text:ref-name="__RefHeading__%s">1.1</text:bookmark-ref>' % hashid)
         self.cnt.write(' (%s) on page ' % reg.register_name)
         self.cnt.write('<text:bookmark-ref text:reference-format="page" ')
-        self.cnt.write('text:ref-name="__RefHeading__%s">1</text:bookmark-ref>' % hashid)
+        self.cnt.write(
+            'text:ref-name="__RefHeading__%s">1</text:bookmark-ref>' % hashid)
         self.cnt.write('</text:p>')
 
     def _write_register_table(self, reg):
@@ -327,7 +340,7 @@ class OdtSpec(WriterBase):
         regkeys = reg.get_bit_field_keys()
         regkeys.reverse()
 
-        last_index = reg.width-1
+        last_index = reg.width - 1
 
         for key in regkeys:
             last = (key == regkeys[-1])
@@ -351,20 +364,18 @@ class OdtSpec(WriterBase):
 
             if bit_range.reset_type == BitField.RESET_NUMERIC:
                 cols = [TYPE_MAP[bit_range.field_type],
-                        rst_val(bit_range.reset_value),
-                        bit_range.field_name]
+                        rst_val(bit_range.reset_value), bit_range.field_name]
                 description = bit_range.description
             else:
-                cols = [TYPE_MAP[bit_range.field_type],
-                        "-",  bit_range.field_name]
-                description =  '%s\n\nReset value is loaded from the input "%s"' % \
+                cols = [TYPE_MAP[bit_range.field_type], "-",
+                        bit_range.field_name]
+                description = '%s\n\nReset value is loaded from the input "%s"' % \
                     (bit_range.description, bit_range.reset_input)
 
             for val in cols:
                 self.write_table_cell(table_cell, CELLBODY, val)
 
-            self.write_table_cell(table_end_cell, CELLBODY,
-                                  description,
+            self.write_table_cell(table_end_cell, CELLBODY, description,
                                   bit_range.values)
             self.end_row()
 
@@ -380,8 +391,8 @@ class OdtSpec(WriterBase):
         Prints a row for reserved bits
         """
         self.start_row()
-        cols = [ (rng, TXTCNTS), ('R', TXTCNTS), ("0", TXTCNTS), ("",  TXTCNTS),
-                 ("unused", TXTEND)]
+        cols = [(rng, TXTCNTS), ('R', TXTCNTS), ("0", TXTCNTS), ("", TXTCNTS),
+                ("unused", TXTEND)]
         for (val, style) in cols:
             self.write_table_cell(style, CELLBODY, val)
         self.end_row()
@@ -433,8 +444,7 @@ class OdtSpec(WriterBase):
             <text:p text:style-name="Contents_20_Heading">Table of Contents</text:p>
             </text:index-title>
             </text:index-body>
-            </text:table-of-content>'''
-            )
+            </text:table-of-content>''')
 
         db = {}
 
@@ -451,11 +461,12 @@ class OdtSpec(WriterBase):
             for inst in my_db.instances:
                 name = find_range(inst[1], addr_rng)
                 if name:
-                    my_list.setdefault(name,[]).append((my_db, inst[0], inst[1]))
+                    my_list.setdefault(name, []).append(
+                        (my_db, inst[0], inst[1]))
 
         keys = addr_rng.items()
-        keys.sort(key=lambda x : x[1])
-        for name in [n[0] for n in keys if my_list.has_key(n[0]) ]:
+        keys.sort(key=lambda x: x[1])
+        for name in [n[0] for n in keys if my_list.has_key(n[0])]:
             self.prev_heading = ""
             self.write_paragraph(HEADING1, name, 1)
             category = my_list[name]
@@ -505,6 +516,7 @@ class OdtSpec(WriterBase):
         for key in dbase.get_keys():
             self._write_register(dbase.get_register(key))
 
+
 def find_odt_template():
     """
     Finds the ODT template file, verifying that the needed styles exist.
@@ -527,9 +539,7 @@ def find_odt_template():
         from ui.error_dialogs import ErrorMsg
         ErrorMsg('Bad OpenDocument template',
                  'The %s file is missing the following '
-                 'paragraph formats:\n' % odtfile +
-                 "\n".join(status)
-                 )
+                 'paragraph formats:\n' % odtfile + "\n".join(status))
         return None
     return original
 
@@ -550,6 +560,7 @@ class StylesXmlParser(object):
     reporting paragraph formats (defined by format_list) that have not been
     defined.
     """
+
     def __init__(self, format_list):
         self.format_list = format_list
 

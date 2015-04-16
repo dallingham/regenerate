@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 Provides a preview editor, tying a text buffer to a webkit display. All
 changes to the buffer cause an update on the webkit display, after the
@@ -30,8 +29,7 @@ from regenerate.settings.paths import GLADE_GTXT
 
 
 class GroupDocEditor(object):
-
-    def __init__(self,  group_inst):
+    def __init__(self, group_inst):
 
         builder = gtk.Builder()
         builder.add_from_file(GLADE_GTXT)
@@ -39,12 +37,10 @@ class GroupDocEditor(object):
         self.group_inst = group_inst
         self.buffer = builder.get_object('overview1').get_buffer()
         self.__prj_preview = PreviewEditor(
-            self.buffer,
-            builder.get_object('scroll_webkit1'))
+            self.buffer, builder.get_object('scroll_webkit1'))
         self.buffer.set_text(group_inst.docs)
 
-        builder.get_object("button2").connect("button-press-event",
-                                              self._save)
+        builder.get_object("button2").connect("button-press-event", self._save)
         builder.get_object("button3").connect("button-press-event",
                                               self._cancel)
         builder.get_object('title').set_text(group_inst.name)
@@ -69,7 +65,5 @@ class GroupDocEditor(object):
 
     def _save(self, obj, data):
         self.group_inst.docs = self.buffer.get_text(
-            self.buffer.get_start_iter(),
-            self.buffer.get_end_iter(),
-            False)
+            self.buffer.get_start_iter(), self.buffer.get_end_iter(), False)
         self.group_doc.destroy()

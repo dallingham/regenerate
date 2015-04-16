@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 WriterBase - base class for objects that product output from the
              register database.
@@ -26,18 +25,19 @@ import os
 import time
 from regenerate.settings.paths import INSTALL_PATH
 
-
 if os.name == 'nt':
+
     def get_username():
         import getpass
         return getpass.getuser()
 else:
+
     def get_username():
         import pwd
         return pwd.getpwnam(os.environ['USER'])[4].split(',')[0]
 
 
-class WriterBase(object):   # IGNORE:R0921 - we know this is a abstract class
+class WriterBase(object):  # IGNORE:R0921 - we know this is a abstract class
     """
     Writes the register information to the output file determined    by the derived class.
     """

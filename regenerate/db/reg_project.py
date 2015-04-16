@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 RegProject is the container object for a regenerate project
 """
@@ -30,8 +29,8 @@ import os.path
 import xml.sax.saxutils
 
 AddrMapData = namedtuple("AddrMapData", "name base width fixed")
-GroupMapData = namedtuple("GroupMapData",
-                          "set inst offset repeat repeat_offset format hdl no_uvm")
+GroupMapData = namedtuple(
+    "GroupMapData", "set inst offset repeat repeat_offset format hdl no_uvm")
 
 
 def cleanup(data):
@@ -266,8 +265,7 @@ class RegProject(object):
             if addrmap.name != old_name:
                 continue
             old_data = self._addr_map_list[i]
-            self._addr_map_list[i] = AddrMapData(new_name,
-                                                 old_data.base,
+            self._addr_map_list[i] = AddrMapData(new_name, old_data.base,
                                                  old_data.width,
                                                  old_data.fixed)
             self._addr_map_grps[new_name] = self._addr_map_grps[old_name]

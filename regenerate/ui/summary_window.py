@@ -17,7 +17,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-
 try:
     import webkit
     WEBKIT = True
@@ -55,8 +54,8 @@ class SummaryWindow(BaseWindow):
         reg_info = regenerate.extras.RegisterRst(reg, regset_name, project,
                                                  show_uvm=True)
 
-        SummaryWindow.wkit.load_string(reg_info.html_css(),
-                                       "text/html", "utf-8", "")
+        SummaryWindow.wkit.load_string(reg_info.html_css(), "text/html",
+                                       "utf-8", "")
         SummaryWindow.window.show_all()
 
     def destroy(self, obj):

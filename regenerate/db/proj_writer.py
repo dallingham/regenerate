@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 RegProject is the container object for a regenerate project
 """
@@ -49,9 +48,9 @@ class ProjectWriter(object):
         """
         with open(path, "w") as ofile:
             ofile.write('<?xml version="1.0"?>\n')
-            ofile.write('<project name="%s" short_name="%s" company_name="%s">\n' %
-                        (self._prj.name, self._prj.short_name,
-                         self._prj.company_name))
+            ofile.write(
+                '<project name="%s" short_name="%s" company_name="%s">\n' %
+                (self._prj.name, self._prj.short_name, self._prj.company_name))
 
             if self._prj.documentation:
                 ofile.write('  <documentation>%s</documentation>\n' %
@@ -67,15 +66,15 @@ class ProjectWriter(object):
                 if self._prj.get_exports(fname):
                     ofile.write('  <registerset name="%s">\n' % fname)
                     for pair in self._prj.get_exports(fname):
-                        ofile.write('    <export option="%s" path="%s"/>\n' %
-                                    pair)
+                        ofile.write(
+                            '    <export option="%s" path="%s"/>\n' % pair)
                     ofile.write('  </registerset>\n')
                 else:
                     ofile.write('  <registerset name="%s"/>\n' % fname)
 
             for pair in self._prj.get_project_exports():
-                ofile.write('  <project_export option="%s" path="%s"/>\n' %
-                            pair)
+                ofile.write(
+                    '  <project_export option="%s" path="%s"/>\n' % pair)
 
             ofile.write('</project>\n')
             self._prj.modified = False
@@ -89,8 +88,7 @@ class ProjectWriter(object):
             groups = self._prj.get_address_map_groups(data.name)
             ofile.write('    <address_map name="%s" base="%x" ' %
                         (data.name, data.base))
-            ofile.write('fixed="%d" width="%d"' %
-                        (data.fixed, data.width))
+            ofile.write('fixed="%d" width="%d"' % (data.fixed, data.width))
             if groups:
                 ofile.write('>\n')
                 for group in groups:
@@ -111,8 +109,7 @@ class ProjectWriter(object):
             ofile.write(' repeat="%d" repeat_offset="%d">\n' %
                         (group.repeat, group.repeat_offset))
             if group.docs:
-                ofile.write("<overview>%s</overview>" %
-                            clean_text(group.docs))
+                ofile.write("<overview>%s</overview>" % clean_text(group.docs))
             for item in group.register_sets:
                 ofile.write('      <map set="%s" inst="%s" offset="%x" ' %
                             (item.set, item.inst, item.offset))

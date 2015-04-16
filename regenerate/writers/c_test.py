@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 Actual program. Parses the arguments, and initiates the main window
 """
@@ -38,7 +37,7 @@ support_code = [
     "typedef unsigned short     uint16;",
     "typedef unsigned char      uint8;",
     "",
-    ]
+]
 code_reg32 = [
     "static int",
     "check_reg32(volatile uint32* addr_ptr, uint32 defval, uint32 ro_mask)",
@@ -139,7 +138,7 @@ code_reg64 = [
     "		       (uint32)(ro_mask>>32)& 0xffffffff);",
     "  return status;",
     "}",
-    ]
+]
 code_reg16 = [
     "static int",
     "check_reg16(volatile uint16* addr_ptr, uint16 defval, uint16 ro_mask)",
@@ -176,32 +175,29 @@ code_reg16 = [
     "",
     "  return 0;",
     "}",
-    ]
-code_reg8 = [
-    "static int",
-    "check_reg8(volatile uint8* addr_ptr, uint8 defval, uint8 ro_mask)",
-    "{",
-    "  uint32 current_address;",
-    "  current_address = (uint32) addr_ptr;",
-    "",
-    "  if (*addr_ptr != defval) return 1;",
-    "",
-    "  *addr_ptr = 0xff;",
-    "  if ((*addr_ptr & ro_mask) != ro_mask) return 2;",
-    "",
-    "  *addr_ptr = defval;",
-    "  if (*addr_ptr != defval) return 3;",
-    "",
-    "  *addr_ptr = defval;",
-    "  if (*addr_ptr != defval) return 4;",
-    "",
-    "  return 0;",
-    "}",
-    ]
+]
+code_reg8 = ["static int",
+             "check_reg8(volatile uint8* addr_ptr, uint8 defval, uint8 ro_mask)",
+             "{",
+             "  uint32 current_address;",
+             "  current_address = (uint32) addr_ptr;",
+             "",
+             "  if (*addr_ptr != defval) return 1;",
+             "",
+             "  *addr_ptr = 0xff;",
+             "  if ((*addr_ptr & ro_mask) != ro_mask) return 2;",
+             "",
+             "  *addr_ptr = defval;",
+             "  if (*addr_ptr != defval) return 3;",
+             "",
+             "  *addr_ptr = defval;",
+             "  if (*addr_ptr != defval) return 4;",
+             "",
+             "  return 0;",
+             "}", ]
 
 
 class CTest(WriterBase):
-
     def __init__(self, project, dbase):
         WriterBase.__init__(self, project, dbase)
         self._offset = 0
@@ -221,20 +217,17 @@ class CTest(WriterBase):
 
         for rng in [register.get_bit_field(key)
                     for key in register.get_bit_field_keys()]:
-            if rng.field_type in (BitField.TYPE_READ_WRITE,
-                                  BitField.TYPE_READ_WRITE_1S,
-                                  BitField.TYPE_READ_WRITE_1S_1,
-                                  BitField.TYPE_READ_WRITE_LOAD,
-                                  BitField.TYPE_READ_WRITE_LOAD_1S,
-                                  BitField.TYPE_READ_WRITE_LOAD_1S_1,
-                                  BitField.TYPE_READ_WRITE_SET,
-                                  BitField.TYPE_READ_WRITE_SET_1S,
-                                  BitField.TYPE_READ_WRITE_SET_1S_1,
-                                  BitField.TYPE_READ_WRITE_CLR,
-                                  BitField.TYPE_READ_WRITE_CLR_1S,
-                                  BitField.TYPE_READ_WRITE_PROTECT,
-                                  BitField.TYPE_READ_WRITE_PROTECT_1S,
-                                  BitField.TYPE_READ_WRITE_CLR_1S_1):
+            if rng.field_type in (
+                BitField.TYPE_READ_WRITE, BitField.TYPE_READ_WRITE_1S,
+                BitField.TYPE_READ_WRITE_1S_1, BitField.TYPE_READ_WRITE_LOAD,
+                BitField.TYPE_READ_WRITE_LOAD_1S,
+                BitField.TYPE_READ_WRITE_LOAD_1S_1,
+                BitField.TYPE_READ_WRITE_SET, BitField.TYPE_READ_WRITE_SET_1S,
+                BitField.TYPE_READ_WRITE_SET_1S_1,
+                BitField.TYPE_READ_WRITE_CLR, BitField.TYPE_READ_WRITE_CLR_1S,
+                BitField.TYPE_READ_WRITE_PROTECT,
+                BitField.TYPE_READ_WRITE_PROTECT_1S,
+                BitField.TYPE_READ_WRITE_CLR_1S_1):
                 for i in range(rng.lsb, rng.msb + 1):
                     value = value | (1 << i)
         return value
@@ -275,8 +268,9 @@ class CTest(WriterBase):
                         first = False
                     width = register.width
                     ext = ext_opt[width]
-                    cfile.write("   val = check_reg%d(REG_UINT%d_PTR(0x%x), 0x%x%s, 0x%x%s);\n" %
-                                (width, width, addr, default, ext, mask, ext))
+                    cfile.write(
+                        "   val = check_reg%d(REG_UINT%d_PTR(0x%x), 0x%x%s, 0x%x%s);\n"
+                        % (width, width, addr, default, ext, mask, ext))
                     cfile.write("   if (val) return val;\n\n")
 
         cfile.write("   return 0;\n")

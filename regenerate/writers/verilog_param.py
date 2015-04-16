@@ -16,12 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 DefsWriter - Writes out Verilog defines representing the register addresses
 """
 
-from writer_base import WriterBase     # IGNORE:W0403
+from writer_base import WriterBase  # IGNORE:W0403
 
 
 class VerilogParameters(WriterBase):
@@ -41,7 +40,8 @@ class VerilogParameters(WriterBase):
         """
         name = prefix + reg.token
 
-        self._ofile.write("parameter p%s = 'h%x\n" % (name, reg.address+offset))
+        self._ofile.write("parameter p%s = 'h%x\n" %
+                          (name, reg.address + offset))
 
     def write(self, filename):
         """
@@ -63,7 +63,8 @@ class VerilogParameters(WriterBase):
             errd.run()
             return
 
-        self._write_header_comment(self._ofile, "site_verilog.inc", comment_char='//')
+        self._write_header_comment(self._ofile, "site_verilog.inc",
+                                   comment_char='//')
 
         for reg_key in self._dbase.get_keys():
             self.write_def(self._dbase.get_register(reg_key), self._prefix,

@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 Actual program. Parses the arguments, and initiates the main window
 """
@@ -36,7 +35,6 @@ def find_range(address, range_map):
 
 
 class VerilogConstRegPackage(WriterBase):
-
     def __init__(self, project, dblist):
         WriterBase.__init__(self, None)
         self.dblist = dblist

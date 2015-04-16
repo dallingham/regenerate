@@ -28,8 +28,10 @@ try:
 
     def __ood(path):
         files = []
-        for svn_status in __client.status(path, recurse=False,
-                                          get_all=True, update=True):
+        for svn_status in __client.status(path,
+                                          recurse=False,
+                                          get_all=True,
+                                          update=True):
             if (svn_status.repos_text_status != pysvn.wc_status_kind.none or
                 svn_status.repos_prop_status != pysvn.wc_status_kind.none):
                 files.append(svn_status.path)
@@ -101,7 +103,6 @@ class ProjectModel(gtk.ListStore):
 
 
 class ProjectList(object):
-
     def __init__(self, obj, selection_callback):
         self.__obj = obj
         self.__obj.get_selection().connect('changed', selection_callback)
@@ -109,9 +110,9 @@ class ProjectList(object):
         self.__model = None
         self.__build_prj_window()
 
-        self.__obj.enable_model_drag_source(
-            gtk.gdk.BUTTON1_MASK, [('text/plain', 0, 0)],
-            gtk.gdk.ACTION_DEFAULT | gtk.gdk.ACTION_MOVE)
+        self.__obj.enable_model_drag_source(gtk.gdk.BUTTON1_MASK, [
+            ('text/plain', 0, 0)
+        ], gtk.gdk.ACTION_DEFAULT | gtk.gdk.ACTION_MOVE)
         self.__obj.connect('drag-data-get', self.drag_data_get)
 
         self.factory = gtk.IconFactory()

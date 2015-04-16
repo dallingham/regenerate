@@ -29,14 +29,15 @@ def full_token(group_name, reg_name, set_name, index, fmt_string):
 
     index_str = "%d" % index if index >= 0 else ""
 
-    name_data = {"G": group_name.upper(),
-                 "g": group_name.lower(),
-                 "D": index_str,
-                 "R": reg_name.upper(),
-                 "r": reg_name.lower(),
-                 "S": set_name.upper(),
-                 "s": set_name.lower()
-                 }
+    name_data = {
+        "G": group_name.upper(),
+        "g": group_name.lower(),
+        "D": index_str,
+        "R": reg_name.upper(),
+        "r": reg_name.lower(),
+        "S": set_name.upper(),
+        "s": set_name.lower()
+    }
 
     return fmt_string % name_data
 
@@ -55,15 +56,10 @@ def in_groups(name, project):
     groups = []
     if name and project:
         for group in project.get_grouping_list():
-            for regset in [rs for rs in group.register_sets
-                           if rs.set == name]:
+            for regset in [rs for rs in group.register_sets if rs.set == name]:
                 fmt = regset.format if regset.format else DEFAULT_FORMAT
-                groups.append(InstData(group.name,
-                                       regset.inst,
-                                       regset.set,
-                                       group.base,
-                                       regset.offset,
-                                       regset.repeat,
-                                       regset.repeat_offset,
+                groups.append(InstData(group.name, regset.inst, regset.set,
+                                       group.base, regset.offset,
+                                       regset.repeat, regset.repeat_offset,
                                        fmt))
     return groups

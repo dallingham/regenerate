@@ -29,8 +29,8 @@ class InstMdl(gtk.TreeStore):
     symbolic ID name and the base address.
     """
 
-    (INST_COL, ID_COL, BASE_COL, SORT_COL, RPT_COL, OFF_COL,
-     FMT_COL, HDL_COL, UVM_COL, OBJ_COL) = range(10)
+    (INST_COL, ID_COL, BASE_COL, SORT_COL, RPT_COL, OFF_COL, FMT_COL, HDL_COL,
+     UVM_COL, OBJ_COL) = range(10)
 
     def __init__(self):
         gtk.TreeStore.__init__(self, str, str, str, gobject.TYPE_UINT64, str,
@@ -61,7 +61,8 @@ class InstMdl(gtk.TreeStore):
             node = self.iter_next(node)
 
         if text in set(items):
-            LOGGER.error('"{0}" has already been used as a group name'.format(text))
+            LOGGER.error(
+                '"{0}" has already been used as a group name'.format(text))
         else:
             node = self.get_iter(path)
             self.set_value(node, InstMdl.INST_COL, text)
@@ -160,7 +161,6 @@ class InstMdl(gtk.TreeStore):
 
 
 class InstanceList(object):
-
     def __init__(self, obj, id_changed, inst_changed, base_changed,
                  repeat_changed, repeat_offset_changed, format_changed,
                  hdl_changed, uvm_changed):
@@ -224,15 +224,15 @@ class InstanceList(object):
         return self.__obj.get_selection().get_selected()
 
     def __enable_dnd(self):
-        self.__obj.enable_model_drag_dest([('text/plain', 0, 0)],
-                                          gtk.gdk.ACTION_DEFAULT |
-                                          gtk.gdk.ACTION_MOVE)
+        self.__obj.enable_model_drag_dest([
+            ('text/plain', 0, 0)
+        ], gtk.gdk.ACTION_DEFAULT | gtk.gdk.ACTION_MOVE)
         self.__obj.connect('drag-data-received',
                            self.__drag_data_received_data)
 
-        self.__obj.enable_model_drag_source(
-            gtk.gdk.BUTTON1_MASK, [('text/plain', 0, 0)],
-            gtk.gdk.ACTION_DEFAULT | gtk.gdk.ACTION_MOVE)
+        self.__obj.enable_model_drag_source(gtk.gdk.BUTTON1_MASK, [
+            ('text/plain', 0, 0)
+        ], gtk.gdk.ACTION_DEFAULT | gtk.gdk.ACTION_MOVE)
         self.__obj.connect('drag-data-get', self.__drag_data_get)
 
     def __drag_data_get(self, treeview, context, selection, target_id, etime):
@@ -247,8 +247,8 @@ class InstanceList(object):
         data = selection.data
         drop_info = treeview.get_dest_row_at_pos(x, y)
         (name, width) = data.split(":")
-        row_data = build_row_data(name, name, 0, 1, int(width), "",
-                                  "", False, None)
+        row_data = build_row_data(name, name, 0, 1, int(width), "", "", False,
+                                  None)
         if drop_info:
             path, position = drop_info
             self.modified_callback()
@@ -256,7 +256,7 @@ class InstanceList(object):
                 node = self.__model.get_iter(path)
                 self.__model.append(node, row_data)
             else:
-                parent = self.__model.get_iter((path[0],))
+                parent = self.__model.get_iter((path[0], ))
                 node = self.__model.get_iter(path)
                 if position in (gtk.TREE_VIEW_DROP_BEFORE,
                                 gtk.TREE_VIEW_DROP_INTO_OR_BEFORE):
@@ -287,8 +287,7 @@ class InstanceList(object):
                                repeat_changed, repeat_offset_changed,
                                format_changed, hdl_changed, uvm_changed):
 
-        column = EditableColumn('Instance', inst_changed,
-                                InstMdl.INST_COL)
+        column = EditableColumn('Instance', inst_changed, InstMdl.INST_COL)
         column.set_sort_column_id(InstMdl.INST_COL)
         column.set_min_width(125)
         self.__obj.append_column(column)
@@ -299,13 +298,13 @@ class InstanceList(object):
         column.set_min_width(125)
         self.__obj.append_column(column)
 
-        column = EditableColumn('Address base', base_changed,
-                                InstMdl.BASE_COL, True)
+        column = EditableColumn('Address base', base_changed, InstMdl.BASE_COL,
+                                True)
         column.set_sort_column_id(InstMdl.SORT_COL)
         self.__obj.append_column(column)
 
-        column = EditableColumn('Repeat', repeat_changed,
-                                InstMdl.RPT_COL, True)
+        column = EditableColumn('Repeat', repeat_changed, InstMdl.RPT_COL,
+                                True)
         self.__obj.append_column(column)
 
         column = EditableColumn('Repeat Offset', repeat_offset_changed,

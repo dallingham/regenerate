@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 Imports data from a Denali RDL file
 """
@@ -24,20 +23,21 @@ Imports data from a Denali RDL file
 from regenerate.db import Register, BitField
 import re
 
-REG_NAME     = "Register Name"
-REG_DESCR    = "Register Description"
-REG_ADDR     = "Register Address"
-REG_WIDTH    = "Register Width"
-REG_ACC      = "Register Access"
-REG_RST      = "Register Reset Value"
-REG_RMASK    = "Register Reset Mask"
-FIELD_NAME   = "Field Name"
-FIELD_DESCR  = "Field Description"
+REG_NAME = "Register Name"
+REG_DESCR = "Register Description"
+REG_ADDR = "Register Address"
+REG_WIDTH = "Register Width"
+REG_ACC = "Register Access"
+REG_RST = "Register Reset Value"
+REG_RMASK = "Register Reset Mask"
+FIELD_NAME = "Field Name"
+FIELD_DESCR = "Field Description"
 FIELD_OFFSET = "Field Offset"
-FIELD_WIDTH  = "Field Width"
+FIELD_WIDTH = "Field Width"
 FIELD_ACCESS = "Field Access"
-FIELD_RESET  = "Field Reset Value"
-FIELD_MASK   = "Field Reset Mask"
+FIELD_RESET = "Field Reset Value"
+FIELD_MASK = "Field Reset Mask"
+
 
 def parse_hex_value(value):
     """
@@ -65,11 +65,13 @@ def parse_hex_value(value):
     except ValueError:
         return 0
 
+
 def is_blank(item_list):
     length = 0
     for i in item_list:
         length += len(i.strip())
     return length == 0
+
 
 class CerteCSVParser:
     """
@@ -134,8 +136,8 @@ class CerteCSVParser:
                 r_addr = name2addr.get(r_name, next_addr)
             else:
                 r_addr = parse_hex_value(data[r_addr_col])
-            
-            next_addr = r_addr + r_width/8
+
+            next_addr = r_addr + r_width / 8
 
             name2addr[r_name] = r_addr
 
@@ -155,7 +157,7 @@ class CerteCSVParser:
                     f_descr = data[f_descr_col]
                 else:
                     f_descr = ""
-                    
+
                 if f_name_col != -1:
                     f_name = data[f_name_col].strip()
                 elif f_stop == f_start:
@@ -195,4 +197,3 @@ class CerteCSVParser:
             reg.add_bit_field(field)
 
         input_file.close()
-

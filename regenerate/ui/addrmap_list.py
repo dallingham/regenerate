@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 Provides the Address List interface
 """
@@ -25,17 +24,12 @@ import gtk
 from columns import EditableColumn, ToggleColumn, ComboMapColumn
 from regenerate.db import LOGGER, AddrMapData
 
-_BITS8  = "8-bits"
+_BITS8 = "8-bits"
 _BITS16 = "16-bits"
 _BITS32 = "32-bits"
 _BITS64 = "64-bits"
 
-SIZE2STR = (
-    (_BITS8,  1),
-    (_BITS16, 2),
-    (_BITS32, 4),
-    (_BITS64, 8)
-    )
+SIZE2STR = ((_BITS8, 1), (_BITS16, 2), (_BITS32, 4), (_BITS64, 8))
 
 INT2SIZE = dict((_i[1], _i[0]) for _i in SIZE2STR)
 STR2SIZE = dict((_i[0], _i[1]) for _i in SIZE2STR)
@@ -91,11 +85,10 @@ class AddrMapList(object):
         """
         Enables drag and drop
         """
-        self._obj.enable_model_drag_dest([('text/plain', 0, 0)],
-                                         gtk.gdk.ACTION_DEFAULT |
-                                         gtk.gdk.ACTION_MOVE)
-        self._obj.connect('drag-data-received',
-                          self._drag_data_received_data)
+        self._obj.enable_model_drag_dest([
+            ('text/plain', 0, 0)
+        ], gtk.gdk.ACTION_DEFAULT | gtk.gdk.ACTION_MOVE)
+        self._obj.connect('drag-data-received', self._drag_data_received_data)
 
     def _drag_data_received_data(self, treeview, context, x, y, selection,
                                  info, etime):
@@ -117,7 +110,7 @@ class AddrMapList(object):
                     node = self._model.get_iter(path)
                     self._model.append(node, row_data)
             else:
-                parent = self._model.get_iter((path[0],))
+                parent = self._model.get_iter((path[0], ))
                 parent_name = self._model[path[0]][0]
                 if self._prj.add_address_map_group(parent_name, data):
                     node = self._model.get_iter(path)
@@ -146,8 +139,9 @@ class AddrMapList(object):
         self._model.clear()
         for base in self._prj.get_address_maps():
             if base.width not in INT2SIZE:
-                LOGGER.error('Illegal width ({0}) for address map "{1}"'.format(
-                             base.width, base.name))
+                LOGGER.error(
+                    'Illegal width ({0}) for address map "{1}"'.format(
+                        base.width, base.name))
                 base = AddrMapData(base.name, base.base, 4, base.fixed)
             data = (base.name, "{0:x}".format(base.base), base.fixed,
                     INT2SIZE[base.width])
@@ -164,8 +158,9 @@ class AddrMapList(object):
 
         current_maps = set([i.name for i in self._prj.get_address_maps()])
         if new_text in current_maps:
-            LOGGER.error('"{}" has already been used as an address map name'.format(
-                         new_text))
+            LOGGER.error(
+                '"{}" has already been used as an address map name'.format(
+                    new_text))
         else:
             node = self._model.get_iter(path)
             name = self._model.get_value(node, AddrMapMdl.NAME_COL)
@@ -188,8 +183,7 @@ class AddrMapList(object):
             node = self._model.get_iter(path)
             name = self._model.get_value(node, AddrMapMdl.NAME_COL)
             fixed = self._model.get_value(node, AddrMapMdl.FIXED_COL)
-            width = STR2SIZE[self._model.get_value(node,
-                                                   AddrMapMdl.WIDTH_COL)]
+            width = STR2SIZE[self._model.get_value(node, AddrMapMdl.WIDTH_COL)]
 
             self._prj.set_address_map(name, value, width, fixed)
             self._model[path][AddrMapMdl.BASE_COL] = new_text
@@ -225,8 +219,8 @@ class AddrMapList(object):
         fixed = self._model.get_value(node, AddrMapMdl.FIXED_COL)
         width = self._model.get_value(node, AddrMapMdl.WIDTH_COL)
         self._model[path][AddrMapMdl.FIXED_COL] = not fixed
-        self._prj.set_address_map(name, int(value, 16),
-                                  STR2SIZE[width], not fixed)
+        self._prj.set_address_map(name, int(value, 16), STR2SIZE[width],
+                                  not fixed)
 
     def _build_instance_table(self):
         """
@@ -244,8 +238,8 @@ class AddrMapList(object):
         column.set_sort_column_id(AddrMapMdl.BASE_COL)
         self._obj.append_column(column)
 
-        column = ComboMapColumn('Access Width', self._width_changed,
-                                SIZE2STR, AddrMapMdl.WIDTH_COL)
+        column = ComboMapColumn('Access Width', self._width_changed, SIZE2STR,
+                                AddrMapMdl.WIDTH_COL)
         column.set_min_width(250)
         self._obj.append_column(column)
 

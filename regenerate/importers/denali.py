@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 Imports data from a Denali RDL file
 """
@@ -26,7 +25,6 @@ import re
 
 
 class RegInfo:
-
     def __init__(self):
         self.description = ""
         self.address = 0
@@ -156,7 +154,9 @@ class DenaliRDLParser:
         with open(filename) as input_file:
 
             for line in input_file:
-                match = re.match("addrmap\s+(.*)\s*{\s*default\s+regwidth\s*=\s*(\d+)\s*;", line)
+                match = re.match(
+                    "addrmap\s+(.*)\s*{\s*default\s+regwidth\s*=\s*(\d+)\s*;",
+                    line)
                 if match:
                     groups = match.groups()
                     self.dbase.descriptive_title = groups[0].strip()
@@ -177,7 +177,7 @@ class DenaliRDLParser:
                     reg.token = groups[0]
                     reg.reg_name = reg.token
                     reg.address = addr
-                    addr = reg.address + (reg.width/8)
+                    addr = reg.address + (reg.width / 8)
                     reg_list.append(reg)
                     continue
 
@@ -195,8 +195,8 @@ class DenaliRDLParser:
                         reg.dispatch(groups[0], groups[1])
                     continue
 
-                match = re.match("\s*}\s*([^[]+)\[(\d+):(\d+)\]\s*=\s*([\dx]+)\s*;",
-                                 line)
+                match = re.match(
+                    "\s*}\s*([^[]+)\[(\d+):(\d+)\]\s*=\s*([\dx]+)\s*;", line)
                 if match:
                     groups = match.groups()
                     field.name = groups[0].strip()
@@ -216,13 +216,13 @@ class DenaliRDLParser:
                     field = None
                     continue
 
-                match = re.match("\s*}\s*([_A-Za-z_0-9]+)\s*@([0-9A-Fa-fx]+)\s*;",
-                                 line)
+                match = re.match(
+                    "\s*}\s*([_A-Za-z_0-9]+)\s*@([0-9A-Fa-fx]+)\s*;", line)
                 if match:
                     groups = match.groups()
                     reg.reg_name = groups[0]
                     reg.address = int(groups[1], 16)
-                    addr = reg.address + (reg.width/8)
+                    addr = reg.address + (reg.width / 8)
                     continue
 
                 match = re.match("\s*}\s*;", line)
@@ -236,9 +236,11 @@ class DenaliRDLParser:
         Converts the extracted data into register and bit field values, and
         loads the new data into the database.
         """
-        lookup = {'rw': BitField.TYPE_READ_WRITE,
-                  'w': BitField.TYPE_WRITE_ONLY,
-                  'r': BitField.TYPE_READ_ONLY}
+        lookup = {
+            'rw': BitField.TYPE_READ_WRITE,
+            'w': BitField.TYPE_WRITE_ONLY,
+            'r': BitField.TYPE_READ_ONLY
+        }
 
         name_count = {}
         for reg in reg_list:

@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 VerilogWriter - produces a verilog RTL description of the registers
 """
@@ -28,7 +27,6 @@ from regenerate.writers.verilog_reg_def import REG
 from regenerate.db import BitField, TYPES, LOGGER
 from regenerate.writers.writer_base import WriterBase
 
-
 # Constants
 
 LOWER_BIT = {128: 4, 64: 3, 32: 2, 16: 1, 8: 0}
@@ -36,8 +34,8 @@ BUS_ELEMENT = re.compile("([\w_]+)\[(\d+)\]")
 SINGLE_BIT = re.compile("\s*(\S+)\[(\d+)\]")
 MULTI_BIT = re.compile("\s*(\S+)\[(\d+):(\d+)\]")
 
-(F_FIELD, F_START_OFF, F_STOP_OFF, F_START, F_STOP,
- F_ADDRESS, F_REGISTER) = range(7)
+(F_FIELD, F_START_OFF, F_STOP_OFF, F_START, F_STOP, F_ADDRESS,
+ F_REGISTER) = range(7)
 
 
 def binary(val, width):
@@ -123,8 +121,8 @@ def reset_value(field, start, stop):
     if field.reset_type == BitField.RESET_NUMERIC:
         field_width = (stop - start) + 1
         reset = (field.reset_value >> (start - field.lsb))
-        return "{0}'h{1:x}".format(field_width,
-                                   reset & ((2 ** field_width) - 1))
+        return "{0}'h{1:x}".format(field_width, reset &
+                                   ((2 ** field_width) - 1))
     elif field.reset_type == BitField.RESET_INPUT:
         if stop == start:
             return field.reset_input
@@ -238,8 +236,7 @@ def add_reset_input(reset_set, field):
         values = reset_set[reset]
         reset_set[reset] = ('input', max(stop, values[1]),
                             min(start, values[2]),
-                            "{0}, {1}".format(values[3], field.field_name)
-                            )
+                            "{0}, {1}".format(values[3], field.field_name))
     else:
         reset_set[reset] = ('input', stop, start,
                             "reset value for {0}".format(field.field_name))
@@ -263,7 +260,8 @@ class Verilog(WriterBase):
 
         self.__sorted_regs = [
             reg for reg in dbase.get_all_registers()
-            if not (reg.do_not_generate_code or reg.ram_size > 0)]
+            if not (reg.do_not_generate_code or reg.ram_size > 0)
+        ]
 
         self._coverage = self._dbase.enable_coverage
 
@@ -293,7 +291,7 @@ class Verilog(WriterBase):
         self._field_type_map = {
             BitField.TYPE_READ_ONLY: self._register_read_only,
             BitField.TYPE_READ_ONLY_VALUE: self._register_read_only_value,
-            }
+        }
 
         self._has_input = {}
         self._has_oneshot = {}
@@ -444,8 +442,8 @@ class Verilog(WriterBase):
         address = (register.address / nbytes) * nbytes
         bit_offset = (register.address * 8) % size
 
-        return (field, start + bit_offset, stop + bit_offset,
-                start, stop, address, register)
+        return (field, start + bit_offset, stop + bit_offset, start, stop,
+                address, register)
 
     def __generate_group_list(self, size):
         """
@@ -455,8 +453,7 @@ class Verilog(WriterBase):
         for register in self.__sorted_regs:
             for field in register.get_bit_fields():
                 for lower in range(0, register.width, size):
-                    if in_range(field.lsb, field.msb,
-                                lower, lower + size - 1):
+                    if in_range(field.lsb, field.msb, lower, lower + size - 1):
                         data = self._byte_info(field, register, lower, size)
                         item_list.setdefault(data[F_ADDRESS], []).append(data)
         return item_list
@@ -470,8 +467,7 @@ class Verilog(WriterBase):
             for field in [field for field in reg.get_bit_fields()
                           if self._has_rd[field.field_type]]:
                 for lower in range(0, reg.width, size):
-                    if in_range(field.lsb, field.msb,
-                                lower, lower + size - 1):
+                    if in_range(field.lsb, field.msb, lower, lower + size - 1):
                         data = self._byte_info(field, reg, lower, size)
                         item_list.setdefault(data[F_ADDRESS], []).append(data)
         return item_list
@@ -508,10 +504,12 @@ class Verilog(WriterBase):
         condition = "" if self._dbase.reset_active_level else "~"
         be_level = "" if self._dbase.byte_strobe_active_level else "~"
 
-        name_map = {'MODULE': self._module,
-                    'BE_LEVEL': be_level,
-                    'RESET_CONDITION': condition,
-                    'RESET_EDGE': edge}
+        name_map = {
+            'MODULE': self._module,
+            'BE_LEVEL': be_level,
+            'RESET_CONDITION': condition,
+            'RESET_EDGE': edge
+        }
 
         for i in self._used_types:
             self._wrln("\n\n")
@@ -540,21 +538,18 @@ class Verilog(WriterBase):
                     if field.reset_parameter.strip() == "":
                         param_name = "UNDEFINED_PARAMETER%d" % bad_param
                         bad_param = bad_param + 1
-                        errmsg("Register %s, field %s did not have a parameter name specified" %
-                               (register.register_name, field.field_name))
+                        errmsg(
+                            "Register %s, field %s did not have a parameter name specified"
+                            % (register.register_name, field.field_name))
                     else:
                         param_name = field.reset_parameter
 
                     if field.msb == field.lsb:
-                        blist.append((param_name,
-                                      field.width,
+                        blist.append((param_name, field.width,
                                       field.reset_value))
                     else:
-                        plist.append((field.msb,
-                                      field.lsb,
-                                      param_name,
-                                      field.width,
-                                      field.reset_value))
+                        plist.append((field.msb, field.lsb, param_name,
+                                      field.width, field.reset_value))
 
         if plist or blist:
             params = ["parameter %s = %d'h%x" % item for item in blist] + \
@@ -597,15 +592,13 @@ class Verilog(WriterBase):
         data_width = "[%d:0]" % (self._data_width - 1)
         be_width = "[%d:0]" % ((self._data_width / 8) - 1)
 
-        port_list = [
-            (self._input, '', self._clock, "Input clock"),
-            (self._input, '', self._reset, "Reset"),
-            (self._input, '', self._write_strobe, "Write strobe"),
-            (self._input, '', self._read_strobe, "Read strobe"),
-            (self._input, be_width, self._byte_enables, "Byte enables"),
-            (self._input, addr_width, self._addr, "Address"),
-            (self._input, data_width, self._data_in, "Data in")
-            ]
+        port_list = [(self._input, '', self._clock, "Input clock"),
+                     (self._input, '', self._reset, "Reset"),
+                     (self._input, '', self._write_strobe, "Write strobe"),
+                     (self._input, '', self._read_strobe, "Read strobe"
+            ), (self._input, be_width, self._byte_enables, "Byte enables"),
+                     (self._input, addr_width, self._addr, "Address"),
+                     (self._input, data_width, self._data_in, "Data in")]
 
         for register in self.__sorted_regs:
 
@@ -615,8 +608,8 @@ class Verilog(WriterBase):
                 # A parallel load requires an input signal
                 if self._has_control[field.field_type]:
                     if not field.control_signal:
-                        errmsg("No parallel load signal specified for %s:%s"
-                               % (register.register_name, field.field_name))
+                        errmsg("No parallel load signal specified for %s:%s" %
+                               (register.register_name, field.field_name))
                     parallel_load_port(field, port_list, output_list)
 
                 # If the bit is controlled by an input value, we
@@ -627,8 +620,8 @@ class Verilog(WriterBase):
                 # Output oneshots require a signal
                 if self._has_oneshot[field.field_type]:
                     if not field.output_signal:
-                        errmsg("Empty output signal for %s:%s"
-                               % (register.register_name, field.field_name))
+                        errmsg("Empty output signal for %s:%s" %
+                               (register.register_name, field.field_name))
                     port_list.append((self._output, "",
                                       oneshot_name(field.output_signal),
                                       "one shot"))
@@ -652,8 +645,8 @@ class Verilog(WriterBase):
             if item[1] == item[2]:
                 port_list.append((item[0], "", key, item[3]))
             else:
-                port_list.append((item[0], "[%d:%d]" %
-                                  (item[1], item[2]), key, item[3]))
+                port_list.append((item[0], "[%d:%d]" % (item[1], item[2]), key,
+                                  item[3]))
 
         return self._cleanup_port_list(port_list)
 
@@ -703,8 +696,8 @@ class Verilog(WriterBase):
             self.__unused_ports = self.__unused_ports + ["%s[%d]" % (key, i)
                                                          for i in used_ports]
 
-            new_entry = (data[0][0], "[%d:%d]" % (max_index, min_index),
-                         key, data[0][3])
+            new_entry = (data[0][0], "[%d:%d]" % (max_index, min_index), key,
+                         data[0][3])
             new_list.append(new_entry)
 
         return new_list
@@ -741,9 +734,9 @@ class Verilog(WriterBase):
             self._comment(['Register Declarations'], precede_blank=1)
             self._wrln("\n".join(local_regs))
         self._wrln("\n   %s prev_write, prev_read;\n\n" % self._reg_type)
-        self._wrln("   %s [%d:0]      mux_%s;\n" % (self._reg_type,
-                                                    self._data_width - 1,
-                                                    self._data_out.lower()))
+        self._wrln(
+            "   %s [%d:0]      mux_%s;\n" %
+            (self._reg_type, self._data_width - 1, self._data_out.lower()))
 
         if local_wires:
             self._comment(['Wire Declarations (Constants)'], precede_blank=1)
@@ -797,14 +790,14 @@ class Verilog(WriterBase):
                     boundaries = break_on_byte_boundaries(field.lsb, field.msb)
                     names = " | ".join([oneshot_name(base, pos[0])
                                         for pos in boundaries])
-                    self._wrln(fmt_string % (
-                        oneshot_name(field.output_signal), names))
+                    self._wrln(fmt_string %
+                               (oneshot_name(field.output_signal), names))
                 if not field.use_output_enable:
                     continue
 
-                self._wrln(fmt_string % (
-                    build_name(field.output_signal, field),
-                    get_base_signal(address, field)))
+                self._wrln(fmt_string %
+                           (build_name(field.output_signal, field),
+                            get_base_signal(address, field)))
 
         fmt_string = "   assign %%-%ds = 1'b0;\n" % max_len
         for unused in self.__unused_ports:
@@ -841,24 +834,23 @@ class Verilog(WriterBase):
         mlen = 11
 
         lines = ['   %s : %s' % ('Field'.ljust(mlen), field.field_name)]
-        lines.append('   %s : %s' % ('Type'.ljust(mlen),
-                                     self._type_descr[field.field_type]))
+        lines.append('   %s : %s' %
+                     ('Type'.ljust(mlen), self._type_descr[field.field_type]))
 
         if field.width == 1:
             lines.append('   %s : %d' % ('Bit'.ljust(mlen), stop))
         else:
-            lines.append('   %s : %d:%d' %
-                         ('Bits'.ljust(mlen), stop, start))
+            lines.append('   %s : %d:%d' % ('Bits'.ljust(mlen), stop, start))
         lines.append('   %s : %s' % ('Register'.ljust(mlen), reg_name))
         lines.append('   %s : %08x' % ('Address'.ljust(mlen), address))
         if field.reset_type == BitField.RESET_NUMERIC:
-            lines.append('   %s : %d\'h%x' %
-                         ('Reset Value'.ljust(mlen), field.width,
-                          field.reset_value))
+            lines.append(
+                '   %s : %d\'h%x' %
+                ('Reset Value'.ljust(mlen), field.width, field.reset_value))
         elif field.reset_type == BitField.RESET_PARAMETER:
-            lines.append('   %s : %d\'h%x' %
-                         ('Reset Value'.ljust(mlen), field.width,
-                          field.reset_value))
+            lines.append(
+                '   %s : %d\'h%x' %
+                ('Reset Value'.ljust(mlen), field.width, field.reset_value))
         else:
             lines.append('   %s : %s' %
                          ('Reset Value'.ljust(mlen), field.reset_input))
@@ -877,8 +869,7 @@ class Verilog(WriterBase):
         """
         Writes the output declarations
         """
-        self._comment(["", "Register Read Output Assignments", ""],
-                      border="-")
+        self._comment(["", "Register Read Output Assignments", ""], border="-")
 
         keys = sorted(self._word_fields.keys())
         for key in keys:
@@ -916,8 +907,8 @@ class Verilog(WriterBase):
                 self._wrln("%d'b0" % (current_pos + 1))
             self._wrln("\n                  };\n")
 
-        self._write_output_mux(keys, self._addr,
-                               self._addr_width, self._data_out)
+        self._write_output_mux(keys, self._addr, self._addr_width,
+                               self._data_out)
 
     def _write_acknowledge(self):
         """
@@ -932,12 +923,12 @@ class Verilog(WriterBase):
         self._wrln("        prev_read  <= 1'b0;\n")
         self._wrln("        %s <= 1'b0;\n" % self._dbase.acknowledge_name)
         self._wrln('     end else begin\n')
-        self._wrln("        prev_write <= %s;\n" % self._dbase.write_strobe_name)
+        self._wrln(
+            "        prev_write <= %s;\n" % self._dbase.write_strobe_name)
         self._wrln("        prev_read  <= %s;\n" % self._dbase.read_strobe_name)
         self._wrln("        %s <= (~prev_write & %s) | (~prev_read & %s);\n" %
-                   (self._dbase.acknowledge_name,
-                    self._dbase.write_strobe_name,
-                    self._dbase.read_strobe_name))
+                   (self._dbase.acknowledge_name, self._dbase.
+                    write_strobe_name, self._dbase.read_strobe_name))
         self._wrln('     end\n   end\n\n')
 
     def _write_output_mux(self, out_address, addr_bus, addr_width, data_out):
@@ -955,9 +946,9 @@ class Verilog(WriterBase):
         self._wrln('           case (%s)\n' % addr_bus)
         for addr in out_address:
             width = addr_width - self._lower_bit
-            self._wrln('            %s: mux_%s <= r%02x;\n' %
-                       (binary(addr >> self._lower_bit, width),
-                        data_out.lower(), addr))
+            self._wrln(
+                '            %s: mux_%s <= r%02x;\n' %
+                (binary(addr >> self._lower_bit, width), data_out.lower(), addr))
         if self._data_width == 64:
             self._wrln('            default: mux_%s <= {2{32\'hdeadbeef}};\n' %
                        data_out.lower())
@@ -1008,21 +999,18 @@ class Verilog2001(Verilog):
                     if field.reset_parameter.strip() == "":
                         param_name = "UNDEFINED_PARAMETER%d" % bad_param
                         bad_param = bad_param + 1
-                        errmsg("Register %s, field %s did not have a parameter name specified" %
-                               (register.register_name, field.field_name))
+                        errmsg(
+                            "Register %s, field %s did not have a parameter name specified"
+                            % (register.register_name, field.field_name))
                     else:
                         param_name = field.reset_parameter
 
                     if field.msb == field.lsb:
-                        blist.append((param_name,
-                                      field.width,
+                        blist.append((param_name, field.width,
                                       field.reset_value))
                     else:
-                        plist.append((field.msb,
-                                      field.lsb,
-                                      param_name,
-                                      field.width,
-                                      field.reset_value))
+                        plist.append((field.msb, field.lsb, param_name,
+                                      field.width, field.reset_value))
 
         if plist or blist:
             params = ["bit %s = %d'h%x" % item for item in blist] + \
@@ -1042,12 +1030,12 @@ class Verilog2001(Verilog):
         max_type = max([len(d[0]) for d in ports])
         max_slice = max([len(d[1]) for d in ports])
         max_col = max_len + max_type + max_slice + 8
-        csep = "\n" + " " * (max_col-1) + "// "
+        csep = "\n" + " " * (max_col - 1) + "// "
 
         commenter = textwrap.TextWrapper(width=max_col)
 
-        fmt_string = "    %%-%ds %%-%ds %%-%ds // %%s\n" % (
-            max_type, max_slice, max_len)
+        fmt_string = "    %%-%ds %%-%ds %%-%ds // %%s\n" % (max_type,
+                                                            max_slice, max_len)
 
         for data in ports:
             comment = csep.join(commenter.wrap(data[3]))
@@ -1062,8 +1050,8 @@ class Verilog2001(Verilog):
         Writes the output mux that controls the selection of the output data
         """
         dout = data_out.lower()
-        self._wrln('\n%s @(posedge %s or %s) begin\n' % (
-            self._always, self._clock, self._reset_edge))
+        self._wrln('\n%s @(posedge %s or %s) begin\n' %
+                   (self._always, self._clock, self._reset_edge))
         self._wrln('   if (%s) begin\n' % self._reset_condition)
         self._wrln("      mux_%s <= %d'h0;\n" % (dout, self._data_width))
         self._wrln('   end else begin\n')
@@ -1117,8 +1105,8 @@ class SystemVerilog(Verilog2001):
         """
 
         dout = data_out.lower()
-        self._wrln('\n   %s @(posedge %s or %s) begin\n' % (
-            self._always, self._clock, self._reset_edge))
+        self._wrln('\n   %s @(posedge %s or %s) begin\n' %
+                   (self._always, self._clock, self._reset_edge))
         self._wrln('      if (%s) begin\n' % self._reset_condition)
         self._wrln("         mux_%s <= %d'h0;\n" % (dout, self._data_width))
         self._wrln('      end else begin\n')
@@ -1133,8 +1121,8 @@ class SystemVerilog(Verilog2001):
                    (dout, self._data_width))
         self._wrln('           endcase\n')
         self._wrln('         end else begin\n')
-        self._wrln('            mux_%s <= %d\'h0;\n' % (dout,
-                                                        self._data_width))
+        self._wrln('            mux_%s <= %d\'h0;\n' %
+                   (dout, self._data_width))
         self._wrln('         end\n')
         self._wrln('      end\n')
         self._wrln('   end\n\n')

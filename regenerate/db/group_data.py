@@ -20,7 +20,12 @@
 
 class GroupData(object):
     """Basic group information"""
-    def __init__(self, name="", base=0, hdl="", repeat=1,
+
+    def __init__(self,
+                 name="",
+                 base=0,
+                 hdl="",
+                 repeat=1,
                  repeat_offset=0x10000):
         self.name = name
         self.base = base

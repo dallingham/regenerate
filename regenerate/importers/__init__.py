@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 Imports the exporters. Makes an attempt to load the site_local versions
 first. This allows the end user to override the standard version without
@@ -35,11 +34,9 @@ from ipxact import IpXactParser
 #   ShortCmdFlag, LongCmdFlag)
 #
 
-IMPORTERS = [
-    (RDLParser,
-     "SystemRDL", "SystemRDL files", ".rdl", '-r', '--import-rdl'),
-    (DenaliRDLParser,
-     "DenaliRDL", "SystemRDL files", ".rdl", '-r', '--import-drdl'),
-    (IpXactParser,
-     "IP-XACT XML", "IP-XACT files", ".xml", '-s', '--import-ipxact'),
-]
+IMPORTERS = [(RDLParser, "SystemRDL", "SystemRDL files", ".rdl", '-r',
+              '--import-rdl'),
+             (DenaliRDLParser, "DenaliRDL", "SystemRDL files", ".rdl", '-r',
+              '--import-drdl'),
+             (IpXactParser, "IP-XACT XML", "IP-XACT files", ".xml", '-s',
+              '--import-ipxact'), ]

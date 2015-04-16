@@ -16,25 +16,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 DefsWriter - Writes out Verilog defines representing the register addresses
 """
 
-from writer_base import WriterBase     # IGNORE:W0403
+from writer_base import WriterBase  # IGNORE:W0403
 
-HEADER = [
-    "`ifdef $M$_DEFS\n",
-    "`else\n",
-    "`define $M$_DEFS 1\n",
-    "\n",
-    ]
+HEADER = ["`ifdef $M$_DEFS\n", "`else\n", "`define $M$_DEFS 1\n", "\n", ]
 
-TRAILER = [
-    ""
-    "`endif"
-    ""
-    ]
+TRAILER = ["" "`endif" ""]
 
 
 class VerilogDefines(WriterBase):
@@ -58,8 +48,8 @@ class VerilogDefines(WriterBase):
             name = "ADDR%04x" % address
         name = "%s%s" % (prefix, name)
 
-        self._ofile.write("`define %-30s (32'h%x)\n" %
-                          (name, (address + offset)))
+        self._ofile.write("`define %-30s (32'h%x)\n" % (name,
+                                                        (address + offset)))
 
     def write(self, filename):
         """

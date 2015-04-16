@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 Provides the register description. Contains the general information about the
 register, including the list of bit fields.
@@ -30,12 +29,12 @@ class Register(object):
     Defines a hardware register.
     """
 
-    full_compare = ("address", "ram_size", "description",
-                    "width", "_id", "_token", "_do_not_test",
-                    "_name", "_hide", "_do_not_generate_code")
+    full_compare = ("address", "ram_size", "description", "width", "_id",
+                    "_token", "_do_not_test", "_name", "_hide",
+                    "_do_not_generate_code")
 
-    doc_compare = ("address", "ram_size", "description",
-                   "width", "_id", "_token", "_name", "_hide")
+    doc_compare = ("address", "ram_size", "description", "width", "_id",
+                   "_token", "_name", "_hide")
 
     def __init__(self, address=0, width=32, name=""):
         self.address = address

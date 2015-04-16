@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 RegProject is the container object for a regenerate project
 """
@@ -26,8 +25,8 @@ from collections import namedtuple
 from regenerate.db.group_data import GroupData
 
 AddrMapData = namedtuple("AddrMapData", "name base width fixed")
-GroupMapData = namedtuple("GroupMapData",
-                          "set inst offset repeat repeat_offset format hdl no_uvm")
+GroupMapData = namedtuple(
+    "GroupMapData", "set inst offset repeat repeat_offset format hdl no_uvm")
 
 
 class ProjectReader(object):
@@ -106,8 +105,7 @@ class ProjectReader(object):
 
     def start_grouping(self, attrs):
         """Called when a grouping tag is found"""
-        self._current_group = GroupData(attrs['name'],
-                                        int(attrs['start'], 16),
+        self._current_group = GroupData(attrs['name'], int(attrs['start'], 16),
                                         attrs.get('hdl', ""),
                                         int(attrs.get('repeat', 1)),
                                         int(attrs.get('repeat_offset',
@@ -117,23 +115,18 @@ class ProjectReader(object):
     def start_map(self, attrs):
         """Called when a map tag is found"""
         sname = attrs['set']
-        data = GroupMapData(sname,
-                            attrs.get('inst', sname),
-                            int(attrs['offset'], 16),
-                            int(attrs['repeat']),
+        data = GroupMapData(sname, attrs.get('inst', sname),
+                            int(attrs['offset'], 16), int(attrs['repeat']),
                             int(attrs['repeat_offset']),
-                            attrs.get("format", ""),
-                            attrs.get("hdl", ""),
+                            attrs.get("format", ""), attrs.get("hdl", ""),
                             int(attrs.get("no_uvm", "0")))
         self._current_group.register_sets.append(data)
 
     def start_address_map(self, attrs):
         """Called when an address tag is found"""
-        self._prj.set_address_map(
-            attrs['name'],
-            int(attrs.get('base', 0), 16),
-            int(attrs.get('width', 4)),
-            int(attrs.get('fixed', 1)))
+        self._prj.set_address_map(attrs['name'], int(attrs.get('base', 0), 16),
+                                  int(attrs.get('width', 4)),
+                                  int(attrs.get('fixed', 1)))
 
         self._current_map = attrs['name']
 

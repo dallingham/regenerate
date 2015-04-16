@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 CWriter - Writes out C defines representing the register addresses
 """
@@ -24,7 +23,6 @@ CWriter - Writes out C defines representing the register addresses
 from writer_base import WriterBase
 from regenerate.extras import full_token, in_groups
 import os
-
 
 HEADER = [
     "/*------------------------------------------------------------------\n",
@@ -40,18 +38,16 @@ HEADER = [
     "#ifndef __$F$\n",
     "#define __$F$ 1\n",
     "\n",
-    ]
+]
 
-TRAILER = [
-    "#endif\n"
-    ]
+TRAILER = ["#endif\n"]
 
 REG_TYPE = {
     8: "unsigned char*",
     16: "unsigned short*",
     32: "unsigned long*",
     64: "unsigned long long*",
-    }
+}
 
 
 class CDefines(WriterBase):
@@ -74,14 +70,12 @@ class CDefines(WriterBase):
         if data.repeat > 1:
             for i in range(0, data.repeat):
                 name = full_token(data.group, reg.token,
-                                  self._dbase.module_name,
-                                  i, data.format)
+                                  self._dbase.module_name, i, data.format)
                 address += (i * data.roffset)
                 self._ofile.write("#define %-30s (*((volatile %s)0x%x))\n" %
                                   (name, REG_TYPE[reg.width], address))
         else:
-            name = full_token(data.group, reg.token,
-                              self._dbase.module_name,
+            name = full_token(data.group, reg.token, self._dbase.module_name,
                               -1, data.format)
             self._ofile.write("#define %-30s (*((volatile %s)0x%x))\n" %
                               (name, REG_TYPE[reg.width], address))

@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 Provides a dialog window that displays the contents of a file, converting
 the contents from restructuredText to HTML.
@@ -27,7 +26,6 @@ try:
     WEBKIT = True
 except ImportError:
     WEBKIT = False
-
 
 import os.path
 from regenerate.settings.paths import HELP_PATH
@@ -55,7 +53,8 @@ class HelpWindow(BaseWindow):
             f = open(fname)
             data = f.read()
         except IOError as msg:
-            data = "Help file '{0}' could not be found\n{1}".format(fname, str(msg))
+            data = "Help file '{0}' could not be found\n{1}".format(fname,
+                                                                    str(msg))
 
         if HelpWindow.window is None:
             HelpWindow.window = builder.get_object("help_win")
@@ -68,8 +67,8 @@ class HelpWindow(BaseWindow):
             HelpWindow.window.connect('destroy', self.destroy)
             HelpWindow.window.connect('delete_event', self.delete)
 
-        HelpWindow.wkit.load_string(html_string(data), "text/html",
-                                    "utf-8", "")
+        HelpWindow.wkit.load_string(html_string(data), "text/html", "utf-8",
+                                    "")
         HelpWindow.window.show_all()
 
     def destroy(self, obj):

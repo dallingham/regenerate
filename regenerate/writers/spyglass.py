@@ -16,12 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 Sdc - Writes out synthesis constraints
 """
 
-from writer_base import WriterBase     # IGNORE:W0403
+from writer_base import WriterBase  # IGNORE:W0403
 
 
 class Spyglass(WriterBase):
@@ -105,11 +104,12 @@ class Spyglass(WriterBase):
             for group in self._project.get_grouping_list():
                 used = set()
                 for grp in group.register_sets:
-                    if (grp.set == dbase.set_name and grp.inst not in used
-                        and grp.hdl != ""):
+                    if (grp.set == dbase.set_name and grp.inst not in used and
+                        grp.hdl != ""):
                         used.add(grp.inst)
                         for field in self.get_static_ports(dbase):
                             for i in range(0, grp.repeat):
                                 signal_name = self._build_name(field, i, grp)
-                                of.write("quasi_static -name %s\n" % signal_name)
+                                of.write(
+                                    "quasi_static -name %s\n" % signal_name)
         of.close()

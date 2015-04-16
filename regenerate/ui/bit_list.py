@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 Provides both the GTK ListStore and ListView for the bit fields.
 """
@@ -35,34 +34,27 @@ class BitModel(gtk.ListStore):
     ListView to provide the data for the bitfields.
     """
 
-    RESET2STR = (
-        ("Constant", BitField.RESET_NUMERIC),
-        ("Input Port", BitField.RESET_INPUT),
-        ("Parameter", BitField.RESET_PARAMETER))
+    RESET2STR = (("Constant", BitField.RESET_NUMERIC),
+                 ("Input Port", BitField.RESET_INPUT),
+                 ("Parameter", BitField.RESET_PARAMETER))
 
-    (ICON_COL, BIT_COL, NAME_COL, TYPE_COL, RESET_COL,
-     RESET_TYPE_COL, SORT_COL, FIELD_COL) = range(8)
+    (ICON_COL, BIT_COL, NAME_COL, TYPE_COL, RESET_COL, RESET_TYPE_COL,
+     SORT_COL, FIELD_COL) = range(8)
 
     def __init__(self):
         """
         Initialize the base class with the object types that we are going to
         be adding to the model.
         """
-        gtk.ListStore.__init__(self, str, str, str, str, str, str,
-                               int, object)
+        gtk.ListStore.__init__(self, str, str, str, str, str, str, int, object)
 
     def append_field(self, field):
         """
         Adds the field to the model, filling out the fields in the model.
         """
-        data = [None,
-                bits(field),
-                field.field_name,
-                TYPE2STR[field.field_type][0],
-                get_field_reset_data(field),
-                self.RESET2STR[field.reset_type][0],
-                field.lsb,
-                field]
+        data = [None, bits(field), field.field_name,
+                TYPE2STR[field.field_type][0], get_field_reset_data(field),
+                self.RESET2STR[field.reset_type][0], field.lsb, field]
 
         node = self.append(row=data)
         return self.get_path(node)
@@ -81,15 +73,12 @@ class BitList(object):
     model through the list model parameter passed into the constructor.
     """
 
-    BIT_COLS = (
-        # Title, Size, Sort, Expand, Monospace
-        ('', 20, -1, False, False),
-        ('Bits', 60, BitModel.SORT_COL, False, True),
+    BIT_COLS = (  # Title, Size, Sort, Expand, Monospace
+        ('', 20, -1, False,
+         False), ('Bits', 60, BitModel.SORT_COL, False, True),
         ('Name', 125, BitModel.NAME_COL, True, False),
-        ('Type', 325, -1, True, False),
-        ('Reset', 100, -1, False, True),
-        ('Reset Type', 75, -1, False, False),
-        )
+        ('Type', 325, -1, True, False), ('Reset', 100, -1, False, True),
+        ('Reset Type', 75, -1, False, False), )
 
     def __init__(self, obj, combo_edit, text_edit, selection_changed):
         """
@@ -120,8 +109,8 @@ class BitList(object):
         """
         for (i, col) in enumerate(self.BIT_COLS):
             if i == BitModel.TYPE_COL:
-                column = ComboMapColumn(col[BIT_TITLE], combo_edit,
-                                        TYPE2STR, i)
+                column = ComboMapColumn(col[BIT_TITLE], combo_edit, TYPE2STR,
+                                        i)
             elif i == BitModel.RESET_TYPE_COL:
                 column = ComboMapColumn(col[BIT_TITLE], combo_edit,
                                         BitModel.RESET2STR, i)
@@ -173,7 +162,8 @@ class BitList(object):
         Adds a new field to the model, and sets editing to begin
         """
         path = self.__model.append_field(field)
-        self.__obj.set_cursor(path, focus_column=self.__col,
+        self.__obj.set_cursor(path,
+                              focus_column=self.__col,
                               start_editing=True)
 
 

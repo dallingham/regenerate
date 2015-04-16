@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 Imports the exporters. Makes an attempt to load the site_local versions
 first. This allows the end user to override the standard version without
@@ -43,10 +42,10 @@ except ImportError:
     from verilog import Verilog, Verilog2001, SystemVerilog
 EXPORTERS.append((SystemVerilog, ("RTL", "SystemVerilog"),
                   "SystemVerilog files", ".sv", 'rtl-system-verilog'))
-EXPORTERS.append((Verilog2001, ("RTL", "Verilog 2001"), "Verilog files",
-                  ".v", 'rtl-verilog-2001'))
-EXPORTERS.append((Verilog, ("RTL", "Verilog 95"), "Verilog files",
-                  ".v", 'rtl-verilog-95'))
+EXPORTERS.append((Verilog2001, ("RTL", "Verilog 2001"), "Verilog files", ".v",
+                  'rtl-verilog-2001'))
+EXPORTERS.append((Verilog, ("RTL", "Verilog 95"), "Verilog files", ".v",
+                  'rtl-verilog-95'))
 
 #-----------------------------------------------------------------------------
 #
@@ -105,11 +104,9 @@ try:
     LOGGER.info("Found site_local reg_pkg")
     from regenerate.site_local.reg_pkg_wrap import VerilogRegPackage
     LOGGER.info("Found site_local reg_pkg_wrap")
-    PRJ_EXPORTERS.append((VerilogRegPackage,
-                          ("Headers",
-                           "SystemVerilog Symbolic Register Mappings"),
-                          "SystemVerilog files", ".sv",
-                          'headers-system-verilog-wrap'))
+    PRJ_EXPORTERS.append((VerilogRegPackage, (
+        "Headers", "SystemVerilog Symbolic Register Mappings"
+    ), "SystemVerilog files", ".sv", 'headers-system-verilog-wrap'))
 #-----------------------------------------------------------------------------
 #
 #  Verilog constant headers
@@ -119,8 +116,7 @@ except:
     from reg_pkg import VerilogConstRegPackage
 
 PRJ_EXPORTERS.append((VerilogConstRegPackage,
-                      ("Headers",
-                       "SystemVerilog Register Constants"),
+                      ("Headers", "SystemVerilog Register Constants"),
                       "SystemVerilog files", ".sv", 'headers-system-verilog'))
 
 try:
@@ -185,7 +181,6 @@ except ImportError:
     from sdc import Sdc
 PRJ_EXPORTERS.append((Sdc, ("Synthesis", "SDC Constraints"), "SDC files",
                       ".sdc", 'syn-constraints'))
-
 
 #-----------------------------------------------------------------------------
 #

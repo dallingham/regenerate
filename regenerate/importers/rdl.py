@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 Imports data from a Denali RDL file
 """
@@ -130,8 +129,7 @@ class RDLParser:
                 field.dispatch(groups[0], groups[1])
                 continue
 
-            match = re.match("\s*}\s*([^[]+)\[(\d+):(\d+)\]\s*;",
-                             line)
+            match = re.match("\s*}\s*([^[]+)\[(\d+):(\d+)\]\s*;", line)
             if match:
                 groups = match.groups()
                 field.name = groups[0]
@@ -143,8 +141,8 @@ class RDLParser:
             match = re.match("\s*}\s*([A-Za-z_0-9]+)\s*@(.+)\s*;", line)
             if match:
                 groups = match.groups()
-                reg_list.append((groups[0], groups[1],
-                                 regwidth, field_list[:]))
+                reg_list.append((groups[0], groups[1], regwidth,
+                                 field_list[:]))
                 continue
 
         input_file.close()
@@ -159,7 +157,7 @@ class RDLParser:
             '"rw"': BitField.TYPE_READ_WRITE,
             '"w"': BitField.TYPE_WRITE_ONLY,
             '"r"': BitField.TYPE_READ_ONLY
-            }
+        }
 
         for (reg_name, addr_txt, width, field_list) in reg_list:
             register = Register()

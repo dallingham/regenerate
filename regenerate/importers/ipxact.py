@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 Parses the register database, loading the database.
 """
@@ -25,11 +24,10 @@ import xml.parsers.expat
 
 from regenerate.db import Register, BitField
 
-
 text2field = {
     "read-only": BitField.TYPE_READ_ONLY,
     "read-write": BitField.TYPE_READ_WRITE,
-    }
+}
 
 
 class IpXactParser(object):
@@ -131,7 +129,7 @@ class IpXactParser(object):
                 self._field.reset_value = int(text, 16)
                 self._field.reset_type = BitField.RESET_NUMERIC
         elif self._in_reg_reset:
-            self._reg_reset = (True, int(text,16))
+            self._reg_reset = (True, int(text, 16))
 
     def start_spirit_field(self, attrs):
         self._field = BitField()
@@ -142,7 +140,9 @@ class IpXactParser(object):
             self._field.stop_position = self._fld_start + self._fld_width - 1
             self._reg.add_bit_field(self._field)
             if self._reg_reset[0]:
-                self._field.reset_value = (self._reg_reset[1] >> self._fld_start) & ((1 << self._field.width) - 1)
+                self._field.reset_value = (
+                    self._reg_reset[1] >> self._fld_start) & (
+                        (1 << self._field.width) - 1)
                 self._field.reset_type = BitField.RESET_NUMERIC
 
         self._field = None
@@ -184,9 +184,9 @@ import re
 
 
 def crossreference(db):
-    names = sorted([reg.register_name
-                    for reg in db.get_all_registers()],
-                   key=len, reverse=True)
+    names = sorted([reg.register_name for reg in db.get_all_registers()],
+                   key=len,
+                   reverse=True)
 
     re_list = [r'([^`])({0}) ((R|r)egister)'.format(name) for name in names]
 

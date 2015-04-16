@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 Provides a function to convert restructuredText to HTML
 """
@@ -72,10 +71,6 @@ def html_string(text):
         return __CSS + publish_string(
             text,
             writer_name="html",
-            settings_overrides={'report_level': 'quiet'},
-            )
+            settings_overrides={'report_level': 'quiet'}, )
     except TypeError:
-        return __CSS + publish_string(
-            text,
-            writer_name="html"
-            )
+        return __CSS + publish_string(text, writer_name="html")

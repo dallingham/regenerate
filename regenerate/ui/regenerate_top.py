@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 regenerate
 
@@ -40,8 +39,8 @@ from register_list import RegisterModel, RegisterList, build_define
 from instance_list import InstMdl, InstanceList
 from addrmap_list import AddrMapList
 from help_window import HelpWindow
-from regenerate.db import (RegWriter, RegisterDb, Register,
-                           BitField, RegProject, LOGGER, TYPES)
+from regenerate.db import (RegWriter, RegisterDb, Register, BitField,
+                           RegProject, LOGGER, TYPES)
 from regenerate.importers import IMPORTERS
 from regenerate.settings.paths import GLADE_TOP, INSTALL_PATH
 from regenerate.settings import ini
@@ -56,7 +55,6 @@ TYPE_ENB = {}
 for data_type in TYPES:
     TYPE_ENB[data_type.type] = (data_type.input, data_type.control)
 
-
 DEF_EXT = '.rprj'
 DEF_MIME = "*" + DEF_EXT
 
@@ -67,17 +65,12 @@ VALID_SIGNAL = re.compile("^[A-Za-z][A-Za-z0-9_]*$")
 VALID_BITS = re.compile("^\s*[\(\[]?(\d+)(\s*[-:]\s*(\d+))?[\)\]]?\s*$")
 REGNAME = re.compile("^(.*)(\d+)(.*)$")
 
-_BITS8  = "8-bits"
+_BITS8 = "8-bits"
 _BITS16 = "16-bits"
 _BITS32 = "32-bits"
 _BITS64 = "64-bits"
 
-SIZE2STR = (
-    (_BITS8,  1),
-    (_BITS16, 2),
-    (_BITS32, 4),
-    (_BITS64, 8)
-    )
+SIZE2STR = ((_BITS8, 1), (_BITS16, 2), (_BITS32, 4), (_BITS64, 8))
 
 INT2SIZE = dict((_i[1], _i[0]) for _i in SIZE2STR)
 STR2SIZE = dict((_i[0], _i[1]) for _i in SIZE2STR)
@@ -90,8 +83,8 @@ class DbaseStatus(object):
     rows in the models.
     """
 
-    def __init__(self, db, filename, name, reg_model, modelsort,
-                 modelfilter, bit_model):
+    def __init__(self, db, filename, name, reg_model, modelsort, modelfilter,
+                 bit_model):
         self.db = db
         self.path = filename
         self.reg_model = reg_model
@@ -219,14 +212,11 @@ class MainWindow(BaseWindow):
         self.__byte_level_obj = self.__builder.get_object('byte_en_level')
 
         self.__instance_obj = InstanceList(
-            self.__builder.get_object('instances'),
-            self.__instance_id_changed,
-            self.__instance_inst_changed,
-            self.__instance_base_changed,
+            self.__builder.get_object('instances'), self.__instance_id_changed,
+            self.__instance_inst_changed, self.__instance_base_changed,
             self.__instance_repeat_changed,
             self.__instance_repeat_offset_changed,
-            self.__instance_format_changed,
-            self.__instance_hdl_changed,
+            self.__instance_format_changed, self.__instance_hdl_changed,
             self.__instance_uvm_changed)
 
         self.__build_data_width_box()
@@ -373,13 +363,12 @@ class MainWindow(BaseWindow):
                          or edited.
         """
 
-        prj_acn = ["save_project_action", "new_set_action",
-                   "add_set_action", "build_action",
-                   "reg_grouping_action", "project_prop_action"]
+        prj_acn = ["save_project_action", "new_set_action", "add_set_action",
+                   "build_action", "reg_grouping_action",
+                   "project_prop_action"]
         reg_acn = ['remove_register_action', 'summary_action',
                    'duplicate_register_action', 'add_bit_action']
-        db_acn = ['add_register_action', 'remove_set_action',
-                  'import_action']
+        db_acn = ['add_register_action', 'remove_set_action', 'import_action']
         fld_acn = ['remove_bit_action', 'edit_bit_action']
         svn_acn = ['update_svn', 'revert_svn']
         file_acn = ['revert_action']
@@ -429,16 +418,15 @@ class MainWindow(BaseWindow):
             field.field_type = model.get_value(node, 1)
             register = self.__reglist_obj.get_selected_register()
             if not field.output_signal:
-                field.output_signal = "%s_%s" % (register.token,
-                                                 field.field_name)
+                field.output_signal = "%s_%s" % (register.token, field.field_name)
 
             if TYPE_ENB[field.field_type][0] and not field.input_signal:
-                field.input_signal = "%s_%s_IN" % (register.token,
-                                                   field.field_name)
+                field.input_signal = "%s_%s_IN" % (register.token, field.
+                                                   field_name)
 
             if TYPE_ENB[field.field_type][1] and not field.control_signal:
-                field.control_signal = "%s_%s_LD" % (register.token,
-                                                     field.field_name)
+                field.control_signal = "%s_%s_LD" % (register.token, field.
+                                                     field_name)
         elif col == BitModel.RESET_TYPE_COL:
             field.reset_type = model.get_value(node, 1)
             if field.reset_type == BitField.RESET_NUMERIC:
@@ -795,8 +783,8 @@ class MainWindow(BaseWindow):
                 self.__reglist_obj.set_model(self.__modelsort)
                 self.__bit_model = self.active.bit_field_list
                 self.__bitfield_obj.set_model(self.__bit_model)
-                text = "<b>%s - %s</b>" % (self.dbase.module_name,
-                                           self.dbase.descriptive_title)
+                text = "<b>%s - %s</b>" % (self.dbase.module_name, self.dbase.
+                                           descriptive_title)
                 self.__selected_dbase.set_text(text)
                 self.__selected_dbase.set_use_markup(True)
                 self.__selected_dbase.set_ellipsize(pango.ELLIPSIZE_END)
@@ -897,8 +885,7 @@ class MainWindow(BaseWindow):
         if field:
             from bitfield_editor import BitFieldEditor
             BitFieldEditor(self.dbase, register, field,
-                           self.__set_field_modified,
-                           self.__builder)
+                           self.__set_field_modified, self.__builder)
 
     def __set_field_modified(self):
         reg = self.__reglist_obj.get_selected_register()
@@ -962,18 +949,18 @@ class MainWindow(BaseWindow):
         Creates a file save selector, using the mime type and regular
         expression to control the selector.
         """
-        return self.__create_file_selector(
-            title, mime_name, mime_regex, gtk.FILE_CHOOSER_ACTION_SAVE,
-            gtk.STOCK_SAVE)
+        return self.__create_file_selector(title, mime_name, mime_regex,
+                                           gtk.FILE_CHOOSER_ACTION_SAVE,
+                                           gtk.STOCK_SAVE)
 
     def __create_open_selector(self, title, mime_name=None, mime_regex=None):
         """
         Creates a file save selector, using the mime type and regular
         expression to control the selector.
         """
-        return self.__create_file_selector(
-            title, mime_name, mime_regex, gtk.FILE_CHOOSER_ACTION_OPEN,
-            gtk.STOCK_OPEN)
+        return self.__create_file_selector(title, mime_name, mime_regex,
+                                           gtk.FILE_CHOOSER_ACTION_OPEN,
+                                           gtk.STOCK_OPEN)
 
     def on_add_register_set_activate(self, obj):
         """
@@ -1014,10 +1001,10 @@ class MainWindow(BaseWindow):
         selected file is added to the recent manager.
         """
         name = None
-        choose = gtk.FileChooserDialog(
-            "New", self.__top_window, gtk.FILE_CHOOSER_ACTION_SAVE,
-            (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_SAVE,
-             gtk.RESPONSE_OK))
+        choose = gtk.FileChooserDialog("New", self.__top_window,
+                                       gtk.FILE_CHOOSER_ACTION_SAVE,
+                                       (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                                        gtk.STOCK_SAVE, gtk.RESPONSE_OK))
         choose.set_current_folder(os.curdir)
         choose.show()
 
@@ -1028,8 +1015,8 @@ class MainWindow(BaseWindow):
         return name
 
     def on_new_project_clicked(self, obj):
-        choose = self.__create_save_selector(
-            "New Project", "Regenerate Project", DEF_MIME)
+        choose = self.__create_save_selector("New Project",
+                                             "Regenerate Project", DEF_MIME)
         response = choose.run()
         if response == gtk.RESPONSE_OK:
             filename = choose.get_filename()
@@ -1053,8 +1040,8 @@ class MainWindow(BaseWindow):
         choose.destroy()
 
     def on_open_action_activate(self, obj):
-        choose = self.__create_open_selector(
-            "Open Project", "Regenerate Project", DEF_MIME)
+        choose = self.__create_open_selector("Open Project",
+                                             "Regenerate Project", DEF_MIME)
         response = choose.run()
         filename = choose.get_filename()
         uri = choose.get_uri()
@@ -1085,8 +1072,7 @@ class MainWindow(BaseWindow):
             self.__prj = RegProject(filename)
             self.__initialize_project_address_maps()
         except xml.parsers.expat.ExpatError as msg:
-            ErrorMsg("%s was not a valid project file" % filename,
-                     str(msg))
+            ErrorMsg("%s was not a valid project file" % filename, str(msg))
             return
 
         ini.set("user", "last_project", filename)
@@ -1357,8 +1343,7 @@ class MainWindow(BaseWindow):
         """
         if (self.__modified or self.__prj_model.is_not_saved() or
             (self.__prj and self.__prj.modified)):
-            dialog = Question('Save Changes?',
-                              "The file has been modified. "
+            dialog = Question('Save Changes?', "The file has been modified. "
                               "Do you want to save your changes?")
             status = dialog.run()
             if status == Question.DISCARD:
@@ -1641,15 +1626,14 @@ class MainWindow(BaseWindow):
         return warn
 
     def __set_module_ports_warn_flag(self):
-        data = (
-            (self.__clk_entry_obj, "clock"),
-            (self.__rst_entry_obj, "reset"),
-            (self.__write_data_obj, "write data"),
-            (self.__read_data_obj, "read data"),
-            (self.__byte_en_obj, "byte enables"),
-            (self.__write_strobe_obj, "write strobe"),
-            (self.__ack_obj, "acknowledge"),
-            (self.__address_bus_obj, "address bus"))
+        data = ((self.__clk_entry_obj, "clock"),
+                (self.__rst_entry_obj, "reset"),
+                (self.__write_data_obj, "write data"),
+                (self.__read_data_obj, "read data"),
+                (self.__byte_en_obj, "byte enables"),
+                (self.__write_strobe_obj, "write strobe"),
+                (self.__ack_obj, "acknowledge"),
+                (self.__address_bus_obj, "address bus"))
 
         if not self.__loading_project:
             warn = False

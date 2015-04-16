@@ -17,17 +17,14 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-
-__convert = [
-    (u"\u2013", "-"),
-    (u"\u2018", "'"),
-    (u"\u2019", "'"),
-    (u"\u201c", "\""),
-    (u"\u201d", "\""),
-    (u"\u201f", "\""),
-    (u"\u2022", "*"),
-    (u"\ue280a2", "*"),
-    ]
+__convert = [(u"\u2013", "-"),
+             (u"\u2018", "'"),
+             (u"\u2019", "'"),
+             (u"\u201c", "\""),
+             (u"\u201d", "\""),
+             (u"\u201f", "\""),
+             (u"\u2022", "*"),
+             (u"\ue280a2", "*"), ]
 
 
 def clean_text(text):

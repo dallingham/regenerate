@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 Provides the builder, which allows the user to construct rules that
 keeps track of when an output file should be rebuilt.
@@ -26,8 +25,8 @@ import os
 import gtk
 from export_assistant import ExportAssistant
 from regenerate.settings.paths import INSTALL_PATH
-from regenerate.writers import (EXPORTERS, PRJ_EXPORTERS, EXP_CLASS,
-                                EXP_TYPE, EXP_ID, EXP_EXT)
+from regenerate.writers import (EXPORTERS, PRJ_EXPORTERS, EXP_CLASS, EXP_TYPE,
+                                EXP_ID, EXP_EXT)
 from columns import EditableColumn, ToggleColumn
 from error_dialogs import ErrorMsg
 from base_window import BaseWindow
@@ -253,8 +252,7 @@ class Build(BaseWindow):
             writer_class = item[MDL_CLASS]
             dbase = item[MDL_DBASE]
             dest = os.path.abspath(
-                os.path.join(os.path.dirname(self.__prj.path),
-                             item[MDL_DEST]))
+                os.path.join(os.path.dirname(self.__prj.path), item[MDL_DEST]))
 
             try:
                 if dbase:
@@ -324,8 +322,7 @@ class Build(BaseWindow):
         filename = data[MDL_DEST]
         if data[MDL_DBASE]:
             register_path = self.__base2path[data[MDL_BASE]]
-            self.__prj.remove_from_export_list(register_path, option,
-                                               filename)
+            self.__prj.remove_from_export_list(register_path, option, filename)
         else:
             self.__prj.remove_from_project_export_list(option, filename)
         self.__model.remove(sel[1])
@@ -365,6 +362,7 @@ def file_needs_rebuilt(local_dest, dbmap, db_paths):
             if db_file_mtime > dest_mtime or dbmap[base][DB_MAP_MODIFIED]:
                 mod = True
     return mod
+
 
 def exp_type_fmt(item):
     return "{0} ({1})".format(item[0], item[1])

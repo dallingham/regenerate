@@ -22,9 +22,8 @@ import os
 
 
 class ExportAssistant(gtk.Assistant):
-
-    def __init__(self, project_name, optlist, register_sets,
-                 save_callback, run_callback):
+    def __init__(self, project_name, optlist, register_sets, save_callback,
+                 run_callback):
         gtk.Assistant.__init__(self)
 
         self.project_name = project_name
@@ -237,25 +236,22 @@ class ExportAssistant(gtk.Assistant):
         self.summary = gtk.Table(4, 5)
         self.summary.set_row_spacings(6)
         self.summary.set_col_spacings(6)
-        self.summary.attach(MyLabel('Export type:'), 1, 2, 0, 1,
-                            gtk.FILL, 0)
-        self.summary.attach(MyLabel('Register set:'), 1, 2, 1, 2,
-                            gtk.FILL, 0)
-        self.summary.attach(MyLabel('Output file:'), 1, 2, 2, 3,
-                            gtk.FILL, 0)
-        self.summary.attach(MyLabel('Execute status:'), 1, 2, 3, 4,
-                            gtk.FILL, 0)
+        self.summary.attach(MyLabel('Export type:'), 1, 2, 0, 1, gtk.FILL, 0)
+        self.summary.attach(MyLabel('Register set:'), 1, 2, 1, 2, gtk.FILL, 0)
+        self.summary.attach(MyLabel('Output file:'), 1, 2, 2, 3, gtk.FILL, 0)
+        self.summary.attach(MyLabel('Execute status:'), 1, 2, 3, 4, gtk.FILL,
+                            0)
         self.summary.set_border_width(12)
         self.export_obj = MyLabel()
         self.register_obj = MyLabel()
         self.dest_obj = MyLabel()
         self.execute_obj = MyLabel()
-        self.summary.attach(self.export_obj, 2, 3, 0, 1,
-                            gtk.FILL | gtk.EXPAND, 0)
+        self.summary.attach(self.export_obj, 2, 3, 0, 1, gtk.FILL | gtk.EXPAND,
+                            0)
         self.summary.attach(self.register_obj, 2, 3, 1, 2,
                             gtk.FILL | gtk.EXPAND, 0)
-        self.summary.attach(self.dest_obj, 2, 3, 2, 3,
-                            gtk.FILL | gtk.EXPAND, 0)
+        self.summary.attach(self.dest_obj, 2, 3, 2, 3, gtk.FILL | gtk.EXPAND,
+                            0)
         self.summary.attach(self.execute_obj, 2, 3, 3, 4,
                             gtk.FILL | gtk.EXPAND, 0)
         self.summary.show_all()
@@ -268,7 +264,6 @@ class ExportAssistant(gtk.Assistant):
 
 
 class MyLabel(gtk.Label):
-
     def __init__(self, text=""):
         if text is None:
             text = ""

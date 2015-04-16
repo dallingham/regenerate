@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 Provides reusable dialog boxes for messages
 """
@@ -72,7 +71,8 @@ class Question(gtk.MessageDialog):
 
     def __init__(self, err, msg):
         gtk.MessageDialog.__init__(self, type=gtk.MESSAGE_QUESTION)
-        self.set_markup('<span weight="bold" size="larger">{0}</span>'.format(err))
+        self.set_markup(
+            '<span weight="bold" size="larger">{0}</span>'.format(err))
         self.format_secondary_markup(msg)
         self.add_button('Discard Changes', self.DISCARD)
         self.add_button(gtk.STOCK_CANCEL, self.CANCEL)

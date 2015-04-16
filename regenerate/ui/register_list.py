@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
 Provides the editing interface to the register table
 """
@@ -29,27 +28,67 @@ from regenerate.db import LOGGER
 BAD_TOKENS = ' /-@!#$%^&*()+=|{}[]:"\';\\,.?'
 
 REPLACE = {
-    'ENABLE': 'EN', 'TRANSLATION': 'TRANS', 'ADDRESS': 'ADDR',
-    'CONFIGURATION': 'CFG', 'CONFIG': 'CFG', 'SYSTEM': 'SYS',
-    'CONTROL': 'CTRL', 'STATUS': 'STAT', 'DEBUG': 'DBG',
-    'COMMAND': 'CMD', 'HEADER': 'HDR', 'PACKET': 'PKT',
-    'INTERRUPT': 'INT', 'WRITE': 'WR', 'READ': 'RD',
-    'TRANSMIT': 'TX', 'RECEIVE': 'RX', 'SOFTWARE': 'SW',
-    'HARDWARE': 'HW', 'SOURCE': 'SRC', 'DESTINATION': 'DEST',
-    'REGISTER': '', 'CLEAR': 'CLR', 'CURRENT': 'CUR',
-    'RANGE': 'RNG', 'DELAY': 'DLY', 'ERROR': 'ERR', 'LOAD': 'LD',
-    'PARITY': 'PAR', 'COMPARE': 'CMP', 'POINTER': 'PTR',
-    'SELECT': 'SEL', 'COUNT': 'CNT', 'COUNTER': 'CNTR',
-    'VALUE': 'VAL', 'MESSAGE': 'MSG', 'ERRORS': 'ERRS',
-    'POWER': 'PWR', 'MAILBOX': 'MBX', 'VECTOR': 'VECT',
-    'RESPONSE': 'RSP', 'NUMBER': 'NUM', 'CLOCK': 'CLK',
-    'EXTERNAL': 'EXT', 'FABRIC': 'FAB', 'SPACE': 'SPC',
-    'MAXIMUM': 'MAX', 'MINIMUM': 'MIN', 'RESET': 'RST',
-    'MANAGEMENT': 'MGMT', 'REQUESTER': 'REQ', 'REQUEST': 'REQ',
-    'ALTERNATE': 'ALT', 'DIVIDER': 'DIV', 'REFERENCE': 'REF',
-    'ARBITRATION': 'ARB', 'ARBITER': 'ARB', 'TRANSACTION': 'TXN',
-    'MASTER': 'MSTR', 'SLAVE': 'SLV',
-    }
+    'ENABLE': 'EN',
+    'TRANSLATION': 'TRANS',
+    'ADDRESS': 'ADDR',
+    'CONFIGURATION': 'CFG',
+    'CONFIG': 'CFG',
+    'SYSTEM': 'SYS',
+    'CONTROL': 'CTRL',
+    'STATUS': 'STAT',
+    'DEBUG': 'DBG',
+    'COMMAND': 'CMD',
+    'HEADER': 'HDR',
+    'PACKET': 'PKT',
+    'INTERRUPT': 'INT',
+    'WRITE': 'WR',
+    'READ': 'RD',
+    'TRANSMIT': 'TX',
+    'RECEIVE': 'RX',
+    'SOFTWARE': 'SW',
+    'HARDWARE': 'HW',
+    'SOURCE': 'SRC',
+    'DESTINATION': 'DEST',
+    'REGISTER': '',
+    'CLEAR': 'CLR',
+    'CURRENT': 'CUR',
+    'RANGE': 'RNG',
+    'DELAY': 'DLY',
+    'ERROR': 'ERR',
+    'LOAD': 'LD',
+    'PARITY': 'PAR',
+    'COMPARE': 'CMP',
+    'POINTER': 'PTR',
+    'SELECT': 'SEL',
+    'COUNT': 'CNT',
+    'COUNTER': 'CNTR',
+    'VALUE': 'VAL',
+    'MESSAGE': 'MSG',
+    'ERRORS': 'ERRS',
+    'POWER': 'PWR',
+    'MAILBOX': 'MBX',
+    'VECTOR': 'VECT',
+    'RESPONSE': 'RSP',
+    'NUMBER': 'NUM',
+    'CLOCK': 'CLK',
+    'EXTERNAL': 'EXT',
+    'FABRIC': 'FAB',
+    'SPACE': 'SPC',
+    'MAXIMUM': 'MAX',
+    'MINIMUM': 'MIN',
+    'RESET': 'RST',
+    'MANAGEMENT': 'MGMT',
+    'REQUESTER': 'REQ',
+    'REQUEST': 'REQ',
+    'ALTERNATE': 'ALT',
+    'DIVIDER': 'DIV',
+    'REFERENCE': 'REF',
+    'ARBITRATION': 'ARB',
+    'ARBITER': 'ARB',
+    'TRANSACTION': 'TXN',
+    'MASTER': 'MSTR',
+    'SLAVE': 'SLV',
+}
 
 
 class RegisterModel(gtk.ListStore):
@@ -66,19 +105,10 @@ class RegisterModel(gtk.ListStore):
     (ICON_COL, ADDR_COL, NAME_COL, DEFINE_COL, WIDTH_COL, SORT_COL,
      TOOLTIP_COL, OBJ_COL) = range(8)
 
-    BIT2STR = (
-        ("8 bits", 8),
-        ("16 bits", 16),
-        ("32 bits", 32),
-        ("64 bits", 64),
-        )
+    BIT2STR = (("8 bits", 8), ("16 bits", 16), ("32 bits", 32),
+               ("64 bits", 64), )
 
-    STR2BIT = {
-        8: "8 bits",
-        16: "16 bits",
-        32: "32 bits",
-        64: "64 bits",
-        }
+    STR2BIT = {8: "8 bits", 16: "16 bits", 32: "32 bits", 64: "64 bits", }
 
     def __init__(self):
         gtk.ListStore.__init__(self, str, str, str, str, str, int, str, object)
@@ -95,9 +125,8 @@ class RegisterModel(gtk.ListStore):
             addr = "%04x:%x" % (register.address, register.ram_size)
         else:
             addr = "%04x" % register.address
-        data = [icon, addr, register.register_name,
-                register.token, self.STR2BIT[register.width],
-                register.address, None, register]
+        data = [icon, addr, register.register_name, register.token,
+                self.STR2BIT[register.width], register.address, None, register]
         path = self.get_path(self.append(row=data))
         self.reg2path[register] = path
         return path
@@ -118,7 +147,7 @@ class RegisterModel(gtk.ListStore):
 
         for reg in self.reg2path:
             if self.reg2path[reg] > old_path:
-                self.reg2path[reg] = (self.reg2path[reg][0] - 1,)
+                self.reg2path[reg] = (self.reg2path[reg][0] - 1, )
 
     def set_tooltip(self, reg, msg):
         """
@@ -171,17 +200,14 @@ class RegisterList(object):
 
     (COL_TEXT, COL_COMBO, COL_ICON) = range(3)
 
-    _COLS = (
-        # Title,   Size, Column,                   Expand
-        ('', 20, RegisterModel.ICON_COL, False, COL_ICON),
-        ('Address', 100, RegisterModel.SORT_COL, False, COL_TEXT),
+    _COLS = (  # Title,   Size, Column,                   Expand
+        ('', 20, RegisterModel.ICON_COL, False,
+         COL_ICON), ('Address', 100, RegisterModel.SORT_COL, False, COL_TEXT),
         ('Name', 175, RegisterModel.NAME_COL, True, COL_TEXT),
         ('Token', 175, RegisterModel.DEFINE_COL, True, COL_TEXT),
-        ('Width', 75, -1, False, COL_COMBO),
-        )
+        ('Width', 75, -1, False, COL_COMBO), )
 
-    def __init__(self, obj, select_change_function, mod_function,
-                 update_addr):
+    def __init__(self, obj, select_change_function, mod_function, update_addr):
         self.__obj = obj
         self.__model = None
         self.__col = None
@@ -260,7 +286,8 @@ class RegisterList(object):
         default column
         """
         path = self.__model.append_register(register)
-        self.__obj.set_cursor(path, focus_column=self.__col,
+        self.__obj.set_cursor(path,
+                              focus_column=self.__col,
                               start_editing=True)
         return path
 
@@ -376,8 +403,8 @@ class RegisterList(object):
             else:
                 self.__handle_reg_address(register, path, new_text)
         except ValueError:
-            LOGGER.warning('Address %0x was not changed: invalid value "%s"'
-                           % (register.address, new_text))
+            LOGGER.warning('Address %0x was not changed: invalid value "%s"' %
+                           (register.address, new_text))
 
     def __handle_ram_address(self, register, path, new_text):
         """
@@ -387,8 +414,8 @@ class RegisterList(object):
             self.__ram_update_addr(register, path, new_text)
         else:
             ErrorMsg("Address already used",
-                     "The address %0x is already used by another register"
-                     % int(new_text, 16))
+                     "The address %0x is already used by another register" %
+                     int(new_text, 16))
 
     def __check_address_align(self, address, width):
         align = width / 8
@@ -401,12 +428,12 @@ class RegisterList(object):
         address = int(new_text, 16)
         if not self.__check_address_align(address, register.width):
             ErrorMsg("Address does not match register width",
-                     "The address %04x is not aligned to a %d bit boundary"
-                     % (address, register.width))
+                     "The address %04x is not aligned to a %d bit boundary" %
+                     (address, register.width))
         elif not self.__new_address_is_not_used(new_text, path):
-            ErrorMsg("Address already used",
-                     "The address %0x is already used by another register" %
-                     address)
+            ErrorMsg(
+                "Address already used",
+                "The address %0x is already used by another register" % address)
         else:
             self.__reg_update_addr(register, path, new_text)
 
@@ -434,8 +461,8 @@ class RegisterList(object):
         new_width = model.get_value(node, 1)
         if not self.__check_address_align(register.address, new_width):
             ErrorMsg("Address does not match register width",
-                     "The address %04x is not aligned to a %d bit boundary"
-                     % (register.address, new_width))
+                     "The address %04x is not aligned to a %d bit boundary" %
+                     (register.address, new_width))
         else:
             self.__model[path][col] = model.get_value(node, 0)
             register.width = new_width
@@ -448,6 +475,5 @@ def build_define(text):
     """
     for i in BAD_TOKENS:
         text = text.replace(i, '_')
-    return "_".join([REPLACE.get(i.upper(), i.upper())
-                     for i in text.split('_')
+    return "_".join([REPLACE.get(i.upper(), i.upper()) for i in text.split('_')
                      if REPLACE.get(i.upper(), i.upper()) != ""])

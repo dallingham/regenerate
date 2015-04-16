@@ -25,7 +25,6 @@ TOKEN_FIELD = 3
 
 
 class FilterManager(object):
-
     def __init__(self, obj, model=None):
         self._obj = obj
         self._model = model

@@ -23,6 +23,7 @@ import os
 class project_path_not_found(Exception):
     pass
 
+
 __regenerate_data_directory__ = '../data/'
 
 
