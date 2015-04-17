@@ -27,8 +27,8 @@ def build_file(infile, outfile):
             current_text.append(line)
             if line.startswith("endmodule"):
                 in_module = False
-                o.write('    "%s" : """%s""",\n' % (current_mod,
-                                                    "".join(current_text)))
+                o.write('    "%s" : """%s""",\n' %
+                        (current_mod, "".join(current_text)))
         elif line.startswith("module"):
             in_module = True
             current_mod = line.split()[1].split("_")[1]
@@ -37,5 +37,6 @@ def build_file(infile, outfile):
     o.write(" }\n")
     f.close()
     o.close()
+
 
 build_file("verilog_reg.v", "verilog_reg_def.py")

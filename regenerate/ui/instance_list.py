@@ -178,8 +178,7 @@ class InstanceList(object):
         self.__build_instance_table(id_changed, inst_changed, base_changed,
                                     repeat_changed, repeat_offset_changed,
                                     format_changed, hdl_changed, uvm_changed,
-                                    array_changed
-        )
+                                    array_changed)
         self.__enable_dnd()
         self.__obj.set_sensitive(False)
 
@@ -219,9 +218,8 @@ class InstanceList(object):
                 hdl = self.__model.get_value(child, InstMdl.HDL_COL)
                 uvm = self.__model.get_value(child, InstMdl.UVM_COL)
                 array = self.__model.get_value(child, InstMdl.ARRAY_COL)
-                current_group.register_sets.append(
-                    GroupMapData(name, inst, base, rpt, offset, fmt,
-                                 hdl, uvm, array))
+                current_group.register_sets.append(GroupMapData(
+                    name, inst, base, rpt, offset, fmt, hdl, uvm, array))
                 child = self.__model.iter_next(child)
             tree_iter = self.__model.iter_next(tree_iter)
         return groups
@@ -283,8 +281,8 @@ class InstanceList(object):
         for item in group_list:
 
             row = build_row_data(item.name, "", item.base, item.repeat,
-                                 item.repeat_offset, "", item.hdl,
-                                 False, False, item)
+                                 item.repeat_offset, "", item.hdl, False,
+                                 False, item)
             node = self.__model.append(None, row=row)
 
             entry_list = sorted(item.register_sets, key=lambda x: x.offset)
@@ -344,7 +342,8 @@ class InstanceList(object):
         self.__obj.append_column(column)
 
 
-def build_row_data(inst, name, offset, rpt, rpt_offset, fmt, hdl, uvm, array, obj):
+def build_row_data(inst, name, offset, rpt, rpt_offset, fmt, hdl, uvm, array,
+                   obj):
     row = (inst, name, "{0:x}".format(offset), offset, "{0:d}".format(rpt),
            "{0:x}".format(rpt_offset), fmt, hdl, uvm, array, obj)
     return row

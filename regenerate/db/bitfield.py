@@ -20,7 +20,6 @@
 Provides the definition of a Bit Field,
 """
 
-
 import uuid
 
 
@@ -56,19 +55,16 @@ class BitField(object):
 
     (RESET_NUMERIC, RESET_INPUT, RESET_PARAMETER) = range(3)
 
-    full_compare = (
-        "_output_signal", "_input_signal", "_id", "lsb",
-        "msb", "_field_name", "use_output_enable",
-        "field_type", "volatile", "is_error_field",
-        "_reset_value", "reset_input", "reset_type",
-        "reset_parameter", "description", "control_signal",
-        "output_is_static", "output_has_side_effect",
-        "values")
+    full_compare = ("_output_signal", "_input_signal", "_id", "lsb", "msb",
+                    "_field_name", "use_output_enable", "field_type",
+                    "volatile", "is_error_field", "_reset_value",
+                    "reset_input", "reset_type", "reset_parameter",
+                    "description", "control_signal", "output_is_static",
+                    "output_has_side_effect", "values")
 
-    doc_compare = (
-        "_id", "lsb", "msb", "_field_name", "field_type",
-        "is_error_field", "_reset_value", "reset_input", "reset_type",
-        "reset_parameter", "description", "values")
+    doc_compare = ("_id", "lsb", "msb", "_field_name", "field_type",
+                   "is_error_field", "_reset_value", "reset_input",
+                   "reset_type", "reset_parameter", "description", "values")
 
     def __init__(self, stop=0, start=0):
 

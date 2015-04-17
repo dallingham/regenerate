@@ -300,7 +300,7 @@ class UVMBlockRegisters(WriterBase):
             gclass = "{0}_grp_reg_blk".format(group.name)
             gname = group.name
             repeat = group.repeat
-            
+
             if repeat > 1:
                 of.write("   {0} {1}[{2}];\n".format(gclass, gname, repeat))
             else:

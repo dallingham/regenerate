@@ -592,13 +592,15 @@ class Verilog(WriterBase):
         data_width = "[%d:0]" % (self._data_width - 1)
         be_width = "[%d:0]" % ((self._data_width / 8) - 1)
 
-        port_list = [(self._input, '', self._clock, "Input clock"),
-                     (self._input, '', self._reset, "Reset"),
-                     (self._input, '', self._write_strobe, "Write strobe"),
-                     (self._input, '', self._read_strobe, "Read strobe"
+        port_list = [
+            (self._input, '', self._clock, "Input clock"),
+            (self._input, '', self._reset, "Reset"),
+            (self._input, '', self._write_strobe, "Write strobe"), (
+                self._input, '', self._read_strobe, "Read strobe"
             ), (self._input, be_width, self._byte_enables, "Byte enables"),
-                     (self._input, addr_width, self._addr, "Address"),
-                     (self._input, data_width, self._data_in, "Data in")]
+            (self._input, addr_width, self._addr, "Address"),
+            (self._input, data_width, self._data_in, "Data in")
+        ]
 
         for register in self.__sorted_regs:
 

@@ -19,8 +19,9 @@
 
 from collections import namedtuple
 
-InstData = namedtuple("InstData",
-                      "group inst set base offset repeat roffset format grpt grpt_offset array")
+InstData = namedtuple(
+    "InstData",
+    "group inst set base offset repeat roffset format grpt grpt_offset array")
 
 DEFAULT_FORMAT = "%(G)s_%(S)s%(D)s_%(R)s"
 
@@ -58,10 +59,9 @@ def in_groups(name, project):
         for group in project.get_grouping_list():
             for regset in [rs for rs in group.register_sets if rs.set == name]:
                 fmt = regset.format if regset.format else DEFAULT_FORMAT
-                groups.append(InstData(group.name, regset.inst, regset.set,
-                                       group.base, regset.offset,
-                                       regset.repeat, regset.repeat_offset,
-                                       fmt, group.repeat,
-                                       group.repeat_offset, regset.array))
+                groups.append(InstData(
+                    group.name, regset.inst, regset.set, group.base,
+                    regset.offset, regset.repeat, regset.repeat_offset, fmt,
+                    group.repeat, group.repeat_offset, regset.array))
 
     return groups

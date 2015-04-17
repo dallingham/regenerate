@@ -31,8 +31,7 @@ import xml.sax.saxutils
 AddrMapData = namedtuple("AddrMapData", "name base width fixed")
 GroupMapData = namedtuple(
     "GroupMapData",
-    "set inst offset repeat repeat_offset format hdl no_uvm array"
-)
+    "set inst offset repeat repeat_offset format hdl no_uvm array")
 
 
 def cleanup(data):

@@ -27,8 +27,7 @@ from regenerate.db.group_data import GroupData
 AddrMapData = namedtuple("AddrMapData", "name base width fixed")
 GroupMapData = namedtuple(
     "GroupMapData",
-    "set inst offset repeat repeat_offset format hdl no_uvm array"
-)
+    "set inst offset repeat repeat_offset format hdl no_uvm array")
 
 
 class ProjectReader(object):
@@ -117,13 +116,11 @@ class ProjectReader(object):
     def start_map(self, attrs):
         """Called when a map tag is found"""
         sname = attrs['set']
-        data = GroupMapData(sname, attrs.get('inst', sname),
-                            int(attrs['offset'], 16), int(attrs['repeat']),
-                            int(attrs['repeat_offset']),
-                            attrs.get("format", ""), attrs.get("hdl", ""),
-                            int(attrs.get("no_uvm", "0")),
-                            int(attrs.get("array", "0"))
-                        )
+        data = GroupMapData(
+            sname, attrs.get('inst', sname), int(attrs['offset'], 16),
+            int(attrs['repeat']), int(attrs['repeat_offset']),
+            attrs.get("format", ""), attrs.get("hdl", ""),
+            int(attrs.get("no_uvm", "0")), int(attrs.get("array", "0")))
         self._current_group.register_sets.append(data)
 
     def start_address_map(self, attrs):

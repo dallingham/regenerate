@@ -141,7 +141,8 @@ class RegisterRst:
     def text(self, line):
         if self._highlight:
             replacer = re.compile(self._highlight, re.IGNORECASE)
-            line = replacer.sub(lambda m: '\ :search:`%s`\ ' % m.group(0), line.strip())
+            line = replacer.sub(lambda m: '\ :search:`%s`\ ' % m.group(0),
+                                line.strip())
             return re.sub(r"_\\ ", r"\\_\\ ", line)
         else:
             return line.strip()
@@ -280,14 +281,15 @@ class RegisterRst:
                                             inst.inst, -1)
                             o.write(" - %s\n" % self.text(name))
                         if use_id:
-                            name = full_token(t_grp_name, self._reg.token, 
+                            name = full_token(t_grp_name, self._reg.token,
                                               inst.inst, -1, inst.format)
                             if use_uvm:
                                 o.write("    ")
                             o.write(" - %s\n" % self.text(name))
                         for map_name in addr_maps:
                             map_base = self._prj.get_address_base(map_name.name)
-                            offset = map_base + inst.offset + inst.base + (grp_inst * inst.grpt_offset)
+                            offset = map_base + inst.offset + inst.base + (
+                                grp_inst * inst.grpt_offset)
                             o.write("     - %s\n" % reg_addr(self._reg, offset))
                     else:
                         for i in range(0, inst.repeat):
@@ -304,8 +306,11 @@ class RegisterRst:
                                 o.write(" - %s\n" % self.text(name))
                             for map_name in addr_maps:
                                 base = self._prj.get_address_base(map_name.name)
-                                offset = inst.base + inst.offset + (i * inst.roffset) + (grp_inst * inst.grpt_offset)
-                                o.write("     - %s\n" % reg_addr(self._reg, offset + base))
+                                offset = inst.base + inst.offset + (
+                                    i * inst.roffset
+                                ) + (grp_inst * inst.grpt_offset)
+                                o.write("     - %s\n" %
+                                        reg_addr(self._reg, offset + base))
 
         o.write("\n\n")
 
