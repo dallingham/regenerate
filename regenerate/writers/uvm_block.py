@@ -369,7 +369,7 @@ class UVMBlockRegisters(WriterBase):
         for group_entry in group.register_sets:
             name = group_entry.set
             inst = group_entry.inst
-            if group_entry.repeat > 1:
+            if group_entry.repeat > 1 or group_entry.array:
                 of.write('      for(int i = 0; i < {0}; i++) begin\n'.format(
                     group_entry.repeat))
                 of.write(
