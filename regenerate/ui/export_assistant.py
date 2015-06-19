@@ -48,6 +48,7 @@ class ExportAssistant(gtk.Assistant):
 
     def selected_export_is_project(self):
         model = self.export_combo.get_model()
+        print not model.get_value(self.export_combo.get_active_iter(), 1)
         return not model.get_value(self.export_combo.get_active_iter(), 1)
 
     def selected_extension(self):
@@ -80,9 +81,9 @@ class ExportAssistant(gtk.Assistant):
         if current_page == 0:
             value = self.selected_export_is_project()
             if value:
-                return 1
-            else:
                 return 2
+            else:
+                return 1
         else:
             return current_page + 1
 

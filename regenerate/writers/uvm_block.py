@@ -209,7 +209,8 @@ class UVMBlockRegisters(WriterBase):
             for name in map_list:
                 grp_data = [grp for grp in self._project.get_grouping_list()
                             if grp.name == name]
-                self.connect_submaps(of, grp_data[0], data.name, name)
+                if grp_data:
+                    self.connect_submaps(of, grp_data[0], data.name, name)
 
         of.write('      lock_model();\n')
         of.write("\n")

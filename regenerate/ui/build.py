@@ -303,7 +303,7 @@ class Build(BaseWindow):
         dbase = self.__dbmap[base][DB_MAP_DBASE].db
         wrclass = self.__mapopt[export_format][MAPOPT_CLASS]
         if self.__mapopt[export_format][MAPOPT_REGISTER_SET]:
-            gen = wrclass(dbase)
+            gen = wrclass(self.__prj, dbase)
         else:
             db_list = [i[DB_MAP_DBASE].db for i in self.__dbmap.values()]
             gen = wrclass(self.__prj, db_list)
