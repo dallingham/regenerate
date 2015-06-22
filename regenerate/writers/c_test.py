@@ -37,11 +37,23 @@ support_code = [
     "typedef unsigned long      uint32;",
     "typedef unsigned short     uint16;",
     "typedef unsigned char      uint8;",
+    "typedef void (*msgptr)(uint32);",
     "",
+    "typedef struct _reg_data {",
+    "  uint32 addr;",
+    "  uint32 ro;",
+    "  uint32 def;",
+    "} reg_data;",
+    "",
+    "typedef struct _reg64_data {",
+    "  uint32 addr;",
+    "  uint64 ro;",
+    "  uint64 def;",
+    "} reg64_data;"
 ]
 code_reg32 = [
     "static uint32",
-    "check_reg32(volatile uint32* addr_ptr, uint32 defval, uint32 ro_mask)",
+    "check_reg32(volatile uint32* addr_ptr, uint32 ro_mask, uint32 defval)",
     "{",
     "  if (*addr_ptr     != defval) return 1;",
     ""
@@ -59,7 +71,7 @@ code_reg32 = [
 ]
 code_reg64 = [
     "static uint32",
-    "check_reg64(volatile uint64* addr_ptr, uint64 defval, uint64 ro_mask)",
+    "check_reg64(volatile uint64* addr_ptr, uint64 ro_mask, uint64 defval)",
     "{",
     "  uint32 status;",
     "  uint32 current_address;",
@@ -67,18 +79,18 @@ code_reg64 = [
     "  current_address = (uint32) addr_ptr;",
     "  ",
     "  status = check_reg32((uint32*)current_address, ",
-    "		       (uint32)defval & 0xffffffff, ",
-    "		       (uint32)ro_mask& 0xffffffff);",
+    "		       (uint32)ro_mask & 0xffffffff, ",
+    "		       (uint32)defval& 0xffffffff);",
     "  if (status) return status;",
     "  status = check_reg32(((uint32*)current_address)+1, ",
-    "		       (uint32)(defval>>32) & 0xffffffff, ",
-    "		       (uint32)(ro_mask>>32)& 0xffffffff);",
+    "		       (uint32)(ro_mask>>32) & 0xffffffff, ",
+    "		       (uint32)(defval>>32)& 0xffffffff);",
     "  return status;",
     "}",
 ]
 code_reg16 = [
     "static uint32",
-    "check_reg16(volatile uint16* addr_ptr, uint16 defval, uint16 ro_mask)",
+    "check_reg16(volatile uint16* addr_ptr, uint16 ro_mask, uint16 defval)",
     "{",
     "  uint32 current_address;",
     "  volatile uint8* byte_ptr = (volatile uint8*) addr_ptr;",
@@ -101,7 +113,7 @@ code_reg16 = [
 ]
 code_reg8 = [
     "static uint32",
-    "check_reg8(volatile uint8* addr_ptr, uint8 defval, uint8 ro_mask)",
+    "check_reg8(volatile uint8* addr_ptr, uint8 ro_mask, uint8 defval)",
     "{",
     "  if (*addr_ptr != defval) return 1;",
     "",
@@ -161,31 +173,87 @@ class CTest(WriterBase):
 
         cfile.write("\n")
         cfile.write("uint32\n")
-        cfile.write("check_{0} (void)\n".format(dbase.module_name))
+        cfile.write("check_{0} (msgptr func)\n".format(dbase.module_name))
         cfile.write("{\n")
+        cfile.write("   uint32 val;\n")
+        cfile.write("   int i;\n\n")
 
-        index = 1
-        for register in dbase.get_all_registers():
+        rdata8 = []
+        rdata16 = []
+        rdata32 = []
+        rdata64 = []
+
+        for index, register in enumerate(dbase.get_all_registers()):
             
             if register.do_not_test:
                 continue
 
             default = self.calc_default_value(register)
             mask = self.calc_ro_mask(register)
-            if first:
-                cfile.write("   uint32 val;\n\n")
-                first = False
             width = register.width
             ext = ext_opt[width]
             
-            cfile.write("  // %s\n" % register.register_name)
-                
             for addr in find_addresses(self._project, dbase.set_name, register):
-                cfile.write(
-                    "   val = check_reg%d(REG_UINT%d_PTR(0x%x), 0x%x%s, 0x%x%s);\n"
-                    % (width, width, addr, default, ext, mask, ext))
-                cfile.write("   if (val) return (val | 0x%x00);\n\n" % index)
-                index += 1
+                if width == 8:
+                    rdata8.append((addr, mask, default))
+                elif width == 16:
+                    rdata16.append((addr, mask, default))
+                elif width == 32:
+                    rdata32.append((addr, mask, default))
+                elif width == 64:
+                    rdata64.append((addr, mask, default))
+
+        if rdata8:
+            cfile.write("  static reg_data r8[] = {\n")
+            data = ["    {0x%x, 0x%x, 0x%x}" % val for val in rdata8]
+            cfile.write(",\n".join(data))
+            cfile.write("\n  };\n\n")
+
+        if rdata16:
+            cfile.write("  static reg_data r16[] = {\n")
+            data = ["    {0x%x, 0x%x, 0x%x}" % val for val in rdata16]
+            cfile.write(",\n".join(data))
+            cfile.write("\n  };\n\n")
+
+        if rdata32:
+            cfile.write("  static reg_data r32[] = {\n")
+            data = ["    {0x%x, 0x%x, 0x%x}" % val for val in rdata32]
+            cfile.write(",\n".join(data))
+            cfile.write("\n  };\n\n")
+
+        if rdata64:
+            cfile.write("  static reg64_data r64[] = {\n")
+            data = ["    {0x%x, 0x%xLL, 0x%xLL}" % val for val in rdata64]
+            cfile.write(",\n".join(data))
+            cfile.write("\n  };\n\n")
+
+        if rdata8:
+            cfile.write("   for (i = 0; i < %d; i++) {\n" % len(rdata8))
+            cfile.write("     func(r8[i].addr);\n")
+            cfile.write("     val = check_reg8(REG_UINT8_PTR(r8[i].addr), r8[i].ro, r8[i].def);\n")
+            cfile.write("     if (val) return (r8[i].addr);\n")
+            cfile.write("   }\n\n")
+
+        if rdata16:
+            cfile.write("   for (i = 0; i < %d; i++) {\n" % len(rdata16))
+            cfile.write("     func(r16[i].addr);\n")
+            cfile.write("     val = check_reg16(REG_UINT16_PTR(r16[i].addr), r16[i].ro, r16[i].def);\n")
+            cfile.write("     if (val) return (r16[i].addr);\n")
+            cfile.write("   }\n\n")
+
+        if rdata32:
+            cfile.write("   for (i = 0; i < %d; i++) {\n" % len(rdata32))
+            cfile.write("     func(r32[i].addr);\n")
+            cfile.write("     val = check_reg32(REG_UINT32_PTR(r32[i].addr), r32[i].ro, r32[i].def);\n")
+            cfile.write("     if (val) return (r32[i].addr);\n")
+            cfile.write("   }\n")
+
+        if rdata64:
+            cfile.write("   for (i = 0; i < %d; i++) {\n" % len(rdata64))
+            cfile.write("     func(r64[i].addr);\n")
+            cfile.write("     val = check_reg64(REG_UINT64_PTR(r64[i].addr), r64[i].ro, r64[i].def);\n")
+            cfile.write("     if (val) return (r64[i].addr);\n")
+            cfile.write("   }\n")
 
         cfile.write("   return 0;\n")
         cfile.write("}\n")
