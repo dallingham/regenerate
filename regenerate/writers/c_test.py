@@ -205,25 +205,25 @@ class CTest(WriterBase):
 
         if rdata8:
             cfile.write("  static reg_data r8[] = {\n")
-            data = ["    {0x%x, 0x%x, 0x%x}" % val for val in rdata8]
+            data = ["    {0x%08x, 0x%08x, 0x%08x}" % val for val in rdata8]
             cfile.write(",\n".join(data))
             cfile.write("\n  };\n\n")
 
         if rdata16:
             cfile.write("  static reg_data r16[] = {\n")
-            data = ["    {0x%x, 0x%x, 0x%x}" % val for val in rdata16]
+            data = ["    {0x%08x, 0x%08x, 0x%08x}" % val for val in rdata16]
             cfile.write(",\n".join(data))
             cfile.write("\n  };\n\n")
 
         if rdata32:
             cfile.write("  static reg_data r32[] = {\n")
-            data = ["    {0x%x, 0x%x, 0x%x}" % val for val in rdata32]
+            data = ["    {0x%08x, 0x%08x, 0x%08x}" % val for val in rdata32]
             cfile.write(",\n".join(data))
             cfile.write("\n  };\n\n")
 
         if rdata64:
             cfile.write("  static reg64_data r64[] = {\n")
-            data = ["    {0x%x, 0x%xLL, 0x%xLL}" % val for val in rdata64]
+            data = ["    {0x%08x, 0x%016xLL, 0x%016xLL}" % val for val in rdata64]
             cfile.write(",\n".join(data))
             cfile.write("\n  };\n\n")
 
