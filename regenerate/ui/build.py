@@ -340,9 +340,13 @@ def base_and_modtime(dbase_full_path):
     time of the associated file.
     """
     base = os.path.splitext(os.path.basename(dbase_full_path))[0]
-    db_file_mtime = os.path.getmtime(dbase_full_path)
-    return (base, db_file_mtime)
-
+    try:
+        db_file_mtime = os.path.getmtime(dbase_full_path)
+        return (base, db_file_mtime)
+    except OSError as msg:
+        ErrorMsg("Error accessing file", str(msg))
+        db_file_mtime = os.path.getmtime(dbase_full_path)
+        return (base, 0)
 
 def file_needs_rebuilt(local_dest, dbmap, db_paths):
     """

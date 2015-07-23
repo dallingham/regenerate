@@ -25,6 +25,8 @@ from regenerate.db import GroupMapData
 from writer_base import WriterBase
 from regenerate.extras import find_addresses
 
+MAX_REGS = 100
+
 support_code = [
     "",
     "// Macros to handle base addresses and types",
@@ -49,7 +51,8 @@ support_code = [
     "  uint32 addr;",
     "  uint64 ro;",
     "  uint64 def;",
-    "} reg64_data;"
+    "} reg64_data;",
+    ""
 ]
 code_reg32 = [
     "static uint32",
@@ -92,11 +95,6 @@ code_reg16 = [
     "static uint32",
     "check_reg16(volatile uint16* addr_ptr, uint16 ro_mask, uint16 defval)",
     "{",
-    "  uint32 current_address;",
-    "  volatile uint8* byte_ptr = (volatile uint8*) addr_ptr;",
-    "",
-    "  current_address = (uint32) addr_ptr;",
-    "",
     "  if (*addr_ptr     != defval) return 1;",
     "",
     "  *addr_ptr = 0xffff;",
@@ -165,18 +163,49 @@ class CTest(WriterBase):
                     value = value | (1 << i)
         return value
 
+    def write_protos(self, cfile, rlist, name, size):
+        if rlist:
+            for index, pos in enumerate(range(0, len(rlist), MAX_REGS)):
+                cfile.write("uint32 check_{0}_{1}{2} (msgptr func);\n".format(name, 
+                                                                              size,
+                                                                              chr(ord('a')+index)))
+
+    def write_call(self, cfile, rlist, name, size):
+        if rlist:
+            for index, pose in enumerate(range(0, len(rlist), MAX_REGS)):
+                cfile.write("  if ((val = check_{0}_{1}{2}(func)) != 0)\n".format(name,
+                                                                                  size,
+                                                                                  chr(ord('a')+index)))
+                cfile.write("    return val;\n");
+
+            data = ["    {0x%08x, 0x%08x, 0x%08x}" % val for val in rlist]
+
+    def write_function(self, cfile, rlist, name, size, letter, suffix, size_suffix):
+
+        format_str = "    {{0x%08x, 0x%08x{0}, 0x%08x{0}}}".format(size_suffix)
+        data = [format_str % val for val in rlist]
+
+        cfile.write("\n")
+        cfile.write("uint32\n")
+        cfile.write("check_{0}_{1}{2} (msgptr func)\n".format(name, size, letter))
+        cfile.write("{\n")
+        cfile.write("  uint32 val;\n")
+        cfile.write("  static reg{0}_data r[] = {{\n".format(suffix))
+        cfile.write(",\n".join(data))
+        cfile.write("\n  };\n\n")
+        cfile.write("   for (int i = 0; i < {0}; i++) {{\n".format(len(rlist)))
+        cfile.write("     func(r[i].addr);\n")
+        cfile.write("     val = check_reg{0}(REG_UINT{0}_PTR(r[i].addr), r[i].ro, r[i].def);\n".format(size))
+        cfile.write("     if (val) return (r[i].addr);\n")
+        cfile.write("   }\n")
+        cfile.write("   return 0;\n")
+        cfile.write("}\n")
+
     def gen_test(self, cfile, dbase):
 
         first = True
 
         ext_opt = {8: "", 16: "", 32: "", 64: "LL"}
-
-        cfile.write("\n")
-        cfile.write("uint32\n")
-        cfile.write("check_{0} (msgptr func)\n".format(dbase.module_name))
-        cfile.write("{\n")
-        cfile.write("   uint32 val;\n")
-        cfile.write("   int i;\n\n")
 
         rdata8 = []
         rdata16 = []
@@ -203,60 +232,53 @@ class CTest(WriterBase):
                 elif width == 64:
                     rdata64.append((addr, mask, default))
 
-        if rdata8:
-            cfile.write("  static reg_data r8[] = {\n")
-            data = ["    {0x%08x, 0x%08x, 0x%08x}" % val for val in rdata8]
-            cfile.write(",\n".join(data))
-            cfile.write("\n  };\n\n")
+        cfile.write("\n");
 
-        if rdata16:
-            cfile.write("  static reg_data r16[] = {\n")
-            data = ["    {0x%08x, 0x%08x, 0x%08x}" % val for val in rdata16]
-            cfile.write(",\n".join(data))
-            cfile.write("\n  };\n\n")
+        self.write_protos(cfile, rdata8, dbase.module_name, "8")
+        self.write_protos(cfile, rdata16, dbase.module_name, "16")
+        self.write_protos(cfile, rdata32, dbase.module_name, "32")
+        self.write_protos(cfile, rdata64, dbase.module_name, "64")
 
-        if rdata32:
-            cfile.write("  static reg_data r32[] = {\n")
-            data = ["    {0x%08x, 0x%08x, 0x%08x}" % val for val in rdata32]
-            cfile.write(",\n".join(data))
-            cfile.write("\n  };\n\n")
+        cfile.write("\n")
+        cfile.write("uint32\n")
+        cfile.write("check_{0} (msgptr func)\n".format(dbase.module_name))
+        cfile.write("{\n")
+        cfile.write("  uint32 val;\n\n")
 
-        if rdata64:
-            cfile.write("  static reg64_data r64[] = {\n")
-            data = ["    {0x%08x, 0x%016xLL, 0x%016xLL}" % val for val in rdata64]
-            cfile.write(",\n".join(data))
-            cfile.write("\n  };\n\n")
+        self.write_call(cfile, rdata8, dbase.module_name, "8")
+        self.write_call(cfile, rdata16, dbase.module_name, "16")
+        self.write_call(cfile, rdata32, dbase.module_name, "32")
+        self.write_call(cfile, rdata64, dbase.module_name, "64")
+        cfile.write("  return 0;\n}\n\n")
 
         if rdata8:
-            cfile.write("   for (i = 0; i < %d; i++) {\n" % len(rdata8))
-            cfile.write("     func(r8[i].addr);\n")
-            cfile.write("     val = check_reg8(REG_UINT8_PTR(r8[i].addr), r8[i].ro, r8[i].def);\n")
-            cfile.write("     if (val) return (r8[i].addr);\n")
-            cfile.write("   }\n\n")
+            for pos, index in enumerate(range(0, len(rdata8), MAX_REGS)):
+                letter = chr(ord('a') + pos)
+                self.write_function(cfile, rdata8[index: MAX_REGS], 
+                                    dbase.module_name, "8", 
+                                    letter, "", "")
 
         if rdata16:
-            cfile.write("   for (i = 0; i < %d; i++) {\n" % len(rdata16))
-            cfile.write("     func(r16[i].addr);\n")
-            cfile.write("     val = check_reg16(REG_UINT16_PTR(r16[i].addr), r16[i].ro, r16[i].def);\n")
-            cfile.write("     if (val) return (r16[i].addr);\n")
-            cfile.write("   }\n\n")
+            for pos, index in enumerate(range(0, len(rdata16), MAX_REGS)):
+                letter = chr(ord('a') + pos)
+                self.write_function(cfile, rdata16[index: MAX_REGS], 
+                                    dbase.module_name, "16", 
+                                    letter, "", "")
+
 
         if rdata32:
-            cfile.write("   for (i = 0; i < %d; i++) {\n" % len(rdata32))
-            cfile.write("     func(r32[i].addr);\n")
-            cfile.write("     val = check_reg32(REG_UINT32_PTR(r32[i].addr), r32[i].ro, r32[i].def);\n")
-            cfile.write("     if (val) return (r32[i].addr);\n")
-            cfile.write("   }\n")
+            for pos, index in enumerate(range(0, len(rdata32), MAX_REGS)):
+                letter = chr(ord('a') + pos)
+                self.write_function(cfile, rdata32[index:index+MAX_REGS], 
+                                    dbase.module_name, "32", 
+                                    letter, "", "")
 
         if rdata64:
-            cfile.write("   for (i = 0; i < %d; i++) {\n" % len(rdata64))
-            cfile.write("     func(r64[i].addr);\n")
-            cfile.write("     val = check_reg64(REG_UINT64_PTR(r64[i].addr), r64[i].ro, r64[i].def);\n")
-            cfile.write("     if (val) return (r64[i].addr);\n")
-            cfile.write("   }\n")
-
-        cfile.write("   return 0;\n")
-        cfile.write("}\n")
+            for pos, index in enumerate(range(0, len(rdata64), MAX_REGS)):
+                letter = chr(ord('a') + pos)
+                self.write_function(cfile, rdata64[index:index+MAX_REGS], 
+                                    dbase.module_name, "64", 
+                                    letter, "64", "LL")
 
     def write(self, filename):
         """
