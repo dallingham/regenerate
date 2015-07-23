@@ -28,7 +28,7 @@ from regenerate.db.textutils import clean_text
 import os.path
 import xml.sax.saxutils
 
-AddrMapData = namedtuple("AddrMapData", "name base width fixed")
+AddrMapData = namedtuple("AddrMapData", "name base width fixed uvm")
 GroupMapData = namedtuple(
     "GroupMapData",
     "set inst offset repeat repeat_offset format hdl no_uvm array")
@@ -268,7 +268,8 @@ class RegProject(object):
             old_data = self._addr_map_list[i]
             self._addr_map_list[i] = AddrMapData(new_name, old_data.base,
                                                  old_data.width,
-                                                 old_data.fixed)
+                                                 old_data.fixed,
+                                                 old_data.uvm)
             self._addr_map_grps[new_name] = self._addr_map_grps[old_name]
             del self._addr_map_grps[old_name]
             self._modified = True
@@ -311,6 +312,15 @@ class RegProject(object):
                 return data.fixed
         return None
 
+    def get_address_uvm(self, name):
+        """
+        Indicates if the specified address map is at a fixed location
+        """
+        for data in self._addr_map_list:
+            if name == data.name:
+                return data.uvm
+        return None
+
     def get_address_width(self, name):
         """
         Returns the width of the address group
@@ -320,12 +330,13 @@ class RegProject(object):
                 return data.width
         return None
 
-    def set_address_map(self, name, base, width, fixed):
+    def set_address_map(self, name, base, width, fixed, uvm):
         """
         Sets the specififed address map
         """
         self._modified = True
-        new_data = AddrMapData(name, base, width, fixed)
+        new_data = AddrMapData(name, base, width, fixed, uvm)
+        print "*", new_data
         for i, data in enumerate(self._addr_map_list):
             if data.name == name:
                 self._addr_map_list[i] = new_data

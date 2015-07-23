@@ -88,7 +88,7 @@ class ProjectWriter(object):
             groups = self._prj.get_address_map_groups(data.name)
             ofile.write('    <address_map name="%s" base="%x" ' %
                         (data.name, data.base))
-            ofile.write('fixed="%d" width="%d"' % (data.fixed, data.width))
+            ofile.write('fixed="%d" width="%d" no_uvm="%d"' % (data.fixed, data.width, data.uvm))
             if groups:
                 ofile.write('>\n')
                 for group in groups:
