@@ -109,7 +109,7 @@ class ProjectWriter(object):
             ofile.write(' repeat="%d" repeat_offset="%d">\n' %
                         (group.repeat, group.repeat_offset))
             if group.docs:
-                ofile.write("<overview>%s</overview>" % clean_text(group.docs))
+                ofile.write("<overview>%s</overview>" % escape(clean_text(group.docs)))
             for item in group.register_sets:
                 ofile.write('      <map set="%s" inst="%s" offset="%x" ' %
                             (item.set, item.inst, item.offset))
