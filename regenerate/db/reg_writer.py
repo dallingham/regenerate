@@ -54,9 +54,13 @@ class RegWriter(object):
         create_backup_file(filename)
         ofile = open(filename, "w")
         ofile.write('<?xml version="1.0"?>\n')
-        ofile.write('<module name="%s" title="%s" owner="%s">\n' %
+        if self.dbase.array_is_reg:
+            array = "reg"
+        else:
+            array = "mem"
+        ofile.write('<module name="%s" title="%s" owner="%s" array="%s">\n' %
                     (self.dbase.module_name, self.dbase.descriptive_title,
-                     self.dbase.owner))
+                     self.dbase.owner, array))
 
         ofile.write('  <base addr_width="%d" ' % self.dbase.address_bus_width)
         ofile.write('data_width="%d"/>\n' % self.dbase.data_bus_width)

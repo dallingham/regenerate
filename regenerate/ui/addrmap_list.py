@@ -138,7 +138,6 @@ class AddrMapList(object):
 
         self._model.clear()
         for base in self._prj.get_address_maps():
-            print base
             if base.width not in INT2SIZE:
                 LOGGER.error(
                     'Illegal width ({0}) for address map "{1}"'.format(

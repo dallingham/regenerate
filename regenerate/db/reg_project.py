@@ -336,7 +336,6 @@ class RegProject(object):
         """
         self._modified = True
         new_data = AddrMapData(name, base, width, fixed, uvm)
-        print "*", new_data
         for i, data in enumerate(self._addr_map_list):
             if data.name == name:
                 self._addr_map_list[i] = new_data

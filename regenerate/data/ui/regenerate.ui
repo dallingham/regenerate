@@ -1356,7 +1356,7 @@
                                       <packing>
                                         <property name="left_attach">1</property>
                                         <property name="right_attach">2</property>
-                                        <property name="y_options"/>
+                                        <property name="y_options"></property>
                                       </packing>
                                     </child>
                                     <child>
@@ -1374,7 +1374,7 @@
                                         <property name="right_attach">2</property>
                                         <property name="top_attach">1</property>
                                         <property name="bottom_attach">2</property>
-                                        <property name="y_options"/>
+                                        <property name="y_options"></property>
                                       </packing>
                                     </child>
                                     <child>
@@ -1392,7 +1392,7 @@
                                         <property name="right_attach">2</property>
                                         <property name="top_attach">2</property>
                                         <property name="bottom_attach">3</property>
-                                        <property name="y_options"/>
+                                        <property name="y_options"></property>
                                       </packing>
                                     </child>
                                     <child>
@@ -1475,7 +1475,7 @@
                               </object>
                               <packing>
                                 <property name="right_attach">6</property>
-                                <property name="y_options"/>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -1491,7 +1491,7 @@
                                 <property name="top_attach">1</property>
                                 <property name="bottom_attach">2</property>
                                 <property name="x_options">GTK_FILL</property>
-                                <property name="y_options"/>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -1511,7 +1511,7 @@
                                 <property name="right_attach">5</property>
                                 <property name="top_attach">1</property>
                                 <property name="bottom_attach">2</property>
-                                <property name="y_options"/>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -1527,7 +1527,7 @@
                                 <property name="top_attach">2</property>
                                 <property name="bottom_attach">3</property>
                                 <property name="x_options">GTK_FILL</property>
-                                <property name="y_options"/>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -1543,7 +1543,7 @@
                                 <property name="top_attach">4</property>
                                 <property name="bottom_attach">5</property>
                                 <property name="x_options">GTK_FILL</property>
-                                <property name="y_options"/>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -1563,7 +1563,7 @@
                                 <property name="right_attach">4</property>
                                 <property name="top_attach">2</property>
                                 <property name="bottom_attach">3</property>
-                                <property name="y_options"/>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -1578,7 +1578,7 @@
                                 <property name="top_attach">4</property>
                                 <property name="bottom_attach">5</property>
                                 <property name="x_options">GTK_FILL</property>
-                                <property name="y_options"/>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -1594,7 +1594,7 @@
                                 <property name="top_attach">3</property>
                                 <property name="bottom_attach">4</property>
                                 <property name="x_options">GTK_FILL</property>
-                                <property name="y_options"/>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -1614,7 +1614,7 @@
                                 <property name="right_attach">4</property>
                                 <property name="top_attach">3</property>
                                 <property name="bottom_attach">4</property>
-                                <property name="y_options"/>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -1653,7 +1653,7 @@
                                 <property name="right_attach">6</property>
                                 <property name="top_attach">2</property>
                                 <property name="bottom_attach">3</property>
-                                <property name="y_options"/>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -1666,7 +1666,7 @@
                                 <property name="right_attach">5</property>
                                 <property name="top_attach">2</property>
                                 <property name="bottom_attach">3</property>
-                                <property name="y_options"/>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -1699,13 +1699,58 @@
                               </packing>
                             </child>
                             <child>
-                              <placeholder/>
+                              <object class="GtkLabel" id="label38">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="xalign">0</property>
+                                <property name="label" translatable="yes">Array notation</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="right_attach">2</property>
+                                <property name="top_attach">6</property>
+                                <property name="bottom_attach">7</property>
+                                <property name="y_options">GTK_FILL</property>
+                              </packing>
                             </child>
                             <child>
-                              <placeholder/>
+                              <object class="GtkRadioButton" id="array_notation">
+                                <property name="label" translatable="yes">memory</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">False</property>
+                                <property name="use_action_appearance">False</property>
+                                <property name="active">True</property>
+                                <property name="draw_indicator">True</property>
+                                <signal name="toggled" handler="on_array_changed" swapped="no"/>
+                              </object>
+                              <packing>
+                                <property name="left_attach">2</property>
+                                <property name="right_attach">3</property>
+                                <property name="top_attach">6</property>
+                                <property name="bottom_attach">7</property>
+                                <property name="y_options">GTK_FILL</property>
+                              </packing>
                             </child>
                             <child>
-                              <placeholder/>
+                              <object class="GtkRadioButton" id="register_notation">
+                                <property name="label" translatable="yes">registers</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">False</property>
+                                <property name="use_action_appearance">False</property>
+                                <property name="active">True</property>
+                                <property name="draw_indicator">True</property>
+                                <property name="group">array_notation</property>
+                                <signal name="group-changed" handler="on_array_changed" swapped="no"/>
+                              </object>
+                              <packing>
+                                <property name="left_attach">3</property>
+                                <property name="right_attach">4</property>
+                                <property name="top_attach">6</property>
+                                <property name="bottom_attach">7</property>
+                                <property name="y_options">GTK_FILL</property>
+                              </packing>
                             </child>
                             <child>
                               <placeholder/>
@@ -1914,7 +1959,7 @@
                                 <property name="top_attach">1</property>
                                 <property name="bottom_attach">2</property>
                                 <property name="x_options">GTK_FILL</property>
-                                <property name="y_options"/>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -1930,7 +1975,7 @@
                                 <property name="top_attach">2</property>
                                 <property name="bottom_attach">3</property>
                                 <property name="x_options">GTK_FILL</property>
-                                <property name="y_options"/>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -1946,7 +1991,7 @@
                                 <property name="top_attach">3</property>
                                 <property name="bottom_attach">4</property>
                                 <property name="x_options">GTK_FILL</property>
-                                <property name="y_options"/>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -1962,7 +2007,7 @@
                                 <property name="top_attach">4</property>
                                 <property name="bottom_attach">5</property>
                                 <property name="x_options">GTK_FILL</property>
-                                <property name="y_options"/>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -1978,7 +2023,7 @@
                                 <property name="top_attach">5</property>
                                 <property name="bottom_attach">6</property>
                                 <property name="x_options">GTK_FILL</property>
-                                <property name="y_options"/>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -1994,7 +2039,7 @@
                                 <property name="top_attach">6</property>
                                 <property name="bottom_attach">7</property>
                                 <property name="x_options">GTK_FILL</property>
-                                <property name="y_options"/>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -2010,7 +2055,7 @@
                                 <property name="top_attach">9</property>
                                 <property name="bottom_attach">10</property>
                                 <property name="x_options">GTK_FILL</property>
-                                <property name="y_options"/>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -2026,7 +2071,7 @@
                                 <property name="top_attach">10</property>
                                 <property name="bottom_attach">11</property>
                                 <property name="x_options">GTK_FILL</property>
-                                <property name="y_options"/>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -2046,7 +2091,7 @@
                                 <property name="right_attach">3</property>
                                 <property name="top_attach">1</property>
                                 <property name="bottom_attach">2</property>
-                                <property name="y_options"/>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -2066,7 +2111,7 @@
                                 <property name="right_attach">3</property>
                                 <property name="top_attach">3</property>
                                 <property name="bottom_attach">4</property>
-                                <property name="y_options"/>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -2086,7 +2131,7 @@
                                 <property name="right_attach">3</property>
                                 <property name="top_attach">2</property>
                                 <property name="bottom_attach">3</property>
-                                <property name="y_options"/>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -2106,7 +2151,7 @@
                                 <property name="right_attach">3</property>
                                 <property name="top_attach">4</property>
                                 <property name="bottom_attach">5</property>
-                                <property name="y_options"/>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -2126,7 +2171,7 @@
                                 <property name="right_attach">3</property>
                                 <property name="top_attach">5</property>
                                 <property name="bottom_attach">6</property>
-                                <property name="y_options"/>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -2146,7 +2191,7 @@
                                 <property name="right_attach">3</property>
                                 <property name="top_attach">6</property>
                                 <property name="bottom_attach">7</property>
-                                <property name="y_options"/>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -2166,7 +2211,7 @@
                                 <property name="right_attach">3</property>
                                 <property name="top_attach">9</property>
                                 <property name="bottom_attach">10</property>
-                                <property name="y_options"/>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -2187,7 +2232,7 @@
                                 <property name="right_attach">3</property>
                                 <property name="top_attach">10</property>
                                 <property name="bottom_attach">11</property>
-                                <property name="y_options"/>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -2205,7 +2250,7 @@
                                 <property name="right_attach">4</property>
                                 <property name="top_attach">2</property>
                                 <property name="bottom_attach">3</property>
-                                <property name="y_options"/>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -2223,7 +2268,7 @@
                                 <property name="right_attach">4</property>
                                 <property name="top_attach">5</property>
                                 <property name="bottom_attach">6</property>
-                                <property name="y_options"/>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -2252,7 +2297,7 @@
                                 <property name="top_attach">7</property>
                                 <property name="bottom_attach">8</property>
                                 <property name="x_options">GTK_FILL</property>
-                                <property name="y_options"/>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -2272,7 +2317,7 @@
                                 <property name="right_attach">3</property>
                                 <property name="top_attach">7</property>
                                 <property name="bottom_attach">8</property>
-                                <property name="y_options"/>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -2288,7 +2333,7 @@
                                 <property name="top_attach">8</property>
                                 <property name="bottom_attach">9</property>
                                 <property name="x_options">GTK_FILL</property>
-                                <property name="y_options"/>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -2322,7 +2367,7 @@
                                 <property name="right_attach">5</property>
                                 <property name="top_attach">2</property>
                                 <property name="bottom_attach">3</property>
-                                <property name="y_options"/>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -2491,7 +2536,7 @@
                             <property name="left_attach">1</property>
                             <property name="right_attach">2</property>
                             <property name="x_options">GTK_FILL</property>
-                            <property name="y_options"/>
+                            <property name="y_options"></property>
                           </packing>
                         </child>
                         <child>
@@ -2509,7 +2554,7 @@
                           <packing>
                             <property name="left_attach">2</property>
                             <property name="right_attach">4</property>
-                            <property name="y_options"/>
+                            <property name="y_options"></property>
                           </packing>
                         </child>
                         <child>
@@ -2525,7 +2570,7 @@
                             <property name="top_attach">1</property>
                             <property name="bottom_attach">2</property>
                             <property name="x_options">GTK_FILL</property>
-                            <property name="y_options"/>
+                            <property name="y_options"></property>
                           </packing>
                         </child>
                         <child>
@@ -2545,7 +2590,7 @@
                             <property name="right_attach">3</property>
                             <property name="top_attach">1</property>
                             <property name="bottom_attach">2</property>
-                            <property name="y_options"/>
+                            <property name="y_options"></property>
                           </packing>
                         </child>
                         <child>
@@ -2561,7 +2606,7 @@
                             <property name="top_attach">2</property>
                             <property name="bottom_attach">3</property>
                             <property name="x_options">GTK_FILL</property>
-                            <property name="y_options"/>
+                            <property name="y_options"></property>
                           </packing>
                         </child>
                         <child>
@@ -2581,7 +2626,7 @@
                             <property name="right_attach">4</property>
                             <property name="top_attach">2</property>
                             <property name="bottom_attach">3</property>
-                            <property name="y_options"/>
+                            <property name="y_options"></property>
                           </packing>
                         </child>
                         <child>
@@ -2596,7 +2641,7 @@
                             <property name="right_attach">5</property>
                             <property name="top_attach">5</property>
                             <property name="bottom_attach">6</property>
-                            <property name="y_options"/>
+                            <property name="y_options"></property>
                           </packing>
                         </child>
                         <child>
@@ -2673,7 +2718,7 @@
                             <property name="right_attach">5</property>
                             <property name="top_attach">6</property>
                             <property name="bottom_attach">7</property>
-                            <property name="x_options"/>
+                            <property name="x_options"></property>
                           </packing>
                         </child>
                         <child>
@@ -2814,7 +2859,7 @@
                             <property name="right_attach">5</property>
                             <property name="top_attach">4</property>
                             <property name="bottom_attach">5</property>
-                            <property name="x_options"/>
+                            <property name="x_options"></property>
                           </packing>
                         </child>
                         <child>
@@ -2829,7 +2874,7 @@
                             <property name="right_attach">5</property>
                             <property name="top_attach">3</property>
                             <property name="bottom_attach">4</property>
-                            <property name="y_options"/>
+                            <property name="y_options"></property>
                           </packing>
                         </child>
                         <child>
@@ -2842,7 +2887,7 @@
                             <property name="right_attach">4</property>
                             <property name="top_attach">1</property>
                             <property name="bottom_attach">2</property>
-                            <property name="y_options"/>
+                            <property name="y_options"></property>
                           </packing>
                         </child>
                         <child>

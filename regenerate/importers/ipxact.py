@@ -194,11 +194,9 @@ def crossreference(db):
         gtk.main_iteration()
 
     for reg in db.get_all_registers():
-        print reg
         for regex in re_list:
             reg.description = re.sub(regex, r'\1`\2`_ \3', reg.description)
         for field in reg.get_bit_fields():
-            print field
             for regex in re_list:
                 field.description = re.sub(regex, r'\1`\2`_ \3',
                                            field.description)
