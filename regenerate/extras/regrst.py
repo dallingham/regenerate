@@ -95,7 +95,7 @@ div.warning p.admonition-title {
 
 def reg_addr(register, offset):
     base = register.address + offset
-    if register.ram_size:
+    if register.ram_size > 32:
         return "%08x - %08x" % (base, base + register.ram_size)
     else:
         return "%08x" % base
@@ -160,7 +160,7 @@ class RegisterRst:
         o.write("\n%s\n\n" %
                 self.text(self._reg.description.encode('ascii', 'replace')))
 
-        if self._reg.ram_size == 0:
+        if self._reg.ram_size < 32:  # Temporary hack
             self._write_bit_fields(o)
 
         if self._show_defines:

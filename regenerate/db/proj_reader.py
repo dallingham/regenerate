@@ -40,6 +40,7 @@ class ProjectReader(object):
 
     def __init__(self, project):
         self._prj = project
+        self._current_group = None
 
     def open(self, name):
         """
@@ -145,7 +146,8 @@ class ProjectReader(object):
         Called when the overview XML tag is encountered. Assigns the
         current text string to the current group's docs variable
         """
-        self._current_group.docs = text
+        if self._current_group:
+            self._current_group.docs = text
 
     def end_map_group(self, text):
         """

@@ -51,7 +51,7 @@ class AddrMapMdl(gtk.TreeStore):
         Adds a new instance to the model. It is not added to the database until
         either the change_id or change_base is called.
         """
-        node = self.append(None, row=('', '0', False, False, _BITS32))
+        node = self.append(None, row=('new_map', '0', False, False, _BITS32))
         return self.get_path(node)
 
     def append_instance(self, inst):
@@ -100,7 +100,7 @@ class AddrMapList(object):
         drop_info = treeview.get_dest_row_at_pos(x, y)
         if drop_info:
             path, position = drop_info
-            row_data = [data, "", "", ""]
+            row_data = [data, "", "", "", ""]
             group_names = [n.name for n in self._prj.get_grouping_list()]
             if data not in group_names:
                 return
@@ -200,7 +200,7 @@ class AddrMapList(object):
         nde = self._model.get_iter(path)
         name = self._model.get_value(nde, AddrMapMdl.NAME_COL)
         value = self._model.get_value(nde, AddrMapMdl.BASE_COL)
-        uvm = self._model.get_value(node, AddrMapMdl.UVM_COL)
+        uvm = self._model.get_value(nde, AddrMapMdl.UVM_COL)
         fixed = self._model.get_value(nde, AddrMapMdl.FIXED_COL)
 
         model = cell.get_property('model')
@@ -313,7 +313,7 @@ class AddrMapList(object):
         data, and sets the first field to start editing.
         """
         name = self._create_new_map_name()
-        node = self._model.append(None, row=(name, 0, False, SIZE2STR[0][0]))
+        node = self._model.append(None, row=(name, 0, False, False, SIZE2STR[0][0]))
         path = self._model.get_path(node)
         self._prj.modified = True
         self._prj.set_address_map(name, 0, SIZE2STR[0][1], False, False)

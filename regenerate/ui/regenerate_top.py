@@ -1386,7 +1386,8 @@ class MainWindow(BaseWindow):
                 self.set_modified()
 
     def on_array_changed(self, obj):
-        self.dbase.array_is_reg = not obj.get_active()
+        if self.dbase:
+            self.dbase.array_is_reg = not obj.get_active()
         self.set_modified()
 
     def on_data_width_changed(self, obj):
