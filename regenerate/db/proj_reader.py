@@ -24,7 +24,7 @@ import xml.parsers.expat
 from collections import namedtuple
 from regenerate.db.group_data import GroupData
 
-AddrMapData = namedtuple("AddrMapData", "name base width fixed")
+AddrMapData = namedtuple("AddrMapData", "name base width fixed uvm")
 GroupMapData = namedtuple(
     "GroupMapData",
     "set inst offset repeat repeat_offset format hdl no_uvm array")
@@ -40,6 +40,7 @@ class ProjectReader(object):
 
     def __init__(self, project):
         self._prj = project
+        self._current_group = None
 
     def open(self, name):
         """
@@ -125,10 +126,12 @@ class ProjectReader(object):
 
     def start_address_map(self, attrs):
         """Called when an address tag is found"""
-        self._prj.set_address_map(attrs['name'], int(attrs.get('base', 0), 16),
-                                  int(attrs.get('width', 4)),
-                                  int(attrs.get('fixed', 1)))
-
+        name = attrs['name']
+        base = int(attrs.get('base', 0), 16)
+        width = int(attrs.get('width', 4))
+        fixed = int(attrs.get('fixed', 1))
+        uvm = int(attrs.get('no_uvm', 0))
+        self._prj.set_address_map(name, base, width, fixed, uvm)
         self._current_map = attrs['name']
 
     def end_documentation(self, text):
@@ -143,7 +146,8 @@ class ProjectReader(object):
         Called when the overview XML tag is encountered. Assigns the
         current text string to the current group's docs variable
         """
-        self._current_group.docs = text
+        if self._current_group:
+            self._current_group.docs = text
 
     def end_map_group(self, text):
         """

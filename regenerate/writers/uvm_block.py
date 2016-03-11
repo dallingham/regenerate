@@ -107,6 +107,8 @@ class UVMBlockRegisters(WriterBase):
         for group in self._project.get_grouping_list():
             in_maps = set()
             for addr_map in self._project.get_address_maps():
+                if addr_map.uvm:
+                    continue
                 map_list = self._project.get_address_map_groups(addr_map.name)
                 if not map_list or group.name in map_list:
                     in_maps.add(addr_map.name)
@@ -202,6 +204,8 @@ class UVMBlockRegisters(WriterBase):
                 self.build_and_configure_group_array(of, group, map2grp)
 
         for data in self._project.get_address_maps():
+            if data.uvm:
+                continue
             map_list = self._project.get_address_map_groups(data.name)
             if not map_list:
                 map_list = [group.name
@@ -209,7 +213,8 @@ class UVMBlockRegisters(WriterBase):
             for name in map_list:
                 grp_data = [grp for grp in self._project.get_grouping_list()
                             if grp.name == name]
-                self.connect_submaps(of, grp_data[0], data.name, name)
+                if grp_data:
+                    self.connect_submaps(of, grp_data[0], data.name, name)
 
         of.write('      lock_model();\n')
         of.write("\n")
@@ -271,6 +276,8 @@ class UVMBlockRegisters(WriterBase):
         all_groups = [grp.name for grp in self._project.get_grouping_list()]
 
         for data in self._project.get_address_maps():
+            if data.uvm:
+                continue
             name = data.name
             map2grp[name] = self._project.get_address_map_groups(name)
             if not map2grp[name]:
@@ -281,7 +288,8 @@ class UVMBlockRegisters(WriterBase):
         map2base = {}
 
         for data in self._project.get_address_maps():
-            map2base[data.name] = data.base
+            if not data.uvm:
+                map2base[data.name] = data.base
         return map2base
 
     def write_toplevel_block(self, of):
@@ -308,11 +316,13 @@ class UVMBlockRegisters(WriterBase):
 
         # Declare register maps
         for data in self._project.get_address_maps():
-            of.write('   uvm_reg_map {0}_map;\n'.format(data.name))
+            if not data.uvm:
+                of.write('   uvm_reg_map {0}_map;\n'.format(data.name))
 
         # Declare variables to enable/disable register maps
         for data in self._project.get_address_maps():
-            of.write('   bit disable_{0}_map = 1\'b0;\n'.format(data.name))
+            if not data.uvm:
+                of.write('   bit disable_{0}_map = 1\'b0;\n'.format(data.name))
 
         # Create new and build functions
         self.write_toplevel_block_new(of)

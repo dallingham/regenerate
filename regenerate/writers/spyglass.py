@@ -63,7 +63,7 @@ class Spyglass(WriterBase):
         new_fields = []
         found = False
         for f in hdl_fields:
-            if not found and "[" in f:
+            if not found and "[%" in f:
                 new_fields.append("\\" + f)
                 found = True
             else:
@@ -75,8 +75,12 @@ class Spyglass(WriterBase):
         else:
             base = base[0]
         if found:
-            path = ".".join(new_fields) % i
-            return "\"%s .%s\"" % (path, base)
+            try:
+                path = ".".join(new_fields) % i
+                return "\"%s .%s\"" % (path, base)
+            except:
+                path = ".".join(new_fields)
+                return "%s.%s" % (path, base)
         else:
             path = ".".join(new_fields)
             return "%s.%s" % (path, base)

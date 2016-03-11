@@ -303,7 +303,7 @@ class Build(BaseWindow):
         dbase = self.__dbmap[base][DB_MAP_DBASE].db
         wrclass = self.__mapopt[export_format][MAPOPT_CLASS]
         if self.__mapopt[export_format][MAPOPT_REGISTER_SET]:
-            gen = wrclass(dbase)
+            gen = wrclass(self.__prj, dbase)
         else:
             db_list = [i[DB_MAP_DBASE].db for i in self.__dbmap.values()]
             gen = wrclass(self.__prj, db_list)
@@ -340,9 +340,13 @@ def base_and_modtime(dbase_full_path):
     time of the associated file.
     """
     base = os.path.splitext(os.path.basename(dbase_full_path))[0]
-    db_file_mtime = os.path.getmtime(dbase_full_path)
-    return (base, db_file_mtime)
-
+    try:
+        db_file_mtime = os.path.getmtime(dbase_full_path)
+        return (base, db_file_mtime)
+    except OSError as msg:
+        ErrorMsg("Error accessing file", str(msg))
+        db_file_mtime = os.path.getmtime(dbase_full_path)
+        return (base, 0)
 
 def file_needs_rebuilt(local_dest, dbmap, db_paths):
     """

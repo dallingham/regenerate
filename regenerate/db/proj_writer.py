@@ -88,7 +88,7 @@ class ProjectWriter(object):
             groups = self._prj.get_address_map_groups(data.name)
             ofile.write('    <address_map name="%s" base="%x" ' %
                         (data.name, data.base))
-            ofile.write('fixed="%d" width="%d"' % (data.fixed, data.width))
+            ofile.write('fixed="%d" width="%d" no_uvm="%d"' % (data.fixed, data.width, data.uvm))
             if groups:
                 ofile.write('>\n')
                 for group in groups:
@@ -109,7 +109,7 @@ class ProjectWriter(object):
             ofile.write(' repeat="%d" repeat_offset="%d">\n' %
                         (group.repeat, group.repeat_offset))
             if group.docs:
-                ofile.write("<overview>%s</overview>" % clean_text(group.docs))
+                ofile.write("<overview>%s</overview>" % escape(clean_text(group.docs)))
             for item in group.register_sets:
                 ofile.write('      <map set="%s" inst="%s" offset="%x" ' %
                             (item.set, item.inst, item.offset))

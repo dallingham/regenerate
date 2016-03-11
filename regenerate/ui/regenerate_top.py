@@ -209,6 +209,8 @@ class MainWindow(BaseWindow):
         self.__address_bus_obj = self.__builder.get_object('address_bus')
         self.__address_width_obj = self.__builder.get_object('address_width')
         self.__data_width_obj = self.__builder.get_object('data_width')
+        self.__array_notation_obj = self.__builder.get_object('array_notation')
+        self.__register_notation_obj = self.__builder.get_object('register_notation')
         self.__byte_level_obj = self.__builder.get_object('byte_en_level')
 
         self.__instance_obj = InstanceList(
@@ -1332,6 +1334,10 @@ class MainWindow(BaseWindow):
         self.__address_bus_obj.set_text(self.dbase.address_bus_name)
         self.__address_width_obj.set_text(str(self.dbase.address_bus_width))
         self.__data_width_obj.set_active(bus_index(self.dbase.data_bus_width))
+        if self.dbase.array_is_reg:
+            self.__register_notation_obj.set_active(True)
+        else:
+            self.__array_notation_obj.set_active(True)
 
         self.__byte_level_obj.set_active(self.dbase.byte_strobe_active_level)
 
@@ -1378,6 +1384,11 @@ class MainWindow(BaseWindow):
                 self.__reglist_obj.delete_selected_node()
                 self.dbase.delete_register(reg)
                 self.set_modified()
+
+    def on_array_changed(self, obj):
+        if self.dbase:
+            self.dbase.array_is_reg = not obj.get_active()
+        self.set_modified()
 
     def on_data_width_changed(self, obj):
         val = obj.get_active()

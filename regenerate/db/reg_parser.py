@@ -134,6 +134,9 @@ class RegParser(object):
         if 'id' in attrs:
             self.save_id = cnv_str(attrs, 'id').upper()
         self.__db.descriptive_title = cnv_str(attrs, 'title')
+        array = attrs.get('array', "mem")
+        self.__db.array_is_reg = array == "reg"
+        self.__db.descriptive_title = cnv_str(attrs, 'title')
 
     def start_base(self, attrs):
         """
