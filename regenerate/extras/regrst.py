@@ -352,11 +352,14 @@ class RegisterRst:
         """
 
         if _HTML:
-            parts = publish_parts(
-                self.restructured_text(text),
-                writer_name="html",
-                settings_overrides={'report_level': 'quiet'}, )
-            return parts['html_title'] + parts['html_subtitle'] + parts['body']
+            try:
+                parts = publish_parts(
+                    self.restructured_text(text),
+                    writer_name="html",
+                    settings_overrides={'report_level': 'quiet'}, )
+                return parts['html_title'] + parts['html_subtitle'] + parts['body']
+            except:
+                return "<h3>Error in Restructured Text</h3>Please contact the developer to get the documentation fixed"
         else:
             return "<pre>" + self.restructured_text() + "</pre>"
 

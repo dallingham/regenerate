@@ -42,6 +42,7 @@ class GroupDocEditor(object):
 
         self.__prj_preview = PreviewEditor(
             self.buffer, builder.get_object('scroll_webkit1'))
+
         self.buffer.set_text(group_inst.docs)
 
         builder.get_object("button2").connect("button-press-event", self._save)
