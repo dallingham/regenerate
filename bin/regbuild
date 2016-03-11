@@ -39,6 +39,69 @@ sys.path.insert(0, os.path.dirname(fullPath))
 from regenerate.writers import (EXPORTERS, PRJ_EXPORTERS, EXP_CLASS,
                                 EXP_TYPE, EXP_ID, EXP_EXT)
 
+def build_set(prjmap, project, item, options, path):
+
+    prjmap = {}
+    for x in EXPORTERS:
+        prjmap[x[EXP_ID]] = x[EXP_CLASS]
+
+    writer = prjmap.get(item[0])
+    dbase_name = os.path.abspath(os.path.join(os.path.dirname(project.path), path))
+    db_file_mtime = os.path.getmtime(dbase_name)
+
+    dest = os.path.abspath(
+        os.path.join(os.path.dirname(project.path), item[1]))
+
+    if not os.path.exists(dest):
+        rebuild = True
+    else:
+        dest_time = os.path.getmtime(dest)
+        rebuild = dest_time < db_file_mtime
+
+    if rebuild or options.force:
+        if options.verbose:
+            print "Generating %s." % dest
+        dbase = RegisterDb()
+        dbase.read_xml(dbase_name)
+        gen = writer(project, dbase)
+        gen.write(dest)
+    else:
+        print "%s up to date." % dest
+
+
+def build_prj(prjmap, project, item, options):
+
+    dbase_list = []
+    mod_times = []
+    for dbase_name in project.get_register_set():
+        db_file_mtime = os.path.getmtime(dbase_name)
+        mod_times.append(db_file_mtime)
+        dbase.read_xml(dbase_name)
+        dbase_list.append(dbase)
+
+    mod_times.sort()
+    min_mod_time = mod_times[0]
+
+    rebuild = False
+    writer, descript = prjmap[item[0]]
+    dest = os.path.abspath(
+        os.path.join(os.path.dirname(project.path), item[1]))
+
+    if not os.path.exists(dest):
+        rebuild = True
+    else:
+        dest_time = os.path.getmtime(dest)
+        rebuild = dest_time < min_mod_time
+
+    if rebuild or options.force:
+        if options.verbose:
+            print "Generating %s." % dest
+        gen = writer(project, dbase_list)
+        gen.write(dest)
+    else:
+        print "%s up to date." % dest
+
+
 def run():
     """
     main program
@@ -60,6 +123,12 @@ def run():
         )
     parser.add_option("-f", "--force", action="store_true", dest="force",
                       help="Force rebuilding even if up to date")
+    parser.add_option("-v", "--verbose", action="store_true", dest="verbose",
+                      help="Verbose mode")
+    parser.add_option("-u", "--uvm", action="store_true", dest="uvm",
+                      help="Generate UVM register package")
+    parser.add_option("-r", "--rtl", action="store_true", dest="rtl",
+                      help="Generate RTL")
 
     (options, args) = parser.parse_args()
 
@@ -67,39 +136,30 @@ def run():
         parser.print_help()
         sys.exit(1)
 
+    if options.verbose:
+        print "Loading project file", args[0]
+
     project = RegProject(args[0])
-    dbase_list = []
-    mod_times = []
-    for dbase_name in project.get_register_set():
-        dbase = RegisterDb()
-        db_file_mtime = os.path.getmtime(dbase_name)
-        mod_times.append(db_file_mtime)
-        dbase.read_xml(dbase_name)
-        dbase_list.append(dbase)
 
-    mod_times.sort()
-    min_mod_time = mod_times[0]
+    found_uvm = False
+    found_rtl = False
 
-    for item in project.get_project_export_list():
-        if item[0] == "proj-uvm":
-            rebuild = False
-            writer, descript = prjmap[item[0]]
-            dest = os.path.abspath(
-                os.path.join(os.path.dirname(project.path),
-                             item[1]))
+    for item in project.get_project_exports():
+        if options.uvm and item[0] == "proj-uvm":
+            build_prj(prjmap, project, item, options)
+            found_uvm = True
 
-            if not os.path.exists(dest):
-                rebuild = True
-            else:
-                dest_time = os.path.getmtime(dest)
-                rebuild = dest_time < min_mod_time
+    for rset in project.get_register_set():
+        path = os.path.relpath(rset, os.path.dirname(project.path))
+        for item in project.get_exports(path):
+            if options.rtl and item[0].startswith("rtl-"):
+                build_set(prjmap, project, item, options, path)
+                found_rtl = True
 
-            if rebuild or options.force:
-                print "Generating %s: %s" % (descript, dest)
-                gen = writer(project, dbase_list)
-                gen.write(dest)
-            else:
-                print "%s up to date. use -f to force rebuilding" % descript
+    if not found_uvm and options.uvm:
+        print "No rule exists for building a register package"
+    if not found_rtl and options.rtl:
+        print "No rule exists for building RTL"
 
 if __name__ == "__main__":
     try:
