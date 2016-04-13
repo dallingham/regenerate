@@ -48,15 +48,18 @@ class Sdc(WriterBase):
                 for grp in group.register_sets:
                     if grp.set == dbase.set_name and grp.set not in used and grp.hdl:
                         used.add(grp.set)
-                        for field in all_fields(dbase):
+                        for reg, field in all_fields(dbase):
                             for i in range(0, grp.repeat):
-                                base = get_signal_base(field)
+#                                base = get_signal_base(field)
+                                base = get_signal_info(reg.address, field)[0]
                                 for j in range(0, group.repeat):
-                                    path = build_format(group.hdl, j, grp.hdl,
-                                                        i)
+                                    path = build_format(group.hdl, j, grp.hdl, i)
                                     signal_name = "%s/%s" % (path, base)
                                     of.write(
-                                        "set_multicycle -from [get_cells(%s)] -setup 2\n"
+                                        "set_multicycle -from [get_cells{%s}] -setup 4\n"
+                                        % signal_name)
+                                    of.write(
+                                        "set_false_path -from [get_cells{%s}] -hold\n"
                                         % signal_name)
         of.close()
 
@@ -80,7 +83,7 @@ def all_fields(dbase):
     for reg in dbase.get_all_registers():
         for field in reg.get_bit_fields():
             if has_static_output(field):
-                f.append(field)
+                f.append((reg, field))
     return f
 
 
@@ -96,3 +99,42 @@ def get_signal_base(field):
     else:
         base = base[0]
     return base
+
+
+def get_signal_info(address, field, start=-1, stop=-1):
+    """
+    Returns the base signal name (derived from the address and output
+    field, the signal name (derived from the base name and the start
+    and stop index), and the register offset.
+    """
+    offset = get_signal_offset(address)
+    base_signal = get_base_signal(address, field)
+
+    signal = base_signal + get_width(field, start, stop)
+    return (base_signal, signal, offset)
+
+
+def get_signal_offset(address):
+    """Returns the offset of the signal."""
+    return address % 4
+
+def get_width(field, start=-1, stop=-1, force_index=False):
+    """Returns with width if the bit range is greater than one."""
+    if stop == -1:
+        start = field.lsb
+        stop = field.msb
+
+    if field.width == 1 and not force_index:
+        signal = ""
+    elif start == stop:
+        signal = "[{0}]".format(stop)
+    else:
+        signal = "[{0}:{1}]".format(stop, start)
+    return signal
+
+def get_base_signal(address, field):
+    """
+    Returns the base signal derived from the address and the output field
+    """
+    return "r{0:02x}_{1}".format(address, field.field_name.lower())
+

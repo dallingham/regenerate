@@ -24,6 +24,7 @@ from regenerate.db import BitField
 from regenerate.db import GroupMapData
 from writer_base import WriterBase
 from regenerate.extras import find_addresses
+import string
 
 MAX_REGS = 100
 
@@ -168,14 +169,14 @@ class CTest(WriterBase):
             for index, pos in enumerate(range(0, len(rlist), MAX_REGS)):
                 cfile.write("uint32 check_{0}_{1}{2} (msgptr func);\n".format(name, 
                                                                               size,
-                                                                              chr(ord('a')+index)))
+                                                                              string.letters[index]))
 
     def write_call(self, cfile, rlist, name, size):
         if rlist:
             for index, pose in enumerate(range(0, len(rlist), MAX_REGS)):
                 cfile.write("  if ((val = check_{0}_{1}{2}(func)) != 0)\n".format(name,
                                                                                   size,
-                                                                                  chr(ord('a')+index)))
+                                                                                  string.letters[index]))
                 cfile.write("    return val;\n");
 
             data = ["    {0x%08x, 0x%08x, 0x%08x}" % val for val in rlist]
@@ -253,14 +254,14 @@ class CTest(WriterBase):
 
         if rdata8:
             for pos, index in enumerate(range(0, len(rdata8), MAX_REGS)):
-                letter = chr(ord('a') + pos)
+                letter = string.letters[pos]
                 self.write_function(cfile, rdata8[index: MAX_REGS], 
                                     dbase.module_name, "8", 
                                     letter, "", "")
 
         if rdata16:
             for pos, index in enumerate(range(0, len(rdata16), MAX_REGS)):
-                letter = chr(ord('a') + pos)
+                letter = string.letters[pos]
                 self.write_function(cfile, rdata16[index: MAX_REGS], 
                                     dbase.module_name, "16", 
                                     letter, "", "")
@@ -268,14 +269,14 @@ class CTest(WriterBase):
 
         if rdata32:
             for pos, index in enumerate(range(0, len(rdata32), MAX_REGS)):
-                letter = chr(ord('a') + pos)
+                letter = string.letters[pos]
                 self.write_function(cfile, rdata32[index:index+MAX_REGS], 
                                     dbase.module_name, "32", 
                                     letter, "", "")
 
         if rdata64:
             for pos, index in enumerate(range(0, len(rdata64), MAX_REGS)):
-                letter = chr(ord('a') + pos)
+                letter = string.letters[pos]
                 self.write_function(cfile, rdata64[index:index+MAX_REGS], 
                                     dbase.module_name, "64", 
                                     letter, "64", "LL")

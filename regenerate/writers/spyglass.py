@@ -57,33 +57,14 @@ class Spyglass(WriterBase):
             group_maps[group] = in_maps
         return group_maps
 
-    def _build_name(self, field, i, grp):
-
-        hdl_fields = grp.hdl.split(".")
-        new_fields = []
-        found = False
-        for f in hdl_fields:
-            if not found and "[%" in f:
-                new_fields.append("\\" + f)
-                found = True
-            else:
-                new_fields.append(f)
+    def _build_name(self, field):
 
         base = field.output_signal.split('*')
         if len(base) > 1:
             base = "%s%d%s" % (base[0], field.start_position, base[1])
         else:
             base = base[0]
-        if found:
-            try:
-                path = ".".join(new_fields) % i
-                return "\"%s .%s\"" % (path, base)
-            except:
-                path = ".".join(new_fields)
-                return "%s.%s" % (path, base)
-        else:
-            path = ".".join(new_fields)
-            return "%s.%s" % (path, base)
+        return base
 
     def get_static_ports(self, dbase):
         fields = []
@@ -99,21 +80,14 @@ class Spyglass(WriterBase):
         Writes the output file
         """
         of = open(filename, "w")
-        of.write("current_design %s\n\n" % self._project.short_name)
 
         # Write register blocks
         for dbase in self.dblist:
-
-            of.write("\n# %s\n\n" % dbase.set_name)
-            for group in self._project.get_grouping_list():
-                used = set()
-                for grp in group.register_sets:
-                    if (grp.set == dbase.set_name and grp.inst not in used and
-                        grp.hdl != ""):
-                        used.add(grp.inst)
-                        for field in self.get_static_ports(dbase):
-                            for i in range(0, grp.repeat):
-                                signal_name = self._build_name(field, i, grp)
-                                of.write(
-                                    "quasi_static -name %s\n" % signal_name)
+            ports = self.get_static_ports(dbase)
+            if ports:
+                of.write("\n\ncurrent_design %s\n\n" % dbase.module_name)
+                for field in ports:
+                    signal_name = self._build_name(field)
+                    of.write(
+                        "quasi_static -name %s\n" % signal_name)
         of.close()

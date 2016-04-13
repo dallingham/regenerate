@@ -430,7 +430,7 @@ class Verilog(WriterBase):
             self._wrln(',\n')
         self._wrln('      .%-6s (%s)' % (pname, value))
 
-    def _byte_info(self, field, register, lower, size):
+    def _byte_info(self, field, register, lower, size, offset):
         """
         Returns the basic information from a field, broken out into byte
         quantities
@@ -443,7 +443,7 @@ class Verilog(WriterBase):
         bit_offset = (register.address * 8) % size
 
         return (field, start + bit_offset, stop + bit_offset, start, stop,
-                address, register)
+                address + offset, register)
 
     def __generate_group_list(self, size):
         """
@@ -452,9 +452,11 @@ class Verilog(WriterBase):
         item_list = {}
         for register in self.__sorted_regs:
             for field in register.get_bit_fields():
+                offset = 0
                 for lower in range(0, register.width, size):
                     if in_range(field.lsb, field.msb, lower, lower + size - 1):
-                        data = self._byte_info(field, register, lower, size)
+                        data = self._byte_info(field, register, lower, size, offset)
+                        offset += size/8
                         item_list.setdefault(data[F_ADDRESS], []).append(data)
         return item_list
 
@@ -467,8 +469,10 @@ class Verilog(WriterBase):
             for field in [field for field in reg.get_bit_fields()
                           if self._has_rd[field.field_type]]:
                 for lower in range(0, reg.width, size):
+                    offset = 0
                     if in_range(field.lsb, field.msb, lower, lower + size - 1):
-                        data = self._byte_info(field, reg, lower, size)
+                        data = self._byte_info(field, reg, lower, size, offset)
+                        offset += data[F_ADDRESS]
                         item_list.setdefault(data[F_ADDRESS], []).append(data)
         return item_list
 
@@ -750,6 +754,7 @@ class Verilog(WriterBase):
         """
         self._comment(['Address Selects'], precede_blank=1)
 
+        print sorted(self._word_fields.keys())
         for address in sorted(self._word_fields.keys()):
             width = self._addr_width - self._lower_bit
             self._wrln("   wire %s = (~prev_write & %s) & (%s == %s);\n" %
