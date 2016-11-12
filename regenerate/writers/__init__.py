@@ -164,10 +164,17 @@ except ImportError:
 PRJ_EXPORTERS.append((RstDoc, ("Specification", "RestructuredText"),
                       "RestructuredText files", ".rest", 'spec-rst'))
 
-from uvm_block import UVMBlockRegisters
+#from uvm_block import UVMBlockRegisters
+#
+#PRJ_EXPORTERS.append((UVMBlockRegisters, ("Test", "UVM Registers"),
+#                      "SystemVerilog files", ".sv", 'proj-uvm'))
 
-PRJ_EXPORTERS.append((UVMBlockRegisters, ("Test", "UVM Registers"),
+from uvm_reg_block import UVMRegBlockRegisters
+
+PRJ_EXPORTERS.append((UVMRegBlockRegisters, ("Test", "UVM Registers"),
                       "SystemVerilog files", ".sv", 'proj-uvm'))
+
+
 
 #-----------------------------------------------------------------------------
 #

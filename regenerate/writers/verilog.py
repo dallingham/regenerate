@@ -263,7 +263,7 @@ class Verilog(WriterBase):
             if not (reg.do_not_generate_code or reg.ram_size > 0)
         ]
 
-        self._coverage = self._dbase.enable_coverage
+        self._coverage = self._dbase.coverage
 
         max_column_str = ini.get('user', 'column_width', "80")
         try:
@@ -754,7 +754,6 @@ class Verilog(WriterBase):
         """
         self._comment(['Address Selects'], precede_blank=1)
 
-        print sorted(self._word_fields.keys())
         for address in sorted(self._word_fields.keys()):
             width = self._addr_width - self._lower_bit
             self._wrln("   wire %s = (~prev_write & %s) & (%s == %s);\n" %

@@ -258,6 +258,18 @@ class RegProject(object):
         """
         return tuple(self._addr_map_grps.get(name, []))
 
+    def get_address_maps_used_by_group(self, name):
+        """
+        Returns the address maps associated with the specified group.
+        """
+        used_in_uvm = set([m.name for m in self._addr_map_list if m.uvm == 0])
+
+        used = []
+        for key in self._addr_map_grps:
+            if key in used_in_uvm and name in self._addr_map_grps[key]:
+                used.append(key)
+        return used
+
     def change_address_map_name(self, old_name, new_name):
         """
         Changes the name of an address map
@@ -328,6 +340,7 @@ class RegProject(object):
         for data in self._addr_map_list:
             if name == data.name:
                 return data.width
+        regenerate.db.LOGGER.error("Address map not found (%s)" % name)
         return None
 
     def set_address_map(self, name, base, width, fixed, uvm):

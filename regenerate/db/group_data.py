@@ -26,13 +26,15 @@ class GroupData(object):
                  base=0,
                  hdl="",
                  repeat=1,
-                 repeat_offset=0x10000):
+                 repeat_offset=0x10000,
+                 title = ""):
         self.name = name
         self.base = base
         self.hdl = hdl
         self.repeat = repeat
         self.repeat_offset = repeat_offset
         self.register_sets = []
+        self.title = title
         self.docs = ""
 
     def __ne__(self, other):
@@ -46,6 +48,8 @@ class GroupData(object):
         if self.base != other.base:
             return False
         if self.hdl != other.hdl:
+            return False
+        if self.title != other.title:
             return False
         if self.repeat != other.repeat:
             return False

@@ -59,13 +59,14 @@ class RegisterDb(object):
         self.__registers = {}
 
         self.array_is_reg = False
+        self.internal_only = False
         self.reset_active_level = 0
         self.data_bus_width = 32
         self.address_bus_width = 12
         self.owner = ""
         self.byte_strobe_active_level = 1
         self.overview_text = ""
-        self.enable_coverage = False
+        self.coverage = True
         self.set_name = ""
 
         if filename is not None:

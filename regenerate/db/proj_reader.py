@@ -107,11 +107,13 @@ class ProjectReader(object):
 
     def start_grouping(self, attrs):
         """Called when a grouping tag is found"""
-        self._current_group = GroupData(attrs['name'], int(attrs['start'], 16),
+        self._current_group = GroupData(attrs['name'], 
+                                        int(attrs['start'], 16),
                                         attrs.get('hdl', ""),
                                         int(attrs.get('repeat', 1)),
-                                        int(attrs.get('repeat_offset',
-                                                      0x10000)))
+                                        int(attrs.get('repeat_offset', 0x10000)),
+                                        attrs.get('title', "")
+                                        )
         self._prj.add_to_grouping_list(self._current_group)
 
     def start_map(self, attrs):

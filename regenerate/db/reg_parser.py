@@ -131,10 +131,11 @@ class RegParser(object):
         self.__db.module_name = attrs['name']
         if 'owner' in attrs:
             self.__db.owner = attrs['owner']
+        self.__db.internal_only = bool(int(attrs.get('internal', "0")))
         if 'id' in attrs:
             self.save_id = cnv_str(attrs, 'id').upper()
-        self.__db.descriptive_title = cnv_str(attrs, 'title')
         array = attrs.get('array', "mem")
+        self.__db.coverage = bool(int(attrs.get('coverage', "1")))
         self.__db.array_is_reg = array == "reg"
         self.__db.descriptive_title = cnv_str(attrs, 'title')
 
@@ -162,6 +163,7 @@ class RegParser(object):
         self.__field.output_is_static = cnv_bool(attrs, 'static')
         self.__field.output_has_side_effect = cnv_bool(attrs, 'side_effect')
         self.__field.volatile = cnv_bool(attrs, 'volatile')
+        self.__field.can_randomize = cnv_bool(attrs, 'random')
         self.__field.is_error_field = cnv_bool(attrs, 'error_field')
         self.__field.field_type = ID_TO_TYPE[attrs.get('field_type', 'RO')]
 
@@ -185,6 +187,7 @@ class RegParser(object):
         self.__reg = Register()
         self.__reg.do_not_generate_code = cnv_bool(attrs, 'nocode')
         self.__reg.do_not_test = cnv_bool(attrs, 'dont_test')
+        self.__reg.do_cover = cnv_bool(attrs, 'dont_cover')
         self.__reg.hide = cnv_bool(attrs, 'hide')
 
     def start_ports(self, attrs):

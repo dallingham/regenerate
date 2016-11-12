@@ -75,6 +75,7 @@ class BitFieldEditor(object):
         self.__side_effect_obj = self.__builder.get_object("side_effect")
         self.__verilog_obj = self.__builder.get_object('verilog_code')
         self.__volatile_obj = self.__builder.get_object('volatile')
+        self.__random_obj = self.__builder.get_object('random')
         self.__error_field_obj = self.__builder.get_object('error_bit')
         self.__col = None
         self.__top_window.set_title("Edit Bit Field - [{0:02x}] {1}".format(
@@ -182,6 +183,7 @@ class BitFieldEditor(object):
         self.__input_obj.set_text(bit_field.input_signal)
 
         self.__volatile_obj.set_active(bit_field.volatile)
+        self.__random_obj.set_active(bit_field.can_randomize)
         self.__error_field_obj.set_active(bit_field.is_error_field)
 
         self.__static_obj.set_active(bit_field.output_is_static)
@@ -211,6 +213,10 @@ class BitFieldEditor(object):
 
     def on_volatile_changed(self, obj):
         self.__bit_field.volatile = obj.get_active()
+        self.__modified()
+
+    def on_random_toggled(self, obj):
+        self.__bit_field.can_randomize = obj.get_active()
         self.__modified()
 
     def on_error_bit_toggled(self, obj):

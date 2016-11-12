@@ -35,6 +35,7 @@ class GroupDocEditor(object):
         builder = gtk.Builder()
         builder.add_from_file(GLADE_GTXT)
         self.group_doc = builder.get_object('group_text')
+        self.group_title = builder.get_object('group_title')
         self.group_inst = group_inst
         self.buffer = builder.get_object('overview1').get_buffer()
         pango_font = pango.FontDescription("monospace")
@@ -44,6 +45,7 @@ class GroupDocEditor(object):
             self.buffer, builder.get_object('scroll_webkit1'))
 
         self.buffer.set_text(group_inst.docs)
+        self.group_title.set_text(group_inst.title)
 
         builder.get_object("button2").connect("button-press-event", self._save)
         builder.get_object("button3").connect("button-press-event",
@@ -71,4 +73,5 @@ class GroupDocEditor(object):
     def _save(self, obj, data):
         self.group_inst.docs = self.buffer.get_text(
             self.buffer.get_start_iter(), self.buffer.get_end_iter(), False)
+        self.group_inst.title = self.group_title.get_text()
         self.group_doc.destroy()

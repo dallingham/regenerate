@@ -58,9 +58,10 @@ class RegWriter(object):
             array = "reg"
         else:
             array = "mem"
-        ofile.write('<module name="%s" title="%s" owner="%s" array="%s">\n' %
+        ofile.write('<module name="%s" title="%s" owner="%s" array="%s" coverage="%d" internal="%d">\n' %
                     (self.dbase.module_name, self.dbase.descriptive_title,
-                     self.dbase.owner, array))
+                     self.dbase.owner, array, int(self.dbase.coverage),
+                     int(self.dbase.internal_only)))
 
         ofile.write('  <base addr_width="%d" ' % self.dbase.address_bus_width)
         ofile.write('data_width="%d"/>\n' % self.dbase.data_bus_width)
@@ -106,8 +107,8 @@ def write_register(ofile, reg):
     """
     Writes the specified register to the output file
     """
-    ofile.write('  <register nocode="%d" dont_test="%d" hide="%d">\n' %
-                (reg.do_not_generate_code, reg.do_not_test, reg.hide))
+    ofile.write('  <register nocode="%d" dont_test="%d" dont_cover="%d" hide="%d">\n' %
+                (reg.do_not_generate_code, reg.do_not_test, reg.do_not_cover, reg.hide))
     ofile.write('    <token>%s</token>\n' % reg.token)
     ofile.write('    <uuid>%s</uuid>\n' % reg.uuid)
     ofile.write('    <name>%s</name>\n' % reg.register_name)
@@ -170,6 +171,7 @@ def write_signal_info(ofile, field):
     ofile.write('field_type="%s" ' % TYPE_TO_ID[field.field_type])
     ofile.write('side_effect="%d" ' % field.output_has_side_effect)
     ofile.write('error_field="%d" ' % field.is_error_field)
+    ofile.write('random="%d" ' % field.can_randomize)
     ofile.write('volatile="%d">' % field.volatile)
     ofile.write('%s</signal>\n' % field.output_signal)
 

@@ -654,11 +654,6 @@ class UVMBlockRegisters(WriterBase):
             else:
                 lsb = field.lsb
 
-            access = ACCESS_MAP.get(field.field_type, None)
-            if access is None:
-                dont_test = True
-                continue
-
             if field.output_has_side_effect:
                 side_effects = True
 
@@ -673,7 +668,16 @@ class UVMBlockRegisters(WriterBase):
             else:
                 reset = "{0:d}'h{1:x}".format(field.width, field.reset_value)
             is_rand = 0
+
+            access = ACCESS_MAP.get(field.field_type, None)
             ind_access = individual_access(field, reg)
+
+            if access is None:
+                dont_test = True
+                continue
+
+            if (volatile or field.reset_type != BitField.RESET_NUMERIC):
+                dont_test = True
 
             of.write(
                 '      %s.configure(this, %d, %d, "%s", %d, %s, %d, %d, %d);\n' %
@@ -769,7 +773,7 @@ class UVMBlockRegisters(WriterBase):
 
 
 def is_volatile(field):
-    return TYPES[field.field_type].input or field.volatile
+    return field.volatile
 
 
 def is_readonly(field):

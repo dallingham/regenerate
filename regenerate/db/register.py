@@ -22,7 +22,7 @@ register, including the list of bit fields.
 """
 
 import uuid
-
+from bitfield import BitField
 
 class Register(object):
     """
@@ -31,7 +31,7 @@ class Register(object):
 
     full_compare = ("address", "ram_size", "description", "width", "_id",
                     "_token", "_do_not_test", "_name", "_hide",
-                    "_do_not_generate_code")
+                    "_do_not_generate_code", "_do_not_cover")
 
     doc_compare = ("address", "ram_size", "description", "width", "_id",
                    "_token", "_name", "_hide")
@@ -45,6 +45,7 @@ class Register(object):
 
         self._token = ""
         self._do_not_test = False
+        self._do_not_cover = False
         self._name = name
         self._hide = False
         self._do_not_generate_code = False
@@ -144,6 +145,22 @@ class Register(object):
         self._do_not_test = bool(val)
 
     @property
+    def do_not_cover(self):
+        """
+        Returns the value of the _do_not_cover flag. This
+        cannot be accessed directly, but only via the property 'do_not_cover'
+        """
+        return self._do_not_cover
+
+    @do_not_cover.setter
+    def do_not_cover(self, val):
+        """
+        Sets the __do_not_cover flag. This cannot be accessed
+        directly, but only via the property 'do_not_cover'
+        """
+        self._do_not_cover = bool(val)
+
+    @property
     def hide(self):
         """
         Returns the value of the _hide flag. This cannot be accessed
@@ -198,6 +215,13 @@ class Register(object):
         """
         return sorted(self.__bit_fields.values())
 
+    def get_bit_fields_with_values(self):
+        """
+        Returns a dictionary of bit fields. The key is msb of the
+        bit field.
+        """
+        return sorted([s for s in self.__bit_fields.values() if s.values])
+
     def get_bit_field(self, key):
         """
         Returns the bit field associated with the specified key.
@@ -224,3 +248,31 @@ class Register(object):
         for key in self.__bit_fields.keys():
             if self.__bit_fields[key] == field:
                 del self.__bit_fields[key]
+    
+    def is_completely_read_only(self):
+        for key in self.__bit_fields.keys():
+            if not self.__bit_fields[key].is_read_only():
+                return False
+        return True
+
+    def no_reset_test(self):
+        if self._do_not_test:
+            return True
+        for key in self.__bit_fields.keys():
+            if self.__bit_fields[key].reset_type != BitField.RESET_NUMERIC:
+                return True
+        return False
+            
+    def strict_volatile(self):
+        for key in self.__bit_fields.keys():
+            field = self.__bit_fields[key]
+            if field.volatile or field.input_signal != "":
+                return True
+        return False
+
+    def loose_volatile(self):
+        for key in self.__bit_fields.keys():
+            if self.__bit_fields[key].volatile:
+                return True
+        return False
+        

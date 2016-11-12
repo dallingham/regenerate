@@ -55,6 +55,9 @@ class BitField(object):
 
     (RESET_NUMERIC, RESET_INPUT, RESET_PARAMETER) = range(3)
 
+    read_only_types = (TYPE_READ_ONLY, TYPE_READ_ONLY_VALUE, TYPE_READ_ONLY_LOAD,
+                       TYPE_READ_ONLY_CLEAR_LOAD, TYPE_READ_ONLY_VALUE_1S)
+
     full_compare = ("_output_signal", "_input_signal", "_id", "lsb", "msb",
                     "_field_name", "use_output_enable", "field_type",
                     "volatile", "is_error_field", "_reset_value",
@@ -84,6 +87,7 @@ class BitField(object):
         self.reset_type = BitField.RESET_NUMERIC
         self.reset_parameter = ""
         self.description = ""
+        self.can_randomize = False
         self.control_signal = ""
         self.output_is_static = False
         self.output_has_side_effect = False
@@ -109,6 +113,12 @@ class BitField(object):
         """
         return (self.field_type == BitField.TYPE_READ_ONLY or
                 self.field_type == BitField.TYPE_READ_ONLY_LOAD)
+
+    def is_read_only(self):
+        """
+        Indicates the the value is a constant value.
+        """
+        return self.field_type in BitField.read_only_types
 
     def full_field_name(self):
         """
@@ -138,6 +148,12 @@ class BitField(object):
     @reset_value.setter
     def reset_value(self, value):
         self._reset_value = value
+
+    def reset_value_bit(self, bit):
+        if self._reset_value & (1 << bit):
+            return 1
+        else:
+            return 0
 
     @property
     def uuid(self):

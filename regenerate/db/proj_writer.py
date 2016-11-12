@@ -106,10 +106,11 @@ class ProjectWriter(object):
         for group in self._prj.get_grouping_list():
             ofile.write('    <grouping name="%s" start="%x" hdl="%s"' %
                         (group.name, group.base, group.hdl))
+            ofile.write(' title="%s"' % escape(clean_text(group.title)))
             ofile.write(' repeat="%d" repeat_offset="%d">\n' %
                         (group.repeat, group.repeat_offset))
             if group.docs:
-                ofile.write("<overview>%s</overview>" % escape(clean_text(group.docs)))
+                ofile.write("<overview>%s</overview>\n" % escape(clean_text(group.docs)))
             for item in group.register_sets:
                 ofile.write('      <map set="%s" inst="%s" offset="%x" ' %
                             (item.set, item.inst, item.offset))

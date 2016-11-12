@@ -138,6 +138,7 @@ class MainWindow(BaseWindow):
         self.__top_notebook = self.__builder.get_object("notebook1")
         self.__no_rtl = self.__builder.get_object('no_rtl')
         self.__no_test = self.__builder.get_object('no_test')
+        self.__no_cover = self.__builder.get_object('no_cover')
         self.__hide = self.__builder.get_object('hide_doc')
         self.__module_entry_obj = self.__builder.get_object('module')
         self.__owner_entry_obj = self.__builder.get_object('owner')
@@ -210,6 +211,8 @@ class MainWindow(BaseWindow):
         self.__address_width_obj = self.__builder.get_object('address_width')
         self.__data_width_obj = self.__builder.get_object('data_width')
         self.__array_notation_obj = self.__builder.get_object('array_notation')
+        self.__internal_only_obj = self.__builder.get_object('internal_only')
+        self.__coverage_obj = self.__builder.get_object('coverage')
         self.__register_notation_obj = self.__builder.get_object('register_notation')
         self.__byte_level_obj = self.__builder.get_object('byte_en_level')
 
@@ -423,20 +426,22 @@ class MainWindow(BaseWindow):
                 field.output_signal = "%s_%s" % (register.token, field.field_name)
 
             if TYPE_ENB[field.field_type][0] and not field.input_signal:
-                field.input_signal = "%s_%s_IN" % (register.token, field.
-                                                   field_name)
+                field.input_signal = "%s_%s_IN" % (register.token, field.field_name)
 
             if TYPE_ENB[field.field_type][1] and not field.control_signal:
-                field.control_signal = "%s_%s_LD" % (register.token, field.
-                                                     field_name)
+                field.control_signal = "%s_%s_LD" % (register.token, field.field_name)
         elif col == BitModel.RESET_TYPE_COL:
             field.reset_type = model.get_value(node, 1)
             if field.reset_type == BitField.RESET_NUMERIC:
                 val = reset_value(field)
                 self.__bit_model[path][BitModel.RESET_COL] = val
             elif field.reset_type == BitField.RESET_INPUT:
+                if field.reset_input == "":
+                    field.reset_input = "%s_RST" % field.field_name
                 self.__bit_model[path][BitModel.RESET_COL] = field.reset_input
             else:
+                if field.reset_parameter == "":
+                    field.reset_parameter = "pRST_%s" % field.field_name
                 self.__bit_model[path][BitModel.RESET_COL] = field.reset_parameter
 
         self.set_modified()
@@ -497,10 +502,14 @@ class MainWindow(BaseWindow):
                 LOGGER.error('Illegal reset value: "%s"' % new_text)
                 return
         elif field.reset_type == BitField.RESET_INPUT:
+            if new_text == "":
+                new_text = "%s_RST" % field.field_name
             field.reset_input = new_text
             self.__bit_model[path][BitModel.RESET_COL] = field.reset_input
             self.set_modified()
         else:
+            if new_text == "":
+                new_text = "pRST_%s" % field.field_name
             field.reset_parameter = new_text
             self.__bit_model[path][BitModel.RESET_COL] = field.reset_parameter
             self.set_modified()
@@ -836,6 +845,7 @@ class MainWindow(BaseWindow):
             self.__reg_text_buf.set_modified(False)
             self.__no_rtl.set_active(reg.do_not_generate_code)
             self.__no_test.set_active(reg.do_not_test)
+            self.__no_cover.set_active(reg.do_not_cover)
             self.__hide.set_active(reg.hide)
             self.__reg_notebook.set_sensitive(True)
             self.__reg_selected.set_sensitive(True)
@@ -1339,6 +1349,8 @@ class MainWindow(BaseWindow):
         else:
             self.__array_notation_obj.set_active(True)
 
+        self.__internal_only_obj.set_active(self.dbase.internal_only)
+        self.__coverage_obj.set_active(self.dbase.coverage)
         self.__byte_level_obj.set_active(self.dbase.byte_strobe_active_level)
 
         self.update_bit_count()
@@ -1390,6 +1402,11 @@ class MainWindow(BaseWindow):
             self.dbase.array_is_reg = not obj.get_active()
         self.set_modified()
 
+    def on_coverage_toggled(self, obj):
+        if self.dbase:
+            self.dbase.coverage = obj.get_active()
+        self.set_modified()
+
     def on_data_width_changed(self, obj):
         val = obj.get_active()
         if val == 0:
@@ -1410,11 +1427,6 @@ class MainWindow(BaseWindow):
         self.dbase.reset_active_level = obj.get_active()
         self.set_modified()
 
-    def on_address_bus_changed(self, obj):
-        self.dbase.address_bus_name = obj.get_text()
-        self.__set_module_ports_warn_flag()
-        self.set_modified()
-
     def on_address_width_changed(self, obj):
         try:
             new_width = int(obj.get_text())
@@ -1422,6 +1434,11 @@ class MainWindow(BaseWindow):
             self.set_modified()
         except ValueError:
             LOGGER.error('Illegal address width: "%s"' % obj.get_text())
+
+    def on_address_bus_changed(self, obj):
+        self.dbase.address_bus_name = obj.get_text()
+        self.__set_module_ports_warn_flag()
+        self.set_modified()
 
     def on_write_strobe_changed(self, obj):
         self.dbase.write_strobe_name = obj.get_text()
@@ -1488,6 +1505,12 @@ class MainWindow(BaseWindow):
         reg = self.__reglist_obj.get_selected_register()
         if reg:
             reg.do_not_test = obj.get_active()
+            self.set_modified()
+
+    def on_no_cover_toggled(self, obj):
+        reg = self.__reglist_obj.get_selected_register()
+        if reg:
+            reg.do_not_cover = obj.get_active()
             self.set_modified()
 
     def on_hide_doc_toggled(self, obj):

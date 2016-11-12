@@ -76,6 +76,7 @@ def build_prj(prjmap, project, item, options):
     for dbase_name in project.get_register_set():
         db_file_mtime = os.path.getmtime(dbase_name)
         mod_times.append(db_file_mtime)
+	dbase = RegisterDb()
         dbase.read_xml(dbase_name)
         dbase_list.append(dbase)
 

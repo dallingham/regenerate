@@ -33,6 +33,7 @@ from regenerate.db import TYPE_TO_SIMPLE_TYPE
 import re
 from token import full_token, in_groups, uvm_name
 
+
 CSS = '''
 <style type="text/css">
 .search {
@@ -89,6 +90,113 @@ div.warning p.admonition-title {
   font-weight: bold ;
   font-family: sans-serif }
 
+/* Structures */
+span.overline, span.bar {
+	text-decoration: overline;
+}
+.fraction, .fullfraction {
+	display: inline-block;
+	vertical-align: middle;
+	text-align: center;
+}
+.fraction .fraction {
+	font-size: 80%;
+	line-height: 100%;
+}
+span.numerator {
+	display: block;
+}
+span.denominator {
+	display: block;
+	padding: 0ex;
+	border-top: thin solid;
+}
+sup.numerator, sup.unit {
+	font-size: 70%;
+	vertical-align: 80%;
+}
+sub.denominator, sub.unit {
+	font-size: 70%;
+	vertical-align: -20%;
+}
+span.sqrt {
+	display: inline-block;
+	vertical-align: middle;
+	padding: 0.1ex;
+}
+sup.root {
+	font-size: 70%;
+	position: relative;
+	left: 1.4ex;
+}
+span.radical {
+	display: inline-block;
+	padding: 0ex;
+	font-size: 150%;
+	vertical-align: top;
+}
+span.root {
+	display: inline-block;
+	border-top: thin solid;
+	padding: 0ex;
+	vertical-align: middle;
+}
+span.symbol {
+	line-height: 125%;
+	font-size: 125%;
+}
+span.bigsymbol {
+	line-height: 150%;
+	font-size: 150%;
+}
+span.largesymbol {
+	font-size: 175%;
+}
+span.hugesymbol {
+	font-size: 200%;
+}
+span.scripts {
+	display: inline-table;
+	vertical-align: middle;
+}
+.script {
+	display: table-row;
+	text-align: left;
+	line-height: 150%;
+}
+span.limits {
+	display: inline-table;
+	vertical-align: middle;
+}
+.limit {
+	display: table-row;
+	line-height: 99%;
+}
+sup.limit, sub.limit {
+	line-height: 100%;
+}
+span.symbolover {
+	display: inline-block;
+	text-align: center;
+	position: relative;
+	float: right;
+	right: 100%;
+	bottom: 0.5em;
+	width: 0px;
+}
+span.withsymbol {
+	display: inline-block;
+}
+span.symbolunder {
+	display: inline-block;
+	text-align: center;
+	position: relative;
+	float: right;
+	right: 80%;
+	top: 0.3em;
+	width: 0px;
+}
+
 </style>
 '''
 
@@ -100,6 +208,11 @@ def reg_addr(register, offset):
     else:
         return "%08x" % base
 
+def norm_name(text):
+    if text is not None:
+        return text.lower().replace(" ", "-").replace("_", "-")
+    else:
+        return ""
 
 class RegisterRst:
     """
@@ -114,7 +227,9 @@ class RegisterRst:
                  show_defines=True,
                  show_uvm=False,
                  decode=None,
-                 group=None):
+                 group=None,
+                 maxlines=9999999,
+                 db=None):
         self._reg = register
         self._highlight = highlight
         self._prj = project
@@ -123,6 +238,13 @@ class RegisterRst:
         self._show_uvm = show_uvm
         self._group = group
         self._inst = inst
+        self._maxlines = maxlines
+
+        if db is None:
+            self.reglist = set()
+        else:
+            self.reglist = set([reg.register_name for reg in db.get_all_registers()])
+
         if decode:
             if isinstance(decode, str):
                 decode = int(decode, 16)
@@ -131,6 +253,7 @@ class RegisterRst:
             else:
                 decode = None
         self._decode = decode
+        self._db = db
 
     def html_css(self, text=""):
         """
@@ -147,36 +270,68 @@ class RegisterRst:
         else:
             return line.strip()
 
+    def substitute(self, val):
+        text = val.groups()[0]
+        if text in self.reglist:
+            return ":ref:`%s <%s-%s-%s>`" % (text,
+                                             norm_name(self._inst),
+                                             norm_name(self._group),
+                                             norm_name(text))
+        else:
+            return "`" + text + "`_"
+
+    def patch_links(self, text):
+        if self._db is None:
+            return text
+        p = re.compile("`([^`]+)`_")
+        text = p.sub(self.substitute, text)
+        return text
+
     def restructured_text(self, text=""):
         """
-        Returns the defintion of the register in RestructuredText format
+        Returns the definition of the register in RestructuredText format
         """
         o = StringIO()
         rlen = len(self._reg.register_name) + 2
-        o.write(".. role:: search\n\n")
-        o.write("%s\n" % ("=" * rlen))
-        o.write(" " + self.text(self._reg.register_name))
-        o.write("\n%s\n" % ("=" * rlen))
-        o.write("\n%s\n\n" %
+        if self._highlight:
+            o.write(".. role:: search\n\n")
+            o.write(" " + self.text(self._reg.register_name))
+
+        o.write(".. _%s:\n\n" % self.refname(self._reg.register_name))
+
+        o.write(self.text(self._reg.register_name))
+        o.write("\n%s\n\n" % ('_' * rlen))
+        o.write("%s\n\n" %
                 self.text(self._reg.description.encode('ascii', 'replace')))
 
         if self._reg.ram_size < 32:  # Temporary hack
             self._write_bit_fields(o)
 
         if self._show_defines:
-            self._write_defines(o, True)
+            self._write_defines(o, True, False)
 
         o.write(text)
 
-        return o.getvalue()
+        return self.patch_links(o.getvalue())
+
+    def refname(self, reg_name):
+        return "%s-%s-%s" % (norm_name(self._inst),
+                             norm_name(self._group),
+                             norm_name(reg_name))
+
+    def field_ref(self, name):
+        return "%s-%s-%s-%s" % (norm_name(self._inst),
+                             norm_name(self._group),
+                             norm_name(self._reg.register_name),
+                             norm_name(name))
 
     def _write_bit_fields(self, o):
-        o.write("Bit fields\n---------------\n")
+        o.write("Bit fields\n+++++++++++++++++++++++++++\n\n")
         o.write(".. list-table::\n")
-        o.write("   :widths: 8 10 7 25 50\n")
-        o.write("   :class: bit_table\n")
+        o.write("   :widths: 8, 10, 7, 25, 50\n")
+        o.write("   :class: bit-table\n")
         o.write("   :header-rows: 1\n\n")
-        o.write("   * - Bit(s)\n")
+        o.write("   * - Bits\n")
         if self._decode:
             o.write("     - Decode\n")
         else:
@@ -186,6 +341,7 @@ class RegisterRst:
         o.write("     - Description\n")
 
         last_index = self._reg.width - 1
+        extra_text = []
 
         for field in reversed(self._reg.get_bit_fields()):
             if field.msb != last_index:
@@ -208,25 +364,45 @@ class RegisterRst:
             o.write(
                 "     - %s\n" % self.text(TYPE_TO_SIMPLE_TYPE[field.field_type]))
             o.write("     - %s\n" % self.text(field.field_name))
-            descr = self.text(field.description)
+            descr = self.text(field.description.rstrip())
             marked_descr = "\n       ".join(descr.split("\n"))
-            o.write("     - %s\n" % marked_descr.encode('ascii', 'replace'))
-            if field.values:
+            encoded_descr = marked_descr.encode('ascii', 'replace').rstrip()
+
+            lines = encoded_descr.split("\n")
+
+            if len(lines) > self._maxlines:
+                o.write("     - See :ref:`Description for %s <%s>`\n" % (field.field_name, self.field_ref(field.field_name)))
+                extra_text.append((self.field_ref(field.field_name), field.field_name, encoded_descr))
+            else:
+                o.write("     - %s\n" % encoded_descr)
+
+
+            if field.values and len(field.values) < 24:
                 o.write("\n")
                 for val in sorted(field.values,
                                   key=lambda x: int(int(x[0], 16))):
                     if val[1]:
-                        o.write("       :0x%x: %s (%s)\n" %
+                        o.write("        0x%x : %s\n            %s\n\n" %
                                 (int(val[0], 16), self.text(val[2]),
                                  self.text(val[1])))
                     else:
-                        o.write("       :0x%x: %s\n" %
+                        o.write("        0x%x : %s\n\n" %
                                 (int(val[0], 16), self.text(val[2])))
             last_index = field.lsb - 1
         if last_index >= 0:
             display_reserved(o, last_index, 0)
 
         o.write("\n")
+
+        for ref, name, descr in extra_text:
+            o.write(".. _%s:\n\n" % ref)
+            title = "Description for %s\n" % name
+            o.write(title)
+            o.write("+" * len(title))
+            o.write("\n\n")
+            o.write(descr)
+            o.write("\n\n")
+                    
 
     def _write_defines(self, o, use_uvm=True, use_id=True):
 
@@ -243,13 +419,19 @@ class RegisterRst:
         if not addr_maps:
             return
 
-        o.write("\n\nAddresses\n---------\n")
+        o.write("\n\nAddresses\n+++++++++++++++++++++++\n\n")
         if not in_groups(self._regset_name, self._prj):
             o.write(
                 ".. WARNING::\n   Register set was not added to any groups\n\n")
         else:
             o.write(".. list-table::\n")
             o.write("   :header-rows: 1\n")
+            if len(addr_maps) == 1:
+                o.write("   :widths: 50, 50\n")
+            elif len(addr_maps) == 2:
+                o.write("   :widths: 50, 25, 25\n")
+            elif len(addr_maps) == 3:
+                o.write("   :widths: 50, 16, 16, 17\n")
             o.write("   :class: summary\n\n")
             o.write("   *")
             if use_uvm:
@@ -358,7 +540,7 @@ class RegisterRst:
                     writer_name="html",
                     settings_overrides={'report_level': 'quiet'}, )
                 return parts['html_title'] + parts['html_subtitle'] + parts['body']
-            except:
+            except ZeroDivisionError:
                 return "<h3>Error in Restructured Text</h3>Please contact the developer to get the documentation fixed"
         else:
             return "<pre>" + self.restructured_text() + "</pre>"
