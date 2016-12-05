@@ -24,10 +24,12 @@ import xml.parsers.expat
 from collections import namedtuple
 from regenerate.db.group_data import GroupData
 
-AddrMapData = namedtuple("AddrMapData", "name base width fixed uvm")
-GroupMapData = namedtuple(
-    "GroupMapData",
-    "set inst offset repeat repeat_offset format hdl no_uvm array")
+AddrMapData = namedtuple("AddrMapData", 
+                         ["name", "base", "width", "fixed", "uvm"])
+GroupMapData = namedtuple("GroupMapData",
+                          ["set", "inst", "offset", "repeat",
+                           "repeat_offset", "format", "hdl", "no_uvm",
+                           "no_decode", "array"])
 
 
 class ProjectReader(object):
@@ -123,7 +125,8 @@ class ProjectReader(object):
             sname, attrs.get('inst', sname), int(attrs['offset'], 16),
             int(attrs['repeat']), int(attrs['repeat_offset']),
             attrs.get("format", ""), attrs.get("hdl", ""),
-            int(attrs.get("no_uvm", "0")), int(attrs.get("array", "0")))
+            int(attrs.get("no_uvm", "0")), int(attrs.get("no_decode", "0")),
+            int(attrs.get("array", "0")))
         self._current_group.register_sets.append(data)
 
     def start_address_map(self, attrs):

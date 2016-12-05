@@ -211,21 +211,21 @@ class BitFieldEditor(object):
         self.__check_data()
         self.__modified()
 
-    def on_volatile_changed(self, obj):
-        self.__bit_field.volatile = obj.get_active()
+    def __set_field_value(self, val, obj):
+        setattr(self.__bit_field, val, obj.get_active())
         self.__modified()
+
+    def on_volatile_changed(self, obj):
+        self.__set_field_value("volatile", obj)
 
     def on_random_toggled(self, obj):
-        self.__bit_field.can_randomize = obj.get_active()
-        self.__modified()
+        self.__set_field_value("can_randomize", obj)
 
     def on_error_bit_toggled(self, obj):
-        self.__bit_field.is_error_field = obj.get_active()
-        self.__modified()
+        self.__set_field_value("is_error_field", obj)
 
     def on_static_toggled(self, obj):
-        self.__bit_field.output_is_static = obj.get_active()
-        self.__modified()
+        self.__set_field_value("output_is_static", obj)
 
     def on_control_changed(self, obj):
         self.__bit_field.control_signal = obj.get_text()

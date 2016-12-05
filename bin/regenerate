@@ -34,6 +34,10 @@ else:
     fullPath = os.getcwd()
 sys.path.insert(0, os.path.dirname(fullPath))
 
+fullPath = os.path.join(fullPath, "..", "lib", "python", "regenerate")
+if os.path.exists(fullPath):
+    sys.path.insert(0, os.path.dirname(fullPath))
+
 def run_gui(args):
     """
     Actually runs the program

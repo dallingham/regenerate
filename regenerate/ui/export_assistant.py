@@ -22,6 +22,7 @@ import os
 
 
 class ExportAssistant(gtk.Assistant):
+
     def __init__(self, project_name, optlist, register_sets, save_callback,
                  run_callback):
         gtk.Assistant.__init__(self)
@@ -40,7 +41,7 @@ class ExportAssistant(gtk.Assistant):
         self.page1 = self.build_page_1(register_sets)
         self.page2 = self.build_page_2()
         self.page3 = self.build_page_3()
-        self.summary = self.build_summary()
+        self.sum = self.build_summary()
 
     def selected_export(self):
         model = self.export_combo.get_model()
@@ -60,7 +61,7 @@ class ExportAssistant(gtk.Assistant):
 
     def prepare(self, obj, page):
         self.set_page_complete(page, True)
-        if page == self.summary:
+        if page == self.sum:
             self.populate_summary()
         if page == self.page2:
             filename = self.choose.get_filename()
@@ -233,34 +234,31 @@ class ExportAssistant(gtk.Assistant):
         self.execute_obj.set_text(msg)
 
     def build_summary(self):
-        self.summary = gtk.Table(4, 5)
-        self.summary.set_row_spacings(6)
-        self.summary.set_col_spacings(6)
-        self.summary.attach(MyLabel('Export type:'), 1, 2, 0, 1, gtk.FILL, 0)
-        self.summary.attach(MyLabel('Register set:'), 1, 2, 1, 2, gtk.FILL, 0)
-        self.summary.attach(MyLabel('Output file:'), 1, 2, 2, 3, gtk.FILL, 0)
-        self.summary.attach(MyLabel('Execute status:'), 1, 2, 3, 4, gtk.FILL,
-                            0)
-        self.summary.set_border_width(12)
+        self.sum = gtk.Table(4, 5)
+        self.sum.set_row_spacings(6)
+        self.sum.set_col_spacings(6)
+        self.sum.attach(MyLabel('Export type:'), 1, 2, 0, 1, gtk.FILL, 0)
+        self.sum.attach(MyLabel('Register set:'), 1, 2, 1, 2, gtk.FILL, 0)
+        self.sum.attach(MyLabel('Output file:'), 1, 2, 2, 3, gtk.FILL, 0)
+        self.sum.attach(MyLabel('Execute status:'), 1, 2, 3, 4, gtk.FILL, 0)
+        self.sum.set_border_width(12)
         self.export_obj = MyLabel()
         self.register_obj = MyLabel()
         self.dest_obj = MyLabel()
         self.execute_obj = MyLabel()
-        self.summary.attach(self.export_obj, 2, 3, 0, 1, gtk.FILL | gtk.EXPAND,
-                            0)
-        self.summary.attach(self.register_obj, 2, 3, 1, 2,
+        self.sum.attach(self.export_obj, 2, 3, 0, 1, gtk.FILL | gtk.EXPAND, 0)
+        self.sum.attach(self.register_obj, 2, 3, 1, 2,
                             gtk.FILL | gtk.EXPAND, 0)
-        self.summary.attach(self.dest_obj, 2, 3, 2, 3, gtk.FILL | gtk.EXPAND,
-                            0)
-        self.summary.attach(self.execute_obj, 2, 3, 3, 4,
+        self.sum.attach(self.dest_obj, 2, 3, 2, 3, gtk.FILL | gtk.EXPAND, 0)
+        self.sum.attach(self.execute_obj, 2, 3, 3, 4,
                             gtk.FILL | gtk.EXPAND, 0)
-        self.summary.show_all()
+        self.sum.show_all()
 
-        self.append_page(self.summary)
-        self.set_page_title(self.summary, 'Completion')
-        self.set_page_type(self.summary, gtk.ASSISTANT_PAGE_CONFIRM)
+        self.append_page(self.sum)
+        self.set_page_title(self.sum, 'Completion')
+        self.set_page_type(self.sum, gtk.ASSISTANT_PAGE_CONFIRM)
         self.show()
-        return self.summary
+        return self.sum
 
 
 class MyLabel(gtk.Label):

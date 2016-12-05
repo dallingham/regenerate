@@ -105,13 +105,14 @@ class UVMRegBlockRegisters(WriterBase):
         else:
             return name
 
+    def uvm_address_maps(self):
+        return [d for d in self._project.get_address_maps() if not d.uvm]
+
     def build_map_name_to_groups(self):
         map2grp = {}
         all_groups = [grp.name for grp in self._project.get_grouping_list()]
 
-        for data in self._project.get_address_maps():
-            if data.uvm:
-                continue
+        for data in self.uvm_address_maps():
             name = data.name
             map2grp[name] = self._project.get_address_map_groups(name)
             if not map2grp[name]:
@@ -122,9 +123,7 @@ class UVMRegBlockRegisters(WriterBase):
         group_maps = {}
         for group in self._project.get_grouping_list():
             in_maps = set()
-            for addr_map in self._project.get_address_maps():
-                if addr_map.uvm:
-                    continue
+            for addr_map in self.uvm_address_maps():
                 map_list = self._project.get_address_map_groups(addr_map.name)
                 if not map_list or group.name in map_list:
                     in_maps.add(addr_map.name)
@@ -133,13 +132,7 @@ class UVMRegBlockRegisters(WriterBase):
         return group_maps
 
     def _used_maps(self):
-        um = set([])
-        for group in self._project.get_grouping_list():
-            for addr_map in self._project.get_address_maps():
-                if addr_map.uvm:
-                    continue
-                um.add(addr_map.name)
-        return um
+        return set([addr_map.name for addr_map in self.uvm_address_maps()])
 
     def write(self, filename):
         """
@@ -158,6 +151,7 @@ class UVMRegBlockRegisters(WriterBase):
 
         used_dbs = self.get_used_databases()
         
+
         with open(filename, "w") as of:
             of.write(template.render(project=self._project, dblist=used_dbs,
                                      individual_access=individual_access,
@@ -185,7 +179,7 @@ class UVMRegBlockRegisters(WriterBase):
 
     def get_used_databases(self):
 
-        grp_set = set([])
+        grp_set = set()
         maps = self._build_group_maps()
         for key in maps:
             if maps[key]:
@@ -197,12 +191,12 @@ class UVMRegBlockRegisters(WriterBase):
                 for reg_sets in group.register_sets:
                     used_sets.add(reg_sets.set)
 
-        used_dbs = set([])
-        for db in self.dblist:
-            if db.set_name in used_sets:
-                used_dbs.add(db)
+        # used_dbs = set([])
+        # for db in self.dblist:
+        #     if db.set_name in used_sets:
+        #         used_dbs.add(db)
 
-        return used_dbs
+        return set([db for db in self.dblist if db.set_name in used_sets])
 
 def is_readonly(field):
     return TYPES[field.field_type].readonly

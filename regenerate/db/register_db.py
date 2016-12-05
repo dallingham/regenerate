@@ -312,3 +312,6 @@ class RegisterDb(object):
         regexp = re.compile(name)
         return [self.__registers[i] for i in self.__registers
                 if regexp.match(self.__registers[i].token)]
+
+    def address_size_in_bytes(self):
+        return 1 << self.address_bus_width

@@ -22,10 +22,18 @@ Parses the register database, loading the database.
 
 import xml.parsers.expat
 from regenerate.db import Register, BitField, LOGGER
+import re
 
 text2field = {
     "read-only": BitField.TYPE_READ_ONLY,
     "read-write": BitField.TYPE_READ_WRITE,
+    "write-only": BitField.TYPE_WRITE_ONLY,
+    "writeOnce": BitField.TYPE_WRITE_ONLY
+}
+
+text2write = {
+    "oneToClear": BitField.TYPE_WRITE_1_TO_CLEAR_SET,
+    "oneToSet": BitField.TYPE_WRITE_1_TO_SET,
 }
 
 
@@ -75,7 +83,13 @@ class IpXactParser(object):
         Called every time an XML element end
         """
         text = ''.join(self._token_list)
-        mname = 'end_' + tag.replace(":", "_")
+        fields = tag.split(":")
+        if len(field) == 1:
+            t = tag
+        else:
+            t = field[1]
+
+        mname = 'end_' + t
         if hasattr(self, mname):
             method = getattr(self, mname)
             method(text)
@@ -88,41 +102,41 @@ class IpXactParser(object):
         """
         self._token_list.append(data)
 
-    def start_spirit_register(self, attrs):
+    def start_register(self, attrs):
         self._reg = Register()
 
-    def end_spirit_register(self, text):
+    def end_register(self, text):
         self._db.add_register(self._reg)
         self._reg = None
         self._reg_reset = (False, 0)
 
-    def end_spirit_addressOffset(self, text):
+    def end_addressOffset(self, text):
         if self._reg:
             self._reg.address = int(text, 0) + self._block_offset
 
-    def end_spirit_addressBlock(self, text):
+    def end_addressBlock(self, text):
         self._block_offset = self._block_list.pop()
 
-    def end_spirit_baseAddress(self, text):
+    def end_baseAddress(self, text):
         self._block_list.append(self._block_offset)
         self._block_offset = self._block_offset + int(text, 0)
 
-    def end_spirit_size(self, text):
+    def end_size(self, text):
         size = int(text, 0)
         if self._reg:
             self._reg.width = size
 
-    def start_spirit_reset(self, attrs):
+    def start_reset(self, attrs):
         if self._field:
             self._in_field_reset = True
         elif self._reg:
             self._in_reg_reset = True
 
-    def end_spirit_reset(self, text):
+    def end_reset(self, text):
         self._in_field_reset = False
         self._in_reg_reset = False
 
-    def end_spirit_value(self, text):
+    def end_value(self, text):
         if self._in_field_reset:
             if self._field:
                 self._field.reset_value = int(text, 16)
@@ -130,10 +144,10 @@ class IpXactParser(object):
         elif self._in_reg_reset:
             self._reg_reset = (True, int(text, 16))
 
-    def start_spirit_field(self, attrs):
+    def start_field(self, attrs):
         self._field = BitField()
 
-    def end_spirit_field(self, text):
+    def end_field(self, text):
         if not self._field.field_name.startswith("RESERVED"):
             self._field.start_position = self._fld_start
             self._field.stop_position = self._fld_start + self._fld_width - 1
@@ -146,12 +160,19 @@ class IpXactParser(object):
 
         self._field = None
 
-    def end_spirit_access(self, text):
+    def end_access(self, text):
         if self._field:
-            self._field.field_type = text2field.get(text,
-                                                    BitField.TYPE_READ_ONLY)
+            if self._field.field_type not in (BitField.TYPE_WRITE_1_TO_SET, 
+                                              BitField.TYPE_WRITE_1_TO_CLEAR_SET):
+                self._field.field_type = text2field.get(text,
+                                                        BitField.TYPE_READ_ONLY)
 
-    def end_spirit_name(self, text):
+    def end_modifiedWriteValue(self, text):
+        if self._field:
+            self._field.field_type = text2write.get(text,
+                                                    BitField.TYPE_WRITE_1_TO_CLEAR_SET)
+
+    def end_name(self, text):
         if self._field:
             self._field.field_name = text.upper()
         elif self._reg:
@@ -160,26 +181,23 @@ class IpXactParser(object):
         elif not self._in_maps and not self._db.descriptive_title:
             self._db.descriptive_title = text.strip()
 
-    def end_spirit_description(self, text):
+    def end_description(self, text):
         if self._field:
             self._field.description = text.strip()
         elif self._reg:
             self._reg.description = text.strip()
 
-    def end_spirit_bitOffset(self, text):
+    def end_bitOffset(self, text):
         self._fld_start = int(text, 0)
 
-    def end_spirit_bitWidth(self, text):
+    def end_bitWidth(self, text):
         self._fld_width = int(text, 0)
 
-    def start_spirit_memoryMaps(self, attrs):
+    def start_memoryMaps(self, attrs):
         self._in_maps = True
 
-    def end_spirit_memoryMaps(self, text):
+    def end_memoryMaps(self, text):
         self._in_maps = False
-
-
-import re
 
 
 def crossreference(db):

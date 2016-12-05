@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<{{scope}}:component
+{% for ref in refs %}
+    {{ref}}
+{% endfor %}>
+    
+    <{{scope}}:vendor>regenerate</{{scope}}:vendor>
+    <{{scope}}:library>user</{{scope}}:library>
+    <{{scope}}:name>{{db.descriptive_title}}</{{scope}}:name>
+    <{{scope}}:version>1.0</{{scope}}:version>
+
+    <{{scope}}:memoryMaps>
+        <{{scope}}:memoryMap>
+            <{{scope}}:name>default</{{scope}}:name>
+                <{{scope}}:addressBlock>
+                    <{{scope}}:name>{{db.module_name|e}}</{{scope}}:name>
+                    <{{scope}}:baseAddress>0x0</{{scope}}:baseAddress>
+                    <{{scope}}:range {{scope}}:format="long">{{db.address_size_in_bytes()}}</{{scope}}:range>
+                    <{{scope}}:width>{{db.data_bus_width}}</{{scope}}:width>
+                    <{{scope}}:usage>register</{{scope}}:usage> 
+
+{% for reg in db.get_all_registers() %}
+                    <{{scope}}:register>
+                        <{{scope}}:name>{{reg.register_name|e}}</{{scope}}:name>
+                        <{{scope}}:description>{{reg.description|e}}</{{scope}}:description>
+                        <{{scope}}:addressOffset>0x{{"%x"|format(reg.address)}}</{{scope}}:addressOffset>
+                        <{{scope}}:size>{{reg.width}}</{{scope}}:size>
+			<{{scope}}:reset>
+			    <{{scope}}:value>0x{{"%x"|format(reg.reset_value())}}</{{scope}}:value>
+			    <{{scope}}:mask>0x{{"%x"|format(reg.reset_mask())}}</{{scope}}:mask>
+			</{{scope}}:reset>
+{%   for field in reg.get_bit_fields() %}
+                        <{{scope}}:field>
+                            <{{scope}}:name>{{field.field_name|e}}</{{scope}}:name>
+                            <{{scope}}:description>{{field.description|e}}</{{scope}}:description>
+                            <{{scope}}:bitOffset>{{field.lsb}}</{{scope}}:bitOffset>
+                            <{{scope}}:bitWidth>{{field.msb - field.lsb + 1}}</{{scope}}:bitWidth>
+                            <{{scope}}:access>{{ACCESS_MAP[field.field_type]}}</{{scope}}:access>
+{%     if field.field_type in WRITE_MAP %}
+                            <{{scope}}:modifiedWriteValue>{{WRITE_MAP[field.field_type]}}</{{scope}}:modifiedWriteValue>
+{%     endif %}
+{%     if reg.do_not_test %}
+                            <{{scope}}:testable>false</{{scope}}:testable>
+{%     endif %}
+{%     if field.volatile or field.input_signal != "" %}
+                            <{{scope}}:volatile>true</{{scope}}:volatile>
+{%     endif %}
+{%     if field.values|length > 0 %}
+                            <{{scope}}:enumeratedValues>
+{%       for value in field.values %}
+                                <{{scope}}:enumeratedValue>
+                                    <{{scope}}:name>{{value[1]|e}}</{{scope}}:name>
+                                    <{{scope}}:value>{{value[0]}}</{{scope}}:value>
+                                </{{scope}}:enumeratedValue>
+{%       endfor %}
+                            </{{scope}}:enumeratedValues>
+{%     endif %}
+                        </{{scope}}:field>
+{%   endfor %}
+                    </{{scope}}:register>
+{% endfor %}
+                </{{scope}}:addressBlock>
+
+        </{{scope}}:memoryMap>
+    </{{scope}}:memoryMaps>
+
+</{{scope}}:component>

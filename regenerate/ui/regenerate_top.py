@@ -109,9 +109,7 @@ class MainWindow(BaseWindow):
 
         self.__prj = None
         self.__builder = gtk.Builder()
-
         self.__builder.add_from_file(GLADE_TOP)
-
         self.__build_actions()
         self.__top_window = self.__builder.get_object("regenerate")
 
@@ -120,7 +118,6 @@ class MainWindow(BaseWindow):
         self.__status_obj = self.__builder.get_object("statusbar")
         LOGGER.addHandler(StatusHandler(self.__status_obj))
         self.__reg_text_buf = self.__builder.get_object("register_text_buffer")
-
         self.__selected_dbase = self.__builder.get_object("selected_dbase")
 
         pango_font = pango.FontDescription("monospace")
@@ -222,7 +219,9 @@ class MainWindow(BaseWindow):
             self.__instance_repeat_changed,
             self.__instance_repeat_offset_changed,
             self.__instance_format_changed, self.__instance_hdl_changed,
-            self.__instance_uvm_changed, self.__instance_array_changed)
+            self.__instance_uvm_changed, 
+            self.__instance_decode_changed, 
+            self.__instance_array_changed)
 
         self.__build_data_width_box()
         self.__restore_position_and_size()
@@ -462,15 +461,13 @@ class MainWindow(BaseWindow):
             if groups[2]:
                 stop = int(groups[0])
                 start = int(groups[2])
-                if (stop != field.msb or start != field.lsb):
-                    field.msb = stop
-                    field.lsb = start
+                if stop != field.msb or start != field.lsb:
+                    field.msb, field.lsb = stop, start
                     self.set_modified()
             else:
                 start = int(groups[0])
-                if (start != field.msb or start != field.lsb):
-                    field.msb = start
-                    field.lsb = start
+                if start != field.msb or start != field.lsb:
+                    field.msb, field.lsb = start, start
                     self.set_modified()
             self.__bit_model[path][BitModel.BIT_COL] = bits(field)
             self.__bit_model[path][BitModel.SORT_COL] = field.start_position
@@ -533,70 +530,70 @@ class MainWindow(BaseWindow):
         """
         LOGGER.error("Subsystem name cannot be changed")
 
+    def __inst_changed(self, attr, path, new_text):
+        getattr(self.__instance_model, attr)(path, new_text)
+        self.__set_module_definition_warn_flag()
+        self.__prj.modified = True
+
+    def __inst_bool_changed(self, attr, cell, path):
+        getattr(self.__instance_model, attr)(cell, path)
+        self.__set_module_definition_warn_flag()
+        self.__prj.modified = True
+
     def __instance_inst_changed(self, cell, path, new_text, col):
         """
         Updates the data model when the text value is changed in the model.
         """
-        self.__instance_model.change_inst(path, new_text)
-        self.__set_module_definition_warn_flag()
-        self.__prj.modified = True
+        self.__inst_changed("change_inst", path, new_text)
 
     def __instance_base_changed(self, cell, path, new_text, col):
         """
         Updates the data model when the text value is changed in the model.
         """
-        self.__instance_model.change_base(path, new_text)
-        self.__set_module_definition_warn_flag()
-        self.__prj.modified = True
+        self.__inst_changed("change_base", path, new_text)
 
     def __instance_format_changed(self, cell, path, new_text, col):
         """
         Updates the data model when the text value is changed in the model.
         """
         if len(path) > 1:
-            self.__instance_model.change_format(path, new_text)
-            self.__set_module_definition_warn_flag()
-            self.__prj.modified = True
+            self.__inst_changed("change_format", path, new_text)
 
     def __instance_hdl_changed(self, cell, path, new_text, col):
         """
         Updates the data model when the text value is changed in the model.
         """
-        self.__instance_model.change_hdl(path, new_text.replace("/", "."))
-        self.__set_module_definition_warn_flag()
-        self.__prj.modified = True
+        self.__inst_changed("change_hdl", path, new_text)
 
     def __instance_uvm_changed(self, cell, path, col):
         """
         Updates the data model when the text value is changed in the model.
         """
-        self.__instance_model.change_uvm(cell, path)
-        self.__set_module_definition_warn_flag()
-        self.__prj.modified = True
+        self.__inst_bool_changed("change_uvm", cell, path)
+
+    def __instance_decode_changed(self, cell, path, col):
+        """
+        Updates the data model when the text value is changed in the model.
+        """
+        self.__inst_changed("change_decode", cell, path)
 
     def __instance_array_changed(self, cell, path, col):
         """
         Updates the data model when the text value is changed in the model.
         """
-        self.__instance_model.change_array(cell, path)
-        self.__set_module_definition_warn_flag()
-        self.__prj.modified = True
+        self.__inst_changed("change_array", cell, path)
 
     def __instance_repeat_changed(self, cell, path, new_text, col):
         """
         Updates the data model when the text value is changed in the model.
         """
-        self.__instance_model.change_repeat(path, new_text)
-        self.__set_module_definition_warn_flag()
-        self.__prj.modified = True
+        self.__inst_changed("change_repeat", path, new_text)
 
     def __instance_repeat_offset_changed(self, cell, path, new_text, col):
         """
         Updates the data model when the text value is changed in the model.
         """
-        self.__instance_model.change_repeat_offset(path, new_text)
-        self.__set_module_definition_warn_flag()
-        self.__prj.modified = True
+        self.__inst_changed("change_repeat_offset", path, new_text)
 
     def on_filter_icon_press(self, obj, icon, event):
         if icon == gtk.ENTRY_ICON_SECONDARY:
@@ -607,44 +604,42 @@ class MainWindow(BaseWindow):
                 menu = self.__builder.get_object("filter_menu")
                 menu.popup(None, None, None, 1, 0)
 
-    def on_address_token_name_toggled(self, obj):
+    def set_search(self, values, obj):
         if obj.get_active():
-            self.__filter_manage.set_search_fields((ADDR_FIELD, NAME_FIELD,
-                                                    TOKEN_FIELD))
+            self.__filter_manage.set_search_fields(values)
+
+    def on_address_token_name_toggled(self, obj):
+        self.set_search((ADDR_FIELD, NAME_FIELD, TOKEN_FIELD), obj)
 
     def on_token_name_toggled(self, obj):
-        if obj.get_active():
-            self.__filter_manage.set_search_fields((NAME_FIELD, TOKEN_FIELD))
+        self.set_search((NAME_FIELD, TOKEN_FIELD), obj)
 
     def on_token_toggled(self, obj):
-        if obj.get_active():
-            self.__filter_manage.set_search_fields((TOKEN_FIELD, ))
+        self.set_search((TOKEN_FIELD,), obj)
 
     def on_address_toggled(self, obj):
-        if obj.get_active():
-            self.__filter_manage.set_search_fields((ADDR_FIELD, ))
+        self.set_search((ADDR_FIELD,), obj)
 
     def on_name_toggled(self, obj):
-        if obj.get_active():
-            self.__filter_manage.set_search_fields((NAME_FIELD, ))
+        self.set_search((NAME_FIELD,), obj)
 
     def __enable_preview(self):
         self.__prj_preview.enable()
         self.__regset_preview.enable()
         self.__regdescr_preview.enable()
+        self.use_preview = True
 
     def __disable_preview(self):
         self.__prj_preview.disable()
         self.__regset_preview.disable()
         self.__regdescr_preview.disable()
+        self.use_preview = False
 
     def on_preview_toggled(self, obj):
         if obj.get_active():
             self.__enable_preview()
-            self.use_preview = True
         else:
             self.__disable_preview()
-            self.use_preview = False
 
     def on_summary_action_activate(self, obj):
         """
@@ -1397,127 +1392,96 @@ class MainWindow(BaseWindow):
                 self.dbase.delete_register(reg)
                 self.set_modified()
 
-    def on_array_changed(self, obj):
+    def set_db_value(self, attr, val):
         if self.dbase:
-            self.dbase.array_is_reg = not obj.get_active()
+            setattr(self.dbase, attr, val)
         self.set_modified()
+
+    def on_array_changed(self, obj):
+        self.set_db_value("array_is_reg", not obj.get_active())
 
     def on_coverage_toggled(self, obj):
-        if self.dbase:
-            self.dbase.coverage = obj.get_active()
-        self.set_modified()
+        self.set_db_value("coverage", obj.get_active())
+
+    def on_internal_only_changed(self, obj):
+        self.set_db_value("internal_only", obj.get_active())
 
     def on_data_width_changed(self, obj):
-        val = obj.get_active()
-        if val == 0:
-            self.dbase.data_bus_width = 8
-        elif val == 1:
-            self.dbase.data_bus_width = 16
-        elif val == 2:
-            self.dbase.data_bus_width = 32
-        else:
-            self.dbase.data_bus_width = 64
-        self.set_modified()
+        self.set_db_value("data_bus_width", 8 << obj.get_active())
 
     def on_byte_en_level_toggled(self, obj):
-        self.dbase.byte_strobe_active_level = obj.get_active()
-        self.set_modified()
+        self.set_db_value("byte_strobe_active_level", obj.get_active())
 
     def on_reset_level_toggled(self, obj):
-        self.dbase.reset_active_level = obj.get_active()
-        self.set_modified()
+        self.set_db_value("reset_active_level", obj.get_active())
 
     def on_address_width_changed(self, obj):
         try:
-            new_width = int(obj.get_text())
-            self.dbase.address_bus_width = new_width
-            self.set_modified()
+            self.set_db_value("address_bus_width", int(obj.get_text()))
         except ValueError:
             LOGGER.error('Illegal address width: "%s"' % obj.get_text())
 
+    def __text_change(self, attr, obj):
+        if self.dbase:
+            setattr(self.dbase, attr, obj.get_text())
+            self.__set_module_ports_warn_flag()
+            self.set_modified()
+
     def on_address_bus_changed(self, obj):
-        self.dbase.address_bus_name = obj.get_text()
-        self.__set_module_ports_warn_flag()
-        self.set_modified()
+        self.__text_change("address_bus_name", obj)
 
     def on_write_strobe_changed(self, obj):
-        self.dbase.write_strobe_name = obj.get_text()
-        self.__set_module_ports_warn_flag()
-        self.set_modified()
+        self.__text_change("write_strobe_name", obj)
 
     def on_ack_changed(self, obj):
-        self.dbase.acknowledge_name = obj.get_text()
-        self.__set_module_ports_warn_flag()
-        self.set_modified()
+        self.__text_change("acknowledge_name", obj)
 
     def on_read_strobe_changed(self, obj):
-        self.dbase.read_strobe_name = obj.get_text()
-        self.__set_module_ports_warn_flag()
-        self.set_modified()
+        self.__text_change("read_strobe_name", obj)
 
     def on_byte_en_signal_changed(self, obj):
-        self.dbase.byte_strobe_name = obj.get_text()
-        self.__set_module_ports_warn_flag()
-        self.set_modified()
+        self.__text_change("byte_strobe_name", obj)
 
     def on_read_data_bus_changed(self, obj):
-        self.dbase.read_data_name = obj.get_text()
-        self.__set_module_ports_warn_flag()
-        self.set_modified()
+        self.__text_change("read_data_name", obj)
 
     def on_reset_signal_changed(self, obj):
-        self.dbase.reset_name = obj.get_text()
-        self.__set_module_ports_warn_flag()
-        self.set_modified()
+        self.__text_change("reset_name", obj)
 
     def on_write_data_bus_changed(self, obj):
-        self.dbase.write_data_name = obj.get_text()
-        self.__set_module_ports_warn_flag()
-        self.set_modified()
+        self.__text_change("write_data_name", obj)
 
     def on_clock_signal_changed(self, obj):
-        self.dbase.clock_name = obj.get_text()
-        self.__set_module_ports_warn_flag()
-        self.set_modified()
+        self.__text_change("clock_name", obj)
 
     def on_module_changed(self, obj):
         self.__check_signal(obj, "Invalid module name")
-        self.dbase.module_name = obj.get_text()
-        self.__set_module_definition_warn_flag()
-        self.set_modified()
+        self.__text_change("module_name", obj)
+
+    def on_title_changed(self, obj):
+        self.__text_change("descriptive_title", obj)
 
     def on_owner_changed(self, obj):
         self.dbase.owner = obj.get_text()
         self.set_modified()
 
-    def on_title_changed(self, obj):
-        self.dbase.descriptive_title = obj.get_text()
-        self.__set_module_definition_warn_flag()
-        self.set_modified()
+    def __button_toggle(self, attr, obj):
+        reg = self.__reglist_obj.get_selected_register()
+        if reg:
+            setattr(reg, attr, obj.get_active())
+            self.set_modified()
 
     def on_no_rtl_toggled(self, obj):
-        reg = self.__reglist_obj.get_selected_register()
-        if reg:
-            reg.do_not_generate_code = obj.get_active()
-            self.set_modified()
+        self.__button_toggle("do_not_generate_code", obj)
 
     def on_no_test_toggled(self, obj):
-        reg = self.__reglist_obj.get_selected_register()
-        if reg:
-            reg.do_not_test = obj.get_active()
-            self.set_modified()
+        self.__button_toggle("do_not_test", obj)
 
     def on_no_cover_toggled(self, obj):
-        reg = self.__reglist_obj.get_selected_register()
-        if reg:
-            reg.do_not_cover = obj.get_active()
-            self.set_modified()
+        self.__button_toggle("do_not_cover", obj)
 
     def on_hide_doc_toggled(self, obj):
-        reg = self.__reglist_obj.get_selected_register()
-        if reg:
-            reg.hide = obj.get_active()
-            self.set_modified()
+        self.__button_toggle("hide", obj)
 
     def on_add_register_action_activate(self, obj):
         """

@@ -148,6 +148,23 @@ EXPORTERS.append((VerilogDefines, ("RTL", "Verilog defines"),
                   "Verilog header files", ".vh", 'rtl-verilog-defines'))
 
 try:
+    from regenerate.site_local.ipxact import IpXactWriter
+    LOGGER.info("Found site_local IpXactWriter")
+except ImportError:
+    from ipxact import IpXactWriter
+EXPORTERS.append((IpXactWriter, ("XML", "IP-XACT"), "IP-XACT files", ".xml",
+                  'ip-xact'))
+
+try:
+    from regenerate.site_local.spirit import SpiritWriter
+    LOGGER.info("Found site_local SpiritWriter")
+except ImportError:
+    from spirit import SpiritWriter
+EXPORTERS.append((SpiritWriter, ("XML", "Spirit"), "Spirit files", ".xml",
+                  'spirit'))
+
+
+try:
     from regenerate.site_local.verilog_param import VerilogParameters
     LOGGER.info("Found site_local verilog_param")
 except ImportError:

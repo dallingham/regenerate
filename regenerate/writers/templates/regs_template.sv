@@ -41,16 +41,16 @@ package {{project.short_name|lower}}_reg_pkg;
 
          READ_ADDR: coverpoint addr iff (is_read) {
             {% for register in db.get_all_registers() %}
-	      {% if register.do_not_cover == False %}
+              {% if register.do_not_cover == False and register.is_completely_write_only() == False %}
            bins r_{{register.token|lower}} = { 'h{{ '%x' | format(register.address) }} };
-	      {% endif %}
+              {% endif %}
             {% endfor %}
          }
 
          WRITE_ADDR: coverpoint addr iff (!is_read) {
             {% for register in db.get_all_registers() %}
               {% if register.is_completely_read_only() == False %}
-  	        {% if register.do_not_cover == False %}
+                {% if register.do_not_cover == False and register.is_completely_read_only() == False %}
            bins r_{{register.token|lower}} = { 'h{{ '%x' | format(register.address) }} };
                 {% endif %}
               {% endif %}
@@ -68,7 +68,7 @@ package {{project.short_name|lower}}_reg_pkg;
       endfunction: sample
 
    endclass : {{db.set_name|lower}}_reg_access_wrapper
-  {%- endif -%}      
+  {% endif %}
 
   {% for register in db.get_all_registers() %}
     {% if register.ram_size %}
@@ -89,7 +89,6 @@ package {{project.short_name|lower}}_reg_pkg;
 
       `uvm_object_utils(reg_{{db.set_name|lower}}_{{register.token|lower}})
 
-      // Fields
      {% for field in register.get_bit_fields() %}
        {% if field.can_randomize %}
       rand uvm_reg_field {{fix_name(field)}};
@@ -98,12 +97,12 @@ package {{project.short_name|lower}}_reg_pkg;
        {% endif %}
      {% endfor %}
 
-     {%- if db.coverage %}      
-      // Locals for coverage
+     {% if db.coverage %}
       local uvm_reg_data_t m_data;
       local uvm_reg_data_t m_be;
-      local bit            m_is_read;
-     {%- endif -%}      
+      local bit m_is_read;
+
+     {% endif %}
      {% for field  in register.get_bit_fields() %}
      {%   if field.can_randomize and field.values|length > 0 %}
       constraint con_{{fix_name(field)}} {
@@ -112,13 +111,15 @@ package {{project.short_name|lower}}_reg_pkg;
      {%   endif %}
 
      {%- endfor -%}
-     {% if db.coverage %}      
+     {% if db.coverage %}
        {% if register.get_bit_fields_with_values() | length > 0 %}
-	 {% if register.do_not_cover == False %}
+         {% if register.do_not_cover == False %}
+
       covergroup cov_fields;
          option.per_instance = 1;
+
            {% for field in register.get_bit_fields_with_values() %}
-         {{fix_name(field)|upper}}: coverpoint m_data[{{field.msb}}:{{field.lsb}}] {
+         {{fix_name(field)|upper}}: coverpoint {{field.field_name|lower}}.value[{{field.msb}}:{{field.lsb}}] {
                {% for value in field.values %}
             bins {{fix_name(field)}}_{{value[0]}} = {'h{{value[0]}} };
                {% endfor %}
@@ -126,30 +127,31 @@ package {{project.short_name|lower}}_reg_pkg;
            {% endfor %}
          {% endif %}
       endgroup : cov_fields
+       {% endif %}
 
       covergroup cov_bits;
          option.per_instance = 1;
+
          {% for field in register.get_bit_fields() %}
-  	   {% if register.do_not_cover == False %}
+           {% if register.do_not_cover == False and field.values|length == 0 %}
              {% for i in range(field.lsb, field.msb+1) %}
                {% if field.is_read_only() == 0 %}
          {{fix_name(field)|upper}}_W{{i}}: coverpoint (m_data[{{i}}]) iff (!m_is_read && m_be[{{(i/8)|int}}]);
                {% endif %}
                {% if field.is_read_only() and field.is_constant() %}
          {{fix_name(field)|upper}}_R{{i}}: coverpoint (m_data[{{i}}]) iff (m_is_read) {bins ro_{{i}} = { {{field.reset_value_bit(i - field.lsb)}} }; }
-               {% else %}
+               {% elif field.is_write_only() == False %}
          {{fix_name(field)|upper}}_R{{i}}: coverpoint (m_data[{{i}}]) iff (m_is_read);
                {% endif %}
              {% endfor %}
            {% endif %}
          {% endfor %}
       endgroup : cov_bits
-       {% endif %}      
      {% endif %}
 
       function new(string name = "{{register.token|lower}}");
-         super.new(name, {{register.width}}, build_coverage(UVM_CVR_FIELD_VALS + UVM_CVR_REG_BITS));
-     {% if db.coverage and register.do_not_cover == False %}      
+         super.new(name, {{register.width}}, build_coverage(UVM_CVR_FIELD_VALS|UVM_CVR_REG_BITS));
+     {% if db.coverage and register.do_not_cover == False %}
        {% if register.get_bit_fields() | length > 0 %}
          if (has_coverage(UVM_CVR_REG_BITS)) begin
             cov_bits = new;
@@ -163,19 +165,19 @@ package {{project.short_name|lower}}_reg_pkg;
      {% endif %}
       endfunction : new
 
-     {% if db.coverage and register.do_not_cover == False %}      
+     {% if db.coverage and register.do_not_cover == False %}
       function void sample(uvm_reg_data_t data, uvm_reg_data_t byte_en,
                            bit is_read, uvm_reg_map map);
          super.sample(data, byte_en, is_read, map);
        {% if register.get_bit_fields() | length > 0 %}
          if (get_coverage(UVM_CVR_REG_BITS)) begin
-            m_data    = data;
-            m_be      = byte_en;
+            m_data = data;
+            m_be = byte_en;
             m_is_read = is_read;
             cov_bits.sample();
          end
        {% endif %}
-       {% if register.get_bit_fields_with_values() | length > 0 %}
+       {% if register.get_bit_fields_with_values() |sort | length > 0 %}
          if (get_coverage(UVM_CVR_FIELD_VALS)) begin
             sample_values();
             cov_fields.sample();
@@ -184,7 +186,7 @@ package {{project.short_name|lower}}_reg_pkg;
 
       endfunction: sample
      {% endif %}
-       
+
       virtual function void build();
      {% for field in register.get_bit_fields() %}
        {% if use_new %}
@@ -248,7 +250,7 @@ package {{project.short_name|lower}}_reg_pkg;
      {% endfor %}
    {% endif %}
 
-   {% if db.coverage %}			       
+   {% if db.coverage %}
     {{db.set_name|lower}}_reg_access_wrapper {{db.set_name|lower}}_access_cg;
    {% endif %}
 
@@ -275,7 +277,7 @@ package {{project.short_name|lower}}_reg_pkg;
 
     virtual function void build();
 
-{% if db.coverage %}			       
+{% if db.coverage %}
       if (has_coverage(UVM_CVR_ADDR_MAP)) begin
   {% if use_new %}
         {{db.set_name|lower}}_access_cg = new("{{db.set_name|lower}}_access_cg");
@@ -319,7 +321,7 @@ package {{project.short_name|lower}}_reg_pkg;
 
     endfunction : build
 
-   {% if db.coverage %}	
+   {% if db.coverage %}
     function void sample(uvm_reg_addr_t offset, bit is_read, uvm_reg_map  map);
        if (get_coverage(UVM_CVR_ADDR_MAP)) begin
           {{db.set_name|lower}}_access_cg.sample(offset, is_read);
@@ -485,7 +487,7 @@ package {{project.short_name|lower}}_reg_pkg;
       {% endfor %}
     {% endif %}
         {{group.name|lower}}.build();
-	   
+
     {% if used_maps|length > 1 %}
       {%- for set in used_maps -%}
         {% if group.name in map2grp[set] %}
@@ -515,7 +517,7 @@ package {{project.short_name|lower}}_reg_pkg;
       {% endif %}
     {% endfor %}
            {{group.name|lower}}[i].build();
-	   
+
     {% for mname in project.get_address_maps() %}
       {% if mname.name in used_maps %}
         {% if used_maps|length > 1 %}

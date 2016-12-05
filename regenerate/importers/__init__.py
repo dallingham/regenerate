@@ -24,7 +24,6 @@ fears that it will get overwritten on the next install.
 
 from rdl import RDLParser
 from denali import DenaliRDLParser
-from certe_csv import CerteCSVParser
 from ipxact import IpXactParser
 
 #

@@ -255,6 +255,12 @@ class Register(object):
                 return False
         return True
 
+    def is_completely_write_only(self):
+        for key in self.__bit_fields.keys():
+            if not self.__bit_fields[key].is_write_only():
+                return False
+        return True
+
     def no_reset_test(self):
         if self._do_not_test:
             return True
@@ -276,3 +282,17 @@ class Register(object):
                 return True
         return False
         
+    def reset_value(self):
+        val = 0
+        for key in self.__bit_fields.keys():
+            field = self.__bit_fields[key]
+            val |= (field.reset_value << field.lsb)
+        return val
+
+    def reset_mask(self):
+        val = 0
+        for key in self.__bit_fields.keys():
+            field = self.__bit_fields[key]
+            for i in range(field.lsb, field.msb + 1):
+                val |= 1 << i
+        return val

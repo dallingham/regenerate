@@ -58,6 +58,8 @@ class BitField(object):
     read_only_types = (TYPE_READ_ONLY, TYPE_READ_ONLY_VALUE, TYPE_READ_ONLY_LOAD,
                        TYPE_READ_ONLY_CLEAR_LOAD, TYPE_READ_ONLY_VALUE_1S)
 
+    write_only_types = (TYPE_WRITE_ONLY,)
+
     full_compare = ("_output_signal", "_input_signal", "_id", "lsb", "msb",
                     "_field_name", "use_output_enable", "field_type",
                     "volatile", "is_error_field", "_reset_value",
@@ -119,6 +121,12 @@ class BitField(object):
         Indicates the the value is a constant value.
         """
         return self.field_type in BitField.read_only_types
+
+    def is_write_only(self):
+        """
+        Indicates the the value is a constant value.
+        """
+        return self.field_type in BitField.write_only_types
 
     def full_field_name(self):
         """

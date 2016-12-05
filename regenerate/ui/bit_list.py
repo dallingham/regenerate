@@ -74,10 +74,11 @@ class BitList(object):
     """
 
     BIT_COLS = (  # Title, Size, Sort, Expand, Monospace
-        ('', 20, -1, False,
-         False), ('Bits', 60, BitModel.SORT_COL, False, True),
+        ('', 20, -1, False, False), 
+        ('Bits', 60, BitModel.SORT_COL, False, True),
         ('Name', 125, BitModel.NAME_COL, True, False),
-        ('Type', 325, -1, True, False), ('Reset', 100, -1, False, True),
+        ('Type', 325, -1, True, False), 
+        ('Reset', 100, -1, False, True),
         ('Reset Type', 75, -1, False, False), )
 
     def __init__(self, obj, combo_edit, text_edit, selection_changed):
@@ -109,8 +110,7 @@ class BitList(object):
         """
         for (i, col) in enumerate(self.BIT_COLS):
             if i == BitModel.TYPE_COL:
-                column = ComboMapColumn(col[BIT_TITLE], combo_edit, TYPE2STR,
-                                        i)
+                column = ComboMapColumn(col[BIT_TITLE], combo_edit, TYPE2STR, i)
             elif i == BitModel.RESET_TYPE_COL:
                 column = ComboMapColumn(col[BIT_TITLE], combo_edit,
                                         BitModel.RESET2STR, i)

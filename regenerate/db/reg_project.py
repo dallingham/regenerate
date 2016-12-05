@@ -28,10 +28,11 @@ from regenerate.db.textutils import clean_text
 import os.path
 import xml.sax.saxutils
 
+
 AddrMapData = namedtuple("AddrMapData", "name base width fixed uvm")
-GroupMapData = namedtuple(
-    "GroupMapData",
-    "set inst offset repeat repeat_offset format hdl no_uvm array")
+GroupMapData = namedtuple("GroupMapData",
+                          ["set", "inst", "offset", "repeat", "repeat_offset",
+                           "format", "hdl", "no_uvm", "no_decode", "array"])
 
 
 def cleanup(data):
@@ -264,11 +265,8 @@ class RegProject(object):
         """
         used_in_uvm = set([m.name for m in self._addr_map_list if m.uvm == 0])
 
-        used = []
-        for key in self._addr_map_grps:
-            if key in used_in_uvm and name in self._addr_map_grps[key]:
-                used.append(key)
-        return used
+        return [key for key in self._addr_map_grps 
+                if key in used_in_uvm and name in self._addr_map_grps[key]]
 
     def change_address_map_name(self, old_name, new_name):
         """
@@ -310,28 +308,19 @@ class RegProject(object):
         """
         Returns the base address  of the address map
         """
-        for data in self._addr_map_list:
-            if name == data.name:
-                return data.base
-        return None
+        return next((d.base for d in self._addr_map_list if name == d.name), None)
 
     def get_address_fixed(self, name):
         """
         Indicates if the specified address map is at a fixed location
         """
-        for data in self._addr_map_list:
-            if name == data.name:
-                return data.fixed
-        return None
+        return next((d.fixed for d in self._addr_map_list if name == d.name), None)
 
     def get_address_uvm(self, name):
         """
         Indicates if the specified address map is at a fixed location
         """
-        for data in self._addr_map_list:
-            if name == data.name:
-                return data.uvm
-        return None
+        return next((d.uvm for d in self._addr_map_list if name == d.name), None)
 
     def get_address_width(self, name):
         """

@@ -23,13 +23,6 @@ RegProject is the container object for a regenerate project
 from xml.sax.saxutils import escape
 from regenerate.db.textutils import clean_text
 
-# def cleanup(data):
-#     "Convert some unicode characters to standard ASCII"
-#     data = data.replace(u"\u2013", "-")
-#     data = data.replace(u"\u201c", "\"")
-#     data = data.replace(u"\ue280a2", "*")
-#     return escape(data.replace(u"\u201d", "\""))
-
 
 class ProjectWriter(object):
     """
@@ -120,6 +113,8 @@ class ProjectWriter(object):
                     ofile.write(' hdl="%s"' % item.hdl)
                 if item.no_uvm:
                     ofile.write(' no_uvm="%s"' % int(item.no_uvm))
+                if item.no_decode:
+                    ofile.write(' no_decode="%s"' % int(item.no_decode))
                 if item.array:
                     ofile.write(' array="%s"' % int(item.array))
                 if item.format:

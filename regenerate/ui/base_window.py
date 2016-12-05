@@ -25,6 +25,7 @@ from regenerate.settings.paths import INSTALL_PATH
 
 
 class BaseWindow(object):
+
     def __init__(self):
         pass
 
