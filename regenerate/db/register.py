@@ -30,14 +30,15 @@ class Register(object):
     """
 
     full_compare = ("address", "ram_size", "description", "width", "_id",
-                    "_token", "_do_not_test", "_name", "_hide",
+                    "_token", "_do_not_test", "_name", "_hide", "dimension",
                     "_do_not_generate_code", "_do_not_cover")
 
     doc_compare = ("address", "ram_size", "description", "width", "_id",
-                   "_token", "_name", "_hide")
+                   "_token", "_name", "_hide", "dimension")
 
     def __init__(self, address=0, width=32, name=""):
         self.address = address
+        self.dimension = 1
         self.ram_size = 0
         self.description = ""
         self.width = width

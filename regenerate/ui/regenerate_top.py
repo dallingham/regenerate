@@ -1695,7 +1695,8 @@ def calculate_next_address(dbase):
     keys = dbase.get_keys()
     if keys:
         last_reg = dbase.get_register(keys[-1])
-        addr = last_reg.address + last_reg.width / 8
+        dim = max(last_reg.dimension, 1)
+        addr = last_reg.address + (dim * (last_reg.width / 8))
     else:
         addr = 0
     return addr

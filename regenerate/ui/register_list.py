@@ -20,6 +20,7 @@
 Provides the editing interface to the register table
 """
 
+from collections import namedtuple
 import gtk
 from regenerate.ui.columns import EditableColumn, ComboMapColumn
 from regenerate.ui.error_dialogs import ErrorMsg
@@ -102,8 +103,8 @@ class RegisterModel(gtk.ListStore):
     address.
     """
 
-    (ICON_COL, ADDR_COL, NAME_COL, DEFINE_COL, WIDTH_COL, SORT_COL,
-     TOOLTIP_COL, OBJ_COL) = range(8)
+    (ICON_COL, ADDR_COL, NAME_COL, DEFINE_COL, DIM_COL, WIDTH_COL, SORT_COL,
+     TOOLTIP_COL, OBJ_COL) = range(9)
 
     BIT2STR = (("8 bits", 8), ("16 bits", 16), ("32 bits", 32),
                ("64 bits", 64), )
@@ -111,7 +112,7 @@ class RegisterModel(gtk.ListStore):
     STR2BIT = {8: "8 bits", 16: "16 bits", 32: "32 bits", 64: "64 bits", }
 
     def __init__(self):
-        gtk.ListStore.__init__(self, str, str, str, str, str, int, str, object)
+        gtk.ListStore.__init__(self, str, str, str, str, str, str, int, str, object)
         self.reg2path = {}
 
     def append_register(self, register):
@@ -125,8 +126,8 @@ class RegisterModel(gtk.ListStore):
             addr = "%04x:%x" % (register.address, register.ram_size)
         else:
             addr = "%04x" % register.address
-        data = [icon, addr, register.register_name, register.token,
-                self.STR2BIT[register.width], register.address, None, register]
+        data = (icon, addr, register.register_name, register.token, register.dimension,
+                self.STR2BIT[register.width], register.address, None, register)
         path = self.get_path(self.append(row=data))
         self.reg2path[register] = path
         return path
@@ -193,6 +194,9 @@ class RegisterModel(gtk.ListStore):
         self.set(node, self.SORT_COL, addr)
 
 
+
+ColDef = namedtuple("ColDef", ["title", "size", "sort_column", "expand", "type"])
+
 class RegisterList(object):
     """
     Provides the interface to the register table
@@ -200,12 +204,14 @@ class RegisterList(object):
 
     (COL_TEXT, COL_COMBO, COL_ICON) = range(3)
 
-    _COLS = (  # Title,   Size, Column,                   Expand
-        ('', 20, RegisterModel.ICON_COL, False,
-         COL_ICON), ('Address', 100, RegisterModel.SORT_COL, False, COL_TEXT),
-        ('Name', 175, RegisterModel.NAME_COL, True, COL_TEXT),
-        ('Token', 175, RegisterModel.DEFINE_COL, True, COL_TEXT),
-        ('Width', 75, -1, False, COL_COMBO), )
+    _COLS = (  # Title,   Size, Column, Expand, Type
+        ColDef('', 20, RegisterModel.ICON_COL, False, COL_ICON), 
+        ColDef('Address', 100, RegisterModel.SORT_COL, False, COL_TEXT),
+        ColDef('Name', 175, RegisterModel.NAME_COL, True, COL_TEXT),
+        ColDef('Token', 150, RegisterModel.DEFINE_COL, True, COL_TEXT),
+        ColDef('Dimension', 75, RegisterModel.DIM_COL, True, COL_TEXT),
+        ColDef('Width', 75, -1, False, COL_COMBO), 
+        )
 
     def __init__(self, obj, select_change_function, mod_function, update_addr):
         self.__obj = obj
@@ -250,22 +256,23 @@ class RegisterList(object):
         the column list. The builds new columns and inserts them into the tree.
         """
         for (i, col) in enumerate(self._COLS):
-            if col[4] == self.COL_COMBO:
-                column = ComboMapColumn(col[0], self.__combo_edited,
+            if col.type == self.COL_COMBO:
+                column = ComboMapColumn(col.title, self.__combo_edited,
                                         RegisterModel.BIT2STR, i)
-            elif col[4] == self.COL_TEXT:
-                column = EditableColumn(col[0], self.__text_edited, i)
+            elif col.type == self.COL_TEXT:
+                column = EditableColumn(col.title, self.__text_edited, i)
             else:
                 self.__icon_renderer = gtk.CellRendererPixbuf()
                 column = gtk.TreeViewColumn("", self.__icon_renderer,
                                             stock_id=i)
                 self.__icon_col = column
-            column.set_min_width(col[1])
-            column.set_expand(col[3])
+
+            column.set_min_width(col.size)
+            column.set_expand(col.expand)
             if i == 1:
                 self.__col = column
-            if col[2] >= 0:
-                column.set_sort_column_id(col[2])
+            if col.sort_column >= 0:
+                column.set_sort_column_id(col.sort_column)
             self.__obj.append_column(column)
         self.__obj.set_search_column(3)
         self.__obj.set_tooltip_column(RegisterModel.TOOLTIP_COL)
@@ -354,6 +361,21 @@ class RegisterList(object):
             reg.token = value
             self.__set_modified()
 
+    def __reg_update_dim(self, reg, path, text):
+        """
+        Updates the name associated with the register. Called after the text
+        has been edited
+        """
+        try:
+            value = int(text)
+        except ValueError:
+            return
+
+        if value != reg.dimension:
+            reg.dimension = value
+            self.__set_modified()
+        self.__model[path][RegisterModel.DIM_COL] = "%d" % value
+
     def __reg_update_define(self, reg, path, text):
         """
         Updates the token name associated with the register. Called after the
@@ -377,7 +399,7 @@ class RegisterList(object):
             if index == int(path):
                 continue
             reg = data[-1]
-            for i in range(reg.address, reg.address + (reg.width / 8)):
+            for i in range(reg.address, reg.address + (reg.dimension * (reg.width / 8))):
                 addr_list.add(i)
 
         data = new_text.split(":")
@@ -448,6 +470,8 @@ class RegisterList(object):
             self.__handle_edited_address(register, path, new_text)
         elif col == RegisterModel.NAME_COL:
             self.__reg_update_name(register, path, new_text)
+        elif col == RegisterModel.DIM_COL:
+            self.__reg_update_dim(register, path, new_text)
         elif col == RegisterModel.DEFINE_COL:
             self.__reg_update_define(register, path, new_text)
 

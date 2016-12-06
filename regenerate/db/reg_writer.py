@@ -110,6 +110,7 @@ def write_register(ofile, reg):
     ofile.write('  <register nocode="%d" dont_test="%d" dont_cover="%d" hide="%d">\n' %
                 (reg.do_not_generate_code, reg.do_not_test, reg.do_not_cover, reg.hide))
     ofile.write('    <token>%s</token>\n' % reg.token)
+    ofile.write('    <dimension>%d</dimension>\n' % reg.dimension)
     ofile.write('    <uuid>%s</uuid>\n' % reg.uuid)
     ofile.write('    <name>%s</name>\n' % reg.register_name)
     ofile.write('    <address>%d</address>\n' % reg.address)
