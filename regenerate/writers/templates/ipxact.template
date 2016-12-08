@@ -25,6 +25,7 @@
                         <{{scope}}:description>{{reg.description|e}}</{{scope}}:description>
                         <{{scope}}:addressOffset>0x{{"%x"|format(reg.address)}}</{{scope}}:addressOffset>
                         <{{scope}}:size>{{reg.width}}</{{scope}}:size>
+                        <{{scope}}:dim>{{reg.dimension}}</{{scope}}:dim>
 			<{{scope}}:reset>
 			    <{{scope}}:value>0x{{"%x"|format(reg.reset_value())}}</{{scope}}:value>
 			    <{{scope}}:mask>0x{{"%x"|format(reg.reset_mask())}}</{{scope}}:mask>

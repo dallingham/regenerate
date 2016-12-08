@@ -42,7 +42,11 @@ package {{project.short_name|lower}}_reg_pkg;
          READ_ADDR: coverpoint addr iff (is_read) {
             {% for register in db.get_all_registers() %}
               {% if register.do_not_cover == False and register.is_completely_write_only() == False %}
+                {% if register.dimension > 1 %}
+           bins r_{{register.token|lower}} = { {% for i in range(0, register.dimension) %}'h{{ '%x' | format(register.address + (i * (register.width / 8))) }}{% if not loop.last %}, {% endif %}{% endfor %} };
+                {% else %}
            bins r_{{register.token|lower}} = { 'h{{ '%x' | format(register.address) }} };
+                {% endif %}
               {% endif %}
             {% endfor %}
          }
@@ -51,7 +55,11 @@ package {{project.short_name|lower}}_reg_pkg;
             {% for register in db.get_all_registers() %}
               {% if register.is_completely_read_only() == False %}
                 {% if register.do_not_cover == False and register.is_completely_read_only() == False %}
+                  {% if register.dimension > 1 %}
+           bins r_{{register.token|lower}} = { {% for i in range(0, register.dimension) %}'h{{ '%x' | format(register.address + (i * (register.width / 8))) }}{% if not loop.last %}, {% endif %}{% endfor %} };
+                  {% else %}
            bins r_{{register.token|lower}} = { 'h{{ '%x' | format(register.address) }} };
+                  {% endif %}
                 {% endif %}
               {% endif %}
             {% endfor %}
@@ -238,7 +246,11 @@ package {{project.short_name|lower}}_reg_pkg;
      {% if register.ram_size %}
     mem_{{db.set_name|lower}}_{{register.token|lower}} {{register.token|lower}};
      {% else %}
+       {% if register.dimension > 1 %}
+    reg_{{db.set_name|lower}}_{{register.token|lower}} {{register.token|lower}}[{{register.dimension}}];
+       {% else %}
     reg_{{db.set_name|lower}}_{{register.token|lower}} {{register.token|lower}};
+       {% endif %}
      {% endif %}
    {% endfor %}
    {% for map in grp_map %}
@@ -269,7 +281,13 @@ package {{project.short_name|lower}}_reg_pkg;
        {% if reg.ram_size %}
        rmap.add_mem({{reg.token|lower}}, 'h{{"%04x" | format(reg.address)}}, "RW");
       {% else %}
+         {% if reg.dimension > 1 %}
+           {% for i in range(0, reg.dimension) %}
+       rmap.add_reg({{reg.token|lower}}[{{i}}], 'h{{"%04x" | format(reg.address + (i * (reg.width / 8)))}}, "RW");
+           {% endfor %}
+         {% else %}
        rmap.add_reg({{reg.token|lower}}, 'h{{"%04x" | format(reg.address)}}, "RW");
+         {% endif %}
       {% endif %}
     {%- endfor %}
        return rmap;
@@ -287,27 +305,42 @@ package {{project.short_name|lower}}_reg_pkg;
       end
 {% endif %}
 
-   {% for register in db.get_all_registers() %}
-      {% if register.ram_size %}
-        {% if use_new %}
+{% for register in db.get_all_registers() %}
+{%   if register.ram_size %}
+{%     if use_new %}
       {{register.token|lower}} = new("{{register.token|lower}}");
-        {% else %}
+{%     else %}
       {{register.token|lower}} = mem_{{db.set_name|lower}}_{{register.token|lower}}::type_id::create("{{register.token|lower}}");
-        {% endif %}
+{%     endif %}
       {{register.token|lower}}.configure(this);
-      {% else %}
-        {% if use_new %}
+{%   else %}
+{%     if register.dimension > 1 %}
+      foreach ({{register.token|lower}}[i]) begin
+{%       if use_new %}
+         {{register.token|lower}} = new("{{register.token|lower}}");
+{%       else %}
+         {{register.token|lower}}[i] = reg_{{db.set_name|lower}}_{{register.token|lower}}::type_id::create("{{register.token|lower}}");
+{%       endif %}
+         {{register.token|lower}}[i].configure(this);
+         {{register.token|lower}}[i].build();
+{%       for field in register.get_bit_fields() %}
+         {{register.token|lower}}[i].add_hdl_path_slice($sformatf("r%02x_{{fix_name(field)}}", {{register.address}} + (i * {{register.width / 8}})), {{field.lsb}}, {{field.width}});
+{%       endfor %}
+      end
+{%     else %}
+{%       if use_new %}
       {{register.token|lower}} = new("{{register.token|lower}}");
-        {% else %}
+{%       else %}
       {{register.token|lower}} = reg_{{db.set_name|lower}}_{{register.token|lower}}::type_id::create("{{register.token|lower}}");
-        {% endif %}
+{%       endif %}
       {{register.token|lower}}.configure(this);
       {{register.token|lower}}.build();
-      {% for field in register.get_bit_fields() %}
+{%       for field in register.get_bit_fields() %}
       {{register.token|lower}}.add_hdl_path_slice("r{{'%02x' | format(register.address)}}_{{fix_name(field)}}", {{field.lsb}}, {{field.width}});
-      {% endfor %}
-      {% endif %}
-   {% endfor %}
+{%       endfor %}
+{%     endif %}
+{%   endif %}
+{% endfor %}
 
    {% if grp_map|length == 1 %}
      {% for map in grp_map %}

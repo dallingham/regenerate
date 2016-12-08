@@ -90,7 +90,7 @@ class IpXactWriter(WriterBase):
         
         dirpath = os.path.dirname(__file__)
 
-        template = Template(file(os.path.join(dirpath, "templates", "ipxact.templ")).read(), 
+        template = Template(file(os.path.join(dirpath, "templates", "ipxact.template")).read(), 
                             trim_blocks=True,
                             lstrip_blocks=True)
 

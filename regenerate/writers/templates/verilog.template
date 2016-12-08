@@ -1,0 +1,293 @@
+// Author: Don Allingham
+// Block: test
+//
+// ----------------------------------------------------------------------
+// Functional Description
+//   Provides a block of registers and their associated input and output
+//   signals
+// ----------------------------------------------------------------------
+//
+// Copyright 2016 Don Allingham. All rights reserved.
+//
+//
+//
+module test
+   (
+    input logic          CLK,
+    input logic          RSTn,
+    input logic          WR,
+    input logic          RD,
+    input logic [{{(db.data_bus_width/8)|int - 1}}:0] BE,
+    input logic [{{db.address_bus_width-1}}:{{LOWER_BIT[db.data_bus_width]}}] ADDR,
+    input logic [{{db.data_bus_width-1}}:0] WDATA,
+{% for reg in db.get_all_registers() %}
+{%   for field in reg.get_bit_fields() %}
+{%     set ci = cell_info[field.field_type] %}
+{%     if ci[2] -%}
+{%       if reg.dimension > 1 %}
+    input logic           {{field.control_signal}}[{{reg.dimension}}],
+{%       else %}
+    input logic           {{field.control_signal}},
+{%       endif %}
+{%-    endif -%}
+{%-  endfor -%}
+{% endfor %}
+{% for reg in db.get_all_registers() %}
+{%   for field in reg.get_bit_fields() %}
+{%     if field.input_signal != "" -%}
+{%       if field.msb == field.lsb %}
+{%         if reg.dimension > 1 %}
+    input logic          {{field.input_signal}}[{{reg.dimension}}],
+{%         else %}
+    input logic          {{field.input_signal}},
+{%         endif %}
+{%       else %}
+{%         if reg.dimension > 1 %}
+    input logic [{{field.msb}}:{{field.lsb}}] {{field.input_signal}}[{{reg.dimension}}],
+{%         else %}
+    input logic [{{field.msb}}:{{field.lsb}}] {{field.input_signal}},
+{%         endif %}
+{%       endif %}
+{%-    endif -%}
+{%-  endfor -%}
+{% endfor %}
+{% for reg in db.get_all_registers() %}
+{%   for field in reg.get_bit_fields() %}
+{%     set ci = cell_info[field.field_type] %}
+{%     if ci[3] -%}
+{%       if reg.dimension > 1 %}
+    output logic          {{field.output_signal}}_1S[{{reg.dimension}}],
+{%       else %}
+    output logic          {{field.output_signal}}_1S,
+{%       endif %}
+{%-    endif -%}
+{%-  endfor -%}
+{% endfor %}
+{% for reg in db.get_all_registers() %}
+{%   for field in reg.get_bit_fields() %}
+{%     if field.use_output_enable and field.output_signal != "" -%}
+{%       if field.msb == field.lsb %}
+{%         if reg.dimension > 1 %}
+    output logic          {{field.output_signal}}[{{reg.dimension}}],
+{%         else %}
+    output logic          {{field.output_signal}},
+{%         endif %}
+{%       else %}
+{%         if reg.dimension > 1 %}
+    output logic [{{field.msb}}:{{field.lsb}}] {{field.output_signal}}[{{reg.dimension}}],
+{%         else %}
+    output logic [{{field.msb}}:{{field.lsb}}] {{field.output_signal}},
+{%         endif %}
+{%       endif %}
+{%-    endif -%}
+{%-  endfor -%}
+{% endfor %}
+
+    output logic [{{db.data_bus_width-1}}:0] RDATA,
+    output logic          ACK
+   );
+
+/*
+ * Register Declarations
+ */
+{% for addr, val in word_fields|dictsort %}
+{%   for (field, start_offset, stop_offset, start_pos, stop_pos, faddr, reg) in val %}
+{%     if field.msb == field.lsb %}
+   logic r{{"%02x"|format(reg.address)}}_{{field.field_name|lower}};
+{%     else %}
+   logic [{{field.msb}}:{{field.lsb}}] r{{"%02x"|format(reg.address)}}_{{field.field_name|lower}};
+{%     endif %}
+{%     set ci = cell_info[field.field_type] %}
+{%     if ci[3] %}
+{%       for b in break_on_byte_boundaries(field.lsb, field.msb) %}
+   logic r{{"%02x"|format(reg.address)}}_{{field.field_name|lower}}_{{b[0]}}_1S;
+{%       endfor %}
+{%     endif %}
+{%   endfor %}
+{% endfor %}
+   logic prev_write;
+   logic prev_read;
+   logic [{{db.data_bus_width-1}}:0] mux_rdata;
+
+/*
+ * Address Selects
+ */
+
+{% for addr,val in word_fields|dictsort %}
+   wire write_r{{"%02x"|format(addr)}} = (~prev_write & WR) & (ADDR == {{db.address_bus_width - LOWER_BIT[db.data_bus_width]}}'h{{"%x"|format(rshift(addr, LOWER_BIT[db.data_bus_width]))}});
+{% endfor %}
+
+/*
+ * Output Assignments
+ */
+{% for addr, val in word_fields|dictsort %}
+{%   for (f, start_offset, stop_offset, start_pos, stop_pos, faddr, reg) in val %}
+{%     if cell_info[f.field_type][3] %}
+   assign {{f.output_signal}}_1S{% if reg.dimension >= 0 %}[{{reg.dimension}}]{% endif %} = {% for b in break_on_byte_boundaries(f.lsb, f.msb) -%}r{{"%02x"|format(reg.address)}}_{{f.field_name|lower}}_{{b[0]}}_1S{% if loop.last %};{% else %} | {% endif %}{% endfor %}
+
+{%     endif %}
+{%   endfor %}
+{% endfor %}
+{% for reg in db.get_all_registers() %}
+{%  for f in reg.get_bit_fields() %}
+{%    if f.use_output_enable and f.output_signal != "" %}
+   assign {{f.output_signal}} = r{{"%02x"|format(reg.address)}}_{{f.field_name|lower}};
+{%     endif %}
+{%   endfor %}
+{% endfor %}
+   assign RDATA = mux_rdata;
+
+{% for addr, val in word_fields|dictsort %}
+{%   for (field, start_offset, stop_offset, start_pos, stop_pos, faddr, reg) in val %}
+{% set ci = cell_info[field.field_type] %}
+/*------------------------------------------------------------------------------
+ *    Field       : {{field.field_name}}
+ *    Type        : {{ci[4]}}
+{%     if stop_pos == start_pos %}
+ *    Bit         : {{start_pos}}
+{% else %}
+ *    Bits        : {{stop_pos}}:{{start_pos}}
+{% endif %}
+ *    Register    : {{reg.register_name}}
+ *    Address     : {{"%08x"|format(reg.address)}}
+{%     if field.reset_type == 0 %}
+ *    Reset Value : {{field.width}}'h{{"%x"|format(field.reset_value)}}
+{%     elif field.reset_type == 1 %}
+ *    Reset Value : {{field.reset_input}}
+{%     else %}
+ *    Reset Value : {{field.reset_value}}
+{%     endif %}
+ *------------------------------------------------------------------------------
+ */
+{%   if field.field_type == 0 %}
+    assign r{{"%02x"|format(reg.address)}}_{{field.field_name|lower}} = {{full_reset_value(field)}};
+{%   elif field.field_type == 1 %}
+{%     if reg.dimension >= 0 %}
+    assign r{{"%02x"|format(reg.address)}}_{{field.field_name|lower}} = {{field.input_signal}}[{{reg.dimension}}];
+{%     else %}
+    assign r{{"%02x"|format(reg.address)}}_{{field.field_name|lower}} = {{field.input_signal}};
+{%     endif %}
+{%   else %}
+{%     for start, stop in break_on_byte_boundaries(field.lsb, field.msb) %}
+{%        set reg_start_bit = (reg.address * 8) % db.data_bus_width %}
+{%        set bus_start = start % db.data_bus_width + reg_start_bit %}
+{%        set bus_stop = stop % db.data_bus_width + reg_start_bit %}
+   {{db.module_name}}_{{ci[0]}}_reg
+     #(
+{%      if ci[5] %}
+       .WIDTH ({{stop - start + 1}}),
+{%      endif %}
+       .RVAL  ({{reset_value(field, start, stop)}})
+       )
+   r{{"%02x"|format(reg.address)}}_{{field.field_name|lower}}_{{start}}
+     (
+      .CLK    ({{db.clock_name}}),
+      .RSTn   ({{db.reset_name}}),
+{%      if ci[8] == False %}
+      .WE     (write_r{{"%02x"|format(addr)}}),
+{%        if bus_stop == bus_start %}
+      .DI     ({{db.write_data_name}}[{{bus_start}}]),
+{%        else %}
+      .DI     ({{db.write_data_name}}[{{bus_stop}}:{{bus_start}}]),
+{%        endif %}
+      .BE     ({{db.byte_strobe_name}}[{{(bus_start/8)|int}}]),
+{%      endif %}
+{%      if ci[7] %}
+      .RD     (read_r{{"%02x"|format(addr)}}),
+{%      endif %}
+{%      if ci[2] %}
+{%        if reg.dimension >= 0 %}
+      .LD     ({{field.control_signal}}[{{reg.dimension}}]),
+{%        else %}
+      .LD     ({{field.control_signal}}),
+{%        endif %}
+{%      endif %}
+{%      if ci[1] %}
+{%        if stop == start %}
+{%          if reg.dimension >= 0 %}
+      .IN     ({{field.input_signal}}[{{reg.dimension}}]),
+{%          else %}
+      .IN     ({{field.input_signal}}),
+{%          endif %}
+{%        else %}
+{%          if reg.dimension >= 0 %}
+      .IN     ({{field.input_signal}}[{{reg.dimension}}][{{stop}}:{{start}}]),
+{%          else %}
+      .IN     ({{field.input_signal}}[{{stop}}:{{start}}]),
+{%          endif %}
+{%        endif %}
+{%      endif %}
+{%      if ci[3] %}
+      .DO_1S  (r{{"%02x"|format(reg.address)}}_{{field.field_name|lower}}_{{start}}_1S),
+{%      endif %}
+{%      if stop == start %}
+      .DO     (r{{"%02x"|format(reg.address)}}_{{field.field_name|lower}})
+{%      else %}
+      .DO     (r{{"%02x"|format(reg.address)}}_{{field.field_name|lower}}[{{stop}}:{{start}}])
+{%      endif %}
+     );
+
+{%     endfor %}
+{%   endif %}
+{%   endfor %}
+{% endfor %}
+/*------------------------------------------------------------------------------
+ * Ensure that internal write is one clock wide
+ *------------------------------------------------------------------------------
+ */
+   always_ff @(posedge CLK or negedge RSTn) begin
+     if (~RSTn) begin
+        prev_write <= 1'b0;
+        prev_read  <= 1'b0;
+        ACK <= 1'b0;
+     end else begin
+        prev_write <= WR;
+        prev_read  <= RD;
+        ACK <= (~prev_write & WR) | (~prev_read & RD);
+     end
+   end
+
+/*------------------------------------------------------------------------------
+ *
+ * Register Read Output Assignments
+ *
+ *------------------------------------------------------------------------------
+ */
+{% for addr, val in word_fields|dictsort %}
+{%-   set last = db.data_bus_width - 1 -%}
+   wire [{{db.data_bus_width-1}}:0] r{{"%02x"|format(addr)}} = {
+{%   for (field, start_offset, stop_offset, start_pos, stop_pos, faddr, reg) in val|reverse %}{%    set width = stop_pos - start_pos + 1 %}
+{%    if start_offset + width < last %}
+                  {{last - (start_offset + width) + 1}}'b0,
+{%    endif %}
+{%     if start_pos == stop_pos %}
+                  r{{"%02x"|format(reg.address)}}_{{field.field_name|lower}}{% if start_pos + start_offset != 0 %},{% endif %}
+{%     else %}
+                  r{{"%02x"|format(reg.address)}}_{{field.field_name|lower}}[{{stop_pos}}:{{start_pos}}]{% if start_pos + start_offset != 0 %},{% endif %}
+{%     endif %}
+
+{%     set last = start_offset - 1 %}
+{%   endfor %}
+                  };
+{% endfor %}
+
+   always_ff @(posedge CLK or negedge RSTn) begin
+      if (~RSTn) begin
+         mux_rdata <= 64'h0;
+      end else begin
+        if (RD) begin
+           unique case (ADDR)
+{% for addr, val in word_fields|dictsort %}
+              {{db.address_bus_width - LOWER_BIT[db.data_bus_width]}}'h{{"%x"|format(rshift(addr, LOWER_BIT[db.data_bus_width]))}}: mux_rdata <= r{{"%02x"|format(addr)}};
+{% endfor %}
+              default: mux_rdata <= {{db.data_bus_width}}'h0;
+           endcase
+         end else begin
+            mux_rdata <= {{db.data_bus_width}}'h0;
+         end
+      end
+   end
+
+endmodule : test
+
+

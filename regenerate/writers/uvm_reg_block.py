@@ -145,7 +145,7 @@ class UVMRegBlockRegisters(WriterBase):
         name = self._project.short_name
         dirpath = os.path.dirname(__file__)
 
-        template = Template(file(os.path.join(dirpath, "templates", "regs_template.sv")).read(), 
+        template = Template(file(os.path.join(dirpath, "templates", "uvm_reg_block.template")).read(), 
                             trim_blocks=True,
                             lstrip_blocks=True)
 

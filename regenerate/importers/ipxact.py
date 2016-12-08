@@ -114,6 +114,10 @@ class IpXactParser(object):
         if self._reg:
             self._reg.address = int(text, 0) + self._block_offset
 
+    def end_dim(self, text):
+        if self._reg:
+            self._reg.dimension = int(text, 0)
+
     def end_addressBlock(self, text):
         self._block_offset = self._block_list.pop()
 
