@@ -1,33 +1,37 @@
-// Author: Don Allingham
-// Block: test
+// Author: {{db.owner}}
+// Block: {{db.module_name}}
 //
 // ----------------------------------------------------------------------
 // Functional Description
+//
 //   Provides a block of registers and their associated input and output
 //   signals
 // ----------------------------------------------------------------------
 //
-// Copyright 2016 Don Allingham. All rights reserved.
+// Copyright 2016 {{db.organization}}. All rights reserved.
 //
 //
 //
-module test
+module {{db.module_name}}
    (
-    input logic          {{db.clock_name}},
-    input logic          {{db.reset_name}},
-    input logic          {{db.write_strobe_name}},
-    input logic          {{db.read_strobe_name}},
-    input logic [{{(db.data_bus_width/8)|int - 1}}:0] {{db.byte_strobe_name}},
-    input logic [{{db.address_bus_width-1}}:{{LOWER_BIT[db.data_bus_width]}}] {{db.address_bus_name}},
-    input logic [{{db.data_bus_width-1}}:0] {{db.write_data_name}},
+    {{input_logic}}          {{db.clock_name}},
+    {{input_logic}}          {{db.reset_name}},
+    {{input_logic}}          {{db.write_strobe_name}},
+    {{input_logic}}          {{db.read_strobe_name}},
+{% set text = "[%d:0]"|format(((db.data_bus_width/8)|int) - 1) %}
+    {{input_logic}} {{"%-8s"|format(text)}} {{db.byte_strobe_name}},
+{% set text = "[%d:%d]"|format(((db.address_bus_width-1)|int), LOWER_BIT[db.data_bus_width]) %}
+    {{input_logic}} {{"%-8s"|format(text)}} {{db.address_bus_name}},
+{% set text = "[%d:0]"|format(((db.data_bus_width)|int) - 1) %}
+    {{input_logic}} {{"%-8s"|format(text)}} {{db.write_data_name}},
 {% for reg in db.get_all_registers() %}
 {%   for field in reg.get_bit_fields() %}
 {%     set ci = cell_info[field.field_type] %}
 {%     if ci[2] -%}
 {%       if reg.dimension > 1 %}
-    input logic           {{field.control_signal}}[{{reg.dimension}}],
+    {{input_logic}}          {{field.control_signal}}[{{reg.dimension}}],
 {%       else %}
-    input logic           {{field.control_signal}},
+    {{input_logic}}          {{field.control_signal}},
 {%       endif %}
 {%-    endif -%}
 {%-  endfor -%}
@@ -37,15 +41,16 @@ module test
 {%     if field.input_signal != "" -%}
 {%       if field.msb == field.lsb %}
 {%         if reg.dimension > 1 %}
-    input logic          {{field.input_signal}}[{{reg.dimension}}],
+    {{input_logic}}          {{field.input_signal}}[{{reg.dimension}}],
 {%         else %}
-    input logic          {{field.input_signal}},
+    {{input_logic}}          {{field.input_signal}},
 {%         endif %}
 {%       else %}
+{%         set text = "[%d:%d]"|format(field.msb, field.lsb) %}
 {%         if reg.dimension > 1 %}
-    input logic [{{field.msb}}:{{field.lsb}}] {{field.input_signal}}[{{reg.dimension}}],
+    {{input_logic}} {{"%-8s"|format(text)}} {{field.input_signal}}[{{reg.dimension}}],
 {%         else %}
-    input logic [{{field.msb}}:{{field.lsb}}] {{field.input_signal}},
+    {{input_logic}} {{"%-8s"|format(text)}} {{field.input_signal}},
 {%         endif %}
 {%       endif %}
 {%-    endif -%}
@@ -56,9 +61,9 @@ module test
 {%     set ci = cell_info[field.field_type] %}
 {%     if ci[3] -%}
 {%       if reg.dimension > 1 %}
-    output logic          {{field.output_signal}}_1S[{{reg.dimension}}],
+    {{output_logic}}          {{field.output_signal}}_1S[{{reg.dimension}}],
 {%       else %}
-    output logic          {{field.output_signal}}_1S,
+    {{output_logic}}          {{field.output_signal}}_1S,
 {%       endif %}
 {%-    endif -%}
 {%-  endfor -%}
@@ -68,23 +73,25 @@ module test
 {%     if field.use_output_enable and field.output_signal != "" -%}
 {%       if field.msb == field.lsb %}
 {%         if reg.dimension > 1 %}
-    output logic          {{field.output_signal}}[{{reg.dimension}}],
+    {{output_logic}}          {{field.output_signal}}[{{reg.dimension}}],
 {%         else %}
-    output logic          {{field.output_signal}},
+    {{output_logic}}          {{field.output_signal}},
 {%         endif %}
 {%       else %}
+{%         set text = "[%d:%d]"|format(field.msb, field.lsb) %}
 {%         if reg.dimension > 1 %}
-    output logic [{{field.msb}}:{{field.lsb}}] {{field.output_signal}}[{{reg.dimension}}],
+    {{output_logic}} {{"%-8s"|format(text)}} {{field.output_signal}}[{{reg.dimension}}],
 {%         else %}
-    output logic [{{field.msb}}:{{field.lsb}}] {{field.output_signal}},
+    {{output_logic}} {{"%-8s"|format(text)}} {{field.output_signal}},
 {%         endif %}
 {%       endif %}
 {%-    endif -%}
 {%-  endfor -%}
 {% endfor %}
 
-    output logic [{{db.data_bus_width-1}}:0] {{db.read_data_name}},
-    output logic          {{db.acknowledge_name}}
+{% set text = "[%d:0]"|format(db.data_bus_width-1) %}
+    {{output_logic}} {{"%-8s"|format(text)}} {{db.read_data_name}},
+    {{output_logic}}          {{db.acknowledge_name}}
    );
 
 /*
@@ -93,21 +100,21 @@ module test
 {% for addr, val in word_fields|dictsort %}
 {%   for (field, start_offset, stop_offset, start_pos, stop_pos, faddr, reg) in val %}
 {%     if field.msb == field.lsb %}
-   logic r{{"%02x"|format(reg.address)}}_{{field.field_name|lower}};
+   {{reg_type}} r{{"%02x"|format(reg.address)}}_{{field.field_name|lower}};
 {%     else %}
-   logic [{{field.msb}}:{{field.lsb}}] r{{"%02x"|format(reg.address)}}_{{field.field_name|lower}};
+   {{reg_type}} [{{field.msb}}:{{field.lsb}}] r{{"%02x"|format(reg.address)}}_{{field.field_name|lower}};
 {%     endif %}
 {%     set ci = cell_info[field.field_type] %}
 {%     if ci[3] %}
 {%       for b in break_on_byte_boundaries(field.lsb, field.msb) %}
-   logic r{{"%02x"|format(reg.address)}}_{{field.field_name|lower}}_{{b[0]}}_1S;
+   {{reg_type}} r{{"%02x"|format(reg.address)}}_{{field.field_name|lower}}_{{b[0]}}_1S;
 {%       endfor %}
 {%     endif %}
 {%   endfor %}
 {% endfor %}
-   logic prev_write;
-   logic prev_read;
-   logic [{{db.data_bus_width-1}}:0] mux_rdata;
+   {{reg_type}} prev_write;
+   {{reg_type}} prev_read;
+   {{reg_type}} [{{db.data_bus_width-1}}:0] mux_rdata;
 
 /*
  * Address Selects
@@ -234,8 +241,8 @@ module test
  * Ensure that internal write is one clock wide
  *------------------------------------------------------------------------------
  */
-   always_ff @(posedge {{db.clock_name}} or negedge {{db.reset_name}}) begin
-     if (~{{db.reset_name}}) begin
+   {{always}} @(posedge {{db.clock_name}} or {{reset_edge}} {{db.reset_name}}) begin
+     if ({{reset_op}}{{db.reset_name}}) begin
         prev_write <= 1'b0;
         prev_read  <= 1'b0;
         {{db.acknowledge_name}} <= 1'b0;
@@ -270,8 +277,8 @@ module test
                   };
 {% endfor %}
 
-   always_ff @(posedge {{db.clock_name}} or negedge {{db.reset_name}}) begin
-      if (~{{db.reset_name}}) begin
+   {{always}} @(posedge {{db.clock_name}} or {{reset_edge}} {{db.reset_name}}) begin
+      if ({{reset_op}}{{db.reset_name}}) begin
          mux_rdata <= 64'h0;
       end else begin
         if ({{db.read_strobe_name}}) begin
@@ -287,6 +294,6 @@ module test
       end
    end
 
-endmodule : test
+endmodule
 
 

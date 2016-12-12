@@ -108,6 +108,11 @@ class Verilog(WriterBase):
     def __init__(self, project, dbase):
         WriterBase.__init__(self, project, dbase)
 
+        self.input_logic = "input       "
+        self.output_logic = "output      "
+        self.always = "always"
+        self.reg_type = "reg"
+
         self._cell_info = {}
         for i in TYPES:
             self._cell_info[i.type] = (
@@ -182,6 +187,9 @@ class Verilog(WriterBase):
 
         word_fields = self.__generate_group_list(reglist, self._data_width)
         
+        reset_edge = "posedge" if self._dbase.reset_active_level else "negedge"
+        reset_op = "" if self._dbase.reset_active_level else "~"
+
         with open(filename, "w") as of:
             of.write(template.render(db = self._dbase,
                                      rshift = rshift,
@@ -191,6 +199,12 @@ class Verilog(WriterBase):
                                      sorted_regs = sorted(reglist),
                                      full_reset_value = full_reset_value,
                                      reset_value = reset_value,
+                                     input_logic = self.input_logic,
+                                     output_logic = self.output_logic,
+                                     always = self.always,
+                                     reset_edge = reset_edge,
+                                     reset_op = reset_op,
+                                     reg_type = self.reg_type,
                                      LOWER_BIT = LOWER_BIT))
             self.write_register_modules(of)
 
@@ -236,7 +250,16 @@ class Verilog(WriterBase):
 
 
 class SystemVerilog(Verilog):
-    pass
+
+    def __init__(self, project, dbase):
+        Verilog.__init__(self, project, dbase)
+        self.input_logic = "input logic "
+        self.output_logic = "output logic"
+        self.always = "always_ff"
+        self.reg_type = "logic"
 
 class Verilog2001(Verilog):
-    pass
+
+    def __init(self, project, dbase):
+        Verilog.__init__(self, project, dbase)
+

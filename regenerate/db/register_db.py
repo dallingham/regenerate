@@ -64,6 +64,7 @@ class RegisterDb(object):
         self.data_bus_width = 32
         self.address_bus_width = 12
         self.owner = ""
+        self.organization = ""
         self.byte_strobe_active_level = 1
         self.overview_text = ""
         self.coverage = True

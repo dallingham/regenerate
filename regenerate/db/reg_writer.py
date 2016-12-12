@@ -58,9 +58,9 @@ class RegWriter(object):
             array = "reg"
         else:
             array = "mem"
-        ofile.write('<module name="%s" title="%s" owner="%s" array="%s" coverage="%d" internal="%d">\n' %
+        ofile.write('<module name="%s" title="%s" owner="%s" organization="%s" array="%s" coverage="%d" internal="%d">\n' %
                     (self.dbase.module_name, self.dbase.descriptive_title,
-                     self.dbase.owner, array, int(self.dbase.coverage),
+                     self.dbase.owner, self.dbase.organization, array, int(self.dbase.coverage),
                      int(self.dbase.internal_only)))
 
         ofile.write('  <base addr_width="%d" ' % self.dbase.address_bus_width)

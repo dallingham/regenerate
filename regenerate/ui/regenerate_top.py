@@ -139,6 +139,7 @@ class MainWindow(BaseWindow):
         self.__hide = self.__builder.get_object('hide_doc')
         self.__module_entry_obj = self.__builder.get_object('module')
         self.__owner_entry_obj = self.__builder.get_object('owner')
+        self.__org_entry_obj = self.__builder.get_object('organization')
         self.__title_entry_obj = self.__builder.get_object('title')
         self.__warn_bit_list = self.__builder.get_object('reg_bit_warn')
         self.__warn_reg_descr = self.__builder.get_object('reg_descr_warn')
@@ -1320,6 +1321,7 @@ class MainWindow(BaseWindow):
         """
         self.__module_entry_obj.set_text(self.dbase.module_name)
         self.__owner_entry_obj.set_text(self.dbase.owner)
+        self.__org_entry_obj.set_text(self.dbase.organization)
         self.__title_entry_obj.set_text(self.dbase.descriptive_title)
 
         self.__overview_buf.set_text(self.dbase.overview_text)
@@ -1463,6 +1465,10 @@ class MainWindow(BaseWindow):
 
     def on_owner_changed(self, obj):
         self.dbase.owner = obj.get_text()
+        self.set_modified()
+
+    def on_organization_changed(self, obj):
+        self.dbase.organization = obj.get_text()
         self.set_modified()
 
     def __button_toggle(self, attr, obj):

@@ -131,6 +131,8 @@ class RegParser(object):
         self.__db.module_name = attrs['name']
         if 'owner' in attrs:
             self.__db.owner = attrs['owner']
+        if 'organization' in attrs:
+            self.__db.organization = attrs['organization']
         self.__db.internal_only = bool(int(attrs.get('internal', "0")))
         if 'id' in attrs:
             self.save_id = cnv_str(attrs, 'id').upper()
