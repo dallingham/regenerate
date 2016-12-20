@@ -24,10 +24,10 @@ import gtk
 from columns import EditableColumn, ToggleColumn, ComboMapColumn
 from regenerate.db import LOGGER, AddrMapData
 
-_BITS8 = "8-bits"
-_BITS16 = "16-bits"
-_BITS32 = "32-bits"
-_BITS64 = "64-bits"
+_BITS8 = "8 bits"
+_BITS16 = "16 bits"
+_BITS32 = "32 bits"
+_BITS64 = "64 bits"
 
 SIZE2STR = ((_BITS8, 1), (_BITS16, 2), (_BITS32, 4), (_BITS64, 8))
 
@@ -327,5 +327,5 @@ class AddrMapList(object):
         name = template
         while name in current_maps:
             name = "{0}{1}".format(template, index)
-            index = index + 1
+            index += 1
         return name

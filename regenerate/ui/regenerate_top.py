@@ -65,16 +65,6 @@ VALID_SIGNAL = re.compile("^[A-Za-z][A-Za-z0-9_]*$")
 VALID_BITS = re.compile("^\s*[\(\[]?(\d+)(\s*[-:]\s*(\d+))?[\)\]]?\s*$")
 REGNAME = re.compile("^(.*)(\d+)(.*)$")
 
-_BITS8 = "8-bits"
-_BITS16 = "16-bits"
-_BITS32 = "32-bits"
-_BITS64 = "64-bits"
-
-SIZE2STR = ((_BITS8, 1), (_BITS16, 2), (_BITS32, 4), (_BITS64, 8))
-
-INT2SIZE = dict((_i[1], _i[0]) for _i in SIZE2STR)
-STR2SIZE = dict((_i[0], _i[1]) for _i in SIZE2STR)
-
 
 class DbaseStatus(object):
     """
@@ -400,10 +390,9 @@ class MainWindow(BaseWindow):
         the numerical value.
         """
         store = gtk.ListStore(str, int)
-        store.append(row=["8 bits", 8])
-        store.append(row=["16 bits", 16])
-        store.append(row=["32 bits", 32])
-        store.append(row=["64 bits", 64])
+        for i in (8, 16, 32, 64):
+            store.append(row=["{0} bits".format(i), i])
+
         self.__data_width_obj.set_model(store)
         cell = gtk.CellRendererText()
         self.__data_width_obj.pack_start(cell, True)
@@ -420,31 +409,37 @@ class MainWindow(BaseWindow):
         self.__bit_model[path][col] = model.get_value(node, 0)
         field = self.__bit_model.get_bitfield_at_path(path)
         if col == BitModel.TYPE_COL:
-            field.field_type = model.get_value(node, 1)
-            register = self.__reglist_obj.get_selected_register()
-            if not field.output_signal:
-                field.output_signal = "%s_%s" % (register.token, field.field_name)
-
-            if TYPE_ENB[field.field_type][0] and not field.input_signal:
-                field.input_signal = "%s_%s_IN" % (register.token, field.field_name)
-
-            if TYPE_ENB[field.field_type][1] and not field.control_signal:
-                field.control_signal = "%s_%s_LD" % (register.token, field.field_name)
+            self.__update_type_info(field, model, path, node)
         elif col == BitModel.RESET_TYPE_COL:
-            field.reset_type = model.get_value(node, 1)
-            if field.reset_type == BitField.RESET_NUMERIC:
-                val = reset_value(field)
-                self.__bit_model[path][BitModel.RESET_COL] = val
-            elif field.reset_type == BitField.RESET_INPUT:
-                if field.reset_input == "":
-                    field.reset_input = "%s_RST" % field.field_name
-                self.__bit_model[path][BitModel.RESET_COL] = field.reset_input
-            else:
-                if field.reset_parameter == "":
-                    field.reset_parameter = "pRST_%s" % field.field_name
-                self.__bit_model[path][BitModel.RESET_COL] = field.reset_parameter
-
+            self.__update_reset_field(field, model, path, node)
         self.set_modified()
+
+    def __update_type_info(self, field, model, path, node):
+        field.field_type = model.get_value(node, 1)
+        register = self.__reglist_obj.get_selected_register()
+
+        if not field.output_signal:
+            field.output_signal = "%s_%s" % (register.token, field.field_name)
+
+        if TYPE_ENB[field.field_type][0] and not field.input_signal:
+            field.input_signal = "%s_%s_IN" % (register.token, field.field_name)
+
+        if TYPE_ENB[field.field_type][1] and not field.control_signal:
+            field.control_signal = "%s_%s_LD" % (register.token, field.field_name)
+
+    def __update_reset_field(self, field, model, path, node):
+        field.reset_type = model.get_value(node, 1)
+        if field.reset_type == BitField.RESET_NUMERIC:
+            val = reset_value(field)
+            self.__bit_model[path][BitModel.RESET_COL] = val
+        elif field.reset_type == BitField.RESET_INPUT:
+            if field.reset_input == "":
+                field.reset_input = "%s_RST" % field.field_name
+            self.__bit_model[path][BitModel.RESET_COL] = field.reset_input
+        else:
+            if field.reset_parameter == "":
+                field.reset_parameter = "pRST_%s" % field.field_name
+            self.__bit_model[path][BitModel.RESET_COL] = field.reset_parameter
 
     def __bit_update_bits(self, field, path, new_text):
         """
@@ -459,17 +454,17 @@ class MainWindow(BaseWindow):
         match = VALID_BITS.match(new_text)
         if match:
             groups = match.groups()
+            stop = int(groups[0])
+
             if groups[2]:
-                stop = int(groups[0])
                 start = int(groups[2])
-                if stop != field.msb or start != field.lsb:
-                    field.msb, field.lsb = stop, start
-                    self.set_modified()
             else:
-                start = int(groups[0])
-                if start != field.msb or start != field.lsb:
-                    field.msb, field.lsb = start, start
-                    self.set_modified()
+                start = stop
+
+            if stop != field.msb or stop != field.lsb:
+                field.msb, field.lsb = stop, stop
+                self.set_modified()
+
             self.__bit_model[path][BitModel.BIT_COL] = bits(field)
             self.__bit_model[path][BitModel.SORT_COL] = field.start_position
 
