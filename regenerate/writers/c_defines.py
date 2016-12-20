@@ -20,7 +20,7 @@
 CWriter - Writes out C defines representing the register addresses
 """
 
-from writer_base import WriterBase
+from writer_base import WriterBase, ExportInfo
 from regenerate.extras import full_token, in_groups
 import os
 
@@ -100,3 +100,9 @@ class CDefines(WriterBase):
 
             for line in TRAILER:
                 self._ofile.write('%s\n' % line.replace('$M$', self._module))
+
+
+EXPORTERS = [
+    (WriterBase.TYPE_BLOCK, ExportInfo(CDefines, ("Header files", "C Source"), 
+                                       "C header files", ".h", 'headers-c'))
+    ]

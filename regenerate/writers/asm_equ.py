@@ -20,7 +20,7 @@
 EquWriter - Writes out Assembler defines (based off the GNU assembler)
 """
 
-from regenerate.writers.writer_base import WriterBase
+from regenerate.writers.writer_base import WriterBase, ExportInfo
 
 
 class AsmEqu(WriterBase):
@@ -58,3 +58,8 @@ class AsmEqu(WriterBase):
                            self._offset)
         self._ofile.write('\n')
         self._ofile.close()
+
+EXPORTERS = [
+    (WriterBase.TYPE_BLOCK, ExportInfo(AsmEqu, ("Header files", "Assembler Source"),
+                                       "Assembler files", ".s", 'headers-asm'))
+    ]

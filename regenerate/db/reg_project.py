@@ -59,6 +59,7 @@ class RegProject(object):
         self._addr_map_grps = {}
         self._exports = {}
         self._project_exports = []
+        self._group_exports = {}
         self._token_list = []
         self._modified = False
         self.path = path
@@ -126,6 +127,12 @@ class RegProject(object):
         """
         return tuple(self._project_exports)
 
+    def get_group_exports(self, name):
+        """
+        Returns the export group list, returns a read-only tuple
+        """
+        return tuple(self._group_exports.get(name, []))
+
     def append_to_export_list(self, path, option, dest):
         """
         For internal use only.
@@ -166,6 +173,18 @@ class RegProject(object):
         self._modified = True
         self._project_exports.append((option, dest))
 
+    def append_to_group_export_list(self, group, option, dest):
+        """
+        Adds a export to the group export list. Group exporters operation
+        on the entire group, not just a specific register database (XML file)
+
+        path - path to the the register XML file. Converted to a relative path
+        option - the chosen export option (exporter)
+        dest - destination output name
+        """
+        self._modified = True
+        self._group_exports[group].append((option, dest))
+
     def add_to_project_export_list(self, option, dest):
         """
         Adds a export to the project export list. Project exporters operation
@@ -178,6 +197,19 @@ class RegProject(object):
         self._modified = True
         dest = os.path.relpath(dest, os.path.dirname(self.path))
         self._project_exports.append((option, dest))
+
+    def add_to_group_export_list(self, group, option, dest):
+        """
+        Adds a export to the group export list. Group exporters operation
+        on the entire group, not just a specific register database (XML file)
+
+        path - path to the the register XML file. Converted to a relative path
+        option - the chosen export option (exporter)
+        dest - destination output name
+        """
+        self._modified = True
+        dest = os.path.relpath(dest, os.path.dirname(self.path))
+        self._group_exports[group].append((option, dest))
 
     def remove_from_export_list(self, path, option, dest):
         """
@@ -193,6 +225,13 @@ class RegProject(object):
         """
         self._modified = True
         self._project_exports.remove((option, dest))
+
+    def remove_from_group_export_list(self, group, option, dest):
+        """
+        Removes the export from the group export list
+        """
+        self._modified = True
+        self._group_exports[group].remove((option, dest))
 
     def get_register_set(self):
         """
@@ -230,6 +269,7 @@ class RegProject(object):
         Adds a new grouping to the grouping list
         """
         self._modified = True
+        self._group_exports[group_data.name] = []
         self._groupings.append(group_data)
 
     def _add_to_grouping_list(self, name, start, hdl, repeat, repeat_offset):

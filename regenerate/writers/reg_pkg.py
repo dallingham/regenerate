@@ -22,7 +22,7 @@ Actual program. Parses the arguments, and initiates the main window
 """
 
 import os
-from regenerate.writers.writer_base import WriterBase
+from regenerate.writers.writer_base import WriterBase, ExportInfo
 
 
 def find_range(address, range_map):
@@ -57,3 +57,9 @@ class VerilogConstRegPackage(WriterBase):
 
         cfile.write('\nendpackage : %s\n' % base)
         cfile.close()
+
+EXPORTERS = [
+    (WriterBase.TYPE_PROJECT, ExportInfo(VerilogConstRegPackage,
+                                         ("Headers", "SystemVerilog Register Constants"),
+                                         "SystemVerilog files", ".sv", 'headers-system-verilog')),
+    ]

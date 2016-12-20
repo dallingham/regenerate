@@ -32,7 +32,7 @@ from xml.sax.saxutils import escape
 from cStringIO import StringIO
 
 from regenerate.settings.paths import ODTFILE, USERODTFILE
-from regenerate.writers.writer_base import WriterBase
+from regenerate.writers.writer_base import WriterBase, ExportInfo
 from regenerate.db import BitField
 from regenerate.db import RegisterDb
 
@@ -582,3 +582,4 @@ class StylesXmlParser(object):
             name = attrs.get('style:name')
             if name in self.format_list:
                 self.format_list.remove(name)
+

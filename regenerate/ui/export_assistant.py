@@ -23,23 +23,22 @@ import os
 
 class ExportAssistant(gtk.Assistant):
 
-    def __init__(self, project_name, optlist, register_sets, save_callback,
-                 run_callback):
+    def __init__(self, project_name, optlist, register_sets, group_names,
+                 save_callback):
         gtk.Assistant.__init__(self)
 
         self.project_name = project_name
         self.save_callback = save_callback
-        self.run_callback = run_callback
         self.connect('delete_event', self.cb_on_delete)
         self.connect('close', self.cb_close)
-        self.connect('cancel', self.cb_close)
+        self.connect('cancel', self.cb_cancel)
         self.connect('prepare', self.prepare)
         self.set_forward_page_func(self.forward)
         self.set_default_size(600, 500)
 
         self.page0 = self.build_page_0(optlist)
         self.page1 = self.build_page_1(register_sets)
-        self.page2 = self.build_page_2()
+        self.page2 = self.build_page_2(group_names)
         self.page3 = self.build_page_3()
         self.sum = self.build_summary()
 
@@ -49,7 +48,11 @@ class ExportAssistant(gtk.Assistant):
 
     def selected_export_is_project(self):
         model = self.export_combo.get_model()
-        return not model.get_value(self.export_combo.get_active_iter(), 1)
+        return model.get_value(self.export_combo.get_active_iter(), 1) == 2
+
+    def selected_export_is_group(self):
+        model = self.export_combo.get_model()
+        return model.get_value(self.export_combo.get_active_iter(), 1) == 1
 
     def selected_extension(self):
         model = self.export_combo.get_model()
@@ -63,12 +66,15 @@ class ExportAssistant(gtk.Assistant):
         self.set_page_complete(page, True)
         if page == self.sum:
             self.populate_summary()
-        if page == self.page2:
+        if page == self.page3:
             filename = self.choose.get_filename()
             if not filename:
-
                 if self.selected_export_is_project():
                     value = self.project_name
+                elif self.selected_export_is_group():
+                    model = self.register_combo.get_model()
+                    active_iter = self.register_combo.get_active_iter()
+                    value = model.get_value(active_iter, 0) + "_reg_decode"
                 else:
                     model = self.register_combo.get_model()
                     active_iter = self.register_combo.get_active_iter()
@@ -79,15 +85,23 @@ class ExportAssistant(gtk.Assistant):
 
     def forward(self, current_page):
         if current_page == 0:
-            value = self.selected_export_is_project()
-            if value:
+            if self.selected_export_is_project():
+                return 3
+            elif self.selected_export_is_group():
                 return 2
             else:
                 return 1
+        elif current_page == 1:
+            return 3
+        elif current_page == 2:
+            return 3
         else:
             return current_page + 1
 
     def cb_on_delete(self, widget, event):
+        self.destroy()
+
+    def cb_cancel(self, assistant):
         self.destroy()
 
     def cb_close(self, assistant):
@@ -100,10 +114,7 @@ class ExportAssistant(gtk.Assistant):
         sel_set = model.get_value(self.register_combo.get_active_iter(), 0)
 
         if filename:
-            if self.check_box.get_active():
-                self.save_callback(filename, sel_fmt, sel_set)
-            else:
-                self.run_callback(filename, sel_fmt, sel_set)
+            self.save_callback(filename, sel_fmt, sel_set)
         self.emit('delete_event', gtk.gdk.Event(gtk.gdk.NOTHING))
 
     def build_page_0(self, optlist):
@@ -114,7 +125,8 @@ class ExportAssistant(gtk.Assistant):
 
         label = gtk.Label("There are many different types of files that can "
                           "be exported. Some files are based on a selected "
-                          "register set, others are based on the entire "
+                          "register set, some are based on a group of "
+                          "registers, others are based on the entire "
                           "project.\n\nSelect the type file that you "
                           "wish to generate.")
         label.set_line_wrap(True)
@@ -125,7 +137,7 @@ class ExportAssistant(gtk.Assistant):
         self.export_combo.show()
 
         cell = gtk.CellRendererText()
-        model = gtk.ListStore(str, bool, str)
+        model = gtk.ListStore(str, int, str)
 
         for item in optlist:
             model.append(row=item)
@@ -172,7 +184,37 @@ class ExportAssistant(gtk.Assistant):
         self.set_page_type(table, gtk.ASSISTANT_PAGE_CONTENT)
         return table
 
-    def build_page_2(self):
+    def build_page_2(self, groups):
+        # Construct page 0
+        table = gtk.Table(3, 3)
+        table.set_border_width(3)
+        table.show()
+
+        label = gtk.Label("The selected export file is requires that "
+                          "you select a group as the source of "
+                          "your data.\n\n")
+        label.set_line_wrap(True)
+        label.show()
+        table.attach(label, 0, 3, 0, 1)
+
+        self.register_combo = gtk.ComboBox()
+        self.register_combo.show()
+        cell = gtk.CellRendererText()
+        model = gtk.ListStore(str)
+        for item in groups:
+            model.append(row=[item])
+        self.register_combo.pack_start(cell, True)
+        self.register_combo.add_attribute(cell, 'text', 0)
+        self.register_combo.set_active(0)
+        self.register_combo.set_model(model)
+        table.attach(self.register_combo, 1, 2, 1, 2, 0, gtk.EXPAND)
+
+        self.append_page(table)
+        self.set_page_title(table, 'Choose the group')
+        self.set_page_type(table, gtk.ASSISTANT_PAGE_CONTENT)
+        return table
+
+    def build_page_3(self):
         # Construct page 0
         self.choose = gtk.FileChooserWidget(
             action=gtk.FILE_CHOOSER_ACTION_SAVE)
@@ -184,38 +226,8 @@ class ExportAssistant(gtk.Assistant):
         self.set_page_type(self.choose, gtk.ASSISTANT_PAGE_CONTENT)
         return self.choose
 
-    def build_page_3(self):
-        # Construct page 0
-        table = gtk.Table(3, 3)
-        table.set_border_width(3)
-        table.show()
-
-        label = gtk.Label("You can add this export rule to the export "
-                          "builder. If you add it to the builder, you can "
-                          "rebuild this file directly from the builder "
-                          "without having to rerun this assistant. The "
-                          "builder will remember add the details, including "
-                          "the destination file, and will let you know when "
-                          "it needs to be rebuilt due to changes in the "
-                          "selected register set or project.")
-        label.set_line_wrap(True)
-        label.show()
-        table.attach(label, 0, 3, 0, 1)
-
-        self.check_box = gtk.CheckButton("Add this rule to the builder")
-        self.check_box.show()
-        table.attach(self.check_box, 1, 2, 1, 2, 0, gtk.EXPAND)
-
-        self.append_page(table)
-        self.set_page_title(table, 'Add to the builder')
-        self.set_page_type(table, gtk.ASSISTANT_PAGE_CONTENT)
-        return table
-
     def populate_summary(self):
-        if self.check_box.get_active():
-            msg = "Added to the builder"
-        else:
-            msg = "Immediately executed"
+        msg = "Added to the builder"
         destination = self.choose.get_filename()
         model = self.export_combo.get_model()
         export_iter = self.export_combo.get_active_iter()

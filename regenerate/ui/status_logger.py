@@ -27,7 +27,7 @@ class StatusHandler(logging.Handler):
     statusbar for 5 seconds
     """
 
-    SECONDS = 5
+    SECONDS = 8
 
     def __init__(self, status_obj):
         logging.Handler.__init__(self)

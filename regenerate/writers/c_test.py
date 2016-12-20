@@ -22,7 +22,7 @@ Actual program. Parses the arguments, and initiates the main window
 
 from regenerate.db import BitField
 from regenerate.db import GroupMapData
-from writer_base import WriterBase
+from writer_base import WriterBase, ExportInfo
 from regenerate.extras import find_addresses
 import string
 
@@ -325,3 +325,8 @@ class CTest(WriterBase):
         self.gen_test(cfile, self._dbase)
 
         cfile.close()
+
+EXPORTERS = [
+    (WriterBase.TYPE_BLOCK, ExportInfo(CTest, ("Test", "C program"),
+                                       "C files", ".c", 'test-c'))
+    ]

@@ -20,7 +20,7 @@
 Sdc - Writes out synthesis constraints
 """
 
-from writer_base import WriterBase  # IGNORE:W0403
+from writer_base import WriterBase, ExportInfo
 
 
 class Spyglass(WriterBase):
@@ -91,3 +91,8 @@ class Spyglass(WriterBase):
                     of.write(
                         "quasi_static -name %s\n" % signal_name)
         of.close()
+
+EXPORTERS = [
+    (WriterBase.TYPE_PROJECT, ExportInfo(Spyglass, ("Spyglass CDC Checking", "SGDC Constraints"),
+                                         "SGDC files", ".sgdc", 'spy-constraints'))
+]

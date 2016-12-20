@@ -24,6 +24,11 @@ WriterBase - base class for objects that product output from the
 import os
 import time
 from regenerate.settings.paths import INSTALL_PATH
+from collections import namedtuple
+
+
+ExportInfo = namedtuple("ExportInfo", ["obj_class", "type", "description",
+                                       "extension", "id"])
 
 if os.name == 'nt':
 
@@ -41,6 +46,9 @@ class WriterBase(object):  # IGNORE:R0921 - we know this is a abstract class
     """
     Writes the register information to the output file determined    by the derived class.
     """
+
+    (TYPE_BLOCK, TYPE_GROUP, TYPE_PROJECT) = range(3)
+
 
     def __init__(self, project, dbase):
         self._dbase = dbase

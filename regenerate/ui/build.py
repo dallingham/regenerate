@@ -25,17 +25,17 @@ import os
 import gtk
 from export_assistant import ExportAssistant
 from regenerate.settings.paths import INSTALL_PATH
-from regenerate.writers import (EXPORTERS, PRJ_EXPORTERS, EXP_CLASS, EXP_TYPE,
-                                EXP_ID, EXP_EXT)
+from regenerate.writers import EXPORTERS, PRJ_EXPORTERS, GRP_EXPORTERS
 from columns import EditableColumn, ToggleColumn
 from error_dialogs import ErrorMsg
 from base_window import BaseWindow
 
-(MDL_MOD, MDL_BASE, MDL_FMT, MDL_DEST, MDL_CLASS, MDL_DBASE) = range(6)
+(MDL_MOD, MDL_BASE, MDL_FMT, MDL_DEST, MDL_CLASS, MDL_DBASE, MDL_TYPE) = range(7)
 (OPTMAP_DESCRIPTION, OPTMAP_CLASS, OPTMAP_REGISTER_SET) = range(3)
 (MAPOPT_ID, MAPOPT_CLASS, MAPOPT_REGISTER_SET) = range(3)
 (DB_MAP_DBASE, DB_MAP_MODIFIED) = range(2)
 
+(LEVEL_BLOCK, LEVEL_GROUP, LEVEL_PROJECT) = range(3)
 
 class Build(BaseWindow):
     """
@@ -64,23 +64,27 @@ class Build(BaseWindow):
         Builds the maps used to map options. The __optmap maps an internal
         Type Identifier to:
 
-        (Document Description, Exporter Class, Register/Project)
+        (Document Description, Exporter Class, Register/Group/Project)
 
         The __mapopt maps the Document Description to:
 
-        (Type Identifier, Exporter Class, Register/Project)
+        (Type Identifier, Exporter Class, Register/Group/Project)
 
         """
         self.__optmap = {}
         self.__mapopt = {}
         for item in EXPORTERS:
-            value = "{0} ({1})".format(item[EXP_TYPE][0], item[EXP_TYPE][1])
-            self.__optmap[item[EXP_ID]] = (value, item[EXP_CLASS], True)
-            self.__mapopt[value] = (item[EXP_ID], item[EXP_CLASS], True)
+            value = "{0} ({1})".format(item.type[0], item.type[1])
+            self.__optmap[item.id] = (value, item.obj_class, LEVEL_BLOCK)
+            self.__mapopt[value] = (item.id, item.obj_class, LEVEL_BLOCK)
+        for item in GRP_EXPORTERS:
+            value = exp_type_fmt(item.type)
+            self.__optmap[item.id] = (value, item.obj_class, LEVEL_GROUP)
+            self.__mapopt[value] = (item.id, item.obj_class, LEVEL_GROUP)
         for item in PRJ_EXPORTERS:
-            value = exp_type_fmt(item[EXP_TYPE])
-            self.__optmap[item[EXP_ID]] = (value, item[EXP_CLASS], False)
-            self.__mapopt[value] = (item[EXP_ID], item[EXP_CLASS], False)
+            value = exp_type_fmt(item.type)
+            self.__optmap[item.id] = (value, item.obj_class, LEVEL_PROJECT)
+            self.__mapopt[value] = (item.id, item.obj_class, LEVEL_PROJECT)
 
     def __build_interface(self):
         """
@@ -94,7 +98,7 @@ class Build(BaseWindow):
         self.__build_list = self.__builder.get_object('buildlist')
         self.__builder.connect_signals(self)
         self.__add_columns()
-        self.__model = gtk.ListStore(bool, str, str, str, object, object)
+        self.__model = gtk.ListStore(bool, str, str, str, object, object, int)
         self.__build_list.set_model(self.__model)
         self.configure(self.__build_top)
         self.__build_top.show_all()
@@ -103,8 +107,10 @@ class Build(BaseWindow):
         """
         Adds the item to the list view.
         """
-        if self.__optmap[option][OPTMAP_REGISTER_SET]:
+        if self.__optmap[option][OPTMAP_REGISTER_SET] == LEVEL_BLOCK:
             self.__add_dbase_item_to_list(full_path, option, dest)
+        elif self.__optmap[option][OPTMAP_REGISTER_SET] == LEVEL_GROUP:
+            self.__add_group_item_to_list(full_path, option, dest)
         else:
             self.__add_prj_item_to_list(option, dest)
 
@@ -121,7 +127,7 @@ class Build(BaseWindow):
         mod = file_needs_rebuilt(local_dest, self.__dbmap, register_set)
         self.__modlist.append(mod)
         (fmt, cls, dbtype) = self.__optmap[option]
-        self.__model.append(row=[mod, "<project>", fmt, dest, cls, None])
+        self.__model.append(row=[mod, "<project>", fmt, dest, cls, None, 2])
 
     def __add_dbase_item_to_list(self, dbase_rel_path, option, dest):
         """
@@ -138,7 +144,19 @@ class Build(BaseWindow):
         self.__modlist.append(mod)
         (fmt, cls, rpttype) = self.__optmap[option]
         dbase = self.__dbmap[base][DB_MAP_DBASE].db
-        self.__model.append(row=(mod, base, fmt, dest, cls, dbase))
+        self.__model.append(row=(mod, base, fmt, dest, cls, dbase, 0))
+
+    def __add_group_item_to_list(self, group_name, option, dest):
+        """
+        Adds the specific item to the build list. We have to check to see
+        if the file needs rebuilt, depending on modification flags a file
+        timestamps.
+        """
+        #mod = file_needs_rebuilt(local_dest, self.__dbmap, [dbase_full_path])
+        mod = True
+        self.__modlist.append(mod)
+        (fmt, cls, rpttype) = self.__optmap[option]
+        self.__model.append(row=(mod, group_name, fmt, dest, cls, None, 1))
 
     def __populate(self):
         """
@@ -152,6 +170,12 @@ class Build(BaseWindow):
                     self.__add_dbase_item_to_list(path, option, dest)
                 except KeyError:
                     pass
+
+        for group_data in self.__prj.get_grouping_list():
+            for g in self.__prj.get_group_exports(group_data.name):
+                self.__add_group_item_to_list("%s (group)" % group_data.name,
+                                              g[1], g[0])
+
         for (option, dest) in self.__prj.get_project_exports():
             try:
                 self.__add_prj_item_to_list(option, dest)
@@ -251,12 +275,18 @@ class Build(BaseWindow):
         for item in [item for item in self.__model if item[MDL_MOD]]:
             writer_class = item[MDL_CLASS]
             dbase = item[MDL_DBASE]
+            rtype = item[MDL_TYPE]
             dest = os.path.abspath(
                 os.path.join(os.path.dirname(self.__prj.path), item[MDL_DEST]))
 
             try:
-                if dbase:
+                if rtype == 0:
                     gen = writer_class(self.__prj, dbase)
+                elif rtype == 1:
+                    db_list = [i[DB_MAP_DBASE].db
+                               for i in self.__dbmap.values()]
+                    grp = item[MDL_BASE].split()[0]
+                    gen = writer_class(self.__prj, grp, db_list)
                 else:
                     db_list = [i[DB_MAP_DBASE].db
                                for i in self.__dbmap.values()]
@@ -271,14 +301,14 @@ class Build(BaseWindow):
         Brings up the export assistant, to help the user build a new rule
         to add to the builder.
         """
-        optlist = [(exp_type_fmt(item[EXP_TYPE]), True, item[EXP_EXT])
-                   for item in EXPORTERS] + [(exp_type_fmt(item[EXP_TYPE]),
-                                              False, item[EXP_EXT])
-                                             for item in PRJ_EXPORTERS]
+        optlist = [(exp_type_fmt(item.type), 0, item.extension) for item in EXPORTERS] + \
+            [(exp_type_fmt(item.type), 1, item.extension) for item in GRP_EXPORTERS] + \
+            [(exp_type_fmt(item.type), 2, item.extension) for item in PRJ_EXPORTERS]
         reglist = [os.path.splitext(os.path.basename(i))[0]
                    for i in self.__prj.get_register_set()]
-        ExportAssistant(self.__prj.short_name, optlist, reglist,
-                        self.add_callback, self.run_callback)
+        groups = [group.name for group in self.__prj.get_grouping_list()]
+        ExportAssistant(self.__prj.short_name, optlist, reglist, groups,
+                        self.add_callback)
 
     def add_callback(self, filename, export_format, register_set):
         """
@@ -286,29 +316,16 @@ class Build(BaseWindow):
         to add the new item to the list view.
         """
         option = self.__mapopt[export_format][MAPOPT_ID]
-        if self.__mapopt[export_format][MAPOPT_REGISTER_SET]:
+        if self.__mapopt[export_format][MAPOPT_REGISTER_SET] == LEVEL_BLOCK:
             register_path = self.__base2path[register_set]
             self.__prj.add_to_export_list(register_path, option, filename)
+        elif self.__mapopt[export_format][MAPOPT_REGISTER_SET] == LEVEL_GROUP:
+            self.__prj.add_to_group_export_list(register_set, option, filename)
+            register_path = "%s (group)" % register_set
         else:
             register_path = '<project>'
             self.__prj.add_to_project_export_list(option, filename)
         self.__add_item_to_list(register_path, option, filename)
-
-    def run_callback(self, filename, export_format, register_set):
-        """
-        Runs a specified exporter. Typcially called when the user
-        decides to run a case instead of adding it to the builder.
-        """
-        base = os.path.splitext(os.path.basename(register_set))[0]
-        dbase = self.__dbmap[base][DB_MAP_DBASE].db
-        wrclass = self.__mapopt[export_format][MAPOPT_CLASS]
-        if self.__mapopt[export_format][MAPOPT_REGISTER_SET]:
-            gen = wrclass(self.__prj, dbase)
-        else:
-            db_list = [i[DB_MAP_DBASE].db for i in self.__dbmap.values()]
-            gen = wrclass(self.__prj, db_list)
-        gen.set_project(self.__prj)
-        gen.write(filename)
 
     def on_remove_build_clicked(self, obj):
         """

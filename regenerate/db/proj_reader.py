@@ -103,6 +103,12 @@ class ProjectReader(object):
         option = attrs['option']
         self._prj.append_to_export_list(path, option, self._current)
 
+    def start_group_export(self, attrs):
+        """Called when an group_export tag is found"""
+        dest = attrs['dest']
+        option = attrs['option']
+        self._prj.append_to_group_export_list(self._current_group.name, dest, option)
+
     def start_project_export(self, attrs):
         """Called when a project_export tag is found"""
         self._prj.append_to_project_export_list(attrs['option'], attrs['path'])

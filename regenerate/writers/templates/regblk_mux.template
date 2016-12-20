@@ -1,0 +1,129 @@
+/*----------------------------------------------------------------------
+ *
+ * {{group_name}}_regblk_mux - Register decode block for {{group_name}}
+ *
+ * Version 0.1
+ *
+ *----------------------------------------------------------------------
+ */
+
+
+module {{group_name}}_regblk_mux
+  #(
+    parameter int pAddrSize = 14
+    )
+   (
+    input logic                 CLK,
+    input logic                 RSTn,
+{% for inst in blk_insts %}
+  {% if inst.repeat > 1 %}
+    {% if mda %}
+    output logic                READ_{{inst.inst|upper}}[{{inst.repeat}}],
+    output logic                WRITE_{{inst.inst|upper}}[{{inst.repeat}}],
+    input logic                 ACK_{{inst.inst|upper}}[{{inst.repeat}}],
+    input logic [63:0]          RDATA_{{inst.inst|upper}}[{{inst.repeat}}],
+    {% else %}
+    output logic [{{inst.repeat-1}}:0]          READ_{{inst.inst|upper}},
+    output logic [{{inst.repeat-1}}:0]          WRITE_{{inst.inst|upper}},
+    input logic [{{inst.repeat-1}}:0]           ACK_{{inst.inst|upper}},
+    input logic [63:0]          RDATA_{{inst.inst|upper}}[{{inst.repeat}}],
+    {% endif %}
+  {% else %}
+    output logic                READ_{{inst.inst|upper}},
+    output logic                WRITE_{{inst.inst|upper}},
+    input logic                 ACK_{{inst.inst|upper}},
+    input logic [63:0]          RDATA_{{inst.inst|upper}},
+  {% endif %}
+{% endfor %}
+    input logic [pAddrSize-1:3] ADDR,
+    input logic                 READ,
+    input logic                 WRITE,
+    output logic                ACK,
+    output logic [63:0]         RDATA
+    );
+
+   logic                        rw_delay;
+
+{% for inst in blk_insts %}
+   {% if inst.repeat > 1 %}
+     {% for i in range(inst.repeat) %}
+   wire select_{{inst.inst|lower}}{{i}} = ADDR >= 'h{{"%x"|format(inst.lower + i * inst.offset)}} && ADDR < 'h{{"%x"|format(inst.lower + i * inst.offset + inst.upper)}};
+     {% endfor %}
+   {% else %}
+   wire select_{{inst.inst|lower}} = ADDR >= 'h{{"%x"|format(inst.lower)}} && ADDR < 'h{{"%x"|format(inst.lower + inst.upper)}};
+   {% endif %}
+{% endfor %}
+
+{% for inst in blk_insts %}
+  {% if inst.repeat > 1 %}
+    {% for i in range(inst.repeat) %}
+   assign READ_{{inst.inst|upper}}[{{i}}] = READ & select_{{inst.inst|lower}}{{i}};
+   assign WRITE_{{inst.inst|upper}}[{{i}}] = WRITE & select_{{inst.inst|lower}}{{i}};
+    {% endfor %}
+  {% else %}
+   assign READ_{{inst.inst|upper}} = READ & select_{{inst.inst|lower}};
+   assign WRITE_{{inst.inst|upper}} = WRITE & select_{{inst.inst|lower}};
+  {% endif %}
+{% endfor %}
+
+   always_comb begin
+{% for inst in blk_insts %}
+  {% set outer_loop = loop %}
+  {% if inst.repeat > 1 %}
+    {% for i in range(inst.repeat) %}
+      {% if outer_loop.index0 == 0 and i == 0 %}
+      unique if (select_{{inst.inst|lower}}{{i}}) begin
+      {% else %}
+      end else if (select_{{inst.inst|lower}}{{i}}) begin
+      {% endif %}
+         RDATA = RDATA_{{inst.inst|upper}}[{{i}}];
+    {% endfor %}
+  {% else %}
+    {% if loop.index0 == 0 %}
+      unique if (select_{{inst.inst|lower}}) begin
+    {% else %}
+      end else if (select_{{inst.inst|lower}}) begin
+    {% endif %}
+         RDATA = RDATA_{{inst.inst|upper}};
+  {% endif %}
+{% endfor %}
+      end else begin
+         RDATA = 64'hdead_beef_dead_beef;
+      end
+   end
+
+   always_comb begin
+{% for inst in blk_insts %}
+  {% set outer_loop = loop %}
+  {% if inst.repeat > 1 %}
+    {% for i in range(inst.repeat) %}
+      {% if outer_loop.index0 == 0 and i == 0 %}
+      unique if (select_{{inst.inst|lower}}{{i}}) begin
+      {% else %}
+      end else if (select_{{inst.inst|lower}}{{i}}) begin
+      {% endif %}
+         ACK = ACK_{{inst.inst|upper}}[{{i}}];
+    {% endfor %}
+  {% else %}
+    {% if loop.index0 == 0 %}
+      unique if (select_{{inst.inst|lower}}) begin
+    {% else %}
+      end else if (select_{{inst.inst|lower}}) begin
+    {% endif %}
+         ACK = ACK_{{inst.inst|upper}};
+  {% endif %}
+{% endfor %}
+      end else begin
+         ACK = rw_delay & (READ | WRITE);
+      end
+   end
+
+   always_ff @(posedge CLK or negedge RSTn) begin
+      if (~RSTn) begin
+         rw_delay <= 1'b0;
+      end else begin
+         rw_delay <= READ | WRITE;
+      end
+   end
+
+endmodule : {{group_name}}_regblk_mux

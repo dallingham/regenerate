@@ -20,14 +20,42 @@
 Imports the exporters. Makes an attempt to load the site_local versions
 first. This allows the end user to override the standard version without
 fears that it will get overwritten on the next install.
+
+Instead of directly importing the files with the import statement, we
+loop through a list of items in the MODULES array, looking at the module
+name, and the listed import times from that module. It makes it simpler
+to maintain.
 """
 
+from collections import namedtuple
+from writer_base import WriterBase
+from regenerate.db import LOGGER
+
+ExportInfo = namedtuple("ExportInfo", ["obj_class", "type", "description",
+                                       "extension", "id"])
+
+
 EXPORTERS = []
+GRP_EXPORTERS = []
 PRJ_EXPORTERS = []
 
-(EXP_CLASS, EXP_TYPE, EXP_DESCRIPTION, EXP_EXT, EXP_ID) = range(5)
-
-from regenerate.db import LOGGER
+IMPORT_PATHS = ("regenerate.site_local", "regenerate.writers")
+MODULES = [ 
+    ("verilog", ["Verilog", "Verilog2001", "SystemVerilog"]),
+    ("verilog_defs", ["VerilogDefines"]),
+    ("verilog_param", ["VerilogParameters"]),
+    ("reg_pkg", ["VerilogConstRegPackage"]),
+    ("decoder", ["AddressDecode"]),
+    ("ipxact", ["IpXactWriter"]),
+    ("c_test", ["CTest"]),
+    ("c_defines", ["CDefines"]),
+    ("asm_equ", ["AsmEqu"]),
+    ("odt_doc", ["OdtDoc"]),
+    ("rst_doc", ["RstDoc"]),
+    ("uvm_reg_block", ["UVMRegBlockRegisters"]),
+    ("sdc", ["Sdc"]),
+    ("spyglass", ["Spyglass"]),
+    ]
 
 #-----------------------------------------------------------------------------
 #
@@ -35,186 +63,25 @@ from regenerate.db import LOGGER
 #  SystemVerilog.
 #
 #-----------------------------------------------------------------------------
-try:
-    from regenerate.site_local.verilog import Verilog, Verilog2001, SystemVerilog
-    LOGGER.info("Found site_local verilog")
-except ImportError:
-    from verilog import Verilog, Verilog2001, SystemVerilog
-EXPORTERS.append((SystemVerilog, ("RTL", "SystemVerilog"),
-                  "SystemVerilog files", ".sv", 'rtl-system-verilog'))
-EXPORTERS.append((Verilog2001, ("RTL", "Verilog 2001"), "Verilog files", ".v",
-                  'rtl-verilog-2001'))
-EXPORTERS.append((Verilog, ("RTL", "Verilog 95"), "Verilog files", ".v",
-                  'rtl-verilog-95'))
 
-#-----------------------------------------------------------------------------
-#
-#  UVM Register Exporting
-#
-#-----------------------------------------------------------------------------
-#from uvm import UVM_Registers
-#EXPORTERS.append((UVM_Registers, ("Test", "UVM Registers"),
-#                  "SystemVerilog files", ".sv", 'uvm-system-verilog'))
-
-#-----------------------------------------------------------------------------
-#
-#  C code register test case exporting
-#
-#-----------------------------------------------------------------------------
-try:
-    from regenerate.site_local.c_test import CTest
-    LOGGER.info("Found site_local C test")
-except ImportError:
-    from c_test import CTest
-EXPORTERS.append((CTest, ("Test", "C program"), "C files", ".c", 'test-c'))
-
-#-----------------------------------------------------------------------------
-#
-#  ASM definition exporting
-#
-#-----------------------------------------------------------------------------
-try:
-    from regenerate.site_local.asm_equ import AsmEqu
-    LOGGER.info("Found site_local asm_eq")
-except ImportError:
-    from asm_equ import AsmEqu
-EXPORTERS.append((AsmEqu, ("Header files", "Assembler Source"),
-                  "Assembler files", ".s", 'headers-asm'))
-
-#-----------------------------------------------------------------------------
-#
-#  C definition exporting
-#
-#-----------------------------------------------------------------------------
-try:
-    from regenerate.site_local.c_defines import CDefines
-    LOGGER.info("Found site_local c_defines")
-except ImportError:
-    from c_defines import CDefines
-EXPORTERS.append((CDefines, ("Header files", "C Source"), "C header files",
-                  ".h", 'headers-c'))
-
-#-----------------------------------------------------------------------------
-#
-#  Verilog register headers
-#
-#-----------------------------------------------------------------------------
-try:
-    from regenerate.site_local.reg_pkg import VerilogConstRegPackage
-    LOGGER.info("Found site_local reg_pkg")
-    from regenerate.site_local.reg_pkg_wrap import VerilogRegPackage
-    LOGGER.info("Found site_local reg_pkg_wrap")
-    PRJ_EXPORTERS.append((VerilogRegPackage, (
-        "Headers", "SystemVerilog Symbolic Register Mappings"
-    ), "SystemVerilog files", ".sv", 'headers-system-verilog-wrap'))
-#-----------------------------------------------------------------------------
-#
-#  Verilog constant headers
-#
-#-----------------------------------------------------------------------------
-except:
-    from reg_pkg import VerilogConstRegPackage
-
-PRJ_EXPORTERS.append((VerilogConstRegPackage,
-                      ("Headers", "SystemVerilog Register Constants"),
-                      "SystemVerilog files", ".sv", 'headers-system-verilog'))
-
-try:
-    from regenerate.site_local.cfg_params import CfgValues
-    EXPORTERS.append((CfgValues, ("Test", "Test Configuration Table"),
-                      "C files", ".c", 'test-config-table'))
-except:
-    pass
-
-#-----------------------------------------------------------------------------
-#
-#  Open Document generator
-#
-#-----------------------------------------------------------------------------
-try:
-    from regenerate.site_local.odt_doc import OdtDoc
-    LOGGER.info("Found site_local odt_doc")
-except ImportError:
-    from odt_doc import OdtDoc
-EXPORTERS.append((OdtDoc, ("Documentation", "OpenDocument"),
-                  "OpenDocument files", ".odt", 'doc-odt'))
-
-try:
-    from regenerate.site_local.verilog_defs import VerilogDefines
-    LOGGER.info("Found site_local verilog_defs")
-except ImportError:
-    from verilog_defs import VerilogDefines
-EXPORTERS.append((VerilogDefines, ("RTL", "Verilog defines"),
-                  "Verilog header files", ".vh", 'rtl-verilog-defines'))
-
-try:
-    from regenerate.site_local.ipxact import IpXactWriter
-    LOGGER.info("Found site_local IpXactWriter")
-except ImportError:
-    from ipxact import IpXactWriter
-EXPORTERS.append((IpXactWriter, ("XML", "IP-XACT"), "IP-XACT files", ".xml",
-                  'ip-xact'))
-
-try:
-    from regenerate.site_local.spirit import SpiritWriter
-    LOGGER.info("Found site_local SpiritWriter")
-except ImportError:
-    from spirit import SpiritWriter
-EXPORTERS.append((SpiritWriter, ("XML", "Spirit"), "Spirit files", ".xml",
-                  'spirit'))
+for module in MODULES:
+    for mpath in IMPORT_PATHS:
+        try:
+            fullpath = mpath + "." + module[0]
+            a = __import__(fullpath, globals(), locals(), module[1])
+            for t, info in a.EXPORTERS:
+                if t == WriterBase.TYPE_BLOCK:
+                    EXPORTERS.append(info)
+                elif t == WriterBase.TYPE_GROUP:
+                    GRP_EXPORTERS.append(info)
+                else:
+                    PRJ_EXPORTERS.append(info)
+            break
+        except ImportError, msg:
+            continue
+        except SyntaxError, msg:
+            continue
+    else:
+        LOGGER.warning('Cound not import the "{0}" module'.format(module[0]))
 
 
-try:
-    from regenerate.site_local.verilog_param import VerilogParameters
-    LOGGER.info("Found site_local verilog_param")
-except ImportError:
-    from verilog_param import VerilogParameters
-EXPORTERS.append((VerilogParameters, ("RTL", "Verilog parameters"),
-                  "Verilog header files", ".vh", 'rtl-verilog-parmaeters'))
-
-try:
-    from regenerate.site_local.rst_doc import RstDoc
-    LOGGER.info("Found site_local rst_doc")
-except ImportError:
-    from rst_doc import RstDoc
-
-PRJ_EXPORTERS.append((RstDoc, ("Specification", "RestructuredText"),
-                      "RestructuredText files", ".rest", 'spec-rst'))
-
-#from uvm_block import UVMBlockRegisters
-#
-#PRJ_EXPORTERS.append((UVMBlockRegisters, ("Test", "UVM Registers"),
-#                      "SystemVerilog files", ".sv", 'proj-uvm'))
-
-from uvm_reg_block import UVMRegBlockRegisters
-
-PRJ_EXPORTERS.append((UVMRegBlockRegisters, ("Test", "UVM Registers"),
-                      "SystemVerilog files", ".sv", 'proj-uvm'))
-
-
-
-#-----------------------------------------------------------------------------
-#
-#  Synthesis constraints
-#
-#-----------------------------------------------------------------------------
-try:
-    from regenerate.site_local.sdc import Sdc
-    LOGGER.info("Found site_local sdc")
-except ImportError:
-    from sdc import Sdc
-PRJ_EXPORTERS.append((Sdc, ("Synthesis", "SDC Constraints"), "SDC files",
-                      ".sdc", 'syn-constraints'))
-
-#-----------------------------------------------------------------------------
-#
-#  Synthesis constraints
-#
-#-----------------------------------------------------------------------------
-try:
-    from regenerate.site_local.spyglass import Spyglass
-    LOGGER.info("Found site_local spyglass")
-except ImportError:
-    from spyglass import Spyglass
-PRJ_EXPORTERS.append((Spyglass, ("Spyglass CDC Checking", "SGDC Constraints"),
-                      "SGDC files", ".sgdc", 'spy-constraints'))

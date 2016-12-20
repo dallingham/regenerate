@@ -29,7 +29,7 @@ from cStringIO import StringIO
 
 from regenerate.settings.paths import ODTFILE, USERODTFILE
 
-from writer_base import WriterBase  # IGNORE:W0403
+from writer_base import WriterBase, ExportInfo
 from regenerate.db import BitField
 
 TYPE_MAP = ["R", "R/W", "W1C", "W1S", "WO"]
@@ -414,3 +414,8 @@ class StylesXmlParser(object):
             name = attrs.get('style:name')
             if name in self.format_list:
                 self.format_list.remove(name)
+
+EXPORTERS = [
+    (WriterBase.TYPE_BLOCK, ExportInfo(OdtDoc, ("Documentation", "OpenDocument"),
+                            "OpenDocument files", ".odt", 'doc-odt'))
+    ]

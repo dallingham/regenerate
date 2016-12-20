@@ -17,14 +17,14 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
-OdtDoc - Writes out an OpenDocument document that contains the register
-             descriptions
+RstDoc - Writes out a RestructuredText document that contains the register
+descriptions
 """
 
 import os
 import re
 from regenerate.settings.paths import ODTFILE, USERODTFILE
-from regenerate.writers.writer_base import WriterBase
+from regenerate.writers.writer_base import WriterBase, ExportInfo
 from regenerate.db import BitField
 from regenerate.db import RegisterDb
 from regenerate.extras import RegisterRst
@@ -154,3 +154,7 @@ class RstDoc(WriterBase):
                     f.write("\n\n")
                             
                 
+EXPORTERS = [
+    (WriterBase.TYPE_PROJECT, ExportInfo(RstDoc, ("Specification", "RestructuredText"),
+                                         "RestructuredText files", ".rest", 'spec-rst'))
+    ]

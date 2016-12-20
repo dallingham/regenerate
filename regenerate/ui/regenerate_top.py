@@ -1419,7 +1419,11 @@ class MainWindow(BaseWindow):
 
     def on_address_width_changed(self, obj):
         try:
-            self.set_db_value("address_bus_width", int(obj.get_text()))
+            value = int(obj.get_text())
+            if value > 64:
+                LOGGER.error('Illegal address width: "%s"' % obj.get_text())
+            else:
+                self.set_db_value("address_bus_width", value)
         except ValueError:
             LOGGER.error('Illegal address width: "%s"' % obj.get_text())
 

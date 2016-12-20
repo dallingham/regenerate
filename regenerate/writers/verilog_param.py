@@ -20,7 +20,7 @@
 DefsWriter - Writes out Verilog defines representing the register addresses
 """
 
-from writer_base import WriterBase  # IGNORE:W0403
+from writer_base import WriterBase, ExportInfo
 
 
 class VerilogParameters(WriterBase):
@@ -71,3 +71,9 @@ class VerilogParameters(WriterBase):
                            self._offset)
         self._ofile.write('\n')
         self._ofile.close()
+
+
+EXPORTERS = [
+    (WriterBase.TYPE_BLOCK, ExportInfo(VerilogParameters, ("RTL", "Verilog parameters"),
+                                       "Verilog header files", ".vh", 'rtl-verilog-parmaeters'))
+    ]

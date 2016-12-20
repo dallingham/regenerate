@@ -21,13 +21,12 @@ Actual program. Parses the arguments, and initiates the main window
 """
 
 from regenerate.db import BitField, TYPES, LOGGER
-from regenerate.writers.writer_base import WriterBase
+from regenerate.writers.writer_base import WriterBase, ExportInfo
 from regenerate.writers.verilog_reg_def import REG
 import time
 import os
 from jinja2 import FileSystemLoader, Environment
 from collections import namedtuple, OrderedDict
-
 
 LOWER_BIT = {128: 4, 64: 3, 32: 2, 16: 1, 8: 0}
 
@@ -39,7 +38,7 @@ LOWER_BIT = {128: 4, 64: 3, 32: 2, 16: 1, 8: 0}
 CellInfo = namedtuple("CellInfo",
                       ["name", "has_input", "has_control",
                        "has_oneshot", "type_descr", "allows_wide",
-                       "has_data_out", "has_rd", "is_read_only"])
+                       "has_rd", "is_read_only"])
 
 
 def full_reset_value(field):
@@ -73,7 +72,7 @@ def reset_value(field, start, stop):
             return "{0}[{1}:{2}]".format(field.reset_parameter, stop, start)
 
 
-def break_on_byte_boundaries(start, stop):
+def break_into_bytes(start, stop):
     """
     Return a list of byte boundaries from the start and stop values
     """
@@ -115,10 +114,9 @@ class Verilog(WriterBase):
 
         self._cell_info = {}
         for i in TYPES:
-            self._cell_info[i.type] = (
+            self._cell_info[i.type] = CellInfo(
                 i.id.lower(), i.input, i.control, i.oneshot,
-                i.description, i.wide, i.dataout, i.read,
-                i.readonly)
+                i.description, i.wide, i.read, i.readonly)
 
         self.__sorted_regs = [
             reg for reg in dbase.get_all_registers()
@@ -190,12 +188,19 @@ class Verilog(WriterBase):
         reset_edge = "posedge" if self._dbase.reset_active_level else "negedge"
         reset_op = "" if self._dbase.reset_active_level else "~"
 
+        parameters = []
+        for r in self._dbase.get_all_registers():
+            for f in r.get_bit_fields():
+                if f.reset_type == BitField.RESET_PARAMETER:
+                    parameters.append((f.msb, f.lsb, f.reset_parameter))
+
         with open(filename, "w") as of:
             of.write(template.render(db = self._dbase,
                                      rshift = rshift,
+                                     parameters = parameters,
                                      cell_info = self._cell_info,
                                      word_fields = word_fields,
-                                     break_on_byte_boundaries = break_on_byte_boundaries,
+                                     break_into_bytes = break_into_bytes,
                                      sorted_regs = sorted(reglist),
                                      full_reset_value = full_reset_value,
                                      reset_value = reset_value,
@@ -263,3 +268,12 @@ class Verilog2001(Verilog):
     def __init(self, project, dbase):
         Verilog.__init__(self, project, dbase)
 
+
+EXPORTERS = [
+    (WriterBase.TYPE_BLOCK, ExportInfo(SystemVerilog, ("RTL", "SystemVerilog"),
+                                       "SystemVerilog files", ".sv", 'rtl-system-verilog')),
+    (WriterBase.TYPE_BLOCK, ExportInfo(Verilog2001, ("RTL", "Verilog 2001"), 
+                                       "Verilog files", ".v", 'rtl-verilog-2001')),
+    (WriterBase.TYPE_BLOCK, ExportInfo(Verilog, ("RTL", "Verilog 95"), 
+                                       "Verilog files", ".v", 'rtl-verilog-95'))
+    ]

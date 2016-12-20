@@ -21,7 +21,7 @@ Actual program. Parses the arguments, and initiates the main window
 """
 
 from regenerate.db import BitField, TYPES, LOGGER
-from regenerate.writers.writer_base import WriterBase
+from regenerate.writers.writer_base import WriterBase, ExportInfo
 import time
 import os
 from jinja2 import Template
@@ -70,17 +70,20 @@ class UVMRegBlockRegisters(WriterBase):
     # Provide a mapping reserved SystemVerilog keywords to alternatives
     # to prevent syntax errors in the generated code.
 
-    REMAP_NAME = set(["always", "assign", "automatic", "begin", "case", "casex", "casez",
-                      "class", "do", "package", "set", 
-                      "cell", "config", "deassign", "default", "defparam", "design", "disable",
-                      "edge", "else", "end", "endcase", "endconfig", "endfunction", "endgenerate",
-                      "endmodule", "endprimitive", "endspecify", "endtable", "endtask", "event",	
-                      "for", "force", "forever", "fork", "function", "generate", "genvar",	
-                      "if", "ifnone", "incdir", "initial", "inout", "input",
-                      "instance", "join", "liblist", "library", "localparam", "macromodule",
-                      "module", "negedge", "output", "parameter", "posedge", "primitive", "reg",
-                      "release", "repeat", "scalared", "signed", "specify", "specparam", "strength",
-                      "table", "task", "tri", "tri0", "tri1", "triand", "wand",
+    REMAP_NAME = set(["always", "assign", "automatic", "begin", "case", 
+                      "casex", "casez", "class", "do", "package", "set",
+                      "cell", "config", "deassign", "default", "defparam",
+                      "design", "disable","edge", "else", "end", "endcase",
+                      "endconfig", "endfunction", "endgenerate", "endmodule",
+                      "endprimitive", "endspecify", "endtable", "endtask",
+                      "event", "for", "force", "forever", "fork", "function",
+                      "generate", "genvar", "if", "ifnone", "incdir", 
+                      "initial", "inout", "input", "instance", "join",
+                      "liblist", "library", "localparam", "macromodule",
+                      "module", "negedge", "output", "parameter", "posedge",
+                      "primitive", "reg", "release", "repeat", "scalared",
+                      "signed", "specify", "specparam", "strength", "table",
+                      "task", "tri", "tri0", "tri1", "triand", "wand", 
                       "trior", "wor", "trireg", "unsigned", "use", "vectored",
                       "wait", "while", "wire"]) 
     
@@ -145,7 +148,9 @@ class UVMRegBlockRegisters(WriterBase):
         name = self._project.short_name
         dirpath = os.path.dirname(__file__)
 
-        template = Template(file(os.path.join(dirpath, "templates", "uvm_reg_block.template")).read(), 
+        template_file = os.path.join(dirpath, "templates", 
+                                     "uvm_reg_block.template")
+        template = Template(file(template_file).read(), 
                             trim_blocks=True,
                             lstrip_blocks=True)
 
@@ -155,7 +160,8 @@ class UVMRegBlockRegisters(WriterBase):
         with open(filename, "w") as of:
             of.write(template.render(project=self._project, dblist=used_dbs,
                                      individual_access=individual_access,
-                                     ACCESS_MAP=ACCESS_MAP, db_grp_maps=self.get_db_groups(),
+                                     ACCESS_MAP=ACCESS_MAP, 
+                                     db_grp_maps=self.get_db_groups(),
                                      group_maps = self._build_group_maps(),
                                      fix_name=self.fix_name,
                                      use_new=False,
@@ -191,11 +197,6 @@ class UVMRegBlockRegisters(WriterBase):
                 for reg_sets in group.register_sets:
                     used_sets.add(reg_sets.set)
 
-        # used_dbs = set([])
-        # for db in self.dblist:
-        #     if db.set_name in used_sets:
-        #         used_dbs.add(db)
-
         return set([db for db in self.dblist if db.set_name in used_sets])
 
 def is_readonly(field):
@@ -226,3 +227,8 @@ def individual_access(field, reg):
         if (pos / 8) in used_bytes:
             return 0
     return 1
+
+EXPORTERS = [
+    (WriterBase.TYPE_PROJECT, ExportInfo(UVMRegBlockRegisters, ("Test", "UVM Registers"),
+                                         "SystemVerilog files", ".sv", 'proj-uvm'))
+]

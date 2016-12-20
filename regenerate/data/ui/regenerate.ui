@@ -988,7 +988,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="related_action">summary_action</property>
-                <property name="label" translatable="yes">toolbutton2</property>
+                <property name="label" translatable="yes">Summary</property>
                 <property name="use_underline">True</property>
               </object>
               <packing>
@@ -1002,7 +1002,7 @@
                 <property name="can_focus">False</property>
                 <property name="tooltip_text" translatable="yes">Display help</property>
                 <property name="related_action">help_action</property>
-                <property name="label" translatable="yes">toolbutton2</property>
+                <property name="label" translatable="yes">Help</property>
                 <property name="use_underline">True</property>
               </object>
               <packing>

@@ -1,8 +1,11 @@
-from distutils.core import setup
+try:
+    from setuputils import setup
+except ImportError:
+    from distutils.core import setup
 
 setup(
     name='regenerate',
-    version='0.9.7',
+    version='1.0.0',
     license='License.txt',
     author='Donald N. Allingham',
     author_email='dallingham@gmail.com',
@@ -15,7 +18,8 @@ setup(
               "regenerate.writers"],
     package_data={
         'regenerate': ['data/ui/*.ui', 'data/media/*.svg', 'data/help/*.rst',
-                       'data/media/*.png', 'data/extra/*.odt', 'data/*.*']
+                       'data/media/*.png', 'data/extra/*.odt', 'data/*.*',
+		       'writers/templates/*']
     },
     url="https://github.com/dallingham/regenerate",
     scripts=["bin/regenerate", "bin/regbuild", "bin/regupdate", "bin/regxref",

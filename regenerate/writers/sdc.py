@@ -20,7 +20,7 @@
 Sdc - Writes out synthesis constraints
 """
 
-from writer_base import WriterBase  # IGNORE:W0403
+from writer_base import WriterBase, ExportInfo
 
 
 class Sdc(WriterBase):
@@ -138,3 +138,8 @@ def get_base_signal(address, field):
     """
     return "r{0:02x}_{1}".format(address, field.field_name.lower())
 
+
+EXPORTERS = [
+    (WriterBase.TYPE_PROJECT, ExportInfo(Sdc, ("Synthesis", "SDC Constraints"), "SDC files",
+                                         ".sdc", 'syn-constraints'))
+    ]

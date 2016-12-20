@@ -20,7 +20,7 @@
 DefsWriter - Writes out Verilog defines representing the register addresses
 """
 
-from writer_base import WriterBase  # IGNORE:W0403
+from writer_base import WriterBase, ExportInfo
 
 HEADER = ["`ifdef $M$_DEFS\n", "`else\n", "`define $M$_DEFS 1\n", "\n", ]
 
@@ -84,3 +84,9 @@ class VerilogDefines(WriterBase):
         for line in TRAILER:
             self._ofile.write('%s\n' % line.replace('$M$', self._module))
         self._ofile.close()
+
+
+EXPORTERS = [
+    (WriterBase.TYPE_BLOCK, ExportInfo(VerilogDefines, ("RTL", "Verilog defines"),
+                                       "Verilog header files", ".vh", 'rtl-verilog-defines'))
+    ]

@@ -21,7 +21,7 @@ Actual program. Parses the arguments, and initiates the main window
 """
 
 from regenerate.db import BitField, TYPES, LOGGER
-from regenerate.writers.writer_base import WriterBase
+from regenerate.writers.writer_base import WriterBase, ExportInfo
 import time
 import os
 from jinja2 import Template
@@ -104,3 +104,8 @@ class IpXactWriter(WriterBase):
                                            'xsi:schemaLocation="http://www.accellera.org/XMLSchema/IPXACT/1685-2014 http://www.accellera.org/XMLSchema/IPXACT/1685-2014/index.xsd"']
                                      ))
 
+
+EXPORTERS = [
+    (WriterBase.TYPE_BLOCK, ExportInfo(IpXactWriter, ("XML", "IP-XACT"),
+                                       "IP-XACT files", ".xml", 'ip-xact'))
+]
