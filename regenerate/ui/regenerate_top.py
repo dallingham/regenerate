@@ -30,26 +30,27 @@ import pango
 import os
 import copy
 import re
-import spell
 import xml
-from status_logger import StatusHandler
-from preferences import Preferences
-from bit_list import BitModel, BitList, bits, reset_value
-from register_list import RegisterModel, RegisterList, build_define
-from instance_list import InstMdl, InstanceList
-from addrmap_list import AddrMapList
-from help_window import HelpWindow
-from regenerate.db import (RegWriter, RegisterDb, Register, BitField,
-                           RegProject, LOGGER, TYPES)
-from regenerate.importers import IMPORTERS
-from regenerate.settings.paths import GLADE_TOP, INSTALL_PATH
-from regenerate.settings import ini
 from regenerate import PROGRAM_VERSION, PROGRAM_NAME
-from error_dialogs import ErrorMsg, WarnMsg, Question
-from project import ProjectModel, ProjectList, update_file
-from preview_editor import PreviewEditor, PREVIEW_ENABLED
-from base_window import BaseWindow
-from filter_mgr import FilterManager, ADDR_FIELD, NAME_FIELD, TOKEN_FIELD
+from regenerate.db import RegWriter, RegisterDb, Register
+from regenerate.db import BitField, RegProject, LOGGER, TYPES
+from regenerate.importers import IMPORTERS
+from regenerate.settings import ini
+from regenerate.settings.paths import GLADE_TOP, INSTALL_PATH
+from regenerate.ui.addrmap_list import AddrMapList
+from regenerate.ui.base_window import BaseWindow
+from regenerate.ui.bit_list import BitModel, BitList, bits, reset_value
+from regenerate.ui.error_dialogs import ErrorMsg, WarnMsg, Question
+from regenerate.ui.filter_mgr import FilterManager, ADDR_FIELD
+from regenerate.ui.filter_mgr import NAME_FIELD, TOKEN_FIELD
+from regenerate.ui.help_window import HelpWindow
+from regenerate.ui.instance_list import InstMdl, InstanceList
+from regenerate.ui.preferences import Preferences
+from regenerate.ui.preview_editor import PreviewEditor, PREVIEW_ENABLED
+from regenerate.ui.project import ProjectModel, ProjectList, update_file
+from regenerate.ui.register_list import RegisterModel, RegisterList, build_define
+from regenerate.ui.spell import Spell
+from regenerate.ui.status_logger import StatusHandler
 
 TYPE_ENB = {}
 for data_type in TYPES:
@@ -73,9 +74,9 @@ class DbaseStatus(object):
     rows in the models.
     """
 
-    def __init__(self, db, filename, name, reg_model, modelsort, modelfilter,
-                 bit_model):
-        self.db = db
+    def __init__(self, database, filename, name, reg_model, modelsort,
+                 modelfilter, bit_model):
+        self.db = database
         self.path = filename
         self.reg_model = reg_model
         self.modelfilter = modelfilter
@@ -116,7 +117,7 @@ class MainWindow(BaseWindow):
 
         self.__overview_buf = self.__builder.get_object('overview_buffer')
         self.__overview_buf.connect('changed', self.__overview_changed)
-        spell.Spell(self.__builder.get_object('overview'))
+        Spell(self.__builder.get_object('overview'))
 
         self.__prj_obj = ProjectList(self.__builder.get_object("project_list"),
                                      self.__prj_selection_changed)
@@ -170,7 +171,7 @@ class MainWindow(BaseWindow):
         self.__reg_text_buf.connect('changed', self.__reg_description_changed)
         self.__reg_descript = self.__builder.get_object('register_description')
         self.__reg_descript.modify_font(pango_font)
-        spell.Spell(self.__reg_descript)
+        Spell(self.__reg_descript)
 
         self.__prj_model = ProjectModel(self.use_svn)
         self.__prj_obj.set_model(self.__prj_model)
@@ -205,13 +206,16 @@ class MainWindow(BaseWindow):
         self.__byte_level_obj = self.__builder.get_object('byte_en_level')
 
         self.__instance_obj = InstanceList(
-            self.__builder.get_object('instances'), self.__instance_id_changed,
-            self.__instance_inst_changed, self.__instance_base_changed,
+            self.__builder.get_object('instances'),
+            self.__instance_id_changed,
+            self.__instance_inst_changed,
+            self.__instance_base_changed,
             self.__instance_repeat_changed,
             self.__instance_repeat_offset_changed,
-            self.__instance_format_changed, self.__instance_hdl_changed,
-            self.__instance_uvm_changed, 
-            self.__instance_decode_changed, 
+            self.__instance_format_changed,
+            self.__instance_hdl_changed,
+            self.__instance_uvm_changed,
+            self.__instance_decode_changed,
             self.__instance_array_changed)
 
         self.__build_data_width_box()
@@ -227,7 +231,7 @@ class MainWindow(BaseWindow):
         self.__filter_manage = FilterManager(filter_obj)
 
     def on_group_doc_clicked(self, obj):
-        from group_doc import GroupDocEditor
+        from regenerate.ui.group_doc import GroupDocEditor
 
         (mdl, node) = self.__instance_obj.get_selected_instance()
         inst = mdl.get_value(node, InstMdl.OBJ_COL)
@@ -461,8 +465,8 @@ class MainWindow(BaseWindow):
             else:
                 start = stop
 
-            if stop != field.msb or stop != field.lsb:
-                field.msb, field.lsb = stop, stop
+            if stop != field.msb or start != field.lsb:
+                field.msb, field.lsb = stop, start
                 self.set_modified()
 
             self.__bit_model[path][BitModel.BIT_COL] = bits(field)
@@ -644,7 +648,7 @@ class MainWindow(BaseWindow):
         reg = self.__reglist_obj.get_selected_register()
 
         if reg:
-            from summary_window import SummaryWindow
+            from regenerate.ui.summary_window import SummaryWindow
             SummaryWindow(self.__builder, reg, self.active.name, self.__prj)
 
     def on_build_action_activate(self, obj):
@@ -707,9 +711,9 @@ class MainWindow(BaseWindow):
         """
         selected = self.__instance_obj.get_selected_instance()
         if selected and selected[1]:
-            g = selected[0].get_value(selected[1], InstMdl.OBJ_COL)
+            grp = selected[0].get_value(selected[1], InstMdl.OBJ_COL)
             self.__instance_model.remove(selected[1])
-            self.__prj.remove_group_from_grouping_list(g)
+            self.__prj.remove_group_from_grouping_list(grp)
             self.__set_module_definition_warn_flag()
             self.__prj.modified = True
 
@@ -771,7 +775,7 @@ class MainWindow(BaseWindow):
         data = self.__prj_obj.get_selected()
         old_skip = self.__skip_changes
         self.__skip_changes = True
-        if (data):
+        if data:
             (store, node) = data
             if self.active:
                 self.active.reg_select = self.__reglist_obj.get_selected_row()
@@ -895,7 +899,7 @@ class MainWindow(BaseWindow):
         register = self.__reglist_obj.get_selected_register()
         field = self.__bitfield_obj.select_field()
         if field:
-            from bitfield_editor import BitFieldEditor
+            from regenerate.ui.bitfield_editor import BitFieldEditor
             BitFieldEditor(self.dbase, register, field,
                            self.__set_field_modified, self.__builder)
 
@@ -1045,7 +1049,7 @@ class MainWindow(BaseWindow):
             self.__prj_obj.set_model(self.__prj_model)
             self.__prj.save()
             if self.__recent_manager:
-                self.__recent_manager.add_item("file://" + filename)
+                self.__recent_manager.add_item("file:///" + filename)
             self.__builder.get_object('save_btn').set_sensitive(True)
             self.__prj_loaded.set_sensitive(True)
             self.load_project_tab()
@@ -1085,6 +1089,9 @@ class MainWindow(BaseWindow):
             self.__initialize_project_address_maps()
         except xml.parsers.expat.ExpatError as msg:
             ErrorMsg("%s was not a valid project file" % filename, str(msg))
+            return
+        except IOError as msg:
+            ErrorMsg("Could not open %s" % filename, str(msg))
             return
 
         ini.set("user", "last_project", filename)
@@ -1505,7 +1512,7 @@ class MainWindow(BaseWindow):
         recent_item = chooser.get_current_item()
         fname = recent_item.get_uri()
         if recent_item.exists():
-            self.open_project(fname.replace('file://', ''), fname)
+            self.open_project(fname.replace('file:///', ''), fname)
 
     def __create_recent_menu_item(self):
         """

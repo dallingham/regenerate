@@ -22,7 +22,7 @@ Provides both the GTK ListStore and ListView for the bit fields.
 
 import gtk
 from regenerate.db import BitField, TYPES
-from columns import EditableColumn, ComboMapColumn
+from regenerate.ui.columns import EditableColumn, ComboMapColumn
 
 TYPE2STR = [(t.description, t.type) for t in sorted(TYPES)]
 (BIT_TITLE, BIT_SIZE, BIT_SORT, BIT_EXPAND, BIT_MONO) = range(5)
@@ -74,10 +74,10 @@ class BitList(object):
     """
 
     BIT_COLS = (  # Title, Size, Sort, Expand, Monospace
-        ('', 20, -1, False, False), 
+        ('', 20, -1, False, False),
         ('Bits', 60, BitModel.SORT_COL, False, True),
         ('Name', 80, BitModel.NAME_COL, True, False),
-        ('Type', 325, -1, True, False), 
+        ('Type', 325, -1, True, False),
         ('Reset', 100, -1, False, True),
         ('Reset Type', 75, -1, False, False), )
 

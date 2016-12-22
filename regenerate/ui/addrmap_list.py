@@ -21,7 +21,7 @@ Provides the Address List interface
 """
 
 import gtk
-from columns import EditableColumn, ToggleColumn, ComboMapColumn
+from regenerate.ui.columns import EditableColumn, ToggleColumn, ComboMapColumn
 from regenerate.db import LOGGER, AddrMapData
 
 _BITS8 = "8 bits"

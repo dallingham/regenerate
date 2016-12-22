@@ -30,6 +30,7 @@ to maintain.
 from collections import namedtuple
 from writer_base import WriterBase
 from regenerate.db import LOGGER
+import platform
 
 ExportInfo = namedtuple("ExportInfo", ["obj_class", "type", "description",
                                        "extension", "id"])
@@ -59,10 +60,27 @@ MODULES = [
 
 #-----------------------------------------------------------------------------
 #
-#  Load the register writers. Currently Verilog-95, Verilog-2001, and
-#  SystemVerilog.
+#  Dynamically load writes for Linux. To get the packaging tools to work, 
+#  we must use the stanard import for windows
 #
 #-----------------------------------------------------------------------------
+
+if platform.system() == 'windows':
+
+    from verilog import Verilog, Verilog2001, SystemVerilog
+    from verilog_defs import VerilogDefines
+    from verilog_param import VerilogParameters
+    from reg_pkg import VerilogConstRegPackage
+    from decoder import AddressDecode
+    from ipxact import IpXactWriter
+    from c_test import CTest
+    from c_defines import CDefines
+    from asm_equ import AsmEqu
+    from odt_doc import OdtDoc
+    from rst_doc import RstDoc
+    from uvm_reg_block import UVMRegBlockRegisters
+    from sdc import Sdc
+    from spyglass import Spyglass
 
 for module in MODULES:
     for mpath in IMPORT_PATHS:
@@ -83,5 +101,7 @@ for module in MODULES:
             continue
     else:
         LOGGER.warning('Cound not import the "{0}" module'.format(module[0]))
+
+
 
 

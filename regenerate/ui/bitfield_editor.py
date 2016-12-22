@@ -22,17 +22,17 @@ information.
 """
 
 import gtk
-import re
-import pango
 import os
-from spell import Spell
+import pango
+import re
+from regenerate.ui.spell import Spell
 
-from regenerate.db import (BitField, TYPES, TYPE_TO_ID, TYPE_TO_DESCR,
-                           TYPE_TO_ENABLE)
+from regenerate.db import BitField, TYPES, TYPE_TO_ID
+from regenerate.db import TYPE_TO_DESCR, TYPE_TO_ENABLE
 from regenerate.settings.paths import GLADE_BIT, INSTALL_PATH
-from error_dialogs import ErrorMsg
+from regenerate.ui.error_dialogs import ErrorMsg
+from regenerate.ui.help_window import HelpWindow
 from regenerate.writers.verilog_reg_def import REG
-from help_window import HelpWindow
 
 try:
     from pygments.lexers import VerilogLexer

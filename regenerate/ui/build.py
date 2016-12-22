@@ -23,12 +23,12 @@ keeps track of when an output file should be rebuilt.
 
 import os
 import gtk
-from export_assistant import ExportAssistant
 from regenerate.settings.paths import INSTALL_PATH
+from regenerate.ui.base_window import BaseWindow
+from regenerate.ui.columns import EditableColumn, ToggleColumn
+from regenerate.ui.error_dialogs import ErrorMsg
+from regenerate.ui.export_assistant import ExportAssistant
 from regenerate.writers import EXPORTERS, PRJ_EXPORTERS, GRP_EXPORTERS
-from columns import EditableColumn, ToggleColumn
-from error_dialogs import ErrorMsg
-from base_window import BaseWindow
 
 (MDL_MOD, MDL_BASE, MDL_FMT, MDL_DEST, MDL_CLASS, MDL_DBASE, MDL_TYPE) = range(7)
 (OPTMAP_DESCRIPTION, OPTMAP_CLASS, OPTMAP_REGISTER_SET) = range(3)
@@ -36,6 +36,7 @@ from base_window import BaseWindow
 (DB_MAP_DBASE, DB_MAP_MODIFIED) = range(2)
 
 (LEVEL_BLOCK, LEVEL_GROUP, LEVEL_PROJECT) = range(3)
+
 
 class Build(BaseWindow):
     """
@@ -73,18 +74,11 @@ class Build(BaseWindow):
         """
         self.__optmap = {}
         self.__mapopt = {}
-        for item in EXPORTERS:
-            value = "{0} ({1})".format(item.type[0], item.type[1])
-            self.__optmap[item.id] = (value, item.obj_class, LEVEL_BLOCK)
-            self.__mapopt[value] = (item.id, item.obj_class, LEVEL_BLOCK)
-        for item in GRP_EXPORTERS:
-            value = exp_type_fmt(item.type)
-            self.__optmap[item.id] = (value, item.obj_class, LEVEL_GROUP)
-            self.__mapopt[value] = (item.id, item.obj_class, LEVEL_GROUP)
-        for item in PRJ_EXPORTERS:
-            value = exp_type_fmt(item.type)
-            self.__optmap[item.id] = (value, item.obj_class, LEVEL_PROJECT)
-            self.__mapopt[value] = (item.id, item.obj_class, LEVEL_PROJECT)
+        for export_list in (EXPORTERS, GRP_EXPORTERS, PRJ_EXPORTERS):
+            for item in export_list:
+                value = "{0} ({1})".format(item.type[0], item.type[1])
+                self.__optmap[item.id] = (value, item.obj_class, LEVEL_BLOCK)
+                self.__mapopt[value] = (item.id, item.obj_class, LEVEL_BLOCK)
 
     def __build_interface(self):
         """
@@ -172,9 +166,9 @@ class Build(BaseWindow):
                     pass
 
         for group_data in self.__prj.get_grouping_list():
-            for g in self.__prj.get_group_exports(group_data.name):
+            for grp in self.__prj.get_group_exports(group_data.name):
                 self.__add_group_item_to_list("%s (group)" % group_data.name,
-                                              g[1], g[0])
+                                              grp[1], grp[0])
 
         for (option, dest) in self.__prj.get_project_exports():
             try:
@@ -383,7 +377,6 @@ def file_needs_rebuilt(local_dest, dbmap, db_paths):
             if db_file_mtime > dest_mtime or dbmap[base][DB_MAP_MODIFIED]:
                 mod = True
     return mod
-
 
 def exp_type_fmt(item):
     return "{0} ({1})".format(item[0], item[1])
