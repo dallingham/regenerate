@@ -14,14 +14,15 @@ package {{project.short_name|lower}}_reg_pkg;
    import uvm_pkg::*;
 
    /*
-    * Controls the handling of the volatile bit. By default, we try to adhere to
-    * the strict definition of UVM - any register that has the potential of
-    * changing between reads should be marked as volatile. This does impact some
-    * usages of the uvm_reg.mirror(UVM_CHECK) function. So if s_relaxed_volitile
-    * is set to a 1, then only registers explicity marked as volatile in regenerate
-    * will be identified as volatile. Fields that have an input signal that can
-    * change the value will not. In this case, it is the responsibility of the user
-    * to manage this potential volatility on thier own.
+    * Controls the handling of the volatile bit. By default, we try to adhere
+    * to the strict definition of UVM - any register that has the potential of
+    * changing between reads should be marked as volatile. This does impact
+    * some usages of the uvm_reg.mirror(UVM_CHECK) function. So if 
+    * s_relaxed_volitile is set to a 1, then only registers explicity marked
+    * as volatile in regenerate will be identified as volatile. Fields that
+    * have an input signal that can change the value will not. In this case,
+    * it is the responsibility of the user to manage this potential volatility
+    * on their own.
     */
    bit s_relaxed_volatile = 1'b0;
 

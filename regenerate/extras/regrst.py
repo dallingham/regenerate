@@ -36,9 +36,6 @@ from token import full_token, in_groups, uvm_name
 
 CSS = '''
 <style type="text/css">
-.search {
-    background-color: #FFFF00;
-}
 table td{
     padding: 3pt;
     font-size: 10pt;
@@ -90,7 +87,6 @@ div.warning p.admonition-title {
   font-weight: bold ;
   font-family: sans-serif }
 
-/* Structures */
 span.overline, span.bar {
 	text-decoration: overline;
 }
@@ -229,7 +225,9 @@ class RegisterRst:
                  decode=None,
                  group=None,
                  maxlines=9999999,
-                 db=None):
+                 db=None,
+                 bootstrap=False,
+                 header_level=1):
         self._reg = register
         self._highlight = highlight
         self._prj = project
@@ -239,6 +237,8 @@ class RegisterRst:
         self._group = group
         self._inst = inst
         self._maxlines = maxlines
+        self._bootstrap = bootstrap
+        self._header_level = header_level
 
         if db is None:
             self.reglist = set()
@@ -246,12 +246,15 @@ class RegisterRst:
             self.reglist = set([reg.register_name for reg in db.get_all_registers()])
 
         if decode:
-            if isinstance(decode, str):
-                decode = int(decode, 16)
-            elif isinstance(decode, int):
-                decode = decode
-            else:
-                decode = None
+            try:
+                if isinstance(decode, str) or isinstance(decode, unicode):
+                    decode = int(decode, 16)
+                elif isinstance(decode, int):
+                    decode = decode
+                else:
+                    decode = None
+            except ValueError:
+                decide = None
         self._decode = decode
         self._db = db
 
@@ -262,30 +265,7 @@ class RegisterRst:
         return CSS + self.html(text)
 
     def text(self, line):
-        if self._highlight:
-            replacer = re.compile(self._highlight, re.IGNORECASE)
-            line = replacer.sub(lambda m: '\ :search:`%s`\ ' % m.group(0),
-                                line.strip())
-            return re.sub(r"_\\ ", r"\\_\\ ", line)
-        else:
-            return line.strip()
-
-    def substitute(self, val):
-        text = val.groups()[0]
-        if text in self.reglist:
-            return ":ref:`%s <%s-%s-%s>`" % (text,
-                                             norm_name(self._inst),
-                                             norm_name(self._group),
-                                             norm_name(text))
-        else:
-            return "`" + text + "`_"
-
-    def patch_links(self, text):
-        if self._db is None:
-            return text
-        p = re.compile("`([^`]+)`_")
-        text = p.sub(self.substitute, text)
-        return text
+        return line.strip()
 
     def restructured_text(self, text=""):
         """
@@ -293,16 +273,13 @@ class RegisterRst:
         """
         o = StringIO()
         rlen = len(self._reg.register_name) + 2
-        if self._highlight:
-            o.write(".. role:: search\n\n")
-            o.write(" " + self.text(self._reg.register_name))
 
         o.write(".. _%s:\n\n" % self.refname(self._reg.register_name))
 
-        o.write(self.text(self._reg.register_name))
+        o.write(self._reg.register_name)
         o.write("\n%s\n\n" % ('_' * rlen))
         o.write("%s\n\n" %
-                self.text(self._reg.description.encode('ascii', 'replace')))
+                self._reg.description.encode('ascii', 'replace'))
 
         if self._reg.ram_size < 32:  # Temporary hack
             self._write_bit_fields(o)
@@ -311,8 +288,8 @@ class RegisterRst:
             self._write_defines(o, True, False)
 
         o.write(text)
-
-        return self.patch_links(o.getvalue())
+        return o.getvalue()
+        
 
     def refname(self, reg_name):
         return "%s-%s-%s" % (norm_name(self._inst),
@@ -329,7 +306,10 @@ class RegisterRst:
         o.write("Bit fields\n+++++++++++++++++++++++++++\n\n")
         o.write(".. list-table::\n")
         o.write("   :widths: 8, 10, 7, 25, 50\n")
-        o.write("   :class: bit-table\n")
+        if self._bootstrap:
+            o.write("   :class: table table-striped table-condensed\n")
+        else:
+            o.write("   :class: bit-table\n")
         o.write("   :header-rows: 1\n\n")
         o.write("   * - Bits\n")
         if self._decode:
@@ -361,10 +341,9 @@ class RegisterRst:
             else:
                 o.write("     - 0x%x\n" % field.reset_value)
 
-            o.write(
-                "     - %s\n" % self.text(TYPE_TO_SIMPLE_TYPE[field.field_type]))
-            o.write("     - %s\n" % self.text(field.field_name))
-            descr = self.text(field.description.rstrip())
+            o.write("     - %s\n" % TYPE_TO_SIMPLE_TYPE[field.field_type])
+            o.write("     - %s\n" % field.field_name)
+            descr = field.description.strip()
             marked_descr = "\n       ".join(descr.split("\n"))
             encoded_descr = marked_descr.encode('ascii', 'replace').rstrip()
 
@@ -383,11 +362,10 @@ class RegisterRst:
                                   key=lambda x: int(int(x[0], 16))):
                     if val[1]:
                         o.write("        0x%x : %s\n            %s\n\n" %
-                                (int(val[0], 16), self.text(val[2]),
-                                 self.text(val[1])))
+                                (int(val[0], 16), val[2], val[1]))
                     else:
                         o.write("        0x%x : %s\n\n" %
-                                (int(val[0], 16), self.text(val[2])))
+                                (int(val[0], 16), val[2]))
             last_index = field.lsb - 1
         if last_index >= 0:
             display_reserved(o, last_index, 0)
@@ -403,7 +381,6 @@ class RegisterRst:
             o.write(descr)
             o.write("\n\n")
                     
-
     def _write_defines(self, o, use_uvm=True, use_id=True):
 
         x_addr_maps = self._prj.get_address_maps()
@@ -432,7 +409,10 @@ class RegisterRst:
                 o.write("   :widths: 50, 25, 25\n")
             elif len(addr_maps) == 3:
                 o.write("   :widths: 50, 16, 16, 17\n")
-            o.write("   :class: summary\n\n")
+            if self._bootstrap:
+                o.write("   :class: table table-striped table-condensed\n\n")
+            else:
+                o.write("   :class: summary\n\n")
             o.write("   *")
             if use_uvm:
                 o.write(" - Register Name\n")
@@ -441,7 +421,8 @@ class RegisterRst:
                     o.write("    ")
                 o.write(" - ID\n")
             for amap in addr_maps:
-                o.write("     - %s\n" % self.text(amap.name))
+                o.write("     - %s\n" % amap.name)
+
             for inst in in_groups(self._regset_name, self._prj):
                 if self._group and inst.group != self._group:
                     continue
@@ -449,59 +430,70 @@ class RegisterRst:
                     continue
 
                 for grp_inst in range(0, inst.grpt):
-                    if inst.grpt == 1:
-                        u_grp_name = inst.group
-                        t_grp_name = inst.group
-                    else:
-                        u_grp_name = "{0}[{1}]".format(inst.group, grp_inst)
-                        t_grp_name = "{0}{1}".format(inst.group, grp_inst)
 
                     if inst.repeat == 1 and not inst.array:
-                        o.write("   *")
-                        if use_uvm:
-                            name = uvm_name(u_grp_name, self._reg.token,
-                                            inst.inst, -1)
-                            o.write(" - %s\n" % self.text(name))
-                        if use_id:
-                            name = full_token(t_grp_name, self._reg.token,
-                                              inst.inst, -1, inst.format)
-                            if use_uvm:
-                                o.write("    ")
-                            o.write(" - %s\n" % self.text(name))
-                        for map_name in addr_maps:
-                            map_base = self._prj.get_address_base(map_name.name)
-                            offset = map_base + inst.offset + inst.base + (
-                                grp_inst * inst.grpt_offset)
-                            o.write("     - %s\n" % reg_addr(self._reg, offset))
+                        if self._reg.dimension <= 1:
+                            self._addr_entry(o, inst, use_uvm, use_id,
+                                             addr_maps, grp_inst, -1, -1)
+                        else:
+                            for i in range(self._reg.dimension):
+                                self._addr_entry(o, inst, use_uvm, use_id, 
+                                                 addr_maps, grp_inst, -1, i)
                     else:
-                        for i in range(0, inst.repeat):
-                            o.write("   *")
-                            if use_uvm:
-                                name = uvm_name(u_grp_name, self._reg.token,
-                                                inst.inst, i)
-                                o.write(" - %s\n" % self.text(name))
-                            if use_id:
-                                name = full_token(t_grp_name, self._reg.token,
-                                                  inst.inst, i, inst.format)
-                                if use_uvm:
-                                    o.write("    ")
-                                o.write(" - %s\n" % self.text(name))
-                            for map_name in addr_maps:
-                                base = self._prj.get_address_base(map_name.name)
-                                offset = inst.base + inst.offset + (
-                                    i * inst.roffset
-                                ) + (grp_inst * inst.grpt_offset)
-                                o.write("     - %s\n" %
-                                        reg_addr(self._reg, offset + base))
+                        for gi in range(0, inst.repeat):
+
+                            if self._reg.dimension <= 1:
+                                self._addr_entry(o, inst, use_uvm, use_id, 
+                                                 addr_maps, grp_inst, gi, -1)
+                            else:
+                                for i in range(self._reg.dimension):
+                                    self._addr_entry(o, inst, use_uvm, use_id,
+                                                     addr_maps, grp_inst, gi, i)
 
         o.write("\n\n")
+
+    def _addr_entry(self, o, inst, use_uvm, use_id, addr_maps,
+                    grp_inst, group_index, index):
+
+        if inst.grpt == 1:
+            u_grp_name = inst.group
+            t_grp_name = inst.group
+        else:
+            u_grp_name = "{0}[{1}]".format(inst.group, grp_inst)
+            t_grp_name = "{0}{1}".format(inst.group, grp_inst)
+
+        o.write("   *")
+        if use_uvm:
+            name = uvm_name(u_grp_name, self._reg.token, inst.inst, group_index)
+            if index < 0:
+                o.write(" - %s\n" % name))
+            else:
+                o.write(" - %s[%d]\n" % (name, index))
+        if use_id:
+            name = full_token(t_grp_name, self._reg.token,
+                                  inst.inst, group_index, inst.format)
+            if use_uvm:
+                o.write("    ")
+            o.write(" - %s\n" % name)
+        for map_name in addr_maps:
+            map_base = self._prj.get_address_base(map_name.name)
+            offset = map_base + inst.offset + inst.base + (
+                grp_inst * inst.grpt_offset)
+            if group_index > 0:
+                offset += group_index * inst.roffset
+
+            if index < 0:
+                o.write("     - %s\n" % reg_addr(self._reg, offset))
+            else:
+                o.write("     - %s\n" % reg_addr(self._reg, offset
+                                                 + (index * (self._reg.width/8))))
 
     def _display_uvm_entry(self, inst, index, o):
         name = full_token(inst.group, self._reg.token, self._regset_name,
                           index, inst.format)
-        o.write("   * - %s\n" % self.text(name))
+        o.write("   * - %s\n" % name)
         name = uvm_name(inst.group, self._reg.token, inst.inst, index)
-        o.write("     - %s\n" % self.text(name))
+        o.write("     - %s\n" % name)
 
     def _write_uvm(self, o):
         """
@@ -513,7 +505,10 @@ class RegisterRst:
         o.write("---------\n")
         o.write(".. list-table::\n")
         o.write("   :header-rows: 1\n")
-        o.write("   :class: summary\n\n")
+        if self._bootstrap:
+            o.write("   :class: table table-striped table-condensed\n\n")
+        else:
+            o.write("   :class: summary\n\n")
         o.write("   * - ID\n")
         o.write("     - UVM name\n")
         for inst in in_groups(self._regset_name, self._prj):
@@ -535,15 +530,32 @@ class RegisterRst:
 
         if _HTML:
             try:
+                if self._header_level > 1:
+                    overrides = {
+                        'initial_header_level': self._header_level,
+                        'doctitle_xform': False,
+                        'report_level': 'quiet'
+                        }
+                else:
+                    overrides = {
+                        'report_level': 'quiet'
+                        }
                 parts = publish_parts(
                     self.restructured_text(text),
                     writer_name="html",
-                    settings_overrides={'report_level': 'quiet'}, )
-                return parts['html_title'] + parts['html_subtitle'] + parts['body']
+                    settings_overrides=overrides
+                    )
+
+                return parts['html_title'] + parts['html_subtitle'] + \
+                    re.sub("(%s)" % self._highlight,
+                           r"<mark>\1</mark>",
+                           parts['body'],
+                           flags=re.IGNORECASE)
+
             except ZeroDivisionError:
                 return "<h3>Error in Restructured Text</h3>Please contact the developer to get the documentation fixed"
         else:
-            return "<pre>" + self.restructured_text() + "</pre>"
+            return "<pre>{0}</pre>".format(self.restructured_text())
 
 
 def display_reserved(o, stop, start):

@@ -452,7 +452,6 @@ class OdtSpec(WriterBase):
 
         addr_rng = {}
         for rng in self.project.get_grouping_list():
-            print rng
             addr_rng[rng.name] = (rng[1], rng[2])
 
         for my_db in self.dblist:
