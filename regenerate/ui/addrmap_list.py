@@ -78,47 +78,7 @@ class AddrMapList(object):
         self._prj = None
         self._model = None
         self._build_instance_table()
-        self._enable_dnd()
         self._obj.set_sensitive(False)
-
-    def _enable_dnd(self):
-        """
-        Enables drag and drop
-        """
-        self._obj.enable_model_drag_dest([
-            ('text/plain', 0, 0)
-        ], gtk.gdk.ACTION_DEFAULT | gtk.gdk.ACTION_MOVE)
-        self._obj.connect('drag-data-received', self._drag_data_received_data)
-
-    def _drag_data_received_data(self, treeview, context, x, y, selection,
-                                 info, etime):
-        """
-        Called when data is dropped.
-        """
-        model = treeview.get_model()
-        data = selection.data
-        drop_info = treeview.get_dest_row_at_pos(x, y)
-        if drop_info:
-            path, position = drop_info
-            row_data = [data, "", "", "", ""]
-            group_names = [n.name for n in self._prj.get_grouping_list()]
-            if data not in group_names:
-                return
-            if len(path) == 1:
-                parent_name = self._model[path][0]
-                if self._prj.add_address_map_group(parent_name, data):
-                    node = self._model.get_iter(path)
-                    self._model.append(node, row_data)
-            else:
-                parent = self._model.get_iter((path[0], ))
-                parent_name = self._model[path[0]][0]
-                if self._prj.add_address_map_group(parent_name, data):
-                    node = self._model.get_iter(path)
-                    if (position == gtk.TREE_VIEW_DROP_BEFORE or
-                        position == gtk.TREE_VIEW_DROP_INTO_OR_BEFORE):
-                        self._model.insert_before(parent, node, row_data)
-                    else:
-                        model.insert_after(parent, node, row_data)
 
     def set_project(self, project):
         """
@@ -154,6 +114,11 @@ class AddrMapList(object):
         Called when the name field is changed.
         """
         if len(path) != 1:
+            return
+
+        i2 = self._model.get_iter(path)
+        old_value = self._model.get_value(i2, AddrMapMdl.NAME_COL)
+        if old_value == new_text:
             return
 
         current_maps = set([i.name for i in self._prj.get_address_maps()])
@@ -289,14 +254,29 @@ class AddrMapList(object):
         data = (base, "{0:x}".format(addr), fixed, uvm, INT2SIZE[width])
         self._model.append(row=(data))
 
-    def remove_selected(self):
+    def get_selected(self):
         """
         Removes the selected node from the list
         """
         (model, node) = self._obj.get_selection().get_selected()
         if node is None:
+            return None
+
+        path = model.get_path(node)
+        if len(path) > 1:
+            return None
+        else:
+            return model.get_value(node, AddrMapMdl.NAME_COL)
+
+    def remove_selected(self):
+        """
+        Removes the selected node from the list
+        """
+        select_data = self._obj.get_selection().get_selected()
+        if select is None or select_data[1] is None:
             return
 
+        (model, node) = select_data
         path = model.get_path(node)
         if len(path) > 1:
             # remove group from address map

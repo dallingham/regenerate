@@ -53,6 +53,10 @@ class InstMdl(gtk.TreeStore):
         """
         Called when the ID of an instance has been edited in the InstanceList
         """
+        i2 = self.get_iter(path)
+        old_value = self.get_value(i2, InstMdl.INST_COL)
+        if old_value == text:
+            return
 
         items = []
         node = self.get_iter_root()
@@ -253,17 +257,6 @@ class InstanceList(object):
         self.__obj.connect('drag-data-received',
                            self.__drag_data_received_data)
 
-        self.__obj.enable_model_drag_source(gtk.gdk.BUTTON1_MASK, [
-            ('text/plain', 0, 0)
-        ], gtk.gdk.ACTION_DEFAULT | gtk.gdk.ACTION_MOVE)
-        self.__obj.connect('drag-data-get', self.__drag_data_get)
-
-    def __drag_data_get(self, treeview, context, selection, target_id, etime):
-        tselection = treeview.get_selection()
-        model, tree_iter = tselection.get_selected()
-        data = model.get_value(tree_iter, 0)
-        selection.set(selection.target, 8, data)
-
     def __drag_data_received_data(self, treeview, context, x, y, selection,
                                   info, etime):
         model = treeview.get_model()
@@ -271,7 +264,7 @@ class InstanceList(object):
         drop_info = treeview.get_dest_row_at_pos(x, y)
         (name, width) = data.split(":")
         row_data = build_row_data(name, name, 0, 1, int(width, 16), "", "", False,
-                                  False, None)
+                                  False, False, None)
         if drop_info:
             path, position = drop_info
             self.modified_callback()

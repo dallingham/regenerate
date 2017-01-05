@@ -2722,6 +2722,7 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
+                                <property name="tooltip_text" translatable="yes">Add a new address map</property>
                                 <property name="use_action_appearance">False</property>
                                 <signal name="clicked" handler="on_add_map_clicked" swapped="no"/>
                                 <child>
@@ -2743,6 +2744,7 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
+                                <property name="tooltip_text" translatable="yes">Deleete the selected address map</property>
                                 <property name="use_action_appearance">False</property>
                                 <signal name="clicked" handler="on_remove_map_clicked" swapped="no"/>
                                 <child>
@@ -2760,10 +2762,34 @@
                               </packing>
                             </child>
                             <child>
+                              <object class="GtkButton" id="edit_map">
+                                <property name="visible">True</property>
+                                <property name="sensitive">False</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">True</property>
+                                <property name="tooltip_text" translatable="yes">Select subsystems for the current address map</property>
+                                <property name="use_action_appearance">False</property>
+                                <signal name="clicked" handler="on_edit_map_clicked" swapped="no"/>
+                                <child>
+                                  <object class="GtkImage" id="image22">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="stock">gtk-edit</property>
+                                  </object>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                                <property name="position">2</property>
+                              </packing>
+                            </child>
+                            <child>
                               <object class="GtkButton" id="addr_map_help">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
+                                <property name="tooltip_text" translatable="yes">Provides help with Address Maps</property>
                                 <property name="use_action_appearance">False</property>
                                 <signal name="clicked" handler="on_addr_map_help_clicked" swapped="no"/>
                                 <child>
@@ -2777,7 +2803,7 @@
                               <packing>
                                 <property name="expand">False</property>
                                 <property name="fill">False</property>
-                                <property name="position">2</property>
+                                <property name="position">3</property>
                               </packing>
                             </child>
                           </object>
@@ -2800,6 +2826,7 @@
                               <object class="GtkTreeView" id="address_tree">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
+                                <signal name="cursor-changed" handler="on_addrmap_cursor_changed" swapped="no"/>
                               </object>
                             </child>
                           </object>
@@ -2822,6 +2849,7 @@
                               <object class="GtkTreeView" id="instances">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
+                                <signal name="cursor-changed" handler="on_instances_cursor_changed" swapped="no"/>
                               </object>
                             </child>
                           </object>
@@ -2842,6 +2870,7 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
+                                <property name="tooltip_text" translatable="yes">Adds a new subsystem</property>
                                 <property name="use_action_appearance">False</property>
                                 <signal name="clicked" handler="on_add_instance_clicked" swapped="no"/>
                                 <child>
@@ -2859,10 +2888,11 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkButton" id="button5">
+                              <object class="GtkButton" id="instance_delete_btn">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
+                                <property name="tooltip_text" translatable="yes">Deletes the selected subsystem</property>
                                 <property name="use_action_appearance">False</property>
                                 <signal name="clicked" handler="on_delete_instance_clicked" swapped="no"/>
                                 <child>
@@ -2880,10 +2910,12 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkButton" id="button1">
+                              <object class="GtkButton" id="instance_edit_btn">
                                 <property name="visible">True</property>
+                                <property name="sensitive">False</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
+                                <property name="tooltip_text" translatable="yes">Edits the documentation for the selected subsystem</property>
                                 <property name="use_action_appearance">False</property>
                                 <signal name="clicked" handler="on_group_doc_clicked" swapped="no"/>
                                 <child>
@@ -2905,6 +2937,7 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
+                                <property name="tooltip_text" translatable="yes">Provides help with Subsystems</property>
                                 <property name="use_action_appearance">False</property>
                                 <signal name="clicked" handler="on_group_help_clicked" swapped="no"/>
                                 <child>

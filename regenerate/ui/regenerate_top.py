@@ -230,12 +230,37 @@ class MainWindow(BaseWindow):
         filter_obj = self.__builder.get_object("filter")
         self.__filter_manage = FilterManager(filter_obj)
 
+    def on_instances_cursor_changed(self, obj):
+        (mdl, node) = self.__instance_obj.get_selected_instance()
+        btn = self.__builder.get_object("instance_edit_btn")
+        if node:
+            path = mdl.get_path(node)
+            if len(path) == 1:
+                btn.set_sensitive(True)
+            else:
+                btn.set_sensitive(False)
+        else:
+            btn.set_sensitive(False)
+
+    def on_addrmap_cursor_changed(self, obj):
+        btn = self.__builder.get_object("edit_map")
+        mdl, node = obj.get_selection().get_selected()
+        if node:
+            path = mdl.get_path(node)
+            if len(path) == 1:
+                btn.set_sensitive(True)
+            else:
+                btn.set_sensitive(False)
+        else:
+            btn.set_sensitive(False)
+
     def on_group_doc_clicked(self, obj):
         from regenerate.ui.group_doc import GroupDocEditor
 
         (mdl, node) = self.__instance_obj.get_selected_instance()
         inst = mdl.get_value(node, InstMdl.OBJ_COL)
-        GroupDocEditor(inst)
+        if inst:
+            GroupDocEditor(inst)
 
     def build_project_tab(self):
         self.__prj_short_name_obj = self.__builder.get_object('short_name')
@@ -254,6 +279,24 @@ class MainWindow(BaseWindow):
         self.__prj_company_name_obj.set_text(company)
         self.__addr_map_list.set_project(self.__prj)
         self.__prj.modified = False
+
+    def on_edit_map_clicked(self, obj):
+        from regenerate.ui.addr_edit import AddrMapEdit
+
+        map_name = self.__addr_map_list.get_selected()
+        if map_name is None:
+            return
+        
+        current = self.__prj.get_address_map_groups(map_name)
+        new_list = [(grp.name, grp.name in current)
+                    for grp in self.__prj.get_grouping_list()]
+
+        dialog = AddrMapEdit(map_name, new_list, self.__builder)
+        new_list = dialog.get_list()
+        if new_list is not None:
+            self.__prj.set_address_map_group_list(map_name, dialog.get_list())
+            self.__addr_map_list.set_project(self.__prj)
+            self.__prj.modified = False
 
     def on_addr_map_help_clicked(self, obj):
         HelpWindow(self.__builder, "addr_map_help.rst")

@@ -466,7 +466,7 @@ class RegisterRst:
         if use_uvm:
             name = uvm_name(u_grp_name, self._reg.token, inst.inst, group_index)
             if index < 0:
-                o.write(" - %s\n" % name))
+                o.write(" - %s\n" % name)
             else:
                 o.write(" - %s[%d]\n" % (name, index))
         if use_id:

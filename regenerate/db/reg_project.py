@@ -335,6 +335,12 @@ class RegProject(object):
         else:
             return False
 
+    def set_address_map_group_list(self, name, group_list):
+        """
+        Adds an address map to a group if it does not already exist
+        """
+        self._addr_map_grps[name] = group_list
+
     def remove_address_map_group(self, name, group_name):
         """
         Removes an address map from a group
