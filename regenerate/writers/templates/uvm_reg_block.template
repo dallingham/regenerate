@@ -41,7 +41,7 @@ package {{project.short_name|lower}}_reg_pkg;
          option.name = name;
 
          READ_ADDR: coverpoint addr iff (is_read) {
-            {% for register in db.get_all_registers() %}
+            {% for register in db.get_all_registers()|remove_no_uvm %}
               {% if register.do_not_cover == False and register.is_completely_write_only() == False %}
                 {% if register.dimension > 1 %}
            bins r_{{register.token|lower}} = { {% for i in range(0, register.dimension) %}'h{{ '%x' | format(register.address + (i * (register.width / 8))) }}{% if not loop.last %}, {% endif %}{% endfor %} };
@@ -53,7 +53,7 @@ package {{project.short_name|lower}}_reg_pkg;
          }
 
          WRITE_ADDR: coverpoint addr iff (!is_read) {
-            {% for register in db.get_all_registers() %}
+            {% for register in db.get_all_registers()|remove_no_uvm %}
               {% if register.is_completely_read_only() == False %}
                 {% if register.do_not_cover == False and register.is_completely_read_only() == False %}
                   {% if register.dimension > 1 %}
@@ -79,7 +79,7 @@ package {{project.short_name|lower}}_reg_pkg;
    endclass : {{db.set_name|lower}}_reg_access_wrapper
   {% endif %}
 
-  {% for register in db.get_all_registers() %}
+  {% for register in db.get_all_registers()|remove_no_uvm %}
     {% if register.ram_size %}
       {% set num_bytes = (register.width / 8)| int %}
    class mem_{{db.set_name|lower}}_{{register.token|lower}} extends uvm_mem;
@@ -243,7 +243,7 @@ package {{project.short_name|lower}}_reg_pkg;
 
     `uvm_object_utils({{group.name|lower}}_{{db.set_name|lower}}_reg_blk)
 
-   {% for register in db.get_all_registers() %}
+   {% for register in db.get_all_registers()|remove_no_uvm %}
      {% if register.ram_size %}
     mem_{{db.set_name|lower}}_{{register.token|lower}} {{register.token|lower}};
      {% else %}
@@ -278,7 +278,7 @@ package {{project.short_name|lower}}_reg_pkg;
        end else begin
           rmap = create_map(map_name, 'h0, {{(db.data_bus_width/8)|int}}, UVM_LITTLE_ENDIAN);
        end
-    {% for reg in db.get_all_registers() %}
+    {% for reg in db.get_all_registers()|remove_no_uvm %}
        {% if reg.ram_size %}
        rmap.add_mem({{reg.token|lower}}, 'h{{"%04x" | format(reg.address)}}, "RW");
       {% else %}
@@ -306,7 +306,7 @@ package {{project.short_name|lower}}_reg_pkg;
       end
 {% endif %}
 
-{% for register in db.get_all_registers() %}
+{% for register in db.get_all_registers()|remove_no_uvm %}
 {%   if register.ram_size %}
 {%     if use_new %}
       {{register.token|lower}} = new("{{register.token|lower}}");

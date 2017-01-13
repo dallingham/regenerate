@@ -24,7 +24,7 @@ from regenerate.db import BitField, TYPES, LOGGER
 from regenerate.writers.writer_base import WriterBase, ExportInfo
 import time
 import os
-from jinja2 import Template
+from jinja2 import Environment
 
 #
 # Map regenerate types to UVM type strings
@@ -148,11 +148,13 @@ class UVMRegBlockRegisters(WriterBase):
         name = self._project.short_name
         dirpath = os.path.dirname(__file__)
 
+        env = Environment(trim_blocks=True, lstrip_blocks=True)
+
+        env.filters['remove_no_uvm'] = remove_no_uvm
+
         template_file = os.path.join(dirpath, "templates", 
                                      "uvm_reg_block.template")
-        template = Template(file(template_file).read(), 
-                            trim_blocks=True,
-                            lstrip_blocks=True)
+        template = env.from_string(file(template_file).read())
 
         used_dbs = self.get_used_databases()
         
@@ -227,6 +229,9 @@ def individual_access(field, reg):
         if (pos / 8) in used_bytes:
             return 0
     return 1
+
+def remove_no_uvm(s):
+    return [r for r in s if r.do_not_use_uvm is False]
 
 
 EXPORTERS = [
