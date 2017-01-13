@@ -190,6 +190,7 @@ class RegParser(object):
         self.__reg.do_not_generate_code = cnv_bool(attrs, 'nocode')
         self.__reg.do_not_test = cnv_bool(attrs, 'dont_test')
         self.__reg.do_cover = cnv_bool(attrs, 'dont_cover')
+        self.__reg.do_not_use_uvm = cnv_bool(attrs, 'dont_use_uvm')
         self.__reg.hide = cnv_bool(attrs, 'hide')
 
     def start_ports(self, attrs):

@@ -31,7 +31,7 @@ class Register(object):
 
     full_compare = ("address", "ram_size", "description", "width", "_id",
                     "_token", "_do_not_test", "_name", "_hide", "dimension",
-                    "_do_not_generate_code", "_do_not_cover")
+                    "_do_not_generate_code", "_do_not_cover", "_do_not_use_uvm")
 
     doc_compare = ("address", "ram_size", "description", "width", "_id",
                    "_token", "_name", "_hide", "dimension")
@@ -47,9 +47,10 @@ class Register(object):
         self._token = ""
         self._do_not_test = False
         self._do_not_cover = False
+        self._do_not_use_uvm = False
+        self._do_not_generate_code = False
         self._name = name
         self._hide = False
-        self._do_not_generate_code = False
         self.__bit_fields = {}
 
     def __ne__(self, other):
@@ -128,6 +129,22 @@ class Register(object):
         directly, but only via the property 'do_not_generate_code'
         """
         self._do_not_generate_code = bool(val)
+
+    @property
+    def do_not_use_uvm(self):
+        """
+        Returns the value of the _do_not_use_uvm flag. This cannot
+        be accessed directly, but only via the property 'do_not_use_uvm'
+        """
+        return self._do_not_use_uvm
+
+    @do_not_use_uvm.setter
+    def do_not_use_uvm(self, val):
+        """
+        Sets the __do_not_use_uvm flag. This cannot be accessed
+        directly, but only via the property 'do_not_use_uvm'
+        """
+        self._do_not_use_uvm = bool(val)
 
     @property
     def do_not_test(self):

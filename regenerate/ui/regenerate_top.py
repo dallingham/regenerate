@@ -127,6 +127,7 @@ class MainWindow(BaseWindow):
         self.__no_rtl = self.__builder.get_object('no_rtl')
         self.__no_test = self.__builder.get_object('no_test')
         self.__no_cover = self.__builder.get_object('no_cover')
+        self.__no_uvm = self.__builder.get_object('no_uvm')
         self.__hide = self.__builder.get_object('hide_doc')
         self.__module_entry_obj = self.__builder.get_object('module')
         self.__owner_entry_obj = self.__builder.get_object('owner')
@@ -260,7 +261,7 @@ class MainWindow(BaseWindow):
         (mdl, node) = self.__instance_obj.get_selected_instance()
         inst = mdl.get_value(node, InstMdl.OBJ_COL)
         if inst:
-            GroupDocEditor(inst)
+            GroupDocEditor(inst, self.project_modified)
 
     def build_project_tab(self):
         self.__prj_short_name_obj = self.__builder.get_object('short_name')
@@ -271,6 +272,9 @@ class MainWindow(BaseWindow):
         self.__addr_map_obj = self.__builder.get_object('address_tree')
         self.__addr_map_list = AddrMapList(self.__addr_map_obj)
 
+    def project_modified(self, value):
+        self.__prj.modified = value
+
     def load_project_tab(self):
         self.__prj_short_name_obj.set_text(self.__prj.short_name)
         self.__prj_doc_object.set_text(self.__prj.documentation)
@@ -278,7 +282,7 @@ class MainWindow(BaseWindow):
         company = self.__prj.company_name
         self.__prj_company_name_obj.set_text(company)
         self.__addr_map_list.set_project(self.__prj)
-        self.__prj.modified = False
+        self.project_modified(False)
 
     def on_edit_map_clicked(self, obj):
         from regenerate.ui.addr_edit import AddrMapEdit
@@ -288,7 +292,7 @@ class MainWindow(BaseWindow):
             return
         
         current = self.__prj.get_address_map_groups(map_name)
-        new_list = [(grp.name, grp.name in current)
+        new_list = [(grp, grp.name in current)
                     for grp in self.__prj.get_grouping_list()]
 
         dialog = AddrMapEdit(map_name, new_list, self.__builder)
@@ -296,7 +300,7 @@ class MainWindow(BaseWindow):
         if new_list is not None:
             self.__prj.set_address_map_group_list(map_name, dialog.get_list())
             self.__addr_map_list.set_project(self.__prj)
-            self.__prj.modified = False
+            self.project_modified(False)
 
     def on_addr_map_help_clicked(self, obj):
         HelpWindow(self.__builder, "addr_map_help.rst")
@@ -305,7 +309,7 @@ class MainWindow(BaseWindow):
         HelpWindow(self.__builder, "project_group_help.rst")
 
     def on_remove_map_clicked(self, obj):
-        self.__prj.modified = True
+        self.project_modified(True)
         self.__addr_map_list.remove_selected()
 
     def on_add_map_clicked(self, obj):
@@ -320,7 +324,7 @@ class MainWindow(BaseWindow):
         When the name is changed, it is immediately updated in the project
         object.
         """
-        self.__prj.modified = True
+        self.project_modified(True)
         self.__prj.name = obj.get_text()
 
     def on_company_name_changed(self, obj):
@@ -329,7 +333,7 @@ class MainWindow(BaseWindow):
         When the name is changed, it is immediately updated in the project
         object.
         """
-        self.__prj.modified = True
+        self.project_modified(True)
         self.__prj.company_name = obj.get_text()
 
     def on_offset_insert_text(self, obj, new_text, pos, *extra):
@@ -339,7 +343,7 @@ class MainWindow(BaseWindow):
             obj.stop_emission('insert-text')
 
     def on_project_documentation_changed(self, obj):
-        self.__prj.modified = True
+        self.project_modified(True)
         self.__prj.documentation = obj.get_text(obj.get_start_iter(),
                                                 obj.get_end_iter())
 
@@ -351,7 +355,7 @@ class MainWindow(BaseWindow):
         spaces.
         """
         self.__prj.short_name = obj.get_text().replace(' ', '').strip()
-        self.__prj.modified = True
+        self.project_modified(True)
         obj.set_text(self.__prj.short_name)
 
     def __restore_position_and_size(self):
@@ -576,12 +580,12 @@ class MainWindow(BaseWindow):
     def __inst_changed(self, attr, path, new_text):
         getattr(self.__instance_model, attr)(path, new_text)
         self.__set_module_definition_warn_flag()
-        self.__prj.modified = True
+        self.project_modified(True)
 
     def __inst_bool_changed(self, attr, cell, path):
         getattr(self.__instance_model, attr)(cell, path)
         self.__set_module_definition_warn_flag()
-        self.__prj.modified = True
+        self.project_modified(True)
 
     def __instance_inst_changed(self, cell, path, new_text, col):
         """
@@ -758,12 +762,12 @@ class MainWindow(BaseWindow):
             self.__instance_model.remove(selected[1])
             self.__prj.remove_group_from_grouping_list(grp)
             self.__set_module_definition_warn_flag()
-            self.__prj.modified = True
+            self.project_modified(True)
 
     def on_add_instance_clicked(self, obj):
         self.__instance_obj.new_instance()
         self.__set_module_definition_warn_flag()
-        self.__prj.modified = True
+        self.project_modified(True)
 
     def __data_changed(self, obj):
         """
@@ -882,6 +886,7 @@ class MainWindow(BaseWindow):
             self.__reg_text_buf.set_text(reg.description)
             self.__reg_text_buf.set_modified(False)
             self.__no_rtl.set_active(reg.do_not_generate_code)
+            self.__no_uvm.set_active(reg.do_not_use_uvm)
             self.__no_test.set_active(reg.do_not_test)
             self.__no_cover.set_active(reg.do_not_cover)
             self.__hide.set_active(reg.hide)
@@ -1528,6 +1533,9 @@ class MainWindow(BaseWindow):
 
     def on_no_rtl_toggled(self, obj):
         self.__button_toggle("do_not_generate_code", obj)
+
+    def on_no_uvm_toggled(self, obj):
+        self.__button_toggle("do_not_use_uvm", obj)
 
     def on_no_test_toggled(self, obj):
         self.__button_toggle("do_not_test", obj)

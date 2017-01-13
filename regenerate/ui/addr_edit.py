@@ -22,10 +22,12 @@ information.
 """
 
 import gtk
-import os
 
 class AddrMapEdit(object):
-
+    """
+    Creates a dialog box allowing the selection of subsystem groups
+    for an address map.
+    """
     def __init__(self, map_name, subsystem_list, builder):
 
         label = gtk.Label(
@@ -37,22 +39,35 @@ class AddrMapEdit(object):
                             (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
                              gtk.STOCK_OK, gtk.RESPONSE_ACCEPT)
                             )
-        dialog.vbox.pack_start(label)
+        dialog.vbox.pack_start(label, False, False)
+        dialog.vbox.set_homogeneous(False)
+        dialog.set_default_size(480, 320)
         label.show()
+
+        scrolled_window = gtk.ScrolledWindow()
+        scrolled_window.set_policy(gtk.POLICY_AUTOMATIC,
+                                   gtk.POLICY_AUTOMATIC)
+        scrolled_window.show()
+        dialog.vbox.pack_end(scrolled_window)
+        
         table = gtk.Table(len(subsystem_list), 3)
         table.show()
-        dialog.vbox.pack_end(table)
+        scrolled_window.add_with_viewport(table)
 
         self.cb_list = []
 
         item_list = []
         for i, val in enumerate(subsystem_list):
-            item, active = val
-            checkbox = gtk.CheckButton(item)
+            group, active = val
+            if group.title:
+                title = "{0} - {1}".format(group.name, group.title)
+            else:
+                title = group.name
+            checkbox = gtk.CheckButton(title)
             checkbox.set_active(active)
             checkbox.show()
             table.attach(checkbox, 1, 2, i, i+1, xpadding=12, ypadding=6)
-            item_list.append((item, checkbox))
+            item_list.append((group.name, checkbox))
         response = dialog.run()
 
         if response == gtk.RESPONSE_REJECT:

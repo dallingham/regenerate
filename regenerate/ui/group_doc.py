@@ -30,10 +30,11 @@ from regenerate.settings.paths import GLADE_GTXT
 
 
 class GroupDocEditor(object):
-    def __init__(self, group_inst):
+    def __init__(self, group_inst, callback):
 
         builder = gtk.Builder()
         builder.add_from_file(GLADE_GTXT)
+        self.callback = callback
         self.group_doc = builder.get_object('group_text')
         self.group_title = builder.get_object('group_title')
         self.group_inst = group_inst
@@ -71,7 +72,15 @@ class GroupDocEditor(object):
         self.group_doc.destroy()
 
     def _save(self, obj, data):
-        self.group_inst.docs = self.buffer.get_text(
+
+        new_docs = self.buffer.get_text(
             self.buffer.get_start_iter(), self.buffer.get_end_iter(), False)
-        self.group_inst.title = self.group_title.get_text()
+        new_title = self.group_title.get_text()
+
+        if self.group_inst.docs != new_docs:
+            self.group_inst.docs = new_docs
+            self.callback(True)
+        if self.group_inst.title != new_title:
+            self.group_inst.title = new_title
+            self.callback(True)
         self.group_doc.destroy()

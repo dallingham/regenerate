@@ -107,8 +107,9 @@ def write_register(ofile, reg):
     """
     Writes the specified register to the output file
     """
-    ofile.write('  <register nocode="%d" dont_test="%d" dont_cover="%d" hide="%d">\n' %
-                (reg.do_not_generate_code, reg.do_not_test, reg.do_not_cover, reg.hide))
+    ofile.write('  <register nocode="%d" dont_test="%d" dont_cover="%d" hide="%d" dont_use_uvm="%d">\n' %
+                (reg.do_not_generate_code, reg.do_not_test, reg.do_not_cover, reg.hide,
+                 reg.do_not_use_uvm))
     ofile.write('    <token>%s</token>\n' % reg.token)
     ofile.write('    <dimension>%d</dimension>\n' % reg.dimension)
     ofile.write('    <uuid>%s</uuid>\n' % reg.uuid)

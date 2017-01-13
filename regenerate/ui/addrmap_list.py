@@ -116,8 +116,8 @@ class AddrMapList(object):
         if len(path) != 1:
             return
 
-        i2 = self._model.get_iter(path)
-        old_value = self._model.get_value(i2, AddrMapMdl.NAME_COL)
+        old_value = self._model.get_value(self._model.get_iter(path),
+                                          AddrMapMdl.NAME_COL)
         if old_value == new_text:
             return
 

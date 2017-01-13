@@ -228,6 +228,7 @@ def individual_access(field, reg):
             return 0
     return 1
 
+
 EXPORTERS = [
     (WriterBase.TYPE_PROJECT, ExportInfo(UVMRegBlockRegisters, ("Test", "UVM Registers"),
                                          "SystemVerilog files", ".sv", 'proj-uvm'))
