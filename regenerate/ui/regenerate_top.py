@@ -514,10 +514,23 @@ class MainWindow(BaseWindow):
 
             if stop != field.msb or start != field.lsb:
                 field.msb, field.lsb = stop, start
+                r = self.__reglist_obj.get_selected_register()
+                r.change_bit_field(field)
                 self.set_modified()
 
             self.__bit_model[path][BitModel.BIT_COL] = bits(field)
             self.__bit_model[path][BitModel.SORT_COL] = field.start_position
+
+    def dump(self, title):
+            r = self.__reglist_obj.get_selected_register()
+
+            print "----------------------------------------------"
+            print title, r.register_name
+
+            for f in r.get_bit_fields():
+                print "'%18s' %4d %4d" % (f.field_name, f.msb, f.lsb)
+                print "\t", f
+
 
     def __bit_update_name(self, field, path, new_text):
         """
@@ -938,7 +951,9 @@ class MainWindow(BaseWindow):
         field = BitField()
         field.lsb = register.find_next_unused_bit()
         field.msb = field.lsb
+        
         register.add_bit_field(field)
+
         self.__bitfield_obj.add_new_field(field)
         self.set_modified()
         self.__set_register_warn_flags(register)

@@ -256,7 +256,20 @@ class Register(object):
         """
         Adds a bit field to the set of bit fields.
         """
-        self.__bit_fields[field.msb] = field
+        self.__bit_fields[field.lsb] = field
+
+    def change_bit_field(self, field):
+        """
+        Adds a bit field to the set of bit fields.
+        """
+        remove_val = None
+        for f in self.__bit_fields:
+            if field == self.__bit_fields[f]:
+                remove_val = f
+
+        if remove_val is not None:
+            del self.__bit_fields[remove_val]
+        self.__bit_fields[field.lsb] = field
 
     def delete_bit_field(self, field):
         """

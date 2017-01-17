@@ -55,7 +55,6 @@ class BitModel(gtk.ListStore):
         data = [None, bits(field), field.field_name,
                 TYPE2STR[field.field_type][0], get_field_reset_data(field),
                 self.RESET2STR[field.reset_type][0], field.lsb, field]
-
         node = self.append(row=data)
         return self.get_path(node)
 
