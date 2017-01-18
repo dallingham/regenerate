@@ -522,15 +522,14 @@ class MainWindow(BaseWindow):
             self.__bit_model[path][BitModel.SORT_COL] = field.start_position
 
     def dump(self, title):
-            r = self.__reglist_obj.get_selected_register()
+        r = self.__reglist_obj.get_selected_register()
 
-            print "----------------------------------------------"
-            print title, r.register_name
+        print "----------------------------------------------"
+        print title, r.register_name
 
-            for f in r.get_bit_fields():
-                print "'%18s' %4d %4d" % (f.field_name, f.msb, f.lsb)
-                print "\t", f
-
+        for f in r.get_bit_fields():
+            print "'%18s' %4d %4d" % (f.field_name, f.msb, f.lsb)
+            print "\t", f
 
     def __bit_update_name(self, field, path, new_text):
         """
