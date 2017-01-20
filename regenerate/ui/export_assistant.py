@@ -20,6 +20,25 @@
 import gtk
 import os
 
+class TextCombo(gtk.ComboBox):
+
+    def __init__(self):
+        gtk.ComboBox.__init__(self)
+        self.model = gtk.ListStore(str)
+        cell = gtk.CellRendererText()
+        self.pack_start(cell, True)
+        self.add_attribute(cell, 'text', 0)
+        self.set_model(self.model)
+        self.set_active(0)
+
+    def append_text(self, item):
+        self.model.append(row=[item])
+        self.set_active(0)
+
+    def get_active_text(self):
+        node = self.get_active_iter()
+        val = self.model.get_value(node, 0)
+        return val
 
 class ExportAssistant(gtk.Assistant):
 
@@ -59,8 +78,7 @@ class ExportAssistant(gtk.Assistant):
         return model.get_value(self.export_combo.get_active_iter(), 2)
 
     def selected_register_set(self):
-        model = self.register_combo.get_model()
-        return model.get_value(self.register_combo.get_active_iter(), 0)
+        return self.register_combo.get_active_text()
 
     def prepare(self, obj, page):
         self.set_page_complete(page, True)
@@ -72,13 +90,9 @@ class ExportAssistant(gtk.Assistant):
                 if self.selected_export_is_project():
                     value = self.project_name
                 elif self.selected_export_is_group():
-                    model = self.group_combo.get_model()
-                    active_iter = self.group_combo.get_active_iter()
-                    value = model.get_value(active_iter, 0) + "_reg_decode"
+                    value = self.group_combo.get_active_text() + "_reg_decode"
                 else:
-                    model = self.register_combo.get_model()
-                    active_iter = self.register_combo.get_active_iter()
-                    value = model.get_value(active_iter, 0)
+                    value = self.register_combo.get_active_text()
 
                 filename = value + self.selected_extension()
                 self.choose.set_current_name(filename)
@@ -110,8 +124,7 @@ class ExportAssistant(gtk.Assistant):
         model = self.export_combo.get_model()
         sel_fmt = model.get_value(self.export_combo.get_active_iter(), 0)
 
-        model = self.register_combo.get_model()
-        sel_set = model.get_value(self.register_combo.get_active_iter(), 0)
+        sel_set = self.register_combo.get_active_text()
 
         if filename:
             self.save_callback(filename, sel_fmt, sel_set)
@@ -167,16 +180,10 @@ class ExportAssistant(gtk.Assistant):
         label.show()
         table.attach(label, 0, 3, 0, 1)
 
-        self.register_combo = gtk.ComboBox()
+        self.register_combo = TextCombo()
         self.register_combo.show()
-        cell = gtk.CellRendererText()
-        model = gtk.ListStore(str)
         for item in register_sets:
-            model.append(row=[item])
-        self.register_combo.pack_start(cell, True)
-        self.register_combo.add_attribute(cell, 'text', 0)
-        self.register_combo.set_active(0)
-        self.register_combo.set_model(model)
+            self.register_combo.append_text(item)
         table.attach(self.register_combo, 1, 2, 1, 2, 0, gtk.EXPAND)
 
         self.append_page(table)
@@ -197,16 +204,10 @@ class ExportAssistant(gtk.Assistant):
         label.show()
         table.attach(label, 0, 3, 0, 1)
 
-        self.group_combo = gtk.ComboBox()
+        self.group_combo = TextCombo()
         self.group_combo.show()
-        cell = gtk.CellRendererText()
-        model = gtk.ListStore(str)
         for item in groups:
-            model.append(row=[item])
-        self.group_combo.pack_start(cell, True)
-        self.group_combo.add_attribute(cell, 'text', 0)
-        self.group_combo.set_active(0)
-        self.group_combo.set_model(model)
+            self.group_combo.append_text(item)
         table.attach(self.group_combo, 1, 2, 1, 2, 0, gtk.EXPAND)
 
         self.append_page(table)
@@ -233,9 +234,7 @@ class ExportAssistant(gtk.Assistant):
         export_iter = self.export_combo.get_active_iter()
         export_project = model.get_value(export_iter, 1)
         export_type = model.get_value(export_iter, 0)
-        model = self.register_combo.get_model()
-        reg_iter = self.register_combo.get_active_iter()
-        register_set = model.get_value(reg_iter, 0)
+        register_set = self.register_combo.get_active_text()
 
         self.export_obj.set_text(export_type)
         if export_project:

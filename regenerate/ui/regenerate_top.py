@@ -487,11 +487,11 @@ class MainWindow(BaseWindow):
             val = reset_value(field)
             self.__bit_model[path][BitModel.RESET_COL] = val
         elif field.reset_type == BitField.RESET_INPUT:
-            if field.reset_input == "":
+            if not re.match("^[A-Za-z]\w*$", field.reset_input):
                 field.reset_input = "%s_RST" % field.field_name
             self.__bit_model[path][BitModel.RESET_COL] = field.reset_input
         else:
-            if field.reset_parameter == "":
+            if not re.match("^[A-Za-z]\w*$", field.reset_parameter):
                 field.reset_parameter = "pRST_%s" % field.field_name
             self.__bit_model[path][BitModel.RESET_COL] = field.reset_parameter
 
@@ -514,6 +514,11 @@ class MainWindow(BaseWindow):
                 start = int(groups[2])
             else:
                 start = stop
+
+            register = self.__reglist_obj.get_selected_register()
+            if stop >= register.width:
+                LOGGER.error("Bit position is greater than register width")
+                return
 
             if stop != field.msb or start != field.lsb:
                 field.msb, field.lsb = stop, start
@@ -542,9 +547,19 @@ class MainWindow(BaseWindow):
         """
         if new_text != field.field_name:
             new_text = new_text.upper().replace(' ', '_')
-            field.field_name = new_text.replace('/', '_').replace('-', '_')
-            self.__bit_model[path][BitModel.NAME_COL] = field.field_name
-            self.set_modified()
+            new_text = new_text.replace('/', '_').replace('-', '_')
+
+            register = self.__reglist_obj.get_selected_register()
+
+            current_names = [f.field_name for f in register.get_bit_fields()
+                             if f != field]
+
+            if new_text not in current_names:
+                self.__bit_model[path][BitModel.NAME_COL] = new_text
+                field.field_name = new_text
+                self.set_modified()
+            else:
+                LOGGER.error('"%s" has already been used as a field name' % new_text)
 
     def __bit_update_reset(self, field, path, new_text):
         """
@@ -561,13 +576,15 @@ class MainWindow(BaseWindow):
                 LOGGER.error('Illegal reset value: "%s"' % new_text)
                 return
         elif field.reset_type == BitField.RESET_INPUT:
-            if new_text == "":
+            if not re.match("^[A-Za-z]\w*$", new_text):
+                LOGGER.error('"%s" is not a valid input name' % new_text)
                 new_text = "%s_RST" % field.field_name
             field.reset_input = new_text
             self.__bit_model[path][BitModel.RESET_COL] = field.reset_input
             self.set_modified()
         else:
-            if new_text == "":
+            if not re.match("^[A-Za-z]\w*$", new_text):
+                LOGGER.error('"%s" is not a valid parameter name' % new_text)
                 new_text = "pRST_%s" % field.field_name
             field.reset_parameter = new_text
             self.__bit_model[path][BitModel.RESET_COL] = field.reset_parameter
@@ -1014,8 +1031,15 @@ class MainWindow(BaseWindow):
 
     def on_add_bit_action_activate(self, obj):
         register = self.__reglist_obj.get_selected_register()
+        next_pos = register.find_next_unused_bit()
+
+        if next_pos == -1:
+            LOGGER.error("All bits are used in this register")
+            return
+
         field = BitField()
-        field.lsb = register.find_next_unused_bit()
+        field.lsb = next_pos
+
         field.msb = field.lsb
         field.field_name = "BIT%d" % field.lsb
         if register.share == Register.SHARE_WRITE:

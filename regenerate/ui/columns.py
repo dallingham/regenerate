@@ -45,14 +45,26 @@ class EditableColumn(gtk.TreeViewColumn):
     """
 
     def __init__(self, title, change_callback, source_column, monospace=False):
-        renderer = gtk.CellRendererText()
+        self.renderer = gtk.CellRendererText()
         if change_callback:
-            renderer.set_property('editable', True)
-            renderer.connect('edited', change_callback, source_column)
-        renderer.set_property('ellipsize', pango.ELLIPSIZE_END)
+            self.renderer.set_property('editable', True)
+            self.renderer.connect('edited', change_callback, source_column)
+        self.renderer.set_property('ellipsize', pango.ELLIPSIZE_END)
         if monospace:
-            renderer.set_property('family', "Monospace")
-        gtk.TreeViewColumn.__init__(self, title, renderer, text=source_column)
+            self.renderer.set_property('family', "Monospace")
+        gtk.TreeViewColumn.__init__(self, title, self.renderer, text=source_column)
+        self.renderer.connect('editing-canceled', self.edit_canceled)
+        self.renderer.connect('editing-started', self.edit_started)
+        self.path = 0
+        self.entry = None
+
+    def edit_started(self, cell, entry, path):
+        self.path = path
+        self.entry = entry
+
+    def edit_canceled(self, obj):
+        val = self.entry.get_text()
+        self.renderer.emit('edited', self.path, val)
 
 
 class ComboMapColumn(gtk.TreeViewColumn):

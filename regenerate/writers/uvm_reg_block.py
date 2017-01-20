@@ -108,6 +108,19 @@ class UVMRegBlockRegisters(WriterBase):
         else:
             return name
 
+    def fix_reg_name(self, reg):
+        """
+        Creates a name from the register. If there are any spaces (which the
+        UI should prevent), the are converted to underscores. We then replace
+        name names that are reserved SystemVerilog words with alternatives.
+        """
+        name = "_".join(reg.token.lower().split())
+
+        if name in self.REMAP_NAME:
+            return "%s_reg" % name
+        else:
+            return name
+
     def uvm_address_maps(self):
         return [d for d in self._project.get_address_maps() if not d.uvm]
 
@@ -166,6 +179,7 @@ class UVMRegBlockRegisters(WriterBase):
                                      db_grp_maps=self.get_db_groups(),
                                      group_maps = self._build_group_maps(),
                                      fix_name=self.fix_name,
+                                     fix_reg=self.fix_reg_name,
                                      use_new=False,
                                      used_maps = self._used_maps(),
                                      map2grp = self.build_map_name_to_groups(),

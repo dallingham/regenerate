@@ -88,7 +88,7 @@ class Register(object):
         if sorted_bits:
             return sorted_bits[0]
         else:
-            return 0
+            return -1
 
     def find_next_unused_bit(self):
         """
@@ -99,6 +99,7 @@ class Register(object):
             for val in range(field.lsb, field.msb + 1):
                 bit.add(val)
         lbits = sorted(list(bit))
+
         if lbits:
             if lbits[-1] == self.width - 1:
                 return self.find_first_unused_bit()
