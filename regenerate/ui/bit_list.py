@@ -21,10 +21,12 @@ Provides both the GTK ListStore and ListView for the bit fields.
 """
 
 import gtk
-from regenerate.db import BitField, TYPES
-from regenerate.ui.columns import EditableColumn, ComboMapColumn
+from regenerate.db import BitField, TYPES, Register
+from regenerate.ui.columns import EditableColumn, ComboMapColumn, SwitchComboMapColumn
 
 TYPE2STR = [(t.description, t.type) for t in sorted(TYPES)]
+RO2STR = [(t.description, t.type) for t in sorted(TYPES) if t.simple_type == "RO"]
+WO2STR = [(t.description, t.type) for t in sorted(TYPES) if t.simple_type == "WO"]
 (BIT_TITLE, BIT_SIZE, BIT_SORT, BIT_EXPAND, BIT_MONO) = range(5)
 
 
@@ -102,6 +104,9 @@ class BitList(object):
         self.__model = model
         self.__obj.set_model(model)
 
+    def set_mode(self, mode):
+        self.type_column.set_mode(mode)
+
     def __build_bitfield_columns(self, combo_edit, text_edit):
         """
         Builds the columns for the tree view. First, removes the old columns in
@@ -109,7 +114,9 @@ class BitList(object):
         """
         for (i, col) in enumerate(self.BIT_COLS):
             if i == BitModel.TYPE_COL:
-                column = ComboMapColumn(col[BIT_TITLE], combo_edit, TYPE2STR, i)
+                column = SwitchComboMapColumn(col[BIT_TITLE], combo_edit, TYPE2STR,
+                                              RO2STR, WO2STR, i)
+                self.type_column = column
             elif i == BitModel.RESET_TYPE_COL:
                 column = ComboMapColumn(col[BIT_TITLE], combo_edit,
                                         BitModel.RESET2STR, i)

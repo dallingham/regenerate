@@ -24,7 +24,7 @@ from collections import namedtuple
 import gtk
 from regenerate.ui.columns import EditableColumn, ComboMapColumn
 from regenerate.ui.error_dialogs import ErrorMsg
-from regenerate.db import LOGGER
+from regenerate.db import LOGGER, Register
 
 BAD_TOKENS = ' /-@!#$%^&*()+=|{}[]:"\';\\,.?'
 
@@ -332,6 +332,7 @@ class RegisterList(object):
         """
         Updates the address associated with a register address
         """
+        print "REG UPDATE ADDR"
         try:
             new_addr = int(text, 16)
             new_length = 0
@@ -395,12 +396,20 @@ class RegisterList(object):
         does not overlap with an existing address.
         """
         addr_list = set()
+        ro_list = set()
+        wo_list = set()
+
         for (index, data) in enumerate(self.__model):
             if index == int(path):
                 continue
             reg = data[-1]
             for i in range(reg.address, reg.address + (reg.dimension * (reg.width / 8))):
-                addr_list.add(i)
+                if reg.share == Register.SHARE_READ:
+                    ro_list.add(i)
+                elif reg.share == Register.SHARE_WRITE:
+                    wo_list.add(i)
+                else:
+                    addr_list.add(i)
 
         data = new_text.split(":")
 
@@ -410,8 +419,8 @@ class RegisterList(object):
             length = int(data[1], 16)
         start_address = int(data[0], 16)
 
-        for address in range(start_address, start_address + length):
-            if address in addr_list:
+        for addr in range(start_address, start_address + length):
+            if addr in addr_list or addr in wo_list and addr in ro_list:
                 return False
         return True
 

@@ -279,15 +279,22 @@ package {{project.short_name|lower}}_reg_pkg;
           rmap = create_map(map_name, 'h0, {{(db.data_bus_width/8)|int}}, UVM_LITTLE_ENDIAN);
        end
     {% for reg in db.get_all_registers()|remove_no_uvm %}
+       {% if reg.share == 0 %}
+       {%   set mode = "RW" %}
+       {% elif reg.share == 1 %}
+       {%   set mode = "RO" %}
+       {% else %}
+       {%   set mode = "WO" %}
+       {% endif %}
        {% if reg.ram_size %}
-       rmap.add_mem({{reg.token|lower}}, 'h{{"%04x" | format(reg.address)}}, "RW");
+       rmap.add_mem({{reg.token|lower}}, 'h{{"%04x" | format(reg.address)}}, "{{mode}}");
       {% else %}
          {% if reg.dimension > 1 %}
            {% for i in range(0, reg.dimension) %}
-       rmap.add_reg({{reg.token|lower}}[{{i}}], 'h{{"%04x" | format(reg.address + (i * (reg.width / 8)))}}, "RW");
+       rmap.add_reg({{reg.token|lower}}[{{i}}], 'h{{"%04x" | format(reg.address + (i * (reg.width / 8)))}}, "{{mode}}");
            {% endfor %}
          {% else %}
-       rmap.add_reg({{reg.token|lower}}, 'h{{"%04x" | format(reg.address)}}, "RW");
+       rmap.add_reg({{reg.token|lower}}, 'h{{"%04x" | format(reg.address)}}, "{{mode}}");
          {% endif %}
       {% endif %}
     {%- endfor %}
@@ -308,6 +315,13 @@ package {{project.short_name|lower}}_reg_pkg;
 
 {% for register in db.get_all_registers()|remove_no_uvm %}
 {%   if register.ram_size %}
+{%     if reg.share == 0 %}
+{%       set mode = "_" %}
+{%     elif reg.share == 1 %}
+{%       set mode = "_r_" %}
+{%     else %}
+{%       set mode = "_w_" %}
+{%     endif %}
 {%     if use_new %}
       {{register.token|lower}} = new("{{register.token|lower}}");
 {%     else %}
@@ -325,7 +339,7 @@ package {{project.short_name|lower}}_reg_pkg;
          {{register.token|lower}}[i].configure(this);
          {{register.token|lower}}[i].build();
 {%       for field in register.get_bit_fields() %}
-         {{register.token|lower}}[i].add_hdl_path_slice($sformatf("r%02x_{{fix_name(field)}}", {{register.address}} + (i * {{register.width / 8}})), {{field.lsb}}, {{field.width}});
+         {{register.token|lower}}[i].add_hdl_path_slice($sformatf("r%02x{{mode}}{fix_name(field)}}", {{register.address}} + (i * {{register.width / 8}})), {{field.lsb}}, {{field.width}});
 {%       endfor %}
       end
 {%     else %}
@@ -337,7 +351,7 @@ package {{project.short_name|lower}}_reg_pkg;
       {{register.token|lower}}.configure(this);
       {{register.token|lower}}.build();
 {%       for field in register.get_bit_fields() %}
-      {{register.token|lower}}.add_hdl_path_slice("r{{'%02x' | format(register.address)}}_{{fix_name(field)}}", {{field.lsb}}, {{field.width}});
+      {{register.token|lower}}.add_hdl_path_slice("r{{'%02x' | format(register.address)}}{{mode}}{{fix_name(field)}}", {{field.lsb}}, {{field.width}});
 {%       endfor %}
 {%     endif %}
 {%   endif %}

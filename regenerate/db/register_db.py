@@ -86,13 +86,13 @@ class RegisterDb(object):
         """
         Returns the register keys, which is the address of the register
         """
-        return sorted(self.__registers.keys())
+        return [a.uuid for a in sorted(self.__registers.values(), key=lambda a: a.address)]
 
     def get_all_registers(self):
         """
         Returns the register keys, which is the address of the register
         """
-        return iter(sorted(self.__registers.values()))
+        return iter(sorted(self.__registers.values(), key=lambda a: a.address))
 
     def get_register(self, key):
         """
@@ -105,13 +105,13 @@ class RegisterDb(object):
         """
         Adds the register to the database.
         """
-        self.__registers[reg.address] = reg
+        self.__registers[reg.uuid] = reg
 
     def delete_register(self, reg):
         """
         Removes the register to the database.
         """
-        del self.__registers[reg.address]
+        del self.__registers[reg.uuid]
 
     def read_xml(self, filename):
         """

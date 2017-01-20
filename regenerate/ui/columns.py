@@ -72,3 +72,40 @@ class ComboMapColumn(gtk.TreeViewColumn):
         renderer.set_property('editable', True)
         renderer.connect('changed', callback, source_column)
         gtk.TreeViewColumn.__init__(self, title, renderer, text=source_column)
+
+
+class SwitchComboMapColumn(gtk.TreeViewColumn):
+    """
+    A TreeViewColumn that has a menu of options. The callback and listmodel
+    columns are passed and used to create the CellRenderer.
+    """
+
+    def __init__(self, title, callback, data_list0, data_list1, data_list2,
+                 source_column, dtype=int):
+
+        self.renderer = gtk.CellRendererCombo()
+
+        self.model = []
+
+        self.model.append(gtk.ListStore(str, dtype))
+        for item in data_list0:
+            self.model[0].append(row=item)
+
+        self.model.append(gtk.ListStore(str, dtype))
+        for item in data_list1:
+            self.model[1].append(row=item)
+
+        self.model.append(gtk.ListStore(str, dtype))
+        for item in data_list2:
+            self.model[2].append(row=item)
+
+        self.renderer.set_property("text-column", 0)
+        self.renderer.set_property("model", self.model[0])
+        self.renderer.set_property("has-entry", False)
+        self.renderer.set_property('editable', True)
+        self.renderer.connect('changed', callback, source_column)
+        gtk.TreeViewColumn.__init__(self, title, self.renderer, text=source_column)
+
+    def set_mode(self, i):
+        self.renderer.set_property("model", self.model[i])
+

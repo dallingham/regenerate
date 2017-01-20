@@ -23,6 +23,7 @@ Parses the register database, loading the database.
 from regenerate.db import Register
 from regenerate.db import BitField, ID_TO_TYPE
 import xml.parsers.expat
+import uuid
 
 
 def cnv_hex(attrs, key, default=0):
@@ -84,6 +85,7 @@ class RegParser(object):
         self.__reset_parameter = ""
         self.__token_list = []
         self.save_id = None
+        self.existing_ids = set()
 
     def parse(self, input_file):
         """
@@ -192,6 +194,7 @@ class RegParser(object):
         self.__reg.do_cover = cnv_bool(attrs, 'dont_cover')
         self.__reg.do_not_use_uvm = cnv_bool(attrs, 'dont_use_uvm')
         self.__reg.hide = cnv_bool(attrs, 'hide')
+        self.__reg.share = int(attrs.get('share', 0))
 
     def start_ports(self, attrs):
         """
@@ -309,6 +312,12 @@ class RegParser(object):
         Called when the token tag is terminated. The text is the
         register token value.
         """
+        # force the generation of a new ID if a duplicate is found
+
+        if text in self.existing_ids:
+            text = uuid.uuid4().hex
+        self.existing_ids.add(text)
+
         if self.__field:
             self.__field.uuid = text
         else:

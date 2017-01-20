@@ -273,7 +273,7 @@ class AddrMapList(object):
         Removes the selected node from the list
         """
         select_data = self._obj.get_selection().get_selected()
-        if select is None or select_data[1] is None:
+        if select_data is None or select_data[1] is None:
             return
 
         (model, node) = select_data

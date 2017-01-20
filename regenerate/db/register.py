@@ -28,6 +28,8 @@ class Register(object):
     """
     Defines a hardware register.
     """
+    
+    (SHARE_NONE, SHARE_READ, SHARE_WRITE) = range(3)
 
     full_compare = ("address", "ram_size", "description", "width", "_id",
                     "_token", "_do_not_test", "_name", "_hide", "dimension",
@@ -52,6 +54,7 @@ class Register(object):
         self._name = name
         self._hide = False
         self.__bit_fields = {}
+        self.share = Register.SHARE_NONE
 
     def __ne__(self, other):
         return not self.__eq__(other)

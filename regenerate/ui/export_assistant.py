@@ -72,8 +72,8 @@ class ExportAssistant(gtk.Assistant):
                 if self.selected_export_is_project():
                     value = self.project_name
                 elif self.selected_export_is_group():
-                    model = self.register_combo.get_model()
-                    active_iter = self.register_combo.get_active_iter()
+                    model = self.group_combo.get_model()
+                    active_iter = self.group_combo.get_active_iter()
                     value = model.get_value(active_iter, 0) + "_reg_decode"
                 else:
                     model = self.register_combo.get_model()
@@ -197,17 +197,17 @@ class ExportAssistant(gtk.Assistant):
         label.show()
         table.attach(label, 0, 3, 0, 1)
 
-        self.register_combo = gtk.ComboBox()
-        self.register_combo.show()
+        self.group_combo = gtk.ComboBox()
+        self.group_combo.show()
         cell = gtk.CellRendererText()
         model = gtk.ListStore(str)
         for item in groups:
             model.append(row=[item])
-        self.register_combo.pack_start(cell, True)
-        self.register_combo.add_attribute(cell, 'text', 0)
-        self.register_combo.set_active(0)
-        self.register_combo.set_model(model)
-        table.attach(self.register_combo, 1, 2, 1, 2, 0, gtk.EXPAND)
+        self.group_combo.pack_start(cell, True)
+        self.group_combo.add_attribute(cell, 'text', 0)
+        self.group_combo.set_active(0)
+        self.group_combo.set_model(model)
+        table.attach(self.group_combo, 1, 2, 1, 2, 0, gtk.EXPAND)
 
         self.append_page(table)
         self.set_page_title(table, 'Choose the group')

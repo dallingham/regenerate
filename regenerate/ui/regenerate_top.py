@@ -129,6 +129,9 @@ class MainWindow(BaseWindow):
         self.__no_cover = self.__builder.get_object('no_cover')
         self.__no_uvm = self.__builder.get_object('no_uvm')
         self.__hide = self.__builder.get_object('hide_doc')
+        self.__share_none = self.__builder.get_object('no_sharing')
+        self.__share_write = self.__builder.get_object('write_access')
+        self.__share_read = self.__builder.get_object('read_access')
         self.__module_entry_obj = self.__builder.get_object('module')
         self.__owner_entry_obj = self.__builder.get_object('owner')
         self.__org_entry_obj = self.__builder.get_object('organization')
@@ -892,6 +895,7 @@ class MainWindow(BaseWindow):
         reg = self.__reglist_obj.get_selected_register()
         if reg:
             self.__bit_model.clear()
+            self.__bitfield_obj.set_mode(reg.share)
             for key in reg.get_bit_field_keys():
                 field = reg.get_bit_field(key)
                 self.__bit_model.append_field(field)
@@ -906,6 +910,7 @@ class MainWindow(BaseWindow):
             self.__reg_selected.set_sensitive(True)
             self.__set_register_warn_flags(reg)
             self.__set_bits_warn_flag()
+            self.set_share(reg)
         else:
             if self.__bit_model:
                 self.__bit_model.clear()
@@ -913,6 +918,14 @@ class MainWindow(BaseWindow):
             self.__reg_notebook.set_sensitive(False)
             self.__reg_selected.set_sensitive(False)
         self.__skip_changes = old_skip
+
+    def set_share(self, reg):
+        if reg.share == Register.SHARE_NONE:
+            self.__share_none.set_active(True)
+        elif reg.share == Register.SHARE_READ:
+            self.__share_read.set_active(True)
+        else:
+            self.__share_write.set_active(True)
 
     def __reg_description_changed(self, obj):
         reg = self.__reglist_obj.get_selected_register()
@@ -945,11 +958,68 @@ class MainWindow(BaseWindow):
         else:
             self.__prj_model.set_markup(prj.node, False)
 
+    def duplicate_address(self, reg_addr):
+        cnt = 0
+        for reg in self.dbase.get_all_registers():
+            if reg.address == reg_addr:
+                cnt += 1
+        return cnt > 1
+
+    def find_shared_address(self, reg):
+        for r in self.dbase.get_all_registers():
+            if r != reg and r.address == reg.address: 
+                return r
+        return None
+
+    def on_no_sharing_toggled(self, obj):
+        if obj.get_active():
+            register = self.__reglist_obj.get_selected_register()
+
+            if self.duplicate_address(register.address):
+                self.set_share(register)
+                LOGGER.error('Register cannot be set to non-sharing if it shares an address with another')
+            else:
+                register.share = Register.SHARE_NONE
+                self.set_modified()
+
+    def on_read_access_toggled(self, obj):
+        if obj.get_active():
+            register = self.__reglist_obj.get_selected_register()
+            
+            other = self.find_shared_address(register)
+            if other and other.share != Register.SHARE_WRITE:
+                self.set_share(register)
+                LOGGER.error('The shared register is not of Write Access type')
+            elif register.is_completely_read_only():
+                register.share = Register.SHARE_READ
+                self.set_modified()
+            else:
+                self.set_share(register)
+                LOGGER.error('All bits in the register must be read only')
+
+    def on_write_access_toggled(self, obj):
+        if obj.get_active():
+            register = self.__reglist_obj.get_selected_register()
+            
+            other = self.find_shared_address(register)
+            if other and other.share != Register.SHARE_READ:
+                self.set_share(register)
+                LOGGER.error('The shared register is not of Read Access type')
+            elif register.is_completely_write_only():
+                register.share = Register.SHARE_WRITE
+                self.set_modified()
+            else:
+                self.set_share(register)
+                LOGGER.error('All bits in the register must be write only')
+
     def on_add_bit_action_activate(self, obj):
         register = self.__reglist_obj.get_selected_register()
         field = BitField()
         field.lsb = register.find_next_unused_bit()
         field.msb = field.lsb
+        field.field_name = "BIT%d" % field.lsb
+        if register.share == Register.SHARE_WRITE:
+            field.field_type = BitField.TYPE_WRITE_ONLY
         
         register.add_bit_field(field)
 
@@ -992,6 +1062,13 @@ class MainWindow(BaseWindow):
         self.dbase.delete_register(register)
         register.address = new_addr
         register.ram_size = new_length
+        r = self.find_shared_address(register)
+        if r:
+            if r.share == Register.SHARE_READ:
+                register.share = Register.SHARE_WRITE
+            else:
+                register.share = Register.SHARE_READ
+            self.set_share(register)
         self.dbase.add_register(register)
 
     def on_duplicate_register_action_activate(self, obj):
@@ -1816,6 +1893,8 @@ def duplicate_register(dbase, reg):
         def_name = build_define(new_name)
 
     new_reg = copy.deepcopy(reg)
+    # force the generation of a new UUID
+    new_reg.uuid = ""
 
     for key in reg.get_bit_field_keys():
         fld = reg.get_bit_field(key)

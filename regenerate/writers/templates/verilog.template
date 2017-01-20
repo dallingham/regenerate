@@ -117,15 +117,22 @@ module {{db.module_name}}
  */
 {% for addr, val in word_fields|dictsort %}
 {%   for (field, start_offset, stop_offset, start_pos, stop_pos, faddr, reg) in val %}
-{%     if field.msb == field.lsb %}
-   {{reg_type}} r{{"%02x"|format(reg.address)}}_{{field.field_name|lower}};
+{%     if reg.share == 0 %}
+{%       set mode = "_" %}
+{%     elif reg.share == 1 %}
+{%       set mode = "_r_" %}
 {%     else %}
-   {{reg_type}} [{{field.msb}}:{{field.lsb}}] r{{"%02x"|format(reg.address)}}_{{field.field_name|lower}};
+{%       set mode = "_w_" %}
+{%     endif %}
+{%     if field.msb == field.lsb %}
+   {{reg_type}} r{{"%02x"|format(reg.address)}}{{mode}}{{field.field_name|lower}};
+{%     else %}
+   {{reg_type}} [{{field.msb}}:{{field.lsb}}] r{{"%02x"|format(reg.address)}}{{mode}}{{field.field_name|lower}};
 {%     endif %}
 {%     set ci = cell_info[field.field_type] %}
 {%     if ci.has_oneshot %}
 {%       for b in break_into_bytes(field.lsb, field.msb) %}
-   {{reg_type}} r{{"%02x"|format(reg.address)}}_{{field.field_name|lower}}_{{b[0]}}_1S;
+   {{reg_type}} r{{"%02x"|format(reg.address)}}{{mode}}{{field.field_name|lower}}_{{b[0]}}_1S;
 {%       endfor %}
 {%     endif %}
 {%   endfor %}
@@ -154,9 +161,16 @@ module {{db.module_name}}
 {% endfor %}
 {% for addr, val in word_fields|dictsort %}
 {%   for (f, start_offset, stop_offset, start_pos, stop_pos, faddr, reg) in val %}
+{%      if reg.share == 0 %}
+{%        set mode = "_" %}
+{%      elif reg.share == 1 %}
+{%        set mode = "_r_" %}
+{%      else %}
+{%        set mode = "_w_" %}
+{%      endif %}
 {%      if f.use_output_enable and f.output_signal != "" %}
 {%        if reg.dimension != -1 %}
-   assign {{f.output_signal}}[{{reg.dimension}}] = r{{"%02x"|format(reg.address)}}_{{f.field_name|lower}};
+   assign {{f.output_signal}}[{{reg.dimension}}] = r{{"%02x"|format(reg.address)}}{{mode}}{{f.field_name|lower}};
 {%        endif %}
 {%      endif %}
 {%   endfor %}
@@ -165,6 +179,13 @@ module {{db.module_name}}
 
 {% for addr, val in word_fields|dictsort %}
 {%   for (field, start_offset, stop_offset, start_pos, stop_pos, faddr, reg) in val %}
+{%     if reg.share == 0 %}
+{%       set mode = "_" %}
+{%     elif reg.share == 1 %}
+{%       set mode = "_r_" %}
+{%     else %}
+{%       set mode = "_w_" %}
+{%     endif %}
 {% set ci = cell_info[field.field_type] %}
 /*------------------------------------------------------------------------------
  *    Field       : {{field.field_name}}
@@ -186,10 +207,10 @@ module {{db.module_name}}
  *------------------------------------------------------------------------------
  */
 {%   if field.field_type == 0 %}
-    assign r{{"%02x"|format(reg.address)}}_{{field.field_name|lower}} = {{full_reset_value(field)}};
+    assign r{{"%02x"|format(reg.address)}}{{mode}}{{field.field_name|lower}} = {{full_reset_value(field)}};
 {%   elif field.field_type == 1 %}
 {%     if reg.dimension >= 0 %}
-    assign r{{"%02x"|format(reg.address)}}_{{field.field_name|lower}} = {{field.input_signal}}[{{reg.dimension}}];
+    assign r{{"%02x"|format(reg.address)}}{{mode}}{{field.field_name|lower}} = {{field.input_signal}}[{{reg.dimension}}];
 {%     else %}
     assign r{{"%02x"|format(reg.address)}}_{{field.field_name|lower}} = {{field.input_signal}};
 {%     endif %}
@@ -205,7 +226,7 @@ module {{db.module_name}}
 {%      endif %}
        .RVAL  ({{reset_value(field, start, stop)}})
        )
-   r{{"%02x"|format(reg.address)}}_{{field.field_name|lower}}_{{start}}
+   r{{"%02x"|format(reg.address)}}{{mode}}{{field.field_name|lower}}_{{start}}
      (
       .CLK    ({{db.clock_name}}),
       .RSTn   ({{db.reset_name}}),
@@ -248,16 +269,16 @@ module {{db.module_name}}
 {%        endif %}
 {%      endif %}
 {%      if ci.has_oneshot %}
-      .DO_1S  (r{{"%02x"|format(reg.address)}}_{{field.field_name|lower}}_{{start}}_1S),
+      .DO_1S  (r{{"%02x"|format(reg.address)}}{{mode}}{{field.field_name|lower}}_{{start}}_1S),
 {%      endif %}
 {%      if stop == start %}
 {%        if field.lsb == field.msb %}
-      .DO     (r{{"%02x"|format(reg.address)}}_{{field.field_name|lower}})
+      .DO     (r{{"%02x"|format(reg.address)}}{{mode}}{{field.field_name|lower}})
 {%        else %}
-      .DO     (r{{"%02x"|format(reg.address)}}_{{field.field_name|lower}}[{{start}}])
+      .DO     (r{{"%02x"|format(reg.address)}}{{mode}}{{field.field_name|lower}}[{{start}}])
 {%        endif %}
 {%      else %}
-      .DO     (r{{"%02x"|format(reg.address)}}_{{field.field_name|lower}}[{{stop}}:{{start}}])
+      .DO     (r{{"%02x"|format(reg.address)}}{{mode}}{{field.field_name|lower}}[{{stop}}:{{start}}])
 {%      endif %}
      );
 
@@ -291,18 +312,27 @@ module {{db.module_name}}
 {%-   set last = db.data_bus_width - 1 -%}
    wire [{{db.data_bus_width-1}}:0] r{{"%02x"|format(addr)}} = {
 {%   for (field, start_offset, stop_offset, start_pos, stop_pos, faddr, reg) in val|reverse %}{%    set width = stop_pos - start_pos + 1 %}
-{%     if start_offset + width < last %}
-                  {{last - (start_offset + width) + 1}}'b0,
-{%     endif %}
-{%     if start_pos == stop_pos %}
-                  r{{"%02x"|format(reg.address)}}_{{field.field_name|lower}}{% if start_pos + start_offset != 0 %},{% endif %}
+{%     if reg.share == 0 %}
+{%       set mode = "_" %}
+{%     elif reg.share == 1 %}
+{%       set mode = "_r_" %}
 {%     else %}
-                  r{{"%02x"|format(reg.address)}}_{{field.field_name|lower}}[{{stop_pos}}:{{start_pos}}]{% if start_pos + start_offset != 0 %},{% endif %}
+{%       set mode = "_w_" %}
 {%     endif %}
+{%     if reg.share != 2 %}
+{%       if start_offset + width < last %}
+                  {{last - (start_offset + width) + 1}}'b0,
+{%       endif %}
+{%       if start_pos == stop_pos %}
+                  r{{"%02x"|format(reg.address)}}{{mode}}{{field.field_name|lower}}{% if start_pos + start_offset != 0 %},{% endif %}
+{%       else %}
+                  r{{"%02x"|format(reg.address)}}{{mode}}{{field.field_name|lower}}[{{stop_pos}}:{{start_pos}}]{% if start_pos + start_offset != 0 %},{% endif %}
+{%       endif %}
 
-{%     set last = start_offset - 1 %}
-{%     if loop.last and start_offset != 0 %}
+{%       set last = start_offset - 1 %}
+{%       if loop.last and start_offset != 0 %}
                   {{start_offset}}'b0
+{%       endif %}
 {%     endif %}
 {%   endfor %}
                   };

@@ -85,7 +85,7 @@ class UVMRegBlockRegisters(WriterBase):
                       "signed", "specify", "specparam", "strength", "table",
                       "task", "tri", "tri0", "tri1", "triand", "wand", 
                       "trior", "wor", "trireg", "unsigned", "use", "vectored",
-                      "wait", "while", "wire"]) 
+                      "wait", "while", "wire", "bit"]) 
     
     def __init__(self, project, dblist):
         """
