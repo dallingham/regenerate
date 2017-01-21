@@ -2,12 +2,12 @@
 <project name="Regenerate Test Project" short_name="test" company_name="Yoyodyne Propulsion Systems">
   <documentation>This section is to be used for overall project documentation - The documentation that is independent of any particular register set.</documentation>
   <address_maps>
-    <address_map name="MAP" base="0" fixed="0" width="4">
+    <address_map name="MAP" base="0" fixed="0" width="4" no_uvm="0">
       <map_group>GROUP</map_group>
     </address_map>
   </address_maps>
   <groupings>
-    <grouping name="GROUP" start="0" hdl="" repeat="1" repeat_offset="65536">
+    <grouping name="GROUP" start="0" hdl="" title="" repeat="1" repeat_offset="65536">
       <map set="test" inst="test" offset="0" repeat="1" repeat_offset="0"/>
     </grouping>
   </groupings>

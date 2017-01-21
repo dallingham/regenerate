@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<module name="test" title="Test Case for Regenerate" owner="John Bigboote">
+<module name="test" coverage="1" internal="0">
   <base addr_width="32" data_width="32"/>
   <ports>
     <addr>ADDR</addr>
@@ -55,16 +55,33 @@ Admonitions
    This is a tip
 
 </overview>
-  <register nocode="0" dont_test="0" hide="0">
+  <owner>John Bigboote</owner>
+  <title>Test Case for Regenerate</title>
+  <array>mem</array>
+  <register>
     <token>RD_ONLY</token>
+    <dimension>1</dimension>
+    <uuid>f7fe1fecc4574f1ab3c1e3ad1c428a55</uuid>
     <name>Read Only</name>
     <address>0</address>
+    <nocode>0</nocode>
+    <dont_test>0</dont_test>
+    <dont_cover>0</dont_cover>
+    <hide>0</hide>
+    <dont_use_uvm>0</dont_use_uvm>
+    <share>0</share>
     <width>32</width>
-    <description>Read Only type.
+    <description>Read Only type
 </description>
     <range start="0" stop="0">
       <name>ONE_BIT</name>
-      <signal enb="0" static="0" field_type="RO" side_effect="0" error_field="0" volatile="0">RO_ONE_BIT</signal>
+      <uuid>d31a53725f5546e482e40110182838c9</uuid>
+      <field_type>RO</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RO_ONE_BIT</signal>
       <reset type="0">0</reset>
       <values>
         <value val="0" token="SET">Set</value>
@@ -77,350 +94,682 @@ Admonitions
     </range>
     <range start="1" stop="7">
       <name>MULTI_BIT</name>
-      <signal enb="0" static="0" field_type="RO" side_effect="0" error_field="0" volatile="0">RO_MULTI_BIT</signal>
+      <uuid>16404808271f4697b93cbcee4b0a2c18</uuid>
+      <field_type>RO</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RO_MULTI_BIT</signal>
       <reset type="0">0</reset>
       <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <name>BYTE_CROSS</name>
-      <signal enb="0" static="0" field_type="RO" side_effect="0" error_field="0" volatile="0">RO_BYTE_CROSS</signal>
+      <uuid>70d4e3c22d01402aa9f51a7e21fe228f</uuid>
+      <field_type>RO</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RO_BYTE_CROSS</signal>
       <reset type="0">0</reset>
       <description>Multi byte.</description>
     </range>
     <range start="17" stop="27">
       <name>BYTE_CROSS_SKEWED</name>
-      <signal enb="0" static="0" field_type="RO" side_effect="0" error_field="0" volatile="0">RO_BYTE_CROSS_SKEWED</signal>
+      <uuid>6910db046e204ebc91e037eea99aa924</uuid>
+      <field_type>RO</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RO_BYTE_CROSS_SKEWED</signal>
       <reset type="0">0</reset>
       <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
-  <register nocode="0" dont_test="0" hide="0">
+  <register>
     <token>RD_ONLY_LD</token>
+    <dimension>1</dimension>
+    <uuid>9f2a4e5ec8d84325a1b55632e383bf74</uuid>
     <name>Read Only Load</name>
     <address>4</address>
+    <nocode>0</nocode>
+    <dont_test>0</dont_test>
+    <dont_cover>0</dont_cover>
+    <hide>0</hide>
+    <dont_use_uvm>0</dont_use_uvm>
+    <share>0</share>
     <width>32</width>
     <description>Read Only with input.</description>
     <range start="0" stop="0">
       <name>ONE_BIT</name>
-      <signal enb="0" static="0" field_type="ROLD" side_effect="0" error_field="0" volatile="0">ROLD_1BIT</signal>
+      <uuid>d48d363728f447ba8b7d8758ddf950c0</uuid>
+      <field_type>ROLD</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">ROLD_1BIT</signal>
       <input load="ROLD_1BIT_LD">ROLD_1BIT_DATA_IN</input>
       <reset type="0">0</reset>
       <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <name>MULTI_BIT</name>
-      <signal enb="0" static="0" field_type="ROLD" side_effect="0" error_field="0" volatile="0">ROLD_MULTI_BIT</signal>
+      <uuid>39fb7f5ed3cf47dfb6de61385b1e2475</uuid>
+      <field_type>ROLD</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">ROLD_MULTI_BIT</signal>
       <input load="ROLD_MULTI_BIT_LD">ROLD_MULTI_BIT_DATA_IN</input>
       <reset type="0">0</reset>
       <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <name>BYTE_CROSS</name>
-      <signal enb="0" static="0" field_type="ROLD" side_effect="0" error_field="0" volatile="0">ROLD_BYTE_CROSS</signal>
+      <uuid>bf7f2aade5c64b38b4fa5590f48bfe15</uuid>
+      <field_type>ROLD</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">ROLD_BYTE_CROSS</signal>
       <input load="ROLD_BYTE_CROSS_LD">ROLD_BYTE_CROSS_DATA_IN</input>
       <reset type="0">0</reset>
       <description>Multi byte.</description>
     </range>
     <range start="17" stop="27">
       <name>BYTE_CROSS_SKEWED</name>
-      <signal enb="0" static="0" field_type="ROLD" side_effect="0" error_field="0" volatile="0">ROLD_BYTE_CROSS_SKEWED</signal>
+      <uuid>219713f8aeaf469bb1ad3ce6660c8679</uuid>
+      <field_type>ROLD</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">ROLD_BYTE_CROSS_SKEWED</signal>
       <input load="ROLD_BYTE_CROSS_SKEWED_LD">ROLD_BYTE_CROSS_SKEWED_DATA_IN</input>
       <reset type="0">0</reset>
       <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
-  <register nocode="0" dont_test="0" hide="0">
+  <register>
     <token>RD_WR</token>
+    <dimension>1</dimension>
+    <uuid>141899f4fc41442c846f6046b19e88b8</uuid>
     <name>Read/Write</name>
     <address>8</address>
+    <nocode>0</nocode>
+    <dont_test>0</dont_test>
+    <dont_cover>0</dont_cover>
+    <hide>0</hide>
+    <dont_use_uvm>0</dont_use_uvm>
+    <share>0</share>
     <width>32</width>
     <description>Basic Read/Write.</description>
     <range start="0" stop="0">
       <name>ONE_BIT</name>
-      <signal enb="1" static="0" field_type="RW" side_effect="0" error_field="0" volatile="0">BUS[8]</signal>
+      <uuid>b518866b22b04d509c9f7b2fb52a2914</uuid>
+      <field_type>RW</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="1" static="0">BUS[8]</signal>
       <reset type="0">0</reset>
       <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <name>MULTI_BIT</name>
-      <signal enb="1" static="0" field_type="RW" side_effect="0" error_field="0" volatile="0">BUS[6:0]</signal>
+      <uuid>3ea69ca7353148d98055e0b4292231fc</uuid>
+      <field_type>RW</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="1" static="0">BUS[6:0]</signal>
       <reset type="0">0</reset>
       <description>Multiple bit within a single bit.</description>
     </range>
     <range start="8" stop="15">
       <name>BYTE_CROSS</name>
-      <signal enb="0" static="0" field_type="RW" side_effect="0" error_field="0" volatile="0">RW_BYTE_CROSS</signal>
+      <uuid>8329cf9c412840d78e843ec83d3278d1</uuid>
+      <field_type>RW</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RW_BYTE_CROSS</signal>
       <reset type="0">0</reset>
       <description>Multi byte.</description>
     </range>
     <range start="17" stop="27">
       <name>BYTE_CROSS_SKEWED</name>
-      <signal enb="0" static="0" field_type="RW" side_effect="0" error_field="0" volatile="0">RW_BYTE_CROSS_SKEW</signal>
+      <uuid>34914bcd8c664570b3d6fe960e6c54ea</uuid>
+      <field_type>RW</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RW_BYTE_CROSS_SKEW</signal>
       <reset type="0">0</reset>
       <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
-  <register nocode="0" dont_test="0" hide="0">
+  <register>
     <token>RD_WR_LD</token>
+    <dimension>1</dimension>
+    <uuid>c92dbf73ff7e4829a96f56d69c78f067</uuid>
     <name>Read/Write Load</name>
     <address>12</address>
+    <nocode>0</nocode>
+    <dont_test>0</dont_test>
+    <dont_cover>0</dont_cover>
+    <hide>0</hide>
+    <dont_use_uvm>0</dont_use_uvm>
+    <share>0</share>
     <width>32</width>
     <description>Read Write with data loaded when a control signal is asserted.</description>
     <range start="0" stop="0">
       <name>ONE_BIT</name>
-      <signal enb="0" static="0" field_type="RWLD" side_effect="0" error_field="0" volatile="0">RWLD_1BIT</signal>
+      <uuid>ebfc3916c5584120b0e936d36f175b1a</uuid>
+      <field_type>RWLD</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RWLD_1BIT</signal>
       <input load="RWLD_1BIT_LOAD">TESTBUS[3]</input>
       <reset type="0">0</reset>
       <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <name>MULTI_BIT</name>
-      <signal enb="0" static="0" field_type="RWLD" side_effect="0" error_field="0" volatile="0">RWLD_MULTI_BIT</signal>
+      <uuid>dfdd841b88924c54af161c206aa8e553</uuid>
+      <field_type>RWLD</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RWLD_MULTI_BIT</signal>
       <input load="RWLD_MULTI_BIT_LD">TESTBUS[11:5]</input>
       <reset type="0">0</reset>
       <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <name>BYTE_CROSS</name>
-      <signal enb="0" static="0" field_type="RWLD" side_effect="0" error_field="0" volatile="0">RWLD_BYTE_CROSS</signal>
+      <uuid>f080ca51a8474bf685cfb99c8a2ec6a1</uuid>
+      <field_type>RWLD</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RWLD_BYTE_CROSS</signal>
       <input load="RWLD_BYTE_CROSS_LD">RWLD_BYTE_CROSS_DATA_IN</input>
       <reset type="0">0</reset>
       <description>Multi byte.</description>
     </range>
     <range start="17" stop="27">
       <name>BYTE_CROSS_SKEWED</name>
-      <signal enb="0" static="0" field_type="RWLD" side_effect="0" error_field="0" volatile="0">RWLD_BYTE_CROSS_SKEW</signal>
+      <uuid>ca5c1aa934354a369dc21302eae39dc6</uuid>
+      <field_type>RWLD</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RWLD_BYTE_CROSS_SKEW</signal>
       <input load="RWLD_BYTE_CROSS_SKEW_LOAD">RWLD_BYTE_CROSS_SKEW_DATA_IN</input>
       <reset type="0">0</reset>
       <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
-  <register nocode="0" dont_test="0" hide="0">
+  <register>
     <token>RD_WR_1_SHOT</token>
+    <dimension>1</dimension>
+    <uuid>baa07a83b6e347d0952ceae085ceefb0</uuid>
     <name>Read/Write 1 Shot</name>
     <address>16</address>
+    <nocode>0</nocode>
+    <dont_test>0</dont_test>
+    <dont_cover>0</dont_cover>
+    <hide>0</hide>
+    <dont_use_uvm>0</dont_use_uvm>
+    <share>0</share>
     <width>32</width>
     <description>Read/Write with a one shot generated on any write, with data loaded when a control signal is asserted.</description>
     <range start="0" stop="0">
       <name>ONE_BIT</name>
-      <signal enb="0" static="0" field_type="RW1S" side_effect="0" error_field="0" volatile="0">RW1S_1BIT</signal>
+      <uuid>3be69f454c9e4050aaf9198668832e3b</uuid>
+      <field_type>RW1S</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RW1S_1BIT</signal>
       <reset type="0">0</reset>
       <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <name>MULTI_BIT</name>
-      <signal enb="0" static="0" field_type="RW1S" side_effect="0" error_field="0" volatile="0">RW1S_MULTI_BIT</signal>
+      <uuid>2505daa468b14107b3f1507fddbc29cc</uuid>
+      <field_type>RW1S</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RW1S_MULTI_BIT</signal>
       <reset type="0">0</reset>
       <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <name>BYTE_CROSS</name>
-      <signal enb="0" static="0" field_type="RW1S" side_effect="0" error_field="0" volatile="0">RW1S_BYTE_CROSS</signal>
+      <uuid>a010e1447d4444448343dabca30d54d1</uuid>
+      <field_type>RW1S</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RW1S_BYTE_CROSS</signal>
       <reset type="0">0</reset>
       <description>Multi byte.</description>
     </range>
     <range start="17" stop="27">
       <name>BYTE_CROSS_SKEWED</name>
-      <signal enb="0" static="0" field_type="RW1S" side_effect="0" error_field="0" volatile="0">RW1S_BYTE_CROSS_SKEWED</signal>
+      <uuid>50920edacc534941b9de750b9f91a60d</uuid>
+      <field_type>RW1S</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RW1S_BYTE_CROSS_SKEWED</signal>
       <reset type="0">0</reset>
       <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
-  <register nocode="0" dont_test="0" hide="0">
+  <register>
     <token>RD_WR_1_SHOT_1</token>
+    <dimension>1</dimension>
+    <uuid>a8e914cafc204b7ca21070ce69a9c341</uuid>
     <name>Read/Write 1 Shot 1</name>
     <address>20</address>
+    <nocode>0</nocode>
+    <dont_test>0</dont_test>
+    <dont_cover>0</dont_cover>
+    <hide>0</hide>
+    <dont_use_uvm>0</dont_use_uvm>
+    <share>0</share>
     <width>32</width>
     <description>Read/Write with a one shot generated on write of a 1, with data loaded when a control signal is asserted.</description>
     <range start="0" stop="0">
       <name>ONE_BIT</name>
-      <signal enb="0" static="0" field_type="RW1S1" side_effect="0" error_field="0" volatile="0">RW1S1_BIT</signal>
+      <uuid>e67e553ea7a644a5bbce78cee65f66c5</uuid>
+      <field_type>RW1S1</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RW1S1_BIT</signal>
       <input load="RD_WR_1_SHOT_1_BIT_LD">RD_WR_1_SHOT_1_BIT_IN</input>
       <reset type="0">0</reset>
       <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <name>MULTI_BIT</name>
-      <signal enb="0" static="0" field_type="RW1S1" side_effect="0" error_field="0" volatile="0">RW1S1_MULTI_BIT</signal>
+      <uuid>1d8da895b4a04af6b10ae39767b7a3de</uuid>
+      <field_type>RW1S1</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RW1S1_MULTI_BIT</signal>
       <reset type="0">0</reset>
       <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <name>BYTE_CROSS</name>
-      <signal enb="0" static="0" field_type="RW1S1" side_effect="0" error_field="0" volatile="0">RW1S1_BYTE_CROSS</signal>
+      <uuid>6937c861ca134c128ed76f3f2ae1d276</uuid>
+      <field_type>RW1S1</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RW1S1_BYTE_CROSS</signal>
       <reset type="0">0</reset>
       <description>Multi byte.</description>
     </range>
     <range start="17" stop="27">
       <name>BYTE_CROSS_SKEWED</name>
-      <signal enb="0" static="0" field_type="RW1S1" side_effect="0" error_field="0" volatile="0">RW1S1_BYTE_CROSS_SKEW</signal>
+      <uuid>180697a1b14445bbb174fb3826cbbb78</uuid>
+      <field_type>RW1S1</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RW1S1_BYTE_CROSS_SKEW</signal>
       <reset type="0">0</reset>
       <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
-  <register nocode="0" dont_test="0" hide="0">
+  <register>
     <token>RD_WR_LD_1_SHOT</token>
+    <dimension>1</dimension>
+    <uuid>c5f4997c0abe4f9390443fa925f9fed7</uuid>
     <name>Read/Write Load 1 Shot</name>
     <address>24</address>
+    <nocode>0</nocode>
+    <dont_test>0</dont_test>
+    <dont_cover>0</dont_cover>
+    <hide>0</hide>
+    <dont_use_uvm>0</dont_use_uvm>
+    <share>0</share>
     <width>32</width>
     <description>Read/Write with a one shot generated on any write, with data loaded when a control signal is asserted.</description>
     <range start="0" stop="0">
       <name>ONE_BIT</name>
-      <signal enb="0" static="0" field_type="RWLD1S" side_effect="0" error_field="0" volatile="0">RD_WR_LD_1_SHOT_BIT_BIT</signal>
+      <uuid>c3399060a6d147e1b9416c1f8e0fd289</uuid>
+      <field_type>RWLD1S</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RD_WR_LD_1_SHOT_BIT_BIT</signal>
       <input load="RD_WR_LD_1_SHOT_BIT_LD">RD_WR_LD_1_SHOT_BIT_IN</input>
       <reset type="0">0</reset>
       <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <name>MULTI_BIT</name>
-      <signal enb="0" static="0" field_type="RWLD1S" side_effect="0" error_field="0" volatile="0">RD_WR_LD_1_SHOT_MULTI_BIT</signal>
+      <uuid>26847655408c4f17830fb81ecb773a4f</uuid>
+      <field_type>RWLD1S</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RD_WR_LD_1_SHOT_MULTI_BIT</signal>
       <input load="RD_WR_LD_1_SHOT_MULTI_BIT_LD">RD_WR_LD_1_SHOT_MULTI_BIT_IN</input>
       <reset type="0">0</reset>
       <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <name>BYTE_CROSS</name>
-      <signal enb="0" static="0" field_type="RWLD1S" side_effect="0" error_field="0" volatile="0">RD_WR_LD_1_SHOT_BYTE_CROSS</signal>
+      <uuid>7620307720644817b217e22ce4dd5439</uuid>
+      <field_type>RWLD1S</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RD_WR_LD_1_SHOT_BYTE_CROSS</signal>
       <input load="RD_WR_LD_1_SHOT_BYTE_CROSS_LD">RD_WR_LD_1_SHOT_BYTE_CROSS_IN</input>
       <reset type="0">0</reset>
       <description>Multi byte.</description>
     </range>
     <range start="17" stop="27">
       <name>BYTE_CROSS_SKEWED</name>
-      <signal enb="0" static="0" field_type="RWLD1S" side_effect="0" error_field="0" volatile="0">RD_WR_LD_1_SHOT_BYTE_CROSS_SKEW</signal>
+      <uuid>85f0b3f824c44a8aa160309d37a856ea</uuid>
+      <field_type>RWLD1S</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RD_WR_LD_1_SHOT_BYTE_CROSS_SKEW</signal>
       <input load="RD_WR_LD_1_SHOT_BYTE_CROSS_SKEW_LD">RD_WR_LD_1_SHOT_BYTE_CROSS_SKEW_IN</input>
       <reset type="0">0</reset>
       <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
-  <register nocode="0" dont_test="0" hide="0">
+  <register>
     <token>RD_WR_LD_1_SHOT_1</token>
+    <dimension>1</dimension>
+    <uuid>11ad195ac42943a19e3a91e65ac9933b</uuid>
     <name>Read/Write Load 1 Shot 1</name>
     <address>28</address>
+    <nocode>0</nocode>
+    <dont_test>0</dont_test>
+    <dont_cover>0</dont_cover>
+    <hide>0</hide>
+    <dont_use_uvm>0</dont_use_uvm>
+    <share>0</share>
     <width>32</width>
     <description>Read/Write with a one shot generated on write of a 1, with data loaded when a control signal is asserted.</description>
     <range start="0" stop="0">
       <name>ONE_BIT</name>
-      <signal enb="0" static="0" field_type="RWLD1S1" side_effect="0" error_field="0" volatile="0">RWLD1S_BIT</signal>
+      <uuid>81c29040fbe8468dab10cd913e47b41d</uuid>
+      <field_type>RWLD1S1</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RWLD1S_BIT</signal>
       <input load="RD_WR_LD_1_SHOT_1_BIT_LD">RD_WR_LD_1_SHOT_1_BIT_IN</input>
       <reset type="0">0</reset>
       <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <name>MULTI_BIT</name>
-      <signal enb="0" static="0" field_type="RWLD1S1" side_effect="0" error_field="0" volatile="0">RWLD1S_MULTI_BIT</signal>
+      <uuid>04c64940f5c5444f87bd9de533012e84</uuid>
+      <field_type>RWLD1S1</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RWLD1S_MULTI_BIT</signal>
       <input load="RD_WR_LD_1_SHOT_1_MULTI_BIT_LD">RD_WR_LD_1_SHOT_1_MULTI_BIT_IN</input>
       <reset type="0">0</reset>
       <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <name>BYTE_CROSS</name>
-      <signal enb="0" static="0" field_type="RWLD1S1" side_effect="0" error_field="0" volatile="0">RWLD1S_BYTE_CROSS</signal>
+      <uuid>56d58955f0084cb2bf1185f6e7caf9fa</uuid>
+      <field_type>RWLD1S1</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RWLD1S_BYTE_CROSS</signal>
       <input load="RD_WR_LD_1_SHOT_1_BYTE_CROSS_LD">RD_WR_LD_1_SHOT_1_BYTE_CROSS_IN</input>
       <reset type="0">0</reset>
       <description>Multi byte.</description>
     </range>
     <range start="17" stop="27">
       <name>BYTE_CROSS_SKEWED</name>
-      <signal enb="0" static="0" field_type="RWLD1S1" side_effect="0" error_field="0" volatile="0">RWLD1S_BYTE_CROSS_SKEW</signal>
+      <uuid>32705169acc94e6e8e6de02c97ebc803</uuid>
+      <field_type>RWLD1S1</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RWLD1S_BYTE_CROSS_SKEW</signal>
       <input load="RD_WR_LD_1_SHOT_1_BYTE_CROSS_SKEWED_LD">RD_WR_LD_1_SHOT_1_BYTE_CROSS_SKEW_IN</input>
       <reset type="0">0</reset>
       <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
-  <register nocode="0" dont_test="0" hide="0">
+  <register>
     <token>RD_WR_SET</token>
+    <dimension>1</dimension>
+    <uuid>b32c42ec2e9c4409b3605f7d8ef9b759</uuid>
     <name>Read/Write Set</name>
     <address>32</address>
+    <nocode>0</nocode>
+    <dont_test>0</dont_test>
+    <dont_cover>0</dont_cover>
+    <hide>0</hide>
+    <dont_use_uvm>0</dont_use_uvm>
+    <share>0</share>
     <width>32</width>
     <description>Read/Write, bits set when corresponding bit on the input signal is set.</description>
     <range start="0" stop="0">
       <name>ONE_BIT</name>
-      <signal enb="0" static="0" field_type="RWS" side_effect="0" error_field="0" volatile="0">RWS_ONE_BIT</signal>
+      <uuid>68217e69956e4ae696f1994af505167a</uuid>
+      <field_type>RWS</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RWS_ONE_BIT</signal>
       <input>RD_WR_SET_ONE_BIT_IN</input>
       <reset type="0">0</reset>
       <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <name>MULTI_BIT</name>
-      <signal enb="0" static="0" field_type="RWS" side_effect="0" error_field="0" volatile="0">RWS_MULTI_BIT</signal>
+      <uuid>84e5788da38f4616a879b53e967c5d48</uuid>
+      <field_type>RWS</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RWS_MULTI_BIT</signal>
       <input>RD_WR_SET_MULTI_BIT_IN</input>
       <reset type="0">0</reset>
       <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <name>BYTE_CROSS</name>
-      <signal enb="0" static="0" field_type="RWS" side_effect="0" error_field="0" volatile="0">RWS_BYTE_CROSS</signal>
+      <uuid>9f7ac33b7ff341b9b6c62a65ec206a8e</uuid>
+      <field_type>RWS</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RWS_BYTE_CROSS</signal>
       <input>RD_WR_SET_BYTE_CROSS_IN</input>
       <reset type="0">0</reset>
       <description>Multi byte.</description>
     </range>
     <range start="17" stop="27">
       <name>BYTE_CROSS_SKEWED</name>
-      <signal enb="0" static="0" field_type="RWS" side_effect="0" error_field="0" volatile="0">BYTE_CROSS_SKEW</signal>
+      <uuid>2b74393a38de4676964bc8bd50fc581b</uuid>
+      <field_type>RWS</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">BYTE_CROSS_SKEW</signal>
       <input>RD_WR_SET_BYTE_CROSS_SKEW_IN</input>
       <reset type="0">0</reset>
       <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
-  <register nocode="0" dont_test="0" hide="0">
+  <register>
     <token>RD_WR_SET_1_SHOT</token>
+    <dimension>1</dimension>
+    <uuid>e6fd1817acb649a9b5b8f4801a2618ff</uuid>
     <name>Read/Write Set 1 Shot</name>
     <address>36</address>
+    <nocode>0</nocode>
+    <dont_test>0</dont_test>
+    <dont_cover>0</dont_cover>
+    <hide>0</hide>
+    <dont_use_uvm>0</dont_use_uvm>
+    <share>0</share>
     <width>32</width>
     <description>Read/Write, bits set when corresponding bit on the input signal is set, one shot signal generated on any write.</description>
     <range start="0" stop="0">
       <name>ONE_BIT</name>
-      <signal enb="0" static="0" field_type="RWS1S" side_effect="0" error_field="0" volatile="0">RWS1S_ONE_BIT</signal>
+      <uuid>454256d0e8a04ee78d1135fb9f0bb0f5</uuid>
+      <field_type>RWS1S</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RWS1S_ONE_BIT</signal>
       <input>RD_WR_SET_1_SHOT_ONE_BIT_IN</input>
       <reset type="0">0</reset>
       <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <name>MULTI_BIT</name>
-      <signal enb="0" static="0" field_type="RWS1S" side_effect="0" error_field="0" volatile="0">RWS1S_MULTI_BIT</signal>
+      <uuid>86e4e40491034dd3aa3f7147fbc66cb1</uuid>
+      <field_type>RWS1S</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RWS1S_MULTI_BIT</signal>
       <input>RD_WR_SET_1_SHOT_MULTI_BIT_IN</input>
       <reset type="0">0</reset>
       <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <name>BYTE_CROSS</name>
-      <signal enb="0" static="0" field_type="RWS1S" side_effect="0" error_field="0" volatile="0">RWS1S_BYTE_CROSS</signal>
+      <uuid>2cce0d1befc54a419ad72f843c36b39f</uuid>
+      <field_type>RWS1S</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RWS1S_BYTE_CROSS</signal>
       <input load="RD_WR_SET_1_SHOT_BYTE_CROSS_LD">RD_WR_SET_1_SHOT_BYTE_CROSS_IN</input>
       <reset type="0">0</reset>
       <description>Multi byte.</description>
     </range>
     <range start="17" stop="27">
       <name>BYTE_CROSS_SKEWED</name>
-      <signal enb="0" static="0" field_type="RWS1S" side_effect="0" error_field="0" volatile="0">RWS1S_BYTE_CROSS_SKEW</signal>
+      <uuid>fcbe74a945434c01acc7ba8814516712</uuid>
+      <field_type>RWS1S</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RWS1S_BYTE_CROSS_SKEW</signal>
       <input>RD_WR_SET_1_SHOT_BYTE_CROSS_SKEW_IN</input>
       <reset type="0">0</reset>
       <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
-  <register nocode="0" dont_test="0" hide="0">
+  <register>
     <token>RD_WR_SET_1_SHOT_1</token>
+    <dimension>1</dimension>
+    <uuid>4ae1d9ef30304b03b1bde1b1e7ef495a</uuid>
     <name>Read/Write Set 1 Shot 1</name>
     <address>40</address>
+    <nocode>0</nocode>
+    <dont_test>0</dont_test>
+    <dont_cover>0</dont_cover>
+    <hide>0</hide>
+    <dont_use_uvm>0</dont_use_uvm>
+    <share>0</share>
     <width>32</width>
     <description>Read/Write, bits set when corresponding bit on the input signal is set, one shot signal generated on a write of a 1.</description>
     <range start="0" stop="0">
       <name>ONE_BIT</name>
-      <signal enb="0" static="0" field_type="RWS1S1" side_effect="0" error_field="0" volatile="0">RWS1S1_ONE_BIT</signal>
+      <uuid>de683d440644455e834b8832266b5c79</uuid>
+      <field_type>RWS1S1</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RWS1S1_ONE_BIT</signal>
       <input>RD_WR_SET_1_SHOT_1_ONE_BIG_IN</input>
       <reset type="0">0</reset>
       <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <name>MULTI_BIT</name>
-      <signal enb="0" static="0" field_type="RWS1S1" side_effect="0" error_field="0" volatile="0">RWS1S1_MULTI_BIT</signal>
+      <uuid>ac1e8efec3194ca2b92fa315a97fa527</uuid>
+      <field_type>RWS1S1</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RWS1S1_MULTI_BIT</signal>
       <input>RD_WR_SET_1_SHOT_1_MULTI_BIT_IN</input>
       <reset type="0">0</reset>
       <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <name>BYTE_CROSS</name>
-      <signal enb="0" static="0" field_type="RWS1S1" side_effect="0" error_field="0" volatile="0">RWS1S1_BYTE_CROSS</signal>
+      <uuid>cf85fb1034424aaaa8faee4fe8fb0e4d</uuid>
+      <field_type>RWS1S1</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RWS1S1_BYTE_CROSS</signal>
       <input>RD_WR_SET_1_SHOT_1_BYTE_CROSS_IN</input>
       <reset type="0">0</reset>
       <description>Multi byte.
@@ -428,417 +777,793 @@ Admonitions
     </range>
     <range start="17" stop="27">
       <name>BYTE_CROSS_SKEWED</name>
-      <signal enb="0" static="0" field_type="RWS1S1" side_effect="0" error_field="0" volatile="0">RWS1S1_BYTE_CROSS_SKEW</signal>
+      <uuid>486c1111d2764a97a847e07282fe2cb1</uuid>
+      <field_type>RWS1S1</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RWS1S1_BYTE_CROSS_SKEW</signal>
       <input>RD_WR_SET_1_SHOT_1_BYTE_CROSS_SKEW_IN</input>
       <reset type="0">0</reset>
       <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
-  <register nocode="0" dont_test="0" hide="0">
+  <register>
     <token>WR_1_TO_CLR_SET</token>
+    <dimension>1</dimension>
+    <uuid>2e48a09111b1421ca48a9e775c4a059b</uuid>
     <name>Write 1 to Clear Set</name>
     <address>44</address>
+    <nocode>0</nocode>
+    <dont_test>0</dont_test>
+    <dont_cover>0</dont_cover>
+    <hide>0</hide>
+    <dont_use_uvm>0</dont_use_uvm>
+    <share>0</share>
     <width>32</width>
     <description>Write one to clear, bits are set based on input signal.</description>
     <range start="0" stop="0">
       <name>ONE_BIT</name>
-      <signal enb="0" static="0" field_type="W1CS" side_effect="0" error_field="0" volatile="0">W1CS_ONE_BIT</signal>
+      <uuid>15a9f0f282854004add9140aecb67657</uuid>
+      <field_type>W1CS</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">W1CS_ONE_BIT</signal>
       <input>WR_1_TO_CLR_SET_ONE_BIT_IN</input>
       <reset type="0">0</reset>
       <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <name>MULTI_BIT</name>
-      <signal enb="0" static="0" field_type="W1CS" side_effect="0" error_field="0" volatile="0">W1CS_MULTI_BIT</signal>
+      <uuid>69e3cb2bc731445b9840b62803f24e3e</uuid>
+      <field_type>W1CS</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">W1CS_MULTI_BIT</signal>
       <input>WR_1_TO_CLR_SET_MULTI_BIT_IN</input>
       <reset type="0">0</reset>
       <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <name>BYTE_CROSS</name>
-      <signal enb="0" static="0" field_type="W1CS" side_effect="0" error_field="0" volatile="0">W1CS_BYTE_CROSS</signal>
+      <uuid>8a7a015279e84ab496addafc11bdb7fc</uuid>
+      <field_type>W1CS</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">W1CS_BYTE_CROSS</signal>
       <input>WR_1_TO_CLR_SET_BYTE_CROSS_IN</input>
       <reset type="0">0</reset>
       <description>Multi byte.</description>
     </range>
     <range start="17" stop="27">
       <name>BYTE_CROSS_SKEWED</name>
-      <signal enb="0" static="0" field_type="W1CS" side_effect="0" error_field="0" volatile="0">W1CS_BYTE_CROSS_SKEW</signal>
+      <uuid>5d2c519df29d43568b5732a9af6d9560</uuid>
+      <field_type>W1CS</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">W1CS_BYTE_CROSS_SKEW</signal>
       <input>WR_1_TO_CLR_SET_BYTE_CROSS_SKEW_IN</input>
       <reset type="0">0</reset>
       <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
-  <register nocode="0" dont_test="0" hide="0">
+  <register>
     <token>WR_1_TO_CLR_1_SHOT</token>
+    <dimension>1</dimension>
+    <uuid>a87fedff9c064a819858d8df51e632c0</uuid>
     <name>Write 1 to Clear 1 Shot</name>
     <address>48</address>
+    <nocode>0</nocode>
+    <dont_test>0</dont_test>
+    <dont_cover>0</dont_cover>
+    <hide>0</hide>
+    <dont_use_uvm>0</dont_use_uvm>
+    <share>0</share>
     <width>32</width>
     <description>Write one to clear, bits are set based on input signal, one shot generated on any write.</description>
     <range start="0" stop="0">
       <name>ONE_BIT</name>
-      <signal enb="0" static="0" field_type="W1CS1S" side_effect="0" error_field="0" volatile="0">W1CS1S_ONE_BIT</signal>
+      <uuid>5a5794e46ac54d3a8424845e2719426a</uuid>
+      <field_type>W1CS1S</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">W1CS1S_ONE_BIT</signal>
       <input>WR_1_TO_CLR_1_SHOT_ONE_BIT_IN</input>
       <reset type="0">0</reset>
       <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <name>MULTI_BIT</name>
-      <signal enb="0" static="0" field_type="W1CS1S" side_effect="0" error_field="0" volatile="0">W1CS1S_MULTI_BIT</signal>
+      <uuid>55945dca7292429a96c487e2628bec35</uuid>
+      <field_type>W1CS1S</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">W1CS1S_MULTI_BIT</signal>
       <input>WR_1_TO_CLR_1_SHOT_MULTI_BIT_IN</input>
       <reset type="0">0</reset>
       <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <name>BYTE_CROSS</name>
-      <signal enb="0" static="0" field_type="W1CS1S" side_effect="0" error_field="0" volatile="0">W1CS1S_BYTE_CROSS</signal>
+      <uuid>046c4d324b824ea888acffbd2eb22bc9</uuid>
+      <field_type>W1CS1S</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">W1CS1S_BYTE_CROSS</signal>
       <input>WR_1_TO_CLR_1_SHOT_BYTE_CROSS_IN</input>
       <reset type="0">0</reset>
       <description>Multi byte.</description>
     </range>
     <range start="17" stop="27">
       <name>BYTE_CROSS_SKEWED</name>
-      <signal enb="0" static="0" field_type="W1CS1S" side_effect="0" error_field="0" volatile="0">W1CS1S_BYTE_CROSS_SKEW</signal>
+      <uuid>533d54cc363b41aaa65830ecb5e9a58e</uuid>
+      <field_type>W1CS1S</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">W1CS1S_BYTE_CROSS_SKEW</signal>
       <input>WR_1_TO_CLR_1_SHOT_BYTE_CROSS_SKEW_IN</input>
       <reset type="0">0</reset>
       <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
-  <register nocode="0" dont_test="0" hide="0">
+  <register>
     <token>WR_1_TO_CLR_SET_1_SHOT_1</token>
+    <dimension>1</dimension>
+    <uuid>3225f82dfb844b089b38214a5743e3c8</uuid>
     <name>Write 1 to Clear Set 1 Shot 1</name>
     <address>52</address>
+    <nocode>0</nocode>
+    <dont_test>0</dont_test>
+    <dont_cover>0</dont_cover>
+    <hide>0</hide>
+    <dont_use_uvm>0</dont_use_uvm>
+    <share>0</share>
     <width>32</width>
     <description>Write one to clear, bits are set based on input signal, one shot generated on a write of 1.</description>
     <range start="0" stop="0">
       <name>ONE_BIT</name>
-      <signal enb="0" static="0" field_type="W1CS1S1" side_effect="0" error_field="0" volatile="0">W1CS1S1_ONE_BIT</signal>
+      <uuid>462bc8c02f2748eaa97171faaec63244</uuid>
+      <field_type>W1CS1S1</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">W1CS1S1_ONE_BIT</signal>
       <input>WR_1_TO_CLR_SET_1_SHOT_1_ONE_BIT_IN</input>
       <reset type="0">0</reset>
       <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <name>MULTI_BIT</name>
-      <signal enb="0" static="0" field_type="W1CS1S1" side_effect="0" error_field="0" volatile="0">W1CS1S1_MULTI_BIT</signal>
+      <uuid>d3c437dbf02e4030948e26cc119662ba</uuid>
+      <field_type>W1CS1S1</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">W1CS1S1_MULTI_BIT</signal>
       <input>WR_1_TO_CLR_SET_1_SHOT_1_MULTI_BIT_IN</input>
       <reset type="0">0</reset>
       <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <name>BYTE_CROSS</name>
-      <signal enb="0" static="0" field_type="W1CS1S1" side_effect="0" error_field="0" volatile="0">W1CS1S1_BYTE_CROSS</signal>
+      <uuid>f821d5b0c6124186afbe48655d3291df</uuid>
+      <field_type>W1CS1S1</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">W1CS1S1_BYTE_CROSS</signal>
       <input load="WR_1_TO_CLR_SET_1_SHOT_1_BYTE_CROSS_LD">WR_1_TO_CLR_SET_1_SHOT_1_BYTE_CROSS_IN</input>
       <reset type="0">0</reset>
       <description>Multi byte.</description>
     </range>
     <range start="17" stop="27">
       <name>BYTE_CROSS_SKEWED</name>
-      <signal enb="0" static="0" field_type="W1CS1S1" side_effect="0" error_field="0" volatile="0">W1CS1S1_BYTE_CROSS_SKEW</signal>
+      <uuid>2c39c7004e60415eb1cdf4f630df7465</uuid>
+      <field_type>W1CS1S1</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">W1CS1S1_BYTE_CROSS_SKEW</signal>
       <input>WR_1_TO_CLR_SET_1_SHOT_1_BYTE_CROSS_SKEW_IN</input>
       <reset type="0">0</reset>
       <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
-  <register nocode="0" dont_test="0" hide="0">
+  <register>
     <token>WR_1_TO_CLR_LD</token>
+    <dimension>1</dimension>
+    <uuid>64ff98e82e40449eabe69717da97db5a</uuid>
     <name>Write 1 to Clear Load</name>
     <address>56</address>
+    <nocode>0</nocode>
+    <dont_test>0</dont_test>
+    <dont_cover>0</dont_cover>
+    <hide>0</hide>
+    <dont_use_uvm>0</dont_use_uvm>
+    <share>0</share>
     <width>32</width>
     <description>Write one to clear, value is loaded from an input signal based on a control signal.</description>
     <range start="0" stop="0">
       <name>ONE_BIT</name>
-      <signal enb="0" static="0" field_type="W1CLD" side_effect="0" error_field="0" volatile="0">W1CLD_ONE_BIT</signal>
+      <uuid>5db47f1c1703489dbfc862096ca919ce</uuid>
+      <field_type>W1CLD</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">W1CLD_ONE_BIT</signal>
       <input load="WR_1_TO_CLR_LD_ONE_BIT_LD">WR_1_TO_CLR_LD_ONE_BIT_IN</input>
       <reset type="0">0</reset>
       <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <name>MULTI_BIT</name>
-      <signal enb="0" static="0" field_type="W1CLD" side_effect="0" error_field="0" volatile="0">W1CLD_MULTI_BIT</signal>
+      <uuid>73795b777af14e5884067a784a943f47</uuid>
+      <field_type>W1CLD</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">W1CLD_MULTI_BIT</signal>
       <input load="WR_1_TO_CLR_LD_MULTI_BIT_LD">WR_1_TO_CLR_LD_MULTI_BIT_IN</input>
       <reset type="0">0</reset>
       <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <name>BYTE_CROSS</name>
-      <signal enb="0" static="0" field_type="W1CLD" side_effect="0" error_field="0" volatile="0">W1CLD_BYTE_CROSS</signal>
+      <uuid>fc8919f535044268acb0c218475fd362</uuid>
+      <field_type>W1CLD</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">W1CLD_BYTE_CROSS</signal>
       <input load="WR_1_TO_CLR_LD_BYTE_CROSS_LD">WR_1_TO_CLR_LD_BYTE_CROSS_IN</input>
       <reset type="0">0</reset>
       <description>Multi byte.</description>
     </range>
     <range start="17" stop="27">
       <name>BYTE_CROSS_SKEWED</name>
-      <signal enb="0" static="0" field_type="W1CLD" side_effect="0" error_field="0" volatile="0">W1CLD_BYTE_CROSS_SKEW</signal>
+      <uuid>9f50c38debc8404589cc05ad4a79d92f</uuid>
+      <field_type>W1CLD</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">W1CLD_BYTE_CROSS_SKEW</signal>
       <input load="WR_1_TO_CLR_LD_BYTE_CROSS_SKEW_LD">WR_1_TO_CLR_LD_BYTE_CROSS_SKEW_IN</input>
       <reset type="0">0</reset>
       <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
-  <register nocode="0" dont_test="0" hide="0">
+  <register>
     <token>WR_1_TO_CLR_LD_1_SHOT</token>
+    <dimension>1</dimension>
+    <uuid>8bf29749dcfd415cbb3bc08c665b3350</uuid>
     <name>Write 1 to Clear Load 1 Shot</name>
     <address>60</address>
+    <nocode>0</nocode>
+    <dont_test>0</dont_test>
+    <dont_cover>0</dont_cover>
+    <hide>0</hide>
+    <dont_use_uvm>0</dont_use_uvm>
+    <share>0</share>
     <width>32</width>
     <description>Write one to clear, value is loaded from an input signal based on a control signal, one shot generated on any write.</description>
     <range start="0" stop="0">
       <name>ONE_BIT</name>
-      <signal enb="0" static="0" field_type="W1CLD1S" side_effect="0" error_field="0" volatile="0">W1CLD1S_ONE_BIT</signal>
+      <uuid>8be5d5f3a7114428b8213db8620ecfa8</uuid>
+      <field_type>W1CLD1S</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">W1CLD1S_ONE_BIT</signal>
       <input load="WR_1_TO_CLR_LD_1_SHOT_ONE_BIT_LD">WR_1_TO_CLR_LD_1_SHOT_ONE_BIT_IN</input>
       <reset type="0">0</reset>
       <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <name>MULTI_BIT</name>
-      <signal enb="0" static="0" field_type="W1CLD1S" side_effect="0" error_field="0" volatile="0">W1CLD1S_MULTI_BIT</signal>
+      <uuid>5caa29fb22e543d79d556f25247670b3</uuid>
+      <field_type>W1CLD1S</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">W1CLD1S_MULTI_BIT</signal>
       <input load="WR_1_TO_CLR_LD_1_SHOT_MULTI_BIT_LD">WR_1_TO_CLR_LD_1_SHOT_MULTI_BIT_IN</input>
       <reset type="0">0</reset>
       <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <name>BYTE_CROSS</name>
-      <signal enb="0" static="0" field_type="W1CLD1S" side_effect="0" error_field="0" volatile="0">W1CLD1S_BYTE_CROSS</signal>
+      <uuid>068c88d7a92249efb38b741e517ee071</uuid>
+      <field_type>W1CLD1S</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">W1CLD1S_BYTE_CROSS</signal>
       <input load="WR_1_TO_CLR_LD_1_SHOT_BYTE_CROSS_LD">WR_1_TO_CLR_LD_1_SHOT_BYTE_CROSS_IN</input>
       <reset type="0">0</reset>
       <description>Multi byte.</description>
     </range>
     <range start="17" stop="27">
       <name>BYTE_CROSS_SKEWED</name>
-      <signal enb="0" static="0" field_type="W1CLD1S" side_effect="0" error_field="0" volatile="0">W1CLD1S_BYTE_CROSS_SKEW</signal>
+      <uuid>e45d57ec0b264fdb967eacd55203e8b4</uuid>
+      <field_type>W1CLD1S</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">W1CLD1S_BYTE_CROSS_SKEW</signal>
       <input load="WR_1_TO_CLR_LD_1_SHOT_BYTE_CROSS_SKEW_LD">WR_1_TO_CLR_LD_1_SHOT_BYTE_CROSS_SKEW_IN</input>
       <reset type="0">0</reset>
       <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
-  <register nocode="0" dont_test="0" hide="0">
+  <register>
     <token>WR_1_TO_CLR_LD_1_SHOT_1</token>
+    <dimension>1</dimension>
+    <uuid>e87de69ca7ff4ee4842742e538ed81c6</uuid>
     <name>Write 1 to Clear Load 1 Shot 1</name>
     <address>64</address>
+    <nocode>0</nocode>
+    <dont_test>0</dont_test>
+    <dont_cover>0</dont_cover>
+    <hide>0</hide>
+    <dont_use_uvm>0</dont_use_uvm>
+    <share>0</share>
     <width>32</width>
     <description>Write one to clear, value is loaded from an input signal based on a control signal, one shot generated on a write of 1.</description>
     <range start="0" stop="0">
       <name>ONE_BIT</name>
-      <signal enb="0" static="0" field_type="W1CLD1S1" side_effect="0" error_field="0" volatile="0">W1CLD1S1_ONE_BIT</signal>
+      <uuid>72403df132c843bf8886047e5f10ca66</uuid>
+      <field_type>W1CLD1S1</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">W1CLD1S1_ONE_BIT</signal>
       <input load="WR_1_TO_CLR_LD_1_SHOT_1_ONE_BIT_LD">WR_1_TO_CLR_LD_1_SHOT_1_ONE_BIT_IN</input>
       <reset type="0">0</reset>
       <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <name>MULTI_BIT</name>
-      <signal enb="0" static="0" field_type="W1CLD1S1" side_effect="0" error_field="0" volatile="0">W1CLD1S1_MULTI_BIT</signal>
+      <uuid>196d1afc679c48489fa43e5f1a0288e0</uuid>
+      <field_type>W1CLD1S1</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">W1CLD1S1_MULTI_BIT</signal>
       <input load="WR_1_TO_CLR_LD_1_SHOT_1_MULTI_BIT_LD">WR_1_TO_CLR_LD_1_SHOT_1_MULTI_BIT_IN</input>
       <reset type="0">0</reset>
       <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <name>BYTE_CROSS</name>
-      <signal enb="0" static="0" field_type="W1CLD1S1" side_effect="0" error_field="0" volatile="0">W1CLD1S1_BYTE_CROSS</signal>
+      <uuid>5c793fe23edc405da2168c611d71d17b</uuid>
+      <field_type>W1CLD1S1</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">W1CLD1S1_BYTE_CROSS</signal>
       <input load="WR_1_TO_CLR_LD_1_SHOT_1_BYTE_CROSS_LD">WR_1_TO_CLR_LD_1_SHOT_1_BYTE_CROSS_IN</input>
       <reset type="0">0</reset>
       <description>Multiple byte.</description>
     </range>
     <range start="17" stop="27">
       <name>BYTE_CROSS_SKEWED</name>
-      <signal enb="0" static="0" field_type="W1CLD1S1" side_effect="0" error_field="0" volatile="0">W1CLD1S1_BYTE_CROSS_SKEW</signal>
+      <uuid>28c02156401346e6a0504a48d017d0d0</uuid>
+      <field_type>W1CLD1S1</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">W1CLD1S1_BYTE_CROSS_SKEW</signal>
       <input load="WR_1_TO_CLR_LD_1_SHOT_1_BYTE_CROSS_SKEW_LD">WR_1_TO_CLR_LD_1_SHOT_1_BYTE_CROSS_SKEW_IN</input>
       <reset type="0">0</reset>
       <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
-  <register nocode="0" dont_test="0" hide="0">
+  <register>
     <token>WR_1_TO_SET</token>
+    <dimension>1</dimension>
+    <uuid>201bea10499546fc91dc747069326f58</uuid>
     <name>Write 1 to Set</name>
     <address>68</address>
+    <nocode>0</nocode>
+    <dont_test>0</dont_test>
+    <dont_cover>0</dont_cover>
+    <hide>0</hide>
+    <dont_use_uvm>0</dont_use_uvm>
+    <share>0</share>
     <width>32</width>
     <description>Write 1 to Set</description>
     <range start="0" stop="0">
       <name>ONE_BIT</name>
-      <signal enb="0" static="0" field_type="W1S" side_effect="0" error_field="0" volatile="0">W1S_ONE_BIT</signal>
+      <uuid>126c564f1b9843bb80dba7dc733fb5e2</uuid>
+      <field_type>W1S</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">W1S_ONE_BIT</signal>
       <input>ONE_BIT_DATA_IN</input>
       <reset type="0">0</reset>
       <description>Single bit. </description>
     </range>
     <range start="1" stop="7">
       <name>MULTI_BIT</name>
-      <signal enb="0" static="0" field_type="W1S" side_effect="0" error_field="0" volatile="0">W1S_MULTI_BIT</signal>
+      <uuid>0c19580c1a2c41d785d2398131835903</uuid>
+      <field_type>W1S</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">W1S_MULTI_BIT</signal>
       <input>MULTI_BIT_DATA_IN</input>
       <reset type="0">0</reset>
       <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <name>BYTE_CROSS</name>
-      <signal enb="0" static="0" field_type="W1S" side_effect="0" error_field="0" volatile="0">W1S_BYTE_CROSS</signal>
+      <uuid>f23143af85fd4acd82c122d6069e636a</uuid>
+      <field_type>W1S</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">W1S_BYTE_CROSS</signal>
       <input>BYTE_CROSS_DATA_IN</input>
       <reset type="0">0</reset>
       <description>Multi byte.</description>
     </range>
     <range start="17" stop="27">
       <name>BYTE_CROSS_SKEWED</name>
-      <signal enb="0" static="0" field_type="W1S" side_effect="0" error_field="0" volatile="0">W1S_BYTE_CROSS_SKEW</signal>
+      <uuid>aafde71595d844e3a313be0c55082378</uuid>
+      <field_type>W1S</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">W1S_BYTE_CROSS_SKEW</signal>
       <input>BYTE_CROSS_SKEWED_DATA_IN</input>
       <reset type="0">0</reset>
       <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
-  <register nocode="0" dont_test="0" hide="0">
+  <register>
     <token>WR_ONLY</token>
+    <dimension>1</dimension>
+    <uuid>7226f7b942d44296b092956367436c04</uuid>
     <name>Write Only</name>
     <address>72</address>
+    <nocode>0</nocode>
+    <dont_test>0</dont_test>
+    <dont_cover>0</dont_cover>
+    <hide>0</hide>
+    <dont_use_uvm>0</dont_use_uvm>
+    <share>0</share>
     <width>32</width>
     <description>Write only.</description>
     <range start="0" stop="0">
       <name>ONE_BIT</name>
-      <signal enb="0" static="0" field_type="WO" side_effect="0" error_field="0" volatile="0">WO_ONE_BIT</signal>
+      <uuid>4d2ce371a5d0476f92686c125172377f</uuid>
+      <field_type>WO</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">WO_ONE_BIT</signal>
       <reset type="0">0</reset>
       <description>Single bit.</description>
     </range>
     <range start="1" stop="7">
       <name>MULTI_BIT</name>
-      <signal enb="0" static="0" field_type="WO" side_effect="0" error_field="0" volatile="0">WO_MULTI_BIT</signal>
+      <uuid>23eb799580944d8cb33e22d8e35d346c</uuid>
+      <field_type>WO</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">WO_MULTI_BIT</signal>
       <reset type="0">0</reset>
       <description>Multiple bit within a single byte.</description>
     </range>
     <range start="8" stop="15">
       <name>BYTE_CROSS</name>
-      <signal enb="0" static="0" field_type="WO" side_effect="0" error_field="0" volatile="0">WO_BYTE_CROSS</signal>
+      <uuid>c28d21adeb414cc5b9f8d89e191a7086</uuid>
+      <field_type>WO</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">WO_BYTE_CROSS</signal>
       <reset type="0">0</reset>
       <description>Multi byte.</description>
     </range>
     <range start="17" stop="27">
       <name>BYTE_CROSS_SKEWED</name>
-      <signal enb="0" static="0" field_type="WO" side_effect="0" error_field="0" volatile="0">WO_BYTE_CROSS_SKEW</signal>
+      <uuid>c2826f0d6748485884374639820e7dd0</uuid>
+      <field_type>WO</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">WO_BYTE_CROSS_SKEW</signal>
       <reset type="0">0</reset>
       <description>Multi byte, unaligned to a byte boundary.</description>
     </range>
   </register>
-  <register nocode="0" dont_test="0" hide="0">
+  <register>
     <token>RD_ONLY_VAL</token>
+    <dimension>1</dimension>
+    <uuid>3006c8ef97b74057975ac57468080307</uuid>
     <name>Read Only Value</name>
     <address>76</address>
+    <nocode>0</nocode>
+    <dont_test>0</dont_test>
+    <dont_cover>0</dont_cover>
+    <hide>0</hide>
+    <dont_use_uvm>0</dont_use_uvm>
+    <share>0</share>
     <width>32</width>
-    <description></description>
+    <description>Test </description>
     <range start="0" stop="0">
       <name>ONE_BIT</name>
-      <signal enb="0" static="0" field_type="ROV" side_effect="0" error_field="0" volatile="0">ROV_ONE_BIT</signal>
+      <uuid>7332431b764a4ca7a06458e11d0c1c40</uuid>
+      <field_type>ROV</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">ROV_ONE_BIT</signal>
       <input>ROV_1BIT_DATA_IN</input>
       <reset type="0">0</reset>
       <description></description>
     </range>
     <range start="1" stop="7">
       <name>MULTI_BIT</name>
-      <signal enb="0" static="0" field_type="ROV" side_effect="0" error_field="0" volatile="0">ROV_MULTI_BIT</signal>
+      <uuid>76d4f2f76dad4d28a3a37f93475331ef</uuid>
+      <field_type>ROV</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">ROV_MULTI_BIT</signal>
       <input>RD_ONLY_VAL_MULTI_BIT_IN</input>
       <reset type="0">0</reset>
       <description></description>
     </range>
   </register>
-  <register nocode="0" dont_test="0" hide="0">
+  <register>
     <token>VOLATILE</token>
+    <dimension>1</dimension>
+    <uuid>d963f0574cb247f79f67075f31293a56</uuid>
     <name>Volatile</name>
     <address>80</address>
+    <nocode>0</nocode>
+    <dont_test>0</dont_test>
+    <dont_cover>0</dont_cover>
+    <hide>0</hide>
+    <dont_use_uvm>0</dont_use_uvm>
+    <share>0</share>
     <width>32</width>
-    <description></description>
     <range start="0" stop="0">
       <name>ONE_BIT</name>
-      <signal enb="0" static="0" field_type="RO" side_effect="0" error_field="0" volatile="1">VOL_ONE_BIT</signal>
+      <uuid>82204978036043c194af7d7dd4b5b9a0</uuid>
+      <field_type>RO</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">VOL_ONE_BIT</signal>
       <reset type="0">0</reset>
       <description></description>
     </range>
   </register>
-  <register nocode="0" dont_test="0" hide="0">
+  <register>
     <token>RD_ONLY_CLR_ON_RD</token>
+    <dimension>1</dimension>
+    <uuid>b563eea280474768a817e05c184451b2</uuid>
     <name>Read Only Clear On Read</name>
     <address>84</address>
+    <nocode>0</nocode>
+    <dont_test>0</dont_test>
+    <dont_cover>0</dont_cover>
+    <hide>0</hide>
+    <dont_use_uvm>0</dont_use_uvm>
+    <share>0</share>
     <width>32</width>
-    <description></description>
     <range start="0" stop="0">
       <name>ONE_BIT</name>
-      <signal enb="0" static="0" field_type="RCLD" side_effect="0" error_field="0" volatile="0">RD_ONLY_CLR_ON_RD_</signal>
+      <uuid>5ff8f9ce2db84f9eb39e9d5c3dca3b64</uuid>
+      <field_type>RCLD</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RD_ONLY_CLR_ON_RD_</signal>
       <input load="RD_ONLY_CLR_ON_RD__LD">RD_ONLY_CLR_ON_RD__IN</input>
       <reset type="0">0</reset>
       <description></description>
     </range>
     <range start="1" stop="7">
       <name>MULTI_BIT</name>
-      <signal enb="0" static="0" field_type="RCLD" side_effect="0" error_field="0" volatile="0">MULTI_BIT</signal>
+      <uuid>fa31ac2a36de4af2922bdace199e5a67</uuid>
+      <field_type>RCLD</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">MULTI_BIT</signal>
       <input load="RD_ONLY_CLR_ON_RD_MULTI_BIT_LD">RD_ONLY_CLR_ON_RD_MULTI_BIT_IN</input>
       <reset type="0">0</reset>
       <description></description>
     </range>
   </register>
-  <register nocode="0" dont_test="0" hide="0">
+  <register>
     <token>RD_ONLY_ONE_SHOT_ON_RD</token>
+    <dimension>1</dimension>
+    <uuid>f4de4073c3084370ae1b432f57dab585</uuid>
     <name>Read Only One Shot On Read</name>
     <address>88</address>
+    <nocode>0</nocode>
+    <dont_test>0</dont_test>
+    <dont_cover>0</dont_cover>
+    <hide>0</hide>
+    <dont_use_uvm>0</dont_use_uvm>
+    <share>0</share>
     <width>32</width>
-    <description></description>
-    <range start="0" stop="0">
-      <name>ONE_BIT</name>
-      <signal enb="0" static="0" field_type="RV1S" side_effect="0" error_field="0" volatile="0">ONE_BIT</signal>
-      <input>RD_ONLY_ONE_SHOT_ON_RD_ONE_BIT_IN</input>
-      <reset type="0">0</reset>
-      <description></description>
-    </range>
     <range start="0" stop="7">
       <name>MULTI_BIT</name>
-      <signal enb="0" static="0" field_type="RV1S" side_effect="0" error_field="0" volatile="0">MULTI_BIT</signal>
+      <uuid>4c9eeb77fb4641f185d8b75080131390</uuid>
+      <field_type>RV1S</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">MULTI_BIT</signal>
       <input>RD_ONLY_ONE_SHOT_ON_RD_MULTI_BIT_IN</input>
       <reset type="0">0</reset>
       <description></description>
     </range>
     <range start="8" stop="15">
       <name>BYTE_CROSS</name>
-      <signal enb="0" static="0" field_type="RV1S" side_effect="0" error_field="0" volatile="0">BYTE_CROSS</signal>
+      <uuid>9785757625b343c891736dc776ab3684</uuid>
+      <field_type>RV1S</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">BYTE_CROSS</signal>
       <input>RD_ONLY_ONE_SHOT_ON_RD_BYTE_CROSS_IN</input>
       <reset type="0">0</reset>
       <description></description>
     </range>
   </register>
-  <register nocode="0" dont_test="0" hide="0">
+  <register>
     <token>BIT_SELECT_OUTPUTS</token>
+    <dimension>1</dimension>
+    <uuid>9d77221c0a924d7ea3d5b53e8deae48d</uuid>
     <name>Bit Select Outputs</name>
     <address>92</address>
+    <nocode>0</nocode>
+    <dont_test>0</dont_test>
+    <dont_cover>0</dont_cover>
+    <hide>0</hide>
+    <dont_use_uvm>0</dont_use_uvm>
+    <share>0</share>
     <width>32</width>
-    <description></description>
     <range start="0" stop="0">
       <name>BIT0</name>
-      <signal enb="1" static="0" field_type="RW" side_effect="0" error_field="0" volatile="0">BIT[*]</signal>
+      <uuid>b3c31ffc3b2e4f39a4f459ffe85fc820</uuid>
+      <field_type>RW</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="1" static="0">BIT[*]</signal>
       <reset type="0">0</reset>
       <description></description>
     </range>
     <range start="1" stop="3">
       <name>BIT3_1</name>
-      <signal enb="1" static="0" field_type="RW" side_effect="0" error_field="0" volatile="0">BIT[*]</signal>
+      <uuid>64ce96f6a6934192834d7d6dfeef3e21</uuid>
+      <field_type>RW</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="1" static="0">BIT[*]</signal>
       <reset type="0">0</reset>
       <description></description>
     </range>
     <range start="5" stop="5">
       <name>BIT5</name>
-      <signal enb="1" static="0" field_type="RW" side_effect="0" error_field="0" volatile="0">BIT[*]</signal>
+      <uuid>3bc625010d8e484db633d97e2083af85</uuid>
+      <field_type>RW</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="1" static="0">BIT[*]</signal>
       <reset type="0">0</reset>
       <description></description>
     </range>
     <range start="8" stop="8">
       <name>FIXED_BITS0</name>
-      <signal enb="1" static="0" field_type="RW" side_effect="0" error_field="0" volatile="0">FIXED_BITS[0]</signal>
+      <uuid>7bd1c9cdd8da4b299752a4615ca72a4f</uuid>
+      <field_type>RW</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="1" static="0">FIXED_BITS[0]</signal>
       <reset type="0">0</reset>
       <description></description>
     </range>
     <range start="9" stop="9">
       <name>FIXED_BITS1</name>
-      <signal enb="1" static="0" field_type="RW" side_effect="0" error_field="0" volatile="0">FIXED_BITS[1]</signal>
+      <uuid>515ba6d582aa449fbafc936447735891</uuid>
+      <field_type>RW</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="1" static="0">FIXED_BITS[1]</signal>
       <reset type="0">0</reset>
       <description></description>
     </range>
   </register>
-  <register nocode="0" dont_test="0" hide="0">
+  <register>
     <token>PARAMETER_RESET</token>
+    <dimension>1</dimension>
+    <uuid>7b7903b1c5a942f1a5c527bae9daeef1</uuid>
     <name>Parameter Reset</name>
     <address>96</address>
+    <nocode>0</nocode>
+    <dont_test>0</dont_test>
+    <dont_cover>0</dont_cover>
+    <hide>0</hide>
+    <dont_use_uvm>0</dont_use_uvm>
+    <share>0</share>
     <width>32</width>
-    <description></description>
     <range start="0" stop="0">
       <name>RO</name>
-      <signal enb="0" static="0" field_type="RO" side_effect="0" error_field="0" volatile="0">RO</signal>
+      <uuid>8ce9c167ab97458ab82f4144584edd3d</uuid>
+      <field_type>RO</field_type>
+      <random>0</random>
+      <side_effect>0</side_effect>
+      <volatile>0</volatile>
+      <error_field>0</error_field>
+      <signal enb="0" static="0">RO</signal>
       <reset type="2" parameter="">0</reset>
       <description></description>
     </range>

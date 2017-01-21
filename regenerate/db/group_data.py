@@ -27,7 +27,7 @@ class GroupData(object):
                  hdl="",
                  repeat=1,
                  repeat_offset=0x10000,
-                 title = ""):
+                 title=""):
         self.name = name
         self.base = base
         self.hdl = hdl

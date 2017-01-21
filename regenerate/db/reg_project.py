@@ -354,19 +354,22 @@ class RegProject(object):
         """
         Returns the base address  of the address map
         """
-        return next((d.base for d in self._addr_map_list if name == d.name), None)
+        return next((d.base for d in self._addr_map_list
+                     if name == d.name), None)
 
     def get_address_fixed(self, name):
         """
         Indicates if the specified address map is at a fixed location
         """
-        return next((d.fixed for d in self._addr_map_list if name == d.name), None)
+        return next((d.fixed for d in self._addr_map_list
+                     if name == d.name), None)
 
     def get_address_uvm(self, name):
         """
         Indicates if the specified address map is at a fixed location
         """
-        return next((d.uvm for d in self._addr_map_list if name == d.name), None)
+        return next((d.uvm for d in self._addr_map_list
+                     if name == d.name), None)
 
     def get_address_width(self, name):
         """

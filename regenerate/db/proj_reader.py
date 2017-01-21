@@ -24,7 +24,7 @@ import xml.parsers.expat
 from collections import namedtuple
 from regenerate.db.group_data import GroupData
 
-AddrMapData = namedtuple("AddrMapData", 
+AddrMapData = namedtuple("AddrMapData",
                          ["name", "base", "width", "fixed", "uvm"])
 GroupMapData = namedtuple("GroupMapData",
                           ["set", "inst", "offset", "repeat",
@@ -107,7 +107,8 @@ class ProjectReader(object):
         """Called when an group_export tag is found"""
         dest = attrs['dest']
         option = attrs['option']
-        self._prj.append_to_group_export_list(self._current_group.name, dest, option)
+        self._prj.append_to_group_export_list(self._current_group.name,
+                                              dest, option)
 
     def start_project_export(self, attrs):
         """Called when a project_export tag is found"""
@@ -115,11 +116,12 @@ class ProjectReader(object):
 
     def start_grouping(self, attrs):
         """Called when a grouping tag is found"""
-        self._current_group = GroupData(attrs['name'], 
+        repeat_offset = int(attrs.get('repeat_offset', 0x10000))
+        self._current_group = GroupData(attrs['name'],
                                         int(attrs['start'], 16),
                                         attrs.get('hdl', ""),
                                         int(attrs.get('repeat', 1)),
-                                        int(attrs.get('repeat_offset', 0x10000)),
+                                        repeat_offset,
                                         attrs.get('title', "")
                                         )
         self._prj.add_to_grouping_list(self._current_group)

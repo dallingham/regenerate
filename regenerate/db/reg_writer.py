@@ -53,14 +53,13 @@ class RegWriter(object):
         """
         create_backup_file(filename)
         ofile = open(filename, "w")
-        ofile.write('<?xml version="1.0"?>\n')
         if self.dbase.array_is_reg:
             array = "reg"
         else:
             array = "mem"
-        ofile.write('<module name="%s" title="%s" owner="%s" organization="%s" array="%s" coverage="%d" internal="%d">\n' %
-                    (self.dbase.module_name, self.dbase.descriptive_title,
-                     self.dbase.owner, self.dbase.organization, array, int(self.dbase.coverage),
+        ofile.write('<?xml version="1.0"?>\n')
+        ofile.write('<module name="%s" coverage="%d" internal="%d">\n' %
+                    (self.dbase.module_name, int(self.dbase.coverage),
                      int(self.dbase.internal_only)))
 
         ofile.write('  <base addr_width="%d" ' % self.dbase.address_bus_width)
@@ -68,8 +67,16 @@ class RegWriter(object):
 
         self.write_port_information(ofile)
 
-        ofile.write(
-            "  <overview>%s</overview>\n" % cleanup(self.dbase.overview_text))
+        overview = cleanup(self.dbase.overview_text)
+        if overview:
+            ofile.write("  <overview>%s</overview>\n" % overview)
+        if self.dbase.owner:
+            ofile.write("  <owner>%s</owner>\n" % self.dbase.owner)
+        if self.dbase.descriptive_title:
+            ofile.write("  <title>%s</title>\n" % self.dbase.descriptive_title)
+        if self.dbase.organization:
+            ofile.write("  <org>%s</org>\n" % self.dbase.organization)
+        ofile.write("  <array>%s</array>\n" % array)
 
         self.write_signal_list(ofile)
         ofile.write('</module>\n')
@@ -107,22 +114,24 @@ def write_register(ofile, reg):
     """
     Writes the specified register to the output file
     """
-    ofile.write('  <register nocode="%d" dont_test="%d" dont_cover="%d" hide="%d" dont_use_uvm="%d"' %
-                (reg.do_not_generate_code, reg.do_not_test, reg.do_not_cover, reg.hide,
-                 reg.do_not_use_uvm))
-    if reg.share:
-        ofile.write(' share="%d"' % reg.share)
-    ofile.write('>\n')
-    ofile.write('    <token>%s</token>\n' % reg.token)
-    ofile.write('    <dimension>%d</dimension>\n' % reg.dimension)
-    ofile.write('    <uuid>%s</uuid>\n' % reg.uuid)
+    ofile.write('  <register>\n')
     ofile.write('    <name>%s</name>\n' % reg.register_name)
+    ofile.write('    <token>%s</token>\n' % reg.token)
+    ofile.write('    <uuid>%s</uuid>\n' % reg.uuid)
+    ofile.write('    <dimension>%d</dimension>\n' % reg.dimension)
     ofile.write('    <address>%d</address>\n' % reg.address)
+    ofile.write('    <nocode>%d</nocode>\n' % reg.do_not_generate_code)
+    ofile.write('    <dont_test>%d</dont_test>\n' % reg.do_not_test)
+    ofile.write('    <dont_cover>%d</dont_cover>\n' % reg.do_not_cover)
+    ofile.write('    <hide>%d</hide>\n' % reg.hide)
+    ofile.write('    <dont_use_uvm>%d</dont_use_uvm>\n' % reg.do_not_use_uvm)
+    ofile.write('    <share>%d</share>\n' % reg.share)
     if reg.ram_size:
         ofile.write('    <ram_size>%d</ram_size>\n' % reg.ram_size)
     ofile.write('    <width>%s</width>\n' % reg.width)
-    ofile.write(
-        '    <description>%s</description>\n' % cleanup(reg.description))
+    if reg.description:
+        text = cleanup(reg.description)
+        ofile.write('    <description>%s</description>\n' % text)
     for field in reg.get_bit_fields():
         write_field(ofile, field)
     ofile.write('  </register>\n')
@@ -143,6 +152,13 @@ def write_field(ofile, field):
     ofile.write('    <range start="%d" stop="%d">\n' % (low, high))
     ofile.write('      <name>%s</name>\n' % field.field_name)
     ofile.write('      <uuid>%s</uuid>\n' % field.uuid)
+    ofile.write('      <field_type>%s</field_type>\n' %
+                TYPE_TO_ID[field.field_type])
+    ofile.write('      <random>%d</random>\n' % field.can_randomize)
+    ofile.write('      <side_effect>%d</side_effect>\n' %
+                field.output_has_side_effect)
+    ofile.write('      <volatile>%d</volatile>\n' % field.volatile)
+    ofile.write('      <error_field>%d</error_field>\n' % field.is_error_field)
     write_signal_info(ofile, field)
     write_input_info(ofile, field)
     write_reset_type(ofile, field)
@@ -171,13 +187,8 @@ def write_signal_info(ofile, field):
     """
     Writes the signal information to the output file
     """
-    ofile.write('      <signal enb="%d" static="%d" ' %
+    ofile.write('      <signal enb="%d" static="%d">' %
                 (field.use_output_enable, field.output_is_static))
-    ofile.write('field_type="%s" ' % TYPE_TO_ID[field.field_type])
-    ofile.write('side_effect="%d" ' % field.output_has_side_effect)
-    ofile.write('error_field="%d" ' % field.is_error_field)
-    ofile.write('random="%d" ' % field.can_randomize)
-    ofile.write('volatile="%d">' % field.volatile)
     ofile.write('%s</signal>\n' % field.output_signal)
 
 

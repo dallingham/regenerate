@@ -55,8 +55,9 @@ class BitField(object):
 
     (RESET_NUMERIC, RESET_INPUT, RESET_PARAMETER) = range(3)
 
-    read_only_types = (TYPE_READ_ONLY, TYPE_READ_ONLY_VALUE, TYPE_READ_ONLY_LOAD,
-                       TYPE_READ_ONLY_CLEAR_LOAD, TYPE_READ_ONLY_VALUE_1S)
+    read_only_types = (TYPE_READ_ONLY, TYPE_READ_ONLY_VALUE,
+                       TYPE_READ_ONLY_LOAD, TYPE_READ_ONLY_CLEAR_LOAD,
+                       TYPE_READ_ONLY_VALUE_1S)
 
     write_only_types = (TYPE_WRITE_ONLY,)
 
