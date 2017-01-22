@@ -1275,6 +1275,7 @@
                                             <property name="can_focus">True</property>
                                             <property name="wrap_mode">word</property>
                                             <property name="buffer">register_text_buffer</property>
+                                            <signal name="key-press-event" handler="on_register_description_key_press_event" swapped="no"/>
                                           </object>
                                         </child>
                                       </object>
@@ -2084,6 +2085,7 @@
                                     <property name="wrap_mode">word</property>
                                     <property name="right_margin">6</property>
                                     <property name="buffer">overview_buffer</property>
+                                    <signal name="key-press-event" handler="on_overview_key_press_event" swapped="no"/>
                                   </object>
                                 </child>
                               </object>

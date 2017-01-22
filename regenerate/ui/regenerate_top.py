@@ -51,6 +51,7 @@ from regenerate.ui.project import ProjectModel, ProjectList, update_file
 from regenerate.ui.register_list import RegisterModel, RegisterList, build_define
 from regenerate.ui.spell import Spell
 from regenerate.ui.status_logger import StatusHandler
+from regenerate.ui.utils import clean_format_if_needed
 
 TYPE_ENB = {}
 for data_type in TYPES:
@@ -953,6 +954,20 @@ class MainWindow(BaseWindow):
             self.set_modified()
             self.__set_register_warn_flags(reg)
 
+    def on_register_description_key_press_event(self, obj, event):
+        if event.keyval == gtk.keysyms.F12:
+            if clean_format_if_needed(obj):
+                self.set_modified()
+            return True
+        return False
+
+    def on_overview_key_press_event(self, obj, event):
+        if event.keyval == gtk.keysyms.F12:
+            if clean_format_if_needed(obj):
+                self.set_modified()
+            return True
+        return False
+
     def set_modified(self):
         """
         Indicates that the database has been modified. The modified
@@ -1002,7 +1017,7 @@ class MainWindow(BaseWindow):
     def on_read_access_toggled(self, obj):
         if obj.get_active():
             register = self.__reglist_obj.get_selected_register()
-            
+
             other = self.find_shared_address(register)
             if other and other.share != Register.SHARE_WRITE:
                 self.set_share(register)
@@ -1017,7 +1032,7 @@ class MainWindow(BaseWindow):
     def on_write_access_toggled(self, obj):
         if obj.get_active():
             register = self.__reglist_obj.get_selected_register()
-            
+
             other = self.find_shared_address(register)
             if other and other.share != Register.SHARE_READ:
                 self.set_share(register)

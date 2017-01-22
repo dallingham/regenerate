@@ -27,6 +27,7 @@ import pango
 from spell import Spell
 from preview_editor import PreviewEditor, PREVIEW_ENABLED
 from regenerate.settings.paths import GLADE_GTXT
+from regenerate.ui.utils import clean_format_if_needed
 
 
 class GroupDocEditor(object):
@@ -48,6 +49,8 @@ class GroupDocEditor(object):
         self.buffer.set_text(group_inst.docs)
         self.group_title.set_text(group_inst.title)
 
+        builder.get_object("overview1").connect("key-press-event",
+                                                self.on_key_press_event)
         builder.get_object("button2").connect("button-press-event", self._save)
         builder.get_object("button3").connect("button-press-event",
                                               self._cancel)
@@ -61,6 +64,12 @@ class GroupDocEditor(object):
         self.group_doc.connect('delete-event', self.on_delete_event)
         self.group_doc.connect('destroy-event', self.on_destroy_event)
         self.group_doc.show()
+
+    def on_key_press_event(self, obj, event):
+        if event.keyval == gtk.keysyms.F12:
+            clean_format_if_needed(obj)
+            return True
+        return False
 
     def on_destroy_event(self, obj):
         self.__spell.detach()

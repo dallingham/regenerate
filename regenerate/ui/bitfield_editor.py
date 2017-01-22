@@ -33,6 +33,7 @@ from regenerate.settings.paths import GLADE_BIT, INSTALL_PATH
 from regenerate.ui.error_dialogs import ErrorMsg
 from regenerate.ui.help_window import HelpWindow
 from regenerate.writers.verilog_reg_def import REG
+from regenerate.ui.utils import clean_format_if_needed
 
 try:
     from pygments.lexers import VerilogLexer
@@ -383,13 +384,8 @@ class BitFieldEditor(object):
         Called on a double click event. If we detect a double click with
         the first button, we call the edit_register method.
         """
-        if event.keyval == gtk.keysyms.F10:
-            bounds = self.__text_buffer.get_selection_bounds()
-            if bounds:
-                old_text = self.__text_buffer.get_text(bounds[0], bounds[1])
-                new_text = " ".join(old_text.replace("\n", " ").split())
-                self.__text_buffer.delete(bounds[0], bounds[1])
-                self.__text_buffer.insert(bounds[0], new_text)
+        if event.keyval == gtk.keysyms.F12:
+            if clean_format_if_needed(obj):
                 self.__modified()
             return True
         return False

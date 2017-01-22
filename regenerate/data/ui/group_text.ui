@@ -149,9 +149,11 @@
                       <object class="GtkTextView" id="overview1">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
+                        <property name="events">GDK_KEY_PRESS_MASK | GDK_STRUCTURE_MASK</property>
                         <property name="border_width">1</property>
                         <property name="wrap_mode">word</property>
                         <property name="right_margin">6</property>
+                        <signal name="key-press-event" handler="on_overview1_key_press_event" swapped="no"/>
                       </object>
                     </child>
                   </object>
