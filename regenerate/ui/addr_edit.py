@@ -23,6 +23,7 @@ information.
 
 import gtk
 
+
 class AddrMapEdit(object):
     """
     Creates a dialog box allowing the selection of subsystem groups

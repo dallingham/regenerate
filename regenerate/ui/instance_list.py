@@ -29,12 +29,12 @@ class InstMdl(gtk.TreeStore):
     symbolic ID name and the base address.
     """
 
-    (INST_COL, ID_COL, BASE_COL, SORT_COL, RPT_COL, OFF_COL, FMT_COL, HDL_COL,
-     UVM_COL, DEC_COL, ARRAY_COL, OBJ_COL) = range(12)
+    (INST_COL, ID_COL, BASE_COL, SORT_COL, RPT_COL, OFF_COL, HDL_COL,
+     UVM_COL, DEC_COL, ARRAY_COL, OBJ_COL) = range(11)
 
     def __init__(self):
         gtk.TreeStore.__init__(self, str, str, str, gobject.TYPE_UINT64, str,
-                               str, str, str, bool, bool, bool, object)
+                               str, str, bool, bool, bool, object)
         self.callback = self.__null_callback()
 
     def __null_callback(self):
@@ -75,14 +75,6 @@ class InstMdl(gtk.TreeStore):
             if obj:
                 obj.name = text
 
-    def change_format(self, path, text):
-        """
-        Called when the ID of an instance has been edited in the InstanceList
-        """
-        node = self.get_iter(path)
-        self.set_value(node, InstMdl.FMT_COL, text)
-        self.callback()
-
     def change_hdl(self, path, text):
         """
         Called when the ID of an instance has been edited in the InstanceList
@@ -107,12 +99,6 @@ class InstMdl(gtk.TreeStore):
         """
         self[path][InstMdl.DEC_COL] = not self[path][InstMdl.DEC_COL]
         self.callback()
-
-    def __instance_decode_changed(self, cell, path, col):
-        """
-        Updates the data model when the text value is changed in the model.
-        """
-        self.__inst_changed("change_decode", path, new_text)
 
     def change_array(self, cell, path):
         """
@@ -174,9 +160,17 @@ class InstMdl(gtk.TreeStore):
         Adds a new instance to the model. It is not added to the database until
         either the change_id or change_base is called.
         """
-        new_grp = GroupData("new_group")
-        row = build_row_data(new_grp.name, new_grp.name, new_grp.base,
-                             new_grp.repeat, new_grp.repeat_offset, "",
+        grps = set([row[0] for row in self])
+
+        name = "new_group"
+        for i in range(len(grps)+1):
+            if name not in grps:
+                break
+            name = "new_group%d" % i
+
+        new_grp = GroupData(name)
+        row = build_row_data(new_grp.name, "", new_grp.base,
+                             new_grp.repeat, new_grp.repeat_offset,
                              new_grp.hdl, False, False, False, new_grp)
 
         node = self.append(None, row=row)
@@ -194,7 +188,7 @@ class InstanceList(object):
         self.__model = None
         self.__build_instance_table(id_changed, inst_changed, base_changed,
                                     repeat_changed, repeat_offset_changed,
-                                    format_changed, hdl_changed, uvm_changed,
+                                    hdl_changed, uvm_changed,
                                     decode_changed, array_changed)
         self.__enable_dnd()
         self.__obj.set_sensitive(False)
@@ -231,13 +225,12 @@ class InstanceList(object):
                 rpt = int(self.__model.get_value(child, InstMdl.RPT_COL))
                 offset_str = self.__model.get_value(child, InstMdl.OFF_COL)
                 offset = int(offset_str, 16)
-                fmt = self.__model.get_value(child, InstMdl.FMT_COL)
                 hdl = self.__model.get_value(child, InstMdl.HDL_COL)
                 uvm = self.__model.get_value(child, InstMdl.UVM_COL)
                 array = self.__model.get_value(child, InstMdl.ARRAY_COL)
                 decode = self.__model.get_value(child, InstMdl.DEC_COL)
                 current_group.register_sets.append(GroupMapData(
-                    name, inst, base, rpt, offset, fmt, hdl, uvm, decode, array))
+                    name, inst, base, rpt, offset, hdl, uvm, decode, array))
                 child = self.__model.iter_next(child)
             tree_iter = self.__model.iter_next(tree_iter)
         return groups
@@ -263,8 +256,8 @@ class InstanceList(object):
         data = selection.data
         drop_info = treeview.get_dest_row_at_pos(x, y)
         (name, width) = data.split(":")
-        row_data = build_row_data(name, name, 0, 1, int(width, 16), "", "", False,
-                                  False, False, None)
+        row_data = build_row_data(name, name, 0, 1, int(width, 16),
+                                  "", False, False, False, None)
         if drop_info:
             path, position = drop_info
             self.modified_callback()
@@ -288,7 +281,7 @@ class InstanceList(object):
         for item in group_list:
 
             row = build_row_data(item.name, "", item.base, item.repeat,
-                                 item.repeat_offset, "", item.hdl, False,
+                                 item.repeat_offset, item.hdl, False,
                                  False, False, item)
             node = self.__model.append(None, row=row)
 
@@ -296,14 +289,14 @@ class InstanceList(object):
             for entry in entry_list:
                 row = build_row_data(entry.inst, entry.set, entry.offset,
                                      entry.repeat, entry.repeat_offset,
-                                     entry.format, entry.hdl, entry.no_uvm,
+                                     entry.hdl, entry.no_uvm,
                                      entry.no_decode, entry.array, None)
                 self.__model.append(node, row=row)
 
     def __build_instance_table(self, id_changed, inst_changed, base_changed,
                                repeat_changed, repeat_offset_changed,
-                               format_changed, hdl_changed, uvm_changed,
-                               decode_changed, array_changed):
+                               hdl_changed, uvm_changed, decode_changed,
+                               array_changed):
 
         column = EditableColumn('Instance', inst_changed, InstMdl.INST_COL)
         column.set_sort_column_id(InstMdl.INST_COL)
@@ -329,11 +322,6 @@ class InstanceList(object):
                                 InstMdl.OFF_COL, True)
         self.__obj.append_column(column)
 
-        column = EditableColumn('ID Format', format_changed, InstMdl.FMT_COL)
-        column.set_min_width(150)
-        column.set_sort_column_id(InstMdl.FMT_COL)
-        self.__obj.append_column(column)
-
         column = EditableColumn('HDL Path', hdl_changed, InstMdl.HDL_COL)
         column.set_min_width(250)
         column.set_sort_column_id(InstMdl.HDL_COL)
@@ -344,7 +332,8 @@ class InstanceList(object):
         column.set_min_width(80)
         self.__obj.append_column(column)
 
-        column = ToggleColumn('Decode Exclude', decode_changed, InstMdl.DEC_COL)
+        column = ToggleColumn('Decode Exclude', decode_changed,
+                              InstMdl.DEC_COL)
         column.set_min_width(80)
         self.__obj.append_column(column)
 
@@ -353,8 +342,8 @@ class InstanceList(object):
         self.__obj.append_column(column)
 
 
-def build_row_data(inst, name, offset, rpt, rpt_offset, fmt, hdl, uvm, dec, array,
+def build_row_data(inst, name, offset, rpt, rpt_offset, hdl, uvm, dec, array,
                    obj):
     row = (inst, name, "{0:x}".format(offset), offset, "{0:d}".format(rpt),
-           "{0:x}".format(rpt_offset), fmt, hdl, uvm, dec, array, obj)
+           "{0:x}".format(rpt_offset), hdl, uvm, dec, array, obj)
     return row

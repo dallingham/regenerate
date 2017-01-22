@@ -58,7 +58,8 @@ class AddrMapMdl(gtk.TreeStore):
         """
         Adds the specified instance to the InstanceList
         """
-        self.append(row=(inst[0], "{0:08x}".format(inst[1]), False, False, _BITS32))
+        self.append(row=(inst[0], "{0:08x}".format(inst[1]),
+                         False, False, _BITS32))
 
     def get_values(self):
         """
@@ -102,7 +103,8 @@ class AddrMapList(object):
                 LOGGER.error(
                     'Illegal width ({0}) for address map "{1}"'.format(
                         base.width, base.name))
-                base = AddrMapData(base.name, base.base, 4, base.fixed, base.uvm)
+                base = AddrMapData(base.name, base.base, 4,
+                                   base.fixed, base.uvm)
             data = (base.name, "{0:x}".format(base.base), base.fixed,
                     base.uvm, INT2SIZE[base.width])
             node = self._model.append(None, row=data)
@@ -213,7 +215,7 @@ class AddrMapList(object):
         """
         column = EditableColumn('Map Name', self._name_changed,
                                 AddrMapMdl.NAME_COL)
-        column.set_min_width(240)
+        column.set_min_width(175)
         column.set_sort_column_id(AddrMapMdl.NAME_COL)
         self._obj.append_column(column)
         self._col = column
@@ -230,12 +232,12 @@ class AddrMapList(object):
 
         column = ToggleColumn('Fixed Address', self._fixed_changed,
                               AddrMapMdl.FIXED_COL)
-        column.set_max_width(300)
+        column.set_max_width(200)
         self._obj.append_column(column)
 
         column = ToggleColumn('Exclude from UVM', self._uvm_changed,
                               AddrMapMdl.UVM_COL)
-        column.set_max_width(300)
+        column.set_max_width(200)
         self._obj.append_column(column)
 
         self._model = AddrMapMdl()
@@ -293,7 +295,8 @@ class AddrMapList(object):
         data, and sets the first field to start editing.
         """
         name = self._create_new_map_name()
-        node = self._model.append(None, row=(name, 0, False, False, SIZE2STR[0][0]))
+        node = self._model.append(None, row=(name, 0, False,
+                                             False, SIZE2STR[0][0]))
         path = self._model.get_path(node)
         self._prj.modified = True
         self._prj.set_address_map(name, 0, SIZE2STR[0][1], False, False)

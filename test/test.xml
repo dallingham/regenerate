@@ -59,10 +59,10 @@ Admonitions
   <title>Test Case for Regenerate</title>
   <array>mem</array>
   <register>
-    <token>RD_ONLY</token>
-    <dimension>1</dimension>
-    <uuid>f7fe1fecc4574f1ab3c1e3ad1c428a55</uuid>
     <name>Read Only</name>
+    <token>RD_ONLY</token>
+    <uuid>f7fe1fecc4574f1ab3c1e3ad1c428a55</uuid>
+    <dimension>1</dimension>
     <address>0</address>
     <nocode>0</nocode>
     <dont_test>0</dont_test>
@@ -130,10 +130,10 @@ Admonitions
     </range>
   </register>
   <register>
-    <token>RD_ONLY_LD</token>
-    <dimension>1</dimension>
-    <uuid>9f2a4e5ec8d84325a1b55632e383bf74</uuid>
     <name>Read Only Load</name>
+    <token>RD_ONLY_LD</token>
+    <uuid>9f2a4e5ec8d84325a1b55632e383bf74</uuid>
+    <dimension>1</dimension>
     <address>4</address>
     <nocode>0</nocode>
     <dont_test>0</dont_test>
@@ -197,10 +197,10 @@ Admonitions
     </range>
   </register>
   <register>
-    <token>RD_WR</token>
-    <dimension>1</dimension>
-    <uuid>141899f4fc41442c846f6046b19e88b8</uuid>
     <name>Read/Write</name>
+    <token>RD_WR</token>
+    <uuid>141899f4fc41442c846f6046b19e88b8</uuid>
+    <dimension>1</dimension>
     <address>8</address>
     <nocode>0</nocode>
     <dont_test>0</dont_test>
@@ -260,10 +260,10 @@ Admonitions
     </range>
   </register>
   <register>
-    <token>RD_WR_LD</token>
-    <dimension>1</dimension>
-    <uuid>c92dbf73ff7e4829a96f56d69c78f067</uuid>
     <name>Read/Write Load</name>
+    <token>RD_WR_LD</token>
+    <uuid>c92dbf73ff7e4829a96f56d69c78f067</uuid>
+    <dimension>1</dimension>
     <address>12</address>
     <nocode>0</nocode>
     <dont_test>0</dont_test>
@@ -327,10 +327,10 @@ Admonitions
     </range>
   </register>
   <register>
-    <token>RD_WR_1_SHOT</token>
-    <dimension>1</dimension>
-    <uuid>baa07a83b6e347d0952ceae085ceefb0</uuid>
     <name>Read/Write 1 Shot</name>
+    <token>RD_WR_1_SHOT</token>
+    <uuid>baa07a83b6e347d0952ceae085ceefb0</uuid>
+    <dimension>1</dimension>
     <address>16</address>
     <nocode>0</nocode>
     <dont_test>0</dont_test>
@@ -390,10 +390,10 @@ Admonitions
     </range>
   </register>
   <register>
-    <token>RD_WR_1_SHOT_1</token>
-    <dimension>1</dimension>
-    <uuid>a8e914cafc204b7ca21070ce69a9c341</uuid>
     <name>Read/Write 1 Shot 1</name>
+    <token>RD_WR_1_SHOT_1</token>
+    <uuid>a8e914cafc204b7ca21070ce69a9c341</uuid>
+    <dimension>1</dimension>
     <address>20</address>
     <nocode>0</nocode>
     <dont_test>0</dont_test>
@@ -454,10 +454,10 @@ Admonitions
     </range>
   </register>
   <register>
-    <token>RD_WR_LD_1_SHOT</token>
-    <dimension>1</dimension>
-    <uuid>c5f4997c0abe4f9390443fa925f9fed7</uuid>
     <name>Read/Write Load 1 Shot</name>
+    <token>RD_WR_LD_1_SHOT</token>
+    <uuid>c5f4997c0abe4f9390443fa925f9fed7</uuid>
+    <dimension>1</dimension>
     <address>24</address>
     <nocode>0</nocode>
     <dont_test>0</dont_test>
@@ -521,10 +521,10 @@ Admonitions
     </range>
   </register>
   <register>
-    <token>RD_WR_LD_1_SHOT_1</token>
-    <dimension>1</dimension>
-    <uuid>11ad195ac42943a19e3a91e65ac9933b</uuid>
     <name>Read/Write Load 1 Shot 1</name>
+    <token>RD_WR_LD_1_SHOT_1</token>
+    <uuid>11ad195ac42943a19e3a91e65ac9933b</uuid>
+    <dimension>1</dimension>
     <address>28</address>
     <nocode>0</nocode>
     <dont_test>0</dont_test>
@@ -588,10 +588,10 @@ Admonitions
     </range>
   </register>
   <register>
-    <token>RD_WR_SET</token>
-    <dimension>1</dimension>
-    <uuid>b32c42ec2e9c4409b3605f7d8ef9b759</uuid>
     <name>Read/Write Set</name>
+    <token>RD_WR_SET</token>
+    <uuid>b32c42ec2e9c4409b3605f7d8ef9b759</uuid>
+    <dimension>1</dimension>
     <address>32</address>
     <nocode>0</nocode>
     <dont_test>0</dont_test>
@@ -655,10 +655,10 @@ Admonitions
     </range>
   </register>
   <register>
-    <token>RD_WR_SET_1_SHOT</token>
-    <dimension>1</dimension>
-    <uuid>e6fd1817acb649a9b5b8f4801a2618ff</uuid>
     <name>Read/Write Set 1 Shot</name>
+    <token>RD_WR_SET_1_SHOT</token>
+    <uuid>e6fd1817acb649a9b5b8f4801a2618ff</uuid>
+    <dimension>1</dimension>
     <address>36</address>
     <nocode>0</nocode>
     <dont_test>0</dont_test>
@@ -722,10 +722,10 @@ Admonitions
     </range>
   </register>
   <register>
-    <token>RD_WR_SET_1_SHOT_1</token>
-    <dimension>1</dimension>
-    <uuid>4ae1d9ef30304b03b1bde1b1e7ef495a</uuid>
     <name>Read/Write Set 1 Shot 1</name>
+    <token>RD_WR_SET_1_SHOT_1</token>
+    <uuid>4ae1d9ef30304b03b1bde1b1e7ef495a</uuid>
+    <dimension>1</dimension>
     <address>40</address>
     <nocode>0</nocode>
     <dont_test>0</dont_test>
@@ -790,10 +790,10 @@ Admonitions
     </range>
   </register>
   <register>
-    <token>WR_1_TO_CLR_SET</token>
-    <dimension>1</dimension>
-    <uuid>2e48a09111b1421ca48a9e775c4a059b</uuid>
     <name>Write 1 to Clear Set</name>
+    <token>WR_1_TO_CLR_SET</token>
+    <uuid>2e48a09111b1421ca48a9e775c4a059b</uuid>
+    <dimension>1</dimension>
     <address>44</address>
     <nocode>0</nocode>
     <dont_test>0</dont_test>
@@ -857,10 +857,10 @@ Admonitions
     </range>
   </register>
   <register>
-    <token>WR_1_TO_CLR_1_SHOT</token>
-    <dimension>1</dimension>
-    <uuid>a87fedff9c064a819858d8df51e632c0</uuid>
     <name>Write 1 to Clear 1 Shot</name>
+    <token>WR_1_TO_CLR_1_SHOT</token>
+    <uuid>a87fedff9c064a819858d8df51e632c0</uuid>
+    <dimension>1</dimension>
     <address>48</address>
     <nocode>0</nocode>
     <dont_test>0</dont_test>
@@ -924,10 +924,10 @@ Admonitions
     </range>
   </register>
   <register>
-    <token>WR_1_TO_CLR_SET_1_SHOT_1</token>
-    <dimension>1</dimension>
-    <uuid>3225f82dfb844b089b38214a5743e3c8</uuid>
     <name>Write 1 to Clear Set 1 Shot 1</name>
+    <token>WR_1_TO_CLR_SET_1_SHOT_1</token>
+    <uuid>3225f82dfb844b089b38214a5743e3c8</uuid>
+    <dimension>1</dimension>
     <address>52</address>
     <nocode>0</nocode>
     <dont_test>0</dont_test>
@@ -991,10 +991,10 @@ Admonitions
     </range>
   </register>
   <register>
-    <token>WR_1_TO_CLR_LD</token>
-    <dimension>1</dimension>
-    <uuid>64ff98e82e40449eabe69717da97db5a</uuid>
     <name>Write 1 to Clear Load</name>
+    <token>WR_1_TO_CLR_LD</token>
+    <uuid>64ff98e82e40449eabe69717da97db5a</uuid>
+    <dimension>1</dimension>
     <address>56</address>
     <nocode>0</nocode>
     <dont_test>0</dont_test>
@@ -1058,10 +1058,10 @@ Admonitions
     </range>
   </register>
   <register>
-    <token>WR_1_TO_CLR_LD_1_SHOT</token>
-    <dimension>1</dimension>
-    <uuid>8bf29749dcfd415cbb3bc08c665b3350</uuid>
     <name>Write 1 to Clear Load 1 Shot</name>
+    <token>WR_1_TO_CLR_LD_1_SHOT</token>
+    <uuid>8bf29749dcfd415cbb3bc08c665b3350</uuid>
+    <dimension>1</dimension>
     <address>60</address>
     <nocode>0</nocode>
     <dont_test>0</dont_test>
@@ -1125,10 +1125,10 @@ Admonitions
     </range>
   </register>
   <register>
-    <token>WR_1_TO_CLR_LD_1_SHOT_1</token>
-    <dimension>1</dimension>
-    <uuid>e87de69ca7ff4ee4842742e538ed81c6</uuid>
     <name>Write 1 to Clear Load 1 Shot 1</name>
+    <token>WR_1_TO_CLR_LD_1_SHOT_1</token>
+    <uuid>e87de69ca7ff4ee4842742e538ed81c6</uuid>
+    <dimension>1</dimension>
     <address>64</address>
     <nocode>0</nocode>
     <dont_test>0</dont_test>
@@ -1192,10 +1192,10 @@ Admonitions
     </range>
   </register>
   <register>
-    <token>WR_1_TO_SET</token>
-    <dimension>1</dimension>
-    <uuid>201bea10499546fc91dc747069326f58</uuid>
     <name>Write 1 to Set</name>
+    <token>WR_1_TO_SET</token>
+    <uuid>201bea10499546fc91dc747069326f58</uuid>
+    <dimension>1</dimension>
     <address>68</address>
     <nocode>0</nocode>
     <dont_test>0</dont_test>
@@ -1259,10 +1259,10 @@ Admonitions
     </range>
   </register>
   <register>
-    <token>WR_ONLY</token>
-    <dimension>1</dimension>
-    <uuid>7226f7b942d44296b092956367436c04</uuid>
     <name>Write Only</name>
+    <token>WR_ONLY</token>
+    <uuid>7226f7b942d44296b092956367436c04</uuid>
+    <dimension>1</dimension>
     <address>72</address>
     <nocode>0</nocode>
     <dont_test>0</dont_test>
@@ -1322,10 +1322,10 @@ Admonitions
     </range>
   </register>
   <register>
-    <token>RD_ONLY_VAL</token>
-    <dimension>1</dimension>
-    <uuid>3006c8ef97b74057975ac57468080307</uuid>
     <name>Read Only Value</name>
+    <token>RD_ONLY_VAL</token>
+    <uuid>3006c8ef97b74057975ac57468080307</uuid>
+    <dimension>1</dimension>
     <address>76</address>
     <nocode>0</nocode>
     <dont_test>0</dont_test>
@@ -1363,10 +1363,10 @@ Admonitions
     </range>
   </register>
   <register>
-    <token>VOLATILE</token>
-    <dimension>1</dimension>
-    <uuid>d963f0574cb247f79f67075f31293a56</uuid>
     <name>Volatile</name>
+    <token>VOLATILE</token>
+    <uuid>d963f0574cb247f79f67075f31293a56</uuid>
+    <dimension>1</dimension>
     <address>80</address>
     <nocode>0</nocode>
     <dont_test>0</dont_test>
@@ -1389,10 +1389,10 @@ Admonitions
     </range>
   </register>
   <register>
-    <token>RD_ONLY_CLR_ON_RD</token>
-    <dimension>1</dimension>
-    <uuid>b563eea280474768a817e05c184451b2</uuid>
     <name>Read Only Clear On Read</name>
+    <token>RD_ONLY_CLR_ON_RD</token>
+    <uuid>b563eea280474768a817e05c184451b2</uuid>
+    <dimension>1</dimension>
     <address>84</address>
     <nocode>0</nocode>
     <dont_test>0</dont_test>
@@ -1429,10 +1429,10 @@ Admonitions
     </range>
   </register>
   <register>
-    <token>RD_ONLY_ONE_SHOT_ON_RD</token>
-    <dimension>1</dimension>
-    <uuid>f4de4073c3084370ae1b432f57dab585</uuid>
     <name>Read Only One Shot On Read</name>
+    <token>RD_ONLY_ONE_SHOT_ON_RD</token>
+    <uuid>f4de4073c3084370ae1b432f57dab585</uuid>
+    <dimension>1</dimension>
     <address>88</address>
     <nocode>0</nocode>
     <dont_test>0</dont_test>
@@ -1469,10 +1469,10 @@ Admonitions
     </range>
   </register>
   <register>
-    <token>BIT_SELECT_OUTPUTS</token>
-    <dimension>1</dimension>
-    <uuid>9d77221c0a924d7ea3d5b53e8deae48d</uuid>
     <name>Bit Select Outputs</name>
+    <token>BIT_SELECT_OUTPUTS</token>
+    <uuid>9d77221c0a924d7ea3d5b53e8deae48d</uuid>
+    <dimension>1</dimension>
     <address>92</address>
     <nocode>0</nocode>
     <dont_test>0</dont_test>
@@ -1543,10 +1543,10 @@ Admonitions
     </range>
   </register>
   <register>
-    <token>PARAMETER_RESET</token>
-    <dimension>1</dimension>
-    <uuid>7b7903b1c5a942f1a5c527bae9daeef1</uuid>
     <name>Parameter Reset</name>
+    <token>PARAMETER_RESET</token>
+    <uuid>7b7903b1c5a942f1a5c527bae9daeef1</uuid>
+    <dimension>1</dimension>
     <address>96</address>
     <nocode>0</nocode>
     <dont_test>0</dont_test>

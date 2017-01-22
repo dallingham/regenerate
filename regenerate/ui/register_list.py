@@ -112,7 +112,8 @@ class RegisterModel(gtk.ListStore):
     STR2BIT = {8: "8 bits", 16: "16 bits", 32: "32 bits", 64: "64 bits", }
 
     def __init__(self):
-        gtk.ListStore.__init__(self, str, str, str, str, str, str, int, str, object)
+        gtk.ListStore.__init__(self, str, str, str, str,
+                               str, str, int, str, object)
         self.reg2path = {}
 
     def append_register(self, register):
@@ -126,8 +127,9 @@ class RegisterModel(gtk.ListStore):
             addr = "%04x:%x" % (register.address, register.ram_size)
         else:
             addr = "%04x" % register.address
-        data = (icon, addr, register.register_name, register.token, register.dimension,
-                self.STR2BIT[register.width], register.address, None, register)
+        data = (icon, addr, register.register_name, register.token,
+                register.dimension, self.STR2BIT[register.width],
+                register.address, None, register)
         path = self.get_path(self.append(row=data))
         self.reg2path[register] = path
         return path
@@ -194,8 +196,9 @@ class RegisterModel(gtk.ListStore):
         self.set(node, self.SORT_COL, addr)
 
 
+ColDef = namedtuple("ColDef", ["title", "size", "sort_column",
+                               "expand", "type"])
 
-ColDef = namedtuple("ColDef", ["title", "size", "sort_column", "expand", "type"])
 
 class RegisterList(object):
     """
@@ -205,12 +208,12 @@ class RegisterList(object):
     (COL_TEXT, COL_COMBO, COL_ICON) = range(3)
 
     _COLS = (  # Title,   Size, Column, Expand, Type
-        ColDef('', 20, RegisterModel.ICON_COL, False, COL_ICON), 
+        ColDef('', 30, RegisterModel.ICON_COL, False, COL_ICON),
         ColDef('Address', 100, RegisterModel.SORT_COL, False, COL_TEXT),
         ColDef('Name', 175, RegisterModel.NAME_COL, True, COL_TEXT),
         ColDef('Token', 150, RegisterModel.DEFINE_COL, True, COL_TEXT),
-        ColDef('Dimension', 75, RegisterModel.DIM_COL, True, COL_TEXT),
-        ColDef('Width', 75, -1, False, COL_COMBO), 
+        ColDef('Dimension', 50, RegisterModel.DIM_COL, True, COL_TEXT),
+        ColDef('Width', 125, -1, False, COL_COMBO),
         )
 
     def __init__(self, obj, select_change_function, mod_function, update_addr):
@@ -236,6 +239,14 @@ class RegisterList(object):
         Returns the node of the selected row
         """
         return self.__selection.get_selected()[1]
+
+    def get_selected_position(self):
+        """
+        Returns the node of the selected row
+        """
+        (model, node) = self.__selection.get_selected()
+        path = model.get_path(node)
+        return path
 
     def delete_selected_node(self):
         """
@@ -332,7 +343,6 @@ class RegisterList(object):
         """
         Updates the address associated with a register address
         """
-        print "REG UPDATE ADDR"
         try:
             new_addr = int(text, 16)
             new_length = 0
@@ -403,7 +413,9 @@ class RegisterList(object):
             if index == int(path):
                 continue
             reg = data[-1]
-            for i in range(reg.address, reg.address + (reg.dimension * (reg.width / 8))):
+            start = reg.address
+            stop = reg.address + (reg.dimension * (reg.width / 8))
+            for i in range(start, stop):
                 if reg.share == Register.SHARE_READ:
                     ro_list.add(i)
                 elif reg.share == Register.SHARE_WRITE:
@@ -464,7 +476,7 @@ class RegisterList(object):
         elif not self.__new_address_is_not_used(new_text, path):
             ErrorMsg(
                 "Address already used",
-                "The address %0x is already used by another register" % address)
+                "%0x is already used by another register" % address)
         else:
             self.__reg_update_addr(register, path, new_text)
 

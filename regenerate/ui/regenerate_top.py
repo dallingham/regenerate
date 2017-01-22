@@ -1553,10 +1553,12 @@ class MainWindow(BaseWindow):
         Deletes the selected object (either a register or a bit range)
         """
         if self.__top_notebook.get_current_page() == 0:
+            row = self.__reglist_obj.get_selected_position()
             reg = self.__reglist_obj.get_selected_register()
             if reg:
                 self.__reglist_obj.delete_selected_node()
                 self.dbase.delete_register(reg)
+                self.__reglist_obj.select_row(row)
                 self.set_modified()
 
     def set_db_value(self, attr, val):
