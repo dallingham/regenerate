@@ -22,6 +22,7 @@ information.
 """
 
 import gtk
+from regenerate.ui.columns import ToggleColumn, EditableColumn
 
 
 class AddrMapEdit(object):
@@ -42,7 +43,7 @@ class AddrMapEdit(object):
                             )
         dialog.vbox.pack_start(label, False, False)
         dialog.vbox.set_homogeneous(False)
-        dialog.set_default_size(480, 320)
+        dialog.set_default_size(580, 320)
         label.show()
 
         scrolled_window = gtk.ScrolledWindow()
@@ -50,34 +51,39 @@ class AddrMapEdit(object):
                                    gtk.POLICY_AUTOMATIC)
         scrolled_window.show()
         dialog.vbox.pack_end(scrolled_window)
-        
-        table = gtk.Table(len(subsystem_list), 3)
-        table.show()
-        scrolled_window.add_with_viewport(table)
+
+        self.view = gtk.TreeView()
+        self.model = gtk.ListStore(bool, str, str)
+        self.view.set_model(self.model)
+
+        self.view.show()
+        col = ToggleColumn("Enabled", self._enble_changed, 0)
+        self.view.append_column(col)
+
+        col = EditableColumn("Subsystem", None, 1)
+        self.view.append_column(col)
+
+        scrolled_window.add_with_viewport(self.view)
 
         self.cb_list = []
 
-        item_list = []
         for i, val in enumerate(subsystem_list):
             group, active = val
             if group.title:
                 title = "{0} - {1}".format(group.name, group.title)
             else:
                 title = group.name
-            checkbox = gtk.CheckButton(title)
-            checkbox.set_active(active)
-            checkbox.show()
-            table.attach(checkbox, 1, 2, i, i+1, xpadding=12, ypadding=6)
-            item_list.append((group.name, checkbox))
+            self.model.append(row=(active, title, ""))
         response = dialog.run()
 
         if response == gtk.RESPONSE_REJECT:
             self.cb_list = None
         else:
-            self.cb_list = [item for (item, check) in item_list
-                            if check.get_active()]
+            self.cb_list = [row[1] for row in self.model if row[0]]
         dialog.destroy()
+
+    def _enble_changed(self, cell, path, source):
+        self.model[path][0] = not self.model[path][0]
 
     def get_list(self):
         return self.cb_list
-
