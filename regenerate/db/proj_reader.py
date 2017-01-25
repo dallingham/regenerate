@@ -27,9 +27,8 @@ from regenerate.db.group_data import GroupData
 AddrMapData = namedtuple("AddrMapData",
                          ["name", "base", "width", "fixed", "uvm"])
 GroupMapData = namedtuple("GroupMapData",
-                          ["set", "inst", "offset", "repeat",
-                           "repeat_offset", "format", "hdl", "no_uvm",
-                           "no_decode", "array"])
+                          ["set", "inst", "offset", "repeat", "repeat_offset",
+                           "hdl", "no_uvm", "no_decode", "array"])
 
 
 class ProjectReader(object):
@@ -132,7 +131,7 @@ class ProjectReader(object):
         data = GroupMapData(
             sname, attrs.get('inst', sname), int(attrs['offset'], 16),
             int(attrs['repeat']), int(attrs['repeat_offset']),
-            attrs.get("format", ""), attrs.get("hdl", ""),
+            attrs.get("hdl", ""),
             int(attrs.get("no_uvm", "0")), int(attrs.get("no_decode", "0")),
             int(attrs.get("array", "0")))
         self._current_group.register_sets.append(data)

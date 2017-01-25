@@ -119,8 +119,6 @@ class ProjectWriter(object):
                     ofile.write(' no_decode="%s"' % int(item.no_decode))
                 if item.array:
                     ofile.write(' array="%s"' % int(item.array))
-                if item.format:
-                    ofile.write(' format="%s"' % item.format)
                 ofile.write("/>\n")
             for item in self._prj.get_group_exports(group.name):
                 ofile.write('      <group_export option="%s" dest="%s"/>' %

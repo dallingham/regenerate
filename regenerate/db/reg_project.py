@@ -28,11 +28,13 @@ from regenerate.db.textutils import clean_text
 import os.path
 import xml.sax.saxutils
 
+(MAP_FULL, MAP_RO, MAP_WO) = range(3)
 
-AddrMapData = namedtuple("AddrMapData", "name base width fixed uvm")
+AddrMapData = namedtuple("AddrMapData",
+                         ["name", "base", "width", "fixed", "uvm"])
 GroupMapData = namedtuple("GroupMapData",
                           ["set", "inst", "offset", "repeat", "repeat_offset",
-                           "format", "hdl", "no_uvm", "no_decode", "array"])
+                           "hdl", "no_uvm", "no_decode", "array"])
 
 
 def cleanup(data):

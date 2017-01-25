@@ -1424,15 +1424,41 @@ class MainWindow(BaseWindow):
         for item in self.__prj_model:
             if item[ProjectModel.MODIFIED]:
                 try:
+                    old_path = item[ProjectModel.OBJ].path
+                    new_path = "%s.bak" % old_path
+                    print old_path, new_path
+                    if os.path.isfile(new_path):
+                        os.remove(new_path)
+                    if os.path.isfile(old_path):
+                        os.rename(old_path, new_path)
+
                     writer = RegWriter(item[ProjectModel.OBJ].db)
-                    writer.save(item[ProjectModel.OBJ].path)
+                    writer.save(old_path)
                     self.clear_modified(item[ProjectModel.OBJ])
-                except IOError as msg:
-                    ErrorMsg("Could not save database", str(msg))
+                except IOError, msg:
+                    os.rename(new_path, old_path)
+                    ErrorMsg("Could not save %s, restoring original" % old_path, str(msg))
+                # except:
+                #     os.rename(new_path, old_path)
+                #     ErrorMsg("Could not save %s, restoring original" % old_path, "")
 
         self.__prj.set_new_order([item[0] for item in self.__prj_model])
         self.__instance_obj.get_groups()
-        self.__prj.save()
+
+        current_path = self.__prj.path
+        backup_path = "%s.bak" % current_path
+
+        if os.path.isfile(backup_path):
+            os.remove(backup_path)
+        if os.path.isfile(current_path):
+            os.rename(current_path, backup_path)
+
+        try:
+            self.__prj.save()
+        except:
+            os.path.rename(new_path, old_path)
+            ErrorMsg("Could not save %s, restoring original" % current_path, str(msg))
+            
         self.active.modified = False
 
     def __exit(self):
