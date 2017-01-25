@@ -212,7 +212,7 @@ class UVMRegBlockRegisters(WriterBase):
             if group.name in grp_set: 
                 for reg_sets in group.register_sets:
                     used_sets.add(reg_sets.set)
-
+        print self.dblist
         return set([db for db in self.dblist if db.set_name in used_sets])
 
 def is_readonly(field):

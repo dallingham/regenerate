@@ -238,9 +238,9 @@ class ExportAssistant(gtk.Assistant):
 
         self.export_obj.set_text(export_type)
         if export_project:
-            self.register_obj.set_text(register_set)
-        else:
             self.register_obj.set_text("Entire Project")
+        else:
+            self.register_obj.set_text(register_set)
         self.dest_obj.set_text(destination)
         self.execute_obj.set_text(msg)
 

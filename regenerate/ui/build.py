@@ -74,11 +74,11 @@ class Build(BaseWindow):
         """
         self.__optmap = {}
         self.__mapopt = {}
-        for export_list in (EXPORTERS, GRP_EXPORTERS, PRJ_EXPORTERS):
+        for level, export_list in enumerate([EXPORTERS, GRP_EXPORTERS, PRJ_EXPORTERS]):
             for item in export_list:
                 value = "{0} ({1})".format(item.type[0], item.type[1])
-                self.__optmap[item.id] = (value, item.obj_class, LEVEL_BLOCK)
-                self.__mapopt[value] = (item.id, item.obj_class, LEVEL_BLOCK)
+                self.__optmap[item.id] = (value, item.obj_class, level)
+                self.__mapopt[value] = (item.id, item.obj_class, level)
 
     def __build_interface(self):
         """
@@ -310,6 +310,7 @@ class Build(BaseWindow):
         to add the new item to the list view.
         """
         option = self.__mapopt[export_format][MAPOPT_ID]
+
         if self.__mapopt[export_format][MAPOPT_REGISTER_SET] == LEVEL_BLOCK:
             register_path = self.__base2path[register_set]
             self.__prj.add_to_export_list(register_path, option, filename)
