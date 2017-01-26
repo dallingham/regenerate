@@ -63,7 +63,7 @@ class AddrMapEdit(object):
         col = EditableColumn("Subsystem", None, 1)
         self.view.append_column(col)
 
-        scrolled_window.add_with_viewport(self.view)
+        scrolled_window.add(self.view)
 
         self.cb_list = []
 
