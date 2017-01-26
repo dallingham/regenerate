@@ -30,13 +30,18 @@ class ToggleColumn(gtk.TreeViewColumn):
     columns are passed and used to create the CellRenderer.
     """
 
-    def __init__(self, title, change_callback, source_column):
+    def __init__(self, title, change_callback, source_column,
+                 visible_callback = None):
+
         renderer = gtk.CellRendererToggle()
         renderer.set_property('activatable', True)
         if change_callback:
             renderer.connect('toggled', change_callback, source_column)
         gtk.TreeViewColumn.__init__(self, title, renderer,
                                     active=source_column)
+
+        if visible_callback:
+            self.set_cell_data_func(renderer, visible_callback)
 
 
 class EditableColumn(gtk.TreeViewColumn):
@@ -46,6 +51,7 @@ class EditableColumn(gtk.TreeViewColumn):
     """
 
     def __init__(self, title, change_callback, source_column, monospace=False):
+
         self.renderer = gtk.CellRendererText()
         if change_callback:
             self.renderer.set_property('editable', True)
@@ -74,7 +80,8 @@ class ComboMapColumn(gtk.TreeViewColumn):
     columns are passed and used to create the CellRenderer.
     """
 
-    def __init__(self, title, callback, data_list, source_column, dtype=int):
+    def __init__(self, title, callback, data_list, source_column, dtype=int,
+                 visible_callback = None):
         renderer = gtk.CellRendererCombo()
         model = gtk.ListStore(str, dtype)
         for item in data_list:
@@ -83,8 +90,12 @@ class ComboMapColumn(gtk.TreeViewColumn):
         renderer.set_property("model", model)
         renderer.set_property("has-entry", False)
         renderer.set_property('editable', True)
-        renderer.connect('changed', callback, source_column)
+        if callback:
+            renderer.connect('changed', callback, source_column)
         gtk.TreeViewColumn.__init__(self, title, renderer, text=source_column)
+
+        if visible_callback:
+            self.set_cell_data_func(renderer, visible_callback)
 
 
 class SwitchComboMapColumn(gtk.TreeViewColumn):

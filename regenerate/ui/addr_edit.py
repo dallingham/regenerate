@@ -22,7 +22,7 @@ information.
 """
 
 import gtk
-from regenerate.ui.columns import ToggleColumn, EditableColumn
+from regenerate.ui.columns import ToggleColumn, EditableColumn, ComboMapColumn
 
 
 class AddrMapEdit(object):
@@ -53,7 +53,7 @@ class AddrMapEdit(object):
         dialog.vbox.pack_end(scrolled_window)
 
         self.view = gtk.TreeView()
-        self.model = gtk.ListStore(bool, str, str)
+        self.model = gtk.TreeStore(bool, str, str)
         self.view.set_model(self.model)
 
         self.view.show()
@@ -61,6 +61,12 @@ class AddrMapEdit(object):
         self.view.append_column(col)
 
         col = EditableColumn("Subsystem", None, 1)
+        self.view.append_column(col)
+
+        options = [("Full Access", 0), ("Read Only", 1), ("Write Only", 2)]
+
+        col = ComboMapColumn("Access Method", None, options, 2,
+                             visible_callback=self.visible_callback)
         self.view.append_column(col)
 
         scrolled_window.add_with_viewport(self.view)
@@ -73,7 +79,7 @@ class AddrMapEdit(object):
                 title = "{0} - {1}".format(group.name, group.title)
             else:
                 title = group.name
-            self.model.append(row=(active, title, ""))
+            self.model.append(None, row=(active, title, ""))
         response = dialog.run()
 
         if response == gtk.RESPONSE_REJECT:
@@ -81,6 +87,12 @@ class AddrMapEdit(object):
         else:
             self.cb_list = [row[1] for row in self.model if row[0]]
         dialog.destroy()
+
+    def visible_callback(self, column, cell, model, node):
+        if len(model.get_path(node)) == 1:
+            cell.set_property('visible', False)
+        else:
+            cell.set_property('visible', True)
 
     def _enble_changed(self, cell, path, source):
         self.model[path][0] = not self.model[path][0]

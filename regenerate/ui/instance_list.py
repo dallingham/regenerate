@@ -328,19 +328,26 @@ class InstanceList(object):
         self.__obj.append_column(column)
         self.__col = column
 
-        column = ToggleColumn('UVM Exclude', uvm_changed, InstMdl.UVM_COL)
+        column = ToggleColumn('UVM Exclude', uvm_changed, InstMdl.UVM_COL,
+                              self.visible_callback)
         column.set_min_width(80)
         self.__obj.append_column(column)
 
         column = ToggleColumn('Decode Exclude', decode_changed,
-                              InstMdl.DEC_COL)
+                              InstMdl.DEC_COL, self.visible_callback)
         column.set_min_width(80)
         self.__obj.append_column(column)
 
-        column = ToggleColumn('Force arrays', array_changed, InstMdl.ARRAY_COL)
+        column = ToggleColumn('Force arrays', array_changed,
+                              InstMdl.ARRAY_COL, self.visible_callback)
         column.set_min_width(80)
         self.__obj.append_column(column)
 
+    def visible_callback(self, column, cell, model, node):
+        if len(model.get_path(node)) == 1:
+            cell.set_property('visible', False)
+        else:
+            cell.set_property('visible', True)
 
 def build_row_data(inst, name, offset, rpt, rpt_offset, hdl, uvm, dec, array,
                    obj):
