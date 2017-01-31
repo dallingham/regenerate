@@ -304,7 +304,8 @@ class InstanceList(object):
         self.__obj.append_column(column)
         self.__col = column
 
-        column = EditableColumn('Subsystem', id_changed, InstMdl.ID_COL)
+        column = EditableColumn('Subsystem', id_changed, InstMdl.ID_COL,
+                                visible_callback=self.visible_callback)
         column.set_sort_column_id(InstMdl.ID_COL)
         column.set_min_width(125)
         self.__obj.append_column(column)

@@ -50,7 +50,8 @@ class EditableColumn(gtk.TreeViewColumn):
     columns are passed and used to create the CellRenderer.
     """
 
-    def __init__(self, title, change_callback, source_column, monospace=False):
+    def __init__(self, title, change_callback, source_column, monospace=False,
+                 visible_callback = None):
 
         self.renderer = gtk.CellRendererText()
         if change_callback:
@@ -59,11 +60,15 @@ class EditableColumn(gtk.TreeViewColumn):
         self.renderer.set_property('ellipsize', pango.ELLIPSIZE_END)
         if monospace:
             self.renderer.set_property('family', "Monospace")
-        gtk.TreeViewColumn.__init__(self, title, self.renderer, text=source_column)
+        gtk.TreeViewColumn.__init__(self, title, self.renderer,
+                                    text=source_column)
         self.renderer.connect('editing-canceled', self.edit_canceled)
         self.renderer.connect('editing-started', self.edit_started)
         self.path = 0
         self.entry = None
+
+        if visible_callback:
+            self.set_cell_data_func(self.renderer, visible_callback)
 
     def edit_started(self, cell, entry, path):
         self.path = path

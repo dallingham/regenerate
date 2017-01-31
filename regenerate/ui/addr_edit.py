@@ -63,13 +63,15 @@ class AddrMapEdit(object):
         col = EditableColumn("Subsystem", None, 1)
         self.view.append_column(col)
 
-        options = [("Full Access", 0), ("Read Only", 1), ("Write Only", 2)]
+        options = [("Full Access", 0),
+                   ("Read Only", 1),
+                   ("Write Only", 2)]
 
         col = ComboMapColumn("Access Method", None, options, 2,
                              visible_callback=self.visible_callback)
         self.view.append_column(col)
 
-        scrolled_window.add_with_viewport(self.view)
+        scrolled_window.add(self.view)
 
         self.cb_list = []
 

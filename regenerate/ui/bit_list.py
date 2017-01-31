@@ -114,8 +114,8 @@ class BitList(object):
         """
         for (i, col) in enumerate(self.BIT_COLS):
             if i == BitModel.TYPE_COL:
-                column = SwitchComboMapColumn(col[BIT_TITLE], combo_edit, TYPE2STR,
-                                              RO2STR, WO2STR, i)
+                column = SwitchComboMapColumn(col[BIT_TITLE], combo_edit,
+                                              TYPE2STR, RO2STR, WO2STR, i)
                 self.type_column = column
             elif i == BitModel.RESET_TYPE_COL:
                 column = ComboMapColumn(col[BIT_TITLE], combo_edit,

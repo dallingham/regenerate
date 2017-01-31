@@ -1013,6 +1013,7 @@ class MainWindow(BaseWindow):
             else:
                 register.share = Register.SHARE_NONE
                 self.set_modified()
+            self.__bitfield_obj.set_mode(register.share)
 
     def on_read_access_toggled(self, obj):
         if obj.get_active():
@@ -1028,6 +1029,7 @@ class MainWindow(BaseWindow):
             else:
                 self.set_share(register)
                 LOGGER.error('All bits in the register must be read only')
+            self.__bitfield_obj.set_mode(register.share)
 
     def on_write_access_toggled(self, obj):
         if obj.get_active():
@@ -1043,6 +1045,7 @@ class MainWindow(BaseWindow):
             else:
                 self.set_share(register)
                 LOGGER.error('All bits in the register must be write only')
+            self.__bitfield_obj.set_mode(register.share)
 
     def on_add_bit_action_activate(self, obj):
         register = self.__reglist_obj.get_selected_register()
