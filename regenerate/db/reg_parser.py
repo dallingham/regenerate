@@ -167,7 +167,8 @@ class RegParser(object):
         self.__field.output_is_static = cnv_bool(attrs, 'static')
         self.__field.output_has_side_effect = cnv_bool(attrs, 'side_effect')
         self.__field.volatile = cnv_bool(attrs, 'volatile')
-        self.__field.can_randomize = cnv_bool(attrs, 'random')
+        if 'random' in attrs:
+            self.__field.can_randomize = cnv_bool(attrs, 'random')
         self.__field.is_error_field = cnv_bool(attrs, 'error_field')
         ftype = attrs.get('field_type')
         if ftype:

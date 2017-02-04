@@ -23,9 +23,9 @@ information.
 
 import gtk
 from regenerate.ui.columns import ToggleColumn, EditableColumn, ComboMapColumn
+from regenerate.ui.base_window import BaseWindow
 
-
-class AddrMapEdit(object):
+class AddrMapEdit(BaseWindow):
     """
     Creates a dialog box allowing the selection of subsystem groups
     for an address map.
@@ -44,6 +44,8 @@ class AddrMapEdit(object):
         dialog.vbox.pack_start(label, False, False)
         dialog.vbox.set_homogeneous(False)
         dialog.set_default_size(580, 320)
+        self.configure(dialog)
+
         label.show()
 
         scrolled_window = gtk.ScrolledWindow()

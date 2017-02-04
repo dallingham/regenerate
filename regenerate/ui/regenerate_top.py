@@ -1009,7 +1009,8 @@ class MainWindow(BaseWindow):
 
             if self.duplicate_address(register.address):
                 self.set_share(register)
-                LOGGER.error('Register cannot be set to non-sharing if it shares an address with another')
+                LOGGER.error('Register cannot be set to non-sharing '
+                             'if it shares an address with another')
             else:
                 register.share = Register.SHARE_NONE
                 self.set_modified()
@@ -1429,7 +1430,6 @@ class MainWindow(BaseWindow):
                 try:
                     old_path = item[ProjectModel.OBJ].path
                     new_path = "%s.bak" % old_path
-                    print old_path, new_path
                     if os.path.isfile(new_path):
                         os.remove(new_path)
                     if os.path.isfile(old_path):
