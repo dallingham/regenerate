@@ -29,36 +29,12 @@ from jinja2 import Environment
 #
 # Map regenerate types to UVM type strings
 #
-ACCESS_MAP = {
-    BitField.TYPE_READ_ONLY: "RO",
-    BitField.TYPE_READ_ONLY_LOAD: "RO",
-    BitField.TYPE_READ_ONLY_VALUE: "RO",
-    BitField.TYPE_READ_ONLY_CLEAR_LOAD: "RC",
-    BitField.TYPE_READ_ONLY_VALUE_1S: "RO",
-    BitField.TYPE_READ_WRITE: "RW",
-    BitField.TYPE_READ_WRITE_1S: "RW",
-    BitField.TYPE_READ_WRITE_1S_1: "RW",
-    BitField.TYPE_READ_WRITE_LOAD: "RW",
-    BitField.TYPE_READ_WRITE_LOAD_1S: "RW",
-    BitField.TYPE_READ_WRITE_LOAD_1S_1: "RW",
-    BitField.TYPE_READ_WRITE_SET: "RW",
-    BitField.TYPE_READ_WRITE_SET_1S: "RW",
-    BitField.TYPE_READ_WRITE_SET_1S_1: "RW",
-    BitField.TYPE_READ_WRITE_CLR: "RW",
-    BitField.TYPE_READ_WRITE_CLR_1S: "RW",
-    BitField.TYPE_READ_WRITE_CLR_1S_1: "RW",
-    BitField.TYPE_WRITE_1_TO_CLEAR_SET: "W1C",
-    BitField.TYPE_WRITE_1_TO_CLEAR_SET_CLR: "W1C",
-    BitField.TYPE_WRITE_1_TO_CLEAR_SET_1S: "W1C",
-    BitField.TYPE_WRITE_1_TO_CLEAR_SET_1S_1: "W1C",
-    BitField.TYPE_WRITE_1_TO_CLEAR_LOAD: "W1C",
-    BitField.TYPE_WRITE_1_TO_CLEAR_LOAD_1S: "W1C",
-    BitField.TYPE_WRITE_1_TO_CLEAR_LOAD_1S_1: "W1C",
-    BitField.TYPE_WRITE_1_TO_SET: "W1S",
-    BitField.TYPE_WRITE_ONLY: "WO",
-    BitField.TYPE_READ_WRITE_PROTECT: "RW",
-    BitField.TYPE_READ_WRITE_PROTECT_1S:  "RW",
-    }
+
+from regenerate.db.bitfield_types import TYPES
+
+ACCESS_MAP = {}
+for i in TYPES:
+    ACCESS_MAP[i.type] = i.simple_type
 
 
 class UVMRegBlockRegisters(WriterBase):
@@ -212,7 +188,6 @@ class UVMRegBlockRegisters(WriterBase):
             if group.name in grp_set: 
                 for reg_sets in group.register_sets:
                     used_sets.add(reg_sets.set)
-        print self.dblist
         return set([db for db in self.dblist if db.set_name in used_sets])
 
 def is_readonly(field):
