@@ -304,7 +304,7 @@ class Build(BaseWindow):
         ExportAssistant(self.__prj.short_name, optlist, reglist, groups,
                         self.add_callback)
 
-    def add_callback(self, filename, export_format, register_set):
+    def add_callback(self, filename, export_format, register_set, group):
         """
         Called when a item has been added to the builder, and is used
         to add the new item to the list view.
@@ -315,8 +315,8 @@ class Build(BaseWindow):
             register_path = self.__base2path[register_set]
             self.__prj.add_to_export_list(register_path, option, filename)
         elif self.__mapopt[export_format][MAPOPT_REGISTER_SET] == LEVEL_GROUP:
-            self.__prj.add_to_group_export_list(register_set, option, filename)
-            register_path = "%s (group)" % register_set
+            self.__prj.add_to_group_export_list(group, option, filename)
+            register_path = "%s (group)" % group
         else:
             register_path = '<project>'
             self.__prj.add_to_project_export_list(option, filename)

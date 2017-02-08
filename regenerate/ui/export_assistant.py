@@ -125,9 +125,10 @@ class ExportAssistant(gtk.Assistant):
         sel_fmt = model.get_value(self.export_combo.get_active_iter(), 0)
 
         sel_set = self.register_combo.get_active_text()
+        sel_grp = self.group_combo.get_active_text()
 
         if filename:
-            self.save_callback(filename, sel_fmt, sel_set)
+            self.save_callback(filename, sel_fmt, sel_set, sel_grp)
         self.emit('delete_event', gtk.gdk.Event(gtk.gdk.NOTHING))
 
     def build_page_0(self, optlist):
