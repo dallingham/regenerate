@@ -273,8 +273,8 @@ package {{project.short_name|lower}}_reg_pkg;
 
     virtual protected function uvm_reg_map build_address_map(string map_name, int unsigned width);
        uvm_reg_map rmap;
-       if ({{(db.data_bus_width / 8)|int}} > width) begin
-          rmap = create_map(map_name, 'h0, width, UVM_LITTLE_ENDIAN);
+       if ({{db.data_bus_width}} > width) begin
+          rmap = create_map(map_name, 'h0, width/8, UVM_LITTLE_ENDIAN);
        end else begin
           rmap = create_map(map_name, 'h0, {{(db.data_bus_width/8)|int}}, UVM_LITTLE_ENDIAN);
        end
