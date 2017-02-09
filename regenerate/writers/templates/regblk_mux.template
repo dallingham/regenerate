@@ -10,36 +10,37 @@
 
 module {{group_name}}_regblk_mux
   #(
-    parameter int pAddrSize = 14
+    parameter int pAddrSize = 14,
+    parameter int pDataSize = 64
     )
    (
-    input logic                 CLK,
-    input logic                 RSTn,
+    input logic                  CLK,
+    input logic                  RSTn,
 {% for inst in blk_insts %}
   {% if inst.repeat > 1 %}
     {% if mda %}
-    output logic                READ_{{inst.inst|upper}}[{{inst.repeat}}],
-    output logic                WRITE_{{inst.inst|upper}}[{{inst.repeat}}],
-    input logic                 ACK_{{inst.inst|upper}}[{{inst.repeat}}],
-    input logic [63:0]          RDATA_{{inst.inst|upper}}[{{inst.repeat}}],
+    output logic                 READ_{{inst.inst|upper}}[{{inst.repeat}}],
+    output logic                 WRITE_{{inst.inst|upper}}[{{inst.repeat}}],
+    input logic                  ACK_{{inst.inst|upper}}[{{inst.repeat}}],
+    input logic [pDataSize-1:0]  RDATA_{{inst.inst|upper}}[{{inst.repeat}}],
     {% else %}
-    output logic [{{inst.repeat-1}}:0]          READ_{{inst.inst|upper}},
-    output logic [{{inst.repeat-1}}:0]          WRITE_{{inst.inst|upper}},
-    input logic [{{inst.repeat-1}}:0]           ACK_{{inst.inst|upper}},
-    input logic [63:0]          RDATA_{{inst.inst|upper}}[{{inst.repeat}}],
+    output logic [{{inst.repeat-1}}:0]           READ_{{inst.inst|upper}},
+    output logic [{{inst.repeat-1}}:0]           WRITE_{{inst.inst|upper}},
+    input logic [{{inst.repeat-1}}:0]            ACK_{{inst.inst|upper}},
+    input logic [pDataSize-1:0]  RDATA_{{inst.inst|upper}}[{{inst.repeat}}],
     {% endif %}
   {% else %}
-    output logic                READ_{{inst.inst|upper}},
-    output logic                WRITE_{{inst.inst|upper}},
-    input logic                 ACK_{{inst.inst|upper}},
-    input logic [63:0]          RDATA_{{inst.inst|upper}},
+    output logic                 READ_{{inst.inst|upper}},
+    output logic                 WRITE_{{inst.inst|upper}},
+    input logic                  ACK_{{inst.inst|upper}},
+    input logic [pDataSize-1:0]  RDATA_{{inst.inst|upper}},
   {% endif %}
 {% endfor %}
-    input logic [pAddrSize-1:3] ADDR,
-    input logic                 READ,
-    input logic                 WRITE,
-    output logic                ACK,
-    output logic [63:0]         RDATA
+    input logic [pAddrSize-1:3]  ADDR,
+    input logic                  READ,
+    input logic                  WRITE,
+    output logic                 ACK,
+    output logic [pDataSize-1:0] RDATA
     );
 
    logic                        rw_delay;
@@ -88,7 +89,7 @@ module {{group_name}}_regblk_mux
   {% endif %}
 {% endfor %}
       end else begin
-         RDATA = 64'hdead_beef_dead_beef;
+         RDATA = {(pDataSize/32){32'hdead_beef}};
       end
    end
 

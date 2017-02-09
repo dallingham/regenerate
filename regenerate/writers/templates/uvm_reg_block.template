@@ -359,11 +359,11 @@ package {{project.short_name|lower}}_reg_pkg;
 
    {% if grp_map|length == 1 %}
      {% for map in grp_map %}
-      {{map}}_map = build_address_map("{{map}}_map", {{project.get_address_width(map)}});
+      {{map}}_map = build_address_map("{{map}}_map", {{8 * project.get_address_width(map)}});
      {% endfor %}
    {% else %}
      {% for map in grp_map %}
-      if (!disable_{{map}}_map) {{map}}_map = build_address_map("{{map}}_map", {{project.get_address_width(map)}});
+      if (!disable_{{map}}_map) {{map}}_map = build_address_map("{{map}}_map", {{8 * project.get_address_width(map)}});
      {% endfor %}
    {% endif %}
 

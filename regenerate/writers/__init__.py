@@ -98,6 +98,7 @@ for module in MODULES:
         except ImportError, msg:
             continue
         except SyntaxError, msg:
+            print str(msg)
             continue
     else:
         LOGGER.warning('Cound not import the "{0}" module'.format(module[0]))

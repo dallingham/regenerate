@@ -20,13 +20,15 @@
 Actual program. Parses the arguments, and initiates the main window
 """
 
-from regenerate.db import BitField, TYPES, LOGGER
+from regenerate.db import BitField, TYPES, LOGGER, Register
 from regenerate.writers.writer_base import WriterBase, ExportInfo
 from regenerate.writers.verilog_reg_def import REG
 import time
 import os
 from jinja2 import FileSystemLoader, Environment
 from collections import namedtuple, OrderedDict
+
+import pprint
 
 LOWER_BIT = {128: 4, 64: 3, 32: 2, 16: 1, 8: 0}
 
@@ -167,6 +169,7 @@ class Verilog(WriterBase):
 
         env = Environment(loader=FileSystemLoader(os.path.join(dirpath, "templates")),
                           trim_blocks = True, lstrip_blocks = True)
+        env.filters['drop_write_share'] = drop_write_share
 
         template = env.get_template("verilog.template")
 
@@ -184,7 +187,6 @@ class Verilog(WriterBase):
                 reglist.append(r)
 
         word_fields = self.__generate_group_list(reglist, self._data_width)
-        
         reset_edge = "posedge" if self._dbase.reset_active_level else "negedge"
         reset_op = "" if self._dbase.reset_active_level else "~"
 
@@ -268,6 +270,11 @@ class Verilog2001(Verilog):
     def __init(self, project, dbase):
         Verilog.__init__(self, project, dbase)
 
+def drop_write_share(list_in):
+    list_out = [l for l in list_in 
+            if l[6].share != Register.SHARE_WRITE]
+    return list_out
+    
 
 EXPORTERS = [
     (WriterBase.TYPE_BLOCK, ExportInfo(SystemVerilog, ("RTL", "SystemVerilog"),
