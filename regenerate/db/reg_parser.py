@@ -340,7 +340,7 @@ class RegParser(object):
         """
         Called when the range tag is terminated.
         """
-        self.__reg.shared = int(text)
+        self.__reg.share = int(text)
 
     def end_reset(self, text):
         """

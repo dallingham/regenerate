@@ -121,7 +121,7 @@ class ProjectWriter(object):
                     ofile.write(' array="%s"' % int(item.array))
                 ofile.write("/>\n")
             for item in self._prj.get_group_exports(group.name):
-                ofile.write('      <group_export option="%s" dest="%s"/>' %
+                ofile.write('      <group_export dest="%s" option="%s"/>' %
                             item)
             ofile.write('    </grouping>\n')
         ofile.write('  </groupings>\n')
