@@ -52,6 +52,7 @@ from regenerate.ui.register_list import RegisterModel, RegisterList, build_defin
 from regenerate.ui.spell import Spell
 from regenerate.ui.status_logger import StatusHandler
 from regenerate.ui.utils import clean_format_if_needed
+from regenerate.extras.remap import REMAP_NAME
 
 TYPE_ENB = {}
 for data_type in TYPES:
@@ -146,7 +147,7 @@ class MainWindow(BaseWindow):
         self.__reglist_obj = RegisterList(
             self.__builder.get_object("register_list"),
             self.__selected_reg_changed, self.set_modified,
-            self.update_register_addr)
+            self.update_register_addr, self.__set_register_warn_flags)
 
         self.use_svn = bool(int(ini.get('user', 'use_svn', 0)))
         self.use_preview = bool(int(ini.get('user', 'use_preview', 0)))
@@ -603,6 +604,8 @@ class MainWindow(BaseWindow):
             self.__bit_update_name(field, path, new_text)
         elif col == BitModel.RESET_COL:
             self.__bit_update_reset(field, path, new_text)
+        register = self.__reglist_obj.get_selected_register()
+        self.__set_register_warn_flags(register)
 
     def __instance_id_changed(self, cell, path, new_text, col):
         """
@@ -1796,14 +1799,21 @@ class MainWindow(BaseWindow):
         if not reg.description:
             warn_reg = True
             msg.append("Missing register description")
+        if reg.token.lower() in REMAP_NAME:
+            warn_reg = True
+            msg.append("Register name is a SystemVerilog reserved word")
         if not reg.get_bit_fields():
             warn_bit = True
             msg.append("No bit fields exist for the register")
         else:
             for field in reg.get_bit_fields():
+                if field.field_name.lower() in REMAP_NAME:
+                    txt = "Field name (%s) is a SystemVerilog reserved word" % \
+                        field.field_name
+                    msg.append(txt)
                 if check_field(field):
                     txt = "Missing field description for '%s'" % \
-                          field.field_name
+                        field.field_name
                     if field.width == 1:
                         txt = txt + " (bit %d)" % field.lsb
                     else:
@@ -1812,7 +1822,7 @@ class MainWindow(BaseWindow):
                     warn_bit = True
                 if check_reset(field):
                     txt = "Missing reset parameter name for '%s'" % \
-                          field.field_name
+                        field.field_name
                     if field.lsb == field.msb:
                         txt = txt + " (bit %d)" % field.lsb
                     else:

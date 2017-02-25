@@ -133,7 +133,8 @@ class ProjectReader(object):
             int(attrs['repeat']), int(attrs['repeat_offset']),
             attrs.get("hdl", ""),
             int(attrs.get("no_uvm", "0")), int(attrs.get("no_decode", "0")),
-            int(attrs.get("array", "0")))
+            int(attrs.get("array", "0"))
+            )
         self._current_group.register_sets.append(data)
 
     def start_address_map(self, attrs):
@@ -161,9 +162,21 @@ class ProjectReader(object):
         if self._current_group:
             self._current_group.docs = text
 
+    def start_map_group(self, attrs):
+        self.current_map_group = attrs.get('name')
+        self._prj.add_address_map_group(self._current_map,
+                                        self.current_map_group)
+
     def end_map_group(self, text):
         """
         Called when the map_group XML tag is encountered. Assigns the
         current text string to the current group's docs variable
         """
-        self._prj.add_address_map_group(self._current_map, text)
+        if self.current_map_group is not None:
+            self._prj.add_address_map_group(self._current_map, text)
+
+    def start_access(self, attrs):
+        self.current_access = int(attrs.get('type', "0"))
+
+    def end_access(self, text):
+        print self._current_map, self.current_map_group, text, self.current_access

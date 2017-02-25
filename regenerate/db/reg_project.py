@@ -20,7 +20,7 @@
 RegProject is the container object for a regenerate project
 """
 
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 import regenerate.db
 from regenerate.db.proj_reader import ProjectReader
 from regenerate.db.proj_writer import ProjectWriter
@@ -35,6 +35,12 @@ AddrMapData = namedtuple("AddrMapData",
 GroupMapData = namedtuple("GroupMapData",
                           ["set", "inst", "offset", "repeat", "repeat_offset",
                            "hdl", "no_uvm", "no_decode", "array"])
+
+def nested_dict(n, type):
+    if n == 1:
+        return defaultdict(type)
+    else:
+        return defaultdict(lambda: nested_dict(n-1, type))
 
 
 def cleanup(data):
@@ -65,6 +71,7 @@ class RegProject(object):
         self._token_list = []
         self._modified = False
         self.path = path
+        self.access_map = nested_dict(3, dict)
         if path:
             self.open(path)
 
@@ -382,6 +389,15 @@ class RegProject(object):
                 return data.width
         regenerate.db.LOGGER.error("Address map not found (%s)" % name)
         return None
+
+    def set_access(self, map_name, group_name, block_name, access):
+        self.access_map[map_name][group_name][block_name] = access
+
+    def get_access(self, map_name, group_name, block_name):
+        try:
+            return self.access_map[map_name][group_name][block_name]
+        except:
+            return 0
 
     def set_address_map(self, name, base, width, fixed, uvm):
         """

@@ -285,7 +285,8 @@ class InstanceList(object):
                                  False, False, item)
             node = self.__model.append(None, row=row)
 
-            entry_list = sorted(item.register_sets, key=lambda x: x.offset)
+            item_sets = item.register_sets
+            entry_list = sorted(item_sets, key=lambda x: x.offset)
             for entry in entry_list:
                 row = build_row_data(entry.inst, entry.set, entry.offset,
                                      entry.repeat, entry.repeat_offset,

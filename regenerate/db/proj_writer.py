@@ -123,5 +123,5 @@ class ProjectWriter(object):
             for item in self._prj.get_group_exports(group.name):
                 ofile.write('      <group_export dest="%s" option="%s"/>' %
                             item)
-            ofile.write('    </grouping>\n')
+            ofile.write('\n    </grouping>\n')
         ofile.write('  </groupings>\n')

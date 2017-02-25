@@ -24,6 +24,7 @@ information.
 import gtk
 from regenerate.ui.columns import ToggleColumn, EditableColumn, ComboMapColumn
 from regenerate.ui.base_window import BaseWindow
+import pprint
 
 class AddrMapEdit(BaseWindow):
     """
@@ -55,21 +56,23 @@ class AddrMapEdit(BaseWindow):
         dialog.vbox.pack_end(scrolled_window)
 
         self.view = gtk.TreeView()
-        self.model = gtk.TreeStore(bool, str, str)
+        self.model = gtk.TreeStore(bool, str, str, object)
         self.view.set_model(self.model)
 
         self.view.show()
-        col = ToggleColumn("Enabled", self._enble_changed, 0)
+        col = ToggleColumn("Enabled", self._enable_changed, 0,
+                             visible_callback=self.visible_callback2)
         self.view.append_column(col)
 
         col = EditableColumn("Subsystem", None, 1)
+        col.set_min_width(200)
         self.view.append_column(col)
 
         options = [("Full Access", 0),
                    ("Read Only", 1),
                    ("Write Only", 2)]
 
-        col = ComboMapColumn("Access Method", None, options, 2,
+        col = ComboMapColumn("Access Method", self._access_changed, options, 2,
                              visible_callback=self.visible_callback)
         self.view.append_column(col)
 
@@ -83,7 +86,11 @@ class AddrMapEdit(BaseWindow):
                 title = "{0} - {1}".format(group.name, group.title)
             else:
                 title = group.name
-            self.model.append(None, row=(active, title, ""))
+            top = self.model.append(None, row=(active, title, "", None))
+            for item in group.register_sets:
+                access = 0
+                self.model.append(top, row=(True, item.inst, options[access][0], item))
+                
         response = dialog.run()
 
         if response == gtk.RESPONSE_REJECT:
@@ -98,8 +105,19 @@ class AddrMapEdit(BaseWindow):
         else:
             cell.set_property('visible', True)
 
-    def _enble_changed(self, cell, path, source):
+    def visible_callback2(self, column, cell, model, node):
+        if len(model.get_path(node)) == 1:
+            cell.set_property('visible', True)
+        else:
+            cell.set_property('visible', False)
+
+    def _enable_changed(self, cell, path, source):
         self.model[path][0] = not self.model[path][0]
+
+    def _access_changed(self, obj, path, node, val):
+        mdl = obj.get_property('model')
+        val = mdl.get_value(node, 0)
+        self.model[path][2] = val
 
     def get_list(self):
         return self.cb_list

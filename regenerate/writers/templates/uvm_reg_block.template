@@ -220,7 +220,8 @@ package {{project.short_name|lower}}_reg_pkg;
          {{fix_name(field)}}.configure(this, {{field.width}}, {{field.lsb}}, "{{access}}", {{volatile}}, {{reset}}, {{has_reset}}, {% if field.can_randomize %}1{% else %}0{% endif %}, {{ind_access}});
      {%- endfor %}
 
-      {% if register.no_reset_test() == True %}
+     // {{register.register_name}}, {{register.share}}
+      {% if register.no_reset_test() == True or register.share != 0 %}
          uvm_resource_db #(bit)::set({"REG::", get_full_name()}, "NO_REG_TESTS", 1, this);
       {% elif register.strict_volatile() %}
          {% if register.loose_volatile() %}
@@ -279,12 +280,12 @@ package {{project.short_name|lower}}_reg_pkg;
           rmap = create_map(map_name, 'h0, {{(db.data_bus_width/8)|int}}, UVM_LITTLE_ENDIAN);
        end
     {% for reg in db.get_all_registers()|remove_no_uvm %}
-       {% if reg.share == 0 %}
-       {%   set mode = "RW" %}
-       {% elif reg.share == 1 %}
+       {% if reg.share == 1 or reg.is_completely_read_only() %}
        {%   set mode = "RO" %}
-       {% else %}
+       {% elif reg.share == 2 or reg.is_completely_write_only() %}
        {%   set mode = "WO" %}
+       {% else %}
+       {%   set mode = "RW" %}
        {% endif %}
        {% if reg.ram_size %}
        rmap.add_mem({{fix_reg(reg)}}, 'h{{"%04x" | format(reg.address)}}, "{{mode}}");

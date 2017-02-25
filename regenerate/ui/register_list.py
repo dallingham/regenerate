@@ -25,6 +25,7 @@ import gtk
 from regenerate.ui.columns import EditableColumn, ComboMapColumn
 from regenerate.ui.error_dialogs import ErrorMsg
 from regenerate.db import LOGGER, Register
+from regenerate.extras.remap import REMAP_NAME
 
 BAD_TOKENS = ' /-@!#$%^&*()+=|{}[]:"\';\\,.?'
 
@@ -216,7 +217,8 @@ class RegisterList(object):
         ColDef('Width', 125, -1, False, COL_COMBO),
         )
 
-    def __init__(self, obj, select_change_function, mod_function, update_addr):
+    def __init__(self, obj, select_change_function, mod_function, update_addr,
+                 set_warn_flags):
         self.__obj = obj
         self.__model = None
         self.__col = None
@@ -225,6 +227,7 @@ class RegisterList(object):
         self.__selection = self.__obj.get_selection()
         self.__set_modified = mod_function
         self.__update_addr = update_addr
+        self.__set_warn_flags = set_warn_flags
         self.__selection.connect('changed', select_change_function)
         self.__build_columns()
 
@@ -387,7 +390,7 @@ class RegisterList(object):
             self.__set_modified()
         self.__model[path][RegisterModel.DIM_COL] = "%d" % value
 
-    def __reg_update_define(self, reg, path, text):
+    def __reg_update_define(self, reg, path, text, cell):
         """
         Updates the token name associated with the register. Called after the
         text has been edited
@@ -397,6 +400,7 @@ class RegisterList(object):
         text = text.upper()
         if text != reg.token:
             reg.token = text
+            self.__set_warn_flags(reg)
             self.__set_modified()
         self.__model[path][RegisterModel.DEFINE_COL] = reg.token
 
@@ -494,7 +498,7 @@ class RegisterList(object):
         elif col == RegisterModel.DIM_COL:
             self.__reg_update_dim(register, path, new_text)
         elif col == RegisterModel.DEFINE_COL:
-            self.__reg_update_define(register, path, new_text)
+            self.__reg_update_define(register, path, new_text, cell)
 
     def __combo_edited(self, cell, path, node, col):
         """
@@ -520,5 +524,8 @@ def build_define(text):
     """
     for i in BAD_TOKENS:
         text = text.replace(i, '_')
+    if text in REAMP_NAME:
+        text = "%s_REG" % text
+
     return "_".join([REPLACE.get(i.upper(), i.upper()) for i in text.split('_')
                      if REPLACE.get(i.upper(), i.upper()) != ""])
