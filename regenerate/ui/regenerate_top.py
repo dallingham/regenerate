@@ -297,10 +297,11 @@ class MainWindow(BaseWindow):
             return
         
         current = self.__prj.get_address_map_groups(map_name)
+
         new_list = [(grp, grp.name in current)
                     for grp in self.__prj.get_grouping_list()]
 
-        dialog = AddrMapEdit(map_name, new_list, self.__builder)
+        dialog = AddrMapEdit(map_name, new_list, self.__builder, self.__prj)
         new_list = dialog.get_list()
         if new_list is not None:
             self.__prj.set_address_map_group_list(map_name, dialog.get_list())
@@ -1459,11 +1460,12 @@ class MainWindow(BaseWindow):
         if os.path.isfile(current_path):
             os.rename(current_path, backup_path)
 
-        try:
-            self.__prj.save()
-        except:
-            os.path.rename(new_path, old_path)
-            ErrorMsg("Could not save %s, restoring original" % current_path, str(msg))
+        self.__prj.save()
+#        try:
+#            self.__prj.save()
+#        except:
+#            os.path.rename(new_path, old_path)
+#            ErrorMsg("Could not save %s, restoring original" % current_path, str(msg))
             
         self.active.modified = False
 

@@ -146,7 +146,8 @@ class ProjectReader(object):
         uvm = int(attrs.get('no_uvm', 0))
         self._prj.set_address_map(name, base, width, fixed, uvm)
         self._current_map = attrs['name']
-
+        self.current_map_group = None
+        
     def end_documentation(self, text):
         """
         Called when the documentation XML tag is encountered. Assigns the
@@ -172,11 +173,12 @@ class ProjectReader(object):
         Called when the map_group XML tag is encountered. Assigns the
         current text string to the current group's docs variable
         """
-        if self.current_map_group is not None:
+        if self.current_map_group is None:
             self._prj.add_address_map_group(self._current_map, text)
 
     def start_access(self, attrs):
         self.current_access = int(attrs.get('type', "0"))
 
     def end_access(self, text):
-        print self._current_map, self.current_map_group, text, self.current_access
+        self._prj.set_access(self._current_map, self.current_map_group,
+                             text, self.current_access)

@@ -85,8 +85,17 @@ class ProjectWriter(object):
                         (data.fixed, data.width, data.uvm))
             if groups:
                 ofile.write('>\n')
+
                 for group in groups:
-                    ofile.write('      <map_group>%s</map_group>\n' % group)
+                    access_list = self._prj.get_access_items(data.name, group)
+                    access_list = [val for val in access_list if val[1]]
+                    if access_list:
+                        ofile.write('      <map_group name="%s">\n' % group)
+                        for inst, val in access_list:
+                            ofile.write('        <access type="%d">%s</access>\n' % (val, inst))
+                        ofile.write('      </map_group>\n')
+                    else:
+                        ofile.write('      <map_group name="%s"/>\n' % group)
                 ofile.write('    </address_map>\n')
             else:
                 ofile.write('/>\n')

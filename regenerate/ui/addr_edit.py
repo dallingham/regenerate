@@ -24,15 +24,16 @@ information.
 import gtk
 from regenerate.ui.columns import ToggleColumn, EditableColumn, ComboMapColumn
 from regenerate.ui.base_window import BaseWindow
-import pprint
 
 class AddrMapEdit(BaseWindow):
     """
     Creates a dialog box allowing the selection of subsystem groups
     for an address map.
     """
-    def __init__(self, map_name, subsystem_list, builder):
+    def __init__(self, map_name, subsystem_list, builder, project):
 
+        self.project = project
+        
         label = gtk.Label(
             'Select subsystems for the "{0}" address map'.format(map_name))
         label.set_padding(6, 6)
@@ -56,7 +57,7 @@ class AddrMapEdit(BaseWindow):
         dialog.vbox.pack_end(scrolled_window)
 
         self.view = gtk.TreeView()
-        self.model = gtk.TreeStore(bool, str, str, object)
+        self.model = gtk.TreeStore(bool, str, str, object, str)
         self.view.set_model(self.model)
 
         self.view.show()
@@ -86,10 +87,13 @@ class AddrMapEdit(BaseWindow):
                 title = "{0} - {1}".format(group.name, group.title)
             else:
                 title = group.name
-            top = self.model.append(None, row=(active, title, "", None))
+            top = self.model.append(None, row=(active, title, "", None, None))
             for item in group.register_sets:
-                access = 0
-                self.model.append(top, row=(True, item.inst, options[access][0], item))
+                access = project.get_access(map_name, group.name, item.inst)
+                self.model.append(top, row=(True, item.inst, options[access][0],
+                                            item, group.name))
+
+        self.map_name = map_name
                 
         response = dialog.run()
 
@@ -117,7 +121,11 @@ class AddrMapEdit(BaseWindow):
     def _access_changed(self, obj, path, node, val):
         mdl = obj.get_property('model')
         val = mdl.get_value(node, 0)
+        val_int = mdl.get_value(node, 1)
         self.model[path][2] = val
-
+        grp = self.model[path][3]
+        self.project.set_access(self.map_name, self.model[path][-1],
+                                self.model[path][1], val_int)
+        
     def get_list(self):
         return self.cb_list

@@ -71,7 +71,7 @@ class RegProject(object):
         self._token_list = []
         self._modified = False
         self.path = path
-        self.access_map = nested_dict(3, dict)
+        self.access_map = nested_dict(3, int)
         if path:
             self.open(path)
 
@@ -314,6 +314,7 @@ class RegProject(object):
         """
         used_in_uvm = set([m.name for m in self._addr_map_list if m.uvm == 0])
 
+        
         return [key for key in self._addr_map_grps 
                 if key in used_in_uvm and name in self._addr_map_grps[key]]
 
@@ -391,8 +392,16 @@ class RegProject(object):
         return None
 
     def set_access(self, map_name, group_name, block_name, access):
+        print ">", map_name, group_name, block_name,  access
         self.access_map[map_name][group_name][block_name] = access
+        print ">", self.access_map[map_name][group_name][block_name]
 
+    def get_access_items(self, map_name, group_name):
+        items = []
+        for key in self.access_map[map_name][group_name]:
+            items.append((key, self.access_map[map_name][group_name][key]))
+        return items
+    
     def get_access(self, map_name, group_name, block_name):
         try:
             return self.access_map[map_name][group_name][block_name]
