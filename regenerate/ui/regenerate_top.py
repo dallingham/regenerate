@@ -1576,7 +1576,7 @@ class MainWindow(BaseWindow):
         self.set_modified()
 
     def on_regenerate_delete_event(self, obj, event):
-        self.on_quit_activate(obj)
+        return self.on_quit_activate(obj)
 
     def on_quit_activate(self, *obj):
         """
@@ -1590,9 +1590,12 @@ class MainWindow(BaseWindow):
             status = dialog.run()
             if status == Question.DISCARD:
                 self.__exit()
+                return False
             elif status == Question.SAVE:
                 self.__save_and_quit()
+                return False
             dialog.destroy()
+            return True
         else:
             self.__exit()
         return True

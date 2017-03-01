@@ -392,9 +392,7 @@ class RegProject(object):
         return None
 
     def set_access(self, map_name, group_name, block_name, access):
-        print ">", map_name, group_name, block_name,  access
         self.access_map[map_name][group_name][block_name] = access
-        print ">", self.access_map[map_name][group_name][block_name]
 
     def get_access_items(self, map_name, group_name):
         items = []

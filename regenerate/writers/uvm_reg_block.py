@@ -60,7 +60,7 @@ class UVMRegBlockRegisters(WriterBase):
         """
         name = "_".join(field.field_name.lower().split())
 
-        if name in self.REMAP_NAME:
+        if name in REMAP_NAME:
             return "%s_field" % name
         else:
             return name
@@ -73,7 +73,7 @@ class UVMRegBlockRegisters(WriterBase):
         """
         name = "_".join(reg.token.lower().split())
 
-        if name in self.REMAP_NAME:
+        if name in REMAP_NAME:
             return "%s_reg" % name
         else:
             return name

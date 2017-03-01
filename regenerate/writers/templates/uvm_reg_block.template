@@ -26,6 +26,21 @@ package {{project.short_name|lower}}_reg_pkg;
     */
    bit s_relaxed_volatile = 1'b0;
 
+   int s_access_map[string][string] = '{
+{% for map in project.access_map %}
+      "{{map}}" : '{
+{%    for group in project.access_map[map] %}
+{%       for block in project.access_map[map][group] %}
+         "{{group}}.{{block}}" : {{project.access_map[map][group][block]}},
+{%       endfor %}
+         default: 0
+{%    endfor %}
+      }{% if not loop.last %},{% endif %}
+
+{% endfor %}
+   };
+
+
 {% for db in dblist %}
 
   {%- if db.coverage %}
@@ -220,7 +235,6 @@ package {{project.short_name|lower}}_reg_pkg;
          {{fix_name(field)}}.configure(this, {{field.width}}, {{field.lsb}}, "{{access}}", {{volatile}}, {{reset}}, {{has_reset}}, {% if field.can_randomize %}1{% else %}0{% endif %}, {{ind_access}});
      {%- endfor %}
 
-     // {{register.register_name}}, {{register.share}}
       {% if register.no_reset_test() == True or register.share != 0 %}
          uvm_resource_db #(bit)::set({"REG::", get_full_name()}, "NO_REG_TESTS", 1, this);
       {% elif register.strict_volatile() %}
@@ -269,11 +283,23 @@ package {{project.short_name|lower}}_reg_pkg;
    {% endif %}
 
     function new(string name = "{{group.name|lower}}_{{db.set_name|lower}}_reg_blk");
-      super.new(name, build_coverage(UVM_CVR_ADDR_MAP));
+       super.new(name, build_coverage(UVM_CVR_ADDR_MAP));
     endfunction
 
-    virtual protected function uvm_reg_map build_address_map(string map_name, int unsigned width);
+    function string access_mode(string def, int force_mode);
+       if (force_mode == 0) begin
+          return def;
+       end else if (force_mode == 1) begin
+          return "RO";
+       end else begin
+          return "WO";
+       end
+    endfunction : access_mode	       
+
+    virtual protected function uvm_reg_map build_address_map(string map_name, int unsigned width,
+                                                             int force_mode);
        uvm_reg_map rmap;
+
        if ({{db.data_bus_width}} > width) begin
           rmap = create_map(map_name, 'h0, width/8, UVM_LITTLE_ENDIAN);
        end else begin
@@ -287,20 +313,41 @@ package {{project.short_name|lower}}_reg_pkg;
        {% else %}
        {%   set mode = "RW" %}
        {% endif %}
+       
        {% if reg.ram_size %}
-       rmap.add_mem({{fix_reg(reg)}}, 'h{{"%04x" | format(reg.address)}}, "{{mode}}");
+       rmap.add_mem({{fix_reg(reg)}}, 'h{{"%04x" | format(reg.address)}}, access_mode("{{mode}}", force_mode));
       {% else %}
          {% if reg.dimension > 1 %}
            {% for i in range(0, reg.dimension) %}
-       rmap.add_reg({{fix_reg(reg)}}[{{i}}], 'h{{"%04x" | format(reg.address + (i * (reg.width / 8)))}}, "{{mode}}");
+       rmap.add_reg({{fix_reg(reg)}}[{{i}}], 'h{{"%04x" | format(reg.address + (i * (reg.width / 8)))}}, access_mode("{{mode}}", force_mode));
            {% endfor %}
          {% else %}
-       rmap.add_reg({{fix_reg(reg)}}, 'h{{"%04x" | format(reg.address)}}, "{{mode}}");
+       rmap.add_reg({{fix_reg(reg)}}, 'h{{"%04x" | format(reg.address)}}, access_mode("{{mode}}", force_mode));
          {% endif %}
       {% endif %}
     {%- endfor %}
        return rmap;
     endfunction : build_address_map
+
+    function string extract_path(string msg);
+       int start, stop;
+
+       for (int i = 0; i < msg.len(); i++) begin
+          if (msg[i] == ".") begin
+             start = i + 1;
+             break;
+          end
+       end
+
+       stop = msg.len() - 1;
+       for (int i = start; i < msg.len(); i++) begin
+          if (msg[i] == "[") begin
+             stop = i;
+             break;
+          end
+       end
+       return msg.substr(start, stop); 
+    endfunction : extract_path
 
     virtual function void build();
 
@@ -360,11 +407,11 @@ package {{project.short_name|lower}}_reg_pkg;
 
    {% if grp_map|length == 1 %}
      {% for map in grp_map %}
-      {{map}}_map = build_address_map("{{map}}_map", {{8 * project.get_address_width(map)}});
+      {{map}}_map = build_address_map("{{map}}_map", {{8 * project.get_address_width(map)}}, s_access_map["{{map}}"][extract_path(get_full_name())]);
      {% endfor %}
    {% else %}
      {% for map in grp_map %}
-      if (!disable_{{map}}_map) {{map}}_map = build_address_map("{{map}}_map", {{8 * project.get_address_width(map)}});
+      if (!disable_{{map}}_map) {{map}}_map = build_address_map("{{map}}_map", {{8 * project.get_address_width(map)}}, s_access_map["{{map}}"][extract_path(get_full_name())]);
      {% endfor %}
    {% endif %}
 
@@ -587,3 +634,4 @@ package {{project.short_name|lower}}_reg_pkg;
   endclass : {{project.short_name|lower}}_reg_block
 
 endpackage : {{project.short_name|lower}}_reg_pkg
+
