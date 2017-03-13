@@ -32,10 +32,11 @@ class InstMdl(gtk.TreeStore):
     (INST_COL, ID_COL, BASE_COL, SORT_COL, RPT_COL, OFF_COL, HDL_COL,
      UVM_COL, DEC_COL, ARRAY_COL, OBJ_COL) = range(11)
 
-    def __init__(self):
+    def __init__(self, project):
         gtk.TreeStore.__init__(self, str, str, str, gobject.TYPE_UINT64, str,
                                str, str, bool, bool, bool, object)
         self.callback = self.__null_callback()
+        self.project = project
 
     def __null_callback(self):
         """Does nothing, should be overridden"""
@@ -53,6 +54,9 @@ class InstMdl(gtk.TreeStore):
         """
         Called when the ID of an instance has been edited in the InstanceList
         """
+
+        # get the previous value, bail if it is the same as the new value
+
         i2 = self.get_iter(path)
         old_value = self.get_value(i2, InstMdl.INST_COL)
         if old_value == text:
@@ -67,13 +71,21 @@ class InstMdl(gtk.TreeStore):
         if text in set(items):
             LOGGER.error(
                 '"{0}" has already been used as a group name'.format(text))
+            return
+
+        node = self.get_iter(path)
+        self.set_value(node, InstMdl.INST_COL, text)
+        self.callback()
+        obj = self.get_value(node, InstMdl.OBJ_COL)
+        if obj:
+            obj.name = text
+
+        if len(path.split(":")) == 1:
+            self.project.change_subsystem_name(old_value, text)
         else:
-            node = self.get_iter(path)
-            self.set_value(node, InstMdl.INST_COL, text)
-            self.callback()
-            obj = self.get_value(node, InstMdl.OBJ_COL)
-            if obj:
-                obj.name = text
+            pnode = self.get_iter(path.split(":")[0])
+            parent = self.get_value(pnode, InstMdl.INST_COL)
+            self.project.change_instance_name(parent, old_value, text)
 
     def change_hdl(self, path, text):
         """

@@ -1311,7 +1311,7 @@ class MainWindow(BaseWindow):
         self.__skip_changes = False
 
     def __initialize_project_address_maps(self):
-        self.__instance_model = InstMdl()
+        self.__instance_model = InstMdl(self.__prj)
         self.__instance_obj.set_model(self.__instance_model)
         self.__instance_obj.set_project(self.__prj)
 

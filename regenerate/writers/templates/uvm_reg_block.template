@@ -27,14 +27,16 @@ package {{project.short_name|lower}}_reg_pkg;
    bit s_relaxed_volatile = 1'b0;
 
    int s_access_map[string][string] = '{
-{% for map in project.access_map %}
-      "{{map}}" : '{
-{%    for group in project.access_map[map] %}
-{%       for block in project.access_map[map][group] %}
-         "{{group}}.{{block}}" : {{project.access_map[map][group][block]}},
-{%       endfor %}
-         default: 0
+{% for map in project.get_address_maps() %}
+      "{{map.name}}" : '{
+{%    for group in project.access_map[map.name] %}
+{%      for block in project.access_map[map.name][group] %}
+{%        if project.access_map[map.name][group][block] %}
+         "{{group}}.{{block}}" : {{project.access_map[map.name][group][block]}},
+{%        endif %}
+{%      endfor %}
 {%    endfor %}
+         default: 0
       }{% if not loop.last %},{% endif %}
 
 {% endfor %}
@@ -222,7 +224,7 @@ package {{project.short_name|lower}}_reg_pkg;
      {%- for field in register.get_bit_fields() -%}
         {%- if field.volatile %}
           {% set volatile = "1" %}
-        {% elif field.input_signal != "" %}
+        {% elif TYPE_TO_INPUT[field.type] %}
           {% set volatile = "!" + project.short_name|lower + "_reg_pkg::s_relaxed_volatile" %}
         {% else %}
           {% set volatile = "0" %}
@@ -305,6 +307,8 @@ package {{project.short_name|lower}}_reg_pkg;
        end else begin
           rmap = create_map(map_name, 'h0, {{(db.data_bus_width/8)|int}}, UVM_LITTLE_ENDIAN);
        end
+
+       if (force_mode != 3) begin
     {% for reg in db.get_all_registers()|remove_no_uvm %}
        {% if reg.share == 1 or reg.is_completely_read_only() %}
        {%   set mode = "RO" %}
@@ -315,17 +319,18 @@ package {{project.short_name|lower}}_reg_pkg;
        {% endif %}
        
        {% if reg.ram_size %}
-       rmap.add_mem({{fix_reg(reg)}}, 'h{{"%04x" | format(reg.address)}}, access_mode("{{mode}}", force_mode));
+          rmap.add_mem({{fix_reg(reg)}}, 'h{{"%04x" | format(reg.address)}}, access_mode("{{mode}}", force_mode));
       {% else %}
          {% if reg.dimension > 1 %}
            {% for i in range(0, reg.dimension) %}
-       rmap.add_reg({{fix_reg(reg)}}[{{i}}], 'h{{"%04x" | format(reg.address + (i * (reg.width / 8)))}}, access_mode("{{mode}}", force_mode));
+          rmap.add_reg({{fix_reg(reg)}}[{{i}}], 'h{{"%04x" | format(reg.address + (i * (reg.width / 8)))}}, access_mode("{{mode}}", force_mode));
            {% endfor %}
          {% else %}
-       rmap.add_reg({{fix_reg(reg)}}, 'h{{"%04x" | format(reg.address)}}, access_mode("{{mode}}", force_mode));
+          rmap.add_reg({{fix_reg(reg)}}, 'h{{"%04x" | format(reg.address)}}, access_mode("{{mode}}", force_mode));
          {% endif %}
       {% endif %}
     {%- endfor %}
+       end
        return rmap;
     endfunction : build_address_map
 

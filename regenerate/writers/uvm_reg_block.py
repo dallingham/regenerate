@@ -37,6 +37,8 @@ ACCESS_MAP = {}
 for i in TYPES:
     ACCESS_MAP[i.type] = i.simple_type
 
+TYPE_TO_INPUT = dict((__i.type, __i.input) for __i in TYPES)
+
 
 class UVMRegBlockRegisters(WriterBase):
     """
@@ -133,6 +135,7 @@ class UVMRegBlockRegisters(WriterBase):
             of.write(template.render(project=self._project, dblist=used_dbs,
                                      individual_access=individual_access,
                                      ACCESS_MAP=ACCESS_MAP, 
+                                     TYPE_TO_INPUT=TYPE_TO_INPUT,
                                      db_grp_maps=self.get_db_groups(),
                                      group_maps = self._build_group_maps(),
                                      fix_name=self.fix_name,

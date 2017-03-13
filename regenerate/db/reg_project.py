@@ -447,3 +447,48 @@ class RegProject(object):
         Clears the modified flag
         """
         self._modified = bool(value)
+
+    def change_subsystem_name(self, old, cur):
+        to_delete = []
+        for m in self.access_map:
+            for subsys in self.access_map[m]:
+                if subsys == old:
+                    to_delete.append((m, old, cur))
+
+        for (m, old, cur) in to_delete:
+            self.access_map[m][cur] = self.access_map[m][old]
+            del self.access_map[m][old]
+
+        # Search groups for items to rename
+        for g_data in self._groupings:
+            if g_data.name == old:
+                g_data.name = cur
+        self._modified = True
+        
+
+    def change_instance_name(self, subsystem, old, cur):
+
+        # Search access maps for items to rename
+        to_delete = []
+        for m in self.access_map:
+            for b in self.access_map[m][subsystem]:
+                if b == old:
+                    to_delete.append((m, subsystem, cur, old))
+        
+        for (m, s, cur, old) in to_delete:
+            self.access_map[m][s][cur] = self.access_map[m][s][old]
+            del self.access_map[m][s][old]
+
+        # Search groups for items to rename
+        for g_data in self._groupings:
+            if g_data.name == subsystem:
+                new_groupings = []
+                for gd in g_data.register_sets:
+                    if gd.inst == old:
+                        gd = GroupMapData(gd[0], cur, gd[2], gd[3], gd[4],
+                                          gd[5], gd[6], gd[7], gd[8])
+                    print gd
+                    new_groupings.append(gd)
+                g_data.register_sets = new_groupings
+        self._modified = True
+

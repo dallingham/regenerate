@@ -71,7 +71,9 @@ class AddrMapEdit(BaseWindow):
 
         options = [("Full Access", 0),
                    ("Read Only", 1),
-                   ("Write Only", 2)]
+                   ("Write Only", 2),
+                   ("No Access", 3),
+                   ]
 
         col = ComboMapColumn("Access Method", self._access_changed, options, 2,
                              visible_callback=self.visible_callback)
@@ -83,10 +85,7 @@ class AddrMapEdit(BaseWindow):
 
         for i, val in enumerate(subsystem_list):
             group, active = val
-            if group.title:
-                title = "{0} - {1}".format(group.name, group.title)
-            else:
-                title = group.name
+            title = group.name
             top = self.model.append(None, row=(active, title, "", None, None))
             for item in group.register_sets:
                 access = project.get_access(map_name, group.name, item.inst)
