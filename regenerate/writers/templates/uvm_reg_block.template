@@ -116,11 +116,7 @@ package {{project.short_name|lower}}_reg_pkg;
       `uvm_object_utils(reg_{{db.set_name|lower}}_{{fix_reg(register)}})
 
      {% for field in register.get_bit_fields() %}
-       {% if field.can_randomize %}
       rand uvm_reg_field {{fix_name(field)}};
-       {% else %}
-      uvm_reg_field {{fix_name(field)}};
-       {% endif %}
      {% endfor %}
 
      {% if db.coverage %}
@@ -265,9 +261,9 @@ package {{project.short_name|lower}}_reg_pkg;
     mem_{{db.set_name|lower}}_{{fix_reg(register)}} {{fix_reg(register)}};
      {% else %}
        {% if register.dimension > 1 %}
-    reg_{{db.set_name|lower}}_{{fix_reg(register)}} {{fix_reg(register)}}[{{register.dimension}}];
+    rand reg_{{db.set_name|lower}}_{{fix_reg(register)}} {{fix_reg(register)}}[{{register.dimension}}];
        {% else %}
-    reg_{{db.set_name|lower}}_{{fix_reg(register)}} {{fix_reg(register)}};
+    rand reg_{{db.set_name|lower}}_{{fix_reg(register)}} {{fix_reg(register)}};
        {% endif %}
      {% endif %}
    {% endfor %}

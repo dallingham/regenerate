@@ -449,6 +449,19 @@ class RegProject(object):
         self._modified = bool(value)
 
     def change_subsystem_name(self, old, cur):
+        """
+        Changes the name of a subsystem from 'old' to 'cur'.
+        Searches through the access maps the group definitions
+        to find the old reference, and replaces it with the new
+        reference
+        """
+
+        # Search access map to find items to replace. We must
+        # delete the old entry, and create a new entry. Since
+        # we cannot delete in the middle of a search, we must save
+        # the matches we found. After we identify them, we can
+        # delete the items we found.
+
         to_delete = []
         for m in self.access_map:
             for subsys in self.access_map[m]:
@@ -459,7 +472,7 @@ class RegProject(object):
             self.access_map[m][cur] = self.access_map[m][old]
             del self.access_map[m][old]
 
-        # Search groups for items to rename
+        # Search groups for items to rename. Just change the name
         for g_data in self._groupings:
             if g_data.name == old:
                 g_data.name = cur
@@ -467,8 +480,20 @@ class RegProject(object):
         
 
     def change_instance_name(self, subsystem, old, cur):
+        """ 
+        Changes the register set instance name for a particular
+        instance in the identified subsystem. Updates the access 
+        map and the groupings.
+        """
 
-        # Search access maps for items to rename
+        # Search access maps for items to rename. Search each
+        # map, for instances of the specified subsystem, then
+        # search for the instance name to be replaced in the
+        # subsystem. Since the object is a tuple, and has to be
+        # replaced instead of altered, we must store the items
+        # to be changed, since we cannot alter the dictionary
+        # as we search it.
+
         to_delete = []
         for m in self.access_map:
             for b in self.access_map[m][subsystem]:
