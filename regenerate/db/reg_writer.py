@@ -20,8 +20,7 @@
 Writes the XML file containing all the information in the register database
 """
 
-from regenerate.db import BitField
-from regenerate.db import TYPE_TO_ID
+from regenerate.db import BitField, TYPE_TO_ID
 from regenerate.db.textutils import clean_text
 import os
 import xml.sax.saxutils

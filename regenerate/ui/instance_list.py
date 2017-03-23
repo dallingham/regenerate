@@ -20,7 +20,7 @@
 import gtk
 import gobject
 from regenerate.ui.columns import EditableColumn, ToggleColumn
-from regenerate.db import GroupMapData, GroupData, LOGGER
+from regenerate.db import GroupInstData, GroupData, LOGGER
 
 
 class InstMdl(gtk.TreeStore):
@@ -241,7 +241,7 @@ class InstanceList(object):
                 uvm = self.__model.get_value(child, InstMdl.UVM_COL)
                 array = self.__model.get_value(child, InstMdl.ARRAY_COL)
                 decode = self.__model.get_value(child, InstMdl.DEC_COL)
-                current_group.register_sets.append(GroupMapData(
+                current_group.register_sets.append(GroupInstData(
                     name, inst, base, rpt, offset, hdl, uvm, decode, array))
                 child = self.__model.iter_next(child)
             tree_iter = self.__model.iter_next(tree_iter)

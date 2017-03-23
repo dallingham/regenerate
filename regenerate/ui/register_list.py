@@ -524,7 +524,7 @@ def build_define(text):
     """
     for i in BAD_TOKENS:
         text = text.replace(i, '_')
-    if text in REAMP_NAME:
+    if text in REMAP_NAME:
         text = "%s_REG" % text
 
     return "_".join([REPLACE.get(i.upper(), i.upper()) for i in text.split('_')

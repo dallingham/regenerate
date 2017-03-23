@@ -22,9 +22,7 @@ RegProject is the container object for a regenerate project
 
 from collections import namedtuple, defaultdict
 import regenerate.db
-from regenerate.db.proj_reader import ProjectReader
-from regenerate.db.proj_writer import ProjectWriter
-from regenerate.db.textutils import clean_text
+from regenerate.db.group_inst_data import GroupInstData
 import os.path
 import xml.sax.saxutils
 
@@ -32,9 +30,6 @@ import xml.sax.saxutils
 
 AddrMapData = namedtuple("AddrMapData",
                          ["name", "base", "width", "fixed", "uvm"])
-GroupMapData = namedtuple("GroupMapData",
-                          ["set", "inst", "offset", "repeat", "repeat_offset",
-                           "hdl", "no_uvm", "no_decode", "array"])
 
 def nested_dict(n, type):
     if n == 1:
@@ -45,7 +40,7 @@ def nested_dict(n, type):
 
 def cleanup(data):
     "Convert some unicode characters to standard ASCII"
-    return xml.sax.saxutils.escape(clean_text(data))
+    return xml.sax.saxutils.escape(regenerate.db.textutils.clean_text(data))
 
 
 class RegProject(object):
@@ -76,7 +71,7 @@ class RegProject(object):
             self.open(path)
 
     def save(self):
-        writer = ProjectWriter(self)
+        writer = regenerate.db.ProjectWriter(self)
         writer.save(self.path)
 
     def open(self, name):
@@ -84,7 +79,7 @@ class RegProject(object):
         Opens and reads an XML file
         """
 
-        reader = ProjectReader(self)
+        reader = regenerate.db.ProjectReader(self)
         self.path = name
         reader.open(name)
 
@@ -507,13 +502,8 @@ class RegProject(object):
         # Search groups for items to rename
         for g_data in self._groupings:
             if g_data.name == subsystem:
-                new_groupings = []
                 for gd in g_data.register_sets:
                     if gd.inst == old:
-                        gd = GroupMapData(gd[0], cur, gd[2], gd[3], gd[4],
-                                          gd[5], gd[6], gd[7], gd[8])
-                    print gd
-                    new_groupings.append(gd)
-                g_data.register_sets = new_groupings
+                        gd.inst = cur
         self._modified = True
 

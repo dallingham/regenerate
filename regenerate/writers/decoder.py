@@ -21,8 +21,7 @@ Actual program. Parses the arguments, and initiates the main window
 """
 
 from regenerate.db import BitField, TYPES, LOGGER
-from regenerate.db.reg_project import RegProject
-from regenerate.db.register_db import RegisterDb
+from regenerate.db import RegProject, RegisterDb
 from regenerate.writers.writer_base import WriterBase, ExportInfo
 from collections import namedtuple
 import os

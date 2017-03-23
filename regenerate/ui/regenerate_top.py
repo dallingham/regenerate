@@ -1906,7 +1906,10 @@ def build_new_name(name, reglist):
             index += 1
         return "".join([groups[0], str(index), groups[2]])
     else:
-        return None
+        index = 2
+        while "%s %d" % (name, index) in reglist:
+            index += 1
+        return "%s %d" % (name, index)
 
 
 def build_signal_set(dbase):
@@ -1970,8 +1973,6 @@ def duplicate_register(dbase, reg):
     signals = build_signal_set(dbase)
 
     new_name = build_new_name(reg.register_name, reglist)
-    if not new_name:
-        new_name = reg.register_name + " Copy"
 
     def_name = build_new_name(reg.token, deflist)
     if not def_name:

@@ -23,12 +23,10 @@ RegProject is the container object for a regenerate project
 import xml.parsers.expat
 from collections import namedtuple
 from regenerate.db.group_data import GroupData
+from regenerate.db.group_inst_data import GroupInstData
 
 AddrMapData = namedtuple("AddrMapData",
                          ["name", "base", "width", "fixed", "uvm"])
-GroupMapData = namedtuple("GroupMapData",
-                          ["set", "inst", "offset", "repeat", "repeat_offset",
-                           "hdl", "no_uvm", "no_decode", "array"])
 
 
 class ProjectReader(object):
@@ -128,7 +126,7 @@ class ProjectReader(object):
     def start_map(self, attrs):
         """Called when a map tag is found"""
         sname = attrs['set']
-        data = GroupMapData(
+        data = GroupInstData(
             sname, attrs.get('inst', sname), int(attrs['offset'], 16),
             int(attrs['repeat']), int(attrs['repeat_offset']),
             attrs.get("hdl", ""),

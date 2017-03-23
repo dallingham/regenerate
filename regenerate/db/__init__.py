@@ -26,9 +26,12 @@ from group_data import GroupData
 import logging
 from register import Register
 from reg_parser import RegParser
-from reg_project import RegProject, AddrMapData, GroupMapData
+from reg_project import RegProject, AddrMapData
+from group_inst_data import GroupInstData
 from reg_writer import RegWriter
 from register_db import RegisterDb
+from proj_reader import ProjectReader
+from proj_writer import ProjectWriter
 
 LOGGER = logging.getLogger('regenerate')
 

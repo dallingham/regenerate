@@ -86,27 +86,13 @@ module {{db.module_name}}
 {%-    endif -%}
 {%-  endfor -%}
 {% endfor %}
-{% for reg in db.get_all_registers() %}
-{%   for field in reg.get_bit_fields() %}
-{%     if field.use_output_enable and field.output_signal != "" -%}
-{%       if field.msb == field.lsb %}
-{%         if reg.dimension > 1 %}
-    {{output_logic}}          {{field.output_signal}}[{{reg.dimension}}],
-{%         else %}
-    {{output_logic}}          {{field.output_signal}},
-{%         endif %}
-{%       else %}
-{%         set text = "[%d:%d]"|format(field.msb, field.lsb) %}
-{%         if reg.dimension > 1 %}
-    {{output_logic}} {{"%-8s"|format(text)}} {{field.output_signal}}[{{reg.dimension}}],
-{%         else %}
-    {{output_logic}} {{"%-8s"|format(text)}} {{field.output_signal}},
-{%         endif %}
-{%       endif %}
-{%-    endif -%}
-{%-  endfor -%}
+{% for (sig, index, dim) in output_ports %}
+{%   if dim > 1 %}
+    {{output_logic}} {{"%-8s"|format(index)}} {{sig}}[{{dim}}],
+{%   else %}
+    {{output_logic}} {{"%-8s"|format(index)}} {{sig}},
+{%   endif %}
 {% endfor %}
-
 {% set text = "[%d:0]"|format(db.data_bus_width-1) %}
     {{output_logic}} {{"%-8s"|format(text)}} {{db.read_data_name}},
     {{output_logic}}          {{db.acknowledge_name}}
@@ -171,6 +157,8 @@ module {{db.module_name}}
 {%      if f.use_output_enable and f.output_signal != "" %}
 {%        if reg.dimension != -1 %}
    assign {{f.output_signal}}[{{reg.dimension}}] = r{{"%02x"|format(reg.address)}}{{mode}}{{f.field_name|lower}};
+{%        else %}
+   assign {{f.resolved_output_signal()}} = r{{"%02x"|format(reg.address)}}{{mode}}{{f.field_name|lower}};
 {%        endif %}
 {%      endif %}
 {%   endfor %}

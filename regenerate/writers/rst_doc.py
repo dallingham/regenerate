@@ -25,8 +25,7 @@ import os
 import re
 from regenerate.settings.paths import ODTFILE, USERODTFILE
 from regenerate.writers.writer_base import WriterBase, ExportInfo
-from regenerate.db import BitField
-from regenerate.db import RegisterDb
+from regenerate.db import BitField, RegisterDb
 from regenerate.extras import RegisterRst
 
 

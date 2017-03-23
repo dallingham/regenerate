@@ -114,8 +114,7 @@ class BitField(object):
         """
         Indicates the the value is a constant value.
         """
-        return (self.field_type == BitField.TYPE_READ_ONLY or
-                self.field_type == BitField.TYPE_READ_ONLY_LOAD)
+        return self.field_type == BitField.TYPE_READ_ONLY
 
     def is_read_only(self):
         """
@@ -217,7 +216,23 @@ class BitField(object):
         if self._output_signal:
             return self._output_signal
         else:
-            return clean_signal(self._field_name)
+            return self._field_name
+
+    def resolved_output_signal(self):
+        """
+        Gets the output signal associated with the bit range. If the user has
+        not specified the name, assume that it is the same as the name of the
+        bit field.
+        """
+        nlist = self._output_signal.split("*")
+        if len(nlist) == 1:
+            return self._output_signal
+        else:
+            if self.msb == self.lsb:
+                index = "%d" % self.lsb
+            else:
+                index = "%d:%d" % (self.msb, self.lsb)
+            return "%s%s%s" % (nlist[0], index, nlist[1])
 
     @output_signal.setter
     def output_signal(self, output):

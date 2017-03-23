@@ -154,3 +154,5 @@ TYPE_TO_SIMPLE_TYPE = dict((__i.type, __i.simple_type) for __i in TYPES)
 TYPE_TO_DESCR = dict((__i.type, __i.description) for __i in TYPES)
 
 TYPE_TO_ENABLE = dict((__i.type, (__i.input, __i.control)) for __i in TYPES)
+
+TYPE_TO_OUTPUT = dict((__i.type, __i.dataout) for __i in TYPES)

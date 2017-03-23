@@ -20,13 +20,14 @@
 Actual program. Parses the arguments, and initiates the main window
 """
 
-from regenerate.db import BitField, TYPES, LOGGER, Register
+from regenerate.db import BitField, TYPES, TYPE_TO_OUTPUT, LOGGER, Register
 from regenerate.writers.writer_base import WriterBase, ExportInfo
 from regenerate.writers.verilog_reg_def import REG
 import time
 import os
+import re
 from jinja2 import FileSystemLoader, Environment
-from collections import namedtuple, OrderedDict
+from collections import namedtuple, OrderedDict, defaultdict
 
 import pprint
 
@@ -35,6 +36,9 @@ LOWER_BIT = {128: 4, 64: 3, 32: 2, 16: 1, 8: 0}
 
 (F_FIELD, F_START_OFF, F_STOP_OFF, F_START, F_STOP, F_ADDRESS,
  F_REGISTER) = range(7)
+
+BIT_SLICE = re.compile("(.*)\[(\d+)\]")
+BUS_SLICE = re.compile("(.*)\[(\d+:\d+)\]")
 
 
 CellInfo = namedtuple("CellInfo",
@@ -196,6 +200,49 @@ class Verilog(WriterBase):
                 if f.reset_type == BitField.RESET_PARAMETER:
                     parameters.append((f.msb, f.lsb, f.reset_parameter))
 
+        scalar_ports = []
+        array_ports = defaultdict(list)
+        dim = {}
+        for r in self._dbase.get_all_registers():
+            for f in r.get_bit_fields():
+                if TYPE_TO_OUTPUT[f.field_type]:
+                    sig = f.output_signal
+                    root = sig.split('[')
+                    wild = sig.split('*')
+                    if len(root) == 1:
+                        if f.msb == f.lsb:
+                            scalar_ports.append((sig, "", r.dimension))
+                        else:
+                            dim[sig] = r.dimension
+                            for i in range(f.lsb, f.msb+1):
+                                array_ports[sig].append(i)
+                    elif len(wild) > 1:
+                        dim[root[0]] = r.dimension
+                        for i in range(f.lsb, f.msb+1):
+                            array_ports[root[0]].append(i)
+                    else:
+                        match = BIT_SLICE.match(sig)
+                        dim[g[0]] = r.dimension
+                        if match:
+                            g = match.groups()
+                            array_ports[g[0]].append(int(g[1]))
+                            continue
+
+                        match = BUS_SLICE.match(sig)
+                        if match:
+                            g = match.groups()
+                            for i in range(int(g[1]), int(g[2])):
+                                array_ports[g[0]].append(i)
+                            continue
+
+        for key in array_ports:
+            msb = max(array_ports[key])
+            lsb = min(array_ports[key])
+            if msb == lsb:
+                scalar_ports.append((key, "[%d]" % lsb, dim[key]))
+            else:
+                scalar_ports.append((key, "[%d:%d]" % (msb, lsb), dim[key]))
+                        
         with open(filename, "w") as of:
             of.write(template.render(db = self._dbase,
                                      rshift = rshift,
@@ -209,6 +256,7 @@ class Verilog(WriterBase):
                                      input_logic = self.input_logic,
                                      output_logic = self.output_logic,
                                      always = self.always,
+                                     output_ports = scalar_ports,
                                      reset_edge = reset_edge,
                                      reset_op = reset_op,
                                      reg_type = self.reg_type,
