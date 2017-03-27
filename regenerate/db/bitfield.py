@@ -139,7 +139,7 @@ class BitField(object):
 
     def bit_range(self):
         """
-        Retruns the bit range of the field
+        Returns the bit range of the field
         """
         if self.width == 1:
             return "%d" % self.lsb

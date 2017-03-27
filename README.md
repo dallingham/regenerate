@@ -4,7 +4,7 @@ data is stored in an XML database. Once the registers have been
 defined, regenerate can create:
 
 * Synthesizable Verilog RTL code of the registers
-* Documenation
+* Documentation
 * Tests
 * UVM (Universal Verification Methodology) register definitions
 * Header files for C and assembly code
@@ -17,3 +17,16 @@ Why is it called "regenerate?"
   purposes. So, like the Doctor, when the program dies, it just
   regenerates into a different form. This verison is Open Source, so
   hopefully it will live on.
+
+Requirements
+
+* python 2.6+
+* pygtk 2.16+
+* jinja2 
+
+Recommended
+
+* gtkspell
+* pywebkitgtk
+
+
