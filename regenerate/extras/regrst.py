@@ -226,6 +226,7 @@ class RegisterRst:
                  group=None,
                  maxlines=9999999,
                  db=None,
+                 limit_encodings=False,
                  bootstrap=False,
                  header_level=1):
         self._reg = register
@@ -239,6 +240,7 @@ class RegisterRst:
         self._maxlines = maxlines
         self._bootstrap = bootstrap
         self._header_level = header_level
+        self._limit_encodings = limit_encodings
 
         if db is None:
             self.reglist = set()
@@ -248,8 +250,8 @@ class RegisterRst:
         if decode:
             try:
                 if isinstance(decode, str) or isinstance(decode, unicode):
-                    decode = int(decode, 16)
-                elif isinstance(decode, int):
+                    decode = long(decode, 16)
+                elif isinstance(decode, int) or isinstance(decode, long):
                     decode = decode
                 else:
                     decode = None
@@ -303,6 +305,7 @@ class RegisterRst:
                              norm_name(name))
 
     def _write_bit_fields(self, o):
+
         o.write("Bit fields\n+++++++++++++++++++++++++++\n\n")
         o.write(".. list-table::\n")
         o.write("   :widths: 8, 10, 7, 25, 50\n")
@@ -356,7 +359,7 @@ class RegisterRst:
                 o.write("     - %s\n" % encoded_descr)
 
 
-            if field.values and len(field.values) < 24:
+            if field.values and (len(field.values) < 24 or not self._limit_encodings):
                 o.write("\n")
                 for val in sorted(field.values,
                                   key=lambda x: int(int(x[0], 16))):
