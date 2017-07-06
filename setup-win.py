@@ -1,15 +1,16 @@
-try:
-    from setuputils import setup
-except ImportError:
-    from distutils.core import setup
-    import py2exe
 
+from setuptools import setup
+import py2exe
+
+import os
+import glob
+    
 __import__('gtk')
 __import__('jinja2')
 __import__('docutils')
 
 
-setup(
+setup_dict = dict(
     name='regenerate',
     version='1.0.0',
     license='License.txt',
@@ -19,25 +20,52 @@ setup(
     long_description='Allows users to manange registers for '
     'ASIC and FPGA designs. Capable of generating Verilog '
     'RTL, test code, C and assembler header files, and documentation.',
-    packages=["regenerate", "regenerate.db", "regenerate.importers",
-              "regenerate.extras", "regenerate.settings", "regenerate.ui",
-              "regenerate.writers"],
-    package_data={
-        'regenerate': ['data/ui/*.ui', 'data/media/*.svg', 'data/help/*.rst',
-                       'data/media/*.png', 'data/extra/*.odt', 'data/*.*',
-		       'writers/templates/*']
+    packages=[
+        "regenerate",
+        "regenerate.db",
+        "regenerate.importers",
+        "regenerate.extras",
+        "regenerate.settings",
+        "regenerate.ui",
+        "regenerate.writers"
+        ],
+    package_dir={
+        "regenerate" : "regenerate",
     },
+    package_data={
+        'regenerate' : [
+            "data/ui/*.ui",
+            "data/media/*",
+            "data/help/*.rst",
+            "data/extra/*",
+            "data/*.*",
+            "writers/templates/*"
+        ]
+    },
+    include_package_data=True,
     url="https://github.com/dallingham/regenerate",
-    scripts=["bin/regenerate", "bin/regbuild", "bin/regupdate", "bin/regxref",
-             "bin/regdiff"],
-    classifiers=
-    ['Operating System :: POSIX', 'Programming Language :: Python :: 2.7',
-     'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
-     'Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)'], 
-    windows=["bin/regenerate"],
+    scripts=[
+        "bin/regenerate",
+        "bin/regbuild",
+        "bin/regupdate",
+        "bin/regxref",
+        "bin/regdiff"
+    ],
+    classifiers=[
+        'Operating System :: POSIX', 'Programming Language :: Python :: 2.7',
+        'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
+        'Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)'
+    ], 
+    windows=[
+        {
+            "script" : "bin/regenerate",
+            "icon_resources" : [(1, "regenerate/data/media/flop.ico")]
+        }
+    ],
     options={
         'py2exe': { 
             'includes' : 'cairo, pango, pangocairo, atk, gobject, gio, gtk.keysyms, jinja2',
+            'skip_archive' : True,
             'dll_excludes': [
                              'MSVCP90.dll',
                              'api-ms-win-core-string-l1-1-0.dll',
@@ -60,3 +88,5 @@ setup(
         
         },
     )
+
+setup(**setup_dict)

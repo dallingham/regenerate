@@ -32,8 +32,12 @@ from reg_writer import RegWriter
 from register_db import RegisterDb
 from proj_reader import ProjectReader
 from proj_writer import ProjectWriter
+import os
 
 LOGGER = logging.getLogger('regenerate')
+
+if os.name == "nt":
+    LOGGER.setLevel(40)
 
 # create console handler and set level to debug
 __ch = logging.StreamHandler()
