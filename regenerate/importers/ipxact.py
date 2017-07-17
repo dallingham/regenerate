@@ -73,7 +73,14 @@ class IpXactParser(object):
         Called every time an XML element begins
         """
         self._token_list = []
-        mname = 'start_' + tag.replace(":", "_")
+
+        fields = tag.split(":")
+        if len(fields) == 1:
+            t = tag
+        else:
+            t = fields[1]
+
+        mname = 'start_' + t
         if hasattr(self, mname):
             method = getattr(self, mname)
             method(attrs)
@@ -84,10 +91,10 @@ class IpXactParser(object):
         """
         text = ''.join(self._token_list)
         fields = tag.split(":")
-        if len(field) == 1:
+        if len(fields) == 1:
             t = tag
         else:
-            t = field[1]
+            t = fields[1]
 
         mname = 'end_' + t
         if hasattr(self, mname):
