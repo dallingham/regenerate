@@ -37,7 +37,10 @@ class TextCombo(gtk.ComboBox):
 
     def get_active_text(self):
         node = self.get_active_iter()
-        val = self.model.get_value(node, 0)
+        try:
+            val = self.model.get_value(node, 0)
+        except:
+            val = None
         return val
 
 class ExportAssistant(gtk.Assistant):

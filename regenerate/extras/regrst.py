@@ -526,11 +526,7 @@ class RegisterRst:
                     self._display_uvm_entry(inst, i, o)
         o.write("\n\n")
 
-    def html(self, text=""):
-        """
-        Produces a HTML subsection of the document (no header/body).
-        """
-
+    def html_from_text(self, text):
         if _HTML:
             try:
                 if self._header_level > 1:
@@ -544,7 +540,7 @@ class RegisterRst:
                         'report_level': 'quiet'
                         }
                 parts = publish_parts(
-                    self.restructured_text(text),
+                    text,
                     writer_name="html",
                     settings_overrides=overrides
                     )
@@ -560,6 +556,15 @@ class RegisterRst:
         else:
             return "<pre>{0}</pre>".format(self.restructured_text())
 
+
+    def html(self, text=""):
+        """
+        Produces a HTML subsection of the document (no header/body).
+        """
+        self.html_from_text(self.restructured_text(text))
+
+    def html_bit_fields(self):
+        self.html_from_text(self.restructured_text(self.str_b
 
 def display_reserved(o, stop, start):
     if stop == start:
