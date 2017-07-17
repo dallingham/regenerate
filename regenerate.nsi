@@ -9,8 +9,8 @@
 !define VERSION "1.00.00.00"
 !define COPYRIGHT "Don Allingham  © 2008"
 !define DESCRIPTION "Application"
-!define LICENSE_TXT "C:\cygwin64\home\533029\projects\regenerate\LICENSE.txt"
-!define INSTALLER_NAME "C:\Users\533029\Downloads\Nsisqssg\Output\Regenerate\setup.exe"
+!define LICENSE_TXT "C:\users\533029\projects\regenerate\LICENSE.txt"
+!define INSTALLER_NAME "C:\Users\533029\regenerate_setup.exe"
 !define MAIN_APP_EXE "regenerate.exe"
 !define INSTALL_TYPE "SetShellVarContext current"
 !define REG_ROOT "HKCU"
@@ -43,6 +43,9 @@ InstallDir "$PROGRAMFILES\Regenerate"
 
 !define MUI_ABORTWARNING
 !define MUI_UNABORTWARNING
+
+!define MUI_ICON "regenerate\data\media\flop.ico"
+!define MUI_UNICON "regenerate\data\media\flop.ico"
 
 !insertmacro MUI_PAGE_WELCOME
 
@@ -80,7 +83,7 @@ Section -MainProgram
 ${INSTALL_TYPE}
 SetOverwrite ifnewer
 SetOutPath "$INSTDIR"
-File /r "C:\cygwin64\home\533029\projects\regenerate\dist\regenerate\*"
+File /r "C:\users\533029\projects\regenerate\dist\*"
 SectionEnd
 
 ######################################################################
