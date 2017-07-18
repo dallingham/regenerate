@@ -226,7 +226,6 @@ class RegisterRst:
                  group=None,
                  maxlines=9999999,
                  db=None,
-                 limit_encodings=False,
                  bootstrap=False,
                  header_level=1):
         self._reg = register
@@ -240,7 +239,6 @@ class RegisterRst:
         self._maxlines = maxlines
         self._bootstrap = bootstrap
         self._header_level = header_level
-        self._limit_encodings = limit_encodings
 
         if db is None:
             self.reglist = set()
@@ -250,8 +248,8 @@ class RegisterRst:
         if decode:
             try:
                 if isinstance(decode, str) or isinstance(decode, unicode):
-                    decode = long(decode, 16)
-                elif isinstance(decode, int) or isinstance(decode, long):
+                    decode = int(decode, 16)
+                elif isinstance(decode, int):
                     decode = decode
                 else:
                     decode = None
@@ -274,14 +272,10 @@ class RegisterRst:
         Returns the definition of the register in RestructuredText format
         """
         o = StringIO()
-        rlen = len(self._reg.register_name) + 2
 
-        o.write(".. _%s:\n\n" % self.refname(self._reg.register_name))
+        self.str_title(o)
 
-        o.write(self._reg.register_name)
-        o.write("\n%s\n\n" % ('_' * rlen))
-        o.write("%s\n\n" %
-                self._reg.description.encode('ascii', 'replace'))
+        self.str_overview(o)
 
         if self._reg.ram_size < 32:  # Temporary hack
             self._write_bit_fields(o)
@@ -304,13 +298,59 @@ class RegisterRst:
                              norm_name(self._reg.register_name),
                              norm_name(name))
 
-    def _write_bit_fields(self, o):
 
-        o.write("Bit fields\n+++++++++++++++++++++++++++\n\n")
+    def str_title(self, o=None):
+        ret_str = False
+        
+        if o is None:
+            o = StringIO()
+            ret_str = True
+
+        o.write(".. _%s:\n\n" % self.refname(self._reg.register_name))
+            
+        if ret_str:
+            return o.getvalue()
+
+    def str_title(self, o=None):
+        ret_str = False
+        
+        if o is None:
+            o = StringIO()
+            ret_str = True
+
+        rlen = len(self._reg.register_name) + 2
+        o.write(".. _%s:\n\n" % self.refname(self._reg.register_name))
+        o.write(self._reg.register_name)
+        o.write("\n%s\n\n" % ('_' * rlen))
+            
+        if ret_str:
+            return o.getvalue()
+
+    def str_overview(self, o=None):
+        ret_str = False
+        
+        if o is None:
+            o = StringIO()
+            ret_str = True
+
+        o.write("%s\n\n" %
+                self._reg.description.encode('ascii', 'replace'))
+            
+        if ret_str:
+            return o.getvalue()
+        
+    def str_bit_fields(self, o=None):
+
+        ret_str = False
+        
+        if o is None:
+            o = StringIO()
+            ret_str = True
+
         o.write(".. list-table::\n")
         o.write("   :widths: 8, 10, 7, 25, 50\n")
         if self._bootstrap:
-            o.write("   :class: table table-striped table-condensed\n")
+            o.write("   :class: table table-bordered table-striped table-condensed\n")
         else:
             o.write("   :class: bit-table\n")
         o.write("   :header-rows: 1\n\n")
@@ -359,7 +399,7 @@ class RegisterRst:
                 o.write("     - %s\n" % encoded_descr)
 
 
-            if field.values and (len(field.values) < 24 or not self._limit_encodings):
+            if field.values and len(field.values) < 24:
                 o.write("\n")
                 for val in sorted(field.values,
                                   key=lambda x: int(int(x[0], 16))):
@@ -383,9 +423,30 @@ class RegisterRst:
             o.write("\n\n")
             o.write(descr)
             o.write("\n\n")
+            
+        if ret_str:
+            return o.getvalue()
+        
+    def _write_bit_fields(self, o):
+
+        o.write("Bit fields\n+++++++++++++++++++++++++++\n\n")
+        self.str_bit_fields(o)
+
                     
     def _write_defines(self, o, use_uvm=True, use_id=True):
 
+        o.write("\n\nAddresses\n+++++++++++++++++++++++\n\n")
+        self.str_defines(o, use_uvm, use_id)
+
+
+    def str_defines(self, o=None, use_uvm=True, use_id=True):
+
+        ret_str = False
+        
+        if o is None:
+            o = StringIO()
+            ret_str = True
+    
         x_addr_maps = self._prj.get_address_maps()
         instances = in_groups(self._regset_name, self._prj)
         addr_maps = set([])
@@ -399,7 +460,6 @@ class RegisterRst:
         if not addr_maps:
             return
 
-        o.write("\n\nAddresses\n+++++++++++++++++++++++\n\n")
         if not in_groups(self._regset_name, self._prj):
             o.write(
                 ".. WARNING::\n   Register set was not added to any groups\n\n")
@@ -413,7 +473,7 @@ class RegisterRst:
             elif len(addr_maps) == 3:
                 o.write("   :widths: 50, 16, 16, 17\n")
             if self._bootstrap:
-                o.write("   :class: table table-striped table-condensed\n\n")
+                o.write("   :class: table table-bordered table-striped table-condensed\n\n")
             else:
                 o.write("   :class: summary\n\n")
             o.write("   *")
@@ -455,6 +515,9 @@ class RegisterRst:
 
         o.write("\n\n")
 
+        if ret_str:
+            return o.getvalue()
+        
     def _addr_entry(self, o, inst, use_uvm, use_id, addr_maps,
                     grp_inst, group_index, index):
 
@@ -509,7 +572,7 @@ class RegisterRst:
         o.write(".. list-table::\n")
         o.write("   :header-rows: 1\n")
         if self._bootstrap:
-            o.write("   :class: table table-striped table-condensed\n\n")
+            o.write("   :class: table table-bordered table-striped table-condensed\n\n")
         else:
             o.write("   :class: summary\n\n")
         o.write("   * - ID\n")
@@ -527,6 +590,8 @@ class RegisterRst:
         o.write("\n\n")
 
     def html_from_text(self, text):
+        if text is None:
+            return "No data"
         if _HTML:
             try:
                 if self._header_level > 1:
@@ -551,6 +616,8 @@ class RegisterRst:
                            parts['body'],
                            flags=re.IGNORECASE)
 
+            except AttributeError, msg:
+                return "<h3>Error</h3><p>" + str(msg) + "</p><p>" + text + "</p>"
             except ZeroDivisionError:
                 return "<h3>Error in Restructured Text</h3>Please contact the developer to get the documentation fixed"
         else:
@@ -561,10 +628,20 @@ class RegisterRst:
         """
         Produces a HTML subsection of the document (no header/body).
         """
-        self.html_from_text(self.restructured_text(text))
+        return self.html_from_text(self.restructured_text(text))
 
     def html_bit_fields(self):
-        self.html_from_text(self.restructured_text(self.str_b
+        return self.html_from_text(self.str_bit_fields())
+
+    def html_title(self):
+        return self.html_from_text(self.str_title())
+
+    def html_addresses(self):
+        return self.html_from_text(self.str_defines(None, True, False))
+
+    def html_overview(self, text=""):
+        return self.html_from_text(self.str_overview()) + self.html_from_text(text)
+
 
 def display_reserved(o, stop, start):
     if stop == start:
