@@ -458,7 +458,7 @@ class RegisterRst:
                     addr_maps.add(x)
 
         if not addr_maps:
-            return
+            return "No address maps defined"
 
         if not in_groups(self._regset_name, self._prj):
             o.write(
@@ -630,17 +630,17 @@ class RegisterRst:
         """
         return self.html_from_text(self.restructured_text(text))
 
-    def html_bit_fields(self):
-        return self.html_from_text(self.str_bit_fields())
+    def html_bit_fields(self, text=""):
+        return self.html_from_text(self.str_bit_fields() + "\n" + text)
 
     def html_title(self):
         return self.html_from_text(self.str_title())
 
-    def html_addresses(self):
-        return self.html_from_text(self.str_defines(None, True, False))
+    def html_addresses(self, text=""):
+        return self.html_from_text(self.str_defines(None, True, False) + "\n" + text)
 
     def html_overview(self, text=""):
-        return self.html_from_text(self.str_overview()) + self.html_from_text(text)
+        return self.html_from_text(self.str_overview() + "\n" + text) + self.html_from_text(text)
 
 
 def display_reserved(o, stop, start):
