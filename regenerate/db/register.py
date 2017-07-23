@@ -35,6 +35,10 @@ class Register(object):
                     "_token", "_do_not_test", "_name", "_hide", "dimension",
                     "_do_not_generate_code", "_do_not_cover", "_do_not_use_uvm")
 
+    array_compare = ("ram_size", "width", "_do_not_test", "_hide",
+                    "_do_not_generate_code", "_do_not_cover", "_do_not_use_uvm",
+                     "share")
+
     doc_compare = ("address", "ram_size", "description", "width", "_id",
                    "_token", "_name", "_hide", "dimension")
 
@@ -67,6 +71,20 @@ class Register(object):
 
     def __cmp__(self, other):
         return cmp(self.address, other.address)
+
+    def array_cmp(self, other):
+        if not all(self.__dict__[i] == other.__dict__[i]
+                   for i in self.array_compare):
+            return False
+        if other.address + other.width != self.address:
+            return False
+        return self.get_bit_fields() == other.get_bit_fields()
+
+    def group_cmp(self, other):
+        if not all(self.__dict__[i] == other.__dict__[i]
+                   for i in self.array_compare):
+            return False
+        return self.get_bit_fields() == other.get_bit_fields()
 
     def find_first_unused_bit(self):
         """

@@ -350,7 +350,7 @@ class RegisterRst:
         o.write(".. list-table::\n")
         o.write("   :widths: 8, 10, 7, 25, 50\n")
         if self._bootstrap:
-            o.write("   :class: table table-bordered table-striped table-condensed\n")
+            o.write("   :class: table table-bordered table-striped table-condensed display\n")
         else:
             o.write("   :class: bit-table\n")
         o.write("   :header-rows: 1\n\n")
@@ -371,9 +371,9 @@ class RegisterRst:
                 display_reserved(o, last_index, field.msb + 1)
 
             if field.width == 1:
-                o.write("   * - %d\n" % field.lsb)
+                o.write("   * - %02d\n" % field.lsb)
             else:
-                o.write("   * - %d:%d\n" % (field.msb, field.lsb))
+                o.write("   * - %02d:%02d\n" % (field.msb, field.lsb))
 
             if self._decode:
                 val = (self._decode & mask(field.msb, field.lsb)) >> field.lsb
@@ -645,9 +645,9 @@ class RegisterRst:
 
 def display_reserved(o, stop, start):
     if stop == start:
-        o.write("   * - %d\n" % stop)
+        o.write("   * - %02d\n" % stop)
     else:
-        o.write("   * - %d:%d\n" % (stop, start))
+        o.write("   * - %02d:%02d\n" % (stop, start))
     o.write('     - 0x0\n')
     o.write('     - RO\n')
     o.write('     - \n')
