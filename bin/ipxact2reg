@@ -23,11 +23,6 @@ Import IPXACT data into regenerate
 #
 # TODO:
 #
-# * Adjust address of split files to be aligned to start of file
-# * Update from previous database of the same name
-# * Calculate the correct address width
-# * Report the number of times a group is repeated
-#
 #
 
 import xml.parsers.expat
@@ -39,6 +34,7 @@ import os
 import sys
 import argparse
 import math
+import sre_constants
 
 ARRAY_ELEMENT = re.compile("^(.*[^d])(\d+)(_reg)?\s*$", re.I)
 
@@ -54,6 +50,11 @@ text2write = {
     "oneToSet": BitField.TYPE_WRITE_1_TO_SET,
 }
 
+RESERVED = [
+    re.compile("^RESERVED"),
+    re.compile("^RSVD"),
+#    re.compile("^R\d+\s*$")
+]
 
 class RegGroup(object):
 
@@ -80,7 +81,7 @@ class IpXactParser(object):
     Parses the XML file, loading up the register database.
     """
 
-    def __init__(self):
+    def __init__(self, keep_reserved=False):
         self._reg = None
         self.db_title = ""
         self._field = None
@@ -99,6 +100,7 @@ class IpXactParser(object):
         self.reglist = []
         self._grp = False
         self.vendor = ''
+        self._keep_reserved = keep_reserved
 
     def import_data(self, input_file):
         """
@@ -236,8 +238,7 @@ class IpXactParser(object):
         self._field = BitField()
 
     def end_field(self, text):
-        if not (self._field.field_name.startswith("RESERVED") or
-                self._field.field_name.startswith("RSVD")):
+        if self._keep_reserved or not ignore_by_field_name(self._field):
             self._field.start_position = self._fld_start
             self._field.stop_position = self._fld_start + self._fld_width - 1
             self._reg.add_bit_field(self._field)
@@ -292,7 +293,10 @@ class IpXactParser(object):
 
 
 class Groupings:
-
+    """
+    Groups registers, looking for repeated groups at the specified
+    boundaries.
+    """
     def __init__(self, registers):
 
         self.registers = registers
@@ -390,7 +394,21 @@ def copy_from_db(db1, db2):
     db.overview_text = db2.overview_text
     db.module_name = db2.module_name
 
+def ignore_by_field_name(field):
 
+    if (field.field_type != BitField.TYPE_READ_ONLY or
+        field.reset_value != 0):
+        return False
+
+    for pattern in RESERVED:
+
+        match = pattern.match(field.field_name)
+        if match:
+            return True
+
+    return False
+
+    
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
@@ -406,11 +424,27 @@ if __name__ == "__main__":
     parser.add_argument("--boundary", dest="boundary", default=256, type=int,
                         choices=[16, 32, 64, 128, 256, 512, 1024, 2048, 4096],
                         help="Address boundary used to look for repeating groups")
+    parser.add_argument("--keep-reserved", dest="keep_reserved", default=False,
+                        action="store_true",
+                        help="Does not removed read only fields with names matched reserved keyword")
     parser.add_argument("--xlate", dest="xlate", nargs="*",
                         help="Regular expressions (python) to use to alter names in repeated groups")
+    parser.add_argument("--reserved-regex", dest="regex", nargs="*",
+                        help="Regular expressions (python) to use to identify reserved fields")
     
     args = parser.parse_args()
-    
+
+    if args.regex:
+        for r in args.regex:
+            try:
+                pattern = re.compile(r)
+                RESERVED.append(pattern)
+            except sre_constants.error as msg:
+                sys.stderr.write("Could not compile \"%s\" as a regular expression" % r)
+                sys.stderr.write(" - %s\n" % str(msg))
+                sys.exit(1)
+            
+
     ip = IpXactParser()
 
     ip.import_data(args.input_file)
@@ -433,12 +467,13 @@ if __name__ == "__main__":
     
     # Save files
     for index, rgrp in enumerate(sorted(data)):
-        filename = os.path.join(args.root + "_%d" % index + ".xml")
 
         if index == 0:
             title = ip.db_title
+            filename = os.path.join(args.root + ".xml")
         else:
             title = "%s_%d" % (ip.db_title, index)
+            filename = os.path.join(args.root + "_%d" % index + ".xml")
             
         db = RegisterDb()
 
