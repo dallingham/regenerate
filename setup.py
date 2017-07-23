@@ -23,7 +23,7 @@ setup(
     },
     url="https://github.com/dallingham/regenerate",
     scripts=["bin/regenerate", "bin/regbuild", "bin/regupdate", "bin/regxref",
-             "bin/regdiff"],
+             "bin/regdiff", "bin/ipxact2reg"],
     classifiers=
     ['Operating System :: POSIX', 'Programming Language :: Python :: 2.7',
      'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
