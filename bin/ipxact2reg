@@ -1,7 +1,6 @@
+#! /usr/bin/env python
 #
-# Manage registers in a hardware design
-#
-# Copyright (C) 2008  Donald N. Allingham
+# Copyright (C) 2017  Donald N. Allingham
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,9 +15,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
 """
-Parses the register database, loading the database.
+Import IPXACT data into regenerate
 """
+
+#
+# TODO:
+#
+# * Adjust address of split files to be aligned to start of file
+# * Update from previous database of the same name
+# * Calculate the correct address width
+# * Report the number of times a group is repeated
+#
+#
 
 import xml.parsers.expat
 from regenerate.db import Register, BitField, LOGGER, RegisterDb
@@ -27,6 +37,8 @@ import re
 import string
 import os
 import sys
+import argparse
+import math
 
 ARRAY_ELEMENT = re.compile("^(.*[^d])(\d+)(_reg)?\s*$", re.I)
 
@@ -43,14 +55,34 @@ text2write = {
 }
 
 
+class RegGroup(object):
+
+    def __init__(self):
+        self.addr = 0
+        self.regs = []
+        self.repeat = 0
+        
+    def add_reg(self, reg):
+        self.regs.append(reg)
+
+    def set_reg_list(self, reg_list):
+        self.regs = reg_list
+
+    def append_reg_list(self, reg_list):
+        self.regs = self.regs + reg_list
+        
+    def get_regs(self):
+        return self.regs
+
+
 class IpXactParser(object):
     """
     Parses the XML file, loading up the register database.
     """
 
-    def __init__(self, dbase):
-        self._db = dbase
+    def __init__(self):
         self._reg = None
+        self.db_title = ""
         self._field = None
         self._fld_start = 0
         self._fld_width = 0
@@ -64,9 +96,9 @@ class IpXactParser(object):
         self._last_reg = None
         self._last_index = -1
         self._ignore_count = 0
-        self.reglist = defaultdict(list)
+        self.reglist = []
         self._grp = False
-        self._boundary = 0x100
+        self.vendor = ''
 
     def import_data(self, input_file):
         """
@@ -83,51 +115,6 @@ class IpXactParser(object):
 
         if self._ignore_count:
             LOGGER.info("Ignored %0d registers that contained no useful fields" % self._ignore_count)
-
-        self.cleanup()
-
-        filebase = "dna_out"
-
-        db = RegisterDb()
-        
-        for key in sorted(self.reglist):
-            for r in self.reglist[key]:
-                db.add_register(r)
-            filename = os.path.join(filebase + "_%d" % key + ".xml")
-            print "Saving", filename
-            db.save_xml(filename)
-
-    def cleanup(self):
-
-        counter = Counter()
-        newlist = defaultdict(list)
-
-        for (i, key) in enumerate(sorted(self.reglist.keys())):
-            
-            if i == 0:
-                counter[key] += 1
-                newlist[key] = self.reglist[key]
-            else:
-                for new_key in newlist.keys():
-                    if identical(self.reglist[key], newlist[new_key]):
-                        counter[new_key] += 1
-                        break
-                else:
-                    newlist[key] = self.reglist[key]
-                    counter[key] += 1
-
-        self.reglist = defaultdict(list)
-        
-        old_count = -11
-        index = 0
-        for key in sorted(counter.keys()):
-            count = counter[key]
-            if old_count == -1 or old_count == count:
-                self.reglist[index] += newlist[key]
-            else:
-                index += 1
-                self.reglist[index] += newlist[key]
-            old_count = count
 
     def start_element(self, tag, attrs):
         """
@@ -146,6 +133,9 @@ class IpXactParser(object):
             method = getattr(self, mname)
             method(attrs)
 
+    def end_vendor(self, tag):
+        self.vendor = ''.join(self._token_list)
+            
     def end_element(self, tag):
         """
         Called every time an XML element end
@@ -194,8 +184,7 @@ class IpXactParser(object):
             self._last_reg.register_name = new_name
         else:
             if self._reg.get_bit_fields():
-                addr = (self._reg.address / self._boundary) * self._boundary
-                self.reglist[addr].append(self._reg)
+                self.reglist.append(self._reg)
                 self._last_reg = self._reg
             else:
                 self._last_reg = None
@@ -278,8 +267,8 @@ class IpXactParser(object):
         elif self._reg:
             self._reg.token = text.upper()
             self._reg.register_name = name_from_token(text.upper())
-        elif not self._in_maps and not self._db.descriptive_title:
-            self._db.descriptive_title = text.strip()
+        elif not self._in_maps and not self.db_title:
+            self.db_title = text.strip()
 
     def end_description(self, text):
         new_text = " ".join([t for t in text.split() if t != ""])
@@ -302,6 +291,65 @@ class IpXactParser(object):
         self._in_maps = False
 
 
+class Groupings:
+
+    def __init__(self, registers):
+
+        self.registers = registers
+
+    def group(self, boundary):
+        
+        # Sort registers into groups based off the boundary
+        reglist = defaultdict(list)
+        for reg in self.registers:
+            addr = (reg.address / boundary) * boundary
+            reglist[addr].append(reg)
+
+        # Look for adjacent, idential groups
+        counter = Counter()
+        newlist = defaultdict(RegGroup)
+
+        for (i, key) in enumerate(sorted(reglist.keys())):
+            
+            if i == 0:
+                counter[key] += 1
+                newlist[key].set_reg_list(reglist[key])
+                newlist[key].addr = key
+            else:
+                for new_key in newlist.keys():
+                    if identical(reglist[key], newlist[new_key].get_regs()):
+                        counter[new_key] += 1
+                        break
+                else:
+                    newlist[key].set_reg_list(reglist[key])
+                    newlist[key].addr = key
+                    counter[key] += 1
+        
+        # Condense lists
+        reglist = []
+        
+        old_count = -1
+        index = 0
+        current_reg = RegGroup()
+        
+        for key in sorted(counter.keys()):
+            count = counter[key]
+
+            # Found duplicate
+            if old_count == -1 or count > 1:
+                grp = RegGroup()
+                grp.addr = key
+                grp.set_reg_list(newlist[key].get_regs())
+                grp.repeat = count
+                reglist.append(grp)
+            else:
+                grp.append_reg_list(newlist[key].get_regs())
+                grp.repeat = 1
+            old_count = count
+
+        return (counter, reglist)
+
+
 def crossreference(db):
     names = sorted([reg.register_name for reg in db.get_all_registers()],
                    key=len,
@@ -309,9 +357,7 @@ def crossreference(db):
 
     re_list = [r'([^`])({0}) ((R|r)egister)'.format(name) for name in names]
 
-    LOGGER.info("Cross Referencing...")
-    while gtk.events_pending():
-        gtk.main_iteration()
+    print "Cross Referencing..."
 
     for reg in db.get_all_registers():
         for regex in re_list:
@@ -336,9 +382,106 @@ def identical(list1, list2):
             return False
     return True
             
+def copy_from_db(db1, db2):
+
+    db.owner = db2.owner
+    db.organization = db2.organization
+    db.descriptive_title = db2.descriptive_title
+    db.overview_text = db2.overview_text
+    db.module_name = db2.module_name
+
 
 if __name__ == "__main__":
 
-    dbase = RegisterDb()
-    ip = IpXactParser(dbase)
-    ip.import_data(sys.argv[1])
+    parser = argparse.ArgumentParser(
+        description="Convert IPXACT files to regenerate files")
+    parser.add_argument("input_file",
+                        help="IPXACT XML input file")
+    parser.add_argument("--output", dest="root", default="reg",
+                        help="Base filename (no extension) of the output files")
+    parser.add_argument("--xref", dest="xref", action="store_true", default=False,
+                        help="Generate crossreferences in the comments if possible")
+    parser.add_argument("--update", dest="update", action="store_true", default=False,
+                        help="Update data from previous file if available")
+    parser.add_argument("--boundary", dest="boundary", default=256, type=int,
+                        choices=[16, 32, 64, 128, 256, 512, 1024, 2048, 4096],
+                        help="Address boundary used to look for repeating groups")
+    parser.add_argument("--xlate", dest="xlate", nargs="*",
+                        help="Regular expressions (python) to use to alter names in repeated groups")
+    
+    args = parser.parse_args()
+    
+    ip = IpXactParser()
+
+    ip.import_data(args.input_file)
+
+    # Group elements
+    grp = Groupings(ip.reglist)
+
+    (counters, data) = grp.group(args.boundary)
+
+    src = []
+    dest = []
+    if args.xlate:
+        for val in args.xlate:
+            vals = val.split("=")
+            if len(vals) == 2:
+                src.append(vals[0])
+                dest.append(vals[1])
+            else:
+                sys.stderr.write("Ignoring %s\n" % val)
+    
+    # Save files
+    for index, rgrp in enumerate(sorted(data)):
+        filename = os.path.join(args.root + "_%d" % index + ".xml")
+
+        if index == 0:
+            title = ip.db_title
+        else:
+            title = "%s_%d" % (ip.db_title, index)
+            
+        db = RegisterDb()
+
+        # copy data from old db, or create our own
+        
+        if os.path.exists(filename) and args.update:
+            print "Loading", filename
+            db2 = RegisterDb(filename)
+            copy_from_db(db, db2)
+        else:
+            db2 = None
+            db.owner = ip.vendor
+            db.organization = ip.vendor
+            db.descriptive_title = title
+            db.module_name = title.lower()
+            db.overview_text = "Imported from IPXACT data provided by %s." % ip.vendor
+
+        max_addr = 0
+        for r in rgrp.get_regs():
+            if args.xlate:
+                for i, s in enumerate(src):
+                    r.token = re.sub(s, dest[i], r.token, flags=re.I)
+                    r.register_name = re.sub(s, dest[i], r.register_name, flags=re.I)
+            if db2 is not None:
+                old_reg = db2.find_register_by_token(r.token)
+                if old_reg:
+                    r.register_name = old_reg.register_name
+                
+            max_addr = max(r.address, max_addr)
+            
+            db.add_register(r)
+        if rgrp.repeat == 1:
+            db.address_bus_width = int(math.ceil(math.log(max_addr, 2)))
+        else:
+            db.address_bus_width = int(math.ceil(math.log(args.boundary, 2)))
+
+        if args.xref:
+            crossreference(db)
+        
+        print "Saving", filename
+        db.save_xml(filename)
+    
+    print "%-20s %-8s Repeat" % ("Register Set", "Address")
+    print "%-20s %-8s %s" % ("-" * 20, "-" * 8, "-" * 6)
+    for index, rgrp in enumerate(sorted(data)):
+        print "%-20s %08x %d" % (filename, rgrp.addr, rgrp.repeat)
