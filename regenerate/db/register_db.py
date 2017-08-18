@@ -66,6 +66,7 @@ class RegisterDb(object):
         self.owner = ""
         self.organization = ""
         self.byte_strobe_active_level = 1
+        self.use_interface = False
         self.overview_text = ""
         self.coverage = True
         self.set_name = ""

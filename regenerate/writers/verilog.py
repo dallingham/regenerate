@@ -191,8 +191,8 @@ class Verilog(WriterBase):
                 reglist.append(r)
 
         word_fields = self.__generate_group_list(reglist, self._data_width)
-        reset_edge = "posedge" if self._dbase.reset_active_level else "negedge"
-        reset_op = "" if self._dbase.reset_active_level else "~"
+        reset_edge = "posedge" if self._dbase.reset_active_level and not self._db.use_interface else "negedge"
+        reset_op = "" if self._dbase.reset_active_level and not self._db.use_interface else "~"
 
         parameters = []
         for r in self._dbase.get_all_registers():
@@ -283,9 +283,9 @@ class Verilog(WriterBase):
         """
         Writes the used register module types to the file.
         """
-        edge = "posedge" if self._dbase.reset_active_level else "negedge"
-        condition = "" if self._dbase.reset_active_level else "~"
-        be_level = "" if self._dbase.byte_strobe_active_level else "~"
+        edge = "posedge" if self._dbase.reset_active_level and not self._dbase.use_interface else "negedge"
+        condition = "" if self._dbase.reset_active_level and not self._dbase.use_interface else "~"
+        be_level = "" if self._dbase.byte_strobe_active_level or self._dbase.use_interface else "~"
 
         name_map = {
             'MODULE': self._module,

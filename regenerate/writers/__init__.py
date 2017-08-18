@@ -97,6 +97,8 @@ for module in MODULES:
             break
         except ImportError, msg:
             continue
+        except AttributeError, msg:
+            continue
         except SyntaxError, msg:
             print str(msg)
             continue

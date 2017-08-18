@@ -226,8 +226,11 @@ class RegisterRst:
                  group=None,
                  maxlines=9999999,
                  db=None,
+                 max_values=24,
                  bootstrap=False,
                  header_level=1):
+
+        self._max_values = max_values
         self._reg = register
         self._highlight = highlight
         self._prj = project
@@ -347,7 +350,11 @@ class RegisterRst:
             o = StringIO()
             ret_str = True
 
+        o.write(".. role:: resetvalue\n\n")
+        o.write(".. role:: editable\n\n")
+        o.write(".. role:: mono\n\n")
         o.write(".. list-table::\n")
+        o.write("   :name: bit_table\n")
         o.write("   :widths: 8, 10, 7, 25, 50\n")
         if self._bootstrap:
             o.write("   :class: table table-bordered table-striped table-condensed display\n")
@@ -378,7 +385,7 @@ class RegisterRst:
             if self._decode:
                 val = (self._decode & mask(field.msb, field.lsb)) >> field.lsb
                 if val != field.reset_value:
-                    o.write("     - **0x%x**\n" % val)
+                    o.write("     - :resetvalue:`0x%x`\n" % val)
                 else:
                     o.write("     - 0x%x\n" % val)
             else:
@@ -399,21 +406,23 @@ class RegisterRst:
                 o.write("     - %s\n" % encoded_descr)
 
 
-            if field.values and len(field.values) < 24:
+            if field.values and len(field.values) < self._max_values:
                 o.write("\n")
+
                 for val in sorted(field.values,
                                   key=lambda x: int(int(x[0], 16))):
-                    if val[1]:
+                    if val[1] and val[2]:
                         o.write("        0x%x : %s\n            %s\n\n" %
-                                (int(val[0], 16), val[2], val[1]))
+                                (int(val[0], 16), val[1], val[2]))
+                    elif val[1]:
+                        o.write("        0x%x : %s\n            %s\n\n" %
+                                (int(val[0], 16), val[1], "*no description available*"))
                     else:
-                        o.write("        0x%x : %s\n\n" %
-                                (int(val[0], 16), val[2]))
+                        o.write("        0x%x : %s\n            %s\n\n" %
+                                (int(val[0], 16), "*no token available*", val[2]))
             last_index = field.lsb - 1
         if last_index >= 0:
             display_reserved(o, last_index, 0)
-
-        o.write("\n")
 
         for ref, name, descr in extra_text:
             o.write(".. _%s:\n\n" % ref)
@@ -457,13 +466,12 @@ class RegisterRst:
                 if inst.group in groups_in_addr_map:
                     addr_maps.add(x)
 
-        if not addr_maps:
-            return "No address maps defined"
+        if len(addr_maps) == 0:
+            o.write(".. warning::\n")
+            o.write("   :class: alert alert-warning\n\n")
+            o.write("   This register has not been mapped into any address space.\n\n")
 
-        if not in_groups(self._regset_name, self._prj):
-            o.write(
-                ".. WARNING::\n   Register set was not added to any groups\n\n")
-        else:
+        elif in_groups(self._regset_name, self._prj):
             o.write(".. list-table::\n")
             o.write("   :header-rows: 1\n")
             if len(addr_maps) == 1:
@@ -494,6 +502,7 @@ class RegisterRst:
 
                 for grp_inst in range(0, inst.grpt):
 
+                    found_addr = True
                     if inst.repeat == 1 and not inst.array:
                         if self._reg.dimension <= 1:
                             self._addr_entry(o, inst, use_uvm, use_id,
@@ -512,8 +521,8 @@ class RegisterRst:
                                 for i in range(self._reg.dimension):
                                     self._addr_entry(o, inst, use_uvm, use_id,
                                                      addr_maps, grp_inst, gi, i)
-
-        o.write("\n\n")
+                
+            o.write("\n\n")
 
         if ret_str:
             return o.getvalue()
@@ -549,9 +558,9 @@ class RegisterRst:
                 offset += group_index * inst.roffset
 
             if index < 0:
-                o.write("     - %s\n" % reg_addr(self._reg, offset))
+                o.write("     - ``%s``\n" % reg_addr(self._reg, offset))
             else:
-                o.write("     - %s\n" % reg_addr(self._reg, offset
+                o.write("     - ``%s``\n" % reg_addr(self._reg, offset
                                                  + (index * (self._reg.width/8))))
 
     def _display_uvm_entry(self, inst, index, o):
@@ -610,11 +619,14 @@ class RegisterRst:
                     settings_overrides=overrides
                     )
 
-                return parts['html_title'] + parts['html_subtitle'] + \
-                    re.sub("(%s)" % self._highlight,
-                           r"<mark>\1</mark>",
-                           parts['body'],
-                           flags=re.IGNORECASE)
+                if self._highlight is None:
+                    return parts['html_title'] + parts['html_subtitle'] + parts['body']
+                else:
+                    return parts['html_title'] + parts['html_subtitle'] + \
+                        re.sub("(%s)" % self._highlight,
+                               r"<mark>\1</mark>",
+                               parts['body'],
+                               flags=re.IGNORECASE)
 
             except AttributeError, msg:
                 return "<h3>Error</h3><p>" + str(msg) + "</p><p>" + text + "</p>"
@@ -645,10 +657,10 @@ class RegisterRst:
 
 def display_reserved(o, stop, start):
     if stop == start:
-        o.write("   * - %02d\n" % stop)
+        o.write("   * - ``%02d``\n" % stop)
     else:
-        o.write("   * - %02d:%02d\n" % (stop, start))
-    o.write('     - 0x0\n')
+        o.write("   * - ``%02d:%02d``\n" % (stop, start))
+    o.write('     - ``0x0``\n')
     o.write('     - RO\n')
     o.write('     - \n')
     o.write('     - *reserved*\n')

@@ -86,6 +86,7 @@ class RegWriter(object):
         Writes the port information to the output file
         """
         ofile.write('  <ports>\n')
+        ofile.write('    <interface>%d</interface>\n' % int(self.dbase.use_interface))
         ofile.write('    <addr>%s</addr>\n' % self.dbase.address_bus_name)
         ofile.write('    <data_in>%s</data_in>\n' % self.dbase.write_data_name)
         ofile.write(

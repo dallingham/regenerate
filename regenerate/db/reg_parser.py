@@ -530,12 +530,20 @@ class RegParser(object):
         """
         self.__db.byte_strobe_name = text
 
+    def end_interface(self, text):
+        """
+        Called when the interface tag is terminated. The text value is assigned
+        to the database's write_strobe_name
+        """
+        self.__db.use_interface = bool(text)
+
     def end_wr(self, text):
         """
         Called when the wr tag is terminated. The text value is assigned
         to the database's write_strobe_name
         """
         self.__db.write_strobe_name = text
+
 
     def end_ack(self, text):
         """

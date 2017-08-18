@@ -149,8 +149,8 @@ class Build(BaseWindow):
         #mod = file_needs_rebuilt(local_dest, self.__dbmap, [dbase_full_path])
         mod = True
         self.__modlist.append(mod)
-        (fmt, cls, rpttype) = self.__optmap[dest]
-        self.__model.append(row=(mod, group_name, fmt, option, cls, None, 1))
+        (fmt, cls, rpttype) = self.__optmap[option]
+        self.__model.append(row=(mod, group_name, fmt, dest, cls, None, 1))
 
     def __populate(self):
         """
@@ -166,14 +166,16 @@ class Build(BaseWindow):
                     pass
 
         for group_data in self.__prj.get_grouping_list():
-            for grp in self.__prj.get_group_exports(group_data.name):
+            for grp_type, grp_dest in self.__prj.get_group_exports(group_data.name):
                 self.__add_group_item_to_list("%s (group)" % group_data.name,
-                                              grp[1], grp[0])
+                                              grp_type, grp_dest)
 
         for (option, dest) in self.__prj.get_project_exports():
             try:
+                print dest, option
                 self.__add_prj_item_to_list(option, dest)
-            except KeyError:
+            except KeyError as msg:
+                print str(msg)
                 pass
 
     def toggle_callback(self, cell, path, source):
@@ -316,7 +318,6 @@ class Build(BaseWindow):
             self.__prj.add_to_export_list(register_path, option, filename)
             self.__add_item_to_list(register_path, option, filename)
         elif self.__mapopt[export_format][MAPOPT_REGISTER_SET] == LEVEL_GROUP:
-            print filename, option, group
             self.__prj.add_to_group_export_list(group, option, filename)
             register_path = "%s (group)" % group
             self.__add_item_to_list(register_path, option, filename)

@@ -199,6 +199,7 @@ class MainWindow(BaseWindow):
         self.__write_data_obj = self.__builder.get_object('write_data_bus')
         self.__read_data_obj = self.__builder.get_object('read_data_bus')
         self.__write_strobe_obj = self.__builder.get_object('write_strobe')
+        self.__interface_obj = self.__builder.get_object('interface')
         self.__ack_obj = self.__builder.get_object('ack')
         self.__read_strobe_obj = self.__builder.get_object('read_strobe')
         self.__byte_en_obj = self.__builder.get_object('byte_en_signal')
@@ -1548,6 +1549,7 @@ class MainWindow(BaseWindow):
         self.__write_data_obj.set_text(self.dbase.write_data_name)
         self.__read_data_obj.set_text(self.dbase.read_data_name)
         self.__write_strobe_obj.set_text(self.dbase.write_strobe_name)
+        self.__interface_obj.set_active(self.dbase.use_interface)
         self.__ack_obj.set_text(self.dbase.acknowledge_name)
         self.__read_strobe_obj.set_text(self.dbase.read_strobe_name)
         self.__byte_en_obj.set_text(self.dbase.byte_strobe_name)
@@ -1657,6 +1659,10 @@ class MainWindow(BaseWindow):
 
     def on_write_strobe_changed(self, obj):
         self.__text_change("write_strobe_name", obj)
+
+    def on_interface_toggled(self, obj):
+        self.dbase.use_interface = obj.get_active()
+        self.set_modified()
 
     def on_ack_changed(self, obj):
         self.__text_change("acknowledge_name", obj)

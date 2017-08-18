@@ -103,16 +103,10 @@ class AddrMapEdit(BaseWindow):
         dialog.destroy()
 
     def visible_callback(self, column, cell, model, node):
-        if len(model.get_path(node)) == 1:
-            cell.set_property('visible', False)
-        else:
-            cell.set_property('visible', True)
+        cell.set_property('visible', len(model.get_path(node)) != 1)
 
     def visible_callback2(self, column, cell, model, node):
-        if len(model.get_path(node)) == 1:
-            cell.set_property('visible', True)
-        else:
-            cell.set_property('visible', False)
+        cell.set_property('visible', len(model.get_path(node)) == 1)
 
     def _enable_changed(self, cell, path, source):
         self.model[path][0] = not self.model[path][0]

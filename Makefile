@@ -15,7 +15,7 @@ all:
 	@echo "Type 'make install' to install"
 
 install:
-	python setup.py install --home=/home/tools
+	python setup.py install --home=/home/tools --force
 
 clean:
 	rm -f *.pyc *.v *.bak *~ *.log

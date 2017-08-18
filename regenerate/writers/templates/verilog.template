@@ -27,16 +27,37 @@ module {{db.module_name}}
     )
 {% endif %}
    (
-    {{input_logic}}          {{db.clock_name}},
-    {{input_logic}}          {{db.reset_name}},
-    {{input_logic}}          {{db.write_strobe_name}},
-    {{input_logic}}          {{db.read_strobe_name}},
+{% if db.use_interface %}
+{%  set clk_name = "MGMT.CLK" %}
+{%  set reset_name = "MGMT.RSTn" %}
+{%  set write_strobe_name = "MGMT.WR" %}
+{%  set read_strobe_name = "MGMT.RD" %}
+{%  set byte_strobe_name = "MGMT.BE" %}
+{%  set write_data_name = "MGMT.WDATA" %}
+{%  set read_data_name = "MGMT.RDATA" %}
+{%  set acknowledge_name = "MGMT.ACK" %}
+{%  set address_bus_name = "MGMT.ADDR[%d:3]" | format(db.address_bus_width-1) %}
+{% else %}
+{%  set clk_name = db.clock_name %}
+{%  set reset_name = db.reset_name %}
+{%  set write_strobe_name = db.write_strobe_name %}
+{%  set read_strobe_name = db.read_strobe_name %}
+{%  set byte_strobe_name = db.byte_strobe_name %}
+{%  set write_data_name = db.write_data_name %}
+{%  set read_data_name = db.read_data_name %}
+{%  set acknowledge_name = db.acknowledge_name %}
+{%  set address_bus_name = db.address_bus_name %}
+    {{input_logic}}          {{clock_name}},
+    {{input_logic}}          {{reset_name}},
+    {{input_logic}}          {{write_strobe_name}},
+    {{input_logic}}          {{read_strobe_name}},
 {% set text = "[%d:0]"|format((db.data_bus_width/8) - 1) %}
-    {{input_logic}} {{"%-8s"|format(text)}} {{db.byte_strobe_name}},
+    {{input_logic}} {{"%-8s"|format(text)}} {{byte_strobe_name}},
 {% set text = "[%d:%d]"|format((db.address_bus_width-1), LOWER_BIT[db.data_bus_width]) %}
-    {{input_logic}} {{"%-8s"|format(text)}} {{db.address_bus_name}},
+    {{input_logic}} {{"%-8s"|format(text)}} {{address_bus_name}},
 {% set text = "[%d:0]"|format(db.data_bus_width - 1) %}
-    {{input_logic}} {{"%-8s"|format(text)}} {{db.write_data_name}},
+    {{input_logic}} {{"%-8s"|format(text)}} {{write_data_name}},
+{% endif %}
 {% set ctrl = {} %}
 {% for reg in db.get_all_registers() %}
 {%   for field in reg.get_bit_fields() %}
@@ -94,8 +115,12 @@ module {{db.module_name}}
 {%   endif %}
 {% endfor %}
 {% set text = "[%d:0]"|format(db.data_bus_width-1) %}
-    {{output_logic}} {{"%-8s"|format(text)}} {{db.read_data_name}},
-    {{output_logic}}          {{db.acknowledge_name}}
+{% if db.use_interface %}
+    mgmt_interface.target MGMT
+{% else %}
+    {{output_logic}} {{"%-8s"|format(text)}} {{read_data_name}},
+    {{output_logic}}          {{acknowledge_name}}
+{% endif %}
    );
 
 /*
@@ -131,7 +156,7 @@ module {{db.module_name}}
  * Address Selects
  */
 {% for addr,val in word_fields|dictsort %}
-   wire write_r{{"%02x"|format(addr)}} = (~prev_write & {{db.write_strobe_name}}) & ({{db.address_bus_name}} == {{db.address_bus_width - LOWER_BIT[db.data_bus_width]}}'h{{"%x"|format(rshift(addr, LOWER_BIT[db.data_bus_width]))}});
+   wire write_r{{"%02x"|format(addr)}} = (~prev_write & {{write_strobe_name}}) & ({{address_bus_name}} == {{db.address_bus_width - LOWER_BIT[db.data_bus_width]}}'h{{"%x"|format(rshift(addr, LOWER_BIT[db.data_bus_width]))}});
 {% endfor %}
 
 /*
@@ -163,7 +188,7 @@ module {{db.module_name}}
 {%      endif %}
 {%   endfor %}
 {% endfor %}
-   assign {{db.read_data_name}} = mux_rdata;
+   assign {{read_data_name}} = mux_rdata;
 
 {% for addr, val in word_fields|dictsort %}
 {%   for (field, start_offset, stop_offset, start_pos, stop_pos, faddr, reg) in val %}
@@ -216,16 +241,16 @@ module {{db.module_name}}
        )
    r{{"%02x"|format(reg.address)}}{{mode}}{{field.field_name|lower}}_{{start}}
      (
-      .CLK    ({{db.clock_name}}),
-      .RSTn   ({{db.reset_name}}),
+      .CLK    ({{clk_name}}),
+      .RSTn   ({{reset_name}}),
 {%      if ci.is_read_only == False %}
       .WE     (write_r{{"%02x"|format(addr)}}),
 {%        if bus_stop == bus_start %}
-      .DI     ({{db.write_data_name}}[{{bus_start}}]),
+      .DI     ({{write_data_name}}[{{bus_start}}]),
 {%        else %}
-      .DI     ({{db.write_data_name}}[{{bus_stop}}:{{bus_start}}]),
+      .DI     ({{write_data_name}}[{{bus_stop}}:{{bus_start}}]),
 {%        endif %}
-      .BE     ({{db.byte_strobe_name}}[{{(bus_start/8)|int}}]),
+      .BE     ({{byte_strobe_name}}[{{(bus_start/8)|int}}]),
 {%      endif %}
 {%      if ci.has_rd %}
       .RD     (read_r{{"%02x"|format(addr)}}),
@@ -278,15 +303,15 @@ module {{db.module_name}}
  * Ensure that internal write is one clock wide
  *------------------------------------------------------------------------------
  */
-   {{always}} @(posedge {{db.clock_name}} or {{reset_edge}} {{db.reset_name}}) begin
-     if ({{reset_op}}{{db.reset_name}}) begin
+   {{always}} @(posedge {{clk_name}} or {{reset_edge}} {{reset_name}}) begin
+     if ({{reset_op}}{{reset_name}}) begin
         prev_write <= 1'b0;
         prev_read  <= 1'b0;
-        {{db.acknowledge_name}} <= 1'b0;
+        {{acknowledge_name}} <= 1'b0;
      end else begin
-        prev_write <= {{db.write_strobe_name}};
-        prev_read  <= {{db.read_strobe_name}};
-        {{db.acknowledge_name}} <= (~prev_write & {{db.write_strobe_name}}) | (~prev_read & {{db.read_strobe_name}});
+        prev_write <= {{write_strobe_name}};
+        prev_read  <= {{read_strobe_name}};
+        {{acknowledge_name}} <= (~prev_write & {{write_strobe_name}}) | (~prev_read & {{read_strobe_name}});
      end
    end
 
@@ -326,12 +351,12 @@ module {{db.module_name}}
                   };
 {% endfor %}
 
-   {{always}} @(posedge {{db.clock_name}} or {{reset_edge}} {{db.reset_name}}) begin
-      if ({{reset_op}}{{db.reset_name}}) begin
+   {{always}} @(posedge {{clk_name}} or {{reset_edge}} {{reset_name}}) begin
+      if ({{reset_op}}{{reset_name}}) begin
          mux_rdata <= 64'h0;
       end else begin
-        if ({{db.read_strobe_name}}) begin
-           unique case ({{db.address_bus_name}})
+        if ({{read_strobe_name}}) begin
+           unique case ({{address_bus_name}})
 {% for addr, val in word_fields|dictsort %}
               {{db.address_bus_width - LOWER_BIT[db.data_bus_width]}}'h{{"%x"|format(rshift(addr, LOWER_BIT[db.data_bus_width]))}}: mux_rdata <= r{{"%02x"|format(addr)}};
 {% endfor %}
