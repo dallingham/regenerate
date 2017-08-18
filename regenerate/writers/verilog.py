@@ -178,7 +178,8 @@ class Verilog(WriterBase):
         template = env.get_template("verilog.template")
 
         reglist = []
-        for reg in self._dbase.get_all_registers():
+        for reg in [r for r in self._dbase.get_all_registers()
+                    if not r.do_not_generate_code]:
             if reg.dimension > 1:
                 for i in range(0, reg.dimension):
                     r = copy.copy(reg)
