@@ -59,7 +59,7 @@ def modified(f):
     
     def modify_value(self, obj):
         f(self, obj)
-        self.modified = True
+        self.modified()
         
     return modify_value
 

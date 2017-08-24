@@ -47,7 +47,7 @@ module {{db.module_name}}
 {%  set read_data_name = db.read_data_name %}
 {%  set acknowledge_name = db.acknowledge_name %}
 {%  set address_bus_name = db.address_bus_name %}
-    {{input_logic}}          {{clock_name}},
+    {{input_logic}}          {{clk_name}},
     {{input_logic}}          {{reset_name}},
     {{input_logic}}          {{write_strobe_name}},
     {{input_logic}}          {{read_strobe_name}},
@@ -59,7 +59,7 @@ module {{db.module_name}}
     {{input_logic}} {{"%-8s"|format(text)}} {{write_data_name}},
 {% endif %}
 {% set ctrl = {} %}
-{% for reg in db.get_all_registers() %}
+{% for reg in sorted_regs %}
 {%   for field in reg.get_bit_fields() %}
 {%     set ci = cell_info[field.field_type] %}
 {%     if ci.has_control and field.control_signal not in ctrl -%}
@@ -72,7 +72,7 @@ module {{db.module_name}}
 {%-    endif -%}
 {%-  endfor -%}
 {% endfor %}
-{% for reg in db.get_all_registers() %}
+{% for reg in sorted_regs %}
 {%   for field in reg.get_bit_fields() %}
 {%     set ci = cell_info[field.field_type] %}
 {%     if ci.has_input and field.input_signal != "" and field.input_signal not in ctrl-%}
@@ -95,17 +95,19 @@ module {{db.module_name}}
 {%-    endif -%}
 {%-  endfor -%}
 {% endfor %}
-{% for reg in db.get_all_registers() %}
-{%   for field in reg.get_bit_fields() %}
-{%     set ci = cell_info[field.field_type] %}
-{%     if ci.has_oneshot -%}
-{%       if reg.dimension > 1 %}
+{% for reg in sorted_regs %}
+{%   if not reg.do_not_generate_code %}
+{%     for field in reg.get_bit_fields() %}
+{%       set ci = cell_info[field.field_type] %}
+{%       if ci.has_oneshot -%}
+{%         if reg.dimension > 1 %}
     {{output_logic}}          {{field.output_signal}}_1S[{{reg.dimension}}],
-{%       else %}
+{%         else %}
     {{output_logic}}          {{field.output_signal}}_1S,
-{%       endif %}
-{%-    endif -%}
-{%-  endfor -%}
+{%         endif %}
+{%-      endif -%}
+{%-    endfor -%}
+{%-  endif -%}
 {% endfor %}
 {% for (sig, index, dim) in output_ports %}
 {%   if dim > 1 %}
@@ -189,7 +191,7 @@ module {{db.module_name}}
 {%   endfor %}
 {% endfor %}
    assign {{read_data_name}} = mux_rdata;
-
+// {{word_fields}}
 {% for addr, val in word_fields|dictsort %}
 {%   for (field, start_offset, stop_offset, start_pos, stop_pos, faddr, reg) in val %}
 {%     if reg.share == 0 %}

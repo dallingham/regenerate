@@ -205,6 +205,8 @@ class Verilog(WriterBase):
         array_ports = defaultdict(list)
         dim = {}
         for r in self._dbase.get_all_registers():
+            if r.do_not_generate_code:
+                continue
             for f in r.get_bit_fields():
                 if TYPE_TO_OUTPUT[f.field_type]:
                     sig = f.output_signal
