@@ -164,11 +164,14 @@ class RegParser(object):
         """
         self.__field.use_output_enable = cnv_bool(attrs, 'enb')
         self.__field.output_is_static = cnv_bool(attrs, 'static')
-        self.__field.output_has_side_effect = cnv_bool(attrs, 'side_effect')
-        self.__field.volatile = cnv_bool(attrs, 'volatile')
+        if 'side_effect' in attrs:
+            self.__field.output_has_side_effect = cnv_bool(attrs, 'side_effect')
+        if 'volatile' in attrs:
+            self.__field.volatile = cnv_bool(attrs, 'volatile')
         if 'random' in attrs:
             self.__field.can_randomize = cnv_bool(attrs, 'random')
-        self.__field.is_error_field = cnv_bool(attrs, 'error_field')
+        if 'error_field' in attrs:
+            self.__field.is_error_field = cnv_bool(attrs, 'error_field')
         ftype = attrs.get('field_type')
         if ftype:
             self.__field.field_type = ID_TO_TYPE[ftype]

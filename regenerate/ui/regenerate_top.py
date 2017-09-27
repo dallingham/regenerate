@@ -1078,6 +1078,7 @@ class MainWindow(BaseWindow):
     def on_edit_field_clicked(self, obj):
         register = self.__reglist_obj.get_selected_register()
         field = self.__bitfield_obj.select_field()
+        print ">" , field, field.field_name, field.volatile
         if field:
             from regenerate.ui.bitfield_editor import BitFieldEditor
             BitFieldEditor(self.dbase, register, field,

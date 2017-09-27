@@ -191,7 +191,6 @@ module {{db.module_name}}
 {%   endfor %}
 {% endfor %}
    assign {{read_data_name}} = mux_rdata;
-// {{word_fields}}
 {% for addr, val in word_fields|dictsort %}
 {%   for (field, start_offset, stop_offset, start_pos, stop_pos, faddr, reg) in val %}
 {%     if reg.share == 0 %}
@@ -335,7 +334,7 @@ module {{db.module_name}}
 {%       set mode = "_w_" %}
 {%     endif %}
 {%     if reg.share != 2 %}
-{%       if start_offset + width < last %}
+{%       if start_offset + width <= last %}
                   {{last - (start_offset + width) + 1}}'b0,
 {%       endif %}
 {%       if start_pos == stop_pos %}
