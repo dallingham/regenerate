@@ -160,6 +160,14 @@ module {{db.module_name}}
 {% for addr,val in word_fields|dictsort %}
    wire write_r{{"%02x"|format(addr)}} = (~prev_write & {{write_strobe_name}}) & ({{address_bus_name}} == {{db.address_bus_width - LOWER_BIT[db.data_bus_width]}}'h{{"%x"|format(rshift(addr, LOWER_BIT[db.data_bus_width]))}});
 {% endfor %}
+{% for addr, val in word_fields|dictsort %}
+{%   set force_r = False %}
+{%   for (field, start_offset, stop_offset, start_pos, stop_pos, faddr, reg) in val if cell_info[field.field_type].has_rd %}
+{%     if loop.first %}
+   wire read_r{{"%02x"|format(addr)}} = (~prev_read & {{read_strobe_name}}) & ({{address_bus_name}} == {{db.address_bus_width - LOWER_BIT[db.data_bus_width]}}'h{{"%x"|format(rshift(addr, LOWER_BIT[db.data_bus_width]))}});
+{%     endif %}
+{%   endfor %}
+{% endfor %}
 
 /*
  * Output Assignments
