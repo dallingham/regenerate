@@ -622,12 +622,12 @@ class RegisterRst:
                 if self._highlight is None:
                     return parts['html_title'] + parts['html_subtitle'] + parts['body']
                 else:
+                    paren_re = re.compile("(%s)" % self._highlight, flags=re.IGNORECASE)
                     return parts['html_title'] + parts['html_subtitle'] + \
-                        re.sub("(%s)" % self._highlight,
-                               r"<mark>\1</mark>",
-                               parts['body'],
-                               flags=re.IGNORECASE)
+                        paren_re.sub(r"<mark>\1</mark>", parts['body'])
 
+            except TypeError, msg:
+                return "<h3>Error</h3><p>" + str(msg) + "</p><p>" + text + "</p>"
             except AttributeError, msg:
                 return "<h3>Error</h3><p>" + str(msg) + "</p><p>" + text + "</p>"
             except ZeroDivisionError:

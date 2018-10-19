@@ -172,7 +172,6 @@ class Build(BaseWindow):
 
         for (option, dest) in self.__prj.get_project_exports():
             try:
-                print dest, option
                 self.__add_prj_item_to_list(option, dest)
             except KeyError as msg:
                 print str(msg)

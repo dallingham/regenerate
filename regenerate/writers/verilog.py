@@ -38,7 +38,7 @@ LOWER_BIT = {128: 4, 64: 3, 32: 2, 16: 1, 8: 0}
  F_REGISTER) = range(7)
 
 BIT_SLICE = re.compile("(.*)\[(\d+)\]")
-BUS_SLICE = re.compile("(.*)\[(\d+:\d+)\]")
+BUS_SLICE = re.compile("(.*)\[(\d+):(\d+)\]")
 
 
 CellInfo = namedtuple("CellInfo",
@@ -208,7 +208,7 @@ class Verilog(WriterBase):
             if r.do_not_generate_code:
                 continue
             for f in r.get_bit_fields():
-                if TYPE_TO_OUTPUT[f.field_type]:
+                if TYPE_TO_OUTPUT[f.field_type] and f.use_output_enable:
                     sig = f.output_signal
                     root = sig.split('[')
                     wild = sig.split('*')
@@ -224,19 +224,20 @@ class Verilog(WriterBase):
                         for i in range(f.lsb, f.msb+1):
                             array_ports[root[0]].append(i)
                     else:
-                        match = BIT_SLICE.match(sig)
-                        dim[g[0]] = r.dimension
-                        if match:
-                            g = match.groups()
-                            array_ports[g[0]].append(int(g[1]))
-                            continue
-
                         match = BUS_SLICE.match(sig)
                         if match:
                             g = match.groups()
                             for i in range(int(g[1]), int(g[2])):
                                 array_ports[g[0]].append(i)
                             continue
+
+                        match = BIT_SLICE.match(sig)
+                        if match:
+                            g = match.groups()
+                            dim[g[0]] = r.dimension
+                            array_ports[g[0]].append(int(g[1]))
+                            continue
+
 
         for key in array_ports:
             msb = max(array_ports[key])
@@ -246,6 +247,8 @@ class Verilog(WriterBase):
             else:
                 scalar_ports.append((key, "[%d:%d]" % (msb, lsb), dim[key]))
                         
+# TODO: fix 64 bit registers with 32 bit width
+
         with open(filename, "w") as of:
             of.write(template.render(db = self._dbase,
                                      rshift = rshift,

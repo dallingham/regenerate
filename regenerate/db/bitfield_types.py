@@ -83,7 +83,7 @@ TYPES = (BitFieldInfo(BitField.TYPE_READ_ONLY,
                       "Read/Write, bits cleared on input signal",
                       "RW"),
          BitFieldInfo(BitField.TYPE_READ_WRITE_CLR_1S,
-                      "RWC1S", True, False, False, True, True, False, False,
+                      "RWC1S", True, False, True, True, True, False, False,
                       "Read/Write, bits cleared on input signal, "
                       "one shot on any write", "RW"),
          BitFieldInfo(BitField.TYPE_READ_WRITE_CLR_1S_1,

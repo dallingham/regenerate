@@ -17,10 +17,15 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-try:
-    import webkit
-    WEBKIT = True
-except ImportError:
+
+import os
+if os.getenv("NOWEBKIT") is None:
+    try:
+        import webkit
+        WEBKIT = True
+    except ImportError:
+        WEBKIT = False
+else:
     WEBKIT = False
 
 import regenerate.extras

@@ -23,15 +23,19 @@ text is converted from restructuredText to HTML.
 """
 
 from regenerate.db import LOGGER
+import os
 
-try:
-    import webkit
-    from preview import html_string
-    PREVIEW_ENABLED = True
-except ImportError:
+if os.getenv("NOWEBKIT") is None:
+    try:
+        import webkit
+        from preview import html_string
+        PREVIEW_ENABLED = True
+    except ImportError:
+        PREVIEW_ENABLED = False
+        LOGGER.warning("Webkit is not installed, preview of formatted "
+                       "comments will not be available")
+else:
     PREVIEW_ENABLED = False
-    LOGGER.warning("Webkit is not installed, preview of formatted "
-                   "comments will not be available")
 
 
 class PreviewEditor(object):

@@ -131,7 +131,7 @@ class ProjectReader(object):
             int(attrs['repeat']), int(attrs['repeat_offset']),
             attrs.get("hdl", ""),
             int(attrs.get("no_uvm", "0")), int(attrs.get("no_decode", "0")),
-            int(attrs.get("array", "0"))
+            int(attrs.get("array", "0")), int(attrs.get("single_decode", "0")),
             )
         self._current_group.register_sets.append(data)
 

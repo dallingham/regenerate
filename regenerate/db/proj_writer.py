@@ -126,6 +126,8 @@ class ProjectWriter(object):
                     ofile.write(' no_uvm="%s"' % int(item.no_uvm))
                 if item.no_decode:
                     ofile.write(' no_decode="%s"' % int(item.no_decode))
+                if item.single_decode:
+                    ofile.write(' single_decode="%s"' % int(item.single_decode))
                 if item.array:
                     ofile.write(' array="%s"' % int(item.array))
                 ofile.write("/>\n")

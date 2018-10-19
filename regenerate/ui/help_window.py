@@ -20,11 +20,15 @@
 Provides a dialog window that displays the contents of a file, converting
 the contents from restructuredText to HTML.
 """
+import os
 
-try:
-    import webkit
-    WEBKIT = True
-except ImportError:
+if os.getenv("NOWEBKIT") is None:
+    try:
+        import webkit
+        WEBKIT = True
+    except ImportError:
+        WEBKIT = False
+else:
     WEBKIT = False
 
 import os.path

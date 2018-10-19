@@ -30,11 +30,11 @@ class InstMdl(gtk.TreeStore):
     """
 
     (INST_COL, ID_COL, BASE_COL, SORT_COL, RPT_COL, OFF_COL, HDL_COL,
-     UVM_COL, DEC_COL, ARRAY_COL, OBJ_COL) = range(11)
+     UVM_COL, DEC_COL, ARRAY_COL, SINGLE_DEC_COL, OBJ_COL) = range(12)
 
     def __init__(self, project):
         gtk.TreeStore.__init__(self, str, str, str, gobject.TYPE_UINT64, str,
-                               str, str, bool, bool, bool, object)
+                               str, str, bool, bool, bool, bool, object)
         self.callback = self.__null_callback()
         self.project = project
 
@@ -112,6 +112,13 @@ class InstMdl(gtk.TreeStore):
         self[path][InstMdl.DEC_COL] = not self[path][InstMdl.DEC_COL]
         self.callback()
 
+    def change_single_decode(self, cell, path):
+        """
+        Called when the ID of an instance has been edited in the InstanceList
+        """
+        self[path][InstMdl.SINGLE_DEC_COL] = not self[path][InstMdl.SINGLE_DEC_COL]
+        self.callback()
+
     def change_array(self, cell, path):
         """
         Called when the ID of an instance has been edited in the InstanceList
@@ -183,7 +190,7 @@ class InstMdl(gtk.TreeStore):
         new_grp = GroupData(name)
         row = build_row_data(new_grp.name, "", new_grp.base,
                              new_grp.repeat, new_grp.repeat_offset,
-                             new_grp.hdl, False, False, False, new_grp)
+                             new_grp.hdl, False, False, False, False, new_grp)
 
         node = self.append(None, row=row)
         self.callback()
@@ -193,7 +200,8 @@ class InstMdl(gtk.TreeStore):
 class InstanceList(object):
     def __init__(self, obj, id_changed, inst_changed, base_changed,
                  repeat_changed, repeat_offset_changed, format_changed,
-                 hdl_changed, uvm_changed, decode_changed, array_changed):
+                 hdl_changed, uvm_changed, decode_changed, array_changed,
+                 single_decode_changed):
         self.__obj = obj
         self.__col = None
         self.__project = None
@@ -201,7 +209,8 @@ class InstanceList(object):
         self.__build_instance_table(id_changed, inst_changed, base_changed,
                                     repeat_changed, repeat_offset_changed,
                                     hdl_changed, uvm_changed,
-                                    decode_changed, array_changed)
+                                    decode_changed, array_changed, 
+                                    single_decode_changed)
         self.__enable_dnd()
         self.__obj.set_sensitive(False)
 
@@ -241,8 +250,9 @@ class InstanceList(object):
                 uvm = self.__model.get_value(child, InstMdl.UVM_COL)
                 array = self.__model.get_value(child, InstMdl.ARRAY_COL)
                 decode = self.__model.get_value(child, InstMdl.DEC_COL)
+                single_decode = self.__model.get_value(child, InstMdl.SINGLE_DEC_COL)
                 current_group.register_sets.append(GroupInstData(
-                    name, inst, base, rpt, offset, hdl, uvm, decode, array))
+                    name, inst, base, rpt, offset, hdl, uvm, decode, array, single_decode))
                 child = self.__model.iter_next(child)
             tree_iter = self.__model.iter_next(tree_iter)
         return groups
@@ -269,7 +279,7 @@ class InstanceList(object):
         drop_info = treeview.get_dest_row_at_pos(x, y)
         (name, width) = data.split(":")
         row_data = build_row_data(name, name, 0, 1, int(width, 16),
-                                  "", False, False, False, None)
+                                  "", False, False, False, False, None)
         if drop_info:
             path, position = drop_info
             self.modified_callback()
@@ -294,7 +304,7 @@ class InstanceList(object):
 
             row = build_row_data(item.name, "", item.base, item.repeat,
                                  item.repeat_offset, item.hdl, False,
-                                 False, False, item)
+                                 False, False, False, item)
             node = self.__model.append(None, row=row)
 
             item_sets = item.register_sets
@@ -303,13 +313,14 @@ class InstanceList(object):
                 row = build_row_data(entry.inst, entry.set, entry.offset,
                                      entry.repeat, entry.repeat_offset,
                                      entry.hdl, entry.no_uvm,
-                                     entry.no_decode, entry.array, None)
+                                     entry.no_decode, entry.array, 
+                                     entry.single_decode, None)
                 self.__model.append(node, row=row)
 
     def __build_instance_table(self, id_changed, inst_changed, base_changed,
                                repeat_changed, repeat_offset_changed,
                                hdl_changed, uvm_changed, decode_changed,
-                               array_changed):
+                               array_changed, single_decode_changed):
 
         column = EditableColumn('Instance', inst_changed, InstMdl.INST_COL)
         column.set_sort_column_id(InstMdl.INST_COL)
@@ -357,6 +368,11 @@ class InstanceList(object):
         column.set_min_width(80)
         self.__obj.append_column(column)
 
+        column = ToggleColumn('Single decode', single_decode_changed,
+                              InstMdl.SINGLE_DEC_COL, self.visible_callback)
+        column.set_min_width(80)
+        self.__obj.append_column(column)
+
     def visible_callback(self, column, cell, model, node):
         if len(model.get_path(node)) == 1:
             cell.set_property('visible', False)
@@ -364,7 +380,7 @@ class InstanceList(object):
             cell.set_property('visible', True)
 
 def build_row_data(inst, name, offset, rpt, rpt_offset, hdl, uvm, dec, array,
-                   obj):
+                   single_decode, obj):
     row = (inst, name, "{0:x}".format(offset), offset, "{0:d}".format(rpt),
-           "{0:x}".format(rpt_offset), hdl, uvm, dec, array, obj)
+           "{0:x}".format(rpt_offset), hdl, uvm, dec, array, single_decode, obj)
     return row

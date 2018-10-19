@@ -140,11 +140,11 @@ module {{db.module_name}}
 {%     if field.msb == field.lsb %}
    {{reg_type}} r{{"%02x"|format(reg.address)}}{{mode}}{{field.field_name|lower}};
 {%     else %}
-   {{reg_type}} [{{field.msb}}:{{field.lsb}}] r{{"%02x"|format(reg.address)}}{{mode}}{{field.field_name|lower}};
+   {{reg_type}} [{{stop_pos}}:{{start_pos}}] r{{"%02x"|format(reg.address)}}{{mode}}{{field.field_name|lower}};
 {%     endif %}
 {%     set ci = cell_info[field.field_type] %}
 {%     if ci.has_oneshot %}
-{%       for b in break_into_bytes(field.lsb, field.msb) %}
+{%       for b in break_into_bytes(start_pos, stop_pos) %}
    {{reg_type}} r{{"%02x"|format(reg.address)}}{{mode}}{{field.field_name|lower}}_{{b[0]}}_1S;
 {%       endfor %}
 {%     endif %}

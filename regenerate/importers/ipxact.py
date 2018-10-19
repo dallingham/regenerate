@@ -20,7 +20,7 @@
 Parses the register database, loading the database.
 """
 
-import xml.parsers.expat
+import xml.etree.ElementTree as ET
 from regenerate.db import Register, BitField, LOGGER
 import re
 
@@ -60,13 +60,25 @@ class IpXactParser(object):
         """
         Parses the specified input file.
         """
-        parser = xml.parsers.expat.ParserCreate()
-        parser.StartElementHandler = self.start_element
-        parser.EndElementHandler = self.end_element
-        parser.CharacterDataHandler = self.characters
-        with open(input_file) as f:
-            parser.ParseFile(f)
-        #crossreference(self._db)
+        print "Reading", input_file
+        tree = ET.parse(input_file)
+        print "Finished"
+        root = tree.getroot()
+
+        print root.tag, root.attrib
+
+        for mem_map in root.find("{http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009}memoryMaps"):
+            name = mem_map.find("{http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009}name")
+            descr = mem_map.find("{http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009}description")
+            print name.text, descr.text
+
+        # parser = xml.parsers.expat.ParserCreate()
+        # parser.StartElementHandler = self.start_element
+        # parser.EndElementHandler = self.end_element
+        # parser.CharacterDataHandler = self.characters
+        # with open(input_file) as f:
+        #     parser.ParseFile(f)
+        # #crossreference(self._db)
 
     def start_element(self, tag, attrs):
         """

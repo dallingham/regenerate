@@ -223,7 +223,8 @@ class MainWindow(BaseWindow):
             self.__instance_hdl_changed,
             self.__instance_uvm_changed,
             self.__instance_decode_changed,
-            self.__instance_array_changed)
+            self.__instance_array_changed,
+            self.__instance_single_decode_changed)
 
         self.__build_data_width_box()
         self.__restore_position_and_size()
@@ -662,6 +663,12 @@ class MainWindow(BaseWindow):
         """
         self.__inst_changed("change_decode", cell, path)
 
+    def __instance_single_decode_changed(self, cell, path, col):
+        """
+        Updates the data model when the text value is changed in the model.
+        """
+        self.__inst_changed("change_single_decode", cell, path)
+
     def __instance_array_changed(self, cell, path, col):
         """
         Updates the data model when the text value is changed in the model.
@@ -1078,7 +1085,6 @@ class MainWindow(BaseWindow):
     def on_edit_field_clicked(self, obj):
         register = self.__reglist_obj.get_selected_register()
         field = self.__bitfield_obj.select_field()
-        print ">" , field, field.field_name, field.volatile
         if field:
             from regenerate.ui.bitfield_editor import BitFieldEditor
             BitFieldEditor(self.dbase, register, field,

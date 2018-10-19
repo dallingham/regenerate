@@ -21,8 +21,8 @@ from collections import namedtuple
 
 class GroupInstData (object):
 
-    def __init__(self, rset, inst, offset, repeat, 
-                 repeat_offset, hdl, no_uvm, no_decode, array):
+    def __init__(self, rset, inst, offset, repeat, repeat_offset, hdl,
+                 no_uvm, no_decode, array, single_decode):
         self.set = rset
         self.inst = inst
         self.offset = offset
@@ -32,3 +32,4 @@ class GroupInstData (object):
         self.no_uvm = no_uvm
         self.no_decode = no_decode
         self.array = array
+        self.single_decode = single_decode

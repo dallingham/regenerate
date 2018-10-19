@@ -73,10 +73,12 @@ class Register(object):
         return cmp(self.address, other.address)
 
     def array_cmp(self, other):
+        if other is None:
+            return False
         if not all(self.__dict__[i] == other.__dict__[i]
                    for i in self.array_compare):
             return False
-        if other.address + other.width != self.address:
+        if other.address + (other.width/8) != self.address:
             return False
         return self.get_bit_fields() == other.get_bit_fields()
 
