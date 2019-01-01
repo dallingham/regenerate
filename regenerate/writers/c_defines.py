@@ -20,7 +20,7 @@
 CWriter - Writes out C defines representing the register addresses
 """
 
-from writer_base import WriterBase, ExportInfo
+from .writer_base import WriterBase, ExportInfo
 from regenerate.extras import full_token, in_groups
 import os
 

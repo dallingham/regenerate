@@ -1,4 +1,4 @@
-from token import in_groups
+from .token import in_groups
 
 def _reg_addr(register, offset):
     return register.address + offset
@@ -10,15 +10,15 @@ def find_addresses(project, regset_name, register, offset_only=True):
 
     x_addr_maps = project.get_address_maps()
     addr_maps = set([])
-    
-    for inst in found_groups:
-        for x in x_addr_maps:
-            groups_in_addr_map = project.get_address_map_groups(x.name)
-            if inst.group in groups_in_addr_map:
-                addr_maps.add(x)
 
     for inst in found_groups:
-        
+        for x_map in x_addr_maps:
+            groups_in_addr_map = project.get_address_map_groups(x_map.name)
+            if inst.group in groups_in_addr_map:
+                addr_maps.add(x_map)
+
+    for inst in found_groups:
+
         for grp_inst in range(0, inst.grpt):
             if inst.repeat == 1 and not inst.array:
                 if offset_only:

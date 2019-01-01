@@ -16,23 +16,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-"""
-Provides the definition of a Bit Field,
-"""
+
+"""Provides the definition of a Bit Field."""
 
 import uuid
 
 
 def clean_signal(name):
-    "Removes white space from a string, replacing them with underscores."
+    """Remove white space from a string, replacing them with underscores."""
     return "_".join(name.strip().split())
 
 
 class BitField(object):
-    """
-    BitField - holds all the data related to a bit field (one or more bits
-    of a register)
-    """
+    """Holds all the data of a bit field (one or more bits of a register)."""
+
     PARAMETERS = {}
 
     (TYPE_READ_ONLY, TYPE_READ_ONLY_VALUE, TYPE_READ_ONLY_LOAD,
@@ -73,7 +70,7 @@ class BitField(object):
                    "reset_type", "reset_parameter", "description", "values")
 
     def __init__(self, stop=0, start=0):
-
+        """Initialize the bitfield."""
         self.modified = False
         self._output_signal = ""
         self._input_signal = ""
@@ -98,131 +95,128 @@ class BitField(object):
 
     @staticmethod
     def set_parameters(values):
+        """Set the parameter value list."""
         BitField.PARAMETERS = values
 
     def __eq__(self, other):
+        """Compare for equality between two bitfieids."""
         return all(self.__dict__[i] == other.__dict__[i]
                    for i in self.full_compare)
 
     def __ne__(self, other):
+        """Compare for inequality between two bitfields."""
         return not self.__eq__(other)
 
-    def __cmp__(self, other):
-        return cmp(self.msb, other.msb)
+#    def __cmp__(self, other):
+#        return cmp(self.msb, other.msb)
 
     def is_constant(self):
-        """
-        Indicates the the value is a constant value.
-        """
+        """Indicate if the value is a constant value."""
         return self.field_type == BitField.TYPE_READ_ONLY
 
     def is_read_only(self):
-        """
-        Indicates the the value is a constant value.
-        """
+        """Indicate if the value is a read only type."""
         return self.field_type in BitField.read_only_types
 
     def is_write_only(self):
-        """
-        Indicates the the value is a constant value.
-        """
+        """Indicate if the value is a write only type."""
         return self.field_type in BitField.write_only_types
 
     def full_field_name(self):
-        """
-        Builds the name of the field, including bit positions if needed
-        """
+        """Build the name of the field, including bit positions if needed."""
         if self.width == 1:
             return self._field_name
-        else:
-            return "%s[%d:%d]" % (self._field_name, self.msb, self.lsb)
+        return "%s[%d:%d]" % (self._field_name, self.msb, self.lsb)
 
     def bit_range(self):
-        """
-        Returns the bit range of the field
-        """
+        """Return the bit range of the field."""
         if self.width == 1:
-            return "%d" % self.lsb
-        else:
-            return "[%d:%d]" % (self.msb, self.lsb)
+            return str(self.lsb)
+        return "[%d:%d]" % (self.msb, self.lsb)
 
     @property
     def reset_value(self):
+        """Return the reset value."""
         if self.reset_type == BitField.RESET_PARAMETER:
             return BitField.PARAMETERS.get(self.reset_parameter, 0)
-        else:
-            return self._reset_value
+        return self._reset_value
 
     @reset_value.setter
     def reset_value(self, value):
+        """Set the reset value."""
         self._reset_value = value
 
     def reset_value_bit(self, bit):
+        """Check for a bit to be set."""
         if self._reset_value & (1 << bit):
             return 1
-        else:
-            return 0
+        return 0
 
     @property
     def uuid(self):
+        """Return the UUID for the bitfield."""
         if not self._id:
             self._id = uuid.uuid4().hex
         return self._id
 
     @uuid.setter
     def uuid(self, value):
+        """Set the UUID for the bitfield."""
         self._id = value
 
     @property
     def stop_position(self):
-        """Returns the most significant bit of the field."""
+        """Return the most significant bit of the field."""
         return self.msb
 
     @stop_position.setter
     def stop_position(self, value):
-        """Sets the most significant bit of the field."""
+        """Set the most significant bit of the field."""
         self.msb = value
 
     @property
     def start_position(self):
-        """Returns the least significant bit of the field."""
+        """Return the least significant bit of the field."""
         return self.lsb
 
     @start_position.setter
     def start_position(self, value):
-        """Sets the least significant bit of the field."""
+        """Set the least significant bit of the field."""
         self.lsb = value
 
     @property
     def width(self):
-        """Returns the width in bits of the bit field."""
+        """Return the width in bits of the bit field."""
         return self.msb - self.lsb + 1
 
     @property
     def field_name(self):
+        """Return the name of the fieid."""
         return self._field_name
 
     @field_name.setter
     def field_name(self, value):
+        """Set the name of the fieid."""
         self._field_name = value.strip()
 
     @property
     def output_signal(self):
         """
-        Gets the output signal associated with the bit range. If the user has
-        not specified the name, assume that it is the same as the name of the
-        bit field.
+        Get the output signal associated with the bit range.
+
+        If the user has not specified the name, assume that it is the same as
+        the name of the bit field.
         """
         if self._output_signal:
             return self._output_signal
-        else:
-            return self._field_name
+        return self._field_name
 
     def resolved_output_signal(self):
         """
-        Gets the output signal associated with the bit range. If the user has
-        not specified the name, assume that it is the same as the name of the
-        bit field.
+        Get the output signal associated with the bit range.
+
+        If the user has not specified the name, assume that it is the same as
+        the name of the bit field.
         """
         nlist = self._output_signal.split("*")
         if len(nlist) == 1:
@@ -236,21 +230,15 @@ class BitField(object):
 
     @output_signal.setter
     def output_signal(self, output):
-        """
-        Sets the output signal associated with the bit range.
-        """
+        """Set the output signal associated with the bit range."""
         self._output_signal = clean_signal(output)
 
     @property
     def input_signal(self):
-        """
-        Gets the name of the input signal, if it exists.
-        """
+        """Get the name of the input signal, if it exists."""
         return self._input_signal
 
     @input_signal.setter
     def input_signal(self, input_signal):
-        """
-        Sets the name of the input signal.
-        """
+        """Set the name of the input signal."""
         self._input_signal = clean_signal(input_signal)

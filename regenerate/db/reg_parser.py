@@ -20,9 +20,10 @@
 Parses the register database, loading the database.
 """
 
-from regenerate.db import Register, BitField, ID_TO_TYPE
 import xml.parsers.expat
 import uuid
+
+from regenerate.db import Register, BitField, ID_TO_TYPE
 
 
 def cnv_hex(attrs, key, default=0):

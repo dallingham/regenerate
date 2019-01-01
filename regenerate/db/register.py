@@ -22,22 +22,24 @@ register, including the list of bit fields.
 """
 
 import uuid
-from bitfield import BitField
+from .bitfield import BitField
+
 
 class Register(object):
     """
     Defines a hardware register.
     """
-    
+
     (SHARE_NONE, SHARE_READ, SHARE_WRITE) = range(3)
 
     full_compare = ("address", "ram_size", "description", "width", "_id",
                     "_token", "_do_not_test", "_name", "_hide", "dimension",
-                    "_do_not_generate_code", "_do_not_cover", "_do_not_use_uvm")
+                    "_do_not_generate_code", "_do_not_cover",
+                    "_do_not_use_uvm")
 
     array_compare = ("ram_size", "width", "_do_not_test", "_hide",
-                    "_do_not_generate_code", "_do_not_cover", "_do_not_use_uvm",
-                     "share")
+                     "_do_not_generate_code", "_do_not_cover",
+                     "_do_not_use_uvm", "share")
 
     doc_compare = ("address", "ram_size", "description", "width", "_id",
                    "_token", "_name", "_hide", "dimension")
@@ -71,6 +73,9 @@ class Register(object):
 
     def __cmp__(self, other):
         return cmp(self.address, other.address)
+
+    def __hash__(self):
+        return id(self)
 
     def array_cmp(self, other):
         if other is None:
@@ -107,8 +112,7 @@ class Register(object):
         sorted_bits = sorted(list(bit.difference(all_bits)))
         if sorted_bits:
             return sorted_bits[0]
-        else:
-            return -1
+        return -1
 
     def find_next_unused_bit(self):
         """
@@ -123,10 +127,8 @@ class Register(object):
         if lbits:
             if lbits[-1] == self.width - 1:
                 return self.find_first_unused_bit()
-            else:
-                return lbits[-1] + 1
-        else:
-            return 0
+            return lbits[-1] + 1
+        return 0
 
     @property
     def uuid(self):
@@ -255,14 +257,16 @@ class Register(object):
         Returns a dictionary of bit fields. The key is msb of the
         bit field.
         """
-        return sorted(self.__bit_fields.values())
+        return sorted(self.__bit_fields.values(),
+                      key=lambda x: x.lsb)
 
     def get_bit_fields_with_values(self):
         """
         Returns a dictionary of bit fields. The key is msb of the
         bit field.
         """
-        return sorted([s for s in self.__bit_fields.values() if s.values])
+        return sorted([s for s in self.__bit_fields.values() if s.values],
+                      key=lambda x: x.lsb)
 
     def get_bit_field(self, key):
         """
@@ -287,9 +291,9 @@ class Register(object):
         Adds a bit field to the set of bit fields.
         """
         remove_val = None
-        for f in self.__bit_fields:
-            if field == self.__bit_fields[f]:
-                remove_val = f
+        for current_field in self.__bit_fields:
+            if field == self.__bit_fields[current_field]:
+                remove_val = current_field
 
         if remove_val is not None:
             del self.__bit_fields[remove_val]
@@ -300,18 +304,18 @@ class Register(object):
         Removes the specified bit field from the dictionary. We cannot
         use the msb, since it may have changed.
         """
-        for key in self.__bit_fields.keys():
+        for key in self.__bit_fields:
             if self.__bit_fields[key] == field:
                 del self.__bit_fields[key]
-    
+
     def is_completely_read_only(self):
-        for key in self.__bit_fields.keys():
+        for key in self.__bit_fields:
             if not self.__bit_fields[key].is_read_only():
                 return False
         return True
 
     def is_completely_write_only(self):
-        for key in self.__bit_fields.keys():
+        for key in self.__bit_fields:
             if not self.__bit_fields[key].is_write_only():
                 return False
         return True
@@ -319,34 +323,34 @@ class Register(object):
     def no_reset_test(self):
         if self._do_not_test:
             return True
-        for key in self.__bit_fields.keys():
+        for key in self.__bit_fields:
             if self.__bit_fields[key].reset_type != BitField.RESET_NUMERIC:
                 return True
         return False
-            
+
     def strict_volatile(self):
-        for key in self.__bit_fields.keys():
+        for key in self.__bit_fields:
             field = self.__bit_fields[key]
             if field.volatile or field.input_signal != "":
                 return True
         return False
 
     def loose_volatile(self):
-        for key in self.__bit_fields.keys():
+        for key in self.__bit_fields:
             if self.__bit_fields[key].volatile:
                 return True
         return False
-        
+
     def reset_value(self):
         val = 0
-        for key in self.__bit_fields.keys():
+        for key in self.__bit_fields:
             field = self.__bit_fields[key]
             val |= (field.reset_value << field.lsb)
         return val
 
     def reset_mask(self):
         val = 0
-        for key in self.__bit_fields.keys():
+        for key in self.__bit_fields:
             field = self.__bit_fields[key]
             for i in range(field.lsb, field.msb + 1):
                 val |= 1 << i

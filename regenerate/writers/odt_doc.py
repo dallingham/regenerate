@@ -29,7 +29,7 @@ from cStringIO import StringIO
 
 from regenerate.settings.paths import ODTFILE, USERODTFILE
 
-from writer_base import WriterBase, ExportInfo
+from .writer_base import WriterBase, ExportInfo
 from regenerate.db import BitField
 
 TYPE_MAP = ["R", "R/W", "W1C", "W1S", "WO"]
@@ -359,7 +359,7 @@ def find_odt_template():
         else:
             odtfile = ODTFILE
         original = zipfile.ZipFile(odtfile)
-    except IOError, msg:
+    except IOError as msg:
         from ui.error_dialogs import ErrorMsg
         ErrorMsg('Could not open OpenDocument template', str(msg))
         return None

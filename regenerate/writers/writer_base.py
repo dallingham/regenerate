@@ -23,8 +23,8 @@ WriterBase - base class for objects that product output from the
 
 import os
 import time
-from regenerate.settings.paths import INSTALL_PATH
 from collections import namedtuple
+from regenerate.settings.paths import INSTALL_PATH
 
 
 ExportInfo = namedtuple("ExportInfo", ["obj_class", "type", "description",
@@ -110,9 +110,9 @@ class WriterBase(object):  # IGNORE:R0921 - we know this is a abstract class
         """
         Goes through the specified text, substituting information if needed.
         """
-        t = time.time()
-        year = str(time.localtime(t)[0])
-        date = time.asctime(time.localtime(t))
+        current_time = time.time()
+        year = str(time.localtime(current_time)[0])
+        date = time.asctime(time.localtime(current_time))
 
         user = get_username()
 

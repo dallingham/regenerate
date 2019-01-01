@@ -20,18 +20,13 @@
 Actual program. Parses the arguments, and initiates the main window
 """
 
-from regenerate.db import BitField, TYPES, LOGGER
-from regenerate.extras.remap import REMAP_NAME
-from regenerate.writers.writer_base import WriterBase, ExportInfo
 import time
 import os
 from jinja2 import Environment
+from regenerate.db import TYPES
+from regenerate.extras.remap import REMAP_NAME
+from regenerate.writers.writer_base import WriterBase, ExportInfo
 
-#
-# Map regenerate types to UVM type strings
-#
-
-from regenerate.db.bitfield_types import TYPES
 
 ACCESS_MAP = {}
 for i in TYPES:
@@ -45,7 +40,7 @@ class UVMRegBlockRegisters(WriterBase):
     Generates a SystemVerilog package representing the registers in
     the UVM format.
     """
-    
+
     def __init__(self, project, dblist):
         """
         Initialize the object. At the current time, only little endian is
@@ -64,8 +59,7 @@ class UVMRegBlockRegisters(WriterBase):
 
         if name in REMAP_NAME:
             return "%s_field" % name
-        else:
-            return name
+        return name
 
     def fix_reg_name(self, reg):
         """
@@ -77,8 +71,7 @@ class UVMRegBlockRegisters(WriterBase):
 
         if name in REMAP_NAME:
             return "%s_reg" % name
-        else:
-            return name
+        return name
 
     def uvm_address_maps(self):
         return [d for d in self._project.get_address_maps() if not d.uvm]
@@ -115,36 +108,33 @@ class UVMRegBlockRegisters(WriterBase):
         a block of register definitions for each register and the associated
         container blocks.
         """
-        
-        group_maps = self._build_group_maps()
-        name = self._project.short_name
+
         dirpath = os.path.dirname(__file__)
 
         env = Environment(trim_blocks=True, lstrip_blocks=True)
-
         env.filters['remove_no_uvm'] = remove_no_uvm
 
-        template_file = os.path.join(dirpath, "templates", 
+        template_file = os.path.join(dirpath, "templates",
                                      "uvm_reg_block.template")
         template = env.from_string(file(template_file).read())
 
         used_dbs = self.get_used_databases()
-        
 
-        with open(filename, "w") as of:
-            of.write(template.render(project=self._project, dblist=used_dbs,
-                                     individual_access=individual_access,
-                                     ACCESS_MAP=ACCESS_MAP, 
-                                     TYPE_TO_INPUT=TYPE_TO_INPUT,
-                                     db_grp_maps=self.get_db_groups(),
-                                     group_maps = self._build_group_maps(),
-                                     fix_name=self.fix_name,
-                                     fix_reg=self.fix_reg_name,
-                                     use_new=False,
-                                     used_maps = self._used_maps(),
-                                     map2grp = self.build_map_name_to_groups(),
-                                     current_date=time.strftime("%B %d, %Y")
-                                     ))
+
+        with open(filename, "w") as ofile:
+            ofile.write(template.render(project=self._project, dblist=used_dbs,
+                                        individual_access=individual_access,
+                                        ACCESS_MAP=ACCESS_MAP,
+                                        TYPE_TO_INPUT=TYPE_TO_INPUT,
+                                        db_grp_maps=self.get_db_groups(),
+                                        group_maps=self._build_group_maps(),
+                                        fix_name=self.fix_name,
+                                        fix_reg=self.fix_reg_name,
+                                        use_new=False,
+                                        used_maps=self._used_maps(),
+                                        map2grp=self.build_map_name_to_groups(),
+                                        current_date=time.strftime("%B %d, %Y")
+                                       ))
 
     def get_db_groups(self):
         data_set = []
@@ -169,7 +159,7 @@ class UVMRegBlockRegisters(WriterBase):
 
         used_sets = set([])
         for group in self._project.get_grouping_list():
-            if group.name in grp_set: 
+            if group.name in grp_set:
                 for reg_sets in group.register_sets:
                     used_sets.add(reg_sets.set)
         return set([db for db in self.dblist if db.set_name in used_sets])
@@ -192,19 +182,21 @@ def individual_access(field, reg):
     # field we are checking for. Calculate the bytes used, and add them to the
     # used_bytes set
 
-    for f in [fld for fld in flds if fld != field and not is_readonly(fld)]:
-        for pos in range(f.lsb, f.msb + 1):
+    for x_field in [fld for fld in flds
+                    if fld != field and not is_readonly(fld)]:
+        for pos in range(x_field.lsb, x_field.msb + 1):
             used_bytes.add(pos / 8)
 
     # loop through the bytes used by the current field, and make sure they
     # do match any of the bytes used by other fields
     for pos in range(field.lsb, field.msb + 1):
-        if (pos / 8) in used_bytes:
+        if pos / 8 in used_bytes:
             return 0
     return 1
 
-def remove_no_uvm(s):
-    return [r for r in s if r.do_not_use_uvm is False]
+def remove_no_uvm(slist):
+    return [reg for reg in slist
+            if reg.do_not_use_uvm is False]
 
 
 EXPORTERS = [

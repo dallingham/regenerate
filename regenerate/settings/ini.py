@@ -21,26 +21,35 @@ Provides the interface to the users .ini file. This is a standard ConfigParser
 module that is used to remember paths for exporters.
 """
 
-import ConfigParser
+try:
+    from configparser import ConfigParser, NoSectionError, NoOptionError
+except:
+    from ConfigParser import ConfigParser, NoSectionError, NoOptionError
+    
 import os
 
-PARSER = ConfigParser.ConfigParser()
+PARSER = ConfigParser()
 FILENAME = os.path.expanduser("~/.regenerate")
 
 
 def get(section, option, default=None):
     try:
         PARSER.read(FILENAME)
-        val = PARSER.get(section, option, default)
+
+        # PORTING ISSUE
+        try:
+            val = PARSER.get(section, option, default)
+        except TypeError:
+            val = PARSER.get(section, option)
         return val
-    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError, IOError):
+    except (NoSectionError, NoOptionError, IOError):
         return default
 
 
 def set(section, option, value):
     if not PARSER.has_section(section):
         PARSER.add_section(section)
-    PARSER.set(section, option, value)
+    PARSER.set(section, option, str(value))
     try:
         ofile = open(FILENAME, "w")
         PARSER.write(ofile)

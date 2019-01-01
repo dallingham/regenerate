@@ -20,11 +20,10 @@
 Actual program. Parses the arguments, and initiates the main window
 """
 
-from regenerate.db import BitField, TYPES, LOGGER
-from regenerate.writers.writer_base import WriterBase, ExportInfo
-import time
 import os
 from jinja2 import Template
+from regenerate.db import BitField
+from regenerate.writers.writer_base import WriterBase, ExportInfo
 
 #
 # Map regenerate types to UVM type strings
@@ -72,6 +71,11 @@ WRITE_MAP = {
     }
 
 
+XML = ['xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"',
+       'xmlns:ipxact="http://www.accellera.org/XMLSchema/IPXACT/1685-2014"',
+       'xsi:schemaLocation="http://www.accellera.org/XMLSchema/IPXACT/1685-2014 http://www.accellera.org/XMLSchema/IPXACT/1685-2014/index.xsd"']
+
+
 class IpXactWriter(WriterBase):
     """
     Generates a SystemVerilog package representing the registers in
@@ -87,22 +91,20 @@ class IpXactWriter(WriterBase):
         a block of register definitions for each register and the associated
         container blocks.
         """
-        
+
         dirpath = os.path.dirname(__file__)
 
-        template = Template(file(os.path.join(dirpath, "templates", "ipxact.template")).read(), 
+        template = Template(file(os.path.join(dirpath, "templates", "ipxact.template")).read(),
                             trim_blocks=True,
                             lstrip_blocks=True)
 
-        with open(filename, "w") as of:
-            of.write(template.render(db = self._dbase,
-                                     WRITE_MAP=WRITE_MAP,
-                                     ACCESS_MAP=ACCESS_MAP,
-                                     scope="ipxact",
-                                     refs=['xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"',
-                                           'xmlns:ipxact="http://www.accellera.org/XMLSchema/IPXACT/1685-2014"',
-                                           'xsi:schemaLocation="http://www.accellera.org/XMLSchema/IPXACT/1685-2014 http://www.accellera.org/XMLSchema/IPXACT/1685-2014/index.xsd"']
-                                     ))
+        with open(filename, "w") as ofile:
+            text = template.render(db=self._dbase,
+                                   WRITE_MAP=WRITE_MAP,
+                                   ACCESS_MAP=ACCESS_MAP,
+                                   scope="ipxact",
+                                   refs=XML)
+            ofile.write(text)
 
 
 EXPORTERS = [

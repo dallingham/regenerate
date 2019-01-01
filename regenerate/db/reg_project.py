@@ -21,21 +21,19 @@ RegProject is the container object for a regenerate project
 """
 
 from collections import namedtuple, defaultdict
-import regenerate.db
-from regenerate.db.group_inst_data import GroupInstData
 import os.path
 import xml.sax.saxutils
+import regenerate.db
 
 (MAP_FULL, MAP_RO, MAP_WO) = range(3)
 
 AddrMapData = namedtuple("AddrMapData",
                          ["name", "base", "width", "fixed", "uvm"])
 
-def nested_dict(n, type):
-    if n == 1:
-        return defaultdict(type)
-    else:
-        return defaultdict(lambda: nested_dict(n-1, type))
+def nested_dict(depth, dict_type):
+    if depth == 1:
+        return defaultdict(dict_type)
+    return defaultdict(lambda: nested_dict(depth-1, dict_type))
 
 
 def cleanup(data):
@@ -309,8 +307,8 @@ class RegProject(object):
         """
         used_in_uvm = set([m.name for m in self._addr_map_list if m.uvm == 0])
 
-        
-        return [key for key in self._addr_map_grps 
+
+        return [key for key in self._addr_map_grps
                 if key in used_in_uvm and name in self._addr_map_grps[key]]
 
     def change_address_map_name(self, old_name, new_name):
@@ -337,8 +335,7 @@ class RegProject(object):
         if group_name not in self._addr_map_grps[name]:
             self._addr_map_grps[name].append(group_name)
             return True
-        else:
-            return False
+        return False
 
     def set_address_map_group_list(self, name, group_list):
         """
@@ -394,7 +391,7 @@ class RegProject(object):
         for key in self.access_map[map_name][group_name]:
             items.append((key, self.access_map[map_name][group_name][key]))
         return items
-    
+
     def get_access(self, map_name, group_name, block_name):
         try:
             return self.access_map[map_name][group_name][block_name]
@@ -472,12 +469,12 @@ class RegProject(object):
             if g_data.name == old:
                 g_data.name = cur
         self._modified = True
-        
+
 
     def change_instance_name(self, subsystem, old, cur):
-        """ 
+        """
         Changes the register set instance name for a particular
-        instance in the identified subsystem. Updates the access 
+        instance in the identified subsystem. Updates the access
         map and the groupings.
         """
 
@@ -494,7 +491,7 @@ class RegProject(object):
             for b in self.access_map[m][subsystem]:
                 if b == old:
                     to_delete.append((m, subsystem, cur, old))
-        
+
         for (m, s, cur, old) in to_delete:
             self.access_map[m][s][cur] = self.access_map[m][s][old]
             del self.access_map[m][s][old]

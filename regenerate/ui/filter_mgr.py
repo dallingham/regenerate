@@ -55,7 +55,9 @@ class FilterManager(object):
         self._text = self._obj.get_text()
         self._model.refilter()
 
-    def visible_cb(self, model, iter):
+    def visible_cb(self, model, *obj):
+        iter = obj[0]
+        
         if self._text == "":
             return True
         try:

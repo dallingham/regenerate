@@ -33,8 +33,8 @@ else:
 
 import os.path
 from regenerate.settings.paths import HELP_PATH
-from preview import html_string
-from base_window import BaseWindow
+from .preview import html_string
+from .base_window import BaseWindow
 
 
 class HelpWindow(BaseWindow):

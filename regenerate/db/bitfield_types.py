@@ -20,9 +20,9 @@
 Provides a description of the various different bit types
 """
 
-from regenerate.db import BitField
 from collections import namedtuple
-
+from regenerate.db import BitField
+    
 BitFieldInfo = namedtuple('BitFieldInfo',
                           ['type', 'id', 'input', 'control',
                            'oneshot', 'wide', 'dataout', 'read', 'readonly',

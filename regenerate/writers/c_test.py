@@ -21,7 +21,7 @@ Actual program. Parses the arguments, and initiates the main window
 """
 
 from regenerate.db import BitField
-from writer_base import WriterBase, ExportInfo
+from .writer_base import WriterBase, ExportInfo
 from regenerate.extras import find_addresses
 import string
 

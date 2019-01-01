@@ -525,7 +525,7 @@ def find_odt_template():
         else:
             odtfile = ODTFILE
         original = zipfile.ZipFile(odtfile)
-    except IOError, msg:
+    except IOError as msg:
         from ui.error_dialogs import ErrorMsg
         ErrorMsg('Could not open OpenDocument template', str(msg))
         return None

@@ -60,17 +60,17 @@ class IpXactParser(object):
         """
         Parses the specified input file.
         """
-        print "Reading", input_file
+        print ("Reading", input_file)
         tree = ET.parse(input_file)
-        print "Finished"
+        print ("Finished")
         root = tree.getroot()
 
-        print root.tag, root.attrib
+        print (root.tag, root.attrib)
 
         for mem_map in root.find("{http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009}memoryMaps"):
             name = mem_map.find("{http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009}name")
             descr = mem_map.find("{http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009}description")
-            print name.text, descr.text
+            print (name.text, descr.text)
 
         # parser = xml.parsers.expat.ParserCreate()
         # parser.StartElementHandler = self.start_element

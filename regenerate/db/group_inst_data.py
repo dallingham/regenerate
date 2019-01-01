@@ -17,9 +17,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-from collections import namedtuple
 
-class GroupInstData (object):
+class GroupInstData(object):
 
     def __init__(self, rset, inst, offset, repeat, repeat_offset, hdl,
                  no_uvm, no_decode, array, single_decode):

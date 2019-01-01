@@ -114,7 +114,7 @@ class RegisterModel(gtk.ListStore):
 
     def __init__(self):
         gtk.ListStore.__init__(self, str, str, str, str,
-                               str, str, int, str, object)
+                               int, str, int, str, object)
         self.reg2path = {}
 
     def append_register(self, register):
@@ -388,7 +388,7 @@ class RegisterList(object):
         if value != reg.dimension:
             reg.dimension = value
             self.__set_modified()
-        self.__model[path][RegisterModel.DIM_COL] = "%d" % value
+        self.__model[path][RegisterModel.DIM_COL] = value
 
     def __reg_update_define(self, reg, path, text, cell):
         """

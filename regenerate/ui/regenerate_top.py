@@ -30,6 +30,7 @@ import pango
 import os
 import copy
 import re
+import sys
 import xml
 from regenerate import PROGRAM_VERSION, PROGRAM_NAME
 from regenerate.db import RegWriter, RegisterDb, Register
@@ -186,7 +187,10 @@ class MainWindow(BaseWindow):
             self.__builder.get_object("bitfield_list"), self.__bit_combo_edit,
             self.__bit_text_edit, self.__bit_changed)
 
-        self.__recent_manager = gtk.recent_manager_get_default()
+        try:
+            self.__recent_manager = gtk.recent_manager_get_default()
+        except AttributeError:
+            self.__recent_manager = gtk.RecentManager.get_default()
         recent_file_menu = self.__create_recent_menu_item()
         self.__builder.get_object('file_menu').insert(recent_file_menu, 2)
 
@@ -353,7 +357,8 @@ class MainWindow(BaseWindow):
     def on_project_documentation_changed(self, obj):
         self.project_modified(True)
         self.__prj.documentation = obj.get_text(obj.get_start_iter(),
-                                                obj.get_end_iter())
+                                                obj.get_end_iter(),
+                                                False)
 
     def on_short_name_changed(self, obj):
         """
@@ -537,12 +542,12 @@ class MainWindow(BaseWindow):
     def dump(self, title):
         r = self.__reglist_obj.get_selected_register()
 
-        print "----------------------------------------------"
-        print title, r.register_name
+        print ("----------------------------------------------")
+        print (title, r.register_name)
 
         for f in r.get_bit_fields():
-            print "'%18s' %4d %4d" % (f.field_name, f.msb, f.lsb)
-            print "\t", f
+            print ("'%18s' %4d %4d" % (f.field_name, f.msb, f.lsb))
+            print ("\t", f)
 
     def __bit_update_name(self, field, path, new_text):
         """
@@ -962,7 +967,8 @@ class MainWindow(BaseWindow):
         if reg:
             reg.description = self.__reg_text_buf.get_text(
                 self.__reg_text_buf.get_start_iter(),
-                self.__reg_text_buf.get_end_iter())
+                self.__reg_text_buf.get_end_iter(),
+                False)
             self.set_modified()
             self.__set_register_warn_flags(reg)
 
@@ -1293,9 +1299,7 @@ class MainWindow(BaseWindow):
         self.__status_obj.push(idval, "Loading %s ..." % filename)
         self.set_busy_cursor(True)
 
-        for f in sorted(self.__prj.get_register_set(),
-                        lambda x, y: cmp(os.path.basename(x),
-                                         os.path.basename(y))):
+        for f in sorted(self.__prj.get_register_set(), key=sort_regset):
 
             try:
                 self.open_xml(f, False)
@@ -1450,7 +1454,7 @@ class MainWindow(BaseWindow):
                     writer = RegWriter(item[ProjectModel.OBJ].db)
                     writer.save(old_path)
                     self.clear_modified(item[ProjectModel.OBJ])
-                except IOError, msg:
+                except IOError as msg:
                     os.rename(new_path, old_path)
                     ErrorMsg("Could not save %s, restoring original" % old_path, str(msg))
                 # except:
@@ -1580,7 +1584,8 @@ class MainWindow(BaseWindow):
 
     def __overview_changed(self, obj):
         self.dbase.overview_text = obj.get_text(obj.get_start_iter(),
-                                                obj.get_end_iter())
+                                                obj.get_end_iter(),
+                                                False)
         self.__set_description_warn_flag()
         self.set_modified()
 
@@ -2020,6 +2025,9 @@ def check_reset(field):
         return gtk.STOCK_DIALOG_WARNING
     return None
 
+def sort_regset(x):
+    return os.path.basename(x)
+    
 
 def bus_index(value):
     if value == 8:

@@ -22,9 +22,9 @@ first. This allows the end user to override the standard version without
 fears that it will get overwritten on the next install.
 """
 
-from rdl import RDLParser
-from denali import DenaliRDLParser
-from ipxact import IpXactParser
+from .rdl import RDLParser
+from .denali import DenaliRDLParser
+from .ipxact import IpXactParser
 
 #
 # Lists the exporters. The format is:

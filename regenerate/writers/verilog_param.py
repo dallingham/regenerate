@@ -20,7 +20,7 @@
 DefsWriter - Writes out Verilog defines representing the register addresses
 """
 
-from writer_base import WriterBase, ExportInfo
+from .writer_base import WriterBase, ExportInfo
 
 
 class VerilogParameters(WriterBase):

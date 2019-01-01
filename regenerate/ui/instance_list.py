@@ -373,7 +373,8 @@ class InstanceList(object):
         column.set_min_width(80)
         self.__obj.append_column(column)
 
-    def visible_callback(self, column, cell, model, node):
+    def visible_callback(self, column, cell, model, *obj):
+        node = obj[0]
         if len(model.get_path(node)) == 1:
             cell.set_property('visible', False)
         else:

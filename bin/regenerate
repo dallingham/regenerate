@@ -43,6 +43,19 @@ def run_gui(args):
     Actually runs the program
     """
     import os
+
+    try:
+        if sys.version_info[0] == 2:
+            pygtkcompat = None
+        else:
+            from gi import pygtkcompat
+    except ImportError:
+        pygtkcompat = None
+
+    if pygtkcompat is not None:
+        pygtkcompat.enable() 
+        pygtkcompat.enable_gtk(version='3.0')
+
     import gtk
 
     from regenerate.ui.regenerate_top import MainWindow
@@ -56,7 +69,7 @@ def run_gui(args):
     if args:
         try:
             edit.open_project(args[0], "file:///" + args[0])
-        except IOError, msg:
+        except IOError as msg:
             sys.stderr.write("regenerate: error: could not project file: ")
             sys.stderr.write("%s\n" % str(msg))
             sys.exit(1)

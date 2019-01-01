@@ -87,7 +87,8 @@ class RegisterDb(object):
         """
         Returns the register keys, which is the address of the register
         """
-        return [a.uuid for a in sorted(self.__registers.values(), key=lambda a: a.address)]
+        return [a.uuid for a in sorted(self.__registers.values(),
+                                       key=lambda a: a.address)]
 
     def get_all_registers(self):
         """
@@ -118,7 +119,7 @@ class RegisterDb(object):
         """
         Reads the XML file, loading the databsae.
         """
-        with open(filename) as ifile:
+        with open(filename, "rb") as ifile:
             self.set_name = os.path.splitext(os.path.basename(filename))[0]
             parser = regenerate.db.RegParser(self)
             parser.parse(ifile)

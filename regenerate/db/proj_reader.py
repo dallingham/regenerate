@@ -25,6 +25,7 @@ from collections import namedtuple
 from regenerate.db.group_data import GroupData
 from regenerate.db.group_inst_data import GroupInstData
 
+
 AddrMapData = namedtuple("AddrMapData",
                          ["name", "base", "width", "fixed", "uvm"])
 
@@ -46,8 +47,8 @@ class ProjectReader(object):
         Opens and reads an XML file
         """
         self.path = name
-        with open(name) as ofile:
 
+        with open(name, "rb") as ofile:
             parser = xml.parsers.expat.ParserCreate()
             parser.StartElementHandler = self.startElement
             parser.EndElementHandler = self.endElement
@@ -119,20 +120,23 @@ class ProjectReader(object):
                                         attrs.get('hdl', ""),
                                         int(attrs.get('repeat', 1)),
                                         repeat_offset,
-                                        attrs.get('title', "")
-                                        )
+                                        attrs.get('title', ""))
         self._prj.add_to_grouping_list(self._current_group)
 
     def start_map(self, attrs):
         """Called when a map tag is found"""
         sname = attrs['set']
-        data = GroupInstData(
-            sname, attrs.get('inst', sname), int(attrs['offset'], 16),
-            int(attrs['repeat']), int(attrs['repeat_offset']),
-            attrs.get("hdl", ""),
-            int(attrs.get("no_uvm", "0")), int(attrs.get("no_decode", "0")),
-            int(attrs.get("array", "0")), int(attrs.get("single_decode", "0")),
-            )
+
+        data = GroupInstData(sname,
+                             attrs.get('inst', sname),
+                             int(attrs['offset'], 16),
+                             int(attrs['repeat']),
+                             int(attrs['repeat_offset']),
+                             attrs.get("hdl", ""),
+                             int(attrs.get("no_uvm", "0")),
+                             int(attrs.get("no_decode", "0")),
+                             int(attrs.get("array", "0")),
+                             int(attrs.get("single_decode", "0")))
         self._current_group.register_sets.append(data)
 
     def start_address_map(self, attrs):
@@ -145,7 +149,7 @@ class ProjectReader(object):
         self._prj.set_address_map(name, base, width, fixed, uvm)
         self._current_map = attrs['name']
         self.current_map_group = None
-        
+
     def end_documentation(self, text):
         """
         Called when the documentation XML tag is encountered. Assigns the

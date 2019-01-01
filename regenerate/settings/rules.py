@@ -25,11 +25,15 @@ This allows the end user to customize their installation without the fear of
 the next update overwriting their modifications.
 """
 
-import ConfigParser
+try:
+    from configparser import SafeConfigParser, NoSectionError, NoOptionError
+except ImportError:
+    from ConfigParser import SafeConfigParser, NoSectionError, NoOptionError
+    
 import os
 from regenerate.settings.paths import INSTALL_PATH
 
-__Rules = ConfigParser.SafeConfigParser()
+__Rules = SafeConfigParser()
 
 __SITE_IO = os.path.join(INSTALL_PATH, "site_local", "iorules.conf")
 __DEF_IO = os.path.join(INSTALL_PATH, "data", "iorules.conf")
@@ -43,5 +47,5 @@ else:
 def get(section, option, default=""):
     try:
         return __Rules.get(section, option)
-    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError, IOError):
+    except (NoSectionError, NoOptionError, IOError):
         return default

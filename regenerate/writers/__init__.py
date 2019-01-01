@@ -28,7 +28,7 @@ to maintain.
 """
 
 from collections import namedtuple
-from writer_base import WriterBase
+from .writer_base import WriterBase
 from regenerate.db import LOGGER
 import platform
 
@@ -41,21 +41,36 @@ GRP_EXPORTERS = []
 PRJ_EXPORTERS = []
 
 IMPORT_PATHS = ("regenerate.site_local", "regenerate.writers")
+
 MODULES = [ 
-    ("verilog", ["Verilog", "Verilog2001", "SystemVerilog"]),
-    ("verilog_defs", ["VerilogDefines"]),
-    ("verilog_param", ["VerilogParameters"]),
-    ("reg_pkg", ["VerilogConstRegPackage"]),
-    ("decoder", ["AddressDecode"]),
-    ("ipxact", ["IpXactWriter"]),
-    ("c_test", ["CTest"]),
-    ("c_defines", ["CDefines"]),
-    ("asm_equ", ["AsmEqu"]),
-    ("odt_doc", ["OdtDoc"]),
-    ("rst_doc", ["RstDoc"]),
-    ("uvm_reg_block", ["UVMRegBlockRegisters"]),
-    ("sdc", ["Sdc"]),
-    ("spyglass", ["Spyglass"]),
+    ("verilog",
+     ["Verilog", "Verilog2001", "SystemVerilog"]),
+    ("verilog_defs",
+     ["VerilogDefines"]),
+    ("verilog_param",
+     ["VerilogParameters"]),
+    ("reg_pkg",
+     ["VerilogConstRegPackage"]),
+    ("decoder",
+     ["AddressDecode"]),
+    ("ipxact",
+     ["IpXactWriter"]),
+    ("c_test",
+     ["CTest"]),
+    ("c_defines",
+     ["CDefines"]),
+    ("asm_equ",
+     ["AsmEqu"]),
+    ("odt_doc",
+     ["OdtDoc"]),
+    ("rst_doc",
+     ["RstDoc"]),
+    ("uvm_reg_block",
+     ["UVMRegBlockRegisters"]),
+    ("sdc",
+     ["Sdc"]),
+    ("spyglass",
+     ["Spyglass"]),
     ]
 
 #-----------------------------------------------------------------------------
@@ -95,12 +110,14 @@ for module in MODULES:
                 else:
                     PRJ_EXPORTERS.append(info)
             break
-        except ImportError, msg:
+        except ImportError as msg:
             continue
-        except AttributeError, msg:
+        except AttributeError as msg:
             continue
-        except SyntaxError, msg:
-            print str(msg)
+        except SyntaxError as msg:
+            print(str(msg))
+            continue
+        except:
             continue
     else:
         LOGGER.warning('Cound not import the "{0}" module'.format(module[0]))

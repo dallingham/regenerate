@@ -19,7 +19,7 @@
 
 
 class GroupData(object):
-    """Basic group information"""
+    """Basic group information."""
 
     def __init__(self,
                  name="",
@@ -28,6 +28,7 @@ class GroupData(object):
                  repeat=1,
                  repeat_offset=0x10000,
                  title=""):
+        """Initialize the group data item."""
         self.name = name
         self.base = base
         self.hdl = hdl
@@ -38,9 +39,11 @@ class GroupData(object):
         self.docs = ""
 
     def __ne__(self, other):
+        """Compare for inequality."""
         return not self.__eq__(other)
 
     def __eq__(self, other):
+        """Compare for equality."""
         if other is None:
             return False
         if self.name != other.name:

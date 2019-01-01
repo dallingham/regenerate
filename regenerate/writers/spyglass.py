@@ -20,7 +20,7 @@
 Sdc - Writes out synthesis constraints
 """
 
-from writer_base import WriterBase, ExportInfo
+from .writer_base import WriterBase, ExportInfo
 
 
 class Spyglass(WriterBase):

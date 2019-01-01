@@ -20,16 +20,14 @@
 Actual program. Parses the arguments, and initiates the main window
 """
 
-from regenerate.db import BitField, TYPES, TYPE_TO_OUTPUT, LOGGER, Register
-from regenerate.writers.writer_base import WriterBase, ExportInfo
-from regenerate.writers.verilog_reg_def import REG
-import time
 import os
 import re
+from collections import namedtuple, defaultdict
 from jinja2 import FileSystemLoader, Environment
-from collections import namedtuple, OrderedDict, defaultdict
+from regenerate.db import BitField, TYPES, TYPE_TO_OUTPUT, Register
+from regenerate.writers.writer_base import WriterBase, ExportInfo
+from regenerate.writers.verilog_reg_def import REG
 
-import pprint
 
 LOWER_BIT = {128: 4, 64: 3, 32: 2, 16: 1, 8: 0}
 
@@ -37,9 +35,8 @@ LOWER_BIT = {128: 4, 64: 3, 32: 2, 16: 1, 8: 0}
 (F_FIELD, F_START_OFF, F_STOP_OFF, F_START, F_STOP, F_ADDRESS,
  F_REGISTER) = range(7)
 
-BIT_SLICE = re.compile("(.*)\[(\d+)\]")
-BUS_SLICE = re.compile("(.*)\[(\d+):(\d+)\]")
-
+BIT_SLICE = re.compile(r"(.*)\[(\d+)\]")
+BUS_SLICE = re.compile(r"(.*)\[(\d+):(\d+)\]")
 
 CellInfo = namedtuple("CellInfo",
                       ["name", "has_input", "has_control",
@@ -54,8 +51,7 @@ def full_reset_value(field):
         return "{0}'h{1:0x}".format(field.width, field.reset_value)
     elif field.reset_type == BitField.RESET_INPUT:
         return field.reset_input
-    else:
-        return field.reset_parameter
+    return field.reset_parameter
 
 
 def reset_value(field, start, stop):
@@ -69,13 +65,10 @@ def reset_value(field, start, stop):
     elif field.reset_type == BitField.RESET_INPUT:
         if stop == start:
             return field.reset_input
-        else:
-            return "{0}[{1}:{2}]".format(field.reset_input, stop, start)
-    else:
-        if stop == start:
-            return field.reset_parameter
-        else:
-            return "{0}[{1}:{2}]".format(field.reset_parameter, stop, start)
+        return "{0}[{1}:{2}]".format(field.reset_input, stop, start)
+    if stop == start:
+        return field.reset_parameter
+    return "{0}[{1}:{2}]".format(field.reset_parameter, stop, start)
 
 
 def break_into_bytes(start, stop):
@@ -172,7 +165,7 @@ class Verilog(WriterBase):
         dirpath = os.path.dirname(__file__)
 
         env = Environment(loader=FileSystemLoader(os.path.join(dirpath, "templates")),
-                          trim_blocks = True, lstrip_blocks = True)
+                          trim_blocks=True, lstrip_blocks=True)
         env.filters['drop_write_share'] = drop_write_share
 
         template = env.get_template("verilog.template")
@@ -182,60 +175,60 @@ class Verilog(WriterBase):
                     if not r.do_not_generate_code]:
             if reg.dimension > 1:
                 for i in range(0, reg.dimension):
-                    r = copy.copy(reg)
-                    r.address = reg.address + (i * (reg.width / 8))
-                    r.dimension = i 
-                    reglist.append(r)
+                    new_reg = copy.copy(reg)
+                    new_reg.address = reg.address + (i * (reg.width / 8))
+                    new_reg.dimension = i
+                    reglist.append(new_reg)
             else:
-                r = copy.copy(reg)
-                r.dimension = -1
-                reglist.append(r)
+                new_reg = copy.copy(reg)
+                new_reg.dimension = -1
+                reglist.append(new_reg)
 
         word_fields = self.__generate_group_list(reglist, self._data_width)
-        reset_edge = "posedge" if self._dbase.reset_active_level and not self._db.use_interface else "negedge"
-        reset_op = "" if self._dbase.reset_active_level and not self._db.use_interface else "~"
+        reset_edge = "posedge" if self._dbase.reset_active_level and not self._dbase.use_interface else "negedge"
+        reset_op = "" if self._dbase.reset_active_level and not self._dbase.use_interface else "~"
 
         parameters = []
-        for r in self._dbase.get_all_registers():
-            for f in r.get_bit_fields():
-                if f.reset_type == BitField.RESET_PARAMETER:
-                    parameters.append((f.msb, f.lsb, f.reset_parameter))
+        for reg in self._dbase.get_all_registers():
+            for field in reg.get_bit_fields():
+                if field.reset_type == BitField.RESET_PARAMETER:
+                    parameters.append((field.msb, field.lsb, field.reset_parameter))
 
         scalar_ports = []
         array_ports = defaultdict(list)
         dim = {}
-        for r in self._dbase.get_all_registers():
-            if r.do_not_generate_code:
+        for reg in self._dbase.get_all_registers():
+            if reg.do_not_generate_code:
                 continue
-            for f in r.get_bit_fields():
-                if TYPE_TO_OUTPUT[f.field_type] and f.use_output_enable:
-                    sig = f.output_signal
+            for field in reg.get_bit_fields():
+                if TYPE_TO_OUTPUT[field.field_type] and field.use_output_enable:
+                    sig = field.output_signal
                     root = sig.split('[')
                     wild = sig.split('*')
                     if len(root) == 1:
-                        if f.msb == f.lsb:
-                            scalar_ports.append((sig, "", r.dimension))
+                        if field.msb == field.lsb:
+                            scalar_ports.append((sig, "", reg.dimension))
                         else:
-                            dim[sig] = r.dimension
-                            for i in range(f.lsb, f.msb+1):
+                            dim[sig] = reg.dimension
+                            for i in range(field.lsb, field.msb+1):
                                 array_ports[sig].append(i)
                     elif len(wild) > 1:
-                        dim[root[0]] = r.dimension
-                        for i in range(f.lsb, f.msb+1):
+                        dim[root[0]] = reg.dimension
+                        for i in range(field.lsb, field.msb+1):
                             array_ports[root[0]].append(i)
                     else:
                         match = BUS_SLICE.match(sig)
                         if match:
-                            g = match.groups()
-                            for i in range(int(g[1]), int(g[2])):
-                                array_ports[g[0]].append(i)
+                            grp = match.groups()
+                            for i in range(int(grp[1]), int(grp[2])):
+                                array_ports[grp[0]].append(i)
                             continue
 
                         match = BIT_SLICE.match(sig)
                         if match:
-                            g = match.groups()
-                            dim[g[0]] = r.dimension
-                            array_ports[g[0]].append(int(g[1]))
+                            grp = match.groups()
+                            dim[grp[0]] = reg.dimension
+                            array_ports[grp[0]].append(int(grp[1]))
                             continue
 
 
@@ -246,46 +239,47 @@ class Verilog(WriterBase):
                 scalar_ports.append((key, "[%d]" % lsb, dim[key]))
             else:
                 scalar_ports.append((key, "[%d:%d]" % (msb, lsb), dim[key]))
-                        
+
 # TODO: fix 64 bit registers with 32 bit width
 
-        with open(filename, "w") as of:
-            of.write(template.render(db = self._dbase,
-                                     rshift = rshift,
-                                     parameters = parameters,
-                                     cell_info = self._cell_info,
-                                     word_fields = word_fields,
-                                     break_into_bytes = break_into_bytes,
-                                     sorted_regs = sorted(reglist),
-                                     full_reset_value = full_reset_value,
-                                     reset_value = reset_value,
-                                     input_logic = self.input_logic,
-                                     output_logic = self.output_logic,
-                                     always = self.always,
-                                     output_ports = scalar_ports,
-                                     reset_edge = reset_edge,
-                                     reset_op = reset_op,
-                                     reg_type = self.reg_type,
-                                     LOWER_BIT = LOWER_BIT))
-            self.write_register_modules(of)
+        with open(filename, "w") as ofile:
+            ofile.write(template.render(db=self._dbase,
+                                        rshift=rshift,
+                                        parameters=parameters,
+                                        cell_info=self._cell_info,
+                                        word_fields=word_fields,
+                                        break_into_bytes=break_into_bytes,
+                                        sorted_regs=sorted(reglist),
+                                        full_reset_value=full_reset_value,
+                                        reset_value=reset_value,
+                                        input_logic=self.input_logic,
+                                        output_logic=self.output_logic,
+                                        always=self.always,
+                                        output_ports=scalar_ports,
+                                        reset_edge=reset_edge,
+                                        reset_op=reset_op,
+                                        reg_type=self.reg_type,
+                                        LOWER_BIT=LOWER_BIT))
+            self.write_register_modules(ofile)
 
-    def comment(self, of, text_list, border=None, precede_blank=0):
+    def comment(self, ofile, text_list, border=None, precede_blank=0):
         """
         Creates a comment from the list of text strings
         """
-        border_string = border * (self._max_column - 2) if border else ""
+        max_column = 78
+        border_string = border * (max_column - 2) if border else ""
 
         if text_list:
             if precede_blank:
-                of.write('\n')
-            of.write("/*{0}\n * ".format(border_string))
-            of.write("\n * ".join(text_list))
+                ofile.write('\n')
+            ofile.write("/*{0}\n * ".format(border_string))
+            ofile.write("\n * ".join(text_list))
             if border:
                 text = "\n *{0}".format(border_string)
-                of.write(text.rstrip())
-            of.write("\n */\n")
+                ofile.write(text.rstrip())
+            ofile.write("\n */\n")
 
-    def write_register_modules(self, of):
+    def write_register_modules(self, ofile):
         """
         Writes the used register module types to the file.
         """
@@ -301,13 +295,13 @@ class Verilog(WriterBase):
         }
 
         for i in self._used_types:
-            of.write("\n\n")
+            ofile.write("\n\n")
             try:
-                self.comment(of, [self._cell_info[i][4]])
-                of.write(REG[self._cell_info[i][0]] % name_map)
+                self.comment(ofile, [self._cell_info[i][4]])
+                ofile.write(REG[self._cell_info[i][0]] % name_map)
             except KeyError:
-                self.comment(of, ['No definition for %s_%s_reg\n' %
-                                   (self._module, self._cell_info[i][0])])
+                self.comment(ofile, ['No definition for %s_%s_reg\n' %
+                                     (self._module, self._cell_info[i][0])])
 
 
 class SystemVerilog(Verilog):
@@ -325,16 +319,16 @@ class Verilog2001(Verilog):
         Verilog.__init__(self, project, dbase)
 
 def drop_write_share(list_in):
-    list_out = [l for l in list_in 
-            if l[6].share != Register.SHARE_WRITE]
+    list_out = [l for l in list_in
+                if l[6].share != Register.SHARE_WRITE]
     return list_out
-    
+
 
 EXPORTERS = [
     (WriterBase.TYPE_BLOCK, ExportInfo(SystemVerilog, ("RTL", "SystemVerilog"),
                                        "SystemVerilog files", ".sv", 'rtl-system-verilog')),
-    (WriterBase.TYPE_BLOCK, ExportInfo(Verilog2001, ("RTL", "Verilog 2001"), 
+    (WriterBase.TYPE_BLOCK, ExportInfo(Verilog2001, ("RTL", "Verilog 2001"),
                                        "Verilog files", ".v", 'rtl-verilog-2001')),
-    (WriterBase.TYPE_BLOCK, ExportInfo(Verilog, ("RTL", "Verilog 95"), 
+    (WriterBase.TYPE_BLOCK, ExportInfo(Verilog, ("RTL", "Verilog 95"),
                                        "Verilog files", ".v", 'rtl-verilog-95'))
     ]

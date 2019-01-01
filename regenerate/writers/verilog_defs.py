@@ -20,7 +20,7 @@
 DefsWriter - Writes out Verilog defines representing the register addresses
 """
 
-from writer_base import WriterBase, ExportInfo
+from .writer_base import WriterBase, ExportInfo
 
 HEADER = ["`ifdef $M$_DEFS\n", "`else\n", "`define $M$_DEFS 1\n", "\n", ]
 

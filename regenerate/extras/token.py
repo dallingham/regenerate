@@ -48,9 +48,8 @@ def uvm_name(group_name, reg_name, set_name, index):
     if index >= 0:
         return "<top>.%s.%s[%d].%s" % (group_name.lower(), set_name.lower(),
                                        index, reg_name.lower())
-    else:
-        return "<top>.%s.%s.%s" % (group_name.lower(), set_name.lower(),
-                                   reg_name.lower())
+    return "<top>.%s.%s.%s" % (group_name.lower(), set_name.lower(),
+                               reg_name.lower())
 
 
 def in_groups(name, project):

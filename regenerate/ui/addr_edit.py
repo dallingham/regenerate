@@ -32,8 +32,9 @@ class AddrMapEdit(BaseWindow):
     """
     def __init__(self, map_name, subsystem_list, builder, project):
 
+        super(AddrMapEdit, self).__init__()
         self.project = project
-        
+
         label = gtk.Label(
             'Select subsystems for the "{0}" address map'.format(map_name))
         label.set_padding(6, 6)
@@ -41,8 +42,7 @@ class AddrMapEdit(BaseWindow):
                             None,
                             gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
                             (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
-                             gtk.STOCK_OK, gtk.RESPONSE_ACCEPT)
-                            )
+                             gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
         dialog.vbox.pack_start(label, False, False)
         dialog.vbox.set_homogeneous(False)
         dialog.set_default_size(580, 320)
@@ -62,7 +62,7 @@ class AddrMapEdit(BaseWindow):
 
         self.view.show()
         col = ToggleColumn("Enabled", self._enable_changed, 0,
-                             visible_callback=self.visible_callback2)
+                           visible_callback=self.visible_callback2)
         self.view.append_column(col)
 
         col = EditableColumn("Subsystem", None, 1)
@@ -73,7 +73,7 @@ class AddrMapEdit(BaseWindow):
                    ("Read Only", 1),
                    ("Write Only", 2),
                    ("No Access", 3),
-                   ]
+                  ]
 
         col = ComboMapColumn("Access Method", self._access_changed, options, 2,
                              visible_callback=self.visible_callback)
@@ -83,7 +83,7 @@ class AddrMapEdit(BaseWindow):
 
         self.cb_list = []
 
-        for i, val in enumerate(subsystem_list):
+        for val in subsystem_list:
             group, active = val
             title = group.name
             top = self.model.append(None, row=(active, title, "", None, None))
@@ -93,7 +93,7 @@ class AddrMapEdit(BaseWindow):
                                             item, group.name))
 
         self.map_name = map_name
-                
+
         response = dialog.run()
 
         if response == gtk.RESPONSE_REJECT:
@@ -102,10 +102,12 @@ class AddrMapEdit(BaseWindow):
             self.cb_list = [row[1] for row in self.model if row[0]]
         dialog.destroy()
 
-    def visible_callback(self, column, cell, model, node):
+    def visible_callback(self, column, cell, model, *obj):
+        node = obj[0]
         cell.set_property('visible', len(model.get_path(node)) != 1)
 
-    def visible_callback2(self, column, cell, model, node):
+    def visible_callback2(self, column, cell, model, *obj):
+        node = obj[0]
         cell.set_property('visible', len(model.get_path(node)) == 1)
 
     def _enable_changed(self, cell, path, source):
@@ -119,6 +121,6 @@ class AddrMapEdit(BaseWindow):
         grp = self.model[path][3]
         self.project.set_access(self.map_name, self.model[path][-1],
                                 self.model[path][1], val_int)
-        
+
     def get_list(self):
         return self.cb_list
