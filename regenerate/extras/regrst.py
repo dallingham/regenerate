@@ -598,10 +598,18 @@ class RegisterRst:
                     self._display_uvm_entry(inst, i, o)
         o.write("\n\n")
 
-    def html_from_text(self, text):
+    def html_from_text(self, text, links=None):
         if text is None:
             return "No data"
         if _HTML:
+
+            refs = []
+            if links:
+                for vals in re.findall("`[^`]+`_", text):
+                    v = vals[1:-2]
+                    if v in links:
+                        refs.append(".. _`%s`: %s" % (v, links[v]))
+
             try:
                 if self._header_level > 1:
                     overrides = {
@@ -614,7 +622,7 @@ class RegisterRst:
                         'report_level': 'quiet'
                         }
                 parts = publish_parts(
-                    text,
+                    text + "\n".join(refs),
                     writer_name="html",
                     settings_overrides=overrides
                     )
@@ -636,23 +644,24 @@ class RegisterRst:
             return "<pre>{0}</pre>".format(self.restructured_text())
 
 
-    def html(self, text=""):
+    def html(self, text="", links=None):
         """
         Produces a HTML subsection of the document (no header/body).
         """
-        return self.html_from_text(self.restructured_text(text))
+        return self.html_from_text(self.restructured_text(text), links)
 
-    def html_bit_fields(self, text=""):
-        return self.html_from_text(self.str_bit_fields() + "\n" + text)
+    def html_bit_fields(self, text="", links=None):
+        return self.html_from_text(self.str_bit_fields() + "\n" + text, links)
 
-    def html_title(self):
-        return self.html_from_text(self.str_title())
+    def html_title(self, links=None):
+        return self.html_from_text(self.str_title(), links)
 
-    def html_addresses(self, text=""):
-        return self.html_from_text(self.str_defines(None, True, False) + "\n" + text)
+    def html_addresses(self, text="", links=None):
+        return self.html_from_text(self.str_defines(None, True, False) + "\n" + text, links)
 
-    def html_overview(self, text=""):
-        return self.html_from_text(self.str_overview() + "\n" + text) + self.html_from_text(text)
+    def html_overview(self, text="", links=None):
+        return self.html_from_text(self.str_overview() + "\n" + text, links)
+        
 
 
 def display_reserved(o, stop, start):

@@ -50,6 +50,7 @@ MODULES = [
     ("ipxact", ["IpXactWriter"]),
     ("c_test", ["CTest"]),
     ("c_defines", ["CDefines"]),
+    ("c_struct", ["CStruct"]),
     ("asm_equ", ["AsmEqu"]),
     ("odt_doc", ["OdtDoc"]),
     ("rst_doc", ["RstDoc"]),
