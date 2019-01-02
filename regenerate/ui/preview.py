@@ -71,6 +71,7 @@ def html_string(text):
         return __CSS + publish_string(
             text,
             writer_name="html",
-            settings_overrides={'report_level': 'quiet'}, )
+            settings_overrides={'report_level': 'quiet', 'output_encoding' : 'unicode'}, )
     except TypeError:
-        return __CSS + publish_string(text, writer_name="html")
+        return __CSS + publish_string(text, writer_name="html",
+                                      settings_overrides={'output_encoding' : 'unicode'})

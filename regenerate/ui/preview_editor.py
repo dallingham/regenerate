@@ -25,17 +25,24 @@ text is converted from restructuredText to HTML.
 from regenerate.db import LOGGER
 import os
 
-if os.getenv("NOWEBKIT") is None:
+PREVIEW_ENABLED = True
+
+from .preview import html_string
+
+try:
+    import webkit
+
+except ImportError:
+
     try:
-        import webkit
-        from preview import html_string
-        PREVIEW_ENABLED = True
+        import gi
+        gi.require_version('WebKit', '3.0')
+        from gi.repository import WebKit as webkit
+        
     except ImportError:
         PREVIEW_ENABLED = False
         LOGGER.warning("Webkit is not installed, preview of formatted "
-                       "comments will not be available")
-else:
-    PREVIEW_ENABLED = False
+                           "comments will not be available")
 
 
 class PreviewEditor(object):
@@ -63,12 +70,14 @@ class PreviewEditor(object):
         into the webkit display
         """
         text = self.__text_buffer.get_text(self.__text_buffer.get_start_iter(),
-                                           self.__text_buffer.get_end_iter())
+                                           self.__text_buffer.get_end_iter(),
+                                           False)
         if self.__active_db:
             data = []
             for reg in self.__active_db.get_all_registers():
                 data.append(".. _`{0}`: /".format(reg.register_name))
             text = text + "\n\n" + "\n".join(data)
+
         self.__webkit.load_string(html_string(text), "text/html", "utf-8", "")
 
     def set_dbase(self, dbase):
