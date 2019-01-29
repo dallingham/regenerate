@@ -67,11 +67,12 @@ def html_string(text):
     Converts the strng from restructuredText to HTML and prepends
     the CSS string.
     """
+
+    overrides = {'output_encoding' : 'unicode'}
+
     try:
-        return __CSS + publish_string(
-            text,
-            writer_name="html",
-            settings_overrides={'report_level': 'quiet', 'output_encoding' : 'unicode'}, )
+        return __CSS + publish_string(text,
+                                      writer_name="html",
+                                      settings_overrides=overrides)
     except TypeError:
-        return __CSS + publish_string(text, writer_name="html",
-                                      settings_overrides={'output_encoding' : 'unicode'})
+        return __CSS + publish_string(text, writer_name="html")
