@@ -174,7 +174,7 @@ class Build(BaseWindow):
             try:
                 self.__add_prj_item_to_list(option, dest)
             except KeyError as msg:
-                print str(msg)
+                print(str(msg))
                 pass
 
     def toggle_callback(self, cell, path, source):
@@ -298,7 +298,8 @@ class Build(BaseWindow):
         """
         optlist = [(exp_type_fmt(item.type), 0, item.extension) for item in EXPORTERS] + \
             [(exp_type_fmt(item.type), 1, item.extension) for item in GRP_EXPORTERS] + \
-            [(exp_type_fmt(item.type), 2, item.extension) for item in PRJ_EXPORTERS]
+            [(exp_type_fmt(item.type), 2, item.extension)
+             for item in PRJ_EXPORTERS]
         reglist = [os.path.splitext(os.path.basename(i))[0]
                    for i in self.__prj.get_register_set()]
         groups = [group.name for group in self.__prj.get_grouping_list()]
@@ -363,6 +364,7 @@ def base_and_modtime(dbase_full_path):
         db_file_mtime = os.path.getmtime(dbase_full_path)
         return (base, 0)
 
+
 def file_needs_rebuilt(local_dest, dbmap, db_paths):
     """
     Returns True if the associated database has been modified since the
@@ -381,6 +383,7 @@ def file_needs_rebuilt(local_dest, dbmap, db_paths):
             if db_file_mtime > dest_mtime or dbmap[base][DB_MAP_MODIFIED]:
                 mod = True
     return mod
+
 
 def exp_type_fmt(item):
     return "{0} ({1})".format(item[0], item[1])

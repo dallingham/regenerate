@@ -213,7 +213,8 @@ class MainWindow(BaseWindow):
         self.__array_notation_obj = self.__builder.get_object('array_notation')
         self.__internal_only_obj = self.__builder.get_object('internal_only')
         self.__coverage_obj = self.__builder.get_object('coverage')
-        self.__register_notation_obj = self.__builder.get_object('register_notation')
+        self.__register_notation_obj = self.__builder.get_object(
+            'register_notation')
         self.__byte_level_obj = self.__builder.get_object('byte_en_level')
 
         self.__instance_obj = InstanceList(
@@ -301,7 +302,7 @@ class MainWindow(BaseWindow):
         map_name = self.__addr_map_list.get_selected()
         if map_name is None:
             return
-        
+
         current = self.__prj.get_address_map_groups(map_name)
 
         new_list = [(grp, grp.name in current)
@@ -486,10 +487,12 @@ class MainWindow(BaseWindow):
             field.output_signal = "%s_%s" % (register.token, field.field_name)
 
         if TYPE_ENB[field.field_type][0] and not field.input_signal:
-            field.input_signal = "%s_%s_IN" % (register.token, field.field_name)
+            field.input_signal = "%s_%s_IN" % (
+                register.token, field.field_name)
 
         if TYPE_ENB[field.field_type][1] and not field.control_signal:
-            field.control_signal = "%s_%s_LD" % (register.token, field.field_name)
+            field.control_signal = "%s_%s_LD" % (
+                register.token, field.field_name)
 
     def __update_reset_field(self, field, model, path, node):
         field.reset_type = model.get_value(node, 1)
@@ -569,7 +572,8 @@ class MainWindow(BaseWindow):
                 field.field_name = new_text
                 self.set_modified()
             else:
-                LOGGER.error('"%s" has already been used as a field name' % new_text)
+                LOGGER.error(
+                    '"%s" has already been used as a field name' % new_text)
 
     def __bit_update_reset(self, field, path, new_text):
         """
@@ -749,7 +753,7 @@ class MainWindow(BaseWindow):
             SummaryWindow(self.__builder, reg, self.active.name, self.__prj)
 
     def on_build_action_activate(self, obj):
-        from build import Build
+        from regenerate.ui.build import Build
 
         dbmap = {}
         item_list = self.__prj_model
@@ -993,7 +997,7 @@ class MainWindow(BaseWindow):
         message.
         """
         if (self.active and not self.active.modified and
-            not self.__skip_changes):
+                not self.__skip_changes):
             self.active.modified = True
             self.__prj_model.set_markup(self.active.node, True)
             self.__file_modified.set_sensitive(True)
@@ -1017,7 +1021,7 @@ class MainWindow(BaseWindow):
 
     def find_shared_address(self, reg):
         for r in self.dbase.get_all_registers():
-            if r != reg and r.address == reg.address: 
+            if r != reg and r.address == reg.address:
                 return r
         return None
 
@@ -1081,7 +1085,7 @@ class MainWindow(BaseWindow):
         field.field_name = "BIT%d" % field.lsb
         if register.share == Register.SHARE_WRITE:
             field.field_type = BitField.TYPE_WRITE_ONLY
-        
+
         register.add_bit_field(field)
 
         self.__bitfield_obj.add_new_field(field)
@@ -1456,7 +1460,8 @@ class MainWindow(BaseWindow):
                     self.clear_modified(item[ProjectModel.OBJ])
                 except IOError as msg:
                     os.rename(new_path, old_path)
-                    ErrorMsg("Could not save %s, restoring original" % old_path, str(msg))
+                    ErrorMsg("Could not save %s, restoring original" %
+                             old_path, str(msg))
                 # except:
                 #     os.rename(new_path, old_path)
                 #     ErrorMsg("Could not save %s, restoring original" % old_path, "")
@@ -1478,7 +1483,7 @@ class MainWindow(BaseWindow):
 #        except:
 #            os.path.rename(new_path, old_path)
 #            ErrorMsg("Could not save %s, restoring original" % current_path, str(msg))
-            
+
         self.active.modified = False
 
     def __exit(self):
@@ -1598,7 +1603,7 @@ class MainWindow(BaseWindow):
         data needs to be saved first.
         """
         if (self.__modified or self.__prj_model.is_not_saved() or
-            (self.__prj and self.__prj.modified)):
+                (self.__prj and self.__prj.modified)):
             dialog = Question('Save Changes?', "The file has been modified. "
                               "Do you want to save your changes?")
             status = dialog.run()
@@ -2021,13 +2026,14 @@ def check_field(field):
 
 def check_reset(field):
     if (field.reset_type == BitField.RESET_PARAMETER and
-        field.reset_parameter.strip() == ""):
+            field.reset_parameter.strip() == ""):
         return gtk.STOCK_DIALOG_WARNING
     return None
 
+
 def sort_regset(x):
     return os.path.basename(x)
-    
+
 
 def bus_index(value):
     if value == 8:

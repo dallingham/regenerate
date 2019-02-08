@@ -34,6 +34,7 @@ except:
     from io import StringIO
 
 import re
+import sys
 
 from regenerate.db import TYPE_TO_SIMPLE_TYPE
 from .token import full_token, in_groups, uvm_name
@@ -208,10 +209,12 @@ def reg_addr(register, offset):
         return "%08x - %08x" % (base, base + register.ram_size)
     return "%08x" % base
 
+
 def norm_name(text):
     if text is not None:
         return text.lower().replace(" ", "-").replace("_", "-")
     return ""
+
 
 class RegisterRst(object):
     """
@@ -293,7 +296,6 @@ class RegisterRst(object):
         ofile.write(text)
         return ofile.getvalue()
 
-
     def refname(self, reg_name):
         return "%s-%s-%s" % (norm_name(self._inst),
                              norm_name(self._group),
@@ -329,7 +331,7 @@ class RegisterRst(object):
             ret_str = True
 
         ofile.write("%s\n\n" %
-                    self._reg.description.encode('ascii', 'replace'))
+                    self._reg.description.encode('utf-8', 'replace').decode())
 
         if ret_str:
             return ofile.getvalue()
@@ -350,7 +352,8 @@ class RegisterRst(object):
         ofile.write("   :name: bit_table\n")
         ofile.write("   :widths: 8, 10, 7, 25, 50\n")
         if self._bootstrap:
-            ofile.write("   :class: table table-bordered table-striped table-condensed display\n")
+            ofile.write(
+                "   :class: table table-bordered table-striped table-condensed display\n")
         else:
             ofile.write("   :class: bit-table\n")
         ofile.write("   :header-rows: 1\n\n")
@@ -388,7 +391,8 @@ class RegisterRst(object):
             ofile.write("     - %s\n" % field.field_name)
             descr = field.description.strip()
             marked_descr = "\n       ".join(descr.split("\n"))
-            encoded_descr = marked_descr.encode('ascii', 'replace').rstrip()
+            encoded_descr = marked_descr.encode(
+                'utf-8', 'replace').rstrip().decode()
 
             lines = encoded_descr.split("\n")
 
@@ -399,7 +403,6 @@ class RegisterRst(object):
                                    field.field_name, encoded_descr))
             else:
                 ofile.write("     - %s\n" % encoded_descr)
-
 
             if field.values and len(field.values) < self._max_values:
                 ofile.write("\n")
@@ -437,12 +440,10 @@ class RegisterRst(object):
         ofile.write("Bit fields\n+++++++++++++++++++++++++++\n\n")
         self.str_bit_fields(ofile)
 
-
     def _write_defines(self, ofile, use_uvm=True, use_id=True):
 
         ofile.write("\n\nAddresses\n+++++++++++++++++++++++\n\n")
         self.str_defines(ofile, use_uvm, use_id)
-
 
     def str_defines(self, ofile=None, use_uvm=True, use_id=True):
 
@@ -458,14 +459,16 @@ class RegisterRst(object):
 
         for inst in instances:
             for x_map in x_addr_maps:
-                groups_in_addr_map = self._prj.get_address_map_groups(x_map.name)
+                groups_in_addr_map = self._prj.get_address_map_groups(
+                    x_map.name)
                 if inst.group in groups_in_addr_map:
                     addr_maps.add(x_map)
 
         if not addr_maps:
             ofile.write(".. warning::\n")
             ofile.write("   :class: alert alert-warning\n\n")
-            ofile.write("   This register has not been mapped into any address space.\n\n")
+            ofile.write(
+                "   This register has not been mapped into any address space.\n\n")
 
         elif in_groups(self._regset_name, self._prj):
             ofile.write(".. list-table::\n")
@@ -477,7 +480,8 @@ class RegisterRst(object):
             elif len(addr_maps) == 3:
                 ofile.write("   :widths: 50, 16, 16, 17\n")
             if self._bootstrap:
-                ofile.write("   :class: table table-bordered table-striped table-condensed\n\n")
+                ofile.write(
+                    "   :class: table table-bordered table-striped table-condensed\n\n")
             else:
                 ofile.write("   :class: summary\n\n")
             ofile.write("   *")
@@ -535,7 +539,8 @@ class RegisterRst(object):
 
         ofile.write("   *")
         if use_uvm:
-            name = uvm_name(u_grp_name, self._reg.token, inst.inst, group_index)
+            name = uvm_name(u_grp_name, self._reg.token,
+                            inst.inst, group_index)
             if index < 0:
                 ofile.write(" - %s\n" % name)
             else:
@@ -577,7 +582,8 @@ class RegisterRst(object):
         ofile.write(".. list-table::\n")
         ofile.write("   :header-rows: 1\n")
         if self._bootstrap:
-            ofile.write("   :class: table table-bordered table-striped table-condensed\n\n")
+            ofile.write(
+                "   :class: table table-bordered table-striped table-condensed\n\n")
         else:
             ofile.write("   :class: summary\n\n")
         ofile.write("   * - ID\n")
@@ -599,37 +605,49 @@ class RegisterRst(object):
             return "No data"
         if _HTML:
             try:
+                print "><>>>", sys.version_info[0]
                 if self._header_level > 1:
-                    overrides = {
-                        'initial_header_level': self._header_level,
-                        'doctitle_xform': False,
-                        'report_level': 'quiet'
+                    if sys.version_info[0] == 3:
+                        overrides = {
+                            'initial_header_level': self._header_level,
+                            'doctitle_xform': False,
+                            'report_level': 4
+                        }
+                    else:
+                        overrides = {
+                            'initial_header_level': self._header_level,
+                            'doctitle_xform': False,
+                            'report_level': 'quiet'
                         }
                 else:
-                    overrides = {
-                        'report_level': 'quiet'
+                    if sys.version_info[0] == 3:
+                        overrides = {
+                            'report_level': 4
+                        }
+                    else:
+                        overrides = {
+                            'report_level': 'quiet'
                         }
                 parts = publish_parts(
                     text,
                     writer_name="html",
                     settings_overrides=overrides
-                    )
-
+                )
                 if self._highlight is None:
                     return parts['html_title'] + parts['html_subtitle'] + parts['body']
-                paren_re = re.compile("(%s)" % self._highlight, flags=re.IGNORECASE)
+                paren_re = re.compile(
+                    "(%s)" % self._highlight, flags=re.IGNORECASE)
                 return parts['html_title'] + parts['html_subtitle'] + \
                     paren_re.sub(r"<mark>\1</mark>", parts['body'])
 
             except TypeError as msg:
-                return "<h3>Error</h3><p>" + str(msg) + "</p><p>" + text + "</p>"
+                return "<h3>TypeError</h3><p>" + str(msg) + "</p><pre>" + text + "</pre>"
             except AttributeError as msg:
-                return "<h3>Error</h3><p>" + str(msg) + "</p><p>" + text + "</p>"
+                return "<h3>AttributeError</h3><p>" + str(msg) + "</p><pre>" + text + "</pre>"
             except ZeroDivisionError:
-                return "<h3>Error in Restructured Text</h3>Please contact the developer to get the documentation fixed"
+                return "<h3>ZeroDivisionError in Restructured Text</h3>Please contact the developer to get the documentation fixed"
         else:
             return "<pre>{0}</pre>".format(self.restructured_text())
-
 
     def html(self, text=""):
         """

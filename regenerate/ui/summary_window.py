@@ -19,17 +19,32 @@
 
 
 import os
+from regenerate.db import LOGGER
+
+WEBKIT = True
+
 if os.getenv("NOWEBKIT") is None:
+
     try:
         import webkit
-        WEBKIT = True
+
     except ImportError:
-        WEBKIT = False
+
+        try:
+            import gi
+            gi.require_version('WebKit', '3.0')
+            from gi.repository import WebKit as webkit
+        except ImportError:
+            PREVIEW_ENABLED = False
+            LOGGER.warning("Webkit is not installed, preview of formatted "
+                           "comments will not be available")
+            WEBKIT = False
 else:
     WEBKIT = False
 
+
 import regenerate.extras
-from base_window import BaseWindow
+from regenerate.ui.base_window import BaseWindow
 
 
 class SummaryWindow(BaseWindow):
@@ -59,8 +74,9 @@ class SummaryWindow(BaseWindow):
         reg_info = regenerate.extras.RegisterRst(reg, regset_name, project,
                                                  show_uvm=True)
 
-        SummaryWindow.wkit.load_string(reg_info.html_css(), "text/html",
-                                       "utf-8", "")
+        print(reg_info)
+        text = reg_info.html_css()
+        SummaryWindow.wkit.load_string(text, "text/html", "utf-8", "")
         SummaryWindow.window.show_all()
 
     def destroy(self, obj):

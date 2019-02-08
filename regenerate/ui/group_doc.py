@@ -24,8 +24,8 @@ text is converted from restructuredText to HTML.
 
 import gtk
 import pango
-from spell import Spell
-from preview_editor import PreviewEditor, PREVIEW_ENABLED
+from regenerate.ui.spell import Spell
+from regenerate.ui.preview_editor import PreviewEditor, PREVIEW_ENABLED
 from regenerate.settings.paths import GLADE_GTXT
 from regenerate.ui.utils import clean_format_if_needed
 
