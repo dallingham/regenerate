@@ -27,7 +27,6 @@ information.
 import gtk
 import os
 import pango
-import re
 
 # Imports that might fail, and we can recover from
 
@@ -41,7 +40,7 @@ except ImportError:
 
 # regenerate imports
 
-from regenerate.db import BitField, TYPES, TYPE_TO_ID
+from regenerate.db import BitField, TYPE_TO_ID
 from regenerate.db import TYPE_TO_DESCR, TYPE_TO_ENABLE
 from regenerate.settings.paths import GLADE_BIT, INSTALL_PATH
 from regenerate.ui.error_dialogs import ErrorMsg
@@ -51,23 +50,18 @@ from regenerate.ui.utils import clean_format_if_needed
 from regenerate.writers.verilog_reg_def import REG
 
 
-
 def modified(f):
-    """
-    Decorator to set modified values
-    """
-    
+    """Decorator to set modified values"""
+
     def modify_value(self, obj):
         f(self, obj)
         self.modified()
-        
+
     return modify_value
 
 
 class BitFieldEditor(object):
-    """
-    Bit field editing class.
-    """
+    """Bit field editing class."""
 
     def __init__(self, dbase, register, bit_field, modified, top_builder):
         self._db = dbase
@@ -300,7 +294,7 @@ class BitFieldEditor(object):
 
         last -= 1
         if (last == -1 or self._list_model[last][0] or
-            self._list_model[last][1] or self._list_model[last][2]):
+                self._list_model[last][1] or self._list_model[last][2]):
             new_val = "" if largest >= max_values else "{0:x}".format(
                 largest + 1)
             node = self._list_model.append(row=(new_val, '', ''))
@@ -309,8 +303,8 @@ class BitFieldEditor(object):
             path = (last, )
 
         self._value_tree_obj.set_cursor(path,
-                                         focus_column=self._col,
-                                         start_editing=True)
+                                        focus_column=self._col,
+                                        start_editing=True)
         self.modified()
 
     @modified

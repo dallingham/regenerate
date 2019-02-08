@@ -60,17 +60,17 @@ class IpXactParser(object):
         """
         Parses the specified input file.
         """
-        print ("Reading", input_file)
+        print("Reading", input_file)
         tree = ET.parse(input_file)
-        print ("Finished")
+        print("Finished")
         root = tree.getroot()
 
-        print (root.tag, root.attrib)
+        print(root.tag, root.attrib)
 
         for mem_map in root.find("{http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009}memoryMaps"):
             name = mem_map.find("{http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009}name")
             descr = mem_map.find("{http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009}description")
-            print (name.text, descr.text)
+            print(name.text, descr.text)
 
         # parser = xml.parsers.expat.ParserCreate()
         # parser.StartElementHandler = self.start_element
@@ -185,7 +185,7 @@ class IpXactParser(object):
 
     def end_access(self, text):
         if self._field:
-            if self._field.field_type not in (BitField.TYPE_WRITE_1_TO_SET, 
+            if self._field.field_type not in (BitField.TYPE_WRITE_1_TO_SET,
                                               BitField.TYPE_WRITE_1_TO_CLEAR_SET):
                 self._field.field_type = text2field.get(text,
                                                         BitField.TYPE_READ_ONLY)
@@ -229,10 +229,6 @@ def crossreference(db):
                    reverse=True)
 
     re_list = [r'([^`])({0}) ((R|r)egister)'.format(name) for name in names]
-
-    LOGGER.info("Cross Referencing...")
-    while gtk.events_pending():
-        gtk.main_iteration()
 
     for reg in db.get_all_registers():
         for regex in re_list:

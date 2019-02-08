@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
 """
 Provides the register description. Contains the general information about the
 register, including the list of bit fields.
@@ -26,9 +27,7 @@ from .bitfield import BitField
 
 
 class Register(object):
-    """
-    Defines a hardware register.
-    """
+    """Defines a hardware register."""
 
     (SHARE_NONE, SHARE_READ, SHARE_WRITE) = range(3)
 
@@ -115,9 +114,7 @@ class Register(object):
         return -1
 
     def find_next_unused_bit(self):
-        """
-        Finds the first unused bit in a the register.
-        """
+        """Finds the first unused bit in a the register."""
         bit = set([])
         for field in self.__bit_fields.values():
             for val in range(field.lsb, field.msb + 1):
@@ -257,8 +254,7 @@ class Register(object):
         Returns a dictionary of bit fields. The key is msb of the
         bit field.
         """
-        return sorted(self.__bit_fields.values(),
-                      key=lambda x: x.lsb)
+        return sorted(self.__bit_fields.values(), key=lambda x: x.lsb)
 
     def get_bit_fields_with_values(self):
         """
@@ -269,27 +265,19 @@ class Register(object):
                       key=lambda x: x.lsb)
 
     def get_bit_field(self, key):
-        """
-        Returns the bit field associated with the specified key.
-        """
+        """Returns the bit field associated with the specified key."""
         return self.__bit_fields.get(key)
 
     def get_bit_field_keys(self):
-        """
-        Returns the list of keys associated with the bit fields
-        """
+        """Returns the list of keys associated with the bit fields"""
         return sorted(self.__bit_fields.keys())
 
     def add_bit_field(self, field):
-        """
-        Adds a bit field to the set of bit fields.
-        """
+        """Adds a bit field to the set of bit fields."""
         self.__bit_fields[field.lsb] = field
 
     def change_bit_field(self, field):
-        """
-        Adds a bit field to the set of bit fields.
-        """
+        """Adds a bit field to the set of bit fields."""
         remove_val = None
         for current_field in self.__bit_fields:
             if field == self.__bit_fields[current_field]:

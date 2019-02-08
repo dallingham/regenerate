@@ -39,17 +39,13 @@ def create_backup_file(filename):
 
 
 class RegWriter(object):
-    """
-    Writes the XML file.
-    """
+    """Writes the XML file."""
 
     def __init__(self, dbase):
         self.dbase = dbase
 
     def save(self, filename):
-        """
-        Saves the data to the specified XML file.
-        """
+        """Saves the data to the specified XML file."""
         create_backup_file(filename)
         ofile = open(filename, "w")
         if self.dbase.array_is_reg:
@@ -82,9 +78,7 @@ class RegWriter(object):
         ofile.close()
 
     def write_port_information(self, ofile):
-        """
-        Writes the port information to the output file
-        """
+        """ Writes the port information to the output file"""
         ofile.write('  <ports>\n')
         ofile.write('    <interface>%d</interface>\n' % int(self.dbase.use_interface))
         ofile.write('    <addr>%s</addr>\n' % self.dbase.address_bus_name)
@@ -103,17 +97,13 @@ class RegWriter(object):
         ofile.write('  </ports>\n')
 
     def write_signal_list(self, ofile):
-        """
-        Writes the signal list to the output file
-        """
+        """Writes the signal list to the output file"""
         for reg in self.dbase.get_all_registers():
             write_register(ofile, reg)
 
 
 def write_register(ofile, reg):
-    """
-    Writes the specified register to the output file
-    """
+    """Writes the specified register to the output file"""
     ofile.write('  <register>\n')
     ofile.write('    <name>%s</name>\n' % reg.register_name)
     ofile.write('    <token>%s</token>\n' % reg.token)
@@ -143,9 +133,7 @@ def cleanup(data):
 
 
 def write_field(ofile, field):
-    """
-    Writes the specified bit field to the output file
-    """
+    """Writes the specified bit field to the output file"""
     low = min(field.start_position, field.stop_position)
     high = max(field.start_position, field.stop_position)
 
@@ -169,9 +157,7 @@ def write_field(ofile, field):
 
 
 def write_input_info(ofile, field):
-    """
-    Writes the input information to the output file
-    """
+    """Writes the input information to the output file"""
     if field.control_signal:
         ldstr = ' load="%s"' % field.control_signal
     else:
@@ -184,18 +170,14 @@ def write_input_info(ofile, field):
 
 
 def write_signal_info(ofile, field):
-    """
-    Writes the signal information to the output file
-    """
+    """Writes the signal information to the output file"""
     ofile.write('      <signal enb="%d" static="%d">' %
                 (field.use_output_enable, field.output_is_static))
     ofile.write('%s</signal>\n' % field.output_signal)
 
 
 def write_reset_type(ofile, field):
-    """
-    Writes the reset information to the output file
-    """
+    """Writes the reset information to the output file"""
     if field.reset_type == BitField.RESET_INPUT:
         ofile.write('      <reset type="1">%s</reset>\n' % field.reset_input)
     elif field.reset_type == BitField.RESET_PARAMETER:
@@ -206,9 +188,7 @@ def write_reset_type(ofile, field):
 
 
 def write_value_list(ofile, field):
-    """
-    Writes the value list information to the output file
-    """
+    """Writes the value list information to the output file"""
     if field.values:
         ofile.write('      <values>\n')
         for value in field.values:

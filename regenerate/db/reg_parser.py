@@ -98,9 +98,7 @@ class RegParser(object):
         parser.ParseFile(input_file)
 
     def start_element(self, tag, attrs):
-        """
-        Called every time an XML element begins
-        """
+        """Called every time an XML element begins"""
         self.__token_list = []
         mname = 'start_' + tag
         if hasattr(self, mname):
@@ -108,9 +106,7 @@ class RegParser(object):
             method(attrs)
 
     def end_element(self, tag):
-        """
-        Called every time an XML element end
-        """
+        """Called every time an XML element end """
         text = ''.join(self.__token_list)
         mname = 'end_' + tag
         if hasattr(self, mname):
@@ -203,9 +199,7 @@ class RegParser(object):
         self.__reg.share = int(attrs.get('share', 0))
 
     def start_ports(self, attrs):
-        """
-        Called when the ports tag is encountered.
-        """
+        """Called when the ports tag is encountered."""
         self.__in_ports = True
 
     def start_value(self, attrs):
@@ -262,87 +256,59 @@ class RegParser(object):
                 self.__reset_type = BitField.RESET_NUMERIC
 
     def end_register(self, text):
-        """
-        Called when the register tag is terminated.
-        """
+        """Called when the register tag is terminated."""
         self.__reg = None
 
     def end_ports(self, text):
-        """
-        Called when the ports tag is terminated.
-        """
+        """Called when the ports tag is terminated."""
         self.__in_ports = False
 
     def end_range(self, text):
-        """
-        Called when the range tag is terminated.
-        """
+        """Called when the range tag is terminated."""
         self.__field = None
 
     def end_field_type(self, text):
-        """
-        Called when the range tag is terminated.
-        """
+        """Called when the range tag is terminated."""
         self.__field.field_type = ID_TO_TYPE[text]
 
     def end_random(self, text):
-        """
-        Called when the range tag is terminated.
-        """
+        """Called when the range tag is terminated."""
         self.__field.can_randomize = bool(int(text))
 
     def end_volatile(self, text):
-        """
-        Called when the range tag is terminated.
-        """
+        """Called when the range tag is terminated."""
         self.__field.volatile = bool(int(text))
 
     def end_error_field(self, text):
-        """
-        Called when the range tag is terminated.
-        """
+        """Called when the range tag is terminated."""
         self.__field.is_error_field = bool(int(text))
 
     def end_side_effect(self, text):
-        """
-        Called when the range tag is terminated.
-        """
+        """Called when the range tag is terminated."""
         self.__field.output_has_side_effect = bool(int(text))
 
     def end_nocode(self, text):
-        """
-        Called when the range tag is terminated.
-        """
+        """Called when the range tag is terminated."""
         self.__reg.do_not_generate_code = bool(int(text))
 
     def end_dont_test(self, text):
-        """
-        Called when the range tag is terminated.
-        """
+        """Called when the range tag is terminated."""
         self.__reg.do_not_test = bool(int(text))
 
     def end_dont_cover(self, text):
-        """
-        Called when the range tag is terminated.
-        """
+        """Called when the range tag is terminated."""
         self.__reg.do_not_cover = bool(int(text))
 
     def end_hide(self, text):
-        """
-        Called when the range tag is terminated.
-        """
+        """Called when the range tag is terminated."""
         self.__reg.hide = bool(int(text))
 
     def end_dont_use_uvm(self, text):
-        """
-        Called when the range tag is terminated.
-        """
+        """Called when the range tag is terminated."""
         self.__reg.do_not_use_uvm = bool(int(text))
 
     def end_share(self, text):
-        """
-        Called when the range tag is terminated.
-        """
+        """Called when the range tag is terminated."""
         self.__reg.share = int(text)
 
     def end_reset(self, text):
@@ -503,7 +469,6 @@ class RegParser(object):
         Called when the overview tag is terminated. The text value is assigned
         to the database's overview_text
         """
-
         self.__db.array_is_reg = text == "reg"
 
     def end_addr(self, text):
@@ -547,7 +512,6 @@ class RegParser(object):
         to the database's write_strobe_name
         """
         self.__db.write_strobe_name = text
-
 
     def end_ack(self, text):
         """

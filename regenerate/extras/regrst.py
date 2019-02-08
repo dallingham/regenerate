@@ -605,7 +605,6 @@ class RegisterRst(object):
             return "No data"
         if _HTML:
             try:
-                print "><>>>", sys.version_info[0]
                 if self._header_level > 1:
                     if sys.version_info[0] == 3:
                         overrides = {

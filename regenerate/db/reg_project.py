@@ -30,6 +30,7 @@ import regenerate.db
 AddrMapData = namedtuple("AddrMapData",
                          ["name", "base", "width", "fixed", "uvm"])
 
+
 def nested_dict(depth, dict_type):
     if depth == 1:
         return defaultdict(dict_type)
@@ -73,18 +74,14 @@ class RegProject(object):
         writer.save(self.path)
 
     def open(self, name):
-        """
-        Opens and reads an XML file
-        """
+        """Opens and reads an XML file"""
 
         reader = regenerate.db.ProjectReader(self)
         self.path = name
         reader.open(name)
 
     def set_new_order(self, new_order):
-        """
-        Alters the order of the items in the files in the list.
-        """
+        """Alters the order of the items in the files in the list."""
         self._modified = True
         htbl = {}
         for i in self._filelist:
@@ -106,9 +103,7 @@ class RegProject(object):
         self.append_register_set_to_list(path)
 
     def remove_register_set(self, path):
-        """
-        Removes the specified register set from the project.
-        """
+        """Removes the specified register set from the project."""
         self._modified = True
         try:
             path2remove = os.path.relpath(path, os.path.dirname(self.path))
@@ -124,15 +119,11 @@ class RegProject(object):
         return tuple(self._exports.get(path, []))
 
     def get_project_exports(self):
-        """
-        Returns the export project list, returns a read-only tuple
-        """
+        """Returns the export project list, returns a read-only tuple"""
         return tuple(self._project_exports)
 
     def get_group_exports(self, name):
-        """
-        Returns the export group list, returns a read-only tuple
-        """
+        """Returns the export group list, returns a read-only tuple"""
         return tuple(self._group_exports.get(name, []))
 
     def append_to_export_list(self, path, option, dest):
@@ -214,24 +205,18 @@ class RegProject(object):
         self._group_exports[group].append((option, dest))
 
     def remove_from_export_list(self, path, option, dest):
-        """
-        Removes the export from the export list
-        """
+        """Removes the export from the export list"""
         self._modified = True
         path = os.path.relpath(path, os.path.dirname(self.path))
         self._exports[path].remove((option, dest))
 
     def remove_from_project_export_list(self, option, dest):
-        """
-        Removes the export from the project export list
-        """
+        """Removes the export from the project export list"""
         self._modified = True
         self._project_exports.remove((option, dest))
 
     def remove_from_group_export_list(self, group, option, dest):
-        """
-        Removes the export from the group export list
-        """
+        """Removes the export from the group export list"""
         self._modified = True
         self._group_exports[group].remove((option, dest))
 
@@ -253,68 +238,49 @@ class RegProject(object):
         return self._groupings
 
     def set_grouping_list(self, glist):
-        """
-        Sets the grouping list
-        """
+        """Sets the grouping list"""
         self._groupings = glist
 
     def set_grouping(self, index, name, start, hdl, repeat, repeat_offset):
-        """
-        Modifies an existing grouping.
-        """
+        """Modifies an existing grouping."""
         self._modified = True
         self._groupings[index] = regenerate.db.GroupData(name, start, hdl,
                                                          repeat, repeat_offset)
 
     def add_to_grouping_list(self, group_data):
-        """
-        Adds a new grouping to the grouping list
-        """
+        """Adds a new grouping to the grouping list"""
         self._modified = True
         self._group_exports[group_data.name] = []
         self._groupings.append(group_data)
 
     def _add_to_grouping_list(self, name, start, hdl, repeat, repeat_offset):
-        """
-        Adds a new grouping to the grouping list
-        """
+        """Adds a new grouping to the grouping list"""
         self._modified = True
         self._groupings.append(regenerate.db.GroupData(name, start, hdl,
                                                        repeat, repeat_offset))
 
     def remove_group_from_grouping_list(self, grp):
-        """
-        Removes a grouping from the grouping list
-        """
+        """Removes a grouping from the grouping list"""
         self._modified = True
         self._groupings.remove(grp)
 
     def get_address_maps(self):
-        """
-        Returns a tuple of the existing address maps
-        """
+        """Returns a tuple of the existing address maps"""
         return tuple(self._addr_map_list)
 
     def get_address_map_groups(self, name):
-        """
-        Returns the address maps associated with the specified group.
-        """
+        """Returns the address maps associated with the specified group."""
         return tuple(self._addr_map_grps.get(name, []))
 
     def get_address_maps_used_by_group(self, name):
-        """
-        Returns the address maps associated with the specified group.
-        """
+        """Returns the address maps associated with the specified group."""
         used_in_uvm = set([m.name for m in self._addr_map_list if m.uvm == 0])
-
 
         return [key for key in self._addr_map_grps
                 if key in used_in_uvm and name in self._addr_map_grps[key]]
 
     def change_address_map_name(self, old_name, new_name):
-        """
-        Changes the name of an address map
-        """
+        """Changes the name of an address map"""
         for (i, addrmap) in enumerate(self._addr_map_list):
             if addrmap.name != old_name:
                 continue
@@ -329,54 +295,40 @@ class RegProject(object):
             return
 
     def add_address_map_group(self, name, group_name):
-        """
-        Adds an address map to a group if it does not already exist
-        """
+        """Adds an address map to a group if it does not already exist"""
         if group_name not in self._addr_map_grps[name]:
             self._addr_map_grps[name].append(group_name)
             return True
         return False
 
     def set_address_map_group_list(self, name, group_list):
-        """
-        Adds an address map to a group if it does not already exist
-        """
+        """Adds an address map to a group if it does not already exist"""
         self._addr_map_grps[name] = group_list
 
     def remove_address_map_group(self, name, group_name):
-        """
-        Removes an address map from a group
-        """
+        """Removes an address map from a group"""
         for (i, group_name) in self._addr_map_grps[name]:
             if group_name == name:
                 del self._addr_map_grps[name][i]
                 return
 
     def get_address_base(self, name):
-        """
-        Returns the base address  of the address map
-        """
+        """Returns the base address  of the address map"""
         return next((d.base for d in self._addr_map_list
                      if name == d.name), None)
 
     def get_address_fixed(self, name):
-        """
-        Indicates if the specified address map is at a fixed location
-        """
+        """Indicates if the specified address map is at a fixed location"""
         return next((d.fixed for d in self._addr_map_list
                      if name == d.name), None)
 
     def get_address_uvm(self, name):
-        """
-        Indicates if the specified address map is at a fixed location
-        """
+        """Indicates if the specified address map is at a fixed location"""
         return next((d.uvm for d in self._addr_map_list
                      if name == d.name), None)
 
     def get_address_width(self, name):
-        """
-        Returns the width of the address group
-        """
+        """Returns the width of the address group"""
         for data in self._addr_map_list:
             if name == data.name:
                 return data.width
@@ -399,9 +351,7 @@ class RegProject(object):
             return 0
 
     def set_address_map(self, name, base, width, fixed, uvm):
-        """
-        Sets the specififed address map
-        """
+        """Sets the specififed address map"""
         self._modified = True
         new_data = AddrMapData(name, base, width, fixed, uvm)
         for i, data in enumerate(self._addr_map_list):
@@ -412,9 +362,7 @@ class RegProject(object):
         self._addr_map_grps[name] = []
 
     def remove_address_map(self, name):
-        """
-        Removes the address map
-        """
+        """Removes the address map"""
         self._modified = True
         for i, data in enumerate(self._addr_map_list):
             if data.name == name:
@@ -428,16 +376,12 @@ class RegProject(object):
 
     @property
     def modified(self):
-        """
-        Sets the modified flag
-        """
+        """Sets the modified flag"""
         return self._modified
 
     @modified.setter
     def modified(self, value):
-        """
-        Clears the modified flag
-        """
+        """Clears the modified flag"""
         self._modified = bool(value)
 
     def change_subsystem_name(self, old, cur):
@@ -469,7 +413,6 @@ class RegProject(object):
             if g_data.name == old:
                 g_data.name = cur
         self._modified = True
-
 
     def change_instance_name(self, subsystem, old, cur):
         """

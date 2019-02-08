@@ -84,16 +84,12 @@ class RegisterDb(object):
         return bits
 
     def get_keys(self):
-        """
-        Returns the register keys, which is the address of the register
-        """
+        """Returns the register keys, which is the address of the register"""
         return [a.uuid for a in sorted(self.__registers.values(),
                                        key=lambda a: a.address)]
 
     def get_all_registers(self):
-        """
-        Returns the register keys, which is the address of the register
-        """
+        """Returns the register keys, which is the address of the register"""
         return iter(sorted(self.__registers.values(), key=lambda a: a.address))
 
     def get_register(self, key):
@@ -104,21 +100,15 @@ class RegisterDb(object):
         return self.__registers.get(key)
 
     def add_register(self, reg):
-        """
-        Adds the register to the database.
-        """
+        """Adds the register to the database."""
         self.__registers[reg.uuid] = reg
 
     def delete_register(self, reg):
-        """
-        Removes the register to the database.
-        """
+        """Removes the register to the database."""
         del self.__registers[reg.uuid]
 
     def read_xml(self, filename):
-        """
-        Reads the XML file, loading the databsae.
-        """
+        """Reads the XML file, loading the databsae."""
         with open(filename, "rb") as ifile:
             self.set_name = os.path.splitext(os.path.basename(filename))[0]
             parser = regenerate.db.RegParser(self)
@@ -126,9 +116,7 @@ class RegisterDb(object):
         return self
 
     def save_xml(self, filename):
-        """
-        Saves the database to the specified XML file
-        """
+        """Saves the database to the specified XML file"""
         writer = regenerate.db.RegWriter(self)
         writer.save(filename)
 
