@@ -74,7 +74,6 @@ class SummaryWindow(BaseWindow):
         reg_info = regenerate.extras.RegisterRst(reg, regset_name, project,
                                                  show_uvm=True)
 
-        print(reg_info)
         text = reg_info.html_css()
         SummaryWindow.wkit.load_string(text, "text/html", "utf-8", "")
         SummaryWindow.window.show_all()

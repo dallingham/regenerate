@@ -39,6 +39,11 @@ import sys
 from regenerate.db import TYPE_TO_SIMPLE_TYPE
 from .token import full_token, in_groups, uvm_name
 
+if sys.version_info[0] == 3:
+    REPORT_LEVEL = 4
+else:
+    REPORT_LEVEL = 'quiet'
+
 
 CSS = '''
 <style type="text/css">
@@ -606,27 +611,15 @@ class RegisterRst(object):
         if _HTML:
             try:
                 if self._header_level > 1:
-                    if sys.version_info[0] == 3:
-                        overrides = {
-                            'initial_header_level': self._header_level,
-                            'doctitle_xform': False,
-                            'report_level': 4
-                        }
-                    else:
-                        overrides = {
-                            'initial_header_level': self._header_level,
-                            'doctitle_xform': False,
-                            'report_level': 'quiet'
-                        }
+                    overrides = {
+                        'initial_header_level': self._header_level,
+                        'doctitle_xform': False,
+                        'report_level': REPORT_LEVEL
+                    }
                 else:
-                    if sys.version_info[0] == 3:
-                        overrides = {
-                            'report_level': 4
-                        }
-                    else:
-                        overrides = {
-                            'report_level': 'quiet'
-                        }
+                    overrides = {
+                        'report_level': REPORT_LEVEL
+                    }
                 parts = publish_parts(
                     text,
                     writer_name="html",

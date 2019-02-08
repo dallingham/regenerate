@@ -34,6 +34,13 @@ except ImportError:
         """
         return text
 
+import sys
+
+if sys.version_info[0] == 3:
+    REPORT_LEVEL = 4
+else:
+    REPORT_LEVEL = 'quiet'
+
 
 __CSS = '''
 <style type="text/css">
@@ -68,7 +75,10 @@ def html_string(text):
     the CSS string.
     """
 
-    overrides = {'output_encoding' : 'unicode'}
+    overrides = {
+        'output_encoding': 'unicode',
+        'report_level': REPORT_LEVEL
+    }
 
     try:
         return __CSS + publish_string(text,
