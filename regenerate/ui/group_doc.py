@@ -31,7 +31,7 @@ from regenerate.ui.utils import clean_format_if_needed
 
 
 class GroupDocEditor(object):
-    def __init__(self, group_inst, callback):
+    def __init__(self, group_inst, callback, parent):
 
         builder = gtk.Builder()
         builder.add_from_file(GLADE_GTXT)
@@ -63,6 +63,7 @@ class GroupDocEditor(object):
 
         self.group_doc.connect('delete-event', self.on_delete_event)
         self.group_doc.connect('destroy-event', self.on_destroy_event)
+        self.group_doc.set_transient_for(parent)
         self.group_doc.show()
 
     def on_key_press_event(self, obj, event):

@@ -273,7 +273,7 @@ class MainWindow(BaseWindow):
         (mdl, node) = self.__instance_obj.get_selected_instance()
         inst = mdl.get_value(node, InstMdl.OBJ_COL)
         if inst:
-            GroupDocEditor(inst, self.project_modified)
+            GroupDocEditor(inst, self.project_modified, self.__top_window)
 
     def build_project_tab(self):
         self.__prj_short_name_obj = self.__builder.get_object('short_name')
@@ -308,7 +308,8 @@ class MainWindow(BaseWindow):
         new_list = [(grp, grp.name in current)
                     for grp in self.__prj.get_grouping_list()]
 
-        dialog = AddrMapEdit(map_name, new_list, self.__builder, self.__prj)
+        dialog = AddrMapEdit(map_name, new_list, self.__builder,
+                             self.__prj, self.__top_window)
         new_list = dialog.get_list()
         if new_list is not None:
             self.__prj.set_address_map_group_list(map_name, dialog.get_list())
@@ -1098,7 +1099,8 @@ class MainWindow(BaseWindow):
         if field:
             from regenerate.ui.bitfield_editor import BitFieldEditor
             BitFieldEditor(self.dbase, register, field,
-                           self.__set_field_modified, self.__builder)
+                           self.__set_field_modified, self.__builder,
+                           self.__top_window)
 
     def __set_field_modified(self):
         reg = self.__reglist_obj.get_selected_register()
@@ -1801,8 +1803,9 @@ class MainWindow(BaseWindow):
             "registers for an ASIC or FPGA based design." % PROGRAM_NAME)
         box.set_authors(['Donald N. Allingham'])
         try:
-            data = file(os.path.join(INSTALL_PATH, "LICENSE.txt")).read()
-            box.set_license(data)
+            with open(os.path.join(INSTALL_PATH, "LICENSE.txt")) as f:
+                data = f.read()
+                box.set_license(data)
         except IOError:
             pass
         fname = os.path.join(INSTALL_PATH, "media", "flop.svg")

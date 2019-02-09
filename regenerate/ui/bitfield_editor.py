@@ -63,7 +63,7 @@ def modified(f):
 class BitFieldEditor(object):
     """Bit field editing class."""
 
-    def __init__(self, dbase, register, bit_field, modified, top_builder):
+    def __init__(self, dbase, register, bit_field, modified, top_builder, parent):
         self._db = dbase
         self.modified = modified
         self._register = register
@@ -91,6 +91,7 @@ class BitFieldEditor(object):
         self._col = None
         self._top_window.set_title("Edit Bit Field - [{0:02x}] {1}".format(
             register.address, register.register_name))
+        self._top_window.set_transient_for(parent)
 
         self._spell = Spell(self._builder.get_object("descr"))
 

@@ -25,12 +25,14 @@ import gtk
 from regenerate.ui.columns import ToggleColumn, EditableColumn, ComboMapColumn
 from regenerate.ui.base_window import BaseWindow
 
+
 class AddrMapEdit(BaseWindow):
     """
     Creates a dialog box allowing the selection of subsystem groups
     for an address map.
     """
-    def __init__(self, map_name, subsystem_list, builder, project):
+
+    def __init__(self, map_name, subsystem_list, builder, project, parent):
 
         super(AddrMapEdit, self).__init__()
         self.project = project
@@ -46,6 +48,7 @@ class AddrMapEdit(BaseWindow):
         dialog.vbox.pack_start(label, False, False)
         dialog.vbox.set_homogeneous(False)
         dialog.set_default_size(580, 320)
+        dialog.set_transient_for(parent)
         self.configure(dialog)
 
         label.show()
@@ -73,7 +76,7 @@ class AddrMapEdit(BaseWindow):
                    ("Read Only", 1),
                    ("Write Only", 2),
                    ("No Access", 3),
-                  ]
+                   ]
 
         col = ComboMapColumn("Access Method", self._access_changed, options, 2,
                              visible_callback=self.visible_callback)

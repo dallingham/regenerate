@@ -44,7 +44,7 @@ class Build(BaseWindow):
     as to what should be built.
     """
 
-    def __init__(self, project, dbmap):
+    def __init__(self, project, dbmap, parent):
         BaseWindow.__init__(self)
 
         self.__dbmap = dbmap
@@ -56,7 +56,7 @@ class Build(BaseWindow):
             base_path = os.path.splitext(os.path.basename(item))
             self.__base2path[base_path[0]] = item
 
-        self.__build_interface()
+        self.__build_interface(parent)
         self.__build_export_maps()
         self.__populate()
 
@@ -80,7 +80,7 @@ class Build(BaseWindow):
                 self.__optmap[item.id] = (value, item.obj_class, level)
                 self.__mapopt[value] = (item.id, item.obj_class, level)
 
-    def __build_interface(self):
+    def __build_interface(self, parent):
         """
         Builds the interface from the glade description, connects the signals,
         and creates the data models to load into the system.
@@ -95,6 +95,7 @@ class Build(BaseWindow):
         self.__model = gtk.ListStore(bool, str, str, str, object, object, int)
         self.__build_list.set_model(self.__model)
         self.configure(self.__build_top)
+        self.__build_top.set_transient_for(parent)
         self.__build_top.show_all()
 
     def __add_item_to_list(self, full_path, option, dest):
@@ -304,7 +305,7 @@ class Build(BaseWindow):
                    for i in self.__prj.get_register_set()]
         groups = [group.name for group in self.__prj.get_grouping_list()]
         ExportAssistant(self.__prj.short_name, optlist, reglist, groups,
-                        self.add_callback)
+                        self.add_callback, self.__build_top)
 
     def add_callback(self, filename, export_format, register_set, group):
         """

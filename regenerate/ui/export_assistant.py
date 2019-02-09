@@ -20,6 +20,7 @@
 import gtk
 import os
 
+
 class TextCombo(gtk.ComboBox):
 
     def __init__(self):
@@ -43,12 +44,14 @@ class TextCombo(gtk.ComboBox):
             val = None
         return val
 
+
 class ExportAssistant(gtk.Assistant):
 
     def __init__(self, project_name, optlist, register_sets, group_names,
-                 save_callback):
+                 save_callback, parent):
         gtk.Assistant.__init__(self)
 
+        self.set_transient_for(parent)
         self.project_name = project_name
         self.save_callback = save_callback
         self.connect('delete_event', self.cb_on_delete)
@@ -263,10 +266,10 @@ class ExportAssistant(gtk.Assistant):
         self.execute_obj = MyLabel()
         self.sum.attach(self.export_obj, 2, 3, 0, 1, gtk.FILL | gtk.EXPAND, 0)
         self.sum.attach(self.register_obj, 2, 3, 1, 2,
-                            gtk.FILL | gtk.EXPAND, 0)
+                        gtk.FILL | gtk.EXPAND, 0)
         self.sum.attach(self.dest_obj, 2, 3, 2, 3, gtk.FILL | gtk.EXPAND, 0)
         self.sum.attach(self.execute_obj, 2, 3, 3, 4,
-                            gtk.FILL | gtk.EXPAND, 0)
+                        gtk.FILL | gtk.EXPAND, 0)
         self.sum.show_all()
 
         self.append_page(self.sum)

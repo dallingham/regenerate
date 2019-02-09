@@ -26,7 +26,7 @@ Provides the preferences dialog box
 
 
 class Preferences(object):
-    def __init__(self):
+    def __init__(self, parent):
         self.__builder = gtk.Builder()
         self.__builder.add_from_file(GLADE_PREF)
         self.__properties = self.__builder.get_object('preferences')
@@ -41,6 +41,7 @@ class Preferences(object):
         self.__builder.get_object('column_width').set_value(float(value))
 
         self.__builder.connect_signals(self)
+        self.__properties.set_transient_for(parent)
         self.__properties.show()
 
     def on_use_svn_toggled(self, obj):
