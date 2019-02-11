@@ -207,9 +207,7 @@ class BitField(object):
         If the user has not specified the name, assume that it is the same as
         the name of the bit field.
         """
-        if self._output_signal:
-            return self._output_signal
-        return self._field_name
+        return self._output_signal
 
     def resolved_output_signal(self):
         """

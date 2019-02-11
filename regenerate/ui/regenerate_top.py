@@ -486,7 +486,8 @@ class MainWindow(BaseWindow):
         register = self.__reglist_obj.get_selected_register()
 
         if not field.output_signal:
-            field.output_signal = "%s_%s" % (register.token, field.field_name)
+            field.output_signal = "%s_%s_OUT" % (
+                register.token, field.field_name)
 
         if TYPE_ENB[field.field_type][0] and not field.input_signal:
             field.input_signal = "%s_%s_IN" % (
@@ -1085,6 +1086,7 @@ class MainWindow(BaseWindow):
 
         field.msb = field.lsb
         field.field_name = "BIT%d" % field.lsb
+        field.output_signal = ""
         if register.share == Register.SHARE_WRITE:
             field.field_type = BitField.TYPE_WRITE_ONLY
 
