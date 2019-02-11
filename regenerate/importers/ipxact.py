@@ -21,7 +21,7 @@ Parses the register database, loading the database.
 """
 
 import xml.etree.ElementTree as ET
-from regenerate.db import Register, BitField, LOGGER
+from regenerate.db import Register, BitField
 import re
 
 text2field = {
@@ -60,17 +60,14 @@ class IpXactParser(object):
         """
         Parses the specified input file.
         """
-        print("Reading", input_file)
         tree = ET.parse(input_file)
-        print("Finished")
         root = tree.getroot()
 
-        print(root.tag, root.attrib)
-
         for mem_map in root.find("{http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009}memoryMaps"):
-            name = mem_map.find("{http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009}name")
-            descr = mem_map.find("{http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009}description")
-            print(name.text, descr.text)
+            name = mem_map.find(
+                "{http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009}name")
+            descr = mem_map.find(
+                "{http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009}description")
 
         # parser = xml.parsers.expat.ParserCreate()
         # parser.StartElementHandler = self.start_element

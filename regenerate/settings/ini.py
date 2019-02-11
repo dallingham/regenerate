@@ -25,7 +25,7 @@ try:
     from configparser import ConfigParser, NoSectionError, NoOptionError
 except:
     from ConfigParser import ConfigParser, NoSectionError, NoOptionError
-    
+
 import os
 
 PARSER = ConfigParser()
@@ -51,8 +51,7 @@ def set(section, option, value):
         PARSER.add_section(section)
     PARSER.set(section, option, str(value))
     try:
-        ofile = open(FILENAME, "w")
-        PARSER.write(ofile)
-        ofile.close()
+        with open(FILENAME, "w") as ofile:
+            PARSER.write(ofile)
     except IOError:
         return

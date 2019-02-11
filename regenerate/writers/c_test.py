@@ -149,16 +149,16 @@ class CTest(WriterBase):
         for rng in [register.get_bit_field(key)
                     for key in register.get_bit_field_keys()]:
             if rng.field_type in (
-                BitField.TYPE_READ_WRITE, BitField.TYPE_READ_WRITE_1S,
-                BitField.TYPE_READ_WRITE_1S_1, BitField.TYPE_READ_WRITE_LOAD,
-                BitField.TYPE_READ_WRITE_LOAD_1S,
-                BitField.TYPE_READ_WRITE_LOAD_1S_1,
-                BitField.TYPE_READ_WRITE_SET, BitField.TYPE_READ_WRITE_SET_1S,
-                BitField.TYPE_READ_WRITE_SET_1S_1,
-                BitField.TYPE_READ_WRITE_CLR, BitField.TYPE_READ_WRITE_CLR_1S,
-                BitField.TYPE_READ_WRITE_PROTECT,
-                BitField.TYPE_READ_WRITE_PROTECT_1S,
-                BitField.TYPE_READ_WRITE_CLR_1S_1):
+                    BitField.TYPE_READ_WRITE, BitField.TYPE_READ_WRITE_1S,
+                    BitField.TYPE_READ_WRITE_1S_1, BitField.TYPE_READ_WRITE_LOAD,
+                    BitField.TYPE_READ_WRITE_LOAD_1S,
+                    BitField.TYPE_READ_WRITE_LOAD_1S_1,
+                    BitField.TYPE_READ_WRITE_SET, BitField.TYPE_READ_WRITE_SET_1S,
+                    BitField.TYPE_READ_WRITE_SET_1S_1,
+                    BitField.TYPE_READ_WRITE_CLR, BitField.TYPE_READ_WRITE_CLR_1S,
+                    BitField.TYPE_READ_WRITE_PROTECT,
+                    BitField.TYPE_READ_WRITE_PROTECT_1S,
+                    BitField.TYPE_READ_WRITE_CLR_1S_1):
                 for i in range(rng.lsb, rng.msb + 1):
                     value = value | (1 << i)
         return value
@@ -166,7 +166,7 @@ class CTest(WriterBase):
     def write_protos(self, cfile, rlist, name, size):
         if rlist:
             for index, pos in enumerate(range(0, len(rlist), MAX_REGS)):
-                cfile.write("uint32 check_{0}_{1}{2} (msgptr func);\n".format(name, 
+                cfile.write("uint32 check_{0}_{1}{2} (msgptr func);\n".format(name,
                                                                               size,
                                                                               string.letters[index]))
 
@@ -176,7 +176,7 @@ class CTest(WriterBase):
                 cfile.write("  if ((val = check_{0}_{1}{2}(func)) != 0)\n".format(name,
                                                                                   size,
                                                                                   string.letters[index]))
-                cfile.write("    return val;\n");
+                cfile.write("    return val;\n")
 
             data = ["    {0x%08x, 0x%08x, 0x%08x}" % val for val in rlist]
 
@@ -187,7 +187,8 @@ class CTest(WriterBase):
 
         cfile.write("\n")
         cfile.write("uint32\n")
-        cfile.write("check_{0}_{1}{2} (msgptr func)\n".format(name, size, letter))
+        cfile.write("check_{0}_{1}{2} (msgptr func)\n".format(
+            name, size, letter))
         cfile.write("{\n")
         cfile.write("  uint32 val;\n")
         cfile.write("  static reg{0}_data r[] = {{\n".format(suffix))
@@ -195,7 +196,8 @@ class CTest(WriterBase):
         cfile.write("\n  };\n\n")
         cfile.write("   for (int i = 0; i < {0}; i++) {{\n".format(len(rlist)))
         cfile.write("     func(r[i].addr);\n")
-        cfile.write("     val = check_reg{0}(REG_UINT{0}_PTR(r[i].addr), r[i].ro, r[i].def);\n".format(size))
+        cfile.write(
+            "     val = check_reg{0}(REG_UINT{0}_PTR(r[i].addr), r[i].ro, r[i].def);\n".format(size))
         cfile.write("     if (val) return (r[i].addr);\n")
         cfile.write("   }\n")
         cfile.write("   return 0;\n")
@@ -213,7 +215,7 @@ class CTest(WriterBase):
         rdata64 = []
 
         for index, register in enumerate(dbase.get_all_registers()):
-            
+
             if register.do_not_test:
                 continue
 
@@ -221,7 +223,7 @@ class CTest(WriterBase):
             mask = self.calc_ro_mask(register)
             width = register.width
             ext = ext_opt[width]
-            
+
             for addr in find_addresses(self._project, dbase.set_name, register):
                 if width == 8:
                     rdata8.append((addr, mask, default))
@@ -232,7 +234,7 @@ class CTest(WriterBase):
                 elif width == 64:
                     rdata64.append((addr, mask, default))
 
-        cfile.write("\n");
+        cfile.write("\n")
 
         self.write_protos(cfile, rdata8, dbase.module_name, "8")
         self.write_protos(cfile, rdata16, dbase.module_name, "16")
@@ -254,30 +256,29 @@ class CTest(WriterBase):
         if rdata8:
             for pos, index in enumerate(range(0, len(rdata8), MAX_REGS)):
                 letter = string.letters[pos]
-                self.write_function(cfile, rdata8[index: MAX_REGS], 
-                                    dbase.module_name, "8", 
+                self.write_function(cfile, rdata8[index: MAX_REGS],
+                                    dbase.module_name, "8",
                                     letter, "", "")
 
         if rdata16:
             for pos, index in enumerate(range(0, len(rdata16), MAX_REGS)):
                 letter = string.letters[pos]
-                self.write_function(cfile, rdata16[index: MAX_REGS], 
-                                    dbase.module_name, "16", 
+                self.write_function(cfile, rdata16[index: MAX_REGS],
+                                    dbase.module_name, "16",
                                     letter, "", "")
-
 
         if rdata32:
             for pos, index in enumerate(range(0, len(rdata32), MAX_REGS)):
                 letter = string.letters[pos]
-                self.write_function(cfile, rdata32[index:index+MAX_REGS], 
-                                    dbase.module_name, "32", 
+                self.write_function(cfile, rdata32[index:index+MAX_REGS],
+                                    dbase.module_name, "32",
                                     letter, "", "")
 
         if rdata64:
             for pos, index in enumerate(range(0, len(rdata64), MAX_REGS)):
                 letter = string.letters[pos]
-                self.write_function(cfile, rdata64[index:index+MAX_REGS], 
-                                    dbase.module_name, "64", 
+                self.write_function(cfile, rdata64[index:index+MAX_REGS],
+                                    dbase.module_name, "64",
                                     letter, "64", "LL")
 
     def write(self, filename):
@@ -286,46 +287,45 @@ class CTest(WriterBase):
         """
         address_maps = self._project.get_address_maps()
 
-        cfile = open(filename, "w")
+        with open(filename, "w") as cfile:
 
-        if address_maps:
-            token = "#ifdef"
-            for amap in address_maps:
-                cfile.write("%s %s_MAP\n" % (token, amap.name.upper()))
-                token = "#elif"
-                cfile.write(" #define ADDRBASE (0x%x)\n" % amap.base)
-            cfile.write("#else\n")
-            cfile.write(" #define ADDRBASE (0)\n")
-            cfile.write("#endif\n")
-        else:
-            cfile.write(" #define ADDRBASE (0)\n")
+            if address_maps:
+                token = "#ifdef"
+                for amap in address_maps:
+                    cfile.write("%s %s_MAP\n" % (token, amap.name.upper()))
+                    token = "#elif"
+                    cfile.write(" #define ADDRBASE (0x%x)\n" % amap.base)
+                cfile.write("#else\n")
+                cfile.write(" #define ADDRBASE (0)\n")
+                cfile.write("#endif\n")
+            else:
+                cfile.write(" #define ADDRBASE (0)\n")
 
-        for line in support_code:
-            cfile.write(line + "\n")
-        cfile.write("\n")
+            for line in support_code:
+                cfile.write(line + "\n")
+            cfile.write("\n")
 
-        use = {8: False, 16: False, 32: False, 64: False}
+            use = {8: False, 16: False, 32: False, 64: False}
 
-        for temp_reg in self._dbase.get_all_registers():
-            if not temp_reg.do_not_test:
-                use[temp_reg.width] = True
-        if use[64]:
-            use[32] = True
+            for temp_reg in self._dbase.get_all_registers():
+                if not temp_reg.do_not_test:
+                    use[temp_reg.width] = True
+            if use[64]:
+                use[32] = True
 
-        if use[8]:
-            cfile.write("\n".join(code_reg8) + "\n")
-        if use[16]:
-            cfile.write("\n".join(code_reg16) + "\n")
-        if use[32]:
-            cfile.write("\n".join(code_reg32) + "\n")
-        if use[64]:
-            cfile.write("\n".join(code_reg64) + "\n")
+            if use[8]:
+                cfile.write("\n".join(code_reg8) + "\n")
+            if use[16]:
+                cfile.write("\n".join(code_reg16) + "\n")
+            if use[32]:
+                cfile.write("\n".join(code_reg32) + "\n")
+            if use[64]:
+                cfile.write("\n".join(code_reg64) + "\n")
 
-        self.gen_test(cfile, self._dbase)
+            self.gen_test(cfile, self._dbase)
 
-        cfile.close()
 
 EXPORTERS = [
     (WriterBase.TYPE_BLOCK, ExportInfo(CTest, ("Test", "C program"),
                                        "C files", ".c", 'test-c'))
-    ]
+]

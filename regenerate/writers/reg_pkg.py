@@ -40,26 +40,25 @@ class VerilogConstRegPackage(WriterBase):
         self.dblist = dblist
 
     def write(self, filename):
-        cfile = open(filename, "w")
-        base = os.path.splitext(os.path.basename(filename))[0]
-        cfile.write('package %s;\n' % base)
-        cfile.write('import vlsi_pkg::*;\n')
+        with open(filename, "w") as cfile:
+            base = os.path.splitext(os.path.basename(filename))[0]
+            cfile.write('package %s;\n' % base)
+            cfile.write('import vlsi_pkg::*;\n')
 
-        for db in self.dblist:
+            for db in self.dblist:
 
-            cfile.write("// %s\n" % db.descriptive_title)
-            for i in db.instances:
-                for key in db.get_keys():
-                    reg = db.get_register(key)
-                    addr = i[1] + reg.address
-                    cfile.write("const xfer_addr %s_%s = 64'h%x;\n" %
-                                (i[0], reg.token, addr))
+                cfile.write("// %s\n" % db.descriptive_title)
+                for i in db.instances:
+                    for key in db.get_keys():
+                        reg = db.get_register(key)
+                        addr = i[1] + reg.address
+                        cfile.write("const xfer_addr %s_%s = 64'h%x;\n" %
+                                    (i[0], reg.token, addr))
+            cfile.write('\nendpackage : %s\n' % base)
 
-        cfile.write('\nendpackage : %s\n' % base)
-        cfile.close()
 
 EXPORTERS = [
     (WriterBase.TYPE_PROJECT, ExportInfo(VerilogConstRegPackage,
                                          ("Headers", "SystemVerilog Register Constants"),
                                          "SystemVerilog files", ".sv", 'headers-system-verilog')),
-    ]
+]

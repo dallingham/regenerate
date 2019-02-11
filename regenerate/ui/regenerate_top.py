@@ -191,6 +191,7 @@ class MainWindow(BaseWindow):
             self.__recent_manager = gtk.recent_manager_get_default()
         except AttributeError:
             self.__recent_manager = gtk.RecentManager.get_default()
+
         recent_file_menu = self.__create_recent_menu_item()
         self.__builder.get_object('file_menu').insert(recent_file_menu, 2)
 
@@ -546,12 +547,12 @@ class MainWindow(BaseWindow):
     def dump(self, title):
         r = self.__reglist_obj.get_selected_register()
 
-        print ("----------------------------------------------")
-        print (title, r.register_name)
+        sys.stdout.write("----------------------------------------------\n")
+        sys.stdout.write("%s %s\n" % (title, r.register_name))
 
         for f in r.get_bit_fields():
-            print ("'%18s' %4d %4d" % (f.field_name, f.msb, f.lsb))
-            print ("\t", f)
+            sys.stdout.write("'%18s' %4d %4d\n" % (f.field_name, f.msb, f.lsb))
+            sys.stdout.write("\t%s\n" % f)
 
     def __bit_update_name(self, field, path, new_text):
         """
@@ -763,7 +764,7 @@ class MainWindow(BaseWindow):
             modified = item[ProjectModel.MODIFIED]
             obj = item[ProjectModel.OBJ]
             dbmap[name] = (obj, modified)
-        Build(self.__prj, dbmap)
+        Build(self.__prj, dbmap, self.__top_window)
 
     def on_revert_svn_activate(self, obj):
         pass
@@ -805,7 +806,7 @@ class MainWindow(BaseWindow):
             self.__file_modified.set_sensitive(False)
 
     def on_user_preferences_activate(self, obj):
-        Preferences()
+        Preferences(self.__top_window)
 
     def on_delete_instance_clicked(self, obj):
         """
@@ -1255,6 +1256,7 @@ class MainWindow(BaseWindow):
             self.__prj_obj.set_model(self.__prj_model)
             self.__prj.save()
             if self.__recent_manager:
+                sys.stdout.write("Add %s=n" % filename)
                 self.__recent_manager.add_item("file:///" + filename)
             self.__builder.get_object('save_btn').set_sensitive(True)
             self.__prj_loaded.set_sensitive(True)
@@ -1300,7 +1302,7 @@ class MainWindow(BaseWindow):
             ErrorMsg("Could not open %s" % filename, str(msg))
             return
 
-        ini.set("user", "last_project", filename)
+        ini.set("user", "last_project", os.path.abspath(filename))
         idval = self.__status_obj.get_context_id('mod')
         self.__status_obj.push(idval, "Loading %s ..." % filename)
         self.set_busy_cursor(True)

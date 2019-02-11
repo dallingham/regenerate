@@ -175,7 +175,6 @@ class Build(BaseWindow):
             try:
                 self.__add_prj_item_to_list(option, dest)
             except KeyError as msg:
-                print(str(msg))
                 pass
 
     def toggle_callback(self, cell, path, source):

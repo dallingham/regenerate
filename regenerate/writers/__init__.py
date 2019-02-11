@@ -31,6 +31,7 @@ from collections import namedtuple
 from .writer_base import WriterBase
 from regenerate.db import LOGGER
 import platform
+import sys
 
 ExportInfo = namedtuple("ExportInfo", ["obj_class", "type", "description",
                                        "extension", "id"])
@@ -42,7 +43,7 @@ PRJ_EXPORTERS = []
 
 IMPORT_PATHS = ("regenerate.site_local", "regenerate.writers")
 
-MODULES = [ 
+MODULES = [
     ("verilog",
      ["Verilog", "Verilog2001", "SystemVerilog"]),
     ("verilog_defs",
@@ -71,11 +72,11 @@ MODULES = [
      ["Sdc"]),
     ("spyglass",
      ["Spyglass"]),
-    ]
+]
 
 #-----------------------------------------------------------------------------
 #
-#  Dynamically load writes for Linux. To get the packaging tools to work, 
+#  Dynamically load writes for Linux. To get the packaging tools to work,
 #  we must use the stanard import for windows
 #
 #-----------------------------------------------------------------------------
@@ -115,12 +116,9 @@ for module in MODULES:
         except AttributeError as msg:
             continue
         except SyntaxError as msg:
-            print(str(msg))
+            sys.stdout.write("%s\n" % str(msg))
             continue
         except:
             continue
     else:
         LOGGER.warning('Cound not import the "{0}" module'.format(module[0]))
-
-
-

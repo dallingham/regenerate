@@ -71,26 +71,23 @@ class Spyglass(WriterBase):
         for reg in dbase.get_all_registers():
             for field in reg.get_bit_fields():
                 if (field.use_output_enable and field.output_signal and
-                    field.output_is_static):
+                        field.output_is_static):
                     fields.append(field)
         return fields
 
     def write(self, filename):
-        """
-        Writes the output file
-        """
-        of = open(filename, "w")
+        """Writes the output file"""
 
-        # Write register blocks
-        for dbase in self.dblist:
-            ports = self.get_static_ports(dbase)
-            if ports:
-                of.write("\n\ncurrent_design %s\n\n" % dbase.module_name)
-                for field in ports:
-                    signal_name = self._build_name(field)
-                    of.write(
-                        "quasi_static -name %s\n" % signal_name)
-        of.close()
+        with open(filename, "w") as of:
+            for dbase in self.dblist:
+                ports = self.get_static_ports(dbase)
+                if ports:
+                    of.write("\n\ncurrent_design %s\n\n" % dbase.module_name)
+                    for field in ports:
+                        signal_name = self._build_name(field)
+                        of.write(
+                            "quasi_static -name %s\n" % signal_name)
+
 
 EXPORTERS = [
     (WriterBase.TYPE_PROJECT, ExportInfo(Spyglass, ("Spyglass CDC Checking", "SGDC Constraints"),

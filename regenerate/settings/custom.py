@@ -38,8 +38,7 @@ def set(section, option, value):
         PARSER.add_section(section)
     PARSER.set(section, option, value)
     try:
-        ofile = open(FILENAME, "w")
-        PARSER.write(ofile)
-        ofile.close()
+        with open(FILENAME, "w") as ofile:
+            PARSER.write(ofile)
     except IOError:
         return

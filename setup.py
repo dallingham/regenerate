@@ -5,7 +5,7 @@ except ImportError:
 
 setup(
     name='regenerate',
-    version='1.0.0',
+    version='1.1.0',
     license='License.txt',
     author='Donald N. Allingham',
     author_email='dallingham@gmail.com',
@@ -19,12 +19,12 @@ setup(
     package_data={
         'regenerate': ['data/ui/*.ui', 'data/media/*.svg', 'data/help/*.rst',
                        'data/media/*.png', 'data/extra/*.odt', 'data/*.*',
-		       'writers/templates/*']
+                       'writers/templates/*']
     },
     url="https://github.com/dallingham/regenerate",
     scripts=["bin/regenerate", "bin/regbuild", "bin/regupdate", "bin/regxref",
              "bin/regdiff", "bin/ipxact2reg"],
-    classifiers=
-    ['Operating System :: POSIX', 'Programming Language :: Python :: 2.7',
-     'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
-     'Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)'], )
+    classifiers=['Operating System :: POSIX',
+                 'Programming Language :: Python :: 2.7',
+                 'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
+                 'Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)'], )

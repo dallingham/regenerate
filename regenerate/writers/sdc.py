@@ -50,10 +50,10 @@ class Sdc(WriterBase):
                         used.add(grp.set)
                         for reg, field in all_fields(dbase):
                             for i in range(0, grp.repeat):
-#                                base = get_signal_base(field)
                                 base = get_signal_info(reg.address, field)[0]
                                 for j in range(0, group.repeat):
-                                    path = build_format(group.hdl, j, grp.hdl, i)
+                                    path = build_format(
+                                        group.hdl, j, grp.hdl, i)
                                     signal_name = "%s/%s" % (path, base)
                                     of.write(
                                         "set_multicycle -from [get_cells{%s}] -setup 4\n"
@@ -118,6 +118,7 @@ def get_signal_offset(address):
     """Returns the offset of the signal."""
     return address % 4
 
+
 def get_width(field, start=-1, stop=-1, force_index=False):
     """Returns with width if the bit range is greater than one."""
     if stop == -1:
@@ -132,6 +133,7 @@ def get_width(field, start=-1, stop=-1, force_index=False):
         signal = "[{0}:{1}]".format(stop, start)
     return signal
 
+
 def get_base_signal(address, field):
     """
     Returns the base signal derived from the address and the output field
@@ -142,4 +144,4 @@ def get_base_signal(address, field):
 EXPORTERS = [
     (WriterBase.TYPE_PROJECT, ExportInfo(Sdc, ("Synthesis", "SDC Constraints"), "SDC files",
                                          ".sdc", 'syn-constraints'))
-    ]
+]

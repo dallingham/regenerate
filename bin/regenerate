@@ -74,7 +74,7 @@ def run_gui(args):
             sys.stderr.write("regenerate: error: could not project file: ")
             sys.stderr.write("%s\n" % str(msg))
             sys.exit(1)
-    elif ini.get("user", "load_last_project", False):
+    elif ini.get("user", "last_project", False):
         filename = ini.get("user", "last_project", None)
         if filename and os.path.exists(filename):
             edit.open_project(filename, None)

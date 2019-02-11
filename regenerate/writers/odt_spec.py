@@ -157,11 +157,16 @@ class OdtSpec(WriterBase):
         self.tblcnt += 1
         self.cnt.write('<table:table table:name="mytable%d"' % self.tblcnt)
         self.cnt.write(' table:style-name="ParentTable">')
-        self.cnt.write('<table:table-column table:style-name="ParentTable.A"/>')
-        self.cnt.write('<table:table-column table:style-name="ParentTable.B"/>')
-        self.cnt.write('<table:table-column table:style-name="ParentTable.C"/>')
-        self.cnt.write('<table:table-column table:style-name="ParentTable.D"/>')
-        self.cnt.write('<table:table-column table:style-name="ParentTable.E"/>')
+        self.cnt.write(
+            '<table:table-column table:style-name="ParentTable.A"/>')
+        self.cnt.write(
+            '<table:table-column table:style-name="ParentTable.B"/>')
+        self.cnt.write(
+            '<table:table-column table:style-name="ParentTable.C"/>')
+        self.cnt.write(
+            '<table:table-column table:style-name="ParentTable.D"/>')
+        self.cnt.write(
+            '<table:table-column table:style-name="ParentTable.E"/>')
 
     def add_image(self, path):
         img = gtk.gdk.pixbuf_new_from_file(path)
@@ -264,9 +269,8 @@ class OdtSpec(WriterBase):
                         in_wave = False
                         f1 = tempfile.mktemp()
                         f2 = tempfile.mktemp() + ".png"
-                        data = open(f1, "w")
-                        data.write("\n".join(ul_data))
-                        data.close()
+                        with open(f1, "w") as data:
+                            data.write("\n".join(ul_data))
                         os.system("wavegen %s %s" % (f1, f2))
                         self.add_image(f2)
                         os.unlink(f1)
@@ -580,4 +584,3 @@ class StylesXmlParser(object):
             name = attrs.get('style:name')
             if name in self.format_list:
                 self.format_list.remove(name)
-
