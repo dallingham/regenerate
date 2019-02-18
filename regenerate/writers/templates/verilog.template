@@ -331,7 +331,7 @@ module {{db.module_name}}
  *------------------------------------------------------------------------------
  */
 {% for addr, val in word_fields|dictsort %}
-{%-   set last = db.data_bus_width - 1 -%}
+{%-   set vars = {'last': db.data_bus_width - 1} -%}
    wire [{{db.data_bus_width-1}}:0] r{{"%02x"|format(addr)}} = {
 {%   for (field, start_offset, stop_offset, start_pos, stop_pos, faddr, reg) in val|reverse|drop_write_share %}{%    set width = stop_pos - start_pos + 1 %}
 {%     if reg.share == 0 %}
@@ -342,8 +342,8 @@ module {{db.module_name}}
 {%       set mode = "_w_" %}
 {%     endif %}
 {%     if reg.share != 2 %}
-{%       if start_offset + width <= last %}
-                  {{last - (start_offset + width) + 1}}'b0,
+{%       if start_offset + width <= vars.last %}
+                  {{vars.last - (start_offset + width) + 1}}'b0,
 {%       endif %}
 {%       if start_pos == stop_pos %}
                   r{{"%02x"|format(reg.address)}}{{mode}}{{field.field_name|lower}}{% if start_pos + start_offset != 0 %},{% endif %}
@@ -351,7 +351,7 @@ module {{db.module_name}}
                   r{{"%02x"|format(reg.address)}}{{mode}}{{field.field_name|lower}}[{{stop_pos}}:{{start_pos}}]{% if start_pos + start_offset != 0 %},{% endif %}
 {%       endif %}
 
-{%       set last = start_offset - 1 %}
+{%       if vars.update({'last' : start_offset - 1})%}{% endif %}
 {%       if loop.last and start_offset != 0 %}
                   {{start_offset}}'b0
 {%       endif %}
