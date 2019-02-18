@@ -850,7 +850,8 @@ class MainWindow(BaseWindow):
 
     def on_address_width_insert_text(self, obj, new_text, pos, *extra):
         try:
-            int(new_text)
+            if new_text != "":
+                int(new_text)
         except ValueError:
             obj.stop_emission('insert-text')
 
