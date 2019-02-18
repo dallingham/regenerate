@@ -31,7 +31,8 @@ _BITS64 = "64 bits"
 
 SIZE2STR = ((_BITS8, 1), (_BITS16, 2), (_BITS32, 4), (_BITS64, 8))
 
-ACCESS2STR = (("Full Access", 0), ("Read Only", 1), ("Write Only", 2), ("No Access", 3))
+ACCESS2STR = (("Full Access", 0), ("Read Only", 1),
+              ("Write Only", 2), ("No Access", 3))
 
 INT2SIZE = dict((_i[1], _i[0]) for _i in SIZE2STR)
 STR2SIZE = dict((_i[0], _i[1]) for _i in SIZE2STR)
@@ -226,23 +227,37 @@ class AddrMapList(object):
         self._obj.append_column(column)
         self._col = column
 
-        column = EditableColumn('Address base (hex)', self._base_changed,
-                                AddrMapMdl.BASE_COL, True)
+        column = EditableColumn(
+            'Address base (hex)',
+            self._base_changed,
+            AddrMapMdl.BASE_COL,
+            True
+        )
         column.set_sort_column_id(AddrMapMdl.BASE_COL)
         self._obj.append_column(column)
 
-        column = ComboMapColumn('Access Width', self._width_changed, SIZE2STR,
-                                AddrMapMdl.WIDTH_COL)
+        column = ComboMapColumn(
+            'Access Width',
+            self._width_changed,
+            SIZE2STR,
+            AddrMapMdl.WIDTH_COL
+        )
         column.set_min_width(250)
         self._obj.append_column(column)
 
-        column = ToggleColumn('Fixed Address', self._fixed_changed,
-                              AddrMapMdl.FIXED_COL)
+        column = ToggleColumn(
+            'Fixed Address',
+            self._fixed_changed,
+            AddrMapMdl.FIXED_COL
+        )
         column.set_max_width(250)
         self._obj.append_column(column)
 
-        column = ToggleColumn('Exclude from UVM', self._uvm_changed,
-                              AddrMapMdl.UVM_COL)
+        column = ToggleColumn(
+            'Exclude from UVM',
+            self._uvm_changed,
+            AddrMapMdl.UVM_COL
+        )
         column.set_max_width(250)
         self._obj.append_column(column)
 

@@ -303,9 +303,11 @@ class BitFieldEditor(object):
         else:
             path = (last, )
 
-        self._value_tree_obj.set_cursor(path,
-                                        focus_column=self._col,
-                                        start_editing=True)
+        self._value_tree_obj.set_cursor(
+            path,
+            focus_column=self._col,
+            start_editing=True
+        )
         self.modified()
 
     @modified
@@ -375,10 +377,12 @@ class BitFieldEditor(object):
         try:
             new_text.decode("ascii")
         except:
-            ErrorMsg("Invalid ASCII characters detected",
-                     "Look for strange punctuations, like dashs and "
-                     "quotes that look valid, but are not actual "
-                     "ascii characters.")
+            ErrorMsg(
+                "Invalid ASCII characters detected",
+                "Look for strange punctuations, like dashs and "
+                "quotes that look valid, but are not actual "
+                "ascii characters."
+            )
         self._list_model.set_value(node, 2, new_text)
         self._update_values()
         self.modified()
@@ -420,7 +424,9 @@ class BitFieldEditor(object):
     def _description_changed(self, obj):
         self._bit_field.description = self._text_buffer.get_text(
             self._text_buffer.get_start_iter(),
-            self._text_buffer.get_end_iter(), False)
+            self._text_buffer.get_end_iter(),
+            False
+        )
 
     def _check_data(self):
         """

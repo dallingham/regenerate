@@ -130,8 +130,10 @@ class Build(BaseWindow):
         if the file needs rebuilt, depending on modification flags a file
         timestamps.
         """
-        dbase_full_path = os.path.join(os.path.dirname(self.__prj.path),
-                                       dbase_rel_path)
+        dbase_full_path = os.path.join(
+            os.path.dirname(self.__prj.path),
+            dbase_rel_path
+        )
         (base, db_file_mtime) = base_and_modtime(dbase_full_path)
         local_dest = os.path.join(os.path.dirname(self.__prj.path), dest)
 
@@ -168,8 +170,9 @@ class Build(BaseWindow):
 
         for group_data in self.__prj.get_grouping_list():
             for grp_type, grp_dest in self.__prj.get_group_exports(group_data.name):
-                self.__add_group_item_to_list("%s (group)" % group_data.name,
-                                              grp_type, grp_dest)
+                self.__add_group_item_to_list(
+                    "%s (group)" % group_data.name, grp_type, grp_dest
+                )
 
         for (option, dest) in self.__prj.get_project_exports():
             try:

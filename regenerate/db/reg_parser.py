@@ -162,7 +162,8 @@ class RegParser(object):
         self.__field.use_output_enable = cnv_bool(attrs, 'enb')
         self.__field.output_is_static = cnv_bool(attrs, 'static')
         if 'side_effect' in attrs:
-            self.__field.output_has_side_effect = cnv_bool(attrs, 'side_effect')
+            self.__field.output_has_side_effect = cnv_bool(
+                attrs, 'side_effect')
         if 'volatile' in attrs:
             self.__field.volatile = cnv_bool(attrs, 'volatile')
         if 'random' in attrs:
@@ -397,8 +398,9 @@ class RegParser(object):
         Called when the value tag is terminated. The value, token and text
         value are added to the field's value list.
         """
-        self.__field.values.append((self.__current_val, self.__current_token,
-                                    text))
+        self.__field.values.append(
+            (self.__current_val, self.__current_token, text)
+        )
 
     def end_input(self, text):
         """

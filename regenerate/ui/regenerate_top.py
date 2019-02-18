@@ -41,6 +41,7 @@ from regenerate.settings.paths import GLADE_TOP, INSTALL_PATH
 from regenerate.ui.addrmap_list import AddrMapList
 from regenerate.ui.base_window import BaseWindow
 from regenerate.ui.bit_list import BitModel, BitList, bits, reset_value
+from regenerate.ui.bitfield_editor import BitFieldEditor
 from regenerate.ui.error_dialogs import ErrorMsg, WarnMsg, Question
 from regenerate.ui.filter_mgr import FilterManager, ADDR_FIELD
 from regenerate.ui.filter_mgr import NAME_FIELD, TOKEN_FIELD
@@ -147,8 +148,11 @@ class MainWindow(BaseWindow):
 
         self.__reglist_obj = RegisterList(
             self.__builder.get_object("register_list"),
-            self.__selected_reg_changed, self.set_modified,
-            self.update_register_addr, self.__set_register_warn_flags)
+            self.__selected_reg_changed,
+            self.set_modified,
+            self.update_register_addr,
+            self.__set_register_warn_flags
+        )
 
         self.use_svn = bool(int(ini.get('user', 'use_svn', 0)))
         self.use_preview = bool(int(ini.get('user', 'use_preview', 0)))
@@ -175,7 +179,10 @@ class MainWindow(BaseWindow):
         self.__modelsort = None
         self.__instance_model = None
 
-        self.__reg_text_buf.connect('changed', self.__reg_description_changed)
+        self.__reg_text_buf.connect(
+            'changed',
+            self.__reg_description_changed
+        )
         self.__reg_descript = self.__builder.get_object('register_description')
         self.__reg_descript.modify_font(pango_font)
         Spell(self.__reg_descript)
@@ -215,7 +222,8 @@ class MainWindow(BaseWindow):
         self.__internal_only_obj = self.__builder.get_object('internal_only')
         self.__coverage_obj = self.__builder.get_object('coverage')
         self.__register_notation_obj = self.__builder.get_object(
-            'register_notation')
+            'register_notation'
+        )
         self.__byte_level_obj = self.__builder.get_object('byte_en_level')
 
         self.__instance_obj = InstanceList(
@@ -230,7 +238,8 @@ class MainWindow(BaseWindow):
             self.__instance_uvm_changed,
             self.__instance_decode_changed,
             self.__instance_array_changed,
-            self.__instance_single_decode_changed)
+            self.__instance_single_decode_changed
+        )
 
         self.__build_data_width_box()
         self.__restore_position_and_size()
@@ -249,10 +258,7 @@ class MainWindow(BaseWindow):
         btn = self.__builder.get_object("instance_edit_btn")
         if node:
             path = mdl.get_path(node)
-            if len(path) == 1:
-                btn.set_sensitive(True)
-            else:
-                btn.set_sensitive(False)
+            btn.set_sensitive(len(path) == 1)
         else:
             btn.set_sensitive(False)
 
@@ -261,10 +267,7 @@ class MainWindow(BaseWindow):
         mdl, node = obj.get_selection().get_selected()
         if node:
             path = mdl.get_path(node)
-            if len(path) == 1:
-                btn.set_sensitive(True)
-            else:
-                btn.set_sensitive(False)
+            btn.set_sensitive(len(path) == 1)
         else:
             btn.set_sensitive(False)
 
@@ -274,7 +277,11 @@ class MainWindow(BaseWindow):
         (mdl, node) = self.__instance_obj.get_selected_instance()
         inst = mdl.get_value(node, InstMdl.OBJ_COL)
         if inst:
-            GroupDocEditor(inst, self.project_modified, self.__top_window)
+            GroupDocEditor(
+                inst,
+                self.project_modified,
+                self.__top_window
+            )
 
     def build_project_tab(self):
         self.__prj_short_name_obj = self.__builder.get_object('short_name')
@@ -292,8 +299,7 @@ class MainWindow(BaseWindow):
         self.__prj_short_name_obj.set_text(self.__prj.short_name)
         self.__prj_doc_object.set_text(self.__prj.documentation)
         self.__prj_name_obj.set_text(self.__prj.name)
-        company = self.__prj.company_name
-        self.__prj_company_name_obj.set_text(company)
+        self.__prj_company_name_obj.set_text(self.__prj.company_name)
         self.__addr_map_list.set_project(self.__prj)
         self.project_modified(False)
 
@@ -309,8 +315,14 @@ class MainWindow(BaseWindow):
         new_list = [(grp, grp.name in current)
                     for grp in self.__prj.get_grouping_list()]
 
-        dialog = AddrMapEdit(map_name, new_list, self.__builder,
-                             self.__prj, self.__top_window)
+        dialog = AddrMapEdit(
+            map_name,
+            new_list,
+            self.__builder,
+            self.__prj,
+            self.__top_window
+        )
+
         new_list = dialog.get_list()
         if new_list is not None:
             self.__prj.set_address_map_group_list(map_name, dialog.get_list())
@@ -359,9 +371,9 @@ class MainWindow(BaseWindow):
 
     def on_project_documentation_changed(self, obj):
         self.project_modified(True)
-        self.__prj.documentation = obj.get_text(obj.get_start_iter(),
-                                                obj.get_end_iter(),
-                                                False)
+        self.__prj.documentation = obj.get_text(
+            obj.get_start_iter(), obj.get_end_iter(), False
+        )
 
     def on_short_name_changed(self, obj):
         """
@@ -487,15 +499,18 @@ class MainWindow(BaseWindow):
 
         if not field.output_signal:
             field.output_signal = "%s_%s_OUT" % (
-                register.token, field.field_name)
+                register.token, field.field_name
+            )
 
         if TYPE_ENB[field.field_type][0] and not field.input_signal:
             field.input_signal = "%s_%s_IN" % (
-                register.token, field.field_name)
+                register.token, field.field_name
+            )
 
         if TYPE_ENB[field.field_type][1] and not field.control_signal:
             field.control_signal = "%s_%s_LD" % (
-                register.token, field.field_name)
+                register.token, field.field_name
+            )
 
     def __update_reset_field(self, field, model, path, node):
         field.reset_type = model.get_value(node, 1)
@@ -975,7 +990,8 @@ class MainWindow(BaseWindow):
             reg.description = self.__reg_text_buf.get_text(
                 self.__reg_text_buf.get_start_iter(),
                 self.__reg_text_buf.get_end_iter(),
-                False)
+                False
+            )
             self.set_modified()
             self.__set_register_warn_flags(reg)
 
@@ -1034,8 +1050,10 @@ class MainWindow(BaseWindow):
 
             if self.duplicate_address(register.address):
                 self.set_share(register)
-                LOGGER.error('Register cannot be set to non-sharing '
-                             'if it shares an address with another')
+                LOGGER.error(
+                    'Register cannot be set to non-sharing '
+                    'if it shares an address with another'
+                )
             else:
                 register.share = Register.SHARE_NONE
                 self.set_modified()
@@ -1100,10 +1118,14 @@ class MainWindow(BaseWindow):
         register = self.__reglist_obj.get_selected_register()
         field = self.__bitfield_obj.select_field()
         if field:
-            from regenerate.ui.bitfield_editor import BitFieldEditor
-            BitFieldEditor(self.dbase, register, field,
-                           self.__set_field_modified, self.__builder,
-                           self.__top_window)
+            BitFieldEditor(
+                self.dbase,
+                register,
+                field,
+                self.__set_field_modified,
+                self.__builder,
+                self.__top_window
+            )
 
     def __set_field_modified(self):
         reg = self.__reglist_obj.get_selected_register()
@@ -1174,18 +1196,26 @@ class MainWindow(BaseWindow):
         Creates a file save selector, using the mime type and regular
         expression to control the selector.
         """
-        return self.__create_file_selector(title, mime_name, mime_regex,
-                                           gtk.FILE_CHOOSER_ACTION_SAVE,
-                                           gtk.STOCK_SAVE)
+        return self.__create_file_selector(
+            title,
+            mime_name,
+            mime_regex,
+            gtk.FILE_CHOOSER_ACTION_SAVE,
+            gtk.STOCK_SAVE
+        )
 
     def __create_open_selector(self, title, mime_name=None, mime_regex=None):
         """
         Creates a file save selector, using the mime type and regular
         expression to control the selector.
         """
-        return self.__create_file_selector(title, mime_name, mime_regex,
-                                           gtk.FILE_CHOOSER_ACTION_OPEN,
-                                           gtk.STOCK_OPEN)
+        return self.__create_file_selector(
+            title,
+            mime_name,
+            mime_regex,
+            gtk.FILE_CHOOSER_ACTION_OPEN,
+            gtk.STOCK_OPEN
+        )
 
     def on_add_register_set_activate(self, obj):
         """
@@ -1193,8 +1223,11 @@ class MainWindow(BaseWindow):
         create_selector method, then runs the dialog, and calls the
         open_xml routine with the result.
         """
-        choose = self.__create_open_selector("Open Register Database",
-                                             'XML files', '*.xml')
+        choose = self.__create_open_selector(
+            "Open Register Database",
+            'XML files',
+            '*.xml'
+        )
         choose.set_select_multiple(True)
         response = choose.run()
         if response == gtk.RESPONSE_OK:
@@ -1226,10 +1259,13 @@ class MainWindow(BaseWindow):
         selected file is added to the recent manager.
         """
         name = None
-        choose = gtk.FileChooserDialog("New", self.__top_window,
-                                       gtk.FILE_CHOOSER_ACTION_SAVE,
-                                       (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
-                                        gtk.STOCK_SAVE, gtk.RESPONSE_OK))
+        choose = gtk.FileChooserDialog(
+            "New",
+            self.__top_window,
+            gtk.FILE_CHOOSER_ACTION_SAVE,
+            (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+             gtk.STOCK_SAVE, gtk.RESPONSE_OK)
+        )
         choose.set_current_folder(os.curdir)
         choose.show()
 
@@ -1240,8 +1276,13 @@ class MainWindow(BaseWindow):
         return name
 
     def on_new_project_clicked(self, obj):
-        choose = self.__create_save_selector("New Project",
-                                             "Regenerate Project", DEF_MIME)
+
+        choose = self.__create_save_selector(
+            "New Project",
+            "Regenerate Project",
+            DEF_MIME
+        )
+
         response = choose.run()
         if response == gtk.RESPONSE_OK:
             filename = choose.get_filename()
@@ -1266,8 +1307,13 @@ class MainWindow(BaseWindow):
         choose.destroy()
 
     def on_open_action_activate(self, obj):
-        choose = self.__create_open_selector("Open Project",
-                                             "Regenerate Project", DEF_MIME)
+
+        choose = self.__create_open_selector(
+            "Open Project",
+            "Regenerate Project",
+            DEF_MIME
+        )
+
         response = choose.run()
         filename = choose.get_filename()
         uri = choose.get_uri()
@@ -1324,8 +1370,11 @@ class MainWindow(BaseWindow):
         self.__builder.get_object('save_btn').set_sensitive(True)
         self.set_busy_cursor(False)
         base = os.path.splitext(os.path.basename(filename))[0]
-        self.__top_window.set_title("%s (%s) - regenerate" %
-                                    (base, self.__prj.name))
+
+        self.__top_window.set_title(
+            "%s (%s) - regenerate" % (base, self.__prj.name)
+        )
+
         self.__status_obj.pop(idval)
         self.load_project_tab()
         self.__prj_loaded.set_sensitive(True)
@@ -1362,10 +1411,15 @@ class MainWindow(BaseWindow):
 
         self.__set_module_definition_warn_flag()
 
-        self.active = DbaseStatus(self.dbase, name, base, self.__reg_model,
-                                  self.__modelsort,
-                                  self.__filter_manage.get_model(),
-                                  self.__bit_model)
+        self.active = DbaseStatus(
+            self.dbase,
+            name,
+            base, self.__reg_model,
+            self.__modelsort,
+            self.__filter_manage.get_model(),
+            self.__bit_model
+        )
+
         self.active.node = self.__prj_model.add_dbase(name, self.active)
         self.__prj_obj.select(self.active.node)
         self.redraw()
@@ -1383,9 +1437,11 @@ class MainWindow(BaseWindow):
         self.dbase = RegisterDb()
         self.__load_database(name)
         if not os.access(name, os.W_OK):
-            WarnMsg("Read only file",
-                    'You will not be able to save this file unless\n'
-                    'you change permissions.')
+            WarnMsg(
+                "Read only file",
+                'You will not be able to save this file unless\n'
+                'you change permissions.'
+            )
 
         self.__reg_model = RegisterModel()
         mdl = self.__reg_model.filter_new()
@@ -1425,10 +1481,16 @@ class MainWindow(BaseWindow):
                 ErrorMsg("Could not load existing register set", str(msg))
 
             base = os.path.splitext(os.path.basename(name))[0]
-            self.active = DbaseStatus(self.dbase, name, base, self.__reg_model,
-                                      self.__modelsort,
-                                      self.__filter_manage.get_model(),
-                                      self.__bit_model)
+
+            self.active = DbaseStatus(
+                self.dbase,
+                name,
+                base,
+                self.__reg_model,
+                self.__modelsort,
+                self.__filter_manage.get_model(),
+                self.__bit_model
+            )
 
             self.active.node = self.__prj_model.add_dbase(name, self.active)
             if load:
@@ -1527,8 +1589,12 @@ class MainWindow(BaseWindow):
         """
         Imports the data using the specified data importer.
         """
-        choose = self.__create_open_selector(data[1][1], data[2],
-                                             "*" + data[3])
+        choose = self.__create_open_selector(
+            data[1][1],
+            data[2],
+            "*" + data[3]
+        )
+
         response = choose.run()
         if response == gtk.RESPONSE_OK:
             choose.hide()
@@ -1594,9 +1660,13 @@ class MainWindow(BaseWindow):
         self.__set_module_definition_warn_flag()
 
     def __overview_changed(self, obj):
-        self.dbase.overview_text = obj.get_text(obj.get_start_iter(),
-                                                obj.get_end_iter(),
-                                                False)
+
+        self.dbase.overview_text = obj.get_text(
+            obj.get_start_iter(),
+            obj.get_end_iter(),
+            False
+        )
+
         self.__set_description_warn_flag()
         self.set_modified()
 
@@ -1610,8 +1680,13 @@ class MainWindow(BaseWindow):
         """
         if (self.__modified or self.__prj_model.is_not_saved() or
                 (self.__prj and self.__prj.modified)):
-            dialog = Question('Save Changes?', "The file has been modified. "
-                              "Do you want to save your changes?")
+
+            dialog = Question(
+                'Save Changes?',
+                "The file has been modified. "
+                "Do you want to save your changes?"
+            )
+
             status = dialog.run()
             if status == Question.DISCARD:
                 self.__exit()
@@ -1876,9 +1951,10 @@ class MainWindow(BaseWindow):
 
     def __set_description_warn_flag(self):
         if not self.__loading_project:
-            warn = self.dbase.overview_text == ""
-            self.__builder.get_object('mod_descr_warn').set_property('visible',
-                                                                     warn)
+            self.__builder.get_object('mod_descr_warn').set_property(
+                'visible',
+                self.dbase.overview_text == ""
+            )
 
     def __set_module_definition_warn_flag(self):
         if not self.__loading_project:

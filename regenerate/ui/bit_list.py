@@ -25,8 +25,10 @@ from regenerate.db import BitField, TYPES, Register
 from regenerate.ui.columns import EditableColumn, ComboMapColumn, SwitchComboMapColumn
 
 TYPE2STR = [(t.description, t.type) for t in sorted(TYPES)]
-RO2STR = [(t.description, t.type) for t in sorted(TYPES) if t.simple_type == "RO"]
-WO2STR = [(t.description, t.type) for t in sorted(TYPES) if t.simple_type == "WO"]
+RO2STR = [(t.description, t.type)
+          for t in sorted(TYPES) if t.simple_type == "RO"]
+WO2STR = [(t.description, t.type)
+          for t in sorted(TYPES) if t.simple_type == "WO"]
 (BIT_TITLE, BIT_SIZE, BIT_SORT, BIT_EXPAND, BIT_MONO) = range(5)
 
 
@@ -114,18 +116,36 @@ class BitList(object):
         """
         for (i, col) in enumerate(self.BIT_COLS):
             if i == BitModel.TYPE_COL:
-                column = SwitchComboMapColumn(col[BIT_TITLE], combo_edit,
-                                              TYPE2STR, RO2STR, WO2STR, i)
+                column = SwitchComboMapColumn(
+                    col[BIT_TITLE],
+                    combo_edit,
+                    TYPE2STR,
+                    RO2STR,
+                    WO2STR,
+                    i
+                )
                 self.type_column = column
             elif i == BitModel.RESET_TYPE_COL:
-                column = ComboMapColumn(col[BIT_TITLE], combo_edit,
-                                        BitModel.RESET2STR, i)
+                column = ComboMapColumn(
+                    col[BIT_TITLE],
+                    combo_edit,
+                    BitModel.RESET2STR,
+                    i
+                )
             elif i == BitModel.ICON_COL:
                 renderer = gtk.CellRendererPixbuf()
-                column = gtk.TreeViewColumn("", renderer, stock_id=i)
+                column = gtk.TreeViewColumn(
+                    "",
+                    renderer,
+                    stock_id=i
+                )
             else:
-                column = EditableColumn(col[BIT_TITLE], text_edit, i,
-                                        col[BIT_MONO])
+                column = EditableColumn(
+                    col[BIT_TITLE],
+                    text_edit,
+                    i,
+                    col[BIT_MONO]
+                )
             if i == BitModel.BIT_COL:
                 self.__col = column
             if col[BIT_SORT] >= 0:
@@ -168,9 +188,11 @@ class BitList(object):
         Adds a new field to the model, and sets editing to begin
         """
         path = self.__model.append_field(field)
-        self.__obj.set_cursor(path,
-                              focus_column=self.__col,
-                              start_editing=True)
+        self.__obj.set_cursor(
+            path,
+            focus_column=self.__col,
+            start_editing=True
+        )
 
 
 def bits(field):
