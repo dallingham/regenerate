@@ -286,8 +286,7 @@ class AddrMapList(object):
         if node is None:
             return None
 
-        path = model.get_path(node)
-        if len(path) > 1:
+        if len(model.get_path(node)) > 1:
             return None
         else:
             return model.get_value(node, AddrMapMdl.NAME_COL)
@@ -317,12 +316,21 @@ class AddrMapList(object):
         data, and sets the first field to start editing.
         """
         name = self._create_new_map_name()
-        node = self._model.append(row=(name, 0, False,
-                                       False, SIZE2STR[0][0], ""))
+        node = self._model.append(
+            row=(
+                name,
+                "0",
+                False,
+                False,
+                SIZE2STR[0][0],
+                ""
+            )
+        )
+
         path = self._model.get_path(node)
         self._prj.modified = True
         self._prj.set_address_map(name, 0, SIZE2STR[0][1], False, False)
-        self._obj.set_cursor(path, focus_column=self._col, start_editing=True)
+        self._obj.set_cursor(path, self._col, start_editing=True)
 
     def _create_new_map_name(self):
         template = "NewMap"

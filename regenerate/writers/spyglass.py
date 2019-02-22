@@ -90,6 +90,12 @@ class Spyglass(WriterBase):
 
 
 EXPORTERS = [
-    (WriterBase.TYPE_PROJECT, ExportInfo(Spyglass, ("Spyglass CDC Checking", "SGDC Constraints"),
-                                         "SGDC files", ".sgdc", 'spy-constraints'))
+    (WriterBase.TYPE_PROJECT,
+     ExportInfo(
+         Spyglass,
+         ("Spyglass CDC Checking", "SGDC Constraints"),
+         "SGDC files",
+         ".sgdc",
+         'spy-constraints')
+     )
 ]

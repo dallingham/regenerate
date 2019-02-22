@@ -1,4 +1,4 @@
-1  #
+#
 # Manage registers in a hardware design
 #
 # Copyright (C) 2008  Donald N. Allingham
@@ -18,14 +18,18 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
 OdtDoc - Writes out an OpenDocument document that contains the register
-             descriptions
+         descriptions
 """
 
 import os
 import zipfile
 import xml
 from xml.sax.saxutils import escape
-from cStringIO import StringIO
+
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 from regenerate.settings.paths import ODTFILE, USERODTFILE
 
@@ -135,11 +139,16 @@ class OdtDoc(WriterBase):
         self.tblcnt += 1
         self.cnt.write('<table:table table:name="mytable%d"' % self.tblcnt)
         self.cnt.write(' table:style-name="ParentTable">')
-        self.cnt.write('<table:table-column table:style-name="ParentTable.A"/>')
-        self.cnt.write('<table:table-column table:style-name="ParentTable.B"/>')
-        self.cnt.write('<table:table-column table:style-name="ParentTable.C"/>')
-        self.cnt.write('<table:table-column table:style-name="ParentTable.D"/>')
-        self.cnt.write('<table:table-column table:style-name="ParentTable.E"/>')
+        self.cnt.write(
+            '<table:table-column table:style-name="ParentTable.A"/>')
+        self.cnt.write(
+            '<table:table-column table:style-name="ParentTable.B"/>')
+        self.cnt.write(
+            '<table:table-column table:style-name="ParentTable.C"/>')
+        self.cnt.write(
+            '<table:table-column table:style-name="ParentTable.D"/>')
+        self.cnt.write(
+            '<table:table-column table:style-name="ParentTable.E"/>')
 
     def write_paragraph(self, para_name, text, level=0):
         """
@@ -415,7 +424,14 @@ class StylesXmlParser(object):
             if name in self.format_list:
                 self.format_list.remove(name)
 
+
 EXPORTERS = [
-    (WriterBase.TYPE_BLOCK, ExportInfo(OdtDoc, ("Documentation", "OpenDocument"),
-                            "OpenDocument files", ".odt", 'doc-odt'))
-    ]
+    (WriterBase.TYPE_BLOCK,
+     ExportInfo(
+         OdtDoc,
+         ("Documentation", "OpenDocument"),
+         "OpenDocument files",
+         ".odt",
+         'doc-odt')
+     )
+]

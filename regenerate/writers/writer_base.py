@@ -27,8 +27,10 @@ from collections import namedtuple
 from regenerate.settings.paths import INSTALL_PATH
 
 
-ExportInfo = namedtuple("ExportInfo", ["obj_class", "type", "description",
-                                       "extension", "id"])
+ExportInfo = namedtuple(
+    "ExportInfo",
+    ["obj_class", "type", "description", "extension", "id"]
+)
 
 if os.name == 'nt':
 
@@ -48,7 +50,6 @@ class WriterBase(object):  # IGNORE:R0921 - we know this is a abstract class
     """
 
     (TYPE_BLOCK, TYPE_GROUP, TYPE_PROJECT) = range(3)
-
 
     def __init__(self, project, dbase):
         self._dbase = dbase

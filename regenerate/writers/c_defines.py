@@ -103,6 +103,12 @@ class CDefines(WriterBase):
 
 
 EXPORTERS = [
-    (WriterBase.TYPE_BLOCK, ExportInfo(CDefines, ("Header files", "C Source"), 
-                                       "C header files", ".h", 'headers-c'))
-    ]
+    (WriterBase.TYPE_BLOCK,
+     ExportInfo(
+         CDefines,
+         ("Header files", "C Source"),
+         "C header files",
+         ".h",
+         'headers-c')
+     )
+]

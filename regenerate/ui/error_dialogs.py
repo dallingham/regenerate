@@ -69,7 +69,7 @@ class Question(gtk.MessageDialog):
     CANCEL = -2
     SAVE = -3
 
-    def __init__(self, err, msg):
+    def __init__(self, err, msg, parent=None):
         gtk.MessageDialog.__init__(self, type=gtk.MESSAGE_QUESTION)
         self.set_markup(
             '<span weight="bold" size="larger">{0}</span>'.format(err))
@@ -78,6 +78,8 @@ class Question(gtk.MessageDialog):
         self.add_button(gtk.STOCK_CANCEL, self.CANCEL)
         self.add_button('Save Changes', self.SAVE)
         self.set_default_response(self.CANCEL)
+        if parent is not None:
+            self.set_transient_for(parent)
         self.show_all()
 
     def run_dialog(self):

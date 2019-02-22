@@ -31,6 +31,7 @@ import os
 import copy
 import re
 import sys
+import string
 import xml
 from regenerate import PROGRAM_VERSION, PROGRAM_NAME
 from regenerate.db import RegWriter, RegisterDb, Register
@@ -362,12 +363,6 @@ class MainWindow(BaseWindow):
         """
         self.project_modified(True)
         self.__prj.company_name = obj.get_text()
-
-    def on_offset_insert_text(self, obj, new_text, pos, *extra):
-        try:
-            int(new_text, 16)
-        except ValueError:
-            obj.stop_emission('insert-text')
 
     def on_project_documentation_changed(self, obj):
         self.project_modified(True)
@@ -1685,7 +1680,8 @@ class MainWindow(BaseWindow):
             dialog = Question(
                 'Save Changes?',
                 "The file has been modified. "
-                "Do you want to save your changes?"
+                "Do you want to save your changes?",
+                self.__top_window
             )
 
             status = dialog.run()

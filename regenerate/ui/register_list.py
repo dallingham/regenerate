@@ -198,7 +198,7 @@ class RegisterModel(gtk.ListStore):
 
 
 ColDef = namedtuple("ColDef", ["title", "size", "sort_column",
-                               "expand", "type"])
+                               "expand", "type", "mono"])
 
 
 class RegisterList(object):
@@ -208,14 +208,14 @@ class RegisterList(object):
 
     (COL_TEXT, COL_COMBO, COL_ICON) = range(3)
 
-    _COLS = (  # Title,   Size, Column, Expand, Type
-        ColDef('', 30, RegisterModel.ICON_COL, False, COL_ICON),
-        ColDef('Address', 100, RegisterModel.SORT_COL, False, COL_TEXT),
-        ColDef('Name', 175, RegisterModel.NAME_COL, True, COL_TEXT),
-        ColDef('Token', 150, RegisterModel.DEFINE_COL, True, COL_TEXT),
-        ColDef('Dimension', 50, RegisterModel.DIM_COL, True, COL_TEXT),
-        ColDef('Width', 125, -1, False, COL_COMBO),
-        )
+    _COLS = (  # Title,   Size, Column, Expand, Type, Monospace
+        ColDef('', 30, RegisterModel.ICON_COL, False, COL_ICON, False),
+        ColDef('Address', 100, RegisterModel.SORT_COL, False, COL_TEXT, True),
+        ColDef('Name', 175, RegisterModel.NAME_COL, True, COL_TEXT, False),
+        ColDef('Token', 150, RegisterModel.DEFINE_COL, True, COL_TEXT, True),
+        ColDef('Dimension', 50, RegisterModel.DIM_COL, True, COL_TEXT, False),
+        ColDef('Width', 125, -1, False, COL_COMBO, False),
+    )
 
     def __init__(self, obj, select_change_function, mod_function, update_addr,
                  set_warn_flags):
@@ -274,7 +274,8 @@ class RegisterList(object):
                 column = ComboMapColumn(col.title, self.__combo_edited,
                                         RegisterModel.BIT2STR, i)
             elif col.type == self.COL_TEXT:
-                column = EditableColumn(col.title, self.__text_edited, i)
+                column = EditableColumn(
+                    col.title, self.__text_edited, i, col.mono)
             else:
                 self.__icon_renderer = gtk.CellRendererPixbuf()
                 column = gtk.TreeViewColumn("", self.__icon_renderer,

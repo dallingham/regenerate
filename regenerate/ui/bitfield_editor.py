@@ -146,10 +146,10 @@ class BitFieldEditor(object):
                 if token not in styles:
                     styles[token] = buf.create_tag()
                 start = buf.get_end_iter()
-                buf.insert_with_tags(start, value.encode('utf-8'),
-                                     styles[token])
+                buf.insert_with_tags(start, value, styles[token])
 
-                for token, tag in styles.iteritems():
+                for token in styles:
+                    tag = styles[token]
                     style = STYLE.style_for_token(token)
                     if style['bgcolor']:
                         tag.set_property('background', '#' + style['bgcolor'])
@@ -303,9 +303,10 @@ class BitFieldEditor(object):
         else:
             path = (last, )
 
+        focus_column = self._col
         self._value_tree_obj.set_cursor(
             path,
-            focus_column=self._col,
+            focus_column,
             start_editing=True
         )
         self.modified()
@@ -345,10 +346,12 @@ class BitFieldEditor(object):
         self._bit_field.output_has_side_effect = obj.get_active()
 
     def _update_values(self):
-        new_list = []
-        for row in self._list_model:
-            new_list.append((row[0], row[1], row[2]))
-        self._bit_field.values = new_list
+        # new_list = []
+        # for row in self._list_model:
+        #     new_list.append((row[0], row[1], row[2]))
+        # self._bit_field.values = new_list
+        self._bit_field.values = [(val[0], val[1], val[2])
+                                  for val in self._list_model]
 
     def _change_text(self, text, path, new_text):
         """

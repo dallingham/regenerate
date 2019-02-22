@@ -57,7 +57,7 @@ ACCESS_MAP = {
     BitField.TYPE_WRITE_ONLY: "write-only",
     BitField.TYPE_READ_WRITE_PROTECT: "read-write",
     BitField.TYPE_READ_WRITE_PROTECT_1S:  "read-write",
-    }
+}
 
 WRITE_MAP = {
     BitField.TYPE_WRITE_1_TO_CLEAR_SET: "oneToClear",
@@ -68,7 +68,7 @@ WRITE_MAP = {
     BitField.TYPE_WRITE_1_TO_CLEAR_LOAD_1S: "oneToClear",
     BitField.TYPE_WRITE_1_TO_CLEAR_LOAD_1S_1: "oneToClear",
     BitField.TYPE_WRITE_1_TO_SET: "oneToSet"
-    }
+}
 
 
 XML = ['xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"',
@@ -94,20 +94,31 @@ class IpXactWriter(WriterBase):
 
         dirpath = os.path.dirname(__file__)
 
-        template = Template(file(os.path.join(dirpath, "templates", "ipxact.template")).read(),
-                            trim_blocks=True,
-                            lstrip_blocks=True)
+        with open(os.path.join(dirpath, "templates", "ipxact.template")) as of:
+            template = Template(
+                of.read(),
+                trim_blocks=True,
+                lstrip_blocks=True
+            )
 
         with open(filename, "w") as ofile:
-            text = template.render(db=self._dbase,
-                                   WRITE_MAP=WRITE_MAP,
-                                   ACCESS_MAP=ACCESS_MAP,
-                                   scope="ipxact",
-                                   refs=XML)
+            text = template.render(
+                db=self._dbase,
+                WRITE_MAP=WRITE_MAP,
+                ACCESS_MAP=ACCESS_MAP,
+                scope="ipxact",
+                refs=XML
+            )
             ofile.write(text)
 
 
 EXPORTERS = [
-    (WriterBase.TYPE_BLOCK, ExportInfo(IpXactWriter, ("XML", "IP-XACT"),
-                                       "IP-XACT files", ".xml", 'ip-xact'))
+    (WriterBase.TYPE_BLOCK,
+     ExportInfo(
+         IpXactWriter,
+         ("XML", "IP-XACT"),
+         "IP-XACT files",
+         ".xml",
+         'ip-xact')
+     )
 ]

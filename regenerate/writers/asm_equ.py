@@ -59,6 +59,12 @@ class AsmEqu(WriterBase):
 
 
 EXPORTERS = [
-    (WriterBase.TYPE_BLOCK, ExportInfo(AsmEqu, ("Header files", "Assembler Source"),
-                                       "Assembler files", ".s", 'headers-asm'))
+    (WriterBase.TYPE_BLOCK,
+     ExportInfo(
+         AsmEqu,
+         ("Header files", "Assembler Source"),
+         "Assembler files",
+         ".s",
+         'headers-asm')
+     )
 ]

@@ -67,13 +67,22 @@ class VerilogParameters(WriterBase):
                                    comment_char='//')
 
         for reg_key in self._dbase.get_keys():
-            self.write_def(self._dbase.get_register(reg_key), self._prefix,
-                           self._offset)
+            self.write_def(
+                self._dbase.get_register(reg_key),
+                self._prefix,
+                self._offset
+            )
         self._ofile.write('\n')
         self._ofile.close()
 
 
 EXPORTERS = [
-    (WriterBase.TYPE_BLOCK, ExportInfo(VerilogParameters, ("RTL", "Verilog parameters"),
-                                       "Verilog header files", ".vh", 'rtl-verilog-parmaeters'))
-    ]
+    (WriterBase.TYPE_BLOCK,
+     ExportInfo(
+         VerilogParameters,
+         ("RTL", "Verilog parameters"),
+         "Verilog header files",
+         ".vh",
+         'rtl-verilog-parmaeters')
+     )
+]

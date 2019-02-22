@@ -39,26 +39,36 @@ class GroupDocEditor(object):
         self.group_doc = builder.get_object('group_text')
         self.group_title = builder.get_object('group_title')
         self.group_inst = group_inst
-        self.buffer = builder.get_object('overview1').get_buffer()
+        self.text_buf = builder.get_object('overview1').get_buffer()
         pango_font = pango.FontDescription("monospace")
         builder.get_object('overview1').modify_font(pango_font)
 
-        self.__prj_preview = PreviewEditor(
-            self.buffer, builder.get_object('scroll_webkit1'))
+        preview = PreviewEditor(
+            self.text_buf,
+            builder.get_object('scroll_webkit1')
+        )
 
-        self.buffer.set_text(group_inst.docs)
+        self.text_buf.set_text(group_inst.docs)
         self.group_title.set_text(group_inst.title)
 
-        builder.get_object("overview1").connect("key-press-event",
-                                                self.on_key_press_event)
-        builder.get_object("button2").connect("button-press-event", self._save)
-        builder.get_object("button3").connect("button-press-event",
-                                              self._cancel)
+        builder.get_object("overview1").connect(
+            "key-press-event",
+            self.on_key_press_event
+        )
+        builder.get_object("button2").connect(
+            "button-press-event",
+            self._save
+        )
+        builder.get_object("button3").connect(
+            "button-press-event",
+            self._cancel
+        )
+
         builder.get_object('title').set_text(group_inst.name)
         if PREVIEW_ENABLED:
-            self.__prj_preview.enable()
+            preview.enable()
         else:
-            self.__prj_preview.disable()
+            preview.disable()
         self.__spell = Spell(builder.get_object('overview1'))
 
         self.group_doc.connect('delete-event', self.on_delete_event)
@@ -83,14 +93,19 @@ class GroupDocEditor(object):
 
     def _save(self, obj, data):
 
-        new_docs = self.buffer.get_text(
-            self.buffer.get_start_iter(), self.buffer.get_end_iter(), False)
-        new_title = self.group_title.get_text()
+        new_docs = self.text_buf.get_text(
+            self.text_buf.get_start_iter(),
+            self.text_buf.get_end_iter(),
+            False
+        )
 
         if self.group_inst.docs != new_docs:
             self.group_inst.docs = new_docs
             self.callback(True)
+
+        new_title = self.group_title.get_text()
         if self.group_inst.title != new_title:
             self.group_inst.title = new_title
             self.callback(True)
+
         self.group_doc.destroy()

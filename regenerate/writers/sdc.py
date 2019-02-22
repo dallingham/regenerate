@@ -142,6 +142,12 @@ def get_base_signal(address, field):
 
 
 EXPORTERS = [
-    (WriterBase.TYPE_PROJECT, ExportInfo(Sdc, ("Synthesis", "SDC Constraints"), "SDC files",
-                                         ".sdc", 'syn-constraints'))
+    (WriterBase.TYPE_PROJECT,
+     ExportInfo(
+         Sdc,
+         ("Synthesis", "SDC Constraints"),
+         "SDC files",
+         ".sdc",
+         'syn-constraints')
+     )
 ]

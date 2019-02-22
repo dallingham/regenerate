@@ -58,7 +58,12 @@ class VerilogConstRegPackage(WriterBase):
 
 
 EXPORTERS = [
-    (WriterBase.TYPE_PROJECT, ExportInfo(VerilogConstRegPackage,
-                                         ("Headers", "SystemVerilog Register Constants"),
-                                         "SystemVerilog files", ".sv", 'headers-system-verilog')),
+    (WriterBase.TYPE_PROJECT,
+     ExportInfo(
+         VerilogConstRegPackage,
+         ("Headers", "SystemVerilog Register Constants"),
+         "SystemVerilog files",
+         ".sv",
+         'headers-system-verilog')
+     ),
 ]
