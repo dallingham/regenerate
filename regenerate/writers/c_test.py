@@ -130,7 +130,7 @@ code_reg8 = [
 
 class CTest(WriterBase):
     def __init__(self, project, dbase):
-        WriterBase.__init__(self, project, dbase)
+        super(CTest, self).__init__(project, dbase)
         self._offset = 0
         self._ofile = None
         self.module_set = set()

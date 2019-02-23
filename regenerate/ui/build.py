@@ -45,7 +45,7 @@ class Build(BaseWindow):
     """
 
     def __init__(self, project, dbmap, parent):
-        BaseWindow.__init__(self)
+        super(Build, self).__init__()
 
         self.__dbmap = dbmap
         self.__prj = project

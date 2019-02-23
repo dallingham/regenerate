@@ -61,8 +61,9 @@ class ProjectModel(gtk.ListStore):
     (NAME, ICON, FILE, MODIFIED, OOD, OBJ) = range(6)
 
     def __init__(self, use_svn=False):
+        super(ProjectModel, self).__init__(str, str, str, bool, bool, object)
+
         gtk.gdk.threads_init()
-        gtk.ListStore.__init__(self, str, str, str, bool, bool, object)
         self.file_list = {}
         self.paths = set()
         self.__use_svn = use_svn

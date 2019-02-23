@@ -29,7 +29,7 @@ class VerilogParameters(WriterBase):
     """
 
     def __init__(self, dbase):
-        WriterBase.__init__(self, dbase)
+        super(VerilogParameters, self).__init__(dbase)
         self._ofile = None
 
     def write_def(self, reg, prefix, offset):

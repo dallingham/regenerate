@@ -113,8 +113,9 @@ class RegisterModel(gtk.ListStore):
     STR2BIT = {8: "8 bits", 16: "16 bits", 32: "32 bits", 64: "64 bits", }
 
     def __init__(self):
-        gtk.ListStore.__init__(self, str, str, str, str,
-                               int, str, int, str, object)
+        super(RegisterModel, self).__init__(
+            str, str, str, str, int, str, int, str, object
+        )
         self.reg2path = {}
 
     def append_register(self, register):

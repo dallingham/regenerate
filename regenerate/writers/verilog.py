@@ -113,7 +113,7 @@ class Verilog(WriterBase):
     """
 
     def __init__(self, project, dbase):
-        WriterBase.__init__(self, project, dbase)
+        super(Verilog, self).__init__(project, dbase)
 
         self.input_logic = "input       "
         self.output_logic = "output      "
@@ -343,7 +343,7 @@ class Verilog(WriterBase):
 class SystemVerilog(Verilog):
 
     def __init__(self, project, dbase):
-        Verilog.__init__(self, project, dbase)
+        super(SystemVerilog, self).__init__(project, dbase)
         self.input_logic = "input logic "
         self.output_logic = "output logic"
         self.always = "always_ff"
@@ -353,7 +353,7 @@ class SystemVerilog(Verilog):
 class Verilog2001(Verilog):
 
     def __init(self, project, dbase):
-        Verilog.__init__(self, project, dbase)
+        super(Verilog2001, self).__init__(project, dbase)
 
 
 def drop_write_share(list_in):

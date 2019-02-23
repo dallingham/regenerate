@@ -29,7 +29,9 @@ class BaseMsg(gtk.MessageDialog):
     """
 
     def __init__(self, title, msg, dialog_type, buttons=gtk.BUTTONS_CLOSE):
-        gtk.MessageDialog.__init__(self, type=dialog_type, buttons=buttons)
+
+        super(BaseMsg, self).__init__(type=dialog_type, buttons=buttons)
+
         self.set_markup('<span weight="bold" size="larger">%s</span>' % title)
         self.format_secondary_markup(msg)
         self.run_dialog()
@@ -48,7 +50,7 @@ class ErrorMsg(BaseMsg):
     """
 
     def __init__(self, err, msg=""):
-        BaseMsg.__init__(self, err, msg, gtk.MESSAGE_ERROR)
+        super(ErrorMsg, self).__init__(err, msg, gtk.MESSAGE_ERROR)
 
 
 class WarnMsg(BaseMsg):
@@ -57,7 +59,7 @@ class WarnMsg(BaseMsg):
     """
 
     def __init__(self, err, msg=""):
-        BaseMsg.__init__(self, err, msg, gtk.MESSAGE_WARNING)
+        super(WarnMsg, self).__init__(err, msg, gtk.MESSAGE_WARNING)
 
 
 class Question(gtk.MessageDialog):
@@ -70,7 +72,9 @@ class Question(gtk.MessageDialog):
     SAVE = -3
 
     def __init__(self, err, msg, parent=None):
-        gtk.MessageDialog.__init__(self, type=gtk.MESSAGE_QUESTION)
+
+        super(Question, self).__init__(type=gtk.MESSAGE_QUESTION)
+
         self.set_markup(
             '<span weight="bold" size="larger">{0}</span>'.format(err))
         self.format_secondary_markup(msg)

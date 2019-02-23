@@ -55,7 +55,7 @@ class HelpWindow(BaseWindow):
 
     def __init__(self, builder, filename):
 
-        BaseWindow.__init__(self)
+        super(HelpWindow, self).__init__()
         if not WEBKIT:
             return
 

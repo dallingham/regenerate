@@ -30,7 +30,7 @@ class AsmEqu(WriterBase):
     """
 
     def __init__(self, dbase):
-        WriterBase.__init__(self, dbase)
+        super(AsmEqu, self).__init__(dbase)
         self._offset = 0
         self._ofile = None
 

@@ -112,7 +112,7 @@ class OdtDoc(WriterBase):
     """
 
     def __init__(self, dbase, rlist=None):
-        WriterBase.__init__(self, dbase)
+        super(OdtDoc, self).__init__(dbase)
         self.tblcnt = 0
         self.rlist = rlist
         self.zip = None

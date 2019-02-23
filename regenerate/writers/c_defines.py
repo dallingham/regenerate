@@ -56,7 +56,7 @@ class CDefines(WriterBase):
     """
 
     def __init__(self, project, dbase):
-        WriterBase.__init__(self, project, dbase)
+        super(CDefines, self).__init__(project, dbase)
         self._ofile = None
 
     def write_def(self, reg, data, base):

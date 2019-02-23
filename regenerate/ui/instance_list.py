@@ -33,8 +33,12 @@ class InstMdl(gtk.TreeStore):
      UVM_COL, DEC_COL, ARRAY_COL, SINGLE_DEC_COL, OBJ_COL) = range(12)
 
     def __init__(self, project):
-        gtk.TreeStore.__init__(self, str, str, str, gobject.TYPE_UINT64, str,
-                               str, str, bool, bool, bool, bool, object)
+
+        super(InstMdl, self).__init__(
+            str, str, str, gobject.TYPE_UINT64, str,
+            str, str, bool, bool, bool, bool, object
+        )
+
         self.callback = self.__null_callback()
         self.project = project
 
@@ -63,6 +67,7 @@ class InstMdl(gtk.TreeStore):
             return
 
         items = []
+
         node = self.get_iter_root()
         while node:
             items.append(self.get_value(node, InstMdl.INST_COL))
@@ -206,11 +211,18 @@ class InstanceList(object):
         self.__col = None
         self.__project = None
         self.__model = None
-        self.__build_instance_table(id_changed, inst_changed, base_changed,
-                                    repeat_changed, repeat_offset_changed,
-                                    hdl_changed, uvm_changed,
-                                    decode_changed, array_changed,
-                                    single_decode_changed)
+        self.__build_instance_table(
+            id_changed,
+            inst_changed,
+            base_changed,
+            repeat_changed,
+            repeat_offset_changed,
+            hdl_changed,
+            uvm_changed,
+            decode_changed,
+            array_changed,
+            single_decode_changed
+        )
         self.__enable_dnd()
         self.__obj.set_sensitive(False)
 

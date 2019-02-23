@@ -46,7 +46,7 @@ class UVMRegBlockRegisters(WriterBase):
         Initialize the object. At the current time, only little endian is
         supported by the package
         """
-        WriterBase.__init__(self, project, None)
+        super(UVMRegBlockRegisters, self).__init__(project, None)
         self.dblist = dblist
 
     def fix_name(self, field):

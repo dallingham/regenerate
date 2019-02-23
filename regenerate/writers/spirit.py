@@ -78,7 +78,7 @@ class SpiritWriter(WriterBase):
     """
 
     def __init__(self, project, dbase):
-        WriterBase.__init__(self, project, dbase)
+        super(SpiritWriter, self).__init__(project, dbase)
 
     def write(self, filename):
         """

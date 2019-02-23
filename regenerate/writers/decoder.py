@@ -92,7 +92,7 @@ class AddressDecode(WriterBase):
     """
 
     def __init__(self, project, group, dblist):
-        WriterBase.__init__(self, project, None)
+        super(AddressDecode, self).__init__(project, None)
         self.dblist = dblist
         self.group = group
 

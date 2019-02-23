@@ -31,7 +31,6 @@ import os
 import copy
 import re
 import sys
-import string
 import xml
 from regenerate import PROGRAM_VERSION, PROGRAM_NAME
 from regenerate.db import RegWriter, RegisterDb, Register
@@ -101,7 +100,7 @@ class MainWindow(BaseWindow):
 
     def __init__(self):
 
-        BaseWindow.__init__(self)
+        super(MainWindow, self).__init__()
 
         self.__prj = None
         self.__builder = gtk.Builder()

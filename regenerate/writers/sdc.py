@@ -29,7 +29,7 @@ class Sdc(WriterBase):
     """
 
     def __init__(self, project, dblist):
-        WriterBase.__init__(self, project, None)
+        super(Sdc, self).__init__(project, None)
         self._offset = 0
         self.dblist = dblist
         self._ofile = None

@@ -21,7 +21,7 @@ Provides both the GTK ListStore and ListView for the bit fields.
 """
 
 import gtk
-from regenerate.db import BitField, TYPES, Register
+from regenerate.db import BitField, TYPES
 from regenerate.ui.columns import EditableColumn, ComboMapColumn, SwitchComboMapColumn
 
 TYPE2STR = [(t.description, t.type) for t in sorted(TYPES)]
@@ -50,7 +50,8 @@ class BitModel(gtk.ListStore):
         Initialize the base class with the object types that we are going to
         be adding to the model.
         """
-        gtk.ListStore.__init__(self, str, str, str, str, str, str, int, object)
+        super(BitModel, self).__init__(
+            str, str, str, str, str, str, int, object)
 
     def append_field(self, field):
         """
@@ -190,7 +191,7 @@ class BitList(object):
         path = self.__model.append_field(field)
         self.__obj.set_cursor(
             path,
-            focus_column=self.__col,
+            self.__col,
             start_editing=True
         )
 
