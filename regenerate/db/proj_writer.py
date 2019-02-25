@@ -92,7 +92,8 @@ class ProjectWriter(object):
                     if access_list:
                         ofile.write('      <map_group name="%s">\n' % group)
                         for inst, val in access_list:
-                            ofile.write('        <access type="%d">%s</access>\n' % (val, inst))
+                            ofile.write(
+                                '        <access type="%d">%s</access>\n' % (val, inst))
                         ofile.write('      </map_group>\n')
                     else:
                         ofile.write('      <map_group name="%s"/>\n' % group)
@@ -127,7 +128,8 @@ class ProjectWriter(object):
                 if item.no_decode:
                     ofile.write(' no_decode="%s"' % int(item.no_decode))
                 if item.single_decode:
-                    ofile.write(' single_decode="%s"' % int(item.single_decode))
+                    ofile.write(' single_decode="%s"' %
+                                int(item.single_decode))
                 if item.array:
                     ofile.write(' array="%s"' % int(item.array))
                 ofile.write("/>\n")
@@ -136,3 +138,20 @@ class ProjectWriter(object):
                             item)
             ofile.write('\n    </grouping>\n')
         ofile.write('  </groupings>\n')
+
+
+def escape(data, entities={}):
+    """Escape &, <, and > in a string of data.
+
+    You can escape other strings of data by passing a dictionary as
+    the optional entities parameter.  The keys and values must all be
+    strings; each key will be replaced with its corresponding value.
+    """
+
+    # must do ampersand first
+    data = data.replace("&", "&amp;")
+    data = data.replace(">", "&gt;")
+    data = data.replace("<", "&lt;")
+    if entities:
+        data = __dict_replace(data, entities)
+    return data

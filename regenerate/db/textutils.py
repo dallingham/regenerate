@@ -30,4 +30,4 @@ __convert = [(u"\u2013", "-"),
 def clean_text(text):
     for (s, d) in __convert:
         text = text.replace(s, d)
-    return text.encode('ascii', 'replace')
+    return text.encode('ascii', 'replace').decode()
