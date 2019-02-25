@@ -73,21 +73,12 @@ class BitFieldEditor(object):
         self._builder.add_from_file(GLADE_BIT)
         self._top_window = self._builder.get_object("editfield")
         self._control_obj = self._builder.get_object('control')
-        self._name_obj = self._builder.get_object("field_name")
         self._register_obj = self._builder.get_object("register_name")
         self._output_obj = self._builder.get_object("output")
-        self._type_obj = self._builder.get_object('type')
         self._input_obj = self._builder.get_object("input")
-        self._reset_obj = self._builder.get_object("reset_value")
-        self._static_obj = self._builder.get_object('static')
         self._text_buffer = self._builder.get_object("descr").get_buffer()
         self._value_tree_obj = self._builder.get_object('values')
-        self._output_enable_obj = self._builder.get_object("outen")
-        self._side_effect_obj = self._builder.get_object("side_effect")
         self._verilog_obj = self._builder.get_object('verilog_code')
-        self._volatile_obj = self._builder.get_object('volatile')
-        self._random_obj = self._builder.get_object('random')
-        self._error_field_obj = self._builder.get_object('error_bit')
         self._col = None
         self._top_window.set_title("Edit Bit Field - [{0:02x}] {1}".format(
             register.address, register.register_name))
@@ -97,6 +88,7 @@ class BitFieldEditor(object):
 
         self._top_window.set_icon_from_file(
             os.path.join(INSTALL_PATH, "media", "flop.svg"))
+
         (input_enb, control_enb) = TYPE_TO_ENABLE[bit_field.field_type]
         self._input_obj.set_sensitive(input_enb)
         self._control_obj.set_sensitive(control_enb)
@@ -116,7 +108,8 @@ class BitFieldEditor(object):
             self._list_model.append(row=value)
 
         self._initialize_from_data(bit_field)
-        self._output_obj.set_sensitive(self._output_enable_obj.get_active())
+        self._output_obj.set_sensitive(self._get_active('outen'))
+
         self._check_data()
 
         self._text_buffer.connect('changed', self._description_changed)
@@ -146,10 +139,10 @@ class BitFieldEditor(object):
                 if token not in styles:
                     styles[token] = buf.create_tag()
                 start = buf.get_end_iter()
-                buf.insert_with_tags(start, value.encode('utf-8'),
-                                     styles[token])
+                buf.insert_with_tags(start, value, styles[token])
 
-                for token, tag in styles.iteritems():
+                for token in styles:
+                    tag = styles[token]
                     style = STYLE.style_for_token(token)
                     if style['bgcolor']:
                         tag.set_property('background', '#' + style['bgcolor'])
@@ -176,13 +169,14 @@ class BitFieldEditor(object):
             "<b>{0}</b>".format(self._register.register_name))
         self._register_obj.set_use_markup(True)
 
-        self._name_obj.set_text(bit_field.full_field_name())
-        self._type_obj.set_text(TYPE_TO_DESCR[bit_field.field_type])
+        self._set_text("field_name", bit_field.full_field_name())
+        self._set_text('type', TYPE_TO_DESCR[bit_field.field_type])
 
         if bit_field.reset_type == BitField.RESET_NUMERIC:
-            self._reset_obj.set_text("{0:x}".format(bit_field.reset_value))
+            self._set_text("reset_value", "{0:x}".format(
+                bit_field.reset_value))
         else:
-            self._reset_obj.set_text(bit_field.reset_parameter)
+            self._set_text("reset_value", bit_field.reset_parameter)
 
         (input_enb, control_enb) = TYPE_TO_ENABLE[bit_field.field_type]
         if input_enb and not bit_field.input_signal:
@@ -194,14 +188,14 @@ class BitFieldEditor(object):
         self._output_obj.set_text(bit_field.output_signal)
         self._input_obj.set_text(bit_field.input_signal)
 
-        self._volatile_obj.set_active(bit_field.volatile)
-        self._random_obj.set_active(bit_field.can_randomize)
-        self._error_field_obj.set_active(bit_field.is_error_field)
+        self._set_active('volatile', bit_field.volatile)
+        self._set_active('random', bit_field.can_randomize)
+        self._set_active('error_bit', bit_field.is_error_field)
+        self._set_active('static', bit_field.output_is_static)
+        self._set_active("side_effect", bit_field.output_has_side_effect)
+        self._set_active("outen", bit_field.use_output_enable)
 
-        self._static_obj.set_active(bit_field.output_is_static)
-        self._side_effect_obj.set_active(bit_field.output_has_side_effect)
         self._text_buffer.set_text(bit_field.description)
-        self._output_enable_obj.set_active(bit_field.use_output_enable)
         self._control_obj.set_text(self._bit_field.control_signal)
 
     def on_help_clicked(self, obj):
@@ -303,9 +297,12 @@ class BitFieldEditor(object):
         else:
             path = (last, )
 
-        self._value_tree_obj.set_cursor(path,
-                                        focus_column=self._col,
-                                        start_editing=True)
+        focus_column = self._col
+        self._value_tree_obj.set_cursor(
+            path,
+            focus_column,
+            start_editing=True
+        )
         self.modified()
 
     @modified
@@ -343,10 +340,12 @@ class BitFieldEditor(object):
         self._bit_field.output_has_side_effect = obj.get_active()
 
     def _update_values(self):
-        new_list = []
-        for row in self._list_model:
-            new_list.append((row[0], row[1], row[2]))
-        self._bit_field.values = new_list
+        # new_list = []
+        # for row in self._list_model:
+        #     new_list.append((row[0], row[1], row[2]))
+        # self._bit_field.values = new_list
+        self._bit_field.values = [(val[0], val[1], val[2])
+                                  for val in self._list_model]
 
     def _change_text(self, text, path, new_text):
         """
@@ -375,10 +374,12 @@ class BitFieldEditor(object):
         try:
             new_text.decode("ascii")
         except:
-            ErrorMsg("Invalid ASCII characters detected",
-                     "Look for strange punctuations, like dashs and "
-                     "quotes that look valid, but are not actual "
-                     "ascii characters.")
+            ErrorMsg(
+                "Invalid ASCII characters detected",
+                "Look for strange punctuations, like dashs and "
+                "quotes that look valid, but are not actual "
+                "ascii characters."
+            )
         self._list_model.set_value(node, 2, new_text)
         self._update_values()
         self.modified()
@@ -420,7 +421,9 @@ class BitFieldEditor(object):
     def _description_changed(self, obj):
         self._bit_field.description = self._text_buffer.get_text(
             self._text_buffer.get_start_iter(),
-            self._text_buffer.get_end_iter(), False)
+            self._text_buffer.get_end_iter(),
+            False
+        )
 
     def _check_data(self):
         """
@@ -436,6 +439,15 @@ class BitFieldEditor(object):
             clear_error(self._input_obj)
         if output_error is False:
             clear_error(self._output_obj)
+
+    def _set_active(self, name, value):
+        self._builder.get_object(name).set_active(value)
+
+    def _get_active(self, name):
+        return self._builder.get_object(name).get_active()
+
+    def _set_text(self, name, value):
+        self._builder.get_object(name).set_text(value)
 
 
 def set_error(obj, message):

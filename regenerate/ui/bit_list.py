@@ -21,12 +21,14 @@ Provides both the GTK ListStore and ListView for the bit fields.
 """
 
 import gtk
-from regenerate.db import BitField, TYPES, Register
+from regenerate.db import BitField, TYPES
 from regenerate.ui.columns import EditableColumn, ComboMapColumn, SwitchComboMapColumn
 
 TYPE2STR = [(t.description, t.type) for t in sorted(TYPES)]
-RO2STR = [(t.description, t.type) for t in sorted(TYPES) if t.simple_type == "RO"]
-WO2STR = [(t.description, t.type) for t in sorted(TYPES) if t.simple_type == "WO"]
+RO2STR = [(t.description, t.type)
+          for t in sorted(TYPES) if t.simple_type == "RO"]
+WO2STR = [(t.description, t.type)
+          for t in sorted(TYPES) if t.simple_type == "WO"]
 (BIT_TITLE, BIT_SIZE, BIT_SORT, BIT_EXPAND, BIT_MONO) = range(5)
 
 
@@ -48,7 +50,8 @@ class BitModel(gtk.ListStore):
         Initialize the base class with the object types that we are going to
         be adding to the model.
         """
-        gtk.ListStore.__init__(self, str, str, str, str, str, str, int, object)
+        super(BitModel, self).__init__(
+            str, str, str, str, str, str, int, object)
 
     def append_field(self, field):
         """
@@ -77,7 +80,7 @@ class BitList(object):
     BIT_COLS = (  # Title, Size, Sort, Expand, Monospace
         ('', 20, -1, False, False),
         ('Bits', 60, BitModel.SORT_COL, False, True),
-        ('Name', 80, BitModel.NAME_COL, True, False),
+        ('Name', 80, BitModel.NAME_COL, True, True),
         ('Type', 325, -1, True, False),
         ('Reset', 100, -1, False, True),
         ('Reset Type', 75, -1, False, False), )
@@ -114,18 +117,36 @@ class BitList(object):
         """
         for (i, col) in enumerate(self.BIT_COLS):
             if i == BitModel.TYPE_COL:
-                column = SwitchComboMapColumn(col[BIT_TITLE], combo_edit,
-                                              TYPE2STR, RO2STR, WO2STR, i)
+                column = SwitchComboMapColumn(
+                    col[BIT_TITLE],
+                    combo_edit,
+                    TYPE2STR,
+                    RO2STR,
+                    WO2STR,
+                    i
+                )
                 self.type_column = column
             elif i == BitModel.RESET_TYPE_COL:
-                column = ComboMapColumn(col[BIT_TITLE], combo_edit,
-                                        BitModel.RESET2STR, i)
+                column = ComboMapColumn(
+                    col[BIT_TITLE],
+                    combo_edit,
+                    BitModel.RESET2STR,
+                    i
+                )
             elif i == BitModel.ICON_COL:
                 renderer = gtk.CellRendererPixbuf()
-                column = gtk.TreeViewColumn("", renderer, stock_id=i)
+                column = gtk.TreeViewColumn(
+                    "",
+                    renderer,
+                    stock_id=i
+                )
             else:
-                column = EditableColumn(col[BIT_TITLE], text_edit, i,
-                                        col[BIT_MONO])
+                column = EditableColumn(
+                    col[BIT_TITLE],
+                    text_edit,
+                    i,
+                    col[BIT_MONO]
+                )
             if i == BitModel.BIT_COL:
                 self.__col = column
             if col[BIT_SORT] >= 0:
@@ -168,9 +189,11 @@ class BitList(object):
         Adds a new field to the model, and sets editing to begin
         """
         path = self.__model.append_field(field)
-        self.__obj.set_cursor(path,
-                              focus_column=self.__col,
-                              start_editing=True)
+        self.__obj.set_cursor(
+            path,
+            self.__col,
+            start_editing=True
+        )
 
 
 def bits(field):

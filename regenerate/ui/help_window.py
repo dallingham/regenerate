@@ -21,20 +21,27 @@ Provides a dialog window that displays the contents of a file, converting
 the contents from restructuredText to HTML.
 """
 import os
+from regenerate.settings.paths import HELP_PATH
+from regenerate.ui.preview import html_string
+from regenerate.ui.base_window import BaseWindow
+from regenerate.db import LOGGER
 
-if os.getenv("NOWEBKIT") is None:
+try:
+    import webkit
+    WEBKIT = True
+
+except ImportError:
+
     try:
-        import webkit
+        import gi
+        gi.require_version('WebKit', '3.0')
+        from gi.repository import WebKit as webkit
         WEBKIT = True
     except ImportError:
+        PREVIEW_ENABLED = False
+        LOGGER.warning("Webkit is not installed, preview of formatted "
+                       "comments will not be available")
         WEBKIT = False
-else:
-    WEBKIT = False
-
-import os.path
-from regenerate.settings.paths import HELP_PATH
-from .preview import html_string
-from .base_window import BaseWindow
 
 
 class HelpWindow(BaseWindow):
@@ -48,7 +55,7 @@ class HelpWindow(BaseWindow):
 
     def __init__(self, builder, filename):
 
-        BaseWindow.__init__(self)
+        super(HelpWindow, self).__init__()
         if not WEBKIT:
             return
 

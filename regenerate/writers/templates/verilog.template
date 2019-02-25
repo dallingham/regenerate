@@ -158,7 +158,8 @@ module {{db.module_name}}
  * Address Selects
  */
 {% for addr,val in word_fields|dictsort %}
-   wire write_r{{"%02x"|format(addr)}} = (~prev_write & {{write_strobe_name}}) & ({{address_bus_name}} == {{db.address_bus_width - LOWER_BIT[db.data_bus_width]}}'h{{"%x"|format(rshift(addr, LOWER_BIT[db.data_bus_width]))}});
+  {% set rval = rshift(addr|int, LOWER_BIT[db.data_bus_width]) %}
+   wire write_r{{"%02x"|format(addr|int)}} = (~prev_write & {{write_strobe_name}}) & ({{address_bus_name}} == {{db.address_bus_width - LOWER_BIT[db.data_bus_width]}}'h{{"%x"|format(rval)}});
 {% endfor %}
 {% for addr, val in word_fields|dictsort %}
 {%   set force_r = False %}
@@ -253,7 +254,7 @@ module {{db.module_name}}
       .CLK    ({{clk_name}}),
       .RSTn   ({{reset_name}}),
 {%      if ci.is_read_only == False %}
-      .WE     (write_r{{"%02x"|format(addr)}}),
+      .WE     (write_r{{"%02x"|format(addr|int)}}),
 {%        if bus_stop == bus_start %}
       .DI     ({{write_data_name}}[{{bus_start}}]),
 {%        else %}
@@ -262,7 +263,7 @@ module {{db.module_name}}
       .BE     ({{byte_strobe_name}}[{{(bus_start/8)|int}}]),
 {%      endif %}
 {%      if ci.has_rd %}
-      .RD     (read_r{{"%02x"|format(addr)}}),
+      .RD     (read_r{{"%02x"|format(addr|int)}}),
 {%      endif %}
 {%      if ci.has_control %}
 {%        if reg.dimension >= 0 %}
@@ -331,8 +332,8 @@ module {{db.module_name}}
  *------------------------------------------------------------------------------
  */
 {% for addr, val in word_fields|dictsort %}
-{%-   set last = db.data_bus_width - 1 -%}
-   wire [{{db.data_bus_width-1}}:0] r{{"%02x"|format(addr)}} = {
+{%-   set vars = {'last': db.data_bus_width - 1} -%}
+   wire [{{db.data_bus_width-1}}:0] r{{"%02x"|format(addr|int)}} = {
 {%   for (field, start_offset, stop_offset, start_pos, stop_pos, faddr, reg) in val|reverse|drop_write_share %}{%    set width = stop_pos - start_pos + 1 %}
 {%     if reg.share == 0 %}
 {%       set mode = "_" %}
@@ -342,8 +343,8 @@ module {{db.module_name}}
 {%       set mode = "_w_" %}
 {%     endif %}
 {%     if reg.share != 2 %}
-{%       if start_offset + width <= last %}
-                  {{last - (start_offset + width) + 1}}'b0,
+{%       if start_offset + width <= vars.last %}
+                  {{vars.last - (start_offset + width) + 1}}'b0,
 {%       endif %}
 {%       if start_pos == stop_pos %}
                   r{{"%02x"|format(reg.address)}}{{mode}}{{field.field_name|lower}}{% if start_pos + start_offset != 0 %},{% endif %}
@@ -351,7 +352,7 @@ module {{db.module_name}}
                   r{{"%02x"|format(reg.address)}}{{mode}}{{field.field_name|lower}}[{{stop_pos}}:{{start_pos}}]{% if start_pos + start_offset != 0 %},{% endif %}
 {%       endif %}
 
-{%       set last = start_offset - 1 %}
+{%       if vars.update({'last' : start_offset - 1})%}{% endif %}
 {%       if loop.last and start_offset != 0 %}
                   {{start_offset}}'b0
 {%       endif %}
@@ -367,7 +368,7 @@ module {{db.module_name}}
         if ({{read_strobe_name}}) begin
            unique case ({{address_bus_name}})
 {% for addr, val in word_fields|dictsort %}
-              {{db.address_bus_width - LOWER_BIT[db.data_bus_width]}}'h{{"%x"|format(rshift(addr, LOWER_BIT[db.data_bus_width]))}}: mux_rdata <= r{{"%02x"|format(addr)}};
+              {{db.address_bus_width - LOWER_BIT[db.data_bus_width]}}'h{{"%x"|format(rshift(addr|int, LOWER_BIT[db.data_bus_width]))}}: mux_rdata <= r{{"%02x"|format(addr|int)}};
 {% endfor %}
               default: mux_rdata <= {{db.data_bus_width}}'h0;
            endcase

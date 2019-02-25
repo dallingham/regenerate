@@ -56,14 +56,14 @@ class FilterManager(object):
         self._model.refilter()
 
     def visible_cb(self, model, *obj):
-        iter = obj[0]
-        
+        node = obj[0]
+
         if self._text == "":
             return True
         try:
             search_text = self._text.upper()
             for i in self._fields:
-                text = model.get_value(iter, i).upper()
+                text = model.get_value(node, i).upper()
                 if text.find(search_text) != -1:
                     return True
             return False

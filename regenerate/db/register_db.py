@@ -43,8 +43,11 @@ class RegisterDb(object):
     def __init__(self, filename=None):
         self.__clock = rules.get('rules', 'clock_default', DEF_CLK_NAME)
         self.__reset = rules.get('rules', 'reset_default', DEF_RST_NAME)
-        self.__write_data = rules.get('rules', 'write_data_default',
-                                      DEF_WDATA_NAME)
+        self.__write_data = rules.get(
+            'rules',
+            'write_data_default',
+            DEF_WDATA_NAME
+        )
         self.__read_data = rules.get('rules', 'read_data_default',
                                      DEF_RDATA_NAME)
         self.__write_strobe = rules.get('rules', 'write_strobe_default',

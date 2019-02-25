@@ -130,7 +130,7 @@ code_reg8 = [
 
 class CTest(WriterBase):
     def __init__(self, project, dbase):
-        WriterBase.__init__(self, project, dbase)
+        super(CTest, self).__init__(project, dbase)
         self._offset = 0
         self._ofile = None
         self.module_set = set()
@@ -166,16 +166,18 @@ class CTest(WriterBase):
     def write_protos(self, cfile, rlist, name, size):
         if rlist:
             for index, pos in enumerate(range(0, len(rlist), MAX_REGS)):
-                cfile.write("uint32 check_{0}_{1}{2} (msgptr func);\n".format(name,
-                                                                              size,
-                                                                              string.letters[index]))
+                cfile.write(
+                    "uint32 check_{0}_{1}{2} (msgptr func);\n".format(name,
+                                                                      size,
+                                                                      string.letters[index]))
 
     def write_call(self, cfile, rlist, name, size):
         if rlist:
             for index, pose in enumerate(range(0, len(rlist), MAX_REGS)):
-                cfile.write("  if ((val = check_{0}_{1}{2}(func)) != 0)\n".format(name,
-                                                                                  size,
-                                                                                  string.letters[index]))
+                cfile.write(
+                    "  if ((val = check_{0}_{1}{2}(func)) != 0)\n".format(name,
+                                                                          size,
+                                                                          string.letters[index]))
                 cfile.write("    return val;\n")
 
             data = ["    {0x%08x, 0x%08x, 0x%08x}" % val for val in rlist]
@@ -256,30 +258,34 @@ class CTest(WriterBase):
         if rdata8:
             for pos, index in enumerate(range(0, len(rdata8), MAX_REGS)):
                 letter = string.letters[pos]
-                self.write_function(cfile, rdata8[index: MAX_REGS],
-                                    dbase.module_name, "8",
-                                    letter, "", "")
+                self.write_function(
+                    cfile, rdata8[index: MAX_REGS], dbase.module_name, "8",
+                    letter, "", ""
+                )
 
         if rdata16:
             for pos, index in enumerate(range(0, len(rdata16), MAX_REGS)):
                 letter = string.letters[pos]
-                self.write_function(cfile, rdata16[index: MAX_REGS],
-                                    dbase.module_name, "16",
-                                    letter, "", "")
+                self.write_function(
+                    cfile, rdata16[index: MAX_REGS], dbase.module_name, "16",
+                    letter, "", ""
+                )
 
         if rdata32:
             for pos, index in enumerate(range(0, len(rdata32), MAX_REGS)):
                 letter = string.letters[pos]
-                self.write_function(cfile, rdata32[index:index+MAX_REGS],
-                                    dbase.module_name, "32",
-                                    letter, "", "")
+                self.write_function(
+                    cfile, rdata32[index:index+MAX_REGS], dbase.module_name,
+                    "32", letter, "", ""
+                )
 
         if rdata64:
             for pos, index in enumerate(range(0, len(rdata64), MAX_REGS)):
                 letter = string.letters[pos]
-                self.write_function(cfile, rdata64[index:index+MAX_REGS],
-                                    dbase.module_name, "64",
-                                    letter, "64", "LL")
+                self.write_function(
+                    cfile, rdata64[index:index+MAX_REGS], dbase.module_name,
+                    "64", letter, "64", "LL"
+                )
 
     def write(self, filename):
         """
@@ -326,6 +332,12 @@ class CTest(WriterBase):
 
 
 EXPORTERS = [
-    (WriterBase.TYPE_BLOCK, ExportInfo(CTest, ("Test", "C program"),
-                                       "C files", ".c", 'test-c'))
+    (WriterBase.TYPE_BLOCK,
+     ExportInfo(
+         CTest,
+         ("Test", "C program"),
+         "C files",
+         ".c",
+         'test-c')
+     )
 ]

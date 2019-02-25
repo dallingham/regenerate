@@ -33,7 +33,7 @@ class VerilogDefines(WriterBase):
     """
 
     def __init__(self, dbase):
-        WriterBase.__init__(self, dbase)
+        super(VerilogDefines, self).__init__(dbase)
         self._ofile = None
 
     def write_def(self, reg, prefix, offset):
@@ -89,4 +89,4 @@ class VerilogDefines(WriterBase):
 EXPORTERS = [
     (WriterBase.TYPE_BLOCK, ExportInfo(VerilogDefines, ("RTL", "Verilog defines"),
                                        "Verilog header files", ".vh", 'rtl-verilog-defines'))
-    ]
+]

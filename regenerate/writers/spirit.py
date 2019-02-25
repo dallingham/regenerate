@@ -20,9 +20,8 @@
 Actual program. Parses the arguments, and initiates the main window
 """
 
-from regenerate.db import BitField, TYPES, LOGGER
+from regenerate.db import BitField
 from regenerate.writers.writer_base import WriterBase
-import time
 import os
 from jinja2 import Template
 
@@ -58,7 +57,7 @@ ACCESS_MAP = {
     BitField.TYPE_WRITE_ONLY: "write-only",
     BitField.TYPE_READ_WRITE_PROTECT: "read-write",
     BitField.TYPE_READ_WRITE_PROTECT_1S:  "read-write",
-    }
+}
 
 WRITE_MAP = {
     BitField.TYPE_WRITE_1_TO_CLEAR_SET: "oneToClear",
@@ -69,7 +68,7 @@ WRITE_MAP = {
     BitField.TYPE_WRITE_1_TO_CLEAR_LOAD_1S: "oneToClear",
     BitField.TYPE_WRITE_1_TO_CLEAR_LOAD_1S_1: "oneToClear",
     BitField.TYPE_WRITE_1_TO_SET: "oneToSet"
-    }
+}
 
 
 class SpiritWriter(WriterBase):
@@ -79,7 +78,7 @@ class SpiritWriter(WriterBase):
     """
 
     def __init__(self, project, dbase):
-        WriterBase.__init__(self, project, dbase)
+        super(SpiritWriter, self).__init__(project, dbase)
 
     def write(self, filename):
         """
@@ -87,18 +86,28 @@ class SpiritWriter(WriterBase):
         a block of register definitions for each register and the associated
         container blocks.
         """
-        
-        dirpath = os.path.dirname(__file__)
 
-        template = Template(file(os.path.join(dirpath, "templates", "ipxact.templ")).read(), 
-                            trim_blocks=True,
-                            lstrip_blocks=True)
+        template_file = os.path.join(
+            os.path.dirname(__file__),
+            "templates",
+            "ipxact.templ"
+        )
+
+        with open(template_file) as ifile:
+            template = Template(
+                ifile.read(),
+                trim_blocks=True,
+                lstrip_blocks=True
+            )
 
         with open(filename, "w") as of:
-            of.write(template.render(db = self._dbase,
-                                     WRITE_MAP=WRITE_MAP,
-                                     ACCESS_MAP=ACCESS_MAP,
-                                     scope="spirit",
-                                     refs=['xmlns:spirit="http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009"']
-                                     ))
-
+            of.write(
+                template.render(
+                    db=self._dbase,
+                    WRITE_MAP=WRITE_MAP,
+                    ACCESS_MAP=ACCESS_MAP,
+                    scope="spirit",
+                    refs=[
+                        'xmlns:spirit="http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009"']
+                )
+            )

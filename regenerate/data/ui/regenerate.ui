@@ -1277,8 +1277,6 @@
                                             <property name="visible">True</property>
                                             <property name="can_focus">True</property>
                                             <property name="wrap_mode">word</property>
-                                            <property name="buffer">register_text_buffer</property>
-                                            <signal name="key-press-event" handler="on_register_description_key_press_event" swapped="no"/>
                                           </object>
                                         </child>
                                       </object>
@@ -1669,7 +1667,6 @@
                                     <property name="secondary_icon_activatable">False</property>
                                     <property name="primary_icon_sensitive">True</property>
                                     <property name="secondary_icon_sensitive">True</property>
-                                    <signal name="changed" handler="on_title_changed" swapped="no"/>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
@@ -1715,7 +1712,6 @@
                                     <property name="secondary_icon_activatable">False</property>
                                     <property name="primary_icon_sensitive">True</property>
                                     <property name="secondary_icon_sensitive">True</property>
-                                    <signal name="changed" handler="on_module_changed" swapped="no"/>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
@@ -1729,7 +1725,6 @@
                                   <object class="GtkComboBox" id="data_width">
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
-                                    <signal name="changed" handler="on_data_width_changed" swapped="no"/>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
@@ -1764,7 +1759,6 @@
                                     <property name="secondary_icon_activatable">False</property>
                                     <property name="primary_icon_sensitive">True</property>
                                     <property name="secondary_icon_sensitive">True</property>
-                                    <signal name="changed" handler="on_owner_changed" swapped="no"/>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
@@ -1912,7 +1906,6 @@
                                     <property name="receives_default">False</property>
                                     <property name="use_action_appearance">False</property>
                                     <property name="draw_indicator">True</property>
-                                    <signal name="toggled" handler="on_internal_only_changed" swapped="no"/>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
@@ -1930,7 +1923,6 @@
                                     <property name="receives_default">False</property>
                                     <property name="use_action_appearance">False</property>
                                     <property name="draw_indicator">True</property>
-                                    <signal name="toggled" handler="on_coverage_toggled" swapped="no"/>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
@@ -1963,7 +1955,6 @@
                                     <property name="secondary_icon_activatable">False</property>
                                     <property name="primary_icon_sensitive">True</property>
                                     <property name="secondary_icon_sensitive">True</property>
-                                    <signal name="changed" handler="on_organization_changed" swapped="no"/>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
@@ -2299,7 +2290,6 @@
                                 <property name="secondary_icon_activatable">False</property>
                                 <property name="primary_icon_sensitive">True</property>
                                 <property name="secondary_icon_sensitive">True</property>
-                                <signal name="changed" handler="on_clock_signal_changed" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">2</property>
@@ -2319,7 +2309,6 @@
                                 <property name="secondary_icon_activatable">False</property>
                                 <property name="primary_icon_sensitive">True</property>
                                 <property name="secondary_icon_sensitive">True</property>
-                                <signal name="changed" handler="on_write_data_bus_changed" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">2</property>
@@ -2339,7 +2328,6 @@
                                 <property name="secondary_icon_activatable">False</property>
                                 <property name="primary_icon_sensitive">True</property>
                                 <property name="secondary_icon_sensitive">True</property>
-                                <signal name="changed" handler="on_reset_signal_changed" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">2</property>
@@ -2359,7 +2347,6 @@
                                 <property name="secondary_icon_activatable">False</property>
                                 <property name="primary_icon_sensitive">True</property>
                                 <property name="secondary_icon_sensitive">True</property>
-                                <signal name="changed" handler="on_read_data_bus_changed" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">2</property>
@@ -2379,7 +2366,6 @@
                                 <property name="secondary_icon_activatable">False</property>
                                 <property name="primary_icon_sensitive">True</property>
                                 <property name="secondary_icon_sensitive">True</property>
-                                <signal name="changed" handler="on_byte_en_signal_changed" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">2</property>
@@ -2399,7 +2385,6 @@
                                 <property name="secondary_icon_activatable">False</property>
                                 <property name="primary_icon_sensitive">True</property>
                                 <property name="secondary_icon_sensitive">True</property>
-                                <signal name="changed" handler="on_write_strobe_changed" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">2</property>
@@ -2419,7 +2404,6 @@
                                 <property name="secondary_icon_activatable">False</property>
                                 <property name="primary_icon_sensitive">True</property>
                                 <property name="secondary_icon_sensitive">True</property>
-                                <signal name="changed" handler="on_address_bus_changed" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">2</property>
@@ -2439,8 +2423,6 @@
                                 <property name="secondary_icon_activatable">False</property>
                                 <property name="primary_icon_sensitive">True</property>
                                 <property name="secondary_icon_sensitive">True</property>
-                                <signal name="changed" handler="on_address_width_changed" swapped="no"/>
-                                <signal name="insert-text" handler="on_address_width_insert_text" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">2</property>
@@ -2458,7 +2440,6 @@
                                 <property name="receives_default">False</property>
                                 <property name="use_action_appearance">False</property>
                                 <property name="draw_indicator">True</property>
-                                <signal name="toggled" handler="on_reset_level_toggled" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">3</property>
@@ -2476,7 +2457,6 @@
                                 <property name="receives_default">False</property>
                                 <property name="use_action_appearance">False</property>
                                 <property name="draw_indicator">True</property>
-                                <signal name="toggled" handler="on_byte_en_level_toggled" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">3</property>
@@ -2525,7 +2505,6 @@
                                 <property name="secondary_icon_activatable">False</property>
                                 <property name="primary_icon_sensitive">True</property>
                                 <property name="secondary_icon_sensitive">True</property>
-                                <signal name="changed" handler="on_read_strobe_changed" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">2</property>
@@ -2561,7 +2540,6 @@
                                 <property name="secondary_icon_activatable">False</property>
                                 <property name="primary_icon_sensitive">True</property>
                                 <property name="secondary_icon_sensitive">True</property>
-                                <signal name="changed" handler="on_ack_changed" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">2</property>
@@ -2593,7 +2571,6 @@
                                 <property name="receives_default">False</property>
                                 <property name="use_action_appearance">False</property>
                                 <property name="draw_indicator">True</property>
-                                <signal name="toggled" handler="on_interface_toggled" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>

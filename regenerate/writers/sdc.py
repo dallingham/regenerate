@@ -29,7 +29,7 @@ class Sdc(WriterBase):
     """
 
     def __init__(self, project, dblist):
-        WriterBase.__init__(self, project, None)
+        super(Sdc, self).__init__(project, None)
         self._offset = 0
         self.dblist = dblist
         self._ofile = None
@@ -142,6 +142,12 @@ def get_base_signal(address, field):
 
 
 EXPORTERS = [
-    (WriterBase.TYPE_PROJECT, ExportInfo(Sdc, ("Synthesis", "SDC Constraints"), "SDC files",
-                                         ".sdc", 'syn-constraints'))
+    (WriterBase.TYPE_PROJECT,
+     ExportInfo(
+         Sdc,
+         ("Synthesis", "SDC Constraints"),
+         "SDC files",
+         ".sdc",
+         'syn-constraints')
+     )
 ]

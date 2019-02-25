@@ -31,7 +31,8 @@ _BITS64 = "64 bits"
 
 SIZE2STR = ((_BITS8, 1), (_BITS16, 2), (_BITS32, 4), (_BITS64, 8))
 
-ACCESS2STR = (("Full Access", 0), ("Read Only", 1), ("Write Only", 2), ("No Access", 3))
+ACCESS2STR = (("Full Access", 0), ("Read Only", 1),
+              ("Write Only", 2), ("No Access", 3))
 
 INT2SIZE = dict((_i[1], _i[0]) for _i in SIZE2STR)
 STR2SIZE = dict((_i[0], _i[1]) for _i in SIZE2STR)
@@ -49,28 +50,35 @@ class AddrMapMdl(gtk.ListStore):
     (NAME_COL, BASE_COL, FIXED_COL, UVM_COL, WIDTH_COL, ACCESS_COL) = range(6)
 
     def __init__(self):
-        gtk.ListStore.__init__(self, str, str, bool, bool, str, str)
+        super(AddrMapMdl, self).__init__(str, str, bool, bool, str, str)
 
     def new_instance(self):
         """
         Adds a new instance to the model. It is not added to the database until
         either the change_id or change_base is called.
         """
-        node = self.append(None, row=('new_map', '0', False, False, _BITS32))
+        node = self.append(None,
+                           row=('new_map', '0', False, False, _BITS32)
+                           )
         return self.get_path(node)
 
     def append_instance(self, inst):
-        """
-        Adds the specified instance to the InstanceList
-        """
-        self.append(row=(inst[0], "{0:08x}".format(inst[1]),
-                         False, False, _BITS32))
+        """Adds the specified instance to the InstanceList"""
+        self.append(
+            row=(
+                inst[0],
+                "{0:08x}".format(inst[1]),
+                False,
+                False,
+                _BITS32
+            )
+        )
 
     def get_values(self):
-        """
-        Returns the list of instance tuples from the model.
-        """
-        return [(val[0], int(val[1], 16)) for val in self if val[0]]
+        """Returns the list of instance tuples from the model."""
+        return [(val[0], int(val[1], 16))
+                for val in self
+                if val[0]]
 
 
 class AddrMapList(object):
@@ -99,20 +107,29 @@ class AddrMapList(object):
         """
         Loads the data from the project
         """
-        if self._prj is None:
-            return
-
-        self._model.clear()
-        for base in self._prj.get_address_maps():
-            if base.width not in INT2SIZE:
-                LOGGER.error(
-                    'Illegal width ({0}) for address map "{1}"'.format(
-                        base.width, base.name))
-                base = AddrMapData(base.name, base.base, 4,
-                                   base.fixed, base.uvm)
-            data = (base.name, "{0:x}".format(base.base), base.fixed,
-                    base.uvm, INT2SIZE[base.width], "")
-            node = self._model.append(row=data)
+        if self._prj is not None:
+            self._model.clear()
+            for base in self._prj.get_address_maps():
+                if base.width not in INT2SIZE:
+                    LOGGER.error(
+                        'Illegal width ({0}) for address map "{1}"'.format(
+                            base.width, base.name))
+                    base = AddrMapData(
+                        base.name,
+                        base.base,
+                        4,
+                        base.fixed,
+                        base.uvm
+                    )
+                self._model.append(
+                    row=(base.name,
+                         "{0:x}".format(base.base),
+                         base.fixed,
+                         base.uvm,
+                         INT2SIZE[base.width],
+                         ""
+                         )
+                )
 
     def _name_changed(self, cell, path, new_text, col):
         """
@@ -121,8 +138,10 @@ class AddrMapList(object):
         if len(path) != 1:
             return
 
-        old_value = self._model.get_value(self._model.get_iter(path),
-                                          AddrMapMdl.NAME_COL)
+        old_value = self._model.get_value(
+            self._model.get_iter(path),
+            AddrMapMdl.NAME_COL
+        )
         if old_value == new_text:
             return
 
@@ -132,8 +151,7 @@ class AddrMapList(object):
                 '"{}" has already been used as an address map name'.format(
                     new_text))
         else:
-            node = self._model.get_iter(path)
-            name = self._model.get_value(node, AddrMapMdl.NAME_COL)
+            name = self._model[path][AddrMapMdl.NAME_COL]
             self._prj.change_address_map_name(name, new_text)
             self._model[path][AddrMapMdl.NAME_COL] = new_text
             self._prj.modified = True
@@ -150,11 +168,10 @@ class AddrMapList(object):
             LOGGER.error('Illegal address: "{0}"'.format(new_text))
             return
         if new_text:
-            node = self._model.get_iter(path)
-            name = self._model.get_value(node, AddrMapMdl.NAME_COL)
-            fixed = self._model.get_value(node, AddrMapMdl.FIXED_COL)
-            uvm = self._model.get_value(node, AddrMapMdl.UVM_COL)
-            width = STR2SIZE[self._model.get_value(node, AddrMapMdl.WIDTH_COL)]
+            name = self._model[path][AddrMapMdl.NAME_COL]
+            fixed = self._model[path][AddrMapMdl.FIXED_COL]
+            uvm = self._model[path][AddrMapMdl.UVM_COL]
+            width = STR2SIZE[self._model[path][AddrMapMdl.WIDTH_COL]]
 
             self._prj.set_address_map(name, value, width, fixed, uvm)
             self._model[path][AddrMapMdl.BASE_COL] = new_text
@@ -165,19 +182,23 @@ class AddrMapList(object):
         Called with the modified toggle is changed. Toggles the value in
         the internal list.
         """
-        if len(path) != 1:
-            return
-        nde = self._model.get_iter(path)
-        name = self._model.get_value(nde, AddrMapMdl.NAME_COL)
-        value = self._model.get_value(nde, AddrMapMdl.BASE_COL)
-        uvm = self._model.get_value(nde, AddrMapMdl.UVM_COL)
-        fixed = self._model.get_value(nde, AddrMapMdl.FIXED_COL)
+        if len(path) == 1:
+            name = self._model[path][AddrMapMdl.NAME_COL]
+            value = self._model[path][AddrMapMdl.BASE_COL]
+            uvm = self._model[path][AddrMapMdl.UVM_COL]
+            fixed = self._model[path][AddrMapMdl.FIXED_COL]
 
-        model = cell.get_property('model')
-        self._model[path][col] = model.get_value(node, 0)
-        width = model.get_value(node, 1)
-        self._prj.set_address_map(name, int(value, 16), width,
-                                  fixed, uvm)
+            model = cell.get_property('model')
+            self._model[path][col] = model.get_value(node, 0)
+            width = model.get_value(node, 1)
+
+            self._prj.set_address_map(
+                name,
+                int(value, 16),
+                width,
+                fixed,
+                uvm
+            )
 
     def _fixed_changed(self, cell, path, source):
         """
@@ -186,63 +207,87 @@ class AddrMapList(object):
         """
         if len(path) != 1:
             return
-        node = self._model.get_iter(path)
-        name = self._model.get_value(node, AddrMapMdl.NAME_COL)
-        value = self._model.get_value(node, AddrMapMdl.BASE_COL)
-        fixed = self._model.get_value(node, AddrMapMdl.FIXED_COL)
-        uvm = self._model.get_value(node, AddrMapMdl.UVM_COL)
-        width = self._model.get_value(node, AddrMapMdl.WIDTH_COL)
-
+        name = self._model[path][AddrMapMdl.NAME_COL]
+        value = self._model[path][AddrMapMdl.BASE_COL]
+        fixed = self._model[path][AddrMapMdl.FIXED_COL]
+        uvm = self._model[path][AddrMapMdl.UVM_COL]
+        width = self._model[path][AddrMapMdl.WIDTH_COL]
         self._model[path][AddrMapMdl.FIXED_COL] = not fixed
-        self._prj.set_address_map(name, int(value, 16), STR2SIZE[width],
-                                  not fixed, uvm)
+
+        self._prj.set_address_map(
+            name,
+            int(value, 16),
+            STR2SIZE[width],
+            not fixed,
+            uvm
+        )
 
     def _uvm_changed(self, cell, path, source):
         """
         Called with the modified toggle is changed. Toggles the value in
         the internal list.
         """
-        if len(path) != 1:
-            return
-        node = self._model.get_iter(path)
-        name = self._model.get_value(node, AddrMapMdl.NAME_COL)
-        value = self._model.get_value(node, AddrMapMdl.BASE_COL)
-        fixed = self._model.get_value(node, AddrMapMdl.FIXED_COL)
-        uvm = self._model.get_value(node, AddrMapMdl.UVM_COL)
-        width = self._model.get_value(node, AddrMapMdl.WIDTH_COL)
+        if len(path) == 1:
+            name = self._model[path][AddrMapMdl.NAME_COL]
+            value = self._model[path][AddrMapMdl.BASE_COL]
+            fixed = self._model[path][AddrMapMdl.FIXED_COL]
+            uvm = self._model[path][AddrMapMdl.UVM_COL]
+            width = self._model[path][AddrMapMdl.WIDTH_COL]
 
-        self._model[path][AddrMapMdl.UVM_COL] = not uvm
-        self._prj.set_address_map(name, int(value, 16), STR2SIZE[width],
-                                  fixed, not uvm)
+            self._model[path][AddrMapMdl.UVM_COL] = not uvm
+            self._prj.set_address_map(
+                name,
+                int(value, 16),
+                STR2SIZE[width],
+                fixed,
+                not uvm
+            )
 
     def _build_instance_table(self):
         """
         Builds the columns, adding them to the address map list.
         """
-        column = EditableColumn('Map Name', self._name_changed,
-                                AddrMapMdl.NAME_COL)
+        column = EditableColumn(
+            'Map Name',
+            self._name_changed,
+            AddrMapMdl.NAME_COL
+        )
         column.set_min_width(175)
         column.set_sort_column_id(AddrMapMdl.NAME_COL)
         self._obj.append_column(column)
         self._col = column
 
-        column = EditableColumn('Address base (hex)', self._base_changed,
-                                AddrMapMdl.BASE_COL, True)
+        column = EditableColumn(
+            'Address base (hex)',
+            self._base_changed,
+            AddrMapMdl.BASE_COL,
+            True
+        )
         column.set_sort_column_id(AddrMapMdl.BASE_COL)
         self._obj.append_column(column)
 
-        column = ComboMapColumn('Access Width', self._width_changed, SIZE2STR,
-                                AddrMapMdl.WIDTH_COL)
+        column = ComboMapColumn(
+            'Access Width',
+            self._width_changed,
+            SIZE2STR,
+            AddrMapMdl.WIDTH_COL
+        )
         column.set_min_width(250)
         self._obj.append_column(column)
 
-        column = ToggleColumn('Fixed Address', self._fixed_changed,
-                              AddrMapMdl.FIXED_COL)
+        column = ToggleColumn(
+            'Fixed Address',
+            self._fixed_changed,
+            AddrMapMdl.FIXED_COL
+        )
         column.set_max_width(250)
         self._obj.append_column(column)
 
-        column = ToggleColumn('Exclude from UVM', self._uvm_changed,
-                              AddrMapMdl.UVM_COL)
+        column = ToggleColumn(
+            'Exclude from UVM',
+            self._uvm_changed,
+            AddrMapMdl.UVM_COL
+        )
         column.set_max_width(250)
         self._obj.append_column(column)
 
@@ -271,8 +316,7 @@ class AddrMapList(object):
         if node is None:
             return None
 
-        path = model.get_path(node)
-        if len(path) > 1:
+        if len(model.get_path(node)) > 1:
             return None
         else:
             return model.get_value(node, AddrMapMdl.NAME_COL)
@@ -302,12 +346,21 @@ class AddrMapList(object):
         data, and sets the first field to start editing.
         """
         name = self._create_new_map_name()
-        node = self._model.append(row=(name, 0, False,
-                                       False, SIZE2STR[0][0], ""))
+        node = self._model.append(
+            row=(
+                name,
+                "0",
+                False,
+                False,
+                SIZE2STR[0][0],
+                ""
+            )
+        )
+
         path = self._model.get_path(node)
         self._prj.modified = True
         self._prj.set_address_map(name, 0, SIZE2STR[0][1], False, False)
-        self._obj.set_cursor(path, focus_column=self._col, start_editing=True)
+        self._obj.set_cursor(path, self._col, start_editing=True)
 
     def _create_new_map_name(self):
         template = "NewMap"

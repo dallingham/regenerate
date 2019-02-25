@@ -115,28 +115,32 @@ class ProjectReader(object):
     def start_grouping(self, attrs):
         """Called when a grouping tag is found"""
         repeat_offset = int(attrs.get('repeat_offset', 0x10000))
-        self._current_group = GroupData(attrs['name'],
-                                        int(attrs['start'], 16),
-                                        attrs.get('hdl', ""),
-                                        int(attrs.get('repeat', 1)),
-                                        repeat_offset,
-                                        attrs.get('title', ""))
+        self._current_group = GroupData(
+            attrs['name'],
+            int(attrs['start'], 16),
+            attrs.get('hdl', ""),
+            int(attrs.get('repeat', 1)),
+            repeat_offset,
+            attrs.get('title', "")
+        )
         self._prj.add_to_grouping_list(self._current_group)
 
     def start_map(self, attrs):
         """Called when a map tag is found"""
         sname = attrs['set']
 
-        data = GroupInstData(sname,
-                             attrs.get('inst', sname),
-                             int(attrs['offset'], 16),
-                             int(attrs['repeat']),
-                             int(attrs['repeat_offset']),
-                             attrs.get("hdl", ""),
-                             int(attrs.get("no_uvm", "0")),
-                             int(attrs.get("no_decode", "0")),
-                             int(attrs.get("array", "0")),
-                             int(attrs.get("single_decode", "0")))
+        data = GroupInstData(
+            sname,
+            attrs.get('inst', sname),
+            int(attrs['offset'], 16),
+            int(attrs['repeat']),
+            int(attrs['repeat_offset']),
+            attrs.get("hdl", ""),
+            int(attrs.get("no_uvm", "0")),
+            int(attrs.get("no_decode", "0")),
+            int(attrs.get("array", "0")),
+            int(attrs.get("single_decode", "0"))
+        )
         self._current_group.register_sets.append(data)
 
     def start_address_map(self, attrs):

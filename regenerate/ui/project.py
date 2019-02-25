@@ -33,7 +33,7 @@ try:
                                           get_all=True,
                                           update=True):
             if (svn_status.repos_text_status != pysvn.wc_status_kind.none or
-                svn_status.repos_prop_status != pysvn.wc_status_kind.none):
+                    svn_status.repos_prop_status != pysvn.wc_status_kind.none):
                 files.append(svn_status.path)
         return files
 
@@ -61,8 +61,9 @@ class ProjectModel(gtk.ListStore):
     (NAME, ICON, FILE, MODIFIED, OOD, OBJ) = range(6)
 
     def __init__(self, use_svn=False):
+        super(ProjectModel, self).__init__(str, str, str, bool, bool, object)
+
         gtk.gdk.threads_init()
-        gtk.ListStore.__init__(self, str, str, str, bool, bool, object)
         self.file_list = {}
         self.paths = set()
         self.__use_svn = use_svn
@@ -110,9 +111,11 @@ class ProjectList(object):
         self.__model = None
         self.__build_prj_window()
 
-        self.__obj.enable_model_drag_source(gtk.gdk.BUTTON1_MASK, [
-            ('text/plain', 0, 0)
-        ], gtk.gdk.ACTION_DEFAULT | gtk.gdk.ACTION_MOVE)
+        self.__obj.enable_model_drag_source(
+            gtk.gdk.BUTTON1_MASK,
+            [('text/plain', 0, 0)],
+            gtk.gdk.ACTION_DEFAULT | gtk.gdk.ACTION_MOVE
+        )
         self.__obj.connect('drag-data-get', self.drag_data_get)
 
         self.factory = gtk.IconFactory()
@@ -130,7 +133,11 @@ class ProjectList(object):
         prj_name = model.get_value(tree_iter, ProjectModel.NAME)
         prj_obj = model.get_value(tree_iter, ProjectModel.OBJ)
         data = "{0}:{1:x}".format(prj_name, 1 << prj_obj.db.address_bus_width)
-        selection.set(selection.target, 8, data)
+
+        try:
+            selection.set(selection.target, 8, data)
+        except AttributeError:
+            selection.set_text(data, -1)
 
     def set_model(self, model):
         self.__model = model

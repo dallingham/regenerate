@@ -33,8 +33,12 @@ class InstMdl(gtk.TreeStore):
      UVM_COL, DEC_COL, ARRAY_COL, SINGLE_DEC_COL, OBJ_COL) = range(12)
 
     def __init__(self, project):
-        gtk.TreeStore.__init__(self, str, str, str, gobject.TYPE_UINT64, str,
-                               str, str, bool, bool, bool, bool, object)
+
+        super(InstMdl, self).__init__(
+            str, str, str, gobject.TYPE_UINT64, str,
+            str, str, bool, bool, bool, bool, object
+        )
+
         self.callback = self.__null_callback()
         self.project = project
 
@@ -63,6 +67,7 @@ class InstMdl(gtk.TreeStore):
             return
 
         items = []
+
         node = self.get_iter_root()
         while node:
             items.append(self.get_value(node, InstMdl.INST_COL))
@@ -206,11 +211,18 @@ class InstanceList(object):
         self.__col = None
         self.__project = None
         self.__model = None
-        self.__build_instance_table(id_changed, inst_changed, base_changed,
-                                    repeat_changed, repeat_offset_changed,
-                                    hdl_changed, uvm_changed,
-                                    decode_changed, array_changed, 
-                                    single_decode_changed)
+        self.__build_instance_table(
+            id_changed,
+            inst_changed,
+            base_changed,
+            repeat_changed,
+            repeat_offset_changed,
+            hdl_changed,
+            uvm_changed,
+            decode_changed,
+            array_changed,
+            single_decode_changed
+        )
         self.__enable_dnd()
         self.__obj.set_sensitive(False)
 
@@ -250,7 +262,8 @@ class InstanceList(object):
                 uvm = self.__model.get_value(child, InstMdl.UVM_COL)
                 array = self.__model.get_value(child, InstMdl.ARRAY_COL)
                 decode = self.__model.get_value(child, InstMdl.DEC_COL)
-                single_decode = self.__model.get_value(child, InstMdl.SINGLE_DEC_COL)
+                single_decode = self.__model.get_value(
+                    child, InstMdl.SINGLE_DEC_COL)
                 current_group.register_sets.append(GroupInstData(
                     name, inst, base, rpt, offset, hdl, uvm, decode, array, single_decode))
                 child = self.__model.iter_next(child)
@@ -260,7 +273,11 @@ class InstanceList(object):
     def new_instance(self):
         pos, grp = self.__model.new_instance()
         self.__project.get_grouping_list().append(grp)
-        self.__obj.set_cursor(pos, focus_column=self.__col, start_editing=True)
+        self.__obj.set_cursor(
+            pos,
+            self.__col,
+            start_editing=True
+        )
 
     def get_selected_instance(self):
         return self.__obj.get_selection().get_selected()
@@ -275,9 +292,15 @@ class InstanceList(object):
     def __drag_data_received_data(self, treeview, context, x, y, selection,
                                   info, etime):
         model = treeview.get_model()
-        data = selection.data
+
+        try:
+            data = selection.data
+        except AttributeError:
+            data = selection.get_text()
+
         drop_info = treeview.get_dest_row_at_pos(x, y)
         (name, width) = data.split(":")
+
         row_data = build_row_data(name, name, 0, 1, int(width, 16),
                                   "", False, False, False, False, None)
         if drop_info:
@@ -313,7 +336,7 @@ class InstanceList(object):
                 row = build_row_data(entry.inst, entry.set, entry.offset,
                                      entry.repeat, entry.repeat_offset,
                                      entry.hdl, entry.no_uvm,
-                                     entry.no_decode, entry.array, 
+                                     entry.no_decode, entry.array,
                                      entry.single_decode, None)
                 self.__model.append(node, row=row)
 
@@ -379,6 +402,7 @@ class InstanceList(object):
             cell.set_property('visible', False)
         else:
             cell.set_property('visible', True)
+
 
 def build_row_data(inst, name, offset, rpt, rpt_offset, hdl, uvm, dec, array,
                    single_decode, obj):

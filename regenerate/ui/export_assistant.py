@@ -24,7 +24,8 @@ import os
 class TextCombo(gtk.ComboBox):
 
     def __init__(self):
-        gtk.ComboBox.__init__(self)
+        super(TextCombo, self).__init__()
+
         self.model = gtk.ListStore(str)
         cell = gtk.CellRendererText()
         self.pack_start(cell, True)
@@ -49,7 +50,7 @@ class ExportAssistant(gtk.Assistant):
 
     def __init__(self, project_name, optlist, register_sets, group_names,
                  save_callback, parent):
-        gtk.Assistant.__init__(self)
+        super(ExportAssistant, self).__init__()
 
         self.set_transient_for(parent)
         self.project_name = project_name
@@ -283,7 +284,7 @@ class MyLabel(gtk.Label):
     def __init__(self, text=""):
         if text is None:
             text = ""
-        gtk.Label.__init__(self, text)
+        super(MyLable, self).__init__(text)
         self.set_alignment(0, 0)
 
     def set_text(self, text):

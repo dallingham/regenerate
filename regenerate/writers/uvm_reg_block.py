@@ -46,7 +46,7 @@ class UVMRegBlockRegisters(WriterBase):
         Initialize the object. At the current time, only little endian is
         supported by the package
         """
-        WriterBase.__init__(self, project, None)
+        super(UVMRegBlockRegisters, self).__init__(project, None)
         self.dblist = dblist
 
     def fix_name(self, field):
@@ -109,32 +109,37 @@ class UVMRegBlockRegisters(WriterBase):
         container blocks.
         """
 
-        dirpath = os.path.dirname(__file__)
-
         env = Environment(trim_blocks=True, lstrip_blocks=True)
         env.filters['remove_no_uvm'] = remove_no_uvm
 
-        template_file = os.path.join(dirpath, "templates",
-                                     "uvm_reg_block.template")
-        template = env.from_string(file(template_file).read())
+        template_file = os.path.join(
+            os.path.dirname(__file__),
+            "templates",
+            "uvm_reg_block.template"
+        )
+
+        with open(template_file) as of:
+            template = env.from_string(of.read())
 
         used_dbs = self.get_used_databases()
 
-
         with open(filename, "w") as ofile:
-            ofile.write(template.render(project=self._project, dblist=used_dbs,
-                                        individual_access=individual_access,
-                                        ACCESS_MAP=ACCESS_MAP,
-                                        TYPE_TO_INPUT=TYPE_TO_INPUT,
-                                        db_grp_maps=self.get_db_groups(),
-                                        group_maps=self._build_group_maps(),
-                                        fix_name=self.fix_name,
-                                        fix_reg=self.fix_reg_name,
-                                        use_new=False,
-                                        used_maps=self._used_maps(),
-                                        map2grp=self.build_map_name_to_groups(),
-                                        current_date=time.strftime("%B %d, %Y")
-                                       ))
+            ofile.write(
+                template.render(
+                    project=self._project, dblist=used_dbs,
+                    individual_access=individual_access,
+                    ACCESS_MAP=ACCESS_MAP,
+                    TYPE_TO_INPUT=TYPE_TO_INPUT,
+                    db_grp_maps=self.get_db_groups(),
+                    group_maps=self._build_group_maps(),
+                    fix_name=self.fix_name,
+                    fix_reg=self.fix_reg_name,
+                    use_new=False,
+                    used_maps=self._used_maps(),
+                    map2grp=self.build_map_name_to_groups(),
+                    current_date=time.strftime("%B %d, %Y")
+                )
+            )
 
     def get_db_groups(self):
         data_set = []
@@ -163,6 +168,7 @@ class UVMRegBlockRegisters(WriterBase):
                 for reg_sets in group.register_sets:
                     used_sets.add(reg_sets.set)
         return set([db for db in self.dblist if db.set_name in used_sets])
+
 
 def is_readonly(field):
     return TYPES[field.field_type].readonly
@@ -194,12 +200,19 @@ def individual_access(field, reg):
             return 0
     return 1
 
+
 def remove_no_uvm(slist):
     return [reg for reg in slist
             if reg.do_not_use_uvm is False]
 
 
 EXPORTERS = [
-    (WriterBase.TYPE_PROJECT, ExportInfo(UVMRegBlockRegisters, ("Test", "UVM Registers"),
-                                         "SystemVerilog files", ".sv", 'proj-uvm'))
+    (WriterBase.TYPE_PROJECT,
+     ExportInfo(
+         UVMRegBlockRegisters,
+         ("Test", "UVM Registers"),
+         "SystemVerilog files",
+         ".sv",
+         'proj-uvm')
+     )
 ]

@@ -41,6 +41,8 @@ from regenerate.settings.paths import GLADE_TOP, INSTALL_PATH
 from regenerate.ui.addrmap_list import AddrMapList
 from regenerate.ui.base_window import BaseWindow
 from regenerate.ui.bit_list import BitModel, BitList, bits, reset_value
+from regenerate.ui.bitfield_editor import BitFieldEditor
+from regenerate.ui.build import Build
 from regenerate.ui.error_dialogs import ErrorMsg, WarnMsg, Question
 from regenerate.ui.filter_mgr import FilterManager, ADDR_FIELD
 from regenerate.ui.filter_mgr import NAME_FIELD, TOKEN_FIELD
@@ -54,6 +56,8 @@ from regenerate.ui.spell import Spell
 from regenerate.ui.status_logger import StatusHandler
 from regenerate.ui.utils import clean_format_if_needed
 from regenerate.extras.remap import REMAP_NAME
+from regenerate.ui.reg_description import RegisterDescription
+from regenerate.ui.module_tab import ModuleTabs
 
 TYPE_ENB = {}
 for data_type in TYPES:
@@ -99,69 +103,60 @@ class MainWindow(BaseWindow):
 
     def __init__(self):
 
-        BaseWindow.__init__(self)
+        super(MainWindow, self).__init__()
 
         self.__prj = None
         self.__builder = gtk.Builder()
         self.__builder.add_from_file(GLADE_TOP)
         self.__build_actions()
-        self.__top_window = self.__builder.get_object("regenerate")
+        self.__top_window = self.find_obj("regenerate")
 
         self.configure(self.__top_window)
 
-        self.__status_obj = self.__builder.get_object("statusbar")
+        self.__status_obj = self.find_obj("statusbar")
         LOGGER.addHandler(StatusHandler(self.__status_obj))
-        self.__reg_text_buf = self.__builder.get_object("register_text_buffer")
-        self.__selected_dbase = self.__builder.get_object("selected_dbase")
+        self.__selected_dbase = self.find_obj("selected_dbase")
 
         pango_font = pango.FontDescription("monospace")
-        self.__builder.get_object('overview').modify_font(pango_font)
-        self.__builder.get_object('project_doc').modify_font(pango_font)
+        self.find_obj('overview').modify_font(pango_font)
+        self.find_obj('project_doc').modify_font(pango_font)
 
-        self.__overview_buf = self.__builder.get_object('overview_buffer')
+        self.__overview_buf = self.find_obj('overview_buffer')
         self.__overview_buf.connect('changed', self.__overview_changed)
-        Spell(self.__builder.get_object('overview'))
+        Spell(self.find_obj('overview'))
 
-        self.__prj_obj = ProjectList(self.__builder.get_object("project_list"),
+        self.__prj_obj = ProjectList(self.find_obj("project_list"),
                                      self.__prj_selection_changed)
-        self.__module_notebook = self.__builder.get_object("module_notebook")
-        self.__reg_notebook = self.__builder.get_object("reg_notebook")
-        self.__top_notebook = self.__builder.get_object("notebook1")
-        self.__no_rtl = self.__builder.get_object('no_rtl')
-        self.__no_test = self.__builder.get_object('no_test')
-        self.__no_cover = self.__builder.get_object('no_cover')
-        self.__no_uvm = self.__builder.get_object('no_uvm')
-        self.__hide = self.__builder.get_object('hide_doc')
-        self.__share_none = self.__builder.get_object('no_sharing')
-        self.__share_write = self.__builder.get_object('write_access')
-        self.__share_read = self.__builder.get_object('read_access')
-        self.__module_entry_obj = self.__builder.get_object('module')
-        self.__owner_entry_obj = self.__builder.get_object('owner')
-        self.__org_entry_obj = self.__builder.get_object('organization')
-        self.__title_entry_obj = self.__builder.get_object('title')
-        self.__warn_bit_list = self.__builder.get_object('reg_bit_warn')
-        self.__warn_reg_descr = self.__builder.get_object('reg_descr_warn')
-        self.__preview_toggle = self.__builder.get_object('preview')
+
+        self.__reg_notebook = self.find_obj("reg_notebook")
+        self.__top_notebook = self.find_obj("notebook1")
+
+        self.__module_notebook = self.find_obj("module_notebook")
+
+        self.__module_tabs = ModuleTabs(
+            self.__builder,
+            self.set_modified
+        )
 
         self.build_project_tab()
 
         self.__reglist_obj = RegisterList(
-            self.__builder.get_object("register_list"),
-            self.__selected_reg_changed, self.set_modified,
-            self.update_register_addr, self.__set_register_warn_flags)
+            self.find_obj("register_list"),
+            self.__selected_reg_changed,
+            self.set_modified,
+            self.update_register_addr,
+            self.__set_register_warn_flags
+        )
 
         self.use_svn = bool(int(ini.get('user', 'use_svn', 0)))
         self.use_preview = bool(int(ini.get('user', 'use_preview', 0)))
 
         self.__prj_preview = PreviewEditor(
-            self.__builder.get_object('project_doc').get_buffer(),
-            self.__builder.get_object('project_webkit'))
+            self.find_obj('project_doc').get_buffer(),
+            self.find_obj('project_webkit'))
         self.__regset_preview = PreviewEditor(
-            self.__builder.get_object('overview_buffer'),
-            self.__builder.get_object('scroll_webkit'))
-        self.__regdescr_preview = PreviewEditor(
-            self.__builder.get_object('register_text_buffer'),
-            self.__builder.get_object('scroll_reg_webkit'))
+            self.find_obj('overview_buffer'),
+            self.find_obj('scroll_webkit'))
 
         self.__filename = None
         self.__modified = False
@@ -175,16 +170,17 @@ class MainWindow(BaseWindow):
         self.__modelsort = None
         self.__instance_model = None
 
-        self.__reg_text_buf.connect('changed', self.__reg_description_changed)
-        self.__reg_descript = self.__builder.get_object('register_description')
-        self.__reg_descript.modify_font(pango_font)
-        Spell(self.__reg_descript)
+        self.reg_description = RegisterDescription(
+            self.find_obj('register_description'),
+            self.find_obj('scroll_reg_webkit'),
+            self.register_description_callback
+        )
 
         self.__prj_model = ProjectModel(self.use_svn)
         self.__prj_obj.set_model(self.__prj_model)
 
         self.__bitfield_obj = BitList(
-            self.__builder.get_object("bitfield_list"), self.__bit_combo_edit,
+            self.find_obj("bitfield_list"), self.__bit_combo_edit,
             self.__bit_text_edit, self.__bit_changed)
 
         try:
@@ -193,33 +189,13 @@ class MainWindow(BaseWindow):
             self.__recent_manager = gtk.RecentManager.get_default()
 
         recent_file_menu = self.__create_recent_menu_item()
-        self.__builder.get_object('file_menu').insert(recent_file_menu, 2)
+        self.find_obj('file_menu').insert(recent_file_menu, 2)
 
         recent_open_btn = self.__create_recent_menu()
-        self.__builder.get_object("open_btn").set_menu(recent_open_btn)
-
-        self.__clk_entry_obj = self.__builder.get_object('clock_signal')
-        self.__rst_entry_obj = self.__builder.get_object('reset_signal')
-        self.__rst_lvl_obj = self.__builder.get_object('reset_level')
-        self.__write_data_obj = self.__builder.get_object('write_data_bus')
-        self.__read_data_obj = self.__builder.get_object('read_data_bus')
-        self.__write_strobe_obj = self.__builder.get_object('write_strobe')
-        self.__interface_obj = self.__builder.get_object('interface')
-        self.__ack_obj = self.__builder.get_object('ack')
-        self.__read_strobe_obj = self.__builder.get_object('read_strobe')
-        self.__byte_en_obj = self.__builder.get_object('byte_en_signal')
-        self.__address_bus_obj = self.__builder.get_object('address_bus')
-        self.__address_width_obj = self.__builder.get_object('address_width')
-        self.__data_width_obj = self.__builder.get_object('data_width')
-        self.__array_notation_obj = self.__builder.get_object('array_notation')
-        self.__internal_only_obj = self.__builder.get_object('internal_only')
-        self.__coverage_obj = self.__builder.get_object('coverage')
-        self.__register_notation_obj = self.__builder.get_object(
-            'register_notation')
-        self.__byte_level_obj = self.__builder.get_object('byte_en_level')
+        self.find_obj("open_btn").set_menu(recent_open_btn)
 
         self.__instance_obj = InstanceList(
-            self.__builder.get_object('instances'),
+            self.find_obj('instances'),
             self.__instance_id_changed,
             self.__instance_inst_changed,
             self.__instance_base_changed,
@@ -230,41 +206,42 @@ class MainWindow(BaseWindow):
             self.__instance_uvm_changed,
             self.__instance_decode_changed,
             self.__instance_array_changed,
-            self.__instance_single_decode_changed)
+            self.__instance_single_decode_changed
+        )
 
-        self.__build_data_width_box()
         self.__restore_position_and_size()
-        self.__preview_toggle.set_active(self.use_preview)
+        self.find_obj('preview').set_active(self.use_preview)
         if self.use_preview:
             self.__enable_preview()
         self.__top_window.show()
         self.__builder.connect_signals(self)
         self.__build_import_menu()
 
-        filter_obj = self.__builder.get_object("filter")
+        filter_obj = self.find_obj("filter")
         self.__filter_manage = FilterManager(filter_obj)
+
+    def find_obj(self, name):
+        return self.__builder.get_object(name)
+
+    def register_description_callback(self, reg):
+        self.set_modified()
+        self.__set_register_warn_flags(reg)
 
     def on_instances_cursor_changed(self, obj):
         (mdl, node) = self.__instance_obj.get_selected_instance()
-        btn = self.__builder.get_object("instance_edit_btn")
+        btn = self.find_obj("instance_edit_btn")
         if node:
             path = mdl.get_path(node)
-            if len(path) == 1:
-                btn.set_sensitive(True)
-            else:
-                btn.set_sensitive(False)
+            btn.set_sensitive(len(path) == 1)
         else:
             btn.set_sensitive(False)
 
     def on_addrmap_cursor_changed(self, obj):
-        btn = self.__builder.get_object("edit_map")
+        btn = self.find_obj("edit_map")
         mdl, node = obj.get_selection().get_selected()
         if node:
             path = mdl.get_path(node)
-            if len(path) == 1:
-                btn.set_sensitive(True)
-            else:
-                btn.set_sensitive(False)
+            btn.set_sensitive(len(path) == 1)
         else:
             btn.set_sensitive(False)
 
@@ -274,15 +251,19 @@ class MainWindow(BaseWindow):
         (mdl, node) = self.__instance_obj.get_selected_instance()
         inst = mdl.get_value(node, InstMdl.OBJ_COL)
         if inst:
-            GroupDocEditor(inst, self.project_modified, self.__top_window)
+            GroupDocEditor(
+                inst,
+                self.project_modified,
+                self.__top_window
+            )
 
     def build_project_tab(self):
-        self.__prj_short_name_obj = self.__builder.get_object('short_name')
-        self.__prj_name_obj = self.__builder.get_object('project_name')
-        self.__prj_company_name_obj = self.__builder.get_object('company_name')
-        self.__prj_doc_object = self.__builder.get_object('project_doc_buffer')
+        self.__prj_short_name_obj = self.find_obj('short_name')
+        self.__prj_name_obj = self.find_obj('project_name')
+        self.__prj_company_name_obj = self.find_obj('company_name')
+        self.__prj_doc_object = self.find_obj('project_doc_buffer')
 
-        self.__addr_map_obj = self.__builder.get_object('address_tree')
+        self.__addr_map_obj = self.find_obj('address_tree')
         self.__addr_map_list = AddrMapList(self.__addr_map_obj)
 
     def project_modified(self, value):
@@ -292,8 +273,7 @@ class MainWindow(BaseWindow):
         self.__prj_short_name_obj.set_text(self.__prj.short_name)
         self.__prj_doc_object.set_text(self.__prj.documentation)
         self.__prj_name_obj.set_text(self.__prj.name)
-        company = self.__prj.company_name
-        self.__prj_company_name_obj.set_text(company)
+        self.__prj_company_name_obj.set_text(self.__prj.company_name)
         self.__addr_map_list.set_project(self.__prj)
         self.project_modified(False)
 
@@ -309,8 +289,14 @@ class MainWindow(BaseWindow):
         new_list = [(grp, grp.name in current)
                     for grp in self.__prj.get_grouping_list()]
 
-        dialog = AddrMapEdit(map_name, new_list, self.__builder,
-                             self.__prj, self.__top_window)
+        dialog = AddrMapEdit(
+            map_name,
+            new_list,
+            self.__builder,
+            self.__prj,
+            self.__top_window
+        )
+
         new_list = dialog.get_list()
         if new_list is not None:
             self.__prj.set_address_map_group_list(map_name, dialog.get_list())
@@ -351,17 +337,11 @@ class MainWindow(BaseWindow):
         self.project_modified(True)
         self.__prj.company_name = obj.get_text()
 
-    def on_offset_insert_text(self, obj, new_text, pos, *extra):
-        try:
-            int(new_text, 16)
-        except ValueError:
-            obj.stop_emission('insert-text')
-
     def on_project_documentation_changed(self, obj):
         self.project_modified(True)
-        self.__prj.documentation = obj.get_text(obj.get_start_iter(),
-                                                obj.get_end_iter(),
-                                                False)
+        self.__prj.documentation = obj.get_text(
+            obj.get_start_iter(), obj.get_end_iter(), False
+        )
 
     def on_short_name_changed(self, obj):
         """
@@ -384,9 +364,9 @@ class MainWindow(BaseWindow):
         if height and width:
             self.__top_window.resize(width, height)
         if vpos:
-            self.__builder.get_object('vpaned').set_position(vpos)
+            self.find_obj('vpaned').set_position(vpos)
         if hpos:
-            self.__builder.get_object('hpaned').set_position(hpos)
+            self.find_obj('hpaned').set_position(hpos)
 
     def __enable_registers(self, value):
         """
@@ -407,7 +387,7 @@ class MainWindow(BaseWindow):
     def __build_group(self, group_name, action_names):
         group = gtk.ActionGroup(group_name)
         for name in action_names:
-            group.add_action(self.__builder.get_object(name))
+            group.add_action(self.find_obj(name))
         group.set_sensitive(False)
         return group
 
@@ -447,24 +427,6 @@ class MainWindow(BaseWindow):
         self.__svn_selected = self.__build_group("svn_enabled", svn_acn)
         self.__file_modified = self.__build_group("file_modified", file_acn)
 
-    def __build_data_width_box(self):
-        """
-        Builds the option menu for the bit width descriptor. Glade no longer
-        allows us to set the values in the glade file, but this allows us to
-        set a more descriptive text along with a numerical value. We can select
-        the active entry, and extract the actual value from the ListStore. The
-        first column of the ListStore is displayed, and the second value is
-        the numerical value.
-        """
-        store = gtk.ListStore(str, int)
-        for i in (8, 16, 32, 64):
-            store.append(row=["{0} bits".format(i), i])
-
-        self.__data_width_obj.set_model(store)
-        cell = gtk.CellRendererText()
-        self.__data_width_obj.pack_start(cell, True)
-        self.__data_width_obj.add_attribute(cell, 'text', 0)
-
     def __bit_combo_edit(self, cell, path, node, col):
         """
         The callback function that occurs whenever a combo entry is altered
@@ -487,15 +449,18 @@ class MainWindow(BaseWindow):
 
         if not field.output_signal:
             field.output_signal = "%s_%s_OUT" % (
-                register.token, field.field_name)
+                register.token, field.field_name
+            )
 
         if TYPE_ENB[field.field_type][0] and not field.input_signal:
             field.input_signal = "%s_%s_IN" % (
-                register.token, field.field_name)
+                register.token, field.field_name
+            )
 
         if TYPE_ENB[field.field_type][1] and not field.control_signal:
             field.control_signal = "%s_%s_LD" % (
-                register.token, field.field_name)
+                register.token, field.field_name
+            )
 
     def __update_reset_field(self, field, model, path, node):
         field.reset_type = model.get_value(node, 1)
@@ -544,16 +509,6 @@ class MainWindow(BaseWindow):
 
             self.__bit_model[path][BitModel.BIT_COL] = bits(field)
             self.__bit_model[path][BitModel.SORT_COL] = field.start_position
-
-    def dump(self, title):
-        r = self.__reglist_obj.get_selected_register()
-
-        sys.stdout.write("----------------------------------------------\n")
-        sys.stdout.write("%s %s\n" % (title, r.register_name))
-
-        for f in r.get_bit_fields():
-            sys.stdout.write("'%18s' %4d %4d\n" % (f.field_name, f.msb, f.lsb))
-            sys.stdout.write("\t%s\n" % f)
 
     def __bit_update_name(self, field, path, new_text):
         """
@@ -630,12 +585,10 @@ class MainWindow(BaseWindow):
 
     def __inst_changed(self, attr, path, new_text):
         getattr(self.__instance_model, attr)(path, new_text)
-        self.__set_module_definition_warn_flag()
         self.project_modified(True)
 
     def __inst_bool_changed(self, attr, cell, path):
         getattr(self.__instance_model, attr)(cell, path)
-        self.__set_module_definition_warn_flag()
         self.project_modified(True)
 
     def __instance_inst_changed(self, cell, path, new_text, col):
@@ -705,7 +658,7 @@ class MainWindow(BaseWindow):
                 obj.set_text("")
         elif icon == gtk.ENTRY_ICON_PRIMARY:
             if event.type == gtk.gdk.BUTTON_PRESS:
-                menu = self.__builder.get_object("filter_menu")
+                menu = self.find_obj("filter_menu")
                 menu.popup(None, None, None, 1, 0)
 
     def set_search(self, values, obj):
@@ -730,13 +683,13 @@ class MainWindow(BaseWindow):
     def __enable_preview(self):
         self.__prj_preview.enable()
         self.__regset_preview.enable()
-        self.__regdescr_preview.enable()
+        self.reg_description.preview_enable()
         self.use_preview = True
 
     def __disable_preview(self):
         self.__prj_preview.disable()
         self.__regset_preview.disable()
-        self.__regdescr_preview.disable()
+        self.reg_description.preview_disable()
         self.use_preview = False
 
     def on_preview_toggled(self, obj):
@@ -746,9 +699,7 @@ class MainWindow(BaseWindow):
             self.__disable_preview()
 
     def on_summary_action_activate(self, obj):
-        """
-        Displays the summary window
-        """
+        """Displays the summary window"""
         reg = self.__reglist_obj.get_selected_register()
 
         if reg:
@@ -756,8 +707,6 @@ class MainWindow(BaseWindow):
             SummaryWindow(self.__builder, reg, self.active.name, self.__prj)
 
     def on_build_action_activate(self, obj):
-        from regenerate.ui.build import Build
-
         dbmap = {}
         item_list = self.__prj_model
         for item in item_list:
@@ -772,7 +721,7 @@ class MainWindow(BaseWindow):
 
     def on_project_list_button_press_event(self, obj, event):
         if event.button == 3:
-            menu = self.__builder.get_object("svn_prj_menu")
+            menu = self.find_obj("svn_prj_menu")
             menu.popup(None, None, None, 1, 0)
 
     def on_update_svn_activate(self, obj):
@@ -818,12 +767,10 @@ class MainWindow(BaseWindow):
             grp = selected[0].get_value(selected[1], InstMdl.OBJ_COL)
             self.__instance_model.remove(selected[1])
             self.__prj.remove_group_from_grouping_list(grp)
-            self.__set_module_definition_warn_flag()
             self.project_modified(True)
 
     def on_add_instance_clicked(self, obj):
         self.__instance_obj.new_instance()
-        self.__set_module_definition_warn_flag()
         self.project_modified(True)
 
     def __data_changed(self, obj):
@@ -833,19 +780,13 @@ class MainWindow(BaseWindow):
         """
         self.set_modified()
 
-    def on_address_width_insert_text(self, obj, new_text, pos, *extra):
-        try:
-            int(new_text)
-        except ValueError:
-            obj.stop_emission('insert-text')
-
     def __build_import_menu(self):
         """
         Builds the export menu from the items in writers.IMPORTERS. The export
         menu is extracted from the glade description, the submenu is built,
         and added to the export menu.
         """
-        menu = self.__builder.get_object('import_menu')
+        menu = self.find_obj('import_menu')
         submenu = gtk.Menu()
         menu.set_submenu(submenu)
         for item in IMPORTERS:
@@ -861,7 +802,7 @@ class MainWindow(BaseWindow):
             text = "%d" % self.dbase.total_bits()
         else:
             text = ""
-        self.__builder.get_object('reg_count').set_text(text)
+        self.find_obj('reg_count').set_text(text)
 
     def on_notebook_switch_page(self, obj, page, page_num):
         if page_num == 1:
@@ -895,7 +836,7 @@ class MainWindow(BaseWindow):
 
                 self.__prj_preview.set_dbase(self.active.db)
                 self.__regset_preview.set_dbase(self.active.db)
-                self.__regdescr_preview.set_dbase(self.active.db)
+                self.reg_description.set_database(self.active.db)
 
                 self.__filter_manage.change_filter(self.active.modelfilter)
                 self.__modelsort = self.active.modelsort
@@ -935,19 +876,20 @@ class MainWindow(BaseWindow):
         old_skip = self.__skip_changes
         self.__skip_changes = True
         reg = self.__reglist_obj.get_selected_register()
+        self.reg_description.set_register(reg)
         if reg:
             self.__bit_model.clear()
             self.__bitfield_obj.set_mode(reg.share)
             for key in reg.get_bit_field_keys():
                 field = reg.get_bit_field(key)
                 self.__bit_model.append_field(field)
-            self.__reg_text_buf.set_text(reg.description)
-            self.__reg_text_buf.set_modified(False)
-            self.__no_rtl.set_active(reg.do_not_generate_code)
-            self.__no_uvm.set_active(reg.do_not_use_uvm)
-            self.__no_test.set_active(reg.do_not_test)
-            self.__no_cover.set_active(reg.do_not_cover)
-            self.__hide.set_active(reg.hide)
+
+            self.find_obj('no_rtl').set_active(reg.do_not_generate_code)
+            self.find_obj('no_uvm').set_active(reg.do_not_use_uvm)
+            self.find_obj('no_test').set_active(reg.do_not_test)
+            self.find_obj('no_cover').set_active(reg.do_not_cover)
+            self.find_obj('hide_doc').set_active(reg.hide)
+
             self.__reg_notebook.set_sensitive(True)
             self.__reg_selected.set_sensitive(True)
             self.__set_register_warn_flags(reg)
@@ -956,35 +898,17 @@ class MainWindow(BaseWindow):
         else:
             if self.__bit_model:
                 self.__bit_model.clear()
-            self.__reg_text_buf.set_text("")
             self.__reg_notebook.set_sensitive(False)
             self.__reg_selected.set_sensitive(False)
         self.__skip_changes = old_skip
 
     def set_share(self, reg):
         if reg.share == Register.SHARE_NONE:
-            self.__share_none.set_active(True)
+            self.find_obj('no_sharing').set_active(True)
         elif reg.share == Register.SHARE_READ:
-            self.__share_read.set_active(True)
+            self.find_obj('read_access').set_active(True)
         else:
-            self.__share_write.set_active(True)
-
-    def __reg_description_changed(self, obj):
-        reg = self.__reglist_obj.get_selected_register()
-        if reg:
-            reg.description = self.__reg_text_buf.get_text(
-                self.__reg_text_buf.get_start_iter(),
-                self.__reg_text_buf.get_end_iter(),
-                False)
-            self.set_modified()
-            self.__set_register_warn_flags(reg)
-
-    def on_register_description_key_press_event(self, obj, event):
-        if event.keyval == gtk.keysyms.F12:
-            if clean_format_if_needed(obj):
-                self.set_modified()
-            return True
-        return False
+            self.find_obj('write_access').set_active(True)
 
     def on_overview_key_press_event(self, obj, event):
         if event.keyval == gtk.keysyms.F12:
@@ -1034,8 +958,10 @@ class MainWindow(BaseWindow):
 
             if self.duplicate_address(register.address):
                 self.set_share(register)
-                LOGGER.error('Register cannot be set to non-sharing '
-                             'if it shares an address with another')
+                LOGGER.error(
+                    'Register cannot be set to non-sharing '
+                    'if it shares an address with another'
+                )
             else:
                 register.share = Register.SHARE_NONE
                 self.set_modified()
@@ -1100,10 +1026,14 @@ class MainWindow(BaseWindow):
         register = self.__reglist_obj.get_selected_register()
         field = self.__bitfield_obj.select_field()
         if field:
-            from regenerate.ui.bitfield_editor import BitFieldEditor
-            BitFieldEditor(self.dbase, register, field,
-                           self.__set_field_modified, self.__builder,
-                           self.__top_window)
+            BitFieldEditor(
+                self.dbase,
+                register,
+                field,
+                self.__set_field_modified,
+                self.__builder,
+                self.__top_window
+            )
 
     def __set_field_modified(self):
         reg = self.__reglist_obj.get_selected_register()
@@ -1174,18 +1104,26 @@ class MainWindow(BaseWindow):
         Creates a file save selector, using the mime type and regular
         expression to control the selector.
         """
-        return self.__create_file_selector(title, mime_name, mime_regex,
-                                           gtk.FILE_CHOOSER_ACTION_SAVE,
-                                           gtk.STOCK_SAVE)
+        return self.__create_file_selector(
+            title,
+            mime_name,
+            mime_regex,
+            gtk.FILE_CHOOSER_ACTION_SAVE,
+            gtk.STOCK_SAVE
+        )
 
     def __create_open_selector(self, title, mime_name=None, mime_regex=None):
         """
         Creates a file save selector, using the mime type and regular
         expression to control the selector.
         """
-        return self.__create_file_selector(title, mime_name, mime_regex,
-                                           gtk.FILE_CHOOSER_ACTION_OPEN,
-                                           gtk.STOCK_OPEN)
+        return self.__create_file_selector(
+            title,
+            mime_name,
+            mime_regex,
+            gtk.FILE_CHOOSER_ACTION_OPEN,
+            gtk.STOCK_OPEN
+        )
 
     def on_add_register_set_activate(self, obj):
         """
@@ -1193,8 +1131,11 @@ class MainWindow(BaseWindow):
         create_selector method, then runs the dialog, and calls the
         open_xml routine with the result.
         """
-        choose = self.__create_open_selector("Open Register Database",
-                                             'XML files', '*.xml')
+        choose = self.__create_open_selector(
+            "Open Register Database",
+            'XML files',
+            '*.xml'
+        )
         choose.set_select_multiple(True)
         response = choose.run()
         if response == gtk.RESPONSE_OK:
@@ -1226,10 +1167,13 @@ class MainWindow(BaseWindow):
         selected file is added to the recent manager.
         """
         name = None
-        choose = gtk.FileChooserDialog("New", self.__top_window,
-                                       gtk.FILE_CHOOSER_ACTION_SAVE,
-                                       (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
-                                        gtk.STOCK_SAVE, gtk.RESPONSE_OK))
+        choose = gtk.FileChooserDialog(
+            "New",
+            self.__top_window,
+            gtk.FILE_CHOOSER_ACTION_SAVE,
+            (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+             gtk.STOCK_SAVE, gtk.RESPONSE_OK)
+        )
         choose.set_current_folder(os.curdir)
         choose.show()
 
@@ -1240,8 +1184,13 @@ class MainWindow(BaseWindow):
         return name
 
     def on_new_project_clicked(self, obj):
-        choose = self.__create_save_selector("New Project",
-                                             "Regenerate Project", DEF_MIME)
+
+        choose = self.__create_save_selector(
+            "New Project",
+            "Regenerate Project",
+            DEF_MIME
+        )
+
         response = choose.run()
         if response == gtk.RESPONSE_OK:
             filename = choose.get_filename()
@@ -1260,14 +1209,19 @@ class MainWindow(BaseWindow):
             if self.__recent_manager:
                 sys.stdout.write("Add %s=n" % filename)
                 self.__recent_manager.add_item("file:///" + filename)
-            self.__builder.get_object('save_btn').set_sensitive(True)
+            self.find_obj('save_btn').set_sensitive(True)
             self.__prj_loaded.set_sensitive(True)
             self.load_project_tab()
         choose.destroy()
 
     def on_open_action_activate(self, obj):
-        choose = self.__create_open_selector("Open Project",
-                                             "Regenerate Project", DEF_MIME)
+
+        choose = self.__create_open_selector(
+            "Open Project",
+            "Regenerate Project",
+            DEF_MIME
+        )
+
         response = choose.run()
         filename = choose.get_filename()
         uri = choose.get_uri()
@@ -1321,11 +1275,14 @@ class MainWindow(BaseWindow):
         self.__prj_model.load_icons()
         if self.__recent_manager and uri:
             self.__recent_manager.add_item(uri)
-        self.__builder.get_object('save_btn').set_sensitive(True)
+        self.find_obj('save_btn').set_sensitive(True)
         self.set_busy_cursor(False)
         base = os.path.splitext(os.path.basename(filename))[0]
-        self.__top_window.set_title("%s (%s) - regenerate" %
-                                    (base, self.__prj.name))
+
+        self.__top_window.set_title(
+            "%s (%s) - regenerate" % (base, self.__prj.name)
+        )
+
         self.__status_obj.pop(idval)
         self.load_project_tab()
         self.__prj_loaded.set_sensitive(True)
@@ -1360,12 +1317,15 @@ class MainWindow(BaseWindow):
         self.__bit_model = BitModel()
         self.__bitfield_obj.set_model(self.__bit_model)
 
-        self.__set_module_definition_warn_flag()
+        self.active = DbaseStatus(
+            self.dbase,
+            name,
+            base, self.__reg_model,
+            self.__modelsort,
+            self.__filter_manage.get_model(),
+            self.__bit_model
+        )
 
-        self.active = DbaseStatus(self.dbase, name, base, self.__reg_model,
-                                  self.__modelsort,
-                                  self.__filter_manage.get_model(),
-                                  self.__bit_model)
         self.active.node = self.__prj_model.add_dbase(name, self.active)
         self.__prj_obj.select(self.active.node)
         self.redraw()
@@ -1374,7 +1334,6 @@ class MainWindow(BaseWindow):
         self.__prj.add_register_set(name)
 
         self.__module_notebook.set_sensitive(True)
-        self.__set_module_definition_warn_flag()
         self.clear_modified()
 
     def __input_xml(self, name, load=True):
@@ -1383,9 +1342,11 @@ class MainWindow(BaseWindow):
         self.dbase = RegisterDb()
         self.__load_database(name)
         if not os.access(name, os.W_OK):
-            WarnMsg("Read only file",
-                    'You will not be able to save this file unless\n'
-                    'you change permissions.')
+            WarnMsg(
+                "Read only file",
+                'You will not be able to save this file unless\n'
+                'you change permissions.'
+            )
 
         self.__reg_model = RegisterModel()
         mdl = self.__reg_model.filter_new()
@@ -1425,16 +1386,21 @@ class MainWindow(BaseWindow):
                 ErrorMsg("Could not load existing register set", str(msg))
 
             base = os.path.splitext(os.path.basename(name))[0]
-            self.active = DbaseStatus(self.dbase, name, base, self.__reg_model,
-                                      self.__modelsort,
-                                      self.__filter_manage.get_model(),
-                                      self.__bit_model)
+
+            self.active = DbaseStatus(
+                self.dbase,
+                name,
+                base,
+                self.__reg_model,
+                self.__modelsort,
+                self.__filter_manage.get_model(),
+                self.__bit_model
+            )
 
             self.active.node = self.__prj_model.add_dbase(name, self.active)
             if load:
                 self.__prj_obj.select(self.active.node)
                 self.__module_notebook.set_sensitive(True)
-        self.__set_module_definition_warn_flag()
 
     def __load_database(self, filename):
         """
@@ -1502,9 +1468,9 @@ class MainWindow(BaseWindow):
         ini.set('user', 'width', width)
         ini.set('user', 'height', height)
         ini.set('user', 'vpos',
-                self.__builder.get_object('vpaned').get_position())
+                self.find_obj('vpaned').get_position())
         ini.set('user', 'hpos',
-                self.__builder.get_object('hpaned').get_position())
+                self.find_obj('hpaned').get_position())
         gtk.main_quit()
 
     def __save_and_quit(self):
@@ -1527,8 +1493,12 @@ class MainWindow(BaseWindow):
         """
         Imports the data using the specified data importer.
         """
-        choose = self.__create_open_selector(data[1][1], data[2],
-                                             "*" + data[3])
+        choose = self.__create_open_selector(
+            data[1][1],
+            data[2],
+            "*" + data[3]
+        )
+
         response = choose.run()
         if response == gtk.RESPONSE_OK:
             choose.hide()
@@ -1556,47 +1526,28 @@ class MainWindow(BaseWindow):
         """
         Redraws the information in the register list.
         """
-        self.__module_entry_obj.set_text(self.dbase.module_name)
-        self.__owner_entry_obj.set_text(self.dbase.owner)
-        self.__org_entry_obj.set_text(self.dbase.organization)
-        self.__title_entry_obj.set_text(self.dbase.descriptive_title)
-
         self.__overview_buf.set_text(self.dbase.overview_text)
         self.__overview_buf.set_modified(False)
 
-        self.__clk_entry_obj.set_text(self.dbase.clock_name)
-        self.__rst_entry_obj.set_text(self.dbase.reset_name)
-        self.__rst_lvl_obj.set_active(self.dbase.reset_active_level)
+        self.__module_tabs.change_db(self.dbase)
 
-        self.__write_data_obj.set_text(self.dbase.write_data_name)
-        self.__read_data_obj.set_text(self.dbase.read_data_name)
-        self.__write_strobe_obj.set_text(self.dbase.write_strobe_name)
-        self.__interface_obj.set_active(self.dbase.use_interface)
-        self.__ack_obj.set_text(self.dbase.acknowledge_name)
-        self.__read_strobe_obj.set_text(self.dbase.read_strobe_name)
-        self.__byte_en_obj.set_text(self.dbase.byte_strobe_name)
-
-        self.__address_bus_obj.set_text(self.dbase.address_bus_name)
-        self.__address_width_obj.set_text(str(self.dbase.address_bus_width))
-        self.__data_width_obj.set_active(bus_index(self.dbase.data_bus_width))
         if self.dbase.array_is_reg:
-            self.__register_notation_obj.set_active(True)
+            self.find_obj('register_notation').set_active(True)
         else:
-            self.__array_notation_obj.set_active(True)
-
-        self.__internal_only_obj.set_active(self.dbase.internal_only)
-        self.__coverage_obj.set_active(self.dbase.coverage)
-        self.__byte_level_obj.set_active(self.dbase.byte_strobe_active_level)
+            self.find_obj('array_notation').set_active(True)
 
         self.update_bit_count()
 
         self.__set_description_warn_flag()
-        self.__set_module_definition_warn_flag()
 
     def __overview_changed(self, obj):
-        self.dbase.overview_text = obj.get_text(obj.get_start_iter(),
-                                                obj.get_end_iter(),
-                                                False)
+
+        self.dbase.overview_text = obj.get_text(
+            obj.get_start_iter(),
+            obj.get_end_iter(),
+            False
+        )
+
         self.__set_description_warn_flag()
         self.set_modified()
 
@@ -1610,8 +1561,14 @@ class MainWindow(BaseWindow):
         """
         if (self.__modified or self.__prj_model.is_not_saved() or
                 (self.__prj and self.__prj.modified)):
-            dialog = Question('Save Changes?', "The file has been modified. "
-                              "Do you want to save your changes?")
+
+            dialog = Question(
+                'Save Changes?',
+                "The file has been modified. "
+                "Do you want to save your changes?",
+                self.__top_window
+            )
+
             status = dialog.run()
             if status == Question.DISCARD:
                 self.__exit()
@@ -1645,83 +1602,6 @@ class MainWindow(BaseWindow):
 
     def on_array_changed(self, obj):
         self.set_db_value("array_is_reg", not obj.get_active())
-
-    def on_coverage_toggled(self, obj):
-        self.set_db_value("coverage", obj.get_active())
-
-    def on_internal_only_changed(self, obj):
-        self.set_db_value("internal_only", obj.get_active())
-
-    def on_data_width_changed(self, obj):
-        self.set_db_value("data_bus_width", 8 << obj.get_active())
-
-    def on_byte_en_level_toggled(self, obj):
-        self.set_db_value("byte_strobe_active_level", obj.get_active())
-
-    def on_reset_level_toggled(self, obj):
-        self.set_db_value("reset_active_level", obj.get_active())
-
-    def on_address_width_changed(self, obj):
-        try:
-            value = int(obj.get_text())
-            if value > 64:
-                LOGGER.error('Illegal address width: "%s"' % obj.get_text())
-            else:
-                self.set_db_value("address_bus_width", value)
-        except ValueError:
-            LOGGER.error('Illegal address width: "%s"' % obj.get_text())
-
-    def __text_change(self, attr, obj):
-        if self.dbase:
-            setattr(self.dbase, attr, obj.get_text())
-            self.__set_module_ports_warn_flag()
-            self.set_modified()
-
-    def on_address_bus_changed(self, obj):
-        self.__text_change("address_bus_name", obj)
-
-    def on_write_strobe_changed(self, obj):
-        self.__text_change("write_strobe_name", obj)
-
-    def on_interface_toggled(self, obj):
-        self.dbase.use_interface = obj.get_active()
-        self.set_modified()
-
-    def on_ack_changed(self, obj):
-        self.__text_change("acknowledge_name", obj)
-
-    def on_read_strobe_changed(self, obj):
-        self.__text_change("read_strobe_name", obj)
-
-    def on_byte_en_signal_changed(self, obj):
-        self.__text_change("byte_strobe_name", obj)
-
-    def on_read_data_bus_changed(self, obj):
-        self.__text_change("read_data_name", obj)
-
-    def on_reset_signal_changed(self, obj):
-        self.__text_change("reset_name", obj)
-
-    def on_write_data_bus_changed(self, obj):
-        self.__text_change("write_data_name", obj)
-
-    def on_clock_signal_changed(self, obj):
-        self.__text_change("clock_name", obj)
-
-    def on_module_changed(self, obj):
-        self.__check_signal(obj, "Invalid module name")
-        self.__text_change("module_name", obj)
-
-    def on_title_changed(self, obj):
-        self.__text_change("descriptive_title", obj)
-
-    def on_owner_changed(self, obj):
-        self.dbase.owner = obj.get_text()
-        self.set_modified()
-
-    def on_organization_changed(self, obj):
-        self.dbase.organization = obj.get_text()
-        self.set_modified()
 
     def __button_toggle(self, attr, obj):
         reg = self.__reglist_obj.get_selected_register()
@@ -1865,8 +1745,8 @@ class MainWindow(BaseWindow):
                     msg.append(txt)
                     warn_bit = True
         if mark and not self.__loading_project:
-            self.__warn_reg_descr.set_property('visible', warn_reg)
-            self.__warn_bit_list.set_property('visible', warn_bit)
+            self.find_obj('reg_descr_warn').set_property('visible', warn_reg)
+            self.find_obj('reg_bit_warn').set_property('visible', warn_bit)
         self.__reg_model.set_warning_for_register(reg, warn_reg or warn_bit)
         if msg:
             tip = "\n".join(msg)
@@ -1876,24 +1756,10 @@ class MainWindow(BaseWindow):
 
     def __set_description_warn_flag(self):
         if not self.__loading_project:
-            warn = self.dbase.overview_text == ""
-            self.__builder.get_object('mod_descr_warn').set_property('visible',
-                                                                     warn)
-
-    def __set_module_definition_warn_flag(self):
-        if not self.__loading_project:
-            warn = False
-            msgs = []
-
-            if self.dbase.descriptive_title == "":
-                warn = True
-                msgs.append("No title was provided for the register set.")
-            if self.dbase.module_name == "":
-                warn = True
-                msgs.append("No module name was provided.")
-            icon = self.__builder.get_object('mod_def_warn')
-            icon.set_property('visible', warn)
-            icon.set_tooltip_text("\n".join(msgs))
+            self.find_obj('mod_descr_warn').set_property(
+                'visible',
+                self.dbase.overview_text == ""
+            )
 
     def __set_bits_warn_flag(self):
         warn = False
@@ -1906,14 +1772,16 @@ class MainWindow(BaseWindow):
         return warn
 
     def __set_module_ports_warn_flag(self):
-        data = ((self.__clk_entry_obj, "clock"),
-                (self.__rst_entry_obj, "reset"),
-                (self.__write_data_obj, "write data"),
-                (self.__read_data_obj, "read data"),
-                (self.__byte_en_obj, "byte enables"),
-                (self.__write_strobe_obj, "write strobe"),
-                (self.__ack_obj, "acknowledge"),
-                (self.__address_bus_obj, "address bus"))
+        return
+        # FIXME
+        data = (
+            (self.__rst_entry_obj, "reset"),
+            (self.__write_data_obj, "write data"),
+            (self.__read_data_obj, "read data"),
+            (self.__byte_en_obj, "byte enables"),
+            (self.__write_strobe_obj, "write strobe"),
+            (self.__ack_obj, "acknowledge"),
+            (self.__address_bus_obj, "address bus"))
 
         if not self.__loading_project:
             warn = False
@@ -1922,7 +1790,7 @@ class MainWindow(BaseWindow):
                 if not self.__check_signal(obj, "Illegal signal name"):
                     warn = True
                     msgs.append("Illegal signal for %s" % name)
-            icon = self.__builder.get_object('mod_port_warn')
+            icon = self.find_obj('mod_port_warn')
             icon.set_property('visible', warn)
             icon.set_tooltip_text("\n".join(msgs))
 
@@ -2040,14 +1908,3 @@ def check_reset(field):
 
 def sort_regset(x):
     return os.path.basename(x)
-
-
-def bus_index(value):
-    if value == 8:
-        return 0
-    elif value == 16:
-        return 1
-    elif value == 32:
-        return 2
-    else:
-        return 3

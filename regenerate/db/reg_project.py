@@ -27,8 +27,10 @@ import regenerate.db
 
 (MAP_FULL, MAP_RO, MAP_WO) = range(3)
 
-AddrMapData = namedtuple("AddrMapData",
-                         ["name", "base", "width", "fixed", "uvm"])
+AddrMapData = namedtuple(
+    "AddrMapData",
+    ["name", "base", "width", "fixed", "uvm"]
+)
 
 
 def nested_dict(depth, dict_type):
@@ -244,8 +246,9 @@ class RegProject(object):
     def set_grouping(self, index, name, start, hdl, repeat, repeat_offset):
         """Modifies an existing grouping."""
         self._modified = True
-        self._groupings[index] = regenerate.db.GroupData(name, start, hdl,
-                                                         repeat, repeat_offset)
+        self._groupings[index] = regenerate.db.GroupData(
+            name, start, hdl, repeat, repeat_offset
+        )
 
     def add_to_grouping_list(self, group_data):
         """Adds a new grouping to the grouping list"""
@@ -256,8 +259,11 @@ class RegProject(object):
     def _add_to_grouping_list(self, name, start, hdl, repeat, repeat_offset):
         """Adds a new grouping to the grouping list"""
         self._modified = True
-        self._groupings.append(regenerate.db.GroupData(name, start, hdl,
-                                                       repeat, repeat_offset))
+        self._groupings.append(
+            regenerate.db.GroupData(
+                name, start, hdl, repeat, repeat_offset
+            )
+        )
 
     def remove_group_from_grouping_list(self, grp):
         """Removes a grouping from the grouping list"""
@@ -285,10 +291,13 @@ class RegProject(object):
             if addrmap.name != old_name:
                 continue
             old_data = self._addr_map_list[i]
-            self._addr_map_list[i] = AddrMapData(new_name, old_data.base,
-                                                 old_data.width,
-                                                 old_data.fixed,
-                                                 old_data.uvm)
+            self._addr_map_list[i] = AddrMapData(
+                new_name,
+                old_data.base,
+                old_data.width,
+                old_data.fixed,
+                old_data.uvm
+            )
             self._addr_map_grps[new_name] = self._addr_map_grps[old_name]
             del self._addr_map_grps[old_name]
             self._modified = True
@@ -446,4 +455,3 @@ class RegProject(object):
                     if gd.inst == old:
                         gd.inst = cur
         self._modified = True
-

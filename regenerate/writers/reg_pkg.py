@@ -36,7 +36,7 @@ def find_range(address, range_map):
 
 class VerilogConstRegPackage(WriterBase):
     def __init__(self, project, dblist):
-        WriterBase.__init__(self, None)
+        super(VerilogConstRegPackage, self).__init__(None)
         self.dblist = dblist
 
     def write(self, filename):
@@ -58,7 +58,12 @@ class VerilogConstRegPackage(WriterBase):
 
 
 EXPORTERS = [
-    (WriterBase.TYPE_PROJECT, ExportInfo(VerilogConstRegPackage,
-                                         ("Headers", "SystemVerilog Register Constants"),
-                                         "SystemVerilog files", ".sv", 'headers-system-verilog')),
+    (WriterBase.TYPE_PROJECT,
+     ExportInfo(
+         VerilogConstRegPackage,
+         ("Headers", "SystemVerilog Register Constants"),
+         "SystemVerilog files",
+         ".sv",
+         'headers-system-verilog')
+     ),
 ]

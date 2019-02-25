@@ -40,11 +40,15 @@ class AddrMapEdit(BaseWindow):
         label = gtk.Label(
             'Select subsystems for the "{0}" address map'.format(map_name))
         label.set_padding(6, 6)
-        dialog = gtk.Dialog("Address Map Subsystem Selection",
-                            None,
-                            gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
-                            (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
-                             gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
+
+        dialog = gtk.Dialog(
+            "Address Map Subsystem Selection",
+            None,
+            gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+            (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
+             gtk.STOCK_OK, gtk.RESPONSE_ACCEPT)
+        )
+
         dialog.vbox.pack_start(label, False, False)
         dialog.vbox.set_homogeneous(False)
         dialog.set_default_size(580, 320)
@@ -64,8 +68,13 @@ class AddrMapEdit(BaseWindow):
         self.view.set_model(self.model)
 
         self.view.show()
-        col = ToggleColumn("Enabled", self._enable_changed, 0,
-                           visible_callback=self.visible_callback2)
+        col = ToggleColumn(
+            "Enabled",
+            self._enable_changed,
+            0,
+            visible_callback=self.visible_callback2
+        )
+
         self.view.append_column(col)
 
         col = EditableColumn("Subsystem", None, 1)
@@ -78,8 +87,14 @@ class AddrMapEdit(BaseWindow):
                    ("No Access", 3),
                    ]
 
-        col = ComboMapColumn("Access Method", self._access_changed, options, 2,
-                             visible_callback=self.visible_callback)
+        col = ComboMapColumn(
+            "Access Method",
+            self._access_changed,
+            options,
+            2,
+            visible_callback=self.visible_callback
+        )
+
         self.view.append_column(col)
 
         scrolled_window.add(self.view)
@@ -92,8 +107,13 @@ class AddrMapEdit(BaseWindow):
             top = self.model.append(None, row=(active, title, "", None, None))
             for item in group.register_sets:
                 access = project.get_access(map_name, group.name, item.inst)
-                self.model.append(top, row=(True, item.inst, options[access][0],
-                                            item, group.name))
+                self.model.append(top, row=(
+                    True,
+                    item.inst,
+                    options[access][0],
+                    item,
+                    group.name)
+                )
 
         self.map_name = map_name
 
@@ -121,9 +141,13 @@ class AddrMapEdit(BaseWindow):
         val = mdl.get_value(node, 0)
         val_int = mdl.get_value(node, 1)
         self.model[path][2] = val
-        grp = self.model[path][3]
-        self.project.set_access(self.map_name, self.model[path][-1],
-                                self.model[path][1], val_int)
+
+        self.project.set_access(
+            self.map_name,
+            self.model[path][-1],
+            self.model[path][1],
+            val_int
+        )
 
     def get_list(self):
         return self.cb_list

@@ -38,10 +38,18 @@ LOWER_BIT = {128: 4, 64: 3, 32: 2, 16: 1, 8: 0}
 BIT_SLICE = re.compile(r"(.*)\[(\d+)\]")
 BUS_SLICE = re.compile(r"(.*)\[(\d+):(\d+)\]")
 
-CellInfo = namedtuple("CellInfo",
-                      ["name", "has_input", "has_control",
-                       "has_oneshot", "type_descr", "allows_wide",
-                       "has_rd", "is_read_only"])
+CellInfo = namedtuple(
+    "CellInfo",
+    ["name", "has_input", "has_control",
+     "has_oneshot", "type_descr", "allows_wide",
+     "has_rd", "is_read_only"]
+)
+
+ByteInfo = namedtuple(
+    "ByteInfo",
+    ["field", "start_offset", "stop_offset", "start", "stop",
+     "address", "register"]
+)
 
 
 def full_reset_value(field):
@@ -59,9 +67,9 @@ def reset_value(field, start, stop):
 
     if field.reset_type == BitField.RESET_NUMERIC:
         field_width = (stop - start) + 1
-        reset = (field.reset_value >> (start - field.lsb))
+        reset = int(field.reset_value >> int(start - field.lsb))
         return "{0}'h{1:x}".format(field_width, reset &
-                                   ((2 ** field_width) - 1))
+                                   int((2 ** field_width) - 1))
     elif field.reset_type == BitField.RESET_INPUT:
         if stop == start:
             return field.reset_input
@@ -93,8 +101,9 @@ def in_range(lower, upper, lower_limit, upper_limit):
             (lower_limit <= upper <= upper_limit) or
             (lower < lower_limit and upper >= upper_limit))
 
+
 def rshift(val, shift):
-    return val >> shift
+    return int(val) >> int(shift)
 
 
 class Verilog(WriterBase):
@@ -104,7 +113,7 @@ class Verilog(WriterBase):
     """
 
     def __init__(self, project, dbase):
-        WriterBase.__init__(self, project, dbase)
+        super(Verilog, self).__init__(project, dbase)
 
         self.input_logic = "input       "
         self.output_logic = "output      "
@@ -135,8 +144,8 @@ class Verilog(WriterBase):
         address = (register.address / nbytes) * nbytes
         bit_offset = (register.address * 8) % size
 
-        return (field, start + bit_offset, stop + bit_offset, start, stop,
-                address + offset, register)
+        return ByteInfo(field, start + bit_offset, stop + bit_offset, start,
+                        stop, address + offset, register)
 
     def __generate_group_list(self, reglist, size):
         """
@@ -149,8 +158,9 @@ class Verilog(WriterBase):
                 offset = 0
                 for lower in range(0, register.width, size):
                     if in_range(field.lsb, field.msb, lower, lower + size - 1):
-                        data = self._byte_info(field, register, lower, size, offset)
-                        item_list.setdefault(data[F_ADDRESS], []).append(data)
+                        data = self._byte_info(
+                            field, register, lower, size, offset)
+                        item_list.setdefault(data.address, []).append(data)
                         offset += size/8
         return item_list
 
@@ -164,8 +174,11 @@ class Verilog(WriterBase):
 
         dirpath = os.path.dirname(__file__)
 
-        env = Environment(loader=FileSystemLoader(os.path.join(dirpath, "templates")),
-                          trim_blocks=True, lstrip_blocks=True)
+        env = Environment(
+            loader=FileSystemLoader(os.path.join(dirpath, "templates")),
+            trim_blocks=True,
+            lstrip_blocks=True
+        )
         env.filters['drop_write_share'] = drop_write_share
 
         template = env.get_template("verilog.template")
@@ -185,14 +198,22 @@ class Verilog(WriterBase):
                 reglist.append(new_reg)
 
         word_fields = self.__generate_group_list(reglist, self._data_width)
-        reset_edge = "posedge" if self._dbase.reset_active_level and not self._dbase.use_interface else "negedge"
-        reset_op = "" if self._dbase.reset_active_level and not self._dbase.use_interface else "~"
+
+        if (self._dbase.reset_active_level and
+                not self._dbase.use_interface):
+            reset_edge = "posedge"
+        else:
+            reset_edge = "negedge"
+
+        reset_op = "" if (self._dbase.reset_active_level and
+                          not self._dbase.use_interface) else "~"
 
         parameters = []
         for reg in self._dbase.get_all_registers():
             for field in reg.get_bit_fields():
                 if field.reset_type == BitField.RESET_PARAMETER:
-                    parameters.append((field.msb, field.lsb, field.reset_parameter))
+                    parameters.append(
+                        (field.msb, field.lsb, field.reset_parameter))
 
         scalar_ports = []
         array_ports = defaultdict(list)
@@ -231,7 +252,6 @@ class Verilog(WriterBase):
                             array_ports[grp[0]].append(int(grp[1]))
                             continue
 
-
         for key in array_ports:
             msb = max(array_ports[key])
             lsb = min(array_ports[key])
@@ -243,23 +263,27 @@ class Verilog(WriterBase):
 # TODO: fix 64 bit registers with 32 bit width
 
         with open(filename, "w") as ofile:
-            ofile.write(template.render(db=self._dbase,
-                                        rshift=rshift,
-                                        parameters=parameters,
-                                        cell_info=self._cell_info,
-                                        word_fields=word_fields,
-                                        break_into_bytes=break_into_bytes,
-                                        sorted_regs=sorted(reglist),
-                                        full_reset_value=full_reset_value,
-                                        reset_value=reset_value,
-                                        input_logic=self.input_logic,
-                                        output_logic=self.output_logic,
-                                        always=self.always,
-                                        output_ports=scalar_ports,
-                                        reset_edge=reset_edge,
-                                        reset_op=reset_op,
-                                        reg_type=self.reg_type,
-                                        LOWER_BIT=LOWER_BIT))
+            ofile.write(
+                template.render(
+                    db=self._dbase,
+                    rshift=rshift,
+                    parameters=parameters,
+                    cell_info=self._cell_info,
+                    word_fields=word_fields,
+                    break_into_bytes=break_into_bytes,
+                    sorted_regs=sorted(reglist, key=lambda r: r.address),
+                    full_reset_value=full_reset_value,
+                    reset_value=reset_value,
+                    input_logic=self.input_logic,
+                    output_logic=self.output_logic,
+                    always=self.always,
+                    output_ports=scalar_ports,
+                    reset_edge=reset_edge,
+                    reset_op=reset_op,
+                    reg_type=self.reg_type,
+                    LOWER_BIT=LOWER_BIT
+                )
+            )
             self.write_register_modules(ofile)
 
     def comment(self, ofile, text_list, border=None, precede_blank=0):
@@ -283,9 +307,21 @@ class Verilog(WriterBase):
         """
         Writes the used register module types to the file.
         """
-        edge = "posedge" if self._dbase.reset_active_level and not self._dbase.use_interface else "negedge"
-        condition = "" if self._dbase.reset_active_level and not self._dbase.use_interface else "~"
-        be_level = "" if self._dbase.byte_strobe_active_level or self._dbase.use_interface else "~"
+
+        if self._dbase.reset_active_level and not self._dbase.use_interface:
+            edge = "posedge"
+        else:
+            edge = "negedge"
+
+        if self._dbase.reset_active_level and not self._dbase.use_interface:
+            condition = ""
+        else:
+            condition = "~"
+
+        if self._dbase.byte_strobe_active_level or self._dbase.use_interface:
+            be_level = ""
+        else:
+            be_level = "~"
 
         name_map = {
             'MODULE': self._module,
@@ -307,16 +343,18 @@ class Verilog(WriterBase):
 class SystemVerilog(Verilog):
 
     def __init__(self, project, dbase):
-        Verilog.__init__(self, project, dbase)
+        super(SystemVerilog, self).__init__(project, dbase)
         self.input_logic = "input logic "
         self.output_logic = "output logic"
         self.always = "always_ff"
         self.reg_type = "logic"
 
+
 class Verilog2001(Verilog):
 
     def __init(self, project, dbase):
-        Verilog.__init__(self, project, dbase)
+        super(Verilog2001, self).__init__(project, dbase)
+
 
 def drop_write_share(list_in):
     list_out = [l for l in list_in
@@ -325,10 +363,28 @@ def drop_write_share(list_in):
 
 
 EXPORTERS = [
-    (WriterBase.TYPE_BLOCK, ExportInfo(SystemVerilog, ("RTL", "SystemVerilog"),
-                                       "SystemVerilog files", ".sv", 'rtl-system-verilog')),
-    (WriterBase.TYPE_BLOCK, ExportInfo(Verilog2001, ("RTL", "Verilog 2001"),
-                                       "Verilog files", ".v", 'rtl-verilog-2001')),
-    (WriterBase.TYPE_BLOCK, ExportInfo(Verilog, ("RTL", "Verilog 95"),
-                                       "Verilog files", ".v", 'rtl-verilog-95'))
-    ]
+    (WriterBase.TYPE_BLOCK,
+     ExportInfo(
+         SystemVerilog,
+         ("RTL", "SystemVerilog"),
+         "SystemVerilog files",
+         ".sv",
+         'rtl-system-verilog')
+     ),
+    (WriterBase.TYPE_BLOCK,
+     ExportInfo(
+         Verilog2001,
+         ("RTL", "Verilog 2001"),
+         "Verilog files",
+         ".v",
+         'rtl-verilog-2001')
+     ),
+    (WriterBase.TYPE_BLOCK,
+     ExportInfo(
+         Verilog,
+         ("RTL", "Verilog 95"),
+         "Verilog files",
+         ".v",
+         'rtl-verilog-95')
+     )
+]

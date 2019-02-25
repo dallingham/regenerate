@@ -125,7 +125,7 @@ class OdtSpec(WriterBase):
     """
 
     def __init__(self, project, dblist):
-        WriterBase.__init__(self, project, None)
+        super(OdtSpec, self).__init__(project, None)
         self.tblcnt = 0
         self.project = project
         self.dblist = dblist

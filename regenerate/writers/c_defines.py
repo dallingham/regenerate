@@ -56,7 +56,7 @@ class CDefines(WriterBase):
     """
 
     def __init__(self, project, dbase):
-        WriterBase.__init__(self, project, dbase)
+        super(CDefines, self).__init__(project, dbase)
         self._ofile = None
 
     def write_def(self, reg, data, base):
@@ -103,6 +103,12 @@ class CDefines(WriterBase):
 
 
 EXPORTERS = [
-    (WriterBase.TYPE_BLOCK, ExportInfo(CDefines, ("Header files", "C Source"), 
-                                       "C header files", ".h", 'headers-c'))
-    ]
+    (WriterBase.TYPE_BLOCK,
+     ExportInfo(
+         CDefines,
+         ("Header files", "C Source"),
+         "C header files",
+         ".h",
+         'headers-c')
+     )
+]

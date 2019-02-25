@@ -56,7 +56,7 @@ class SummaryWindow(BaseWindow):
 
     def __init__(self, builder, reg, regset_name, project):
 
-        BaseWindow.__init__(self)
+        super(SummaryWindow, self).__init__()
         if not WEBKIT:
             return
 

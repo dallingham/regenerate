@@ -23,9 +23,8 @@ descriptions
 
 import os
 import re
-from regenerate.settings.paths import ODTFILE, USERODTFILE
 from regenerate.writers.writer_base import WriterBase, ExportInfo
-from regenerate.db import BitField, RegisterDb
+from regenerate.db import RegisterDb
 from regenerate.extras import RegisterRst
 
 
@@ -40,7 +39,7 @@ class RstDoc(WriterBase):
     """
 
     def __init__(self, project, dblist):
-        WriterBase.__init__(self, project, None)
+        super(RstDoc, self).__init__(project, None)
         self.tblcnt = 0
         self.project = project
         self.dblist = dblist
@@ -60,7 +59,7 @@ class RstDoc(WriterBase):
                                              norm_name(text))
         else:
             return "`" + text + "`_"
-        
+
     def patch_links(self, text, db, inst, group):
 
         if db is None:
@@ -70,7 +69,6 @@ class RstDoc(WriterBase):
         self._group = group
         text = p.sub(self.substitute, text)
         return text
-
 
     def find_db_from_group_inst(self, group, inst):
         current_group = None
@@ -133,27 +131,44 @@ class RstDoc(WriterBase):
                     if db.internal_only:
                         continue
 
-                    self.reglist = set([reg.register_name for reg in db.get_all_registers()])
+                    self.reglist = set(
+                        [reg.register_name for reg in db.get_all_registers()])
 
                     if db.descriptive_title:
-                        title = "{} ({})\n".format(db.descriptive_title, regset.inst)
+                        title = "{} ({})\n".format(
+                            db.descriptive_title, regset.inst)
                     else:
                         title = regset.inst
                     f.write(title)
                     f.write("^" * len(title))
                     f.write("\n\n")
-                    f.write(self.patch_links(db.overview_text, db, regset.inst, group.name))
+                    f.write(self.patch_links(db.overview_text,
+                                             db, regset.inst, group.name))
                     f.write("\n\n")
 
                     for reg in db.get_all_registers():
-                        rst = RegisterRst(reg, regset.set, self.project, inst=regset.inst,
-                                          show_defines=True, show_uvm=True, group=group.name,
-                                          maxlines=25, db=db)
+                        rst = RegisterRst(
+                            reg,
+                            regset.set,
+                            self.project,
+                            inst=regset.inst,
+                            show_defines=True,
+                            show_uvm=True,
+                            group=group.name,
+                            maxlines=25,
+                            db=db
+                        )
                         f.write(rst.restructured_text())
                     f.write("\n\n")
-                            
-                
+
+
 EXPORTERS = [
-    (WriterBase.TYPE_PROJECT, ExportInfo(RstDoc, ("Specification", "RestructuredText"),
-                                         "RestructuredText files", ".rest", 'spec-rst'))
-    ]
+    (WriterBase.TYPE_PROJECT,
+     ExportInfo(
+         RstDoc,
+         ("Specification", "RestructuredText"),
+         "RestructuredText files",
+         ".rest",
+         'spec-rst')
+     )
+]
