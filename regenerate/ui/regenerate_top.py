@@ -125,8 +125,10 @@ class MainWindow(BaseWindow):
         self.__overview_buf.connect('changed', self.__overview_changed)
         Spell(self.find_obj('overview'))
 
-        self.__prj_obj = ProjectList(self.find_obj("project_list"),
-                                     self.__prj_selection_changed)
+        self.__prj_obj = ProjectList(
+            self.find_obj("project_list"),
+            self.__prj_selection_changed
+        )
 
         self.__reg_notebook = self.find_obj("reg_notebook")
         self.__top_notebook = self.find_obj("notebook1")
@@ -340,7 +342,9 @@ class MainWindow(BaseWindow):
     def on_project_documentation_changed(self, obj):
         self.project_modified(True)
         self.__prj.documentation = obj.get_text(
-            obj.get_start_iter(), obj.get_end_iter(), False
+            obj.get_start_iter(),
+            obj.get_end_iter(),
+            False
         )
 
     def on_short_name_changed(self, obj):

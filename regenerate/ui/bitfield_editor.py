@@ -27,27 +27,20 @@ information.
 import gtk
 import os
 import pango
-
-# Imports that might fail, and we can recover from
-
-try:
-    from pygments.lexers import VerilogLexer
-    from pygments.styles import get_style_by_name
-    USE_HIGHLIGHT = True
-    STYLE = get_style_by_name('emacs')
-except ImportError:
-    USE_HIGHLIGHT = False
-
-# regenerate imports
-
 from regenerate.db import BitField, TYPE_TO_ID
 from regenerate.db import TYPE_TO_DESCR, TYPE_TO_ENABLE
 from regenerate.settings.paths import GLADE_BIT, INSTALL_PATH
 from regenerate.ui.error_dialogs import ErrorMsg
 from regenerate.ui.help_window import HelpWindow
+from regenerate.ui.base_window import BaseWindow
 from regenerate.ui.spell import Spell
 from regenerate.ui.utils import clean_format_if_needed
 from regenerate.writers.verilog_reg_def import REG
+
+
+# Imports that might fail, and we can recover from
+
+from regenerate.ui.highlight import highlight_text
 
 
 def modified(f):
@@ -60,60 +53,79 @@ def modified(f):
     return modify_value
 
 
-class BitFieldEditor(object):
+class BitFieldEditor(BaseWindow):
     """Bit field editing class."""
 
-    def __init__(self, dbase, register, bit_field, modified, top_builder, parent):
+    def __init__(self, dbase, register, bit_field, modified,
+                 top_builder, parent):
+
+        super(BitFieldEditor, self).__init__()
+
         self._db = dbase
         self.modified = modified
         self._register = register
         self._bit_field = bit_field
         self._builder = gtk.Builder()
-        self._top_builder = top_builder
         self._builder.add_from_file(GLADE_BIT)
-        self._top_window = self._builder.get_object("editfield")
+        self._top_builder = top_builder
         self._control_obj = self._builder.get_object('control')
         self._register_obj = self._builder.get_object("register_name")
         self._output_obj = self._builder.get_object("output")
         self._input_obj = self._builder.get_object("input")
-        self._text_buffer = self._builder.get_object("descr").get_buffer()
         self._value_tree_obj = self._builder.get_object('values')
-        self._verilog_obj = self._builder.get_object('verilog_code')
         self._col = None
-        self._top_window.set_title("Edit Bit Field - [{0:02x}] {1}".format(
-            register.address, register.register_name))
-        self._top_window.set_transient_for(parent)
 
-        self._spell = Spell(self._builder.get_object("descr"))
+        pango_font = pango.FontDescription("monospace")
 
-        self._top_window.set_icon_from_file(
-            os.path.join(INSTALL_PATH, "media", "flop.svg"))
+        self.setup_description(pango_font)
 
         (input_enb, control_enb) = TYPE_TO_ENABLE[bit_field.field_type]
         self._input_obj.set_sensitive(input_enb)
         self._control_obj.set_sensitive(control_enb)
 
-        pango_font = pango.FontDescription("monospace")
-        self._builder.get_object("descr").modify_font(pango_font)
-
         self.build_values_list()
-
-        self._list_model = gtk.ListStore(str, str, str)
-        self._model_selection = self._value_tree_obj.get_selection()
-        self._value_tree_obj.set_model(self._list_model)
-
-        self._used_tokens = set()
-        for value in self._bit_field.values:
-            self._used_tokens.add(value[1])
-            self._list_model.append(row=value)
 
         self._initialize_from_data(bit_field)
         self._output_obj.set_sensitive(self._get_active('outen'))
 
         self._check_data()
 
-        self._text_buffer.connect('changed', self._description_changed)
+        verilog_obj = self._builder.get_object('verilog_code')
+        highlight_text(
+            self.build_register_text(bit_field),
+            verilog_obj.get_buffer()
+        )
+        verilog_obj.modify_font(pango_font)
 
+        self._builder.connect_signals(self)
+        self.configure_window(register, parent)
+
+    def setup_description(self, pango_font):
+        """
+        Finds the bitfield description object, sets the font to a monospace
+        font, and attaches the spell checker to the buffere
+        """
+        descr = self._builder.get_object("descr")
+        descr.modify_font(pango_font)
+        self._spell = Spell(descr)
+
+    def configure_window(self, register, parent):
+        """
+        Sets up the dialog window, setting the title, parent,
+        and window icon
+        """
+        self._top_window = self._builder.get_object("editfield")
+        self._top_window.set_transient_for(parent)
+        self._top_window.set_title(
+            "Edit Bit Field - [{0:02x}] {1}".format(
+                register.address,
+                register.register_name
+            )
+        )
+        self.configure(self._top_window)
+        self._top_window.show_all()
+
+    def build_register_text(self, bit_field):
         try:
             edge = "posedge" if self._db.reset_active_level else "negedge"
             condition = "" if self._db.reset_active_level else "~"
@@ -128,38 +140,7 @@ class BitFieldEditor(object):
             text = REG[TYPE_TO_ID[bit_field.field_type].lower()] % name_map
         except KeyError:
             text = ""
-
-        buf = self._verilog_obj.get_buffer()
-        if USE_HIGHLIGHT:
-
-            styles = {}
-            for token, value in VerilogLexer().get_tokens(text):
-                while not STYLE.styles_token(token) and token.parent:
-                    token = token.parent
-                if token not in styles:
-                    styles[token] = buf.create_tag()
-                start = buf.get_end_iter()
-                buf.insert_with_tags(start, value, styles[token])
-
-                for token in styles:
-                    tag = styles[token]
-                    style = STYLE.style_for_token(token)
-                    if style['bgcolor']:
-                        tag.set_property('background', '#' + style['bgcolor'])
-                    if style['color']:
-                        tag.set_property('foreground', '#' + style['color'])
-                    if style['bold']:
-                        tag.set_property('weight', pango.WEIGHT_BOLD)
-                    if style['italic']:
-                        tag.set_property('style', pango.STYLE_ITALIC)
-                    if style['underline']:
-                        tag.set_property('underline', pango.UNDERLINE_SINGLE)
-        else:
-            buf.set_text(text)
-
-        self._verilog_obj.modify_font(pango_font)
-        self._builder.connect_signals(self)
-        self._top_window.show_all()
+        return text
 
     def _initialize_from_data(self, bit_field):
         """
@@ -195,7 +176,10 @@ class BitFieldEditor(object):
         self._set_active("side_effect", bit_field.output_has_side_effect)
         self._set_active("outen", bit_field.use_output_enable)
 
-        self._text_buffer.set_text(bit_field.description)
+        text_buffer = self._builder.get_object("descr").get_buffer()
+        text_buffer.connect('changed', self._description_changed)
+        text_buffer.set_text(bit_field.description)
+
         self._control_obj.set_text(self._bit_field.control_signal)
 
     def on_help_clicked(self, obj):
@@ -241,38 +225,13 @@ class BitFieldEditor(object):
         self._bit_field.control_signal = obj.get_text()
         self._check_data()
 
-    def build_values_list(self):
-        """
-        Builds the columns associated with the list view
-        """
-        render = gtk.CellRendererText()
-        render.set_property('editable', True)
-        render.connect('edited', self._change_val)
-        column = gtk.TreeViewColumn('Value', render, text=0)
-        column.set_min_width(50)
-        self._value_tree_obj.append_column(column)
-        self._col = column
-
-        render = gtk.CellRendererText()
-        render.set_property('editable', True)
-        render.connect('edited', self._change_text)
-        column = gtk.TreeViewColumn('Token', render, text=1)
-        column.set_min_width(100)
-        self._value_tree_obj.append_column(column)
-
-        render = gtk.CellRendererText()
-        render.set_property('editable', True)
-        render.connect('edited', self._change_description)
-        column = gtk.TreeViewColumn('Description', render, text=2)
-        self._value_tree_obj.append_column(column)
-
     def on_add_clicked(self, obj):
         """
         Called with the add button is clicked. Search the existing values
         in the list, finding the next highest value to use as the default.
         """
 
-        last = len(self._list_model)
+        last = len(self._value_model)
         max_values = 2 ** self._bit_field.width
 
         if last >= max_values:
@@ -282,18 +241,18 @@ class BitFieldEditor(object):
             return
 
         try:
-            largest = max([int(val[0], 16) for val in self._list_model
+            largest = max([int(val[0], 16) for val in self._value_model
                            if val[0] != ""])
         except ValueError:
             largest = -1
 
         last -= 1
-        if (last == -1 or self._list_model[last][0] or
-                self._list_model[last][1] or self._list_model[last][2]):
+        if (last == -1 or self._value_model[last][0] or
+                self._value_model[last][1] or self._value_model[last][2]):
             new_val = "" if largest >= max_values else "{0:x}".format(
                 largest + 1)
-            node = self._list_model.append(row=(new_val, '', ''))
-            path = self._list_model.get_path(node)
+            node = self._value_model.append(row=(new_val, '', ''))
+            path = self._value_model.get_path(node)
         else:
             path = (last, )
 
@@ -310,79 +269,16 @@ class BitFieldEditor(object):
         """
         Called with the remove button is clicked
         """
-        self._list_model.remove(self._model_selection.get_selected()[1])
+        self._value_model.remove(self._model_selection.get_selected()[1])
         self._update_values()
-
-    def _change_val(self, text, path, new_text):  # IGNORE:W0613
-        """
-        Called with the value has changed value field. Checks to make sure that
-        value is a valid hex value, and within the correct range.
-        """
-        new_text = new_text.strip()
-
-        start = self._bit_field.lsb
-        stop = self._bit_field.msb
-        maxval = (2 ** (stop - start + 1)) - 1
-
-        try:
-            if new_text == "" or int(new_text, 16) > maxval:
-                return
-        except ValueError:
-            return
-
-        node = self._list_model.get_iter(path)
-        self._list_model.set_value(node, 0, new_text)
-        self._update_values()
-        self.modified()
 
     @modified
     def on_side_effect_toggled(self, obj):
         self._bit_field.output_has_side_effect = obj.get_active()
 
     def _update_values(self):
-        # new_list = []
-        # for row in self._list_model:
-        #     new_list.append((row[0], row[1], row[2]))
-        # self._bit_field.values = new_list
         self._bit_field.values = [(val[0], val[1], val[2])
-                                  for val in self._list_model]
-
-    def _change_text(self, text, path, new_text):
-        """
-        Updates the data model when the text value is changed in the model.
-        """
-        if new_text in self._used_tokens:
-            ErrorMsg("Duplicate token",
-                     'The token "{0}" has already been used'.format(new_text))
-        else:
-            node = self._list_model.get_iter(path)
-            old_text = self._list_model.get_value(node, 1)
-            self._list_model.set_value(node, 1, new_text)
-
-            if old_text and old_text in self._used_tokens:
-                self._used_tokens.remove(old_text)
-            if new_text:
-                self._used_tokens.add(new_text)
-            self._update_values()
-            self.modified()
-
-    def _change_description(self, text, path, new_text):
-        """
-        Updates the data model when the text value is changed in the model.
-        """
-        node = self._list_model.get_iter(path)
-        try:
-            new_text.decode("ascii")
-        except:
-            ErrorMsg(
-                "Invalid ASCII characters detected",
-                "Look for strange punctuations, like dashs and "
-                "quotes that look valid, but are not actual "
-                "ascii characters."
-            )
-        self._list_model.set_value(node, 2, new_text)
-        self._update_values()
-        self.modified()
+                                  for val in self._value_model]
 
     @modified
     def on_output_enable_toggled(self, obj):
@@ -419,9 +315,9 @@ class BitFieldEditor(object):
 
     @modified
     def _description_changed(self, obj):
-        self._bit_field.description = self._text_buffer.get_text(
-            self._text_buffer.get_start_iter(),
-            self._text_buffer.get_end_iter(),
+        self._bit_field.description = obj.get_text(
+            obj.get_start_iter(),
+            obj.get_end_iter(),
             False
         )
 
@@ -448,6 +344,98 @@ class BitFieldEditor(object):
 
     def _set_text(self, name, value):
         self._builder.get_object(name).set_text(value)
+
+    def build_values_list(self):
+        """
+        Builds the columns associated with the list view
+        """
+        self._col = self.build_column("Value", 0, 50, self._change_val)
+        self._value_tree_obj.append_column(self._col)
+
+        self._value_tree_obj.append_column(
+            self.build_column("Token", 1, 100, self._change_text)
+        )
+
+        self._value_tree_obj.append_column(
+            self.build_column("Description", 2, 0, self._change_description)
+        )
+
+        self._value_model = gtk.ListStore(str, str, str)
+        self._model_selection = self._value_tree_obj.get_selection()
+        self._value_tree_obj.set_model(self._value_model)
+
+        self._used_tokens = set()
+        for value in self._bit_field.values:
+            self._used_tokens.add(value[1])
+            self._value_model.append(row=value)
+
+    def build_column(self, title, text_col, size, callback):
+        render = gtk.CellRendererText()
+        render.set_property('editable', True)
+        render.connect('edited', callback)
+        column = gtk.TreeViewColumn(title, render, text=text_col)
+        if size:
+            column.set_min_width(size)
+        return column
+
+    def _change_text(self, text, path, new_text):
+        """
+        Updates the data model when the text value is changed in the model.
+        """
+        if new_text in self._used_tokens:
+            ErrorMsg("Duplicate token",
+                     'The token "{0}" has already been used'.format(new_text))
+        else:
+            node = self._value_model.get_iter(path)
+            old_text = self._value_model.get_value(node, 1)
+            self._value_model.set_value(node, 1, new_text)
+
+            if old_text and old_text in self._used_tokens:
+                self._used_tokens.remove(old_text)
+            if new_text:
+                self._used_tokens.add(new_text)
+            self._update_values()
+            self.modified()
+
+    def _change_description(self, text, path, new_text):
+        """
+        Updates the data model when the text value is changed in the model.
+        """
+        node = self._value_model.get_iter(path)
+        try:
+            new_text.decode("ascii")
+        except:
+            ErrorMsg(
+                "Invalid ASCII characters detected",
+                "Look for strange punctuations, like dashs and "
+                "quotes that look valid, but are not actual "
+                "ascii characters."
+            )
+        self._value_model.set_value(node, 2, new_text)
+        self._update_values()
+        self.modified()
+
+    def _change_val(self, text, path, new_text):  # IGNORE:W0613
+        """
+        Called with the value has changed value field. Checks to make sure that
+        value is a valid hex value, and within the correct range.
+        """
+        new_text = new_text.strip()
+
+        start = self._bit_field.lsb
+        stop = self._bit_field.msb
+        maxval = (2 ** (stop - start + 1)) - 1
+
+        try:
+            if new_text == "" or int(new_text, 16) > maxval:
+                return
+        except ValueError:
+            return
+
+        node = self._value_model.get_iter(path)
+        self._value_model.set_value(node, 0, new_text)
+        self._update_values()
+        self.modified()
 
 
 def set_error(obj, message):
