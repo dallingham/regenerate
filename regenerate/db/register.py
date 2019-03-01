@@ -31,17 +31,23 @@ class Register(object):
 
     (SHARE_NONE, SHARE_READ, SHARE_WRITE) = range(3)
 
-    full_compare = ("address", "ram_size", "description", "width", "_id",
-                    "_token", "_do_not_test", "_name", "_hide", "dimension",
-                    "_do_not_generate_code", "_do_not_cover",
-                    "_do_not_use_uvm")
+    full_compare = (
 
-    array_compare = ("ram_size", "width", "_do_not_test", "_hide",
-                     "_do_not_generate_code", "_do_not_cover",
-                     "_do_not_use_uvm", "share")
+        "address", "ram_size", "description", "width", "_id", "_token",
+        "_do_not_test", "_name", "_hide", "dimension", "_do_not_generate_code",
+        "_do_not_cover", "_do_not_use_uvm"
 
-    doc_compare = ("address", "ram_size", "description", "width", "_id",
-                   "_token", "_name", "_hide", "dimension")
+    )
+
+    array_compare = (
+        "ram_size", "width", "_do_not_test", "_hide", "_do_not_generate_code",
+        "_do_not_cover", "_do_not_use_uvm", "share"
+    )
+
+    doc_compare = (
+        "address", "ram_size", "description", "width", "_id", "_token",
+        "_name", "_hide", "dimension"
+    )
 
     def __init__(self, address=0, width=32, name=""):
         self.address = address

@@ -22,22 +22,23 @@ Docutils is used to convert the output to the desired format. Currently, only
 HTML is supported now.
 """
 
-try:
-    from docutils.core import publish_parts
-    _HTML = True
-except:
-    _HTML = False
-
-try:
-    from cStringIO import StringIO
-except:
-    from io import StringIO
-
 import re
 import sys
 
 from regenerate.db import TYPE_TO_SIMPLE_TYPE
-from .token import full_token, in_groups, uvm_name
+from regenerate.extras.token import full_token, in_groups, uvm_name
+
+try:
+    from docutils.core import publish_parts
+    _HTML = True
+except ImportError:
+    _HTML = False
+
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from io import StringIO
+
 
 if sys.version_info[0] == 3:
     REPORT_LEVEL = 4
@@ -99,109 +100,109 @@ div.warning p.admonition-title {
   font-family: sans-serif }
 
 span.overline, span.bar {
-	text-decoration: overline;
+   text-decoration: overline;
 }
 .fraction, .fullfraction {
-	display: inline-block;
-	vertical-align: middle;
-	text-align: center;
+   display: inline-block;
+   vertical-align: middle;
+   text-align: center;
 }
 .fraction .fraction {
-	font-size: 80%;
-	line-height: 100%;
+   font-size: 80%;
+   line-height: 100%;
 }
 span.numerator {
-	display: block;
+   display: block;
 }
 span.denominator {
-	display: block;
-	padding: 0ex;
-	border-top: thin solid;
+   display: block;
+   padding: 0ex;
+   border-top: thin solid;
 }
 sup.numerator, sup.unit {
-	font-size: 70%;
-	vertical-align: 80%;
+   font-size: 70%;
+   vertical-align: 80%;
 }
 sub.denominator, sub.unit {
-	font-size: 70%;
-	vertical-align: -20%;
+   font-size: 70%;
+   vertical-align: -20%;
 }
 span.sqrt {
-	display: inline-block;
-	vertical-align: middle;
-	padding: 0.1ex;
+   display: inline-block;
+   vertical-align: middle;
+   padding: 0.1ex;
 }
 sup.root {
-	font-size: 70%;
-	position: relative;
-	left: 1.4ex;
+   font-size: 70%;
+   position: relative;
+   left: 1.4ex;
 }
 span.radical {
-	display: inline-block;
-	padding: 0ex;
-	font-size: 150%;
-	vertical-align: top;
+   display: inline-block;
+   padding: 0ex;
+   font-size: 150%;
+   vertical-align: top;
 }
 span.root {
-	display: inline-block;
-	border-top: thin solid;
-	padding: 0ex;
-	vertical-align: middle;
+   display: inline-block;
+   border-top: thin solid;
+   padding: 0ex;
+   vertical-align: middle;
 }
 span.symbol {
-	line-height: 125%;
-	font-size: 125%;
+   line-height: 125%;
+   font-size: 125%;
 }
 span.bigsymbol {
-	line-height: 150%;
-	font-size: 150%;
+   line-height: 150%;
+   font-size: 150%;
 }
 span.largesymbol {
-	font-size: 175%;
+   font-size: 175%;
 }
 span.hugesymbol {
-	font-size: 200%;
+   font-size: 200%;
 }
 span.scripts {
-	display: inline-table;
-	vertical-align: middle;
+   display: inline-table;
+   vertical-align: middle;
 }
 .script {
-	display: table-row;
-	text-align: left;
-	line-height: 150%;
+   display: table-row;
+   text-align: left;
+   line-height: 150%;
 }
 span.limits {
-	display: inline-table;
-	vertical-align: middle;
+   display: inline-table;
+   vertical-align: middle;
 }
 .limit {
-	display: table-row;
-	line-height: 99%;
+   display: table-row;
+   line-height: 99%;
 }
 sup.limit, sub.limit {
-	line-height: 100%;
+   line-height: 100%;
 }
 span.symbolover {
-	display: inline-block;
-	text-align: center;
-	position: relative;
-	float: right;
-	right: 100%;
-	bottom: 0.5em;
-	width: 0px;
+   display: inline-block;
+   text-align: center;
+   position: relative;
+   float: right;
+   right: 100%;
+   bottom: 0.5em;
+   width: 0px;
 }
 span.withsymbol {
-	display: inline-block;
+   display: inline-block;
 }
 span.symbolunder {
-	display: inline-block;
-	text-align: center;
-	position: relative;
-	float: right;
-	right: 80%;
-	top: 0.3em;
-	width: 0px;
+   display: inline-block;
+   text-align: center;
+   position: relative;
+   float: right;
+   right: 80%;
+   top: 0.3em;
+   width: 0px;
 }
 
 </style>
@@ -302,15 +303,19 @@ class RegisterRst(object):
         return ofile.getvalue()
 
     def refname(self, reg_name):
-        return "%s-%s-%s" % (norm_name(self._inst),
-                             norm_name(self._group),
-                             norm_name(reg_name))
+        return "%s-%s-%s" % (
+            norm_name(self._inst),
+            norm_name(self._group),
+            norm_name(reg_name)
+        )
 
     def field_ref(self, name):
-        return "%s-%s-%s-%s" % (norm_name(self._inst),
-                                norm_name(self._group),
-                                norm_name(self._reg.register_name),
-                                norm_name(name))
+        return "%s-%s-%s-%s" % (
+            norm_name(self._inst),
+            norm_name(self._group),
+            norm_name(self._reg.register_name),
+            norm_name(name)
+        )
 
     def str_title(self, ofile=None):
         ret_str = False

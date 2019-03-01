@@ -80,9 +80,9 @@ class BitList(object):
     BIT_COLS = (  # Title, Size, Sort, Expand, Monospace
         ('', 20, -1, False, False),
         ('Bits', 60, BitModel.SORT_COL, False, True),
-        ('Name', 80, BitModel.NAME_COL, True, True),
+        ('Name', 60, BitModel.NAME_COL, True, True),
         ('Type', 325, -1, True, False),
-        ('Reset', 100, -1, False, True),
+        ('Reset', 160, -1, False, True),
         ('Reset Type', 75, -1, False, False), )
 
     def __init__(self, obj, combo_edit, text_edit, selection_changed):

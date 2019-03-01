@@ -1,7 +1,9 @@
 from .token import in_groups
 
+
 def _reg_addr(register, offset):
     return register.address + offset
+
 
 def find_addresses(project, regset_name, register, offset_only=True):
 
@@ -36,13 +38,14 @@ def find_addresses(project, regset_name, register, offset_only=True):
                     if offset_only:
                         offset = inst.base + inst.offset + (
                             i * inst.roffset
-                            ) + (grp_inst * inst.grpt_offset)
+                        ) + (grp_inst * inst.grpt_offset)
                         address_list.append(_reg_addr(register, offset))
                     else:
                         for map_name in addr_maps:
                             base = project.get_address_base(map_name.name)
                             offset = inst.base + inst.offset + (
                                 i * inst.roffset
-                                ) + (grp_inst * inst.grpt_offset)
-                            address_list.append(_reg_addr(register, offset + base))
+                            ) + (grp_inst * inst.grpt_offset)
+                            address_list.append(
+                                _reg_addr(register, offset + base))
     return address_list

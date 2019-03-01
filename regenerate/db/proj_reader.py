@@ -26,8 +26,10 @@ from regenerate.db.group_data import GroupData
 from regenerate.db.group_inst_data import GroupInstData
 
 
-AddrMapData = namedtuple("AddrMapData",
-                         ["name", "base", "width", "fixed", "uvm"])
+AddrMapData = namedtuple(
+    "AddrMapData",
+    ["name", "base", "width", "fixed", "uvm"]
+)
 
 
 class ProjectReader(object):
@@ -43,9 +45,7 @@ class ProjectReader(object):
         self._current_group = None
 
     def open(self, name):
-        """
-        Opens and reads an XML file
-        """
+        """Opens and reads an XML file"""
         self.path = name
 
         with open(name, "rb") as ofile:
@@ -186,5 +186,7 @@ class ProjectReader(object):
         self.current_access = int(attrs.get('type', "0"))
 
     def end_access(self, text):
-        self._prj.set_access(self._current_map, self.current_map_group,
-                             text, self.current_access)
+        self._prj.set_access(
+            self._current_map, self.current_map_group,
+            text, self.current_access
+        )

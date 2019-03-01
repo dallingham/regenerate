@@ -43,11 +43,14 @@ class ProjectWriter(object):
             ofile.write('<?xml version="1.0"?>\n')
             ofile.write(
                 '<project name="%s" short_name="%s" company_name="%s">\n' %
-                (self._prj.name, self._prj.short_name, self._prj.company_name))
+                (self._prj.name, self._prj.short_name, self._prj.company_name)
+            )
 
             if self._prj.documentation:
-                ofile.write('  <documentation>%s</documentation>\n' %
-                            escape(self._prj.documentation))
+                ofile.write(
+                    '  <documentation>%s</documentation>\n' %
+                    escape(self._prj.documentation)
+                )
 
             if self._prj.get_address_maps:
                 self._print_address_maps(ofile)
@@ -92,7 +95,8 @@ class ProjectWriter(object):
                     if access_list:
                         ofile.write('      <map_group name="%s">\n' % group)
                         for inst, val in access_list:
-                            ofile.write('        <access type="%d">%s</access>\n' % (val, inst))
+                            ofile.write(
+                                '        <access type="%d">%s</access>\n' % (val, inst))
                         ofile.write('      </map_group>\n')
                     else:
                         ofile.write('      <map_group name="%s"/>\n' % group)
@@ -127,7 +131,8 @@ class ProjectWriter(object):
                 if item.no_decode:
                     ofile.write(' no_decode="%s"' % int(item.no_decode))
                 if item.single_decode:
-                    ofile.write(' single_decode="%s"' % int(item.single_decode))
+                    ofile.write(' single_decode="%s"' %
+                                int(item.single_decode))
                 if item.array:
                     ofile.write(' array="%s"' % int(item.array))
                 ofile.write("/>\n")
