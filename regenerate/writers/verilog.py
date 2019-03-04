@@ -27,7 +27,7 @@ from jinja2 import FileSystemLoader, Environment
 from regenerate.db import BitField, TYPES, TYPE_TO_OUTPUT, Register
 from regenerate.writers.writer_base import WriterBase, ExportInfo
 from regenerate.writers.verilog_reg_def import REG
-
+from regenerate.db.enums import ShareType
 
 LOWER_BIT = {128: 4, 64: 3, 32: 2, 16: 1, 8: 0}
 
@@ -55,9 +55,9 @@ ByteInfo = namedtuple(
 def full_reset_value(field):
     """returns the full reset value for the entire field"""
 
-    if field.reset_type == BitField.RESET_NUMERIC:
+    if field.reset_type == ResetType.NUMERIC:
         return "{0}'h{1:0x}".format(field.width, field.reset_value)
-    elif field.reset_type == BitField.RESET_INPUT:
+    elif field.reset_type == ResetType.INPUT:
         return field.reset_input
     return field.reset_parameter
 
@@ -65,12 +65,12 @@ def full_reset_value(field):
 def reset_value(field, start, stop):
     """returns the full reset value for the field up to a byte"""
 
-    if field.reset_type == BitField.RESET_NUMERIC:
+    if field.reset_type == ResetType.NUMERIC:
         field_width = (stop - start) + 1
         reset = int(field.reset_value >> int(start - field.lsb))
         return "{0}'h{1:x}".format(field_width, reset &
                                    int((2 ** field_width) - 1))
-    elif field.reset_type == BitField.RESET_INPUT:
+    elif field.reset_type == ResetType.INPUT:
         if stop == start:
             return field.reset_input
         return "{0}[{1}:{2}]".format(field.reset_input, stop, start)
@@ -211,7 +211,7 @@ class Verilog(WriterBase):
         parameters = []
         for reg in self._dbase.get_all_registers():
             for field in reg.get_bit_fields():
-                if field.reset_type == BitField.RESET_PARAMETER:
+                if field.reset_type == ResetType.PARAMETER:
                     parameters.append(
                         (field.msb, field.lsb, field.reset_parameter))
 
@@ -358,7 +358,7 @@ class Verilog2001(Verilog):
 
 def drop_write_share(list_in):
     list_out = [l for l in list_in
-                if l[6].share != Register.SHARE_WRITE]
+                if l[6].share != ShareType.WRITE]
     return list_out
 
 

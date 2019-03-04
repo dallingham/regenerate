@@ -22,6 +22,7 @@ Writes the XML file containing all the information in the register database
 
 from regenerate.db import BitField, TYPE_TO_ID
 from regenerate.db.textutils import clean_text
+from regenerate.db.enums import ResetType
 import os
 import xml.sax.saxutils
 
@@ -179,9 +180,9 @@ def write_signal_info(ofile, field):
 
 def write_reset_type(ofile, field):
     """Writes the reset information to the output file"""
-    if field.reset_type == BitField.RESET_INPUT:
+    if field.reset_type == ResetType.INPUT:
         ofile.write('      <reset type="1">%s</reset>\n' % field.reset_input)
-    elif field.reset_type == BitField.RESET_PARAMETER:
+    elif field.reset_type == ResetType.PARAMETER:
         ofile.write('      <reset type="2" parameter="%s">%x</reset>\n' %
                     (field.reset_parameter, field.reset_value))
     else:

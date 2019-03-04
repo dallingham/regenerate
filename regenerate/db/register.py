@@ -23,13 +23,11 @@ register, including the list of bit fields.
 """
 
 import uuid
-from .bitfield import BitField
+from .enums import ResetType, ShareType
 
 
 class Register(object):
     """Defines a hardware register."""
-
-    (SHARE_NONE, SHARE_READ, SHARE_WRITE) = range(3)
 
     full_compare = (
 
@@ -65,7 +63,7 @@ class Register(object):
         self._name = name
         self._hide = False
         self.__bit_fields = {}
-        self.share = Register.SHARE_NONE
+        self.share = ShareType.NONE
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -318,7 +316,7 @@ class Register(object):
         if self._do_not_test:
             return True
         for key in self.__bit_fields:
-            if self.__bit_fields[key].reset_type != BitField.RESET_NUMERIC:
+            if self.__bit_fields[key].reset_type != ResetType.NUMERIC:
                 return True
         return False
 

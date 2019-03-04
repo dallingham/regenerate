@@ -114,13 +114,18 @@ class ModuleBool(object):
 class ModuleText(object):
     """Connects a database text value to an entry box."""
 
-    def __init__(self, widget, db_name, modified):
+    def __init__(self, widget, db_name, modified, placeholder=None):
 
         self.widget = widget
         self.dbname = db_name
         self.dbase = None
         self.modified = modified
         self.widget.connect('changed', self.on_change)
+        try:
+            if placeholder:
+                self.widget.set_placeholder_text(placeholder)
+        except TypeError:
+            pass
 
     def change_db(self, dbase):
         self.dbase = dbase
@@ -141,8 +146,9 @@ class ModuleValid(ModuleText):
     code to the insert-text function.
     """
 
-    def __init__(self, widget, db_name, modified, valid_data):
-        super(ModuleValid, self).__init__(widget, db_name, modified)
+    def __init__(self, widget, db_name, modified, valid_data, placeholder=None):
+        super(ModuleValid, self).__init__(
+            widget, db_name, modified, placeholder)
         self.valid_data = valid_data
         self.widget.connect('insert-text', self.on_insert)
 
@@ -177,12 +183,13 @@ class ModuleWord(ModuleValid):
     to a single word (no spaces).
     """
 
-    def __init__(self, widget, db_name, modified):
+    def __init__(self, widget, db_name, modified, placeholder=None):
         super(ModuleWord, self).__init__(
             widget,
             db_name,
             modified,
-            string.ascii_letters + string.digits + "_"
+            string.ascii_letters + string.digits + "_",
+            placeholder=placeholder
         )
 
 
@@ -192,12 +199,13 @@ class ModuleInt(ModuleValid):
     to a digits.
     """
 
-    def __init__(self, widget, db_name, modified):
+    def __init__(self, widget, db_name, modified, placeholder=None):
         super(ModuleInt, self).__init__(
             widget,
             db_name,
             modified,
-            string.digits
+            string.digits,
+            placeholder=placeholder
         )
 
     def on_change(self, obj):
@@ -222,38 +230,59 @@ class ModuleTabs(object):
     def __init__(self, builder, modified):
 
         item_list = [
-            ('clock_signal', 'clock_name', ModuleWord),
-            ('reset_signal', 'reset_name', ModuleWord),
-            ('write_data_bus', "write_data_name", ModuleWord),
-            ('read_data_bus', "read_data_name", ModuleWord),
-            ('byte_en_signal', "byte_strobe_name", ModuleWord),
-            ('write_strobe', "write_strobe_name", ModuleWord),
-            ('ack', 'acknowledge_name', ModuleWord),
-            ('read_strobe', 'read_strobe_name', ModuleWord),
-            ('address_bus', 'address_bus_name', ModuleWord),
-            ('address_width', 'address_bus_width', ModuleInt),
-            ('module', 'module_name', ModuleWord),
-            ('owner', 'owner', ModuleText),
-            ('organization', 'organization', ModuleText),
-            ('title', 'descriptive_title', ModuleText),
-            ('reset_level', 'reset_active_level', ModuleBool),
-            ('interface', 'use_interface', ModuleBool),
-            ('byte_en_level', 'be_level', ModuleBool),
-            ('internal_only', 'internal_only', ModuleBool),
-            ('coverage', 'coverage', ModuleBool),
-            ('data_width', 'data_bus_width', ModuleWidth),
+            ('clock_signal', 'clock_name', ModuleWord, "Missing clock name"),
+            ('reset_signal', 'reset_name', ModuleWord, "Missing reset name"),
+            ('write_data_bus', "write_data_name", ModuleWord,
+             "Missing write data bus name"),
+            ('read_data_bus', "read_data_name", ModuleWord,
+             "Missing read data bus name"),
+            ('byte_en_signal', "byte_strobe_name", ModuleWord,
+             "Missing byte enable name"),
+            ('write_strobe', "write_strobe_name", ModuleWord,
+             "Missing write strobe name"),
+            ('ack', 'acknowledge_name', ModuleWord,
+             "Missing acknowledge signal name"),
+            ('read_strobe', 'read_strobe_name', ModuleWord,
+             "Missing read strobe name"),
+            ('address_bus', 'address_bus_name', ModuleWord,
+             "Missing address bus name"),
+            ('address_width', 'address_bus_width', ModuleInt,
+             'Missing address bus width'),
+            ('module', 'module_name', ModuleWord, "Missing module name"),
+            ('owner', 'owner', ModuleText,
+             "Missing owner name or email address"),
+            ('organization', 'organization', ModuleText,
+             "Missing company/organization name"),
+            ('title', 'descriptive_title', ModuleText,
+             "Missing description of the module"),
+            ('reset_level', 'reset_active_level', ModuleBool, None),
+            ('interface', 'use_interface', ModuleBool, None),
+            ('byte_en_level', 'be_level', ModuleBool, None),
+            ('internal_only', 'internal_only', ModuleBool, None),
+            ('coverage', 'coverage', ModuleBool, None),
+            ('data_width', 'data_bus_width', ModuleWidth, None),
         ]
 
         self.object_list = []
 
-        for (widget_name, db_name, class_type) in item_list:
-            self.object_list.append(
-                class_type(
-                    builder.get_object(widget_name),
-                    db_name,
-                    self.after_modified
+        for (widget_name, db_name, class_type, placeholder) in item_list:
+            if placeholder is not None:
+                self.object_list.append(
+                    class_type(
+                        builder.get_object(widget_name),
+                        db_name,
+                        self.after_modified,
+                        placeholder=placeholder
+                    )
                 )
-            )
+            else:
+                self.object_list.append(
+                    class_type(
+                        builder.get_object(widget_name),
+                        db_name,
+                        self.after_modified
+                    )
+                )
 
         self.dbase = None
         self.set_modified = modified
@@ -277,4 +306,49 @@ class ModuleTabs(object):
             msgs.append("No module name was provided.")
         self.icon.set_property('visible', warn)
         self.icon.set_tooltip_text("\n".join(msgs))
+        self.set_modified()
+
+
+class ProjectTabs(object):
+
+    def __init__(self, builder, modified):
+
+        item_list = [
+            ('project_name', 'name', ModuleText, "Missing project name"),
+            ('short_name', 'short_name', ModuleWord, "Missing short name"),
+            ('company_name', "company_name", ModuleText, "Missing company name"),
+        ]
+
+        self.object_list = []
+
+        for (widget_name, db_name, class_type, placeholder) in item_list:
+            if placeholder is not None:
+                self.object_list.append(
+                    class_type(
+                        builder.get_object(widget_name),
+                        db_name,
+                        self.after_modified,
+                        placeholder=placeholder
+                    )
+                )
+            else:
+                self.object_list.append(
+                    class_type(
+                        builder.get_object(widget_name),
+                        db_name,
+                        self.after_modified
+                    )
+                )
+
+        self.dbase = None
+        self.set_modified = modified
+        self.icon = builder.get_object('mod_def_warn')
+
+    def change_db(self, dbase):
+        self.dbase = dbase
+        for obj in self.object_list:
+            obj.change_db(dbase)
+
+    def after_modified(self):
+
         self.set_modified()

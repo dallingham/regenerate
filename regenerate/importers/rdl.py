@@ -21,6 +21,7 @@ Imports data from a Denali RDL file
 """
 
 from regenerate.db import Register, BitField
+from regenerate.db.enums import BitType
 import re
 
 
@@ -154,9 +155,9 @@ class RDLParser:
         loads the new data into the database.
         """
         lookup = {
-            '"rw"': BitField.TYPE_READ_WRITE,
-            '"w"': BitField.TYPE_WRITE_ONLY,
-            '"r"': BitField.TYPE_READ_ONLY
+            '"rw"': BitType.READ_WRITE,
+            '"w"': BitType.WRITE_ONLY,
+            '"r"': BitType.READ_ONLY
         }
 
         for (reg_name, addr_txt, width, field_list) in reg_list:
@@ -173,7 +174,7 @@ class RDLParser:
                 try:
                     field.field_type = lookup[item.software_access]
                 except IndexError:
-                    field.field_type = BitField.TYPE_READ_ONLY
+                    field.field_type = BitType.READ_ONLY
 
                 field.start_position = item.start
                 field.stop_position = item.stop

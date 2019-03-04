@@ -23,51 +23,52 @@ Actual program. Parses the arguments, and initiates the main window
 import os
 from jinja2 import Template
 from regenerate.db import BitField
+from regenerate.db.enums import BitType
 from regenerate.writers.writer_base import WriterBase, ExportInfo
 
 #
 # Map regenerate types to UVM type strings
 #
 ACCESS_MAP = {
-    BitField.TYPE_READ_ONLY: "read-only",
-    BitField.TYPE_READ_ONLY_LOAD: "read-only",
-    BitField.TYPE_READ_ONLY_VALUE: "read-only",
-    BitField.TYPE_READ_ONLY_CLEAR_LOAD: "read-only",
-    BitField.TYPE_READ_ONLY_VALUE_1S: "read-only",
-    BitField.TYPE_READ_WRITE: "read-write",
-    BitField.TYPE_READ_WRITE_1S: "read-write",
-    BitField.TYPE_READ_WRITE_1S_1: "read-write",
-    BitField.TYPE_READ_WRITE_LOAD: "read-write",
-    BitField.TYPE_READ_WRITE_LOAD_1S: "read-write",
-    BitField.TYPE_READ_WRITE_LOAD_1S_1: "read-write",
-    BitField.TYPE_READ_WRITE_SET: "read-write",
-    BitField.TYPE_READ_WRITE_SET_1S: "read-write",
-    BitField.TYPE_READ_WRITE_SET_1S_1: "read-write",
-    BitField.TYPE_READ_WRITE_CLR: "read-write",
-    BitField.TYPE_READ_WRITE_CLR_1S: "read-write",
-    BitField.TYPE_READ_WRITE_CLR_1S_1: "read-write",
-    BitField.TYPE_WRITE_1_TO_CLEAR_SET: "read-write",
-    BitField.TYPE_WRITE_1_TO_CLEAR_SET_CLR: "read-write",
-    BitField.TYPE_WRITE_1_TO_CLEAR_SET_1S: "read-write",
-    BitField.TYPE_WRITE_1_TO_CLEAR_SET_1S_1: "read-write",
-    BitField.TYPE_WRITE_1_TO_CLEAR_LOAD: "read-write",
-    BitField.TYPE_WRITE_1_TO_CLEAR_LOAD_1S: "read-write",
-    BitField.TYPE_WRITE_1_TO_CLEAR_LOAD_1S_1: "read-write",
-    BitField.TYPE_WRITE_1_TO_SET: "read-write",
-    BitField.TYPE_WRITE_ONLY: "write-only",
-    BitField.TYPE_READ_WRITE_PROTECT: "read-write",
-    BitField.TYPE_READ_WRITE_PROTECT_1S:  "read-write",
+    BitType.READ_ONLY: "read-only",
+    BitType.READ_ONLY_LOAD: "read-only",
+    BitType.READ_ONLY_VALUE: "read-only",
+    BitType.READ_ONLY_CLEAR_LOAD: "read-only",
+    BitType.READ_ONLY_VALUE_1S: "read-only",
+    BitType.READ_WRITE: "read-write",
+    BitType.READ_WRITE_1S: "read-write",
+    BitType.READ_WRITE_1S_1: "read-write",
+    BitType.READ_WRITE_LOAD: "read-write",
+    BitType.READ_WRITE_LOAD_1S: "read-write",
+    BitType.READ_WRITE_LOAD_1S_1: "read-write",
+    BitType.READ_WRITE_SET: "read-write",
+    BitType.READ_WRITE_SET_1S: "read-write",
+    BitType.READ_WRITE_SET_1S_1: "read-write",
+    BitType.READ_WRITE_CLR: "read-write",
+    BitType.READ_WRITE_CLR_1S: "read-write",
+    BitType.READ_WRITE_CLR_1S_1: "read-write",
+    BitType.WRITE_1_TO_CLEAR_SET: "read-write",
+    BitType.WRITE_1_TO_CLEAR_SET_CLR: "read-write",
+    BitType.WRITE_1_TO_CLEAR_SET_1S: "read-write",
+    BitType.WRITE_1_TO_CLEAR_SET_1S_1: "read-write",
+    BitType.WRITE_1_TO_CLEAR_LOAD: "read-write",
+    BitType.WRITE_1_TO_CLEAR_LOAD_1S: "read-write",
+    BitType.WRITE_1_TO_CLEAR_LOAD_1S_1: "read-write",
+    BitType.WRITE_1_TO_SET: "read-write",
+    BitType.WRITE_ONLY: "write-only",
+    BitType.READ_WRITE_PROTECT: "read-write",
+    BitType.READ_WRITE_PROTECT_1S:  "read-write",
 }
 
 WRITE_MAP = {
-    BitField.TYPE_WRITE_1_TO_CLEAR_SET: "oneToClear",
-    BitField.TYPE_WRITE_1_TO_CLEAR_SET_CLR: "oneToClear",
-    BitField.TYPE_WRITE_1_TO_CLEAR_SET_1S: "oneToClear",
-    BitField.TYPE_WRITE_1_TO_CLEAR_SET_1S_1: "oneToClear",
-    BitField.TYPE_WRITE_1_TO_CLEAR_LOAD: "oneToClear",
-    BitField.TYPE_WRITE_1_TO_CLEAR_LOAD_1S: "oneToClear",
-    BitField.TYPE_WRITE_1_TO_CLEAR_LOAD_1S_1: "oneToClear",
-    BitField.TYPE_WRITE_1_TO_SET: "oneToSet"
+    BitType.WRITE_1_TO_CLEAR_SET: "oneToClear",
+    BitType.WRITE_1_TO_CLEAR_SET_CLR: "oneToClear",
+    BitType.WRITE_1_TO_CLEAR_SET_1S: "oneToClear",
+    BitType.WRITE_1_TO_CLEAR_SET_1S_1: "oneToClear",
+    BitType.WRITE_1_TO_CLEAR_LOAD: "oneToClear",
+    BitType.WRITE_1_TO_CLEAR_LOAD_1S: "oneToClear",
+    BitType.WRITE_1_TO_CLEAR_LOAD_1S_1: "oneToClear",
+    BitType.WRITE_1_TO_SET: "oneToSet"
 }
 
 

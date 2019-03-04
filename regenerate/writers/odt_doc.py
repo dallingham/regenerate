@@ -35,6 +35,7 @@ from regenerate.settings.paths import ODTFILE, USERODTFILE
 
 from .writer_base import WriterBase, ExportInfo
 from regenerate.db import BitField
+from regenerate.db.enums import ResetType
 
 TYPE_MAP = ["R", "R/W", "W1C", "W1S", "WO"]
 
@@ -260,7 +261,7 @@ class OdtDoc(WriterBase):
             text = bit_range.bit_range()
             self.write_table_cell(table_cell, CELLBODY, text)
 
-            if bit_range.reset_type == BitField.RESET_NUMERIC:
+            if bit_range.reset_type == ResetType.NUMERIC:
                 cols = [TYPE_MAP[bit_range.field_type],
                         rst_val(bit_range.reset_value), bit_range.field_name]
                 description = bit_range.description

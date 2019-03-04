@@ -20,6 +20,7 @@
 """Provides the definition of a Bit Field."""
 
 import uuid
+from regenerate.db.enums import BitType, ResetType
 
 
 def clean_signal(name):
@@ -32,31 +33,17 @@ class BitField(object):
 
     PARAMETERS = {}
 
-    (TYPE_READ_ONLY, TYPE_READ_ONLY_VALUE, TYPE_READ_ONLY_LOAD,
-     TYPE_READ_ONLY_CLEAR_LOAD, TYPE_READ_ONLY_VALUE_1S, TYPE_READ_WRITE,
-     TYPE_READ_WRITE_1S, TYPE_READ_WRITE_1S_1, TYPE_READ_WRITE_LOAD,
-     TYPE_READ_WRITE_LOAD_1S, TYPE_READ_WRITE_LOAD_1S_1, TYPE_READ_WRITE_SET,
-     TYPE_READ_WRITE_SET_1S, TYPE_READ_WRITE_SET_1S_1, TYPE_READ_WRITE_CLR,
-     TYPE_READ_WRITE_CLR_1S, TYPE_READ_WRITE_CLR_1S_1,
-     TYPE_WRITE_1_TO_CLEAR_SET, TYPE_WRITE_1_TO_CLEAR_SET_1S,
-     TYPE_WRITE_1_TO_CLEAR_SET_1S_1, TYPE_WRITE_1_TO_CLEAR_LOAD,
-     TYPE_WRITE_1_TO_CLEAR_LOAD_1S, TYPE_WRITE_1_TO_CLEAR_LOAD_1S_1,
-     TYPE_WRITE_1_TO_SET, TYPE_WRITE_1_TO_SET_1S, TYPE_WRITE_1_TO_SET_1S1,
-     TYPE_WRITE_ONLY, TYPE_READ_WRITE_RESET_ON_COMP, TYPE_READ_WRITE_PROTECT,
-     TYPE_READ_WRITE_PROTECT_1S, TYPE_WRITE_1_TO_CLEAR_SET_CLR) = range(31)
+    read_only_types = (
+        BitType.READ_ONLY,
+        BitType.READ_ONLY_VALUE,
+        BitType.READ_ONLY_LOAD,
+        BitType.READ_ONLY_CLEAR_LOAD,
+        BitType.READ_ONLY_VALUE_1S
+    )
 
-    (FUNC_SET_BITS, FUNC_CLEAR_BITS, FUNC_PARALLEL, FUNC_ASSIGNMENT) = range(4)
-
-    (ONE_SHOT_NONE, ONE_SHOT_ANY, ONE_SHOT_ONE, ONE_SHOT_ZERO,
-     ONE_SHOT_TOGGLE) = range(5)
-
-    (RESET_NUMERIC, RESET_INPUT, RESET_PARAMETER) = range(3)
-
-    read_only_types = (TYPE_READ_ONLY, TYPE_READ_ONLY_VALUE,
-                       TYPE_READ_ONLY_LOAD, TYPE_READ_ONLY_CLEAR_LOAD,
-                       TYPE_READ_ONLY_VALUE_1S)
-
-    write_only_types = (TYPE_WRITE_ONLY,)
+    write_only_types = (
+        BitType.WRITE_ONLY,
+    )
 
     full_compare = ("_output_signal", "_input_signal", "_id", "lsb", "msb",
                     "_field_name", "use_output_enable", "field_type",
@@ -79,12 +66,12 @@ class BitField(object):
         self.msb = stop
         self._field_name = ""
         self.use_output_enable = False
-        self.field_type = BitField.TYPE_READ_ONLY
+        self.field_type = BitType.READ_ONLY
         self.volatile = False
         self.is_error_field = False
         self._reset_value = 0
         self.reset_input = ""
-        self.reset_type = BitField.RESET_NUMERIC
+        self.reset_type = ResetType.NUMERIC
         self.reset_parameter = ""
         self.description = ""
         self.can_randomize = False
@@ -112,7 +99,7 @@ class BitField(object):
 
     def is_constant(self):
         """Indicate if the value is a constant value."""
-        return self.field_type == BitField.TYPE_READ_ONLY
+        return self.field_type == BitType.READ_ONLY
 
     def is_read_only(self):
         """Indicate if the value is a read only type."""
@@ -137,7 +124,7 @@ class BitField(object):
     @property
     def reset_value(self):
         """Return the reset value."""
-        if self.reset_type == BitField.RESET_PARAMETER:
+        if self.reset_type == ResetType.PARAMETER:
             return BitField.PARAMETERS.get(self.reset_parameter, 0)
         return self._reset_value
 

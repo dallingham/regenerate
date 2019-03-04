@@ -54,12 +54,18 @@ class EditableColumn(gtk.TreeViewColumn):
     """
 
     def __init__(self, title, change_callback, source_column, monospace=False,
-                 visible_callback=None):
+                 visible_callback=None, placeholder=None):
 
         self.renderer = gtk.CellRendererText()
         if change_callback:
             self.renderer.set_property('editable', True)
             self.renderer.connect('edited', change_callback, source_column)
+        if placeholder:
+            try:
+                self.renderer.set_property('placeholder-text', placeholder)
+            except TypeError:
+                pass
+
         self.renderer.set_property('ellipsize', pango.ELLIPSIZE_END)
         if monospace:
             self.renderer.set_property('family', "Monospace")

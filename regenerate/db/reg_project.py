@@ -25,8 +25,6 @@ import os.path
 import xml.sax.saxutils
 import regenerate.db
 
-(MAP_FULL, MAP_RO, MAP_WO) = range(3)
-
 AddrMapData = namedtuple(
     "AddrMapData",
     ["name", "base", "width", "fixed", "uvm"]

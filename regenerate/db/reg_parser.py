@@ -24,6 +24,7 @@ import xml.parsers.expat
 import uuid
 
 from regenerate.db import Register, BitField, ID_TO_TYPE
+from regenerate.db.enums import ResetType
 
 
 def cnv_hex(attrs, key, default=0):
@@ -254,7 +255,7 @@ class RegParser(object):
                 self.__reset_type = int(attrs.get('type', "0"))
                 self.__reset_parameter = attrs.get('parameter', '')
             except ValueError:
-                self.__reset_type = BitField.RESET_NUMERIC
+                self.__reset_type = ResetType.NUMERIC
 
     def end_register(self, text):
         """Called when the register tag is terminated."""
@@ -321,14 +322,14 @@ class RegParser(object):
             self.__db.reset_name = text
         elif self.__reset_type == 1:
             self.__field.reset_input = text.strip()
-            self.__field.reset_type = BitField.RESET_INPUT
+            self.__field.reset_type = ResetType.INPUT
         elif self.__reset_type == 2:
             self.__field.reset_parameter = self.__reset_parameter
             self.__field.reset_value = int(text, 16)
-            self.__field.reset_type = BitField.RESET_PARAMETER
+            self.__field.reset_type = ResetType.PARAMETER
         else:
             self.__field.reset_value = int(text, 16)
-            self.__field.reset_type = BitField.RESET_NUMERIC
+            self.__field.reset_type = ResetType.NUMERIC
 
     def end_token(self, text):
         """

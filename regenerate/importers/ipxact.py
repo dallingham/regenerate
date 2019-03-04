@@ -22,18 +22,19 @@ Parses the register database, loading the database.
 
 import xml.etree.ElementTree as ET
 from regenerate.db import Register, BitField
+from regenerate.db.enums import BitType, ResetType
 import re
 
 text2field = {
-    "read-only": BitField.TYPE_READ_ONLY,
-    "read-write": BitField.TYPE_READ_WRITE,
-    "write-only": BitField.TYPE_WRITE_ONLY,
-    "writeOnce": BitField.TYPE_WRITE_ONLY
+    "read-only": BitType.READ_ONLY,
+    "read-write": BitType.READ_WRITE,
+    "write-only": BitType.WRITE_ONLY,
+    "writeOnce": BitType.WRITE_ONLY
 }
 
 text2write = {
-    "oneToClear": BitField.TYPE_WRITE_1_TO_CLEAR_SET,
-    "oneToSet": BitField.TYPE_WRITE_1_TO_SET,
+    "oneToClear": BitType.WRITE_1_TO_CLEAR_SET,
+    "oneToSet": BitType.WRITE_1_TO_SET,
 }
 
 
@@ -160,7 +161,7 @@ class IpXactParser(object):
         if self._in_field_reset:
             if self._field:
                 self._field.reset_value = int(text, 16)
-                self._field.reset_type = BitField.RESET_NUMERIC
+                self._field.reset_type = ResetType.NUMERIC
         elif self._in_reg_reset:
             self._reg_reset = (True, int(text, 16))
 
@@ -176,21 +177,21 @@ class IpXactParser(object):
                 self._field.reset_value = (
                     self._reg_reset[1] >> self._fld_start) & (
                         (1 << self._field.width) - 1)
-                self._field.reset_type = BitField.RESET_NUMERIC
+                self._field.reset_type = ResetType.NUMERIC
 
         self._field = None
 
     def end_access(self, text):
         if self._field:
-            if self._field.field_type not in (BitField.TYPE_WRITE_1_TO_SET,
-                                              BitField.TYPE_WRITE_1_TO_CLEAR_SET):
+            if self._field.field_type not in (BitType.WRITE_1_TO_SET,
+                                              BitType.WRITE_1_TO_CLEAR_SET):
                 self._field.field_type = text2field.get(text,
-                                                        BitField.TYPE_READ_ONLY)
+                                                        BitType.READ_ONLY)
 
     def end_modifiedWriteValue(self, text):
         if self._field:
             self._field.field_type = text2write.get(text,
-                                                    BitField.TYPE_WRITE_1_TO_CLEAR_SET)
+                                                    BitType.WRITE_1_TO_CLEAR_SET)
 
     def end_name(self, text):
         if self._field:

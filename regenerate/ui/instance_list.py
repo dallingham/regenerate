@@ -193,9 +193,19 @@ class InstMdl(gtk.TreeStore):
             name = "new_group%d" % i
 
         new_grp = GroupData(name)
-        row = build_row_data(new_grp.name, "", new_grp.base,
-                             new_grp.repeat, new_grp.repeat_offset,
-                             new_grp.hdl, False, False, False, False, new_grp)
+        row = build_row_data(
+            new_grp.name,
+            "",
+            new_grp.base,
+            new_grp.repeat,
+            new_grp.repeat_offset,
+            new_grp.hdl,
+            False,
+            False,
+            False,
+            False,
+            new_grp
+        )
 
         node = self.append(None, row=row)
         self.callback()
@@ -374,7 +384,6 @@ class InstanceList(object):
         column.set_min_width(250)
         column.set_sort_column_id(InstMdl.HDL_COL)
         self.__obj.append_column(column)
-        self.__col = column
 
         column = ToggleColumn('UVM Exclude', uvm_changed, InstMdl.UVM_COL,
                               self.visible_callback)

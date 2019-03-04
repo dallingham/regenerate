@@ -29,6 +29,7 @@ import os
 import pango
 from regenerate.db import BitField, TYPE_TO_ID
 from regenerate.db import TYPE_TO_DESCR, TYPE_TO_ENABLE
+from regenerate.db.enums import ResetType
 from regenerate.settings.paths import GLADE_BIT, INSTALL_PATH
 from regenerate.ui.error_dialogs import ErrorMsg
 from regenerate.ui.help_window import HelpWindow
@@ -153,7 +154,7 @@ class BitFieldEditor(BaseWindow):
         self._set_text("field_name", bit_field.full_field_name())
         self._set_text('type', TYPE_TO_DESCR[bit_field.field_type])
 
-        if bit_field.reset_type == BitField.RESET_NUMERIC:
+        if bit_field.reset_type == ResetType.NUMERIC:
             self._set_text("reset_value", "{0:x}".format(
                 bit_field.reset_value))
         else:

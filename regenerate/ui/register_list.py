@@ -25,6 +25,7 @@ import gtk
 from regenerate.ui.columns import EditableColumn, ComboMapColumn
 from regenerate.ui.error_dialogs import ErrorMsg
 from regenerate.db import LOGGER, Register
+from regenerate.db.enums import ShareType
 from regenerate.extras.remap import REMAP_NAME
 
 BAD_TOKENS = ' /-@!#$%^&*()+=|{}[]:"\';\\,.?'
@@ -124,15 +125,26 @@ class RegisterModel(gtk.ListStore):
         filling in the data from the register into the appropriate
         column.
         """
-        icon = None
         if register.ram_size:
             addr = "%04x:%x" % (register.address, register.ram_size)
         else:
             addr = "%04x" % register.address
-        data = (icon, addr, register.register_name, register.token,
-                register.dimension, self.STR2BIT[register.width],
-                register.address, None, register)
-        path = self.get_path(self.append(row=data))
+
+        path = self.get_path(
+            self.append(
+                row=(
+                    None,
+                    addr,
+                    register.register_name,
+                    register.token,
+                    register.dimension,
+                    self.STR2BIT[register.width],
+                    register.address,
+                    None,
+                    register
+                )
+            )
+        )
         self.reg2path[register] = path
         return path
 
@@ -198,8 +210,10 @@ class RegisterModel(gtk.ListStore):
         self.set(node, self.SORT_COL, addr)
 
 
-ColDef = namedtuple("ColDef", ["title", "size", "sort_column",
-                               "expand", "type", "mono"])
+ColDef = namedtuple(
+    "ColDef",
+    ["title", "size", "sort_column", "expand", "type", "mono",
+     "placeholder"])
 
 
 class RegisterList(object):
@@ -210,12 +224,28 @@ class RegisterList(object):
     (COL_TEXT, COL_COMBO, COL_ICON) = range(3)
 
     _COLS = (  # Title,   Size, Column, Expand, Type, Monospace
-        ColDef('', 30, RegisterModel.ICON_COL, False, COL_ICON, False),
-        ColDef('Address', 100, RegisterModel.SORT_COL, False, COL_TEXT, True),
-        ColDef('Name', 175, RegisterModel.NAME_COL, True, COL_TEXT, False),
-        ColDef('Token', 150, RegisterModel.DEFINE_COL, True, COL_TEXT, True),
-        ColDef('Dimension', 50, RegisterModel.DIM_COL, True, COL_TEXT, False),
-        ColDef('Width', 125, -1, False, COL_COMBO, False),
+        ColDef(
+            '', 30, RegisterModel.ICON_COL, False, COL_ICON, False, None
+        ),
+        ColDef(
+            'Address', 100, RegisterModel.SORT_COL, False, COL_TEXT, True,
+            'Address'
+        ),
+        ColDef(
+            'Name', 175, RegisterModel.NAME_COL, True, COL_TEXT, False,
+            'Missing Register Descriptive Name'
+        ),
+        ColDef(
+            'Token', 150, RegisterModel.DEFINE_COL, True, COL_TEXT, True,
+            'Missing Register Token Name'
+        ),
+        ColDef(
+            'Dimension', 50, RegisterModel.DIM_COL, True, COL_TEXT, False,
+            None
+        ),
+        ColDef(
+            'Width', 125, -1, False, COL_COMBO, False, None
+        ),
     )
 
     def __init__(self, obj, select_change_function, mod_function, update_addr,
@@ -276,7 +306,9 @@ class RegisterList(object):
                                         RegisterModel.BIT2STR, i)
             elif col.type == self.COL_TEXT:
                 column = EditableColumn(
-                    col.title, self.__text_edited, i, col.mono)
+                    col.title, self.__text_edited, i, col.mono,
+                    placeholder=col.placeholder
+                )
             else:
                 self.__icon_renderer = gtk.CellRendererPixbuf()
                 column = gtk.TreeViewColumn("", self.__icon_renderer,
@@ -309,9 +341,7 @@ class RegisterList(object):
         default column
         """
         path = self.__model.append_register(register)
-        self.__obj.set_cursor(path,
-                              focus_column=self.__col,
-                              start_editing=True)
+        self.__obj.set_cursor(path, self.__col, start_editing=True)
         return path
 
     def get_selected_register(self):
@@ -420,11 +450,11 @@ class RegisterList(object):
                 continue
             reg = data[-1]
             start = reg.address
-            stop = reg.address + (reg.dimension * (reg.width / 8))
+            stop = reg.address + (reg.dimension * (reg.width >> 3))
             for i in range(start, stop):
-                if reg.share == Register.SHARE_READ:
+                if reg.share == ShareType.READ:
                     ro_list.add(i)
-                elif reg.share == Register.SHARE_WRITE:
+                elif reg.share == ShareType.WRITE:
                     wo_list.add(i)
                 else:
                     addr_list.add(i)
@@ -467,7 +497,7 @@ class RegisterList(object):
                      int(new_text, 16))
 
     def __check_address_align(self, address, width):
-        align = width / 8
+        align = width >> 3
         return address % align == 0
 
     def __handle_reg_address(self, register, path, new_text):

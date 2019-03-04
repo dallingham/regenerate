@@ -21,6 +21,7 @@ Imports data from a Denali RDL file
 """
 
 from regenerate.db import Register, BitField
+from regenerate.db.enums import BitType
 import re
 
 
@@ -237,9 +238,9 @@ class DenaliRDLParser:
         loads the new data into the database.
         """
         lookup = {
-            'rw': BitField.TYPE_READ_WRITE,
-            'w': BitField.TYPE_WRITE_ONLY,
-            'r': BitField.TYPE_READ_ONLY
+            'rw': BitType.READ_WRITE,
+            'w': BitType.WRITE_ONLY,
+            'r': BitType.READ_ONLY
         }
 
         name_count = {}

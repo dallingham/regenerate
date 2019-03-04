@@ -22,6 +22,7 @@ Provides both the GTK ListStore and ListView for the bit fields.
 
 import gtk
 from regenerate.db import BitField, TYPES
+from regenerate.db.enums import ResetType
 from regenerate.ui.columns import EditableColumn, ComboMapColumn, SwitchComboMapColumn
 
 TYPE2STR = [(t.description, t.type) for t in sorted(TYPES)]
@@ -38,9 +39,9 @@ class BitModel(gtk.ListStore):
     ListView to provide the data for the bitfields.
     """
 
-    RESET2STR = (("Constant", BitField.RESET_NUMERIC),
-                 ("Input Port", BitField.RESET_INPUT),
-                 ("Parameter", BitField.RESET_PARAMETER))
+    RESET2STR = (("Constant", ResetType.NUMERIC),
+                 ("Input Port", ResetType.INPUT),
+                 ("Parameter", ResetType.PARAMETER))
 
     (ICON_COL, BIT_COL, NAME_COL, TYPE_COL, RESET_COL, RESET_TYPE_COL,
      SORT_COL, FIELD_COL) = range(8)
@@ -218,9 +219,9 @@ def get_field_reset_data(field):
     """
     Converts the fields reset value/type into a displayable value.
     """
-    if field.reset_type == BitField.RESET_NUMERIC:
+    if field.reset_type == ResetType.NUMERIC:
         reset = reset_value(field)
-    elif field.reset_type == BitField.RESET_INPUT:
+    elif field.reset_type == ResetType.INPUT:
         reset = field.reset_input
     else:
         reset = field.reset_parameter

@@ -35,6 +35,7 @@ import xml
 from regenerate import PROGRAM_VERSION, PROGRAM_NAME
 from regenerate.db import RegWriter, RegisterDb, Register
 from regenerate.db import BitField, RegProject, LOGGER, TYPES
+from regenerate.db.enums import ResetType, ShareType, BitType
 from regenerate.importers import IMPORTERS
 from regenerate.settings import ini
 from regenerate.settings.paths import GLADE_TOP, INSTALL_PATH
@@ -57,7 +58,7 @@ from regenerate.ui.status_logger import StatusHandler
 from regenerate.ui.utils import clean_format_if_needed
 from regenerate.extras.remap import REMAP_NAME
 from regenerate.ui.reg_description import RegisterDescription
-from regenerate.ui.module_tab import ModuleTabs
+from regenerate.ui.module_tab import ModuleTabs, ProjectTabs
 
 TYPE_ENB = {}
 for data_type in TYPES:
@@ -220,6 +221,10 @@ class MainWindow(BaseWindow):
         self.__build_import_menu()
 
         filter_obj = self.find_obj("filter")
+        try:
+            filter_obj.set_placeholder_text("Signal Filter")
+        except TypeError:
+            pass
         self.__filter_manage = FilterManager(filter_obj)
 
     def find_obj(self, name):
@@ -260,22 +265,33 @@ class MainWindow(BaseWindow):
             )
 
     def build_project_tab(self):
-        self.__prj_short_name_obj = self.find_obj('short_name')
-        self.__prj_name_obj = self.find_obj('project_name')
-        self.__prj_company_name_obj = self.find_obj('company_name')
+        self.project_tabs = ProjectTabs(
+            self.__builder, self.set_project_modified
+        )
         self.__prj_doc_object = self.find_obj('project_doc_buffer')
 
         self.__addr_map_obj = self.find_obj('address_tree')
         self.__addr_map_list = AddrMapList(self.__addr_map_obj)
 
+    def set_project_modified(self):
+        self.project_modified(True)
+
     def project_modified(self, value):
+        if value:
+            if self.__prj.modified == False:
+                self.__top_window.set_title(
+                    "%s (modified) - regenerate" % self.__prj.name
+                )
+        else:
+            self.__top_window.set_title(
+                "%s - regenerate" % self.__prj.name
+            )
         self.__prj.modified = value
 
     def load_project_tab(self):
-        self.__prj_short_name_obj.set_text(self.__prj.short_name)
+        self.project_tabs.change_db(self.__prj)
+
         self.__prj_doc_object.set_text(self.__prj.documentation)
-        self.__prj_name_obj.set_text(self.__prj.name)
-        self.__prj_company_name_obj.set_text(self.__prj.company_name)
         self.__addr_map_list.set_project(self.__prj)
         self.project_modified(False)
 
@@ -468,10 +484,10 @@ class MainWindow(BaseWindow):
 
     def __update_reset_field(self, field, model, path, node):
         field.reset_type = model.get_value(node, 1)
-        if field.reset_type == BitField.RESET_NUMERIC:
+        if field.reset_type == ResetType.NUMERIC:
             val = reset_value(field)
             self.__bit_model[path][BitModel.RESET_COL] = val
-        elif field.reset_type == BitField.RESET_INPUT:
+        elif field.reset_type == ResetType.INPUT:
             if not re.match("^[A-Za-z]\w*$", field.reset_input):
                 field.reset_input = "%s_RST" % field.field_name
             self.__bit_model[path][BitModel.RESET_COL] = field.reset_input
@@ -543,7 +559,7 @@ class MainWindow(BaseWindow):
         is different from the stored value, we alter the model (to change the
         display) and alter the corresponding field.
         """
-        if field.reset_type == BitField.RESET_NUMERIC:
+        if field.reset_type == ResetType.NUMERIC:
             try:
                 field.reset_value = int(new_text, 16)
                 self.__bit_model[path][BitModel.RESET_COL] = reset_value(field)
@@ -551,7 +567,7 @@ class MainWindow(BaseWindow):
             except ValueError:
                 LOGGER.error('Illegal reset value: "%s"' % new_text)
                 return
-        elif field.reset_type == BitField.RESET_INPUT:
+        elif field.reset_type == ResetType.INPUT:
             if not re.match("^[A-Za-z]\w*$", new_text):
                 LOGGER.error('"%s" is not a valid input name' % new_text)
                 new_text = "%s_RST" % field.field_name
@@ -907,9 +923,9 @@ class MainWindow(BaseWindow):
         self.__skip_changes = old_skip
 
     def set_share(self, reg):
-        if reg.share == Register.SHARE_NONE:
+        if reg.share == ShareType.NONE:
             self.find_obj('no_sharing').set_active(True)
-        elif reg.share == Register.SHARE_READ:
+        elif reg.share == ShareType.READ:
             self.find_obj('read_access').set_active(True)
         else:
             self.find_obj('write_access').set_active(True)
@@ -967,7 +983,7 @@ class MainWindow(BaseWindow):
                     'if it shares an address with another'
                 )
             else:
-                register.share = Register.SHARE_NONE
+                register.share = ShareType.NONE
                 self.set_modified()
             self.__bitfield_obj.set_mode(register.share)
 
@@ -976,11 +992,11 @@ class MainWindow(BaseWindow):
             register = self.__reglist_obj.get_selected_register()
 
             other = self.find_shared_address(register)
-            if other and other.share != Register.SHARE_WRITE:
+            if other and other.share != ShareType.WRITE:
                 self.set_share(register)
                 LOGGER.error('The shared register is not of Write Access type')
             elif register.is_completely_read_only():
-                register.share = Register.SHARE_READ
+                register.share = ShareType.READ
                 self.set_modified()
             else:
                 self.set_share(register)
@@ -992,11 +1008,11 @@ class MainWindow(BaseWindow):
             register = self.__reglist_obj.get_selected_register()
 
             other = self.find_shared_address(register)
-            if other and other.share != Register.SHARE_READ:
+            if other and other.share != ShareType.READ:
                 self.set_share(register)
                 LOGGER.error('The shared register is not of Read Access type')
             elif register.is_completely_write_only():
-                register.share = Register.SHARE_WRITE
+                register.share = ShareType.WRITE
                 self.set_modified()
             else:
                 self.set_share(register)
@@ -1017,8 +1033,8 @@ class MainWindow(BaseWindow):
         field.msb = field.lsb
         field.field_name = "BIT%d" % field.lsb
         field.output_signal = ""
-        if register.share == Register.SHARE_WRITE:
-            field.field_type = BitField.TYPE_WRITE_ONLY
+        if register.share == ShareType.WRITE:
+            field.field_type = BitType.WRITE_ONLY
 
         register.add_bit_field(field)
 
@@ -1068,10 +1084,10 @@ class MainWindow(BaseWindow):
         register.ram_size = new_length
         r = self.find_shared_address(register)
         if r:
-            if r.share == Register.SHARE_READ:
-                register.share = Register.SHARE_WRITE
+            if r.share == ShareType.READ:
+                register.share = ShareType.WRITE
             else:
-                register.share = Register.SHARE_READ
+                register.share = ShareType.READ
             self.set_share(register)
         self.dbase.add_register(register)
 
@@ -1210,6 +1226,7 @@ class MainWindow(BaseWindow):
             self.__prj_model = ProjectModel(self.use_svn)
             self.__prj_obj.set_model(self.__prj_model)
             self.__prj.save()
+            self.project_modified(False)
             if self.__recent_manager:
                 sys.stdout.write("Add %s=n" % filename)
                 self.__recent_manager.add_item("file:///" + filename)
@@ -1281,10 +1298,10 @@ class MainWindow(BaseWindow):
             self.__recent_manager.add_item(uri)
         self.find_obj('save_btn').set_sensitive(True)
         self.set_busy_cursor(False)
-        base = os.path.splitext(os.path.basename(filename))[0]
+#        base = os.path.splitext(os.path.basename(filename))[0]
 
         self.__top_window.set_title(
-            "%s (%s) - regenerate" % (base, self.__prj.name)
+            "%s - regenerate" % self.__prj.name
         )
 
         self.__status_obj.pop(idval)
@@ -1454,6 +1471,7 @@ class MainWindow(BaseWindow):
             os.rename(current_path, backup_path)
 
         self.__prj.save()
+        self.project_modified(False)
 #        try:
 #            self.__prj.save()
 #        except:
@@ -1635,7 +1653,10 @@ class MainWindow(BaseWindow):
         """
         register = Register()
         register.width = self.dbase.data_bus_width
-        register.address = calculate_next_address(self.dbase)
+        register.address = calculate_next_address(
+            self.dbase,
+            register.width
+        )
         self.__insert_new_register(register)
 
     def __cb_open_recent(self, chooser):
@@ -1831,7 +1852,7 @@ def build_signal_set(dbase):
     return signal_list
 
 
-def calculate_next_address(dbase):
+def calculate_next_address(dbase, width):
     """
     Calculates the next address based on the last address that was
     used.
@@ -1840,7 +1861,11 @@ def calculate_next_address(dbase):
     if keys:
         last_reg = dbase.get_register(keys[-1])
         dim = max(last_reg.dimension, 1)
-        addr = last_reg.address + (dim * (last_reg.width / 8))
+        byte_width = last_reg.width >> 3
+        addr = last_reg.address + (dim * byte_width)
+        byte_width = width >> 3
+        if addr % byte_width != 0:
+            addr += (addr % byte_width)
     else:
         addr = 0
     return addr
@@ -1904,7 +1929,7 @@ def check_field(field):
 
 
 def check_reset(field):
-    if (field.reset_type == BitField.RESET_PARAMETER and
+    if (field.reset_type == ResetType.PARAMETER and
             field.reset_parameter.strip() == ""):
         return gtk.STOCK_DIALOG_WARNING
     return None
