@@ -19,7 +19,12 @@
 
 import gtk
 import gobject
+import pango
 import string
+
+from regenerate.ui.spell import Spell
+from regenerate.ui.utils import clean_format_if_needed
+from regenerate.ui.preview_editor import PreviewEditor
 
 
 class ModuleWidth(object):
@@ -225,6 +230,65 @@ class ModuleInt(ModuleValid):
             self.widget.set_text("")
 
 
+class ModuleDoc(object):
+    """
+    Handles the Register description. Sets the font to a monospace font,
+    sets up the changed handler, sets up the spell checker, and makes
+    the link to the preview editor.
+
+    Requires a callback functions from the main window to mark the
+    the system as modified.
+    """
+
+    def __init__(self, text_view, web_view, db_name, modified, use_reg=True):
+        pango_font = pango.FontDescription("monospace")
+
+        self.text_view = text_view
+        self.buf = self.text_view.get_buffer()
+        self.callback = modified
+
+        self.text_view.modify_font(pango_font)
+        self.buf.connect('changed', self.on_changed)
+
+        Spell(self.text_view)
+        self.preview = PreviewEditor(self.buf, web_view, use_reg)
+        self.db_name = db_name
+        self.dbase = None
+
+    def preview_enable(self):
+        """Enables the preview window"""
+        self.preview.enable()
+
+    def preview_disable(self):
+        """Disables the preview window"""
+        self.preview.disable()
+
+    def change_db(self, dbase):
+        """Change the database so the preview window can resolve references"""
+        self.dbase = dbase
+        if self.dbase:
+            self.buf.set_text(getattr(self.dbase, self.db_name))
+        self.preview.set_dbase(self.dbase)
+
+    def on_changed(self, obj):
+        """A change to the text occurred"""
+        if self.dbase:
+            new_text = self.buf.get_text(
+                self.buf.get_start_iter(),
+                self.buf.get_end_iter(),
+                False
+            )
+            setattr(self.dbase, self.db_name, new_text)
+            self.callback()
+
+    def on_key_press_event(self, obj, event):
+        if event.keyval == gtk.keysyms.F12:
+            if clean_format_if_needed(obj):
+                self.callback()
+            return True
+        return False
+
+
 class ModuleTabs(object):
 
     def __init__(self, builder, modified):
@@ -284,6 +348,13 @@ class ModuleTabs(object):
                     )
                 )
 
+        self.preview = ModuleDoc(
+            builder.get_object('overview'),
+            builder.get_object('scroll_webkit'),
+            "overview_text",
+            self.after_modified
+        )
+
         self.dbase = None
         self.set_modified = modified
         self.icon = builder.get_object('mod_def_warn')
@@ -292,6 +363,7 @@ class ModuleTabs(object):
         self.dbase = dbase
         for obj in self.object_list:
             obj.change_db(dbase)
+        self.preview.change_db(dbase)
 
     def after_modified(self):
 
@@ -308,15 +380,26 @@ class ModuleTabs(object):
         self.icon.set_tooltip_text("\n".join(msgs))
         self.set_modified()
 
+    def preview_enable(self):
+        """Enables the preview window"""
+        self.preview.preview_enable()
+
+    def preview_disable(self):
+        """Disables the preview window"""
+        self.preview.preview_disable()
+
 
 class ProjectTabs(object):
 
     def __init__(self, builder, modified):
 
         item_list = [
-            ('project_name', 'name', ModuleText, "Missing project name"),
-            ('short_name', 'short_name', ModuleWord, "Missing short name"),
-            ('company_name', "company_name", ModuleText, "Missing company name"),
+            ('project_name', 'name', ModuleText,
+             "Missing project name"),
+            ('short_name', 'short_name', ModuleWord,
+             "Missing short name"),
+            ('company_name', "company_name", ModuleText,
+             "Missing company name"),
         ]
 
         self.object_list = []
@@ -340,6 +423,14 @@ class ProjectTabs(object):
                     )
                 )
 
+        self.preview = ModuleDoc(
+            builder.get_object('project_doc'),
+            builder.get_object('project_webkit'),
+            'documentation',
+            self.after_modified,
+            False
+        )
+
         self.dbase = None
         self.set_modified = modified
         self.icon = builder.get_object('mod_def_warn')
@@ -348,7 +439,15 @@ class ProjectTabs(object):
         self.dbase = dbase
         for obj in self.object_list:
             obj.change_db(dbase)
+        self.preview.change_db(dbase)
 
     def after_modified(self):
-
         self.set_modified()
+
+    def preview_enable(self):
+        """Enables the preview window"""
+        self.preview.preview_enable()
+
+    def preview_disable(self):
+        """Disables the preview window"""
+        self.preview.preview_disable()

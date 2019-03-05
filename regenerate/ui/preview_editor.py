@@ -38,11 +38,11 @@ except ImportError:
         import gi
         gi.require_version('WebKit', '3.0')
         from gi.repository import WebKit as webkit
-        
+
     except ImportError:
         PREVIEW_ENABLED = False
         LOGGER.warning("Webkit is not installed, preview of formatted "
-                           "comments will not be available")
+                       "comments will not be available")
 
 
 class PreviewEditor(object):
@@ -50,7 +50,7 @@ class PreviewEditor(object):
     Connects a text buffer to a webkit display.
     """
 
-    def __init__(self, text_buffer, webkit_container):
+    def __init__(self, text_buffer, webkit_container, use_reg=True):
         if not PREVIEW_ENABLED:
             return
 
@@ -63,6 +63,7 @@ class PreviewEditor(object):
         self.__update = False
         self.__adjust = self.__container.get_vadjustment()
         self.__active_db = None
+        self.__use_reg = use_reg
 
     def __update_text(self):
         """
@@ -72,7 +73,7 @@ class PreviewEditor(object):
         text = self.__text_buffer.get_text(self.__text_buffer.get_start_iter(),
                                            self.__text_buffer.get_end_iter(),
                                            False)
-        if self.__active_db:
+        if self.__use_reg and self.__active_db:
             data = []
             for reg in self.__active_db.get_all_registers():
                 data.append(".. _`{0}`: /".format(reg.register_name))

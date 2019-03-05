@@ -118,14 +118,6 @@ class MainWindow(BaseWindow):
         LOGGER.addHandler(StatusHandler(self.__status_obj))
         self.__selected_dbase = self.find_obj("selected_dbase")
 
-        pango_font = pango.FontDescription("monospace")
-        self.find_obj('overview').modify_font(pango_font)
-        self.find_obj('project_doc').modify_font(pango_font)
-
-        self.__overview_buf = self.find_obj('overview_buffer')
-        self.__overview_buf.connect('changed', self.__overview_changed)
-        Spell(self.find_obj('overview'))
-
         self.__prj_obj = ProjectList(
             self.find_obj("project_list"),
             self.__prj_selection_changed
@@ -136,7 +128,7 @@ class MainWindow(BaseWindow):
 
         self.__module_notebook = self.find_obj("module_notebook")
 
-        self.__module_tabs = ModuleTabs(
+        self.module_tabs = ModuleTabs(
             self.__builder,
             self.set_modified
         )
@@ -153,13 +145,6 @@ class MainWindow(BaseWindow):
 
         self.use_svn = bool(int(ini.get('user', 'use_svn', 0)))
         self.use_preview = bool(int(ini.get('user', 'use_preview', 0)))
-
-        self.__prj_preview = PreviewEditor(
-            self.find_obj('project_doc').get_buffer(),
-            self.find_obj('project_webkit'))
-        self.__regset_preview = PreviewEditor(
-            self.find_obj('overview_buffer'),
-            self.find_obj('scroll_webkit'))
 
         self.__filename = None
         self.__modified = False
@@ -266,9 +251,9 @@ class MainWindow(BaseWindow):
 
     def build_project_tab(self):
         self.project_tabs = ProjectTabs(
-            self.__builder, self.set_project_modified
+            self.__builder,
+            self.set_project_modified
         )
-        self.__prj_doc_object = self.find_obj('project_doc_buffer')
 
         self.__addr_map_obj = self.find_obj('address_tree')
         self.__addr_map_list = AddrMapList(self.__addr_map_obj)
@@ -290,8 +275,6 @@ class MainWindow(BaseWindow):
 
     def load_project_tab(self):
         self.project_tabs.change_db(self.__prj)
-
-        self.__prj_doc_object.set_text(self.__prj.documentation)
         self.__addr_map_list.set_project(self.__prj)
         self.project_modified(False)
 
@@ -701,14 +684,14 @@ class MainWindow(BaseWindow):
         self.set_search((NAME_FIELD,), obj)
 
     def __enable_preview(self):
-        self.__prj_preview.enable()
-        self.__regset_preview.enable()
+        self.project_tabs.preview_enable()
+        self.module_tabs.preview_enable()
         self.reg_description.preview_enable()
         self.use_preview = True
 
     def __disable_preview(self):
-        self.__prj_preview.disable()
-        self.__regset_preview.disable()
+        self.project_tabs.preview_disable()
+        self.module_tabs.preview_disable()
         self.reg_description.preview_disable()
         self.use_preview = False
 
@@ -853,9 +836,6 @@ class MainWindow(BaseWindow):
                 self.__file_modified.set_sensitive(row[ProjectModel.MODIFIED])
                 self.dbase = self.active.db
                 self.__reg_model = self.active.reg_model
-
-                self.__prj_preview.set_dbase(self.active.db)
-                self.__regset_preview.set_dbase(self.active.db)
                 self.reg_description.set_database(self.active.db)
 
                 self.__filter_manage.change_filter(self.active.modelfilter)
@@ -930,12 +910,12 @@ class MainWindow(BaseWindow):
         else:
             self.find_obj('write_access').set_active(True)
 
-    def on_overview_key_press_event(self, obj, event):
-        if event.keyval == gtk.keysyms.F12:
-            if clean_format_if_needed(obj):
-                self.set_modified()
-            return True
-        return False
+    # def on_overview_key_press_event(self, obj, event):
+    #     if event.keyval == gtk.keysyms.F12:
+    #         if clean_format_if_needed(obj):
+    #             self.set_modified()
+    #         return True
+    #     return False
 
     def set_modified(self):
         """
@@ -1271,6 +1251,7 @@ class MainWindow(BaseWindow):
 
         try:
             self.__prj = RegProject(filename)
+            self.project_tabs.change_db(self.__prj)
             self.__initialize_project_address_maps()
         except xml.parsers.expat.ExpatError as msg:
             ErrorMsg("%s was not a valid project file" % filename, str(msg))
@@ -1298,7 +1279,6 @@ class MainWindow(BaseWindow):
             self.__recent_manager.add_item(uri)
         self.find_obj('save_btn').set_sensitive(True)
         self.set_busy_cursor(False)
-#        base = os.path.splitext(os.path.basename(filename))[0]
 
         self.__top_window.set_title(
             "%s - regenerate" % self.__prj.name
@@ -1548,10 +1528,7 @@ class MainWindow(BaseWindow):
         """
         Redraws the information in the register list.
         """
-        self.__overview_buf.set_text(self.dbase.overview_text)
-        self.__overview_buf.set_modified(False)
-
-        self.__module_tabs.change_db(self.dbase)
+        self.module_tabs.change_db(self.dbase)
 
         if self.dbase.array_is_reg:
             self.find_obj('register_notation').set_active(True)
@@ -1562,16 +1539,16 @@ class MainWindow(BaseWindow):
 
         self.__set_description_warn_flag()
 
-    def __overview_changed(self, obj):
+    # def __overview_changed(self, obj):
 
-        self.dbase.overview_text = obj.get_text(
-            obj.get_start_iter(),
-            obj.get_end_iter(),
-            False
-        )
+    #     self.dbase.overview_text = obj.get_text(
+    #         obj.get_start_iter(),
+    #         obj.get_end_iter(),
+    #         False
+    #     )
 
-        self.__set_description_warn_flag()
-        self.set_modified()
+    #     self.__set_description_warn_flag()
+    #     self.set_modified()
 
     def on_regenerate_delete_event(self, obj, event):
         return self.on_quit_activate(obj)
