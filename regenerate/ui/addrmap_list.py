@@ -23,6 +23,7 @@ Provides the Address List interface
 import gtk
 from regenerate.ui.columns import EditableColumn, ToggleColumn, ComboMapColumn
 from regenerate.db import LOGGER, AddrMapData
+from regenerate.ui.enums import AddrCol
 
 _BITS8 = "8 bits"
 _BITS16 = "16 bits"
@@ -46,8 +47,6 @@ class AddrMapMdl(gtk.ListStore):
     Provides the list of instances for the module. Instances consist of the
     symbolic ID name and the base address.
     """
-
-    (NAME_COL, BASE_COL, FIXED_COL, UVM_COL, WIDTH_COL, ACCESS_COL) = range(6)
 
     def __init__(self):
         super(AddrMapMdl, self).__init__(str, str, bool, bool, str, str)
@@ -140,7 +139,7 @@ class AddrMapList(object):
 
         old_value = self._model.get_value(
             self._model.get_iter(path),
-            AddrMapMdl.NAME_COL
+            AddrCol.NAME
         )
         if old_value == new_text:
             return
@@ -151,9 +150,9 @@ class AddrMapList(object):
                 '"{}" has already been used as an address map name'.format(
                     new_text))
         else:
-            name = self._model[path][AddrMapMdl.NAME_COL]
+            name = self._model[path][AddrCol.NAME]
             self._prj.change_address_map_name(name, new_text)
-            self._model[path][AddrMapMdl.NAME_COL] = new_text
+            self._model[path][AddrCol.NAME] = new_text
             self._prj.modified = True
 
     def _base_changed(self, cell, path, new_text, col):
@@ -168,13 +167,13 @@ class AddrMapList(object):
             LOGGER.error('Illegal address: "{0}"'.format(new_text))
             return
         if new_text:
-            name = self._model[path][AddrMapMdl.NAME_COL]
-            fixed = self._model[path][AddrMapMdl.FIXED_COL]
-            uvm = self._model[path][AddrMapMdl.UVM_COL]
-            width = STR2SIZE[self._model[path][AddrMapMdl.WIDTH_COL]]
+            name = self._model[path][AddrCol.NAME]
+            fixed = self._model[path][AddrCol.FIXED]
+            uvm = self._model[path][AddrCol.UVM]
+            width = STR2SIZE[self._model[path][AddrCol.WIDTH]]
 
             self._prj.set_address_map(name, value, width, fixed, uvm)
-            self._model[path][AddrMapMdl.BASE_COL] = new_text
+            self._model[path][AddrCol.BASE] = new_text
             self._prj.modified = True
 
     def _width_changed(self, cell, path, node, col):
@@ -183,10 +182,10 @@ class AddrMapList(object):
         the internal list.
         """
         if len(path) == 1:
-            name = self._model[path][AddrMapMdl.NAME_COL]
-            value = self._model[path][AddrMapMdl.BASE_COL]
-            uvm = self._model[path][AddrMapMdl.UVM_COL]
-            fixed = self._model[path][AddrMapMdl.FIXED_COL]
+            name = self._model[path][AddrCol.NAME]
+            value = self._model[path][AddrCol.BASE]
+            uvm = self._model[path][AddrCol.UVM]
+            fixed = self._model[path][AddrCol.FIXED]
 
             model = cell.get_property('model')
             self._model[path][col] = model.get_value(node, 0)
@@ -207,12 +206,12 @@ class AddrMapList(object):
         """
         if len(path) != 1:
             return
-        name = self._model[path][AddrMapMdl.NAME_COL]
-        value = self._model[path][AddrMapMdl.BASE_COL]
-        fixed = self._model[path][AddrMapMdl.FIXED_COL]
-        uvm = self._model[path][AddrMapMdl.UVM_COL]
-        width = self._model[path][AddrMapMdl.WIDTH_COL]
-        self._model[path][AddrMapMdl.FIXED_COL] = not fixed
+        name = self._model[path][AddrCol.NAME]
+        value = self._model[path][AddrCol.BASE]
+        fixed = self._model[path][AddrCol.FIXED]
+        uvm = self._model[path][AddrCol.UVM]
+        width = self._model[path][AddrCol.WIDTH]
+        self._model[path][AddrCol.FIXED] = not fixed
 
         self._prj.set_address_map(
             name,
@@ -228,13 +227,13 @@ class AddrMapList(object):
         the internal list.
         """
         if len(path) == 1:
-            name = self._model[path][AddrMapMdl.NAME_COL]
-            value = self._model[path][AddrMapMdl.BASE_COL]
-            fixed = self._model[path][AddrMapMdl.FIXED_COL]
-            uvm = self._model[path][AddrMapMdl.UVM_COL]
-            width = self._model[path][AddrMapMdl.WIDTH_COL]
+            name = self._model[path][AddrCol.NAME]
+            value = self._model[path][AddrCol.BASE]
+            fixed = self._model[path][AddrCol.FIXED]
+            uvm = self._model[path][AddrCol.UVM]
+            width = self._model[path][AddrCol.WIDTH]
 
-            self._model[path][AddrMapMdl.UVM_COL] = not uvm
+            self._model[path][AddrCol.UVM] = not uvm
             self._prj.set_address_map(
                 name,
                 int(value, 16),
@@ -250,27 +249,27 @@ class AddrMapList(object):
         column = EditableColumn(
             'Map Name',
             self._name_changed,
-            AddrMapMdl.NAME_COL
+            AddrCol.NAME
         )
         column.set_min_width(175)
-        column.set_sort_column_id(AddrMapMdl.NAME_COL)
+        column.set_sort_column_id(AddrCol.NAME)
         self._obj.append_column(column)
         self._col = column
 
         column = EditableColumn(
             'Address base (hex)',
             self._base_changed,
-            AddrMapMdl.BASE_COL,
+            AddrCol.BASE,
             True
         )
-        column.set_sort_column_id(AddrMapMdl.BASE_COL)
+        column.set_sort_column_id(AddrCol.BASE)
         self._obj.append_column(column)
 
         column = ComboMapColumn(
             'Access Width',
             self._width_changed,
             SIZE2STR,
-            AddrMapMdl.WIDTH_COL
+            AddrCol.WIDTH
         )
         column.set_min_width(250)
         self._obj.append_column(column)
@@ -278,7 +277,7 @@ class AddrMapList(object):
         column = ToggleColumn(
             'Fixed Address',
             self._fixed_changed,
-            AddrMapMdl.FIXED_COL
+            AddrCol.FIXED
         )
         column.set_max_width(250)
         self._obj.append_column(column)
@@ -286,7 +285,7 @@ class AddrMapList(object):
         column = ToggleColumn(
             'Exclude from UVM',
             self._uvm_changed,
-            AddrMapMdl.UVM_COL
+            AddrCol.UVM
         )
         column.set_max_width(250)
         self._obj.append_column(column)
@@ -319,7 +318,7 @@ class AddrMapList(object):
         if len(model.get_path(node)) > 1:
             return None
         else:
-            return model.get_value(node, AddrMapMdl.NAME_COL)
+            return model.get_value(node, AddrCol.NAME)
 
     def remove_selected(self):
         """
@@ -335,7 +334,7 @@ class AddrMapList(object):
             # remove group from address map
             pass
         else:
-            name = model.get_value(node, AddrMapMdl.NAME_COL)
+            name = model.get_value(node, AddrCol.NAME)
             model.remove(node)
             self._prj.modified = True
             self._prj.remove_address_map(name)

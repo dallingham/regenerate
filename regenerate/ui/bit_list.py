@@ -24,12 +24,14 @@ import gtk
 from regenerate.db import BitField, TYPES
 from regenerate.db.enums import ResetType
 from regenerate.ui.columns import EditableColumn, ComboMapColumn, SwitchComboMapColumn
+from regenerate.ui.enums import BitCol
 
 TYPE2STR = [(t.description, t.type) for t in sorted(TYPES)]
 RO2STR = [(t.description, t.type)
           for t in sorted(TYPES) if t.simple_type == "RO"]
 WO2STR = [(t.description, t.type)
           for t in sorted(TYPES) if t.simple_type == "WO"]
+
 (BIT_TITLE, BIT_SIZE, BIT_SORT, BIT_EXPAND, BIT_MONO) = range(5)
 
 
@@ -80,8 +82,8 @@ class BitList(object):
 
     BIT_COLS = (  # Title, Size, Sort, Expand, Monospace
         ('', 20, -1, False, False),
-        ('Bits', 60, BitModel.SORT_COL, False, True),
-        ('Name', 60, BitModel.NAME_COL, True, True),
+        ('Bits', 60, BitCol.SORT, False, True),
+        ('Name', 60, BitCol.NAME, True, True),
         ('Type', 325, -1, True, False),
         ('Reset', 160, -1, False, True),
         ('Reset Type', 75, -1, False, False), )
@@ -117,7 +119,7 @@ class BitList(object):
         the column list. The builds new columns and inserts them into the tree.
         """
         for (i, col) in enumerate(self.BIT_COLS):
-            if i == BitModel.TYPE_COL:
+            if i == BitCol.TYPE:
                 column = SwitchComboMapColumn(
                     col[BIT_TITLE],
                     combo_edit,
@@ -127,14 +129,14 @@ class BitList(object):
                     i
                 )
                 self.type_column = column
-            elif i == BitModel.RESET_TYPE_COL:
+            elif i == BitCol.RESET_TYPE:
                 column = ComboMapColumn(
                     col[BIT_TITLE],
                     combo_edit,
                     BitModel.RESET2STR,
                     i
                 )
-            elif i == BitModel.ICON_COL:
+            elif i == BitCol.ICON:
                 renderer = gtk.CellRendererPixbuf()
                 column = gtk.TreeViewColumn(
                     "",
@@ -148,7 +150,7 @@ class BitList(object):
                     i,
                     col[BIT_MONO]
                 )
-            if i == BitModel.BIT_COL:
+            if i == BitCol.BIT:
                 self.__col = column
             if col[BIT_SORT] >= 0:
                 column.set_sort_column_id(col[BIT_SORT])
@@ -182,7 +184,7 @@ class BitList(object):
         if data:
             (store, node) = data
             if node:
-                return store.get_value(node, BitModel.FIELD_COL)
+                return store.get_value(node, BitCol.FIELD)
         return None
 
     def add_new_field(self, field):

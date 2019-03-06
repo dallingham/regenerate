@@ -21,6 +21,7 @@ import gtk
 import gobject
 from regenerate.ui.columns import EditableColumn, ToggleColumn
 from regenerate.db import GroupInstData, GroupData, LOGGER
+from regenerate.ui.enums import InstCol
 
 
 class InstMdl(gtk.TreeStore):
@@ -28,9 +29,6 @@ class InstMdl(gtk.TreeStore):
     Provides the list of instances for the module. Instances consist of the
     symbolic ID name and the base address.
     """
-
-    (INST_COL, ID_COL, BASE_COL, SORT_COL, RPT_COL, OFF_COL, HDL_COL,
-     UVM_COL, DEC_COL, ARRAY_COL, SINGLE_DEC_COL, OBJ_COL) = range(12)
 
     def __init__(self, project):
 
@@ -51,7 +49,7 @@ class InstMdl(gtk.TreeStore):
         Called when the ID of an instance has been edited in the InstanceList
         """
         node = self.get_iter(path)
-        self.set_value(node, InstMdl.ID_COL, text)
+        self.set_value(node, InstCol.ID, text)
         self.callback()
 
     def change_inst(self, path, text):
@@ -62,7 +60,7 @@ class InstMdl(gtk.TreeStore):
         # get the previous value, bail if it is the same as the new value
 
         i2 = self.get_iter(path)
-        old_value = self.get_value(i2, InstMdl.INST_COL)
+        old_value = self.get_value(i2, InstCol.INST)
         if old_value == text:
             return
 
@@ -70,7 +68,7 @@ class InstMdl(gtk.TreeStore):
 
         node = self.get_iter_root()
         while node:
-            items.append(self.get_value(node, InstMdl.INST_COL))
+            items.append(self.get_value(node, InstCol.INST))
             node = self.iter_next(node)
 
         if text in set(items):
@@ -79,9 +77,9 @@ class InstMdl(gtk.TreeStore):
             return
 
         node = self.get_iter(path)
-        self.set_value(node, InstMdl.INST_COL, text)
+        self.set_value(node, InstCol.INST, text)
         self.callback()
-        obj = self.get_value(node, InstMdl.OBJ_COL)
+        obj = self.get_value(node, InstCol.OBJ)
         if obj:
             obj.name = text
 
@@ -89,7 +87,7 @@ class InstMdl(gtk.TreeStore):
             self.project.change_subsystem_name(old_value, text)
         else:
             pnode = self.get_iter(path.split(":")[0])
-            parent = self.get_value(pnode, InstMdl.INST_COL)
+            parent = self.get_value(pnode, InstCol.INST)
             self.project.change_instance_name(parent, old_value, text)
 
     def change_hdl(self, path, text):
@@ -97,9 +95,9 @@ class InstMdl(gtk.TreeStore):
         Called when the ID of an instance has been edited in the InstanceList
         """
         node = self.get_iter(path)
-        self.set_value(node, InstMdl.HDL_COL, text)
+        self.set_value(node, InstCol.HDL, text)
         self.callback()
-        obj = self.get_value(node, InstMdl.OBJ_COL)
+        obj = self.get_value(node, InstCol.OBJ)
         if obj:
             obj.hdl = text
 
@@ -107,28 +105,28 @@ class InstMdl(gtk.TreeStore):
         """
         Called when the ID of an instance has been edited in the InstanceList
         """
-        self[path][InstMdl.UVM_COL] = not self[path][InstMdl.UVM_COL]
+        self[path][InstCol.UVM] = not self[path][InstCol.UVM]
         self.callback()
 
     def change_decode(self, cell, path):
         """
         Called when the ID of an instance has been edited in the InstanceList
         """
-        self[path][InstMdl.DEC_COL] = not self[path][InstMdl.DEC_COL]
+        self[path][InstCol.DEC] = not self[path][InstCol.DEC]
         self.callback()
 
     def change_single_decode(self, cell, path):
         """
         Called when the ID of an instance has been edited in the InstanceList
         """
-        self[path][InstMdl.SINGLE_DEC_COL] = not self[path][InstMdl.SINGLE_DEC_COL]
+        self[path][InstCol.SINGLE_DEC] = not self[path][InstCol.SINGLE_DEC]
         self.callback()
 
     def change_array(self, cell, path):
         """
         Called when the ID of an instance has been edited in the InstanceList
         """
-        self[path][InstMdl.ARRAY_COL] = not self[path][InstMdl.ARRAY_COL]
+        self[path][InstCol.ARRAY] = not self[path][InstCol.ARRAY]
         self.callback()
 
     def change_base(self, path, text):
@@ -138,12 +136,12 @@ class InstMdl(gtk.TreeStore):
         """
         node = self.get_iter(path)
         try:
-            self.set_value(node, InstMdl.SORT_COL, int(text, 16))
-            self.set_value(node, InstMdl.BASE_COL, text)
+            self.set_value(node, InstCol.SORT, int(text, 16))
+            self.set_value(node, InstCol.BASE, text)
             self.callback()
         except ValueError:
             LOGGER.error('Illegal base address: "{0}"'.format(text))
-        obj = self.get_value(node, InstMdl.OBJ_COL)
+        obj = self.get_value(node, InstCol.OBJ)
         if obj:
             obj.base = int(text, 16)
 
@@ -155,11 +153,11 @@ class InstMdl(gtk.TreeStore):
         node = self.get_iter(path)
         try:
             int(text)
-            self.set_value(node, InstMdl.RPT_COL, text)
+            self.set_value(node, InstCol.RPT, text)
             self.callback()
         except ValueError:
             LOGGER.error('Illegal repeat count: "{0}"'.format(text))
-        obj = self.get_value(node, InstMdl.OBJ_COL)
+        obj = self.get_value(node, InstCol.OBJ)
         if obj:
             obj.repeat = int(text)
 
@@ -171,11 +169,11 @@ class InstMdl(gtk.TreeStore):
         node = self.get_iter(path)
         try:
             value = int(text, 16)
-            self.set_value(node, InstMdl.OFF_COL, "{0:x}".format(value))
+            self.set_value(node, InstCol.OFF, "{0:x}".format(value))
             self.callback()
         except ValueError:
             LOGGER.error('Illegal repeat offset column: "{0}"'.format(text))
-        obj = self.get_value(node, InstMdl.OBJ_COL)
+        obj = self.get_value(node, InstCol.OBJ)
         if obj:
             obj.repeat_offset = int(text, 16)
 
@@ -213,26 +211,12 @@ class InstMdl(gtk.TreeStore):
 
 
 class InstanceList(object):
-    def __init__(self, obj, id_changed, inst_changed, base_changed,
-                 repeat_changed, repeat_offset_changed, format_changed,
-                 hdl_changed, uvm_changed, decode_changed, array_changed,
-                 single_decode_changed):
+    def __init__(self, obj):
         self.__obj = obj
         self.__col = None
         self.__project = None
         self.__model = None
-        self.__build_instance_table(
-            id_changed,
-            inst_changed,
-            base_changed,
-            repeat_changed,
-            repeat_offset_changed,
-            hdl_changed,
-            uvm_changed,
-            decode_changed,
-            array_changed,
-            single_decode_changed
-        )
+        self.__build_instance_table()
         self.__enable_dnd()
         self.__obj.set_sensitive(False)
 
@@ -252,33 +236,31 @@ class InstanceList(object):
 
     def get_groups(self):
         tree_iter = self.__model.get_iter_first()
-        groups = []
         while tree_iter is not None:
-            base = self.__model.get_value(tree_iter, InstMdl.SORT_COL)
-            hdl = self.__model.get_value(tree_iter, InstMdl.HDL_COL)
-
-            current_group = self.__model.get_value(tree_iter, InstMdl.OBJ_COL)
+            current_group = self.__model.get_value(tree_iter, InstCol.OBJ)
             current_group.register_sets = []
 
             child = self.__model.iter_children(tree_iter)
             while child:
-                inst = self.__model.get_value(child, InstMdl.INST_COL)
-                name = self.__model.get_value(child, InstMdl.ID_COL)
-                base = self.__model.get_value(child, InstMdl.SORT_COL)
-                rpt = int(self.__model.get_value(child, InstMdl.RPT_COL))
-                offset_str = self.__model.get_value(child, InstMdl.OFF_COL)
-                offset = int(offset_str, 16)
-                hdl = self.__model.get_value(child, InstMdl.HDL_COL)
-                uvm = self.__model.get_value(child, InstMdl.UVM_COL)
-                array = self.__model.get_value(child, InstMdl.ARRAY_COL)
-                decode = self.__model.get_value(child, InstMdl.DEC_COL)
-                single_decode = self.__model.get_value(
-                    child, InstMdl.SINGLE_DEC_COL)
-                current_group.register_sets.append(GroupInstData(
-                    name, inst, base, rpt, offset, hdl, uvm, decode, array, single_decode))
+                current_group.register_sets.append(
+                    GroupInstData(
+                        self.col_value(child, InstCol.ID),
+                        self.col_value(child, InstCol.INST),
+                        self.col_value(child, InstCol.SORT),
+                        int(self.col_value(child, InstCol.RPT)),
+                        int(self.col_value(child, InstCol.OFF), 16),
+                        self.col_value(child, InstCol.HDL),
+                        self.col_value(child, InstCol.UVM),
+                        self.col_value(child, InstCol.DEC),
+                        self.col_value(child, InstCol.ARRAY),
+                        self.col_value(child, InstCol.SINGLE_DEC)
+                    )
+                )
                 child = self.__model.iter_next(child)
             tree_iter = self.__model.iter_next(tree_iter)
-        return groups
+
+    def col_value(self, node, col):
+        return self.__model.get_value(node, col)
 
     def new_instance(self):
         pos, grp = self.__model.new_instance()
@@ -311,8 +293,19 @@ class InstanceList(object):
         drop_info = treeview.get_dest_row_at_pos(x, y)
         (name, width) = data.split(":")
 
-        row_data = build_row_data(name, name, 0, 1, int(width, 16),
-                                  "", False, False, False, False, None)
+        row_data = build_row_data(
+            name,
+            name,
+            0,
+            1,
+            int(width, 16),
+            "",
+            False,
+            False,
+            False,
+            False,
+            None
+        )
         if drop_info:
             path, position = drop_info
             self.modified_callback()
@@ -335,73 +328,131 @@ class InstanceList(object):
                             key=lambda x: x.base)
         for item in group_list:
 
-            row = build_row_data(item.name, "", item.base, item.repeat,
-                                 item.repeat_offset, item.hdl, False,
-                                 False, False, False, item)
-            node = self.__model.append(None, row=row)
+            node = self.__model.append(
+                None,
+                row=build_row_data(
+                    item.name,
+                    "",
+                    item.base,
+                    item.repeat,
+                    item.repeat_offset,
+                    item.hdl,
+                    False,
+                    False,
+                    False,
+                    False,
+                    item
+                )
+            )
 
             item_sets = item.register_sets
-            entry_list = sorted(item_sets, key=lambda x: x.offset)
-            for entry in entry_list:
-                row = build_row_data(entry.inst, entry.set, entry.offset,
-                                     entry.repeat, entry.repeat_offset,
-                                     entry.hdl, entry.no_uvm,
-                                     entry.no_decode, entry.array,
-                                     entry.single_decode, None)
-                self.__model.append(node, row=row)
+            for entry in sorted(item_sets, key=lambda x: x.offset):
+                self.__model.append(
+                    node,
+                    row=build_row_data(
+                        entry.inst,
+                        entry.set,
+                        entry.offset,
+                        entry.repeat,
+                        entry.repeat_offset,
+                        entry.hdl,
+                        entry.no_uvm,
+                        entry.no_decode,
+                        entry.array,
+                        entry.single_decode,
+                        None
+                    )
+                )
 
-    def __build_instance_table(self, id_changed, inst_changed, base_changed,
-                               repeat_changed, repeat_offset_changed,
-                               hdl_changed, uvm_changed, decode_changed,
-                               array_changed, single_decode_changed):
+    def __build_instance_table(self):
 
-        column = EditableColumn('Instance', inst_changed, InstMdl.INST_COL)
-        column.set_sort_column_id(InstMdl.INST_COL)
+        column = EditableColumn(
+            'Instance',
+            self.instance_inst_changed,
+            InstCol.INST
+        )
+        column.set_sort_column_id(InstCol.INST)
         column.set_min_width(125)
         self.__obj.append_column(column)
         self.__col = column
 
-        column = EditableColumn('Subsystem', id_changed, InstMdl.ID_COL,
-                                visible_callback=self.visible_callback)
-        column.set_sort_column_id(InstMdl.ID_COL)
+        column = EditableColumn(
+            'Subsystem',
+            self.instance_id_changed,
+            InstCol.ID,
+            visible_callback=self.visible_callback
+        )
+        column.set_sort_column_id(InstCol.ID)
         column.set_min_width(125)
         self.__obj.append_column(column)
 
-        column = EditableColumn('Address base', base_changed, InstMdl.BASE_COL,
-                                True)
-        column.set_sort_column_id(InstMdl.SORT_COL)
+        column = EditableColumn(
+            'Address base',
+            self.instance_base_changed,
+            InstCol.BASE,
+            True
+        )
+        column.set_sort_column_id(InstCol.SORT)
         self.__obj.append_column(column)
 
-        column = EditableColumn('Repeat', repeat_changed, InstMdl.RPT_COL,
-                                True)
+        column = EditableColumn(
+            'Repeat',
+            self.instance_repeat_changed,
+            InstCol.RPT,
+            True
+        )
         self.__obj.append_column(column)
 
-        column = EditableColumn('Repeat Offset', repeat_offset_changed,
-                                InstMdl.OFF_COL, True)
+        column = EditableColumn(
+            'Repeat Offset',
+            self.instance_repeat_offset_changed,
+            InstCol.OFF,
+            True
+        )
         self.__obj.append_column(column)
 
-        column = EditableColumn('HDL Path', hdl_changed, InstMdl.HDL_COL)
+        column = EditableColumn(
+            'HDL Path',
+            self.instance_hdl_changed,
+            InstCol.HDL
+        )
         column.set_min_width(250)
-        column.set_sort_column_id(InstMdl.HDL_COL)
+        column.set_sort_column_id(InstCol.HDL)
         self.__obj.append_column(column)
 
-        column = ToggleColumn('UVM Exclude', uvm_changed, InstMdl.UVM_COL,
-                              self.visible_callback)
+        column = ToggleColumn(
+            'UVM Exclude',
+            self.instance_uvm_changed,
+            InstCol.UVM,
+            self.visible_callback
+        )
         column.set_min_width(80)
         self.__obj.append_column(column)
 
-        column = ToggleColumn('Decode Exclude', decode_changed,
-                              InstMdl.DEC_COL, self.visible_callback)
+        column = ToggleColumn(
+            'Decode Exclude',
+            self.instance_decode_changed,
+            InstCol.DEC,
+            self.visible_callback
+        )
         column.set_min_width(80)
         self.__obj.append_column(column)
 
-        column = ToggleColumn('Force arrays', array_changed,
-                              InstMdl.ARRAY_COL, self.visible_callback)
+        column = ToggleColumn(
+            'Force arrays',
+            self.instance_array_changed,
+            InstCol.ARRAY,
+            self.visible_callback
+        )
         column.set_min_width(80)
         self.__obj.append_column(column)
 
-        column = ToggleColumn('Single decode', single_decode_changed,
-                              InstMdl.SINGLE_DEC_COL, self.visible_callback)
+        column = ToggleColumn(
+            'Single decode',
+            self.instance_single_decode_changed,
+            InstCol.SINGLE_DEC,
+            self.visible_callback
+        )
         column.set_min_width(80)
         self.__obj.append_column(column)
 
@@ -412,9 +463,96 @@ class InstanceList(object):
         else:
             cell.set_property('visible', True)
 
+    def instance_id_changed(self, cell, path, new_text, col):
+        """
+        Updates the data model when the text value is changed in the model.
+        """
+        LOGGER.error("Subsystem name cannot be changed")
+
+    def inst_changed(self, attr, path, new_text):
+        getattr(self.__model, attr)(path, new_text)
+        self.modified_callback()
+
+    def inst_bool_changed(self, attr, cell, path):
+        getattr(self.__model, attr)(cell, path)
+        self.modified_callback()
+
+    def instance_inst_changed(self, cell, path, new_text, col):
+        """
+        Updates the data model when the text value is changed in the model.
+        """
+        self.inst_changed("change_inst", path, new_text)
+
+    def instance_base_changed(self, cell, path, new_text, col):
+        """
+        Updates the data model when the text value is changed in the model.
+        """
+        self.inst_changed("change_base", path, new_text)
+
+    def instance_format_changed(self, cell, path, new_text, col):
+        """
+        Updates the data model when the text value is changed in the model.
+        """
+        if len(path) > 1:
+            self.inst_changed("change_format", path, new_text)
+
+    def instance_hdl_changed(self, cell, path, new_text, col):
+        """
+        Updates the data model when the text value is changed in the model.
+        """
+        self.inst_changed("change_hdl", path, new_text)
+
+    def instance_uvm_changed(self, cell, path, col):
+        """
+        Updates the data model when the text value is changed in the model.
+        """
+        self.inst_bool_changed("change_uvm", cell, path)
+
+    def instance_decode_changed(self, cell, path, col):
+        """
+        Updates the data model when the text value is changed in the model.
+        """
+        self.inst_changed("change_decode", cell, path)
+
+    def instance_single_decode_changed(self, cell, path, col):
+        """
+        Updates the data model when the text value is changed in the model.
+        """
+        self.inst_changed("change_single_decode", cell, path)
+
+    def instance_array_changed(self, cell, path, col):
+        """
+        Updates the data model when the text value is changed in the model.
+        """
+        self.inst_changed("change_array", cell, path)
+
+    def instance_repeat_changed(self, cell, path, new_text, col):
+        """
+        Updates the data model when the text value is changed in the model.
+        """
+        self.inst_changed("change_repeat", path, new_text)
+
+    def instance_repeat_offset_changed(self, cell, path, new_text, col):
+        """
+        Updates the data model when the text value is changed in the model.
+        """
+        self.inst_changed("change_repeat_offset", path, new_text)
+
 
 def build_row_data(inst, name, offset, rpt, rpt_offset, hdl, uvm, dec, array,
                    single_decode, obj):
-    row = (inst, name, "{0:x}".format(offset), offset, "{0:d}".format(rpt),
-           "{0:x}".format(rpt_offset), hdl, uvm, dec, array, single_decode, obj)
+    row = (
+        inst,
+        name,
+        "{0:x}".format(offset),
+        offset,
+        "{0:d}".format(rpt),
+        "{0:x}".format(rpt_offset),
+        hdl,
+        uvm,
+        dec,
+        array,
+        single_decode,
+        obj
+    )
     return row

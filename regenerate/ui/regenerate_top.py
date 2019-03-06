@@ -50,12 +50,10 @@ from regenerate.ui.filter_mgr import NAME_FIELD, TOKEN_FIELD
 from regenerate.ui.help_window import HelpWindow
 from regenerate.ui.instance_list import InstMdl, InstanceList
 from regenerate.ui.preferences import Preferences
-from regenerate.ui.preview_editor import PreviewEditor, PREVIEW_ENABLED
+from regenerate.ui.preview_editor import PREVIEW_ENABLED
 from regenerate.ui.project import ProjectModel, ProjectList, update_file
 from regenerate.ui.register_list import RegisterModel, RegisterList, build_define
-from regenerate.ui.spell import Spell
 from regenerate.ui.status_logger import StatusHandler
-from regenerate.ui.utils import clean_format_if_needed
 from regenerate.extras.remap import REMAP_NAME
 from regenerate.ui.reg_description import RegisterDescription
 from regenerate.ui.module_tab import ModuleTabs, ProjectTabs
@@ -183,18 +181,7 @@ class MainWindow(BaseWindow):
         self.find_obj("open_btn").set_menu(recent_open_btn)
 
         self.instance_obj = InstanceList(
-            self.find_obj('instances'),
-            self.instance_id_changed,
-            self.instance_inst_changed,
-            self.instance_base_changed,
-            self.instance_repeat_changed,
-            self.instance_repeat_offset_changed,
-            self.instance_format_changed,
-            self.instance_hdl_changed,
-            self.instance_uvm_changed,
-            self.instance_decode_changed,
-            self.instance_array_changed,
-            self.instance_single_decode_changed
+            self.find_obj('instances')
         )
 
         self.restore_position_and_size()
@@ -579,81 +566,6 @@ class MainWindow(BaseWindow):
             self.bit_update_reset(field, path, new_text)
         register = self.reglist_obj.get_selected_register()
         self.set_register_warn_flags(register)
-
-    def instance_id_changed(self, cell, path, new_text, col):
-        """
-        Updates the data model when the text value is changed in the model.
-        """
-        LOGGER.error("Subsystem name cannot be changed")
-
-    def inst_changed(self, attr, path, new_text):
-        getattr(self.instance_model, attr)(path, new_text)
-        self.project_modified(True)
-
-    def inst_bool_changed(self, attr, cell, path):
-        getattr(self.instance_model, attr)(cell, path)
-        self.project_modified(True)
-
-    def instance_inst_changed(self, cell, path, new_text, col):
-        """
-        Updates the data model when the text value is changed in the model.
-        """
-        self.inst_changed("change_inst", path, new_text)
-
-    def instance_base_changed(self, cell, path, new_text, col):
-        """
-        Updates the data model when the text value is changed in the model.
-        """
-        self.inst_changed("change_base", path, new_text)
-
-    def instance_format_changed(self, cell, path, new_text, col):
-        """
-        Updates the data model when the text value is changed in the model.
-        """
-        if len(path) > 1:
-            self.inst_changed("change_format", path, new_text)
-
-    def instance_hdl_changed(self, cell, path, new_text, col):
-        """
-        Updates the data model when the text value is changed in the model.
-        """
-        self.inst_changed("change_hdl", path, new_text)
-
-    def instance_uvm_changed(self, cell, path, col):
-        """
-        Updates the data model when the text value is changed in the model.
-        """
-        self.inst_bool_changed("change_uvm", cell, path)
-
-    def instance_decode_changed(self, cell, path, col):
-        """
-        Updates the data model when the text value is changed in the model.
-        """
-        self.inst_changed("change_decode", cell, path)
-
-    def instance_single_decode_changed(self, cell, path, col):
-        """
-        Updates the data model when the text value is changed in the model.
-        """
-        self.inst_changed("change_single_decode", cell, path)
-
-    def instance_array_changed(self, cell, path, col):
-        """
-        Updates the data model when the text value is changed in the model.
-        """
-        self.inst_changed("change_array", cell, path)
-
-    def instance_repeat_changed(self, cell, path, new_text, col):
-        """
-        Updates the data model when the text value is changed in the model.
-        """
-        self.inst_changed("change_repeat", path, new_text)
-
-    def instance_repeat_offset_changed(self, cell, path, new_text, col):
-        """
-        Updates the data model when the text value is changed in the model.
-        """
-        self.inst_changed("change_repeat_offset", path, new_text)
 
     def on_filter_icon_press(self, obj, icon, event):
         if icon == gtk.ENTRY_ICON_SECONDARY:
