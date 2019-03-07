@@ -33,10 +33,19 @@ class Properties(object):
         self.__builder = gtk.Builder()
         self.__builder.add_from_file(GLADE_PROP)
         self.__properties = self.__builder.get_object('properties')
-        self.__builder.get_object('short_name').set_text(project.short_name)
-        self.__builder.get_object('project_name').set_text(project.name)
-        company = project.company_name
-        self.__builder.get_object('company_name').set_text(company)
+
+        self.__builder.get_object('short_name').set_text(
+            project.short_name
+        )
+
+        self.__builder.get_object('project_name').set_text(
+            project.name
+        )
+
+        self.__builder.get_object('company_name').set_text(
+            project.company_name
+        )
+
         self.__builder.connect_signals(self)
 
         self.__tree = self.__builder.get_object('address_tree')

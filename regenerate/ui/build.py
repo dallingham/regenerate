@@ -28,14 +28,8 @@ from regenerate.ui.base_window import BaseWindow
 from regenerate.ui.columns import EditableColumn, ToggleColumn
 from regenerate.ui.error_dialogs import ErrorMsg
 from regenerate.ui.export_assistant import ExportAssistant
+from regenerate.ui.enums import Level, BuildCol, MapOpt, OptMap, DbMap
 from regenerate.writers import EXPORTERS, PRJ_EXPORTERS, GRP_EXPORTERS
-
-(MDL_MOD, MDL_BASE, MDL_FMT, MDL_DEST, MDL_CLASS, MDL_DBASE, MDL_TYPE) = range(7)
-(OPTMAP_DESCRIPTION, OPTMAP_CLASS, OPTMAP_REGISTER_SET) = range(3)
-(MAPOPT_ID, MAPOPT_CLASS, MAPOPT_REGISTER_SET) = range(3)
-(DB_MAP_DBASE, DB_MAP_MODIFIED) = range(2)
-
-(LEVEL_BLOCK, LEVEL_GROUP, LEVEL_PROJECT) = range(3)
 
 
 class Build(BaseWindow):
@@ -102,9 +96,9 @@ class Build(BaseWindow):
         """
         Adds the item to the list view.
         """
-        if self.__optmap[option][OPTMAP_REGISTER_SET] == LEVEL_BLOCK:
+        if self.__optmap[option][OptMap.REGISTER_SET] == Level.BLOCK:
             self.__add_dbase_item_to_list(full_path, option, dest)
-        elif self.__optmap[option][OPTMAP_REGISTER_SET] == LEVEL_GROUP:
+        elif self.__optmap[option][OptMap.REGISTER_SET] == Level.GROUP:
             self.__add_group_item_to_list(full_path, option, dest)
         else:
             self.__add_prj_item_to_list(option, dest)
@@ -140,7 +134,7 @@ class Build(BaseWindow):
         mod = file_needs_rebuilt(local_dest, self.__dbmap, [dbase_full_path])
         self.__modlist.append(mod)
         (fmt, cls, rpttype) = self.__optmap[option]
-        dbase = self.__dbmap[base][DB_MAP_DBASE].db
+        dbase = self.__dbmap[base][DbMap.DBASE].db
         self.__model.append(row=(mod, base, fmt, dest, cls, dbase, 0))
 
     def __add_group_item_to_list(self, group_name, option, dest):
@@ -185,7 +179,7 @@ class Build(BaseWindow):
         Called with the modified toggle is changed. Toggles the value in
         the internal list.
         """
-        self.__model[path][MDL_MOD] = not self.__model[path][MDL_MOD]
+        self.__model[path][BuildCol.MODIFIED] = not self.__model[path][BuildCol.MODIFIED]
 
     def register_set_callback(self, cell, path, node, col):
         """
@@ -195,8 +189,8 @@ class Build(BaseWindow):
         into the database.
         """
         combo_box_model = cell.get_property('model')
-        self.__model[path][MDL_DBASE] = combo_box_model[node][1]
-        self.__model[path][MDL_BASE] = combo_box_model[node][0]
+        self.__model[path][BuildCol.DBASE] = combo_box_model[node][1]
+        self.__model[path][BuildCol.BASE] = combo_box_model[node][0]
 
     def format_callback(self, cell, path, node, col):
         """
@@ -206,29 +200,29 @@ class Build(BaseWindow):
         into the database.
         """
         combo_box_model = cell.get_property('model')
-        self.__model[path][MDL_CLASS] = combo_box_model[node][1]
-        self.__model[path][MDL_FMT] = combo_box_model[node][0]
+        self.__model[path][BuildCol.CLASS] = combo_box_model[node][1]
+        self.__model[path][BuildCol.FORMAT] = combo_box_model[node][0]
 
     def __add_columns(self):
         """
         Adds the columns to the builder list.
         """
-        column = ToggleColumn("Build", self.toggle_callback, MDL_MOD)
+        column = ToggleColumn("Build", self.toggle_callback, BuildCol.MODIFIED)
         self.__build_list.append_column(column)
 
-        column = EditableColumn("RegisterSet", None, MDL_BASE)
+        column = EditableColumn("RegisterSet", None, BuildCol.BASE)
         column.set_min_width(125)
-        column.set_sort_column_id(MDL_BASE)
+        column.set_sort_column_id(BuildCol.BASE)
         self.__build_list.append_column(column)
 
-        column = EditableColumn("Format", None, MDL_FMT)
+        column = EditableColumn("Format", None, BuildCol.FORMAT)
         column.set_min_width(175)
-        column.set_sort_column_id(MDL_FMT)
+        column.set_sort_column_id(BuildCol.FORMAT)
         self.__build_list.append_column(column)
 
-        column = EditableColumn("Destination", None, MDL_DEST)
+        column = EditableColumn("Destination", None, BuildCol.DEST)
         column.set_min_width(250)
-        column.set_sort_column_id(MDL_DEST)
+        column.set_sort_column_id(BuildCol.DEST)
         self.__build_list.append_column(column)
 
     def on_buildlist_button_press_event(self, obj, event):
@@ -246,7 +240,7 @@ class Build(BaseWindow):
         targets for rebuild. Simply sets all the modified flags to True.
         """
         for item in self.__model:
-            item[MDL_MOD] = True
+            item[BuildCol.MODIFIED] = True
 
     def on_unselect_all_activate(self, obj):
         """
@@ -254,7 +248,7 @@ class Build(BaseWindow):
         targets for rebuild. Simply sets all the modified flags to False.
         """
         for item in self.__model:
-            item[MDL_MOD] = False
+            item[BuildCol.MODIFIED] = False
 
     def on_select_ood_activate(self, obj):
         """
@@ -264,33 +258,33 @@ class Build(BaseWindow):
         we just march down the list and set the appropriate modified flags.
         """
         for (count, item) in enumerate(self.__model):
-            item[MDL_MOD] = self.__modlist[count]
+            item[BuildCol.MODIFIED] = self.__modlist[count]
 
     def on_run_build_clicked(self, obj):
         """
         Called when the build button is pressed.
         """
-        for item in [item for item in self.__model if item[MDL_MOD]]:
-            writer_class = item[MDL_CLASS]
-            dbase = item[MDL_DBASE]
-            rtype = item[MDL_TYPE]
+        for item in [item for item in self.__model if item[BuildCol.MODIFIED]]:
+            writer_class = item[BuildCol.CLASS]
+            dbase = item[BuildCol.DBASE]
+            rtype = item[BuildCol.TYPE]
             dest = os.path.abspath(
-                os.path.join(os.path.dirname(self.__prj.path), item[MDL_DEST]))
+                os.path.join(os.path.dirname(self.__prj.path), item[BuildCol.DEST]))
 
             try:
                 if rtype == 0:
                     gen = writer_class(self.__prj, dbase)
                 elif rtype == 1:
-                    db_list = [i[DB_MAP_DBASE].db
+                    db_list = [i[DbMap.DBASE].db
                                for i in self.__dbmap.values()]
-                    grp = item[MDL_BASE].split()[0]
+                    grp = item[BuildCol.BASE].split()[0]
                     gen = writer_class(self.__prj, grp, db_list)
                 else:
-                    db_list = [i[DB_MAP_DBASE].db
+                    db_list = [i[DbMap.DBASE].db
                                for i in self.__dbmap.values()]
                     gen = writer_class(self.__prj, db_list)
                 gen.write(dest)
-                item[MDL_MOD] = False
+                item[BuildCol.MODIFIED] = False
             except IOError as msg:
                 ErrorMsg("Error running exporter", str(msg))
 
@@ -299,13 +293,18 @@ class Build(BaseWindow):
         Brings up the export assistant, to help the user build a new rule
         to add to the builder.
         """
-        optlist = [(exp_type_fmt(item.type), 0, item.extension) for item in EXPORTERS] + \
-            [(exp_type_fmt(item.type), 1, item.extension) for item in GRP_EXPORTERS] + \
-            [(exp_type_fmt(item.type), 2, item.extension)
-             for item in PRJ_EXPORTERS]
+        optlist = [(exp_type_fmt(item.type), 0, item.extension)
+                   for item in EXPORTERS] + \
+                  [(exp_type_fmt(item.type), 1, item.extension)
+                   for item in GRP_EXPORTERS] + \
+                  [(exp_type_fmt(item.type), 2, item.extension)
+                   for item in PRJ_EXPORTERS]
+
         reglist = [os.path.splitext(os.path.basename(i))[0]
                    for i in self.__prj.get_register_set()]
+
         groups = [group.name for group in self.__prj.get_grouping_list()]
+
         ExportAssistant(self.__prj.short_name, optlist, reglist, groups,
                         self.add_callback, self.__build_top)
 
@@ -314,13 +313,13 @@ class Build(BaseWindow):
         Called when a item has been added to the builder, and is used
         to add the new item to the list view.
         """
-        option = self.__mapopt[export_format][MAPOPT_ID]
+        option = self.__mapopt[export_format][MapOpt.ID]
 
-        if self.__mapopt[export_format][MAPOPT_REGISTER_SET] == LEVEL_BLOCK:
+        if self.__mapopt[export_format][MapOpt.REGISTER_SET] == Level.BLOCK:
             register_path = self.__base2path[register_set]
             self.__prj.add_to_export_list(register_path, option, filename)
             self.__add_item_to_list(register_path, option, filename)
-        elif self.__mapopt[export_format][MAPOPT_REGISTER_SET] == LEVEL_GROUP:
+        elif self.__mapopt[export_format][MapOpt.REGISTER_SET] == Level.GROUP:
             self.__prj.add_to_group_export_list(group, option, filename)
             register_path = "%s (group)" % group
             self.__add_item_to_list(register_path, option, filename)
@@ -337,10 +336,10 @@ class Build(BaseWindow):
         sel = self.__build_list.get_selection().get_selected()
         data = sel[0][sel[1]]
 
-        option = self.__mapopt[data[MDL_FMT]][MAPOPT_ID]
-        filename = data[MDL_DEST]
-        if data[MDL_DBASE]:
-            register_path = self.__base2path[data[MDL_BASE]]
+        option = self.__mapopt[data[BuildCol.FORMAT]][MapOpt.ID]
+        filename = data[BuildCol.DEST]
+        if data[BuildCol.DBASE]:
+            register_path = self.__base2path[data[BuildCol.BASE]]
             self.__prj.remove_from_export_list(register_path, option, filename)
         else:
             self.__prj.remove_from_project_export_list(option, filename)
@@ -383,7 +382,7 @@ def file_needs_rebuilt(local_dest, dbmap, db_paths):
         for full_path in db_paths:
             (base, db_file_mtime) = base_and_modtime(full_path)
             dest_mtime = os.path.getmtime(local_dest)
-            if db_file_mtime > dest_mtime or dbmap[base][DB_MAP_MODIFIED]:
+            if db_file_mtime > dest_mtime or dbmap[base][DbMap.MODIFIED]:
                 mod = True
     return mod
 

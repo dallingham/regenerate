@@ -14,18 +14,17 @@ except ImportError:
         import locale
         import gi
         from gtkspellcheck import SpellChecker as Spell
-        
-    except:
+
+    except ImportError:
 
         class Spell(object):
             "Empty class for compatiblity if the spell checker is not found"
 
             def __init__(self, obj):
                 pass
-            
+
             def detach(self):
                 pass
 
-            LOGGER.warning("gtkspell is not installed, "
+            LOGGER.warning("gtkspell/gtkspellcheck is not installed, "
                            "spell checking will not be available")
-

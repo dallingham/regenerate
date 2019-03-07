@@ -21,7 +21,7 @@ Provides both the GTK ListStore and ListView for the bit fields.
 """
 
 import gtk
-from regenerate.db import BitField, TYPES
+from regenerate.db import TYPES
 from regenerate.db.enums import ResetType
 from regenerate.ui.columns import EditableColumn, ComboMapColumn, SwitchComboMapColumn
 from regenerate.ui.enums import BitCol
@@ -41,12 +41,11 @@ class BitModel(gtk.ListStore):
     ListView to provide the data for the bitfields.
     """
 
-    RESET2STR = (("Constant", ResetType.NUMERIC),
-                 ("Input Port", ResetType.INPUT),
-                 ("Parameter", ResetType.PARAMETER))
-
-    (ICON_COL, BIT_COL, NAME_COL, TYPE_COL, RESET_COL, RESET_TYPE_COL,
-     SORT_COL, FIELD_COL) = range(8)
+    RESET2STR = (
+        ("Constant", ResetType.NUMERIC),
+        ("Input Port", ResetType.INPUT),
+        ("Parameter", ResetType.PARAMETER)
+    )
 
     def __init__(self):
         """
@@ -80,13 +79,15 @@ class BitList(object):
     model through the list model parameter passed into the constructor.
     """
 
-    BIT_COLS = (  # Title, Size, Sort, Expand, Monospace
+    # Title, Size, Sort, Expand, Monospace
+    BIT_COLS = (
         ('', 20, -1, False, False),
         ('Bits', 60, BitCol.SORT, False, True),
         ('Name', 60, BitCol.NAME, True, True),
         ('Type', 325, -1, True, False),
         ('Reset', 160, -1, False, True),
-        ('Reset Type', 75, -1, False, False), )
+        ('Reset Type', 75, -1, False, False),
+    )
 
     def __init__(self, obj, combo_edit, text_edit, selection_changed):
         """

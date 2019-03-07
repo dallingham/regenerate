@@ -18,10 +18,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 from regenerate.db import LOGGER
-
-ADDR_FIELD = 1
-NAME_FIELD = 2
-TOKEN_FIELD = 3
+from regenerate.ui.enums import FilterField
 
 
 class FilterManager(object):
@@ -29,7 +26,7 @@ class FilterManager(object):
         self._obj = obj
         self._model = model
         self._text = ""
-        self._fields = (ADDR_FIELD, NAME_FIELD, TOKEN_FIELD)
+        self._fields = (FilterField.ADDR, FilterField.NAME, FilterField.TOKEN)
 
         self._obj.connect('changed', self._filter_changed)
 
