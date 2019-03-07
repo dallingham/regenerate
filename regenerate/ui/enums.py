@@ -36,3 +36,42 @@ BitCol = enum(
     SORT=6,
     FIELD=7
 )
+
+Level = enum(
+    BLOCK=0,
+    GROUP=1,
+    PROJECT=2
+)
+
+BuildCol = enum(
+    MODIFIED=0,
+    BASE=1,
+    FORMAT=2,
+    DEST=3,
+    CLASS=4,
+    DBASE=5,
+    TYPE=6
+)
+
+MapOpt = enum(
+    ID=0,
+    CLASS=1,
+    REGISTER_SET=2
+)
+
+OptMap = enum(
+    DESCRIPTION=0,
+    CLASS=1,
+    REGISTER_SET=2
+)
+
+DbMap = enum(
+    DBASE=0,
+    MODIFIED=1
+)
+
+FilterField = enum(
+    ADDR=0,
+    NAME=1,
+    TOKEN=2
+)

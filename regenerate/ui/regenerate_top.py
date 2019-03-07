@@ -45,8 +45,8 @@ from regenerate.ui.bit_list import BitModel, BitList, bits, reset_value
 from regenerate.ui.bitfield_editor import BitFieldEditor
 from regenerate.ui.build import Build
 from regenerate.ui.error_dialogs import ErrorMsg, WarnMsg, Question
-from regenerate.ui.filter_mgr import FilterManager, ADDR_FIELD
-from regenerate.ui.filter_mgr import NAME_FIELD, TOKEN_FIELD
+from regenerate.ui.enums import FilterField
+from regenerate.ui.filter_mgr import FilterManager
 from regenerate.ui.help_window import HelpWindow
 from regenerate.ui.instance_list import InstMdl, InstanceList
 from regenerate.ui.preferences import Preferences
@@ -96,9 +96,7 @@ class DbaseStatus(object):
 
 
 class MainWindow(BaseWindow):
-    """
-    Main window of the Regenerate program
-    """
+    """Main window of the Regenerate program"""
 
     def __init__(self):
 
@@ -395,11 +393,14 @@ class MainWindow(BaseWindow):
                          or edited.
         """
 
-        prj_acn = ["save_project_action", "new_set_action", "add_set_action",
-                   "build_action", "reg_grouping_action",
-                   "project_prop_action"]
-        reg_acn = ['remove_register_action', 'summary_action',
-                   'duplicate_register_action', 'add_bit_action']
+        prj_acn = [
+            "save_project_action", "new_set_action", "add_set_action",
+            "build_action", "reg_grouping_action", "project_prop_action"
+        ]
+        reg_acn = [
+            'remove_register_action', 'summary_action',
+            'duplicate_register_action', 'add_bit_action'
+        ]
         db_acn = ['add_register_action', 'remove_set_action', 'import_action']
         fld_acn = ['remove_bit_action', 'edit_bit_action']
         svn_acn = ['update_svn', 'revert_svn']
@@ -581,19 +582,22 @@ class MainWindow(BaseWindow):
             self.filter_manage.set_search_fields(values)
 
     def on_address_token_name_toggled(self, obj):
-        self.set_search((ADDR_FIELD, NAME_FIELD, TOKEN_FIELD), obj)
+        self.set_search(
+            (FilterField.TOKEN, FilterField.NAME, FilterField.TOKEN),
+            obj
+        )
 
     def on_token_name_toggled(self, obj):
-        self.set_search((NAME_FIELD, TOKEN_FIELD), obj)
+        self.set_search((FilterField.NAME, FilterField.TOKEN), obj)
 
     def on_token_toggled(self, obj):
-        self.set_search((TOKEN_FIELD,), obj)
+        self.set_search((FilterField.TOKEN,), obj)
 
     def on_address_toggled(self, obj):
-        self.set_search((ADDR_FIELD,), obj)
+        self.set_search((FilterField.TOKEN,), obj)
 
     def on_name_toggled(self, obj):
-        self.set_search((NAME_FIELD,), obj)
+        self.set_search((FilterField.NAME,), obj)
 
     def enable_preview(self):
         self.project_tabs.preview_enable()
@@ -821,13 +825,6 @@ class MainWindow(BaseWindow):
             self.find_obj('read_access').set_active(True)
         else:
             self.find_obj('write_access').set_active(True)
-
-    # def on_overview_key_press_event(self, obj, event):
-    #     if event.keyval == gtk.keysyms.F12:
-    #         if clean_format_if_needed(obj):
-    #             self.set_modified()
-    #         return True
-    #     return False
 
     def set_modified(self):
         """
@@ -1451,17 +1448,6 @@ class MainWindow(BaseWindow):
         self.update_bit_count()
 
         self.set_description_warn_flag()
-
-    # def overview_changed(self, obj):
-
-    #     self.dbase.overview_text = obj.get_text(
-    #         obj.get_start_iter(),
-    #         obj.get_end_iter(),
-    #         False
-    #     )
-
-    #     self.set_description_warn_flag()
-    #     self.set_modified()
 
     def on_regenerate_delete_event(self, obj, event):
         return self.on_quit_activate(obj)

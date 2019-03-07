@@ -40,8 +40,10 @@ class GroupDocEditor(object):
         self.group_title = builder.get_object('group_title')
         self.group_inst = group_inst
         self.text_buf = builder.get_object('overview1').get_buffer()
-        pango_font = pango.FontDescription("monospace")
-        builder.get_object('overview1').modify_font(pango_font)
+
+        builder.get_object('overview1').modify_font(
+            pango.FontDescription("monospace")
+        )
 
         preview = PreviewEditor(
             self.text_buf,
