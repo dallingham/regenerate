@@ -296,9 +296,10 @@ class Register(object):
         Removes the specified bit field from the dictionary. We cannot
         use the msb, since it may have changed.
         """
-        for key in self.__bit_fields:
-            if self.__bit_fields[key] == field:
-                del self.__bit_fields[key]
+        delete_keys = [key for key in self.__bit_fields
+                       if self.__bit_fields[key] == field]
+        for key in delete_keys:
+            del self.__bit_fields[key]
 
     def is_completely_read_only(self):
         for key in self.__bit_fields:

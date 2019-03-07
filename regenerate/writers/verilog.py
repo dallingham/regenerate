@@ -27,7 +27,7 @@ from jinja2 import FileSystemLoader, Environment
 from regenerate.db import BitField, TYPES, TYPE_TO_OUTPUT, Register
 from regenerate.writers.writer_base import WriterBase, ExportInfo
 from regenerate.writers.verilog_reg_def import REG
-from regenerate.db.enums import ShareType
+from regenerate.db.enums import ShareType, ResetType
 
 LOWER_BIT = {128: 4, 64: 3, 32: 2, 16: 1, 8: 0}
 
@@ -87,7 +87,7 @@ def break_into_bytes(start, stop):
     data = []
 
     while index <= stop:
-        next_boundary = ((index / 8) + 1) * 8
+        next_boundary = (int(index / 8) + 1) * 8
         data.append((index, min(stop, next_boundary - 1)))
         index = next_boundary
     return data
@@ -140,9 +140,9 @@ class Verilog(WriterBase):
         start = max(field.lsb, lower)
         stop = min(field.msb, lower + size - 1)
 
-        nbytes = size / 8
-        address = (register.address / nbytes) * nbytes
-        bit_offset = (register.address * 8) % size
+        nbytes = int(size / 8)
+        address = int(register.address / nbytes) * nbytes
+        bit_offset = int((register.address * 8) % size)
 
         return ByteInfo(field, start + bit_offset, stop + bit_offset, start,
                         stop, address + offset, register)
@@ -189,7 +189,7 @@ class Verilog(WriterBase):
             if reg.dimension > 1:
                 for i in range(0, reg.dimension):
                     new_reg = copy.copy(reg)
-                    new_reg.address = reg.address + (i * (reg.width / 8))
+                    new_reg.address = reg.address + (i * int(reg.width / 8))
                     new_reg.dimension = i
                     reglist.append(new_reg)
             else:

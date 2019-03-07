@@ -239,9 +239,10 @@ module {{db.module_name}}
 {%     endif %}
 {%   else %}
 {%     for start, stop in break_into_bytes(field.lsb, field.msb) %}
-{%        set reg_start_bit = (reg.address * 8) % db.data_bus_width %}
-{%        set bus_start = start % db.data_bus_width + reg_start_bit %}
-{%        set bus_stop = stop % db.data_bus_width + reg_start_bit %}
+{%        set reg_start_bit = ((reg.address / 8)|int % db.data_bus_width)|int %}
+{%        set bus_start = (start % db.data_bus_width)|int + reg_start_bit %}
+{%        set bus_stop = (stop % db.data_bus_width)|int + reg_start_bit %}
+// {{start}},{{stop}} {{bus_start}},{{bus_stop}} {{start % db.data_bus_width}} {{reg_start_bit}} {{db.data_bus_width}}
    {{db.module_name}}_{{ci.name}}_reg
      #(
 {%      if ci.allows_wide %}
@@ -260,7 +261,7 @@ module {{db.module_name}}
 {%        else %}
       .DI     ({{write_data_name}}[{{bus_stop}}:{{bus_start}}]),
 {%        endif %}
-      .BE     ({{byte_strobe_name}}[{{(bus_start/8)|int}}]),
+      .BE     ({{byte_strobe_name}}[{{(bus_start / 8)|int}}]),
 {%      endif %}
 {%      if ci.has_rd %}
       .RD     (read_r{{"%02x"|format(addr|int)}}),

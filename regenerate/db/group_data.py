@@ -38,6 +38,9 @@ class GroupData(object):
         self.title = title
         self.docs = ""
 
+    def __hash__(self):
+        return id(self)
+
     def __ne__(self, other):
         """Compare for inequality."""
         return not self.__eq__(other)

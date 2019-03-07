@@ -284,7 +284,7 @@ class MyLabel(gtk.Label):
     def __init__(self, text=""):
         if text is None:
             text = ""
-        super(MyLable, self).__init__(text)
+        super(MyLabel, self).__init__(text)
         self.set_alignment(0, 0)
 
     def set_text(self, text):

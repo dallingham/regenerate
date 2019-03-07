@@ -33,8 +33,10 @@ from regenerate.db import LOGGER
 import platform
 import sys
 
-ExportInfo = namedtuple("ExportInfo", ["obj_class", "type", "description",
-                                       "extension", "id"])
+ExportInfo = namedtuple(
+    "ExportInfo",
+    ["obj_class", "type", "description", "extension", "id"]
+)
 
 
 EXPORTERS = []
@@ -70,6 +72,8 @@ MODULES = [
      ["UVMRegBlockRegisters"]),
     ("sdc",
      ["Sdc"]),
+    ("xdc",
+     ["Xdc"]),
     ("spyglass",
      ["Spyglass"]),
 ]
@@ -97,6 +101,7 @@ if platform.system() == 'windows':
     from .uvm_reg_block import UVMRegBlockRegisters
     from .sdc import Sdc
     from .spyglass import Spyglass
+    from .xdc import Xdc
 
 for module in MODULES:
     for mpath in IMPORT_PATHS:
@@ -119,4 +124,4 @@ for module in MODULES:
             sys.stdout.write("%s\n" % str(msg))
             continue
     else:
-        LOGGER.warning('Cound not import the "{0}" module'.format(module[0]))
+        LOGGER.warning('Could not import the "{0}" module'.format(module[0]))

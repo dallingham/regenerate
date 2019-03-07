@@ -238,7 +238,7 @@ class Build(BaseWindow):
         """
         if event.button == 3:
             menu = self.__builder.get_object("menu")
-            menu.popup(None, None, None, 1, 0)
+            menu.popup(None, None, None, 1, 0, gtk.get_current_event_time())
 
     def on_select_all_activate(self, obj):
         """

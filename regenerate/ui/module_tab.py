@@ -129,7 +129,7 @@ class ModuleText(object):
         try:
             if placeholder:
                 self.widget.set_placeholder_text(placeholder)
-        except TypeError:
+        except AttributeError:
             pass
 
     def change_db(self, dbase):

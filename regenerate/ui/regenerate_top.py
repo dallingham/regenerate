@@ -195,7 +195,7 @@ class MainWindow(BaseWindow):
         filter_obj = self.find_obj("filter")
         try:
             filter_obj.set_placeholder_text("Signal Filter")
-        except TypeError:
+        except AttributeError:
             pass
         self.filter_manage = FilterManager(filter_obj)
 
