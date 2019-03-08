@@ -45,7 +45,7 @@ from regenerate.ui.bit_list import BitModel, BitList, bits, reset_value
 from regenerate.ui.bitfield_editor import BitFieldEditor
 from regenerate.ui.build import Build
 from regenerate.ui.error_dialogs import ErrorMsg, WarnMsg, Question
-from regenerate.ui.enums import FilterField
+from regenerate.ui.enums import FilterField, BitCol, InstCol
 from regenerate.ui.filter_mgr import FilterManager
 from regenerate.ui.help_window import HelpWindow
 from regenerate.ui.instance_list import InstMdl, InstanceList
@@ -226,7 +226,7 @@ class MainWindow(BaseWindow):
         from regenerate.ui.group_doc import GroupDocEditor
 
         (mdl, node) = self.instance_obj.get_selected_instance()
-        inst = mdl.get_value(node, InstMdl.OBJ_COL)
+        inst = mdl.get_value(node, InstCol.OBJ)
         if inst:
             GroupDocEditor(
                 inst,
@@ -428,9 +428,9 @@ class MainWindow(BaseWindow):
         model = cell.get_property('model')
         self.bit_model[path][col] = model.get_value(node, 0)
         field = self.bit_model.get_bitfield_at_path(path)
-        if col == BitModel.TYPE_COL:
+        if col == BitCol.TYPE:
             self.update_type_info(field, model, path, node)
-        elif col == BitModel.RESET_TYPE_COL:
+        elif col == BitCol.RESET:
             self.update_reset_field(field, model, path, node)
         self.set_modified()
 
@@ -457,15 +457,15 @@ class MainWindow(BaseWindow):
         field.reset_type = model.get_value(node, 1)
         if field.reset_type == ResetType.NUMERIC:
             val = reset_value(field)
-            self.bit_model[path][BitModel.RESET_COL] = val
+            self.bit_model[path][BitCol.RESET] = val
         elif field.reset_type == ResetType.INPUT:
             if not re.match("^[A-Za-z]\w*$", field.reset_input):
                 field.reset_input = "%s_RST" % field.field_name
-            self.bit_model[path][BitModel.RESET_COL] = field.reset_input
+            self.bit_model[path][BitCol.RESET] = field.reset_input
         else:
             if not re.match("^[A-Za-z]\w*$", field.reset_parameter):
                 field.reset_parameter = "pRST_%s" % field.field_name
-            self.bit_model[path][BitModel.RESET_COL] = field.reset_parameter
+            self.bit_model[path][BitCol.RESET] = field.reset_parameter
 
     def bit_update_bits(self, field, path, new_text):
         """
@@ -498,8 +498,8 @@ class MainWindow(BaseWindow):
                 r.change_bit_field(field)
                 self.set_modified()
 
-            self.bit_model[path][BitModel.BIT_COL] = bits(field)
-            self.bit_model[path][BitModel.SORT_COL] = field.start_position
+            self.bit_model[path][BitCol.BIT] = bits(field)
+            self.bit_model[path][BitCol.SORT] = field.start_position
 
     def bit_update_name(self, field, path, new_text):
         """
@@ -517,7 +517,7 @@ class MainWindow(BaseWindow):
                              if f != field]
 
             if new_text not in current_names:
-                self.bit_model[path][BitModel.NAME_COL] = new_text
+                self.bit_model[path][BitCol.NAME] = new_text
                 field.field_name = new_text
                 self.set_modified()
             else:
@@ -533,7 +533,7 @@ class MainWindow(BaseWindow):
         if field.reset_type == ResetType.NUMERIC:
             try:
                 field.reset_value = int(new_text, 16)
-                self.bit_model[path][BitModel.RESET_COL] = reset_value(field)
+                self.bit_model[path][BitCol.RESET] = reset_value(field)
                 self.set_modified()
             except ValueError:
                 LOGGER.error('Illegal reset value: "%s"' % new_text)
@@ -543,14 +543,14 @@ class MainWindow(BaseWindow):
                 LOGGER.error('"%s" is not a valid input name' % new_text)
                 new_text = "%s_RST" % field.field_name
             field.reset_input = new_text
-            self.bit_model[path][BitModel.RESET_COL] = field.reset_input
+            self.bit_model[path][BitCol.RESET] = field.reset_input
             self.set_modified()
         else:
             if not re.match("^[A-Za-z]\w*$", new_text):
                 LOGGER.error('"%s" is not a valid parameter name' % new_text)
                 new_text = "pRST_%s" % field.field_name
             field.reset_parameter = new_text
-            self.bit_model[path][BitModel.RESET_COL] = field.reset_parameter
+            self.bit_model[path][BitCol.RESET] = field.reset_parameter
             self.set_modified()
 
     def bit_text_edit(self, cell, path, new_text, col):
@@ -559,11 +559,11 @@ class MainWindow(BaseWindow):
         the column, we pass it to a function to handle the data.
         """
         field = self.bit_model.get_bitfield_at_path(path)
-        if col == BitModel.BIT_COL:
+        if col == BitCol.BIT:
             self.bit_update_bits(field, path, new_text)
-        elif col == BitModel.NAME_COL:
+        elif col == BitCol.NAME:
             self.bit_update_name(field, path, new_text)
-        elif col == BitModel.RESET_COL:
+        elif col == BitCol.RESET:
             self.bit_update_reset(field, path, new_text)
         register = self.reglist_obj.get_selected_register()
         self.set_register_warn_flags(register)
@@ -683,7 +683,7 @@ class MainWindow(BaseWindow):
         """
         selected = self.instance_obj.get_selected_instance()
         if selected and selected[1]:
-            grp = selected[0].get_value(selected[1], InstMdl.OBJ_COL)
+            grp = selected[0].get_value(selected[1], InstCol.OBJ)
             self.instance_model.remove(selected[1])
             self.prj.remove_group_from_grouping_list(grp)
             self.project_modified(True)
@@ -1665,9 +1665,9 @@ class MainWindow(BaseWindow):
     def set_bits_warn_flag(self):
         warn = False
         for row in self.bit_model:
-            field = row[BitModel.FIELD_COL]
+            field = row[BitCol.FIELD]
             icon = check_field(field)
-            row[BitModel.ICON_COL] = icon
+            row[BitCol.ICON] = icon
             if icon:
                 warn = True
         return warn
