@@ -36,6 +36,7 @@ from regenerate import PROGRAM_VERSION, PROGRAM_NAME
 from regenerate.db import RegWriter, RegisterDb, Register
 from regenerate.db import BitField, RegProject, LOGGER, TYPES
 from regenerate.db.enums import ResetType, ShareType, BitType
+from regenerate.extras.remap import REMAP_NAME
 from regenerate.importers import IMPORTERS
 from regenerate.settings import ini
 from regenerate.settings.paths import GLADE_TOP, INSTALL_PATH
@@ -45,7 +46,7 @@ from regenerate.ui.bit_list import BitModel, BitList, bits, reset_value
 from regenerate.ui.bitfield_editor import BitFieldEditor
 from regenerate.ui.build import Build
 from regenerate.ui.error_dialogs import ErrorMsg, WarnMsg, Question
-from regenerate.ui.enums import FilterField, BitCol, InstCol
+from regenerate.ui.enums import FilterField, BitCol, InstCol, PrjCol
 from regenerate.ui.filter_mgr import FilterManager
 from regenerate.ui.help_window import HelpWindow
 from regenerate.ui.instance_list import InstMdl, InstanceList
@@ -54,7 +55,6 @@ from regenerate.ui.preview_editor import PREVIEW_ENABLED
 from regenerate.ui.project import ProjectModel, ProjectList, update_file
 from regenerate.ui.register_list import RegisterModel, RegisterList, build_define
 from regenerate.ui.status_logger import StatusHandler
-from regenerate.extras.remap import REMAP_NAME
 from regenerate.ui.reg_description import RegisterDescription
 from regenerate.ui.module_tab import ModuleTabs, ProjectTabs
 
@@ -68,7 +68,6 @@ DEF_MIME = "*" + DEF_EXT
 # Regular expressions to check the validity of entered names. This should
 # probably be configurable, but has not been implemented yet.
 
-VALID_SIGNAL = re.compile("^[A-Za-z][A-Za-z0-9_]*$")
 VALID_BITS = re.compile("^\s*[\(\[]?(\d+)(\s*[-:]\s*(\d+))?[\)\]]?\s*$")
 REGNAME = re.compile("^(.*)(\d+)(.*)$")
 
@@ -102,34 +101,36 @@ class MainWindow(BaseWindow):
 
         super(MainWindow, self).__init__()
 
+        self.skip_changes = False
+        self.filename = None
+        self.modified = False
+        self.loading_project = False
+        self.active = None
+        self.dbase = None
+        self.reg_model = None
+        self.bit_model = None
+        self.modelsort = None
+        self.instance_model = None
         self.prj = None
+
+        self.use_svn = False
+        self.use_preview = bool(int(ini.get('user', 'use_preview', 0)))
+
         self.builder = gtk.Builder()
         self.builder.add_from_file(GLADE_TOP)
+
+        self.setup_main_window()
         self.build_actions()
-        self.top_window = self.find_obj("regenerate")
 
-        self.configure(self.top_window)
-
-        self.status_obj = self.find_obj("statusbar")
-        LOGGER.addHandler(StatusHandler(self.status_obj))
         self.selected_dbase = self.find_obj("selected_dbase")
-
-        self.prj_obj = ProjectList(
-            self.find_obj("project_list"),
-            self.prj_selection_changed
-        )
-
         self.reg_notebook = self.find_obj("reg_notebook")
         self.top_notebook = self.find_obj("notebook1")
-
         self.module_notebook = self.find_obj("module_notebook")
 
         self.module_tabs = ModuleTabs(
             self.builder,
             self.set_modified
         )
-
-        self.build_project_tab()
 
         self.reglist_obj = RegisterList(
             self.find_obj("register_list"),
@@ -139,44 +140,21 @@ class MainWindow(BaseWindow):
             self.set_register_warn_flags
         )
 
-        self.use_svn = bool(int(ini.get('user', 'use_svn', 0)))
-        self.use_preview = bool(int(ini.get('user', 'use_preview', 0)))
-
-        self.filename = None
-        self.modified = False
-
-        self.skip_changes = False
-        self.loading_project = False
-        self.active = None
-        self.dbase = None
-        self.reg_model = None
-        self.bit_model = None
-        self.modelsort = None
-        self.instance_model = None
-
         self.reg_description = RegisterDescription(
             self.find_obj('register_description'),
             self.find_obj('scroll_reg_webkit'),
             self.register_description_callback
         )
 
-        self.prj_model = ProjectModel(self.use_svn)
-        self.prj_obj.set_model(self.prj_model)
-
         self.bitfield_obj = BitList(
-            self.find_obj("bitfield_list"), self.bit_combo_edit,
-            self.bit_text_edit, self.bit_changed)
+            self.find_obj("bitfield_list"),
+            self.bit_combo_edit,
+            self.bit_text_edit,
+            self.bit_changed
+        )
 
-        try:
-            self.recent_manager = gtk.recent_manager_get_default()
-        except AttributeError:
-            self.recent_manager = gtk.RecentManager.get_default()
-
-        recent_file_menu = self.create_recent_menu_item()
-        self.find_obj('file_menu').insert(recent_file_menu, 2)
-
-        recent_open_btn = self.create_recent_menu()
-        self.find_obj("open_btn").set_menu(recent_open_btn)
+        self.setup_project()
+        self.setup_recent_menu()
 
         self.instance_obj = InstanceList(
             self.find_obj('instances')
@@ -197,6 +175,29 @@ class MainWindow(BaseWindow):
             pass
         self.filter_manage = FilterManager(filter_obj)
 
+    def setup_main_window(self):
+        self.top_window = self.find_obj("regenerate")
+        self.configure(self.top_window)
+        self.status_obj = self.find_obj("statusbar")
+        LOGGER.addHandler(StatusHandler(self.status_obj))
+
+    def setup_recent_menu(self):
+        """Setup the recent files management system"""
+
+        try:
+            self.recent_manager = gtk.RecentManager.get_default()
+        except AttributeError:
+            self.recent_manager = gtk.recent_manager_get_default()
+
+        self.find_obj('file_menu').insert(
+            self.create_recent_menu_item(),
+            2
+        )
+
+        self.find_obj("open_btn").set_menu(
+            self.create_recent_menu()
+        )
+
     def find_obj(self, name):
         return self.builder.get_object(name)
 
@@ -214,8 +215,8 @@ class MainWindow(BaseWindow):
             btn.set_sensitive(False)
 
     def on_addrmap_cursor_changed(self, obj):
-        btn = self.find_obj("edit_map")
         mdl, node = obj.get_selection().get_selected()
+        btn = self.find_obj("edit_map")
         if node:
             path = mdl.get_path(node)
             btn.set_sensitive(len(path) == 1)
@@ -234,11 +235,18 @@ class MainWindow(BaseWindow):
                 self.top_window
             )
 
-    def build_project_tab(self):
+    def setup_project(self):
         self.project_tabs = ProjectTabs(
             self.builder,
             self.set_project_modified
         )
+
+        self.prj_obj = ProjectList(
+            self.find_obj("project_list"),
+            self.prj_selection_changed
+        )
+        self.prj_model = ProjectModel(False)
+        self.prj_obj.set_model(self.prj_model)
 
         self.addr_map_obj = self.find_obj('address_tree')
         self.addr_map_list = AddrMapList(self.addr_map_obj)
@@ -248,7 +256,7 @@ class MainWindow(BaseWindow):
 
     def project_modified(self, value):
         if value:
-            if self.prj.modified == False:
+            if not self.prj.modified:
                 self.top_window.set_title(
                     "%s (modified) - regenerate" % self.prj.name
                 )
@@ -304,43 +312,6 @@ class MainWindow(BaseWindow):
 
     def on_help_action_activate(self, obj):
         HelpWindow(self.builder, "regenerate_help.rst")
-
-    def on_project_name_changed(self, obj):
-        """
-        Callback function from glade to handle changes in the project name.
-        When the name is changed, it is immediately updated in the project
-        object.
-        """
-        self.project_modified(True)
-        self.prj.name = obj.get_text()
-
-    def on_company_name_changed(self, obj):
-        """
-        Callback function from glade to handle changes in the company name.
-        When the name is changed, it is immediately updated in the project
-        object.
-        """
-        self.project_modified(True)
-        self.prj.company_name = obj.get_text()
-
-    def on_project_documentation_changed(self, obj):
-        self.project_modified(True)
-        self.prj.documentation = obj.get_text(
-            obj.get_start_iter(),
-            obj.get_end_iter(),
-            False
-        )
-
-    def on_short_name_changed(self, obj):
-        """
-        Callback function from glade to handle changes in the short name.
-        When the name is changed, it is immediately updated in the project
-        object. The name must not have spaces, so we immediately replace any
-        spaces.
-        """
-        self.prj.short_name = obj.get_text().replace(' ', '').strip()
-        self.project_modified(True)
-        obj.set_text(self.prj.short_name)
 
     def restore_position_and_size(self):
         "Restore the desired position and size from the user's config file"
@@ -403,7 +374,6 @@ class MainWindow(BaseWindow):
         ]
         db_acn = ['add_register_action', 'remove_set_action', 'import_action']
         fld_acn = ['remove_bit_action', 'edit_bit_action']
-        svn_acn = ['update_svn', 'revert_svn']
         file_acn = ['revert_action']
 
         if PREVIEW_ENABLED:
@@ -415,7 +385,6 @@ class MainWindow(BaseWindow):
         self.reg_selected = self.build_group("reg_selected", reg_acn)
         self.db_selected = self.build_group("database_selected", db_acn)
         self.field_selected = self.build_group("field_selected", fld_acn)
-        self.svn_selected = self.build_group("svn_enabled", svn_acn)
         self.file_modified = self.build_group("file_modified", file_acn)
 
     def bit_combo_edit(self, cell, path, node, col):
@@ -575,7 +544,8 @@ class MainWindow(BaseWindow):
         elif icon == gtk.ENTRY_ICON_PRIMARY:
             if event.type == gtk.gdk.BUTTON_PRESS:
                 menu = self.find_obj("filter_menu")
-                menu.popup(None, None, None, 1, 0)
+                menu.popup(None, None, None, 1, 0,
+                           gtk.get_current_event_time())
 
     def set_search(self, values, obj):
         if obj.get_active():
@@ -594,7 +564,7 @@ class MainWindow(BaseWindow):
         self.set_search((FilterField.TOKEN,), obj)
 
     def on_address_toggled(self, obj):
-        self.set_search((FilterField.TOKEN,), obj)
+        self.set_search((FilterField.ADDR,), obj)
 
     def on_name_toggled(self, obj):
         self.set_search((FilterField.NAME,), obj)
@@ -629,48 +599,23 @@ class MainWindow(BaseWindow):
         dbmap = {}
         item_list = self.prj_model
         for item in item_list:
-            name = item[ProjectModel.NAME]
-            modified = item[ProjectModel.MODIFIED]
-            obj = item[ProjectModel.OBJ]
+            name = item[PrjCol.NAME]
+            modified = item[PrjCol.MODIFIED]
+            obj = item[PrjCol.OBJ]
             dbmap[name] = (obj, modified)
         Build(self.prj, dbmap, self.top_window)
 
-    def on_revert_svn_activate(self, obj):
-        pass
-
-    def on_project_list_button_press_event(self, obj, event):
-        if event.button == 3:
-            menu = self.find_obj("svn_prj_menu")
-            menu.popup(None, None, None, 1, 0)
-
-    def on_update_svn_activate(self, obj):
-        (store, node) = self.prj_obj.get_selected()
-        if node and store[node][ProjectModel.OOD]:
-            filename = store[node][ProjectModel.FILE]
-
-            idval = self.status_obj.get_context_id('mod')
-            self.status_obj.push(idval, "Updating %s from SVN" % filename)
-            self.set_busy_cursor(True)
-            update_file(filename)
-            self.input_xml(filename)
-            store[node][ProjectModel.FILE] = self.dbase
-            store[node][ProjectModel.MODIFIED] = False
-            store[node][ProjectModel.OOD] = False
-            store[node][ProjectModel.ICON] = ""
-            self.status_obj.pop(idval)
-            self.set_busy_cursor(False)
-
     def on_revert_action_activate(self, obj):
         (store, node) = self.prj_obj.get_selected()
-        if node and store[node][ProjectModel.MODIFIED]:
-            filename = store[node][ProjectModel.FILE]
+        if node and store[node][PrjCol.MODIFIED]:
+            filename = store[node][PrjCol.FILE]
 
             self.set_busy_cursor(True)
             self.input_xml(filename)
-            store[node][ProjectModel.FILE] = self.dbase
-            store[node][ProjectModel.MODIFIED] = False
-            store[node][ProjectModel.OOD] = False
-            store[node][ProjectModel.ICON] = ""
+            store[node][PrjCol.FILE] = self.dbase
+            store[node][PrjCol.MODIFIED] = False
+            store[node][PrjCol.OOD] = False
+            store[node][PrjCol.ICON] = ""
             self.set_busy_cursor(False)
             self.file_modified.set_sensitive(False)
 
@@ -691,13 +636,6 @@ class MainWindow(BaseWindow):
     def on_add_instance_clicked(self, obj):
         self.instance_obj.new_instance()
         self.project_modified(True)
-
-    def data_changed(self, obj):
-        """
-        Typically attached to the 'changed' callback of ui widgets to
-        keep track of changes in the interface.
-        """
-        self.set_modified()
 
     def build_import_menu(self):
         """
@@ -746,10 +684,9 @@ class MainWindow(BaseWindow):
                 self.active.bit_select = self.bitfield_obj.get_selected_row()
 
             if node:
-                self.active = store.get_value(node, ProjectModel.OBJ)
+                self.active = store.get_value(node, PrjCol.OBJ)
                 row = store[node]
-                self.svn_selected.set_sensitive(row[ProjectModel.OOD])
-                self.file_modified.set_sensitive(row[ProjectModel.MODIFIED])
+                self.file_modified.set_sensitive(row[PrjCol.MODIFIED])
                 self.dbase = self.active.db
                 self.reg_model = self.active.reg_model
                 self.reg_description.set_database(self.active.db)
@@ -776,12 +713,10 @@ class MainWindow(BaseWindow):
                 self.active = None
                 self.dbase = None
                 self.selected_dbase.set_text("")
-                self.svn_selected.set_sensitive(False)
                 self.reglist_obj.set_model(None)
                 self.enable_registers(False)
         else:
             self.enable_registers(False)
-            self.svn_selected.set_sensitive(False)
         self.skip_changes = old_skip
 
     def selected_reg_changed(self, obj):
@@ -997,9 +932,12 @@ class MainWindow(BaseWindow):
         expression to control the selector.
         """
         choose = gtk.FileChooserDialog(
-            title, self.top_window, action,
+            title,
+            self.top_window,
+            action,
             (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, icon, gtk.RESPONSE_OK)
         )
+
         choose.set_current_folder(os.curdir)
         if m_name:
             mime_filter = gtk.FileFilter()
@@ -1066,7 +1004,7 @@ class MainWindow(BaseWindow):
         self.skip_changes = True
         if data:
             (store, node) = data
-            filename = store.get_value(node, ProjectModel.FILE)
+            filename = store.get_value(node, PrjCol.FILE)
             store.remove(node)
             self.prj.remove_register_set(filename)
         self.skip_changes = old_skip
@@ -1296,12 +1234,10 @@ class MainWindow(BaseWindow):
             except IOError as msg:
                 ErrorMsg("Could not load existing register set", str(msg))
 
-            base = os.path.splitext(os.path.basename(name))[0]
-
             self.active = DbaseStatus(
                 self.dbase,
                 name,
-                base,
+                os.path.splitext(os.path.basename(name))[0],
                 self.reg_model,
                 self.modelsort,
                 self.filter_manage.get_model(),
@@ -1329,25 +1265,22 @@ class MainWindow(BaseWindow):
         database.
         """
         for item in self.prj_model:
-            if item[ProjectModel.MODIFIED]:
+            if item[PrjCol.MODIFIED]:
                 try:
-                    old_path = item[ProjectModel.OBJ].path
+                    old_path = item[PrjCol.OBJ].path
                     new_path = "%s.bak" % old_path
                     if os.path.isfile(new_path):
                         os.remove(new_path)
                     if os.path.isfile(old_path):
                         os.rename(old_path, new_path)
 
-                    writer = RegWriter(item[ProjectModel.OBJ].db)
+                    writer = RegWriter(item[PrjCol.OBJ].db)
                     writer.save(old_path)
-                    self.clear_modified(item[ProjectModel.OBJ])
+                    self.clear_modified(item[PrjCol.OBJ])
                 except IOError as msg:
                     os.rename(new_path, old_path)
                     ErrorMsg("Could not save %s, restoring original" %
                              old_path, str(msg))
-                # except:
-                #     os.rename(new_path, old_path)
-                #     ErrorMsg("Could not save %s, restoring original" % old_path, "")
 
         self.prj.set_new_order([item[0] for item in self.prj_model])
         self.instance_obj.get_groups()
@@ -1423,9 +1356,7 @@ class MainWindow(BaseWindow):
         choose.destroy()
 
     def import_using_importer(self, name, importer_class):
-        """
-        Saves the file using the specified writer class.
-        """
+        """Saves the file using the specified writer class."""
         importer = importer_class(self.dbase)
         try:
             importer.import_data(name)
@@ -1435,9 +1366,7 @@ class MainWindow(BaseWindow):
             ErrorMsg("Could not create %s " % name, str(msg))
 
     def redraw(self):
-        """
-        Redraws the information in the register list.
-        """
+        """Redraws the information in the register list."""
         self.module_tabs.change_db(self.dbase)
 
         if self.dbase.array_is_reg:
@@ -1598,17 +1527,6 @@ class MainWindow(BaseWindow):
         box.run()
         box.destroy()
 
-    def check_signal(self, obj, message):
-        match = VALID_SIGNAL.match(obj.get_text())
-        if match:
-            obj.set_property('secondary-icon-stock', None)
-            obj.set_property('secondary-icon-tooltip-text', '')
-            return True
-        else:
-            obj.set_property('secondary-icon-stock', gtk.STOCK_DIALOG_ERROR)
-            obj.set_property('secondary-icon-tooltip-text', message)
-            return False
-
     def set_register_warn_flags(self, reg, mark=True):
         warn_reg = warn_bit = False
         msg = []
@@ -1671,30 +1589,6 @@ class MainWindow(BaseWindow):
             if icon:
                 warn = True
         return warn
-
-    def set_module_ports_warn_flag(self):
-        return
-        # FIXME
-        data = (
-            (self.rst_entry_obj, "reset"),
-            (self.write_data_obj, "write data"),
-            (self.read_data_obj, "read data"),
-            (self.byte_en_obj, "byte enables"),
-            (self.write_strobe_obj, "write strobe"),
-            (self.ack_obj, "acknowledge"),
-            (self.address_bus_obj, "address bus")
-        )
-
-        if not self.loading_project:
-            warn = False
-            msgs = []
-            for (obj, name) in data:
-                if not self.check_signal(obj, "Illegal signal name"):
-                    warn = True
-                    msgs.append("Illegal signal for %s" % name)
-            icon = self.find_obj('mod_port_warn')
-            icon.set_property('visible', warn)
-            icon.set_tooltip_text("\n".join(msgs))
 
 
 def build_new_name(name, reglist):

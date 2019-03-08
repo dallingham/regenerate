@@ -31,9 +31,6 @@ class Preferences(object):
         self.__builder.add_from_file(GLADE_PREF)
         self.__properties = self.__builder.get_object('preferences')
 
-        value = bool(int(ini.get('user', 'use_svn', 0)))
-        self.__builder.get_object('use_svn').set_active(value)
-
         value = bool(int(ini.get('user', 'load_last_project', 0)))
         self.__builder.get_object('load_last_project').set_active(value)
 
@@ -43,9 +40,6 @@ class Preferences(object):
         self.__builder.connect_signals(self)
         self.__properties.set_transient_for(parent)
         self.__properties.show()
-
-    def on_use_svn_toggled(self, obj):
-        ini.set('user', 'use_svn', int(bool(obj.get_active())))
 
     def on_load_last_project_toggled(self, obj):
         ini.set('user', 'load_last_project', int(bool(obj.get_active())))

@@ -91,11 +91,6 @@
     <property name="stock_id">gtk-revert-to-saved</property>
     <signal name="activate" handler="on_revert_action_activate" swapped="no"/>
   </object>
-  <object class="GtkAction" id="revert_svn">
-    <property name="label">Revert to SVN</property>
-    <property name="short_label">SVN revert</property>
-    <signal name="activate" handler="on_revert_svn_activate" swapped="no"/>
-  </object>
   <object class="GtkAction" id="save_project_action">
     <property name="label" translatable="yes">Save Project</property>
     <property name="short_label" translatable="yes">Save</property>
@@ -106,11 +101,6 @@
     <property name="tooltip" translatable="yes">Displays a summary of the selected register</property>
     <property name="stock_id">gtk-file</property>
     <signal name="activate" handler="on_summary_action_activate" swapped="no"/>
-  </object>
-  <object class="GtkAction" id="update_svn">
-    <property name="label">Update from SVN</property>
-    <property name="short_label">SVN update</property>
-    <signal name="activate" handler="on_update_svn_activate" swapped="no"/>
   </object>
   <object class="GtkMenu" id="filter_menu">
     <property name="visible">True</property>
@@ -512,7 +502,6 @@
   </object>
   <object class="GtkTextBuffer" id="overview_buffer"/>
   <object class="GtkTextBuffer" id="project_doc_buffer">
-    <signal name="changed" handler="on_project_documentation_changed" swapped="no"/>
   </object>
   <object class="GtkWindow" id="regenerate">
     <property name="can_focus">False</property>
@@ -641,15 +630,6 @@
                       <object class="GtkSeparatorMenuItem" id="menuitem5">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkMenuItem" id="update_from_svn">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="related_action">update_svn</property>
-                        <property name="label" translatable="yes">Update from SVN</property>
-                        <property name="use_underline">True</property>
                       </object>
                     </child>
                     <child>
@@ -1034,7 +1014,6 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="border_width">6</property>
-                    <signal name="button-press-event" handler="on_project_list_button_press_event" swapped="no"/>
                   </object>
                 </child>
               </object>
@@ -2763,7 +2742,6 @@
                             <property name="secondary_icon_activatable">False</property>
                             <property name="primary_icon_sensitive">True</property>
                             <property name="secondary_icon_sensitive">True</property>
-                            <signal name="changed" handler="on_project_name_changed" swapped="no"/>
                           </object>
                           <packing>
                             <property name="left_attach">2</property>
@@ -2797,7 +2775,6 @@
                             <property name="secondary_icon_activatable">False</property>
                             <property name="primary_icon_sensitive">True</property>
                             <property name="secondary_icon_sensitive">True</property>
-                            <signal name="changed" handler="on_short_name_changed" swapped="no"/>
                           </object>
                           <packing>
                             <property name="left_attach">2</property>
@@ -2833,7 +2810,6 @@
                             <property name="secondary_icon_activatable">False</property>
                             <property name="primary_icon_sensitive">True</property>
                             <property name="secondary_icon_sensitive">True</property>
-                            <signal name="changed" handler="on_company_name_changed" swapped="no"/>
                           </object>
                           <packing>
                             <property name="left_attach">2</property>
@@ -3351,28 +3327,6 @@
             <property name="position">2</property>
           </packing>
         </child>
-      </object>
-    </child>
-  </object>
-  <object class="GtkMenu" id="svn_prj_menu">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <child>
-      <object class="GtkImageMenuItem" id="menuitem11">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="related_action">update_svn</property>
-        <property name="use_underline">True</property>
-        <property name="use_stock">True</property>
-      </object>
-    </child>
-    <child>
-      <object class="GtkImageMenuItem" id="menuitem12">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="related_action">revert_action</property>
-        <property name="use_underline">True</property>
-        <property name="use_stock">True</property>
       </object>
     </child>
   </object>

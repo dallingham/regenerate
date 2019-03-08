@@ -21,6 +21,7 @@ import gtk
 import pango
 import os
 from regenerate.settings.paths import INSTALL_PATH
+from regenerate.ui.enums import PrjCol
 
 try:
     import pysvn
@@ -58,8 +59,6 @@ except ImportError:
 
 class ProjectModel(gtk.ListStore):
 
-    (NAME, ICON, FILE, MODIFIED, OOD, OBJ) = range(6)
-
     def __init__(self, use_svn=False):
         super(ProjectModel, self).__init__(str, str, str, bool, bool, object)
 
@@ -73,12 +72,12 @@ class ProjectModel(gtk.ListStore):
             icon = gtk.STOCK_EDIT
         else:
             icon = None
-        self.set_value(node, self.ICON, icon)
-        self.set_value(node, self.MODIFIED, modified)
+        self.set_value(node, PrjCol.ICON, icon)
+        self.set_value(node, PrjCol.MODIFIED, modified)
 
     def is_not_saved(self):
         for item in self:
-            if item[self.MODIFIED]:
+            if item[PrjCol.MODIFIED]:
                 return True
         return False
 
@@ -88,8 +87,8 @@ class ProjectModel(gtk.ListStore):
                 for ood_file in get_out_of_date(path):
                     try:
                         node = self.file_list[ood_file]
-                        self.set_value(node, self.ICON, 'out-of-date')
-                        self.set_value(node, self.OOD, True)
+                        self.set_value(node, PrjCol.ICON, 'out-of-date')
+                        self.set_value(node, PrjCol.OOD, True)
                     except KeyError:
                         pass
         self.paths = set()
@@ -130,8 +129,8 @@ class ProjectList(object):
         tselection = treeview.get_selection()
         model, tree_iter = tselection.get_selected()
 
-        prj_name = model.get_value(tree_iter, ProjectModel.NAME)
-        prj_obj = model.get_value(tree_iter, ProjectModel.OBJ)
+        prj_name = model.get_value(tree_iter, PrjCol.NAME)
+        prj_obj = model.get_value(tree_iter, PrjCol.OBJ)
         data = "{0}:{1:x}".format(prj_name, 1 << prj_obj.db.address_bus_width)
 
         try:

@@ -31,23 +31,6 @@
               </packing>
             </child>
             <child>
-              <object class="GtkCheckButton" id="use_svn">
-                <property name="label" translatable="yes">Check SVN for out of date files</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">False</property>
-                <property name="draw_indicator">True</property>
-                <signal name="toggled" handler="on_use_svn_toggled"/>
-              </object>
-              <packing>
-                <property name="left_attach">1</property>
-                <property name="right_attach">3</property>
-                <property name="top_attach">1</property>
-                <property name="bottom_attach">2</property>
-                <property name="y_options"></property>
-              </packing>
-            </child>
-            <child>
               <object class="GtkLabel" id="label1">
                 <property name="visible">True</property>
                 <property name="xalign">0</property>

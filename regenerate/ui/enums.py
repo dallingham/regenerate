@@ -75,3 +75,12 @@ FilterField = enum(
     NAME=1,
     TOKEN=2
 )
+
+PrjCol = enum(
+    NAME=0,
+    ICON=1,
+    FILE=2,
+    MODIFIED=3,
+    OOD=4,
+    OBJ=5
+)
