@@ -321,7 +321,7 @@ class ModuleTabs(object):
              "Missing description of the module"),
             ('reset_level', 'reset_active_level', ModuleBool, None),
             ('interface', 'use_interface', ModuleBool, None),
-            ('byte_en_level', 'be_level', ModuleBool, None),
+            ('byte_en_level', 'byte_strobe_active_level', ModuleBool, None),
             ('internal_only', 'internal_only', ModuleBool, None),
             ('coverage', 'coverage', ModuleBool, None),
             ('data_width', 'data_bus_width', ModuleWidth, None),

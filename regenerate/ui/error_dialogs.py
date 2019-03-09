@@ -28,10 +28,12 @@ class BaseMsg(gtk.MessageDialog):
     Base message class
     """
 
-    def __init__(self, title, msg, dialog_type, buttons=gtk.BUTTONS_CLOSE):
+    def __init__(self, title, msg, dialog_type, buttons=gtk.BUTTONS_CLOSE, parent=None):
 
         super(BaseMsg, self).__init__(type=dialog_type, buttons=buttons)
 
+        if parent is not None:
+            self.set_transient_for(parent)
         self.set_markup('<span weight="bold" size="larger">%s</span>' % title)
         self.format_secondary_markup(msg)
         self.run_dialog()
@@ -49,8 +51,8 @@ class ErrorMsg(BaseMsg):
     Error message dialog box
     """
 
-    def __init__(self, err, msg=""):
-        super(ErrorMsg, self).__init__(err, msg, gtk.MESSAGE_ERROR)
+    def __init__(self, err, msg="", parent=None):
+        super(ErrorMsg, self).__init__(err, msg, gtk.MESSAGE_ERROR, parent)
 
 
 class WarnMsg(BaseMsg):
@@ -58,8 +60,8 @@ class WarnMsg(BaseMsg):
     Warning message dialog box
     """
 
-    def __init__(self, err, msg=""):
-        super(WarnMsg, self).__init__(err, msg, gtk.MESSAGE_WARNING)
+    def __init__(self, err, msg="", parent=None):
+        super(WarnMsg, self).__init__(err, msg, gtk.MESSAGE_WARNING, parent)
 
 
 class Question(gtk.MessageDialog):

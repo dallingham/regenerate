@@ -134,10 +134,13 @@ class InstMdl(gtk.TreeStore):
         Called when the base address of an instance has been edited in the
         InstanceList
         """
+        print ("Change Base")
+
         node = self.get_iter(path)
         try:
             self.set_value(node, InstCol.SORT, int(text, 16))
             self.set_value(node, InstCol.BASE, text)
+            print (self.callback)
             self.callback()
         except ValueError:
             LOGGER.error('Illegal base address: "{0}"'.format(text))
@@ -211,7 +214,8 @@ class InstMdl(gtk.TreeStore):
 
 
 class InstanceList(object):
-    def __init__(self, obj):
+
+    def __init__(self, obj, callback):
         self.__obj = obj
         self.__col = None
         self.__project = None
@@ -219,10 +223,7 @@ class InstanceList(object):
         self.__build_instance_table()
         self.__enable_dnd()
         self.__obj.set_sensitive(False)
-
-    def modified_callback(self):
-        if self.__project:
-            self.__project.modified = True
+        self.modified_callback = callback
 
     def set_project(self, project):
         self.__project = project

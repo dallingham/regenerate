@@ -19,7 +19,9 @@
 
 
 import os
+import regenerate.extras
 from regenerate.db import LOGGER
+from regenerate.ui.base_window import BaseWindow
 
 WEBKIT = True
 
@@ -41,10 +43,6 @@ if os.getenv("NOWEBKIT") is None:
             WEBKIT = False
 else:
     WEBKIT = False
-
-
-import regenerate.extras
-from regenerate.ui.base_window import BaseWindow
 
 
 class SummaryWindow(BaseWindow):

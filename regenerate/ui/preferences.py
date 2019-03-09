@@ -26,6 +26,7 @@ Provides the preferences dialog box
 
 
 class Preferences(object):
+
     def __init__(self, parent):
         self.__builder = gtk.Builder()
         self.__builder.add_from_file(GLADE_PREF)

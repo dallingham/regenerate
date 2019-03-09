@@ -32,10 +32,12 @@ class AddrMapEdit(BaseWindow):
     for an address map.
     """
 
-    def __init__(self, map_name, subsystem_list, builder, project, parent):
+    def __init__(self, map_name, subsystem_list, builder, project, parent,
+                 callback):
 
         super(AddrMapEdit, self).__init__()
         self.project = project
+        self.callback = callback
 
         label = gtk.Label(
             'Select subsystems for the "{0}" address map'.format(map_name))
@@ -135,6 +137,7 @@ class AddrMapEdit(BaseWindow):
 
     def _enable_changed(self, cell, path, source):
         self.model[path][0] = not self.model[path][0]
+        self.callback()
 
     def _access_changed(self, obj, path, node, val):
         mdl = obj.get_property('model')
@@ -148,6 +151,7 @@ class AddrMapEdit(BaseWindow):
             self.model[path][1],
             val_int
         )
+        self.callback()
 
     def get_list(self):
         return self.cb_list

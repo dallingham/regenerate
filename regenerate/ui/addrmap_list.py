@@ -85,13 +85,14 @@ class AddrMapList(object):
     Container for the Address Map control logic.
     """
 
-    def __init__(self, obj):
+    def __init__(self, obj, callback):
         self._obj = obj
         self._col = None
         self._prj = None
         self._model = None
         self._build_instance_table()
         self._obj.set_sensitive(False)
+        self._callback = callback
 
     def set_project(self, project):
         """
@@ -153,7 +154,7 @@ class AddrMapList(object):
             name = self._model[path][AddrCol.NAME]
             self._prj.change_address_map_name(name, new_text)
             self._model[path][AddrCol.NAME] = new_text
-            self._prj.modified = True
+            self._callback()
 
     def _base_changed(self, cell, path, new_text, col):
         """
@@ -174,7 +175,7 @@ class AddrMapList(object):
 
             self._prj.set_address_map(name, value, width, fixed, uvm)
             self._model[path][AddrCol.BASE] = new_text
-            self._prj.modified = True
+            self._callback()
 
     def _width_changed(self, cell, path, node, col):
         """
@@ -198,6 +199,7 @@ class AddrMapList(object):
                 fixed,
                 uvm
             )
+            self._callback()
 
     def _fixed_changed(self, cell, path, source):
         """
@@ -336,7 +338,7 @@ class AddrMapList(object):
         else:
             name = model.get_value(node, AddrCol.NAME)
             model.remove(node)
-            self._prj.modified = True
+            self._callback()
             self._prj.remove_address_map(name)
 
     def add_new_map(self):
@@ -357,7 +359,7 @@ class AddrMapList(object):
         )
 
         path = self._model.get_path(node)
-        self._prj.modified = True
+        self._callback()
         self._prj.set_address_map(name, 0, SIZE2STR[0][1], False, False)
         self._obj.set_cursor(path, self._col, start_editing=True)
 

@@ -238,7 +238,10 @@ class BitFieldEditor(BaseWindow):
         if last >= max_values:
             ErrorMsg(
                 "Maximum number of values reached",
-                "The width of the field only allows for {0} values".format(last))
+                "The width of the field only allows for {0} values".format(
+                    last),
+                self.top_window
+            )
             return
 
         try:
@@ -385,7 +388,9 @@ class BitFieldEditor(BaseWindow):
         """
         if new_text in self._used_tokens:
             ErrorMsg("Duplicate token",
-                     'The token "{0}" has already been used'.format(new_text))
+                     'The token "{0}" has already been used'.format(new_text),
+                     self.top_window
+                     )
         else:
             node = self._value_model.get_iter(path)
             old_text = self._value_model.get_value(node, 1)

@@ -52,7 +52,7 @@ from regenerate.ui.help_window import HelpWindow
 from regenerate.ui.instance_list import InstMdl, InstanceList
 from regenerate.ui.preferences import Preferences
 from regenerate.ui.preview_editor import PREVIEW_ENABLED
-from regenerate.ui.project import ProjectModel, ProjectList, update_file
+from regenerate.ui.project import ProjectModel, ProjectList
 from regenerate.ui.register_list import RegisterModel, RegisterList, build_define
 from regenerate.ui.status_logger import StatusHandler
 from regenerate.ui.reg_description import RegisterDescription
@@ -157,7 +157,8 @@ class MainWindow(BaseWindow):
         self.setup_recent_menu()
 
         self.instance_obj = InstanceList(
-            self.find_obj('instances')
+            self.find_obj('instances'),
+            self.set_project_modified
         )
 
         self.restore_position_and_size()
@@ -249,17 +250,19 @@ class MainWindow(BaseWindow):
         self.prj_obj.set_model(self.prj_model)
 
         self.addr_map_obj = self.find_obj('address_tree')
-        self.addr_map_list = AddrMapList(self.addr_map_obj)
+        self.addr_map_list = AddrMapList(
+            self.addr_map_obj,
+            self.set_project_modified
+        )
 
     def set_project_modified(self):
         self.project_modified(True)
 
     def project_modified(self, value):
         if value:
-            if not self.prj.modified:
-                self.top_window.set_title(
-                    "%s (modified) - regenerate" % self.prj.name
-                )
+            self.top_window.set_title(
+                "%s (modified) - regenerate" % self.prj.name
+            )
         else:
             self.top_window.set_title(
                 "%s - regenerate" % self.prj.name
@@ -288,14 +291,15 @@ class MainWindow(BaseWindow):
             new_list,
             self.builder,
             self.prj,
-            self.top_window
+            self.top_window,
+            self.set_project_modified
         )
 
         new_list = dialog.get_list()
         if new_list is not None:
-            self.prj.set_address_map_group_list(map_name, dialog.get_list())
+            self.prj.set_address_map_group_list(map_name, new_list)
             self.addr_map_list.set_project(self.prj)
-            self.project_modified(False)
+            self.set_project_modified()
 
     def on_addr_map_help_clicked(self, obj):
         HelpWindow(self.builder, "addr_map_help.rst")
@@ -990,6 +994,7 @@ class MainWindow(BaseWindow):
             for filename in choose.get_filenames():
                 self.open_xml(filename)
                 self.prj.add_register_set(filename)
+                self.set_project_modified()
             self.prj_model.load_icons()
         choose.destroy()
 
@@ -1007,6 +1012,7 @@ class MainWindow(BaseWindow):
             filename = store.get_value(node, PrjCol.FILE)
             store.remove(node)
             self.prj.remove_register_set(filename)
+            self.set_project_modified()
         self.skip_changes = old_skip
 
     def get_new_filename(self):
@@ -1183,6 +1189,7 @@ class MainWindow(BaseWindow):
         self.prj.add_register_set(name)
 
         self.module_notebook.set_sensitive(True)
+        self.set_project_modified()
         self.clear_modified()
 
     def input_xml(self, name, load=True):
@@ -1194,7 +1201,8 @@ class MainWindow(BaseWindow):
             WarnMsg(
                 "Read only file",
                 'You will not be able to save this file unless\n'
-                'you change permissions.'
+                'you change permissions.',
+                self.top_window
             )
 
         self.reg_model = RegisterModel()
