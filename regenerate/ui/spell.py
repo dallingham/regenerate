@@ -6,14 +6,13 @@ from regenerate.db import LOGGER
 
 try:
 
-    from gtkspell import Spell
+    from gtkspellcheck import SpellChecker as Spell
 
 except ImportError:
 
     try:
-        import locale
-        import gi
-        from gtkspellcheck import SpellChecker as Spell
+
+        from gtkspell import Spell
 
     except ImportError:
 

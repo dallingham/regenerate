@@ -17,32 +17,26 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-
-import os
 import regenerate.extras
 from regenerate.db import LOGGER
 from regenerate.ui.base_window import BaseWindow
 
 WEBKIT = True
 
-if os.getenv("NOWEBKIT") is None:
+try:
+    import webkit
+
+except ImportError:
 
     try:
-        import webkit
-
+        import gi
+        gi.require_version('WebKit', '3.0')
+        from gi.repository import WebKit as webkit
     except ImportError:
-
-        try:
-            import gi
-            gi.require_version('WebKit', '3.0')
-            from gi.repository import WebKit as webkit
-        except ImportError:
-            PREVIEW_ENABLED = False
-            LOGGER.warning("Webkit is not installed, preview of formatted "
-                           "comments will not be available")
-            WEBKIT = False
-else:
-    WEBKIT = False
+        PREVIEW_ENABLED = False
+        LOGGER.warning("Webkit is not installed, preview of formatted "
+                       "comments will not be available")
+        WEBKIT = False
 
 
 class SummaryWindow(BaseWindow):

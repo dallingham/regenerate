@@ -24,9 +24,10 @@ from collections import namedtuple
 import gtk
 from regenerate.ui.columns import EditableColumn, ComboMapColumn
 from regenerate.ui.error_dialogs import ErrorMsg
-from regenerate.db import LOGGER, Register
+from regenerate.db import LOGGER
 from regenerate.db.enums import ShareType
 from regenerate.extras.remap import REMAP_NAME
+from regenerate.ui.enums import RegCol, RegColType
 
 BAD_TOKENS = ' /-@!#$%^&*()+=|{}[]:"\';\\,.?'
 
@@ -105,13 +106,19 @@ class RegisterModel(gtk.ListStore):
     address.
     """
 
-    (ICON_COL, ADDR_COL, NAME_COL, DEFINE_COL, DIM_COL, WIDTH_COL, SORT_COL,
-     TOOLTIP_COL, OBJ_COL) = range(9)
+    BIT2STR = (
+        ("8 bits", 8),
+        ("16 bits", 16),
+        ("32 bits", 32),
+        ("64 bits", 64),
+    )
 
-    BIT2STR = (("8 bits", 8), ("16 bits", 16), ("32 bits", 32),
-               ("64 bits", 64), )
-
-    STR2BIT = {8: "8 bits", 16: "16 bits", 32: "32 bits", 64: "64 bits", }
+    STR2BIT = {
+        8: "8 bits",
+        16: "16 bits",
+        32: "32 bits",
+        64: "64 bits",
+    }
 
     def __init__(self):
         super(RegisterModel, self).__init__(
@@ -171,14 +178,14 @@ class RegisterModel(gtk.ListStore):
         Sets the tooltip for the register.
         """
         path = self.get_path_from_register(reg)
-        self[path][self.TOOLTIP_COL] = msg
+        self[path][RegCol.TOOLTIP] = msg
 
     def get_register_at_path(self, path):
         """
         Given a path (row) in the ListStore, we return the corresponding
         Register.
         """
-        return self[path][self.OBJ_COL]
+        return self[path][RegCol.OBJ]
 
     def set_warning_for_register(self, register, flag):
         """
@@ -186,9 +193,9 @@ class RegisterModel(gtk.ListStore):
         """
         path = self.reg2path[register]
         if flag:
-            self[path][self.ICON_COL] = gtk.STOCK_DIALOG_WARNING
+            self[path][RegCol.ICON] = gtk.STOCK_DIALOG_WARNING
         else:
-            self[path][self.ICON_COL] = None
+            self[path][RegCol.ICON] = None
 
     def get_path_from_register(self, register):
         """
@@ -204,16 +211,16 @@ class RegisterModel(gtk.ListStore):
         """
         node = self.get_iter(path)
         if length:
-            self.set(node, self.ADDR_COL, "%04x:%x" % (addr, length))
+            self.set(node, RegCol.ADDR, "%04x:%x" % (addr, length))
         else:
-            self.set(node, self.ADDR_COL, "%04x" % addr)
-        self.set(node, self.SORT_COL, addr)
+            self.set(node, RegCol.ADDR, "%04x" % addr)
+        self.set(node, RegCol.SORT, addr)
 
 
 ColDef = namedtuple(
     "ColDef",
-    ["title", "size", "sort_column", "expand", "type", "mono",
-     "placeholder"])
+    ["title", "size", "sort_column", "expand", "type", "mono", "placeholder"]
+)
 
 
 class RegisterList(object):
@@ -221,30 +228,28 @@ class RegisterList(object):
     Provides the interface to the register table
     """
 
-    (COL_TEXT, COL_COMBO, COL_ICON) = range(3)
-
     _COLS = (  # Title,   Size, Column, Expand, Type, Monospace
         ColDef(
-            '', 30, RegisterModel.ICON_COL, False, COL_ICON, False, None
+            '', 30, RegCol.ICON, False, RegColType.ICON, False, None
         ),
         ColDef(
-            'Address', 100, RegisterModel.SORT_COL, False, COL_TEXT, True,
+            'Address', 100, RegCol.SORT, False, RegColType.TEXT, True,
             'Address'
         ),
         ColDef(
-            'Name', 175, RegisterModel.NAME_COL, True, COL_TEXT, False,
+            'Name', 175, RegCol.NAME, True, RegColType.TEXT, False,
             'Missing Register Descriptive Name'
         ),
         ColDef(
-            'Token', 150, RegisterModel.DEFINE_COL, True, COL_TEXT, True,
+            'Token', 150, RegCol.DEFINE, True, RegColType.TEXT, True,
             'Missing Register Token Name'
         ),
         ColDef(
-            'Dimension', 50, RegisterModel.DIM_COL, True, COL_TEXT, False,
+            'Dimension', 50, RegCol.DIM, True, RegColType.TEXT, False,
             None
         ),
         ColDef(
-            'Width', 125, -1, False, COL_COMBO, False, None
+            'Width', 125, -1, False, RegColType.COMBO, False, None
         ),
     )
 
@@ -301,18 +306,28 @@ class RegisterList(object):
         the column list. The builds new columns and inserts them into the tree.
         """
         for (i, col) in enumerate(self._COLS):
-            if col.type == self.COL_COMBO:
-                column = ComboMapColumn(col.title, self.__combo_edited,
-                                        RegisterModel.BIT2STR, i)
-            elif col.type == self.COL_TEXT:
+            if col.type == RegColType.COMBO:
+                column = ComboMapColumn(
+                    col.title,
+                    self.__combo_edited,
+                    RegisterModel.BIT2STR,
+                    i
+                )
+            elif col.type == RegColType.TEXT:
                 column = EditableColumn(
-                    col.title, self.__text_edited, i, col.mono,
+                    col.title,
+                    self.__text_edited,
+                    i,
+                    col.mono,
                     placeholder=col.placeholder
                 )
             else:
                 self.__icon_renderer = gtk.CellRendererPixbuf()
-                column = gtk.TreeViewColumn("", self.__icon_renderer,
-                                            stock_id=i)
+                column = gtk.TreeViewColumn(
+                    "",
+                    self.__icon_renderer,
+                    stock_id=i
+                )
                 self.__icon_col = column
 
             column.set_min_width(col.size)
@@ -323,7 +338,7 @@ class RegisterList(object):
                 column.set_sort_column_id(col.sort_column)
             self.__obj.append_column(column)
         self.__obj.set_search_column(3)
-        self.__obj.set_tooltip_column(RegisterModel.TOOLTIP_COL)
+        self.__obj.set_tooltip_column(RegCol.TOOLTIP)
 
     def set_model(self, model):
         """
@@ -352,7 +367,7 @@ class RegisterList(object):
         if data:
             (store, node) = data
             if node:
-                return store.get_value(node, RegisterModel.OBJ_COL)
+                return store.get_value(node, RegCol.OBJ)
         return None
 
     def __ram_update_addr(self, reg, path, text):
@@ -368,11 +383,13 @@ class RegisterList(object):
                 self.__model.set_address_at_path(path, new_addr, new_length)
                 self.__set_modified()
         except KeyError:
-            ErrorMsg("Internal Error",
-                     "Deleting the register caused an internal "
-                     "inconsistency.\nPlease exit without saving "
-                     "to prevent any corruption to\n"
-                     "your database and report this error.")
+            ErrorMsg(
+                "Internal Error",
+                "Deleting the register caused an internal "
+                "inconsistency.\nPlease exit without saving "
+                "to prevent any corruption to\n"
+                "your database and report this error."
+            )
 
     def __reg_update_addr(self, reg, path, text):
         """
@@ -386,11 +403,13 @@ class RegisterList(object):
                 self.__model.set_address_at_path(path, new_addr, new_length)
                 self.__set_modified()
         except KeyError:
-            ErrorMsg("Internal Error",
-                     "Deleting the register caused an internal "
-                     "inconsistency.\nPlease exit without saving to "
-                     "prevent any corruption to\n"
-                     "your database and report this error.")
+            ErrorMsg(
+                "Internal Error",
+                "Deleting the register caused an internal "
+                "inconsistency.\nPlease exit without saving to "
+                "prevent any corruption to\n"
+                "your database and report this error."
+            )
 
     def __reg_update_name(self, reg, path, text):
         """
@@ -400,10 +419,10 @@ class RegisterList(object):
         if text != reg.register_name:
             reg.register_name = text
             self.__set_modified()
-        self.__model[path][RegisterModel.NAME_COL] = reg.register_name
+        self.__model[path][RegCol.NAME] = reg.register_name
         if reg.token == "":
             value = build_define(reg.register_name)
-            self.__model[path][RegisterModel.DEFINE_COL] = value
+            self.__model[path][RegCol.DEFINE] = value
             reg.token = value
             self.__set_modified()
 
@@ -420,7 +439,7 @@ class RegisterList(object):
         if value != reg.dimension:
             reg.dimension = value
             self.__set_modified()
-        self.__model[path][RegisterModel.DIM_COL] = value
+        self.__model[path][RegCol.DIM] = value
 
     def __reg_update_define(self, reg, path, text, cell):
         """
@@ -434,7 +453,7 @@ class RegisterList(object):
             reg.token = text
             self.__set_warn_flags(reg)
             self.__set_modified()
-        self.__model[path][RegisterModel.DEFINE_COL] = reg.token
+        self.__model[path][RegCol.DEFINE] = reg.token
 
     def __new_address_is_not_used(self, new_text, path):
         """
@@ -482,8 +501,9 @@ class RegisterList(object):
             else:
                 self.__handle_reg_address(register, path, new_text)
         except ValueError:
-            LOGGER.warning('Address %0x was not changed: invalid value "%s"' %
-                           (register.address, new_text))
+            LOGGER.warning(
+                'Address %0x was not changed: invalid value "%s"' %
+                (register.address, new_text))
 
     def __handle_ram_address(self, register, path, new_text):
         """
@@ -492,9 +512,10 @@ class RegisterList(object):
         if self.__new_address_is_not_used(new_text, path):
             self.__ram_update_addr(register, path, new_text)
         else:
-            ErrorMsg("Address already used",
-                     "The address %0x is already used by another register" %
-                     int(new_text, 16))
+            ErrorMsg(
+                "Address already used",
+                "The address %0x is already used by another register" %
+                int(new_text, 16))
 
     def __check_address_align(self, address, width):
         align = width >> 3
@@ -523,13 +544,13 @@ class RegisterList(object):
         """
         register = self.__model.get_register_at_path(path)
         new_text = new_text.strip()
-        if col == RegisterModel.ADDR_COL:
+        if col == RegCol.ADDR:
             self.__handle_edited_address(register, path, new_text)
-        elif col == RegisterModel.NAME_COL:
+        elif col == RegCol.NAME:
             self.__reg_update_name(register, path, new_text)
-        elif col == RegisterModel.DIM_COL:
+        elif col == RegCol.DIM:
             self.__reg_update_dim(register, path, new_text)
-        elif col == RegisterModel.DEFINE_COL:
+        elif col == RegCol.DEFINE:
             self.__reg_update_define(register, path, new_text, cell)
 
     def __combo_edited(self, cell, path, node, col):
@@ -559,5 +580,8 @@ def build_define(text):
     if text in REMAP_NAME:
         text = "%s_REG" % text
 
-    return "_".join([REPLACE.get(i.upper(), i.upper()) for i in text.split('_')
-                     if REPLACE.get(i.upper(), i.upper()) != ""])
+    return "_".join(
+        [REPLACE.get(i.upper(), i.upper())
+         for i in text.split('_')
+         if REPLACE.get(i.upper(), i.upper()) != ""]
+    )

@@ -27,7 +27,6 @@ class FilterManager(object):
         self._model = model
         self._text = ""
         self._fields = (FilterField.ADDR, FilterField.NAME, FilterField.TOKEN)
-
         self._obj.connect('changed', self._filter_changed)
 
     def get_model(self):

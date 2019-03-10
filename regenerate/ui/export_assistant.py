@@ -70,15 +70,18 @@ class ExportAssistant(gtk.Assistant):
 
     def selected_export(self):
         model = self.export_combo.get_model()
-        return model.get_value(self.export_combo.get_active_iter(), 0)
+        return model.get_value(
+            self.export_combo.get_active_iter(), 0)
 
     def selected_export_is_project(self):
         model = self.export_combo.get_model()
-        return model.get_value(self.export_combo.get_active_iter(), 1) == 2
+        return model.get_value(
+            self.export_combo.get_active_iter(), 1) == 2
 
     def selected_export_is_group(self):
         model = self.export_combo.get_model()
-        return model.get_value(self.export_combo.get_active_iter(), 1) == 1
+        return model.get_value(
+            self.export_combo.get_active_iter(), 1) == 1
 
     def selected_extension(self):
         model = self.export_combo.get_model()
@@ -144,12 +147,14 @@ class ExportAssistant(gtk.Assistant):
         table.set_border_width(3)
         table.show()
 
-        label = gtk.Label("There are many different types of files that can "
-                          "be exported. Some files are based on a selected "
-                          "register set, some are based on a group of "
-                          "registers, others are based on the entire "
-                          "project.\n\nSelect the type file that you "
-                          "wish to generate.")
+        label = gtk.Label(
+            "There are many different types of files that can "
+            "be exported. Some files are based on a selected "
+            "register set, some are based on a group of "
+            "registers, others are based on the entire "
+            "project.\n\nSelect the type file that you "
+            "wish to generate."
+        )
         label.set_line_wrap(True)
         label.show()
         table.attach(label, 0, 3, 0, 1)
@@ -181,9 +186,11 @@ class ExportAssistant(gtk.Assistant):
         table.set_border_width(3)
         table.show()
 
-        label = gtk.Label("The selected export file is requires that "
-                          "you select a register set as the source of "
-                          "your data.\n\n")
+        label = gtk.Label(
+            "The selected export file is requires that "
+            "you select a register set as the source of "
+            "your data.\n\n"
+        )
         label.set_line_wrap(True)
         label.show()
         table.attach(label, 0, 3, 0, 1)
@@ -205,9 +212,11 @@ class ExportAssistant(gtk.Assistant):
         table.set_border_width(3)
         table.show()
 
-        label = gtk.Label("The selected export file is requires that "
-                          "you select a group as the source of "
-                          "your data.\n\n")
+        label = gtk.Label(
+            "The selected export file is requires that "
+            "you select a group as the source of "
+            "your data.\n\n"
+        )
         label.set_line_wrap(True)
         label.show()
         table.attach(label, 0, 3, 0, 1)
