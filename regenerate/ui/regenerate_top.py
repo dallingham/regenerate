@@ -33,7 +33,7 @@ import re
 import sys
 import xml
 from regenerate import PROGRAM_VERSION, PROGRAM_NAME
-from regenerate.db import RegWriter, RegisterDb, Register
+from regenerate.db import RegWriter, RegisterDb, Register, GroupInstData
 from regenerate.db import BitField, RegProject, LOGGER, TYPES
 from regenerate.db.enums import ResetType, ShareType, BitType
 from regenerate.extras.remap import REMAP_NAME
@@ -207,15 +207,13 @@ class MainWindow(BaseWindow):
         self.set_register_warn_flags(reg)
 
     def on_instances_cursor_changed(self, obj):
+        """Called when the row of the treeview changes."""
         (mdl, node) = self.instance_obj.get_selected_instance()
         btn = self.find_obj("instance_edit_btn")
-        if node:
-            path = mdl.get_path(node)
-            btn.set_sensitive(len(path) == 1)
-        else:
-            btn.set_sensitive(False)
+        btn.set_sensitive(True)
 
     def on_addrmap_cursor_changed(self, obj):
+        """Called when the row of the treeview changes."""
         mdl, node = obj.get_selection().get_selected()
         btn = self.find_obj("edit_map")
         if node:
@@ -229,7 +227,15 @@ class MainWindow(BaseWindow):
 
         (mdl, node) = self.instance_obj.get_selected_instance()
         inst = mdl.get_value(node, InstCol.OBJ)
-        if inst:
+        if isinstance(inst, GroupInstData):
+            from regenerate.ui.group_options import GroupOptions
+
+            a = GroupOptions(
+                inst,
+                self.top_window,
+                self.project_modified
+            )
+        else:
             GroupDocEditor(
                 inst,
                 self.project_modified,

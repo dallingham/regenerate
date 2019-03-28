@@ -25,12 +25,11 @@ information.
 #  Standard imports
 
 import gtk
-import os
 import pango
-from regenerate.db import BitField, TYPE_TO_ID
+from regenerate.db import TYPE_TO_ID
 from regenerate.db import TYPE_TO_DESCR, TYPE_TO_ENABLE
 from regenerate.db.enums import ResetType
-from regenerate.settings.paths import GLADE_BIT, INSTALL_PATH
+from regenerate.settings.paths import GLADE_BIT
 from regenerate.ui.error_dialogs import ErrorMsg
 from regenerate.ui.help_window import HelpWindow
 from regenerate.ui.base_window import BaseWindow

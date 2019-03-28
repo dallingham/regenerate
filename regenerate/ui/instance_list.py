@@ -34,7 +34,7 @@ class InstMdl(gtk.TreeStore):
 
         super(InstMdl, self).__init__(
             str, str, str, gobject.TYPE_UINT64, str,
-            str, str, bool, bool, bool, bool, object
+            str, str, object
         )
 
         self.callback = self.__null_callback()
@@ -64,14 +64,11 @@ class InstMdl(gtk.TreeStore):
         if old_value == text:
             return
 
-        items = []
+        items = set([])
+        for row in self:
+            items.add(row[InstCol.INST])
 
-        node = self.get_iter_root()
-        while node:
-            items.append(self.get_value(node, InstCol.INST))
-            node = self.iter_next(node)
-
-        if text in set(items):
+        if text in items:
             LOGGER.error(
                 '"{0}" has already been used as a group name'.format(text))
             return
@@ -79,11 +76,10 @@ class InstMdl(gtk.TreeStore):
         node = self.get_iter(path)
         self.set_value(node, InstCol.INST, text)
         self.callback()
-        obj = self.get_value(node, InstCol.OBJ)
-        if obj:
-            obj.name = text
 
         if len(path.split(":")) == 1:
+            obj = self.get_value(node, InstCol.OBJ)
+            obj.name = text
             self.project.change_subsystem_name(old_value, text)
         else:
             pnode = self.get_iter(path.split(":")[0])
@@ -101,46 +97,15 @@ class InstMdl(gtk.TreeStore):
         if obj:
             obj.hdl = text
 
-    def change_uvm(self, cell, path):
-        """
-        Called when the ID of an instance has been edited in the InstanceList
-        """
-        self[path][InstCol.UVM] = not self[path][InstCol.UVM]
-        self.callback()
-
-    def change_decode(self, cell, path):
-        """
-        Called when the ID of an instance has been edited in the InstanceList
-        """
-        self[path][InstCol.DEC] = not self[path][InstCol.DEC]
-        self.callback()
-
-    def change_single_decode(self, cell, path):
-        """
-        Called when the ID of an instance has been edited in the InstanceList
-        """
-        self[path][InstCol.SINGLE_DEC] = not self[path][InstCol.SINGLE_DEC]
-        self.callback()
-
-    def change_array(self, cell, path):
-        """
-        Called when the ID of an instance has been edited in the InstanceList
-        """
-        self[path][InstCol.ARRAY] = not self[path][InstCol.ARRAY]
-        self.callback()
-
     def change_base(self, path, text):
         """
         Called when the base address of an instance has been edited in the
         InstanceList
         """
-        print ("Change Base")
-
         node = self.get_iter(path)
         try:
             self.set_value(node, InstCol.SORT, int(text, 16))
             self.set_value(node, InstCol.BASE, text)
-            print (self.callback)
             self.callback()
         except ValueError:
             LOGGER.error('Illegal base address: "{0}"'.format(text))
@@ -201,10 +166,6 @@ class InstMdl(gtk.TreeStore):
             new_grp.repeat,
             new_grp.repeat_offset,
             new_grp.hdl,
-            False,
-            False,
-            False,
-            False,
             new_grp
         )
 
@@ -301,10 +262,6 @@ class InstanceList(object):
             1,
             int(width, 16),
             "",
-            False,
-            False,
-            False,
-            False,
             None
         )
         if drop_info:
@@ -338,10 +295,6 @@ class InstanceList(object):
                     item.repeat,
                     item.repeat_offset,
                     item.hdl,
-                    False,
-                    False,
-                    False,
-                    False,
                     item
                 )
             )
@@ -357,11 +310,7 @@ class InstanceList(object):
                         entry.repeat,
                         entry.repeat_offset,
                         entry.hdl,
-                        entry.no_uvm,
-                        entry.no_decode,
-                        entry.array,
-                        entry.single_decode,
-                        None
+                        entry
                     )
                 )
 
@@ -373,7 +322,7 @@ class InstanceList(object):
             InstCol.INST
         )
         column.set_sort_column_id(InstCol.INST)
-        column.set_min_width(125)
+        column.set_min_width(150)
         self.__obj.append_column(column)
         self.__col = column
 
@@ -384,7 +333,7 @@ class InstanceList(object):
             visible_callback=self.visible_callback
         )
         column.set_sort_column_id(InstCol.ID)
-        column.set_min_width(125)
+        column.set_min_width(150)
         self.__obj.append_column(column)
 
         column = EditableColumn(
@@ -394,6 +343,7 @@ class InstanceList(object):
             True
         )
         column.set_sort_column_id(InstCol.SORT)
+        column.set_min_width(150)
         self.__obj.append_column(column)
 
         column = EditableColumn(
@@ -402,6 +352,7 @@ class InstanceList(object):
             InstCol.RPT,
             True
         )
+        column.set_min_width(150)
         self.__obj.append_column(column)
 
         column = EditableColumn(
@@ -410,6 +361,7 @@ class InstanceList(object):
             InstCol.OFF,
             True
         )
+        column.set_min_width(150)
         self.__obj.append_column(column)
 
         column = EditableColumn(
@@ -419,42 +371,6 @@ class InstanceList(object):
         )
         column.set_min_width(250)
         column.set_sort_column_id(InstCol.HDL)
-        self.__obj.append_column(column)
-
-        column = ToggleColumn(
-            'UVM Exclude',
-            self.instance_uvm_changed,
-            InstCol.UVM,
-            self.visible_callback
-        )
-        column.set_min_width(80)
-        self.__obj.append_column(column)
-
-        column = ToggleColumn(
-            'Decode Exclude',
-            self.instance_decode_changed,
-            InstCol.DEC,
-            self.visible_callback
-        )
-        column.set_min_width(80)
-        self.__obj.append_column(column)
-
-        column = ToggleColumn(
-            'Force arrays',
-            self.instance_array_changed,
-            InstCol.ARRAY,
-            self.visible_callback
-        )
-        column.set_min_width(80)
-        self.__obj.append_column(column)
-
-        column = ToggleColumn(
-            'Single decode',
-            self.instance_single_decode_changed,
-            InstCol.SINGLE_DEC,
-            self.visible_callback
-        )
-        column.set_min_width(80)
         self.__obj.append_column(column)
 
     def visible_callback(self, column, cell, model, *obj):
@@ -503,30 +419,6 @@ class InstanceList(object):
         """
         self.inst_changed("change_hdl", path, new_text)
 
-    def instance_uvm_changed(self, cell, path, col):
-        """
-        Updates the data model when the text value is changed in the model.
-        """
-        self.inst_bool_changed("change_uvm", cell, path)
-
-    def instance_decode_changed(self, cell, path, col):
-        """
-        Updates the data model when the text value is changed in the model.
-        """
-        self.inst_changed("change_decode", cell, path)
-
-    def instance_single_decode_changed(self, cell, path, col):
-        """
-        Updates the data model when the text value is changed in the model.
-        """
-        self.inst_changed("change_single_decode", cell, path)
-
-    def instance_array_changed(self, cell, path, col):
-        """
-        Updates the data model when the text value is changed in the model.
-        """
-        self.inst_changed("change_array", cell, path)
-
     def instance_repeat_changed(self, cell, path, new_text, col):
         """
         Updates the data model when the text value is changed in the model.
@@ -540,8 +432,7 @@ class InstanceList(object):
         self.inst_changed("change_repeat_offset", path, new_text)
 
 
-def build_row_data(inst, name, offset, rpt, rpt_offset, hdl, uvm, dec, array,
-                   single_decode, obj):
+def build_row_data(inst, name, offset, rpt, rpt_offset, hdl, obj):
     row = (
         inst,
         name,
@@ -550,10 +441,6 @@ def build_row_data(inst, name, offset, rpt, rpt_offset, hdl, uvm, dec, array,
         "{0:d}".format(rpt),
         "{0:x}".format(rpt_offset),
         hdl,
-        uvm,
-        dec,
-        array,
-        single_decode,
         obj
     )
     return row

@@ -273,7 +273,7 @@ class AddrMapList(object):
             SIZE2STR,
             AddrCol.WIDTH
         )
-        column.set_min_width(250)
+        column.set_min_width(150)
         self._obj.append_column(column)
 
         column = ToggleColumn(

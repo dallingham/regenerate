@@ -30,11 +30,7 @@ InstCol = enum(
     RPT=4,
     OFF=5,
     HDL=6,
-    UVM=7,
-    DEC=8,
-    ARRAY=9,
-    SINGLE_DEC=10,
-    OBJ=11
+    OBJ=7
 )
 
 AddrCol = enum(
