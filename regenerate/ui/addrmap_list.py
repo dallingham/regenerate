@@ -353,14 +353,14 @@ class AddrMapList(object):
                 "0",
                 False,
                 False,
-                SIZE2STR[0][0],
+                SIZE2STR[-1][0],
                 ""
             )
         )
 
         path = self._model.get_path(node)
         self._callback()
-        self._prj.set_address_map(name, 0, SIZE2STR[0][1], False, False)
+        self._prj.set_address_map(name, 0, SIZE2STR[-1][1], False, False)
         self._obj.set_cursor(path, self._col, start_editing=True)
 
     def _create_new_map_name(self):

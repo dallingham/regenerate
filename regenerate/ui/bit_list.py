@@ -86,7 +86,7 @@ class BitList(object):
         ('Name', 60, BitCol.NAME, True, True),
         ('Type', 325, -1, True, False),
         ('Reset', 160, -1, False, True),
-        ('Reset Type', 75, -1, False, False),
+        ('Reset Type', 105, -1, False, False),
     )
 
     def __init__(self, obj, combo_edit, text_edit, selection_changed):

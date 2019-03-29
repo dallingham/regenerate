@@ -352,7 +352,7 @@ class InstanceList(object):
             InstCol.RPT,
             True
         )
-        column.set_min_width(150)
+        column.set_min_width(125)
         self.__obj.append_column(column)
 
         column = EditableColumn(

@@ -233,11 +233,11 @@ class RegisterList(object):
             '', 30, RegCol.ICON, False, RegColType.ICON, False, None
         ),
         ColDef(
-            'Address', 100, RegCol.SORT, False, RegColType.TEXT, True,
+            'Address', 125, RegCol.SORT, False, RegColType.TEXT, True,
             'Address'
         ),
         ColDef(
-            'Name', 175, RegCol.NAME, True, RegColType.TEXT, False,
+            'Name', 200, RegCol.NAME, True, RegColType.TEXT, False,
             'Missing Register Descriptive Name'
         ),
         ColDef(
@@ -245,11 +245,11 @@ class RegisterList(object):
             'Missing Register Token Name'
         ),
         ColDef(
-            'Dimension', 50, RegCol.DIM, True, RegColType.TEXT, False,
+            'Dimension', 100, RegCol.DIM, False, RegColType.TEXT, False,
             None
         ),
         ColDef(
-            'Width', 125, -1, False, RegColType.COMBO, False, None
+            'Width', 225, -1, False, RegColType.COMBO, False, None
         ),
     )
 
