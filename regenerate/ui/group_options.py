@@ -1,3 +1,22 @@
+#
+# Manage registers in a hardware design
+#
+# Copyright (C) 2008  Donald N. Allingham
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
 import gtk
 
 DEF_DIALOG_FLAGS = gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT
@@ -7,7 +26,7 @@ DEF_DIALOG_BUTTONS = (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
 
 class GroupOptions (gtk.Dialog):
 
-    def __init__(self, instance, parent, modified, width=600, height=260):
+    def __init__(self, instance, modified, parent, width=600, height=260):
 
         gtk.Dialog.__init__(
             self,
@@ -19,7 +38,6 @@ class GroupOptions (gtk.Dialog):
         self.instance = instance
         self.set_size_request(width, height)
         self.build_window(instance.inst)
-        self.set_transient_for(parent)
 
         changed = False
         response = self.run()

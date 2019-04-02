@@ -28,7 +28,6 @@ regenerate
 import gtk
 import pango
 import os
-import copy
 import re
 import sys
 import xml
@@ -36,6 +35,7 @@ from regenerate import PROGRAM_VERSION, PROGRAM_NAME
 from regenerate.db import RegWriter, RegisterDb, Register, GroupInstData
 from regenerate.db import BitField, RegProject, LOGGER, TYPES
 from regenerate.db.enums import ResetType, ShareType, BitType
+import regenerate.extras.regutils
 from regenerate.extras.remap import REMAP_NAME
 from regenerate.importers import IMPORTERS
 from regenerate.settings import ini
@@ -48,15 +48,17 @@ from regenerate.ui.build import Build
 from regenerate.ui.error_dialogs import ErrorMsg, WarnMsg, Question
 from regenerate.ui.enums import FilterField, BitCol, InstCol, PrjCol
 from regenerate.ui.filter_mgr import FilterManager
+from regenerate.ui.group_doc import GroupDocEditor
+from regenerate.ui.group_options import GroupOptions
 from regenerate.ui.help_window import HelpWindow
 from regenerate.ui.instance_list import InstMdl, InstanceList
+from regenerate.ui.module_tab import ModuleTabs, ProjectTabs
 from regenerate.ui.preferences import Preferences
 from regenerate.ui.preview_editor import PREVIEW_ENABLED
 from regenerate.ui.project import ProjectModel, ProjectList
-from regenerate.ui.register_list import RegisterModel, RegisterList, build_define
-from regenerate.ui.status_logger import StatusHandler
 from regenerate.ui.reg_description import RegisterDescription
-from regenerate.ui.module_tab import ModuleTabs, ProjectTabs
+from regenerate.ui.register_list import RegisterModel, RegisterList
+from regenerate.ui.status_logger import StatusHandler
 
 TYPE_ENB = {}
 for data_type in TYPES:
@@ -69,7 +71,6 @@ DEF_MIME = "*" + DEF_EXT
 # probably be configurable, but has not been implemented yet.
 
 VALID_BITS = re.compile("^\s*[\(\[]?(\d+)(\s*[-:]\s*(\d+))?[\)\]]?\s*$")
-REGNAME = re.compile("^(.*)(\d+)(.*)$")
 
 
 class DbaseStatus(object):
@@ -113,7 +114,6 @@ class MainWindow(BaseWindow):
         self.instance_model = None
         self.prj = None
 
-        self.use_svn = False
         self.use_preview = bool(int(ini.get('user', 'use_preview', 0)))
 
         self.builder = gtk.Builder()
@@ -223,14 +223,11 @@ class MainWindow(BaseWindow):
             btn.set_sensitive(False)
 
     def on_group_doc_clicked(self, obj):
-        from regenerate.ui.group_doc import GroupDocEditor
 
         (mdl, node) = self.instance_obj.get_selected_instance()
         inst = mdl.get_value(node, InstCol.OBJ)
         if isinstance(inst, GroupInstData):
-            from regenerate.ui.group_options import GroupOptions
-
-            a = GroupOptions(
+            GroupOptions(
                 inst,
                 self.top_window,
                 self.project_modified
@@ -252,7 +249,7 @@ class MainWindow(BaseWindow):
             self.find_obj("project_list"),
             self.prj_selection_changed
         )
-        self.prj_model = ProjectModel(False)
+        self.prj_model = ProjectModel()
         self.prj_obj.set_model(self.prj_model)
 
         self.addr_map_obj = self.find_obj('address_tree')
@@ -265,14 +262,7 @@ class MainWindow(BaseWindow):
         self.project_modified(True)
 
     def project_modified(self, value):
-        if value:
-            self.top_window.set_title(
-                "%s (modified) - regenerate" % self.prj.name
-            )
-        else:
-            self.top_window.set_title(
-                "%s - regenerate" % self.prj.name
-            )
+        self.set_title(value)
         self.prj.modified = value
 
     def load_project_tab(self):
@@ -932,7 +922,10 @@ class MainWindow(BaseWindow):
         """
         reg = self.reglist_obj.get_selected_register()
         if reg:
-            reg_copy = duplicate_register(self.dbase, reg)
+            reg_copy = regenerate.extras.regutils.duplicate_register(
+                self.dbase,
+                reg
+            )
             self.insert_new_register(reg_copy)
             self.set_register_warn_flags(reg_copy)
 
@@ -1063,7 +1056,7 @@ class MainWindow(BaseWindow):
             self.initialize_project_address_maps()
             base_name = os.path.basename(filename)
             self.prj.name = os.path.splitext(base_name)[0]
-            self.prj_model = ProjectModel(self.use_svn)
+            self.prj_model = ProjectModel()
             self.prj_obj.set_model(self.prj_model)
             self.prj.save()
             self.project_modified(False)
@@ -1106,7 +1099,7 @@ class MainWindow(BaseWindow):
 
     def open_project(self, filename, uri):
         self.loading_project = True
-        self.prj_model = ProjectModel(self.use_svn)
+        self.prj_model = ProjectModel()
         self.prj_obj.set_model(self.prj_model)
 
         try:
@@ -1114,10 +1107,16 @@ class MainWindow(BaseWindow):
             self.project_tabs.change_db(self.prj)
             self.initialize_project_address_maps()
         except xml.parsers.expat.ExpatError as msg:
-            ErrorMsg("%s was not a valid project file" % filename, str(msg))
+            ErrorMsg("%s was not a valid project file" % filename,
+                     str(msg),
+                     self.top_window
+                     )
             return
         except IOError as msg:
-            ErrorMsg("Could not open %s" % filename, str(msg))
+            ErrorMsg("Could not open %s" % filename,
+                     str(msg),
+                     self.top_window
+                     )
             return
 
         ini.set("user", "last_project", os.path.abspath(filename))
@@ -1130,7 +1129,11 @@ class MainWindow(BaseWindow):
             try:
                 self.open_xml(f, False)
             except xml.parsers.expat.ExpatError as msg:
-                ErrorMsg("%s was not a valid register set file" % f)
+                ErrorMsg(
+                    "%s was not a valid register set file" % f,
+                    str(msg),
+                    self.top_window
+                )
                 continue
 
         self.prj_obj.select_path(0)
@@ -1140,9 +1143,7 @@ class MainWindow(BaseWindow):
         self.find_obj('save_btn').set_sensitive(True)
         self.set_busy_cursor(False)
 
-        self.top_window.set_title(
-            "%s - regenerate" % self.prj.name
-        )
+        self.set_title(False)
 
         self.status_obj.pop(idval)
         self.load_project_tab()
@@ -1246,7 +1247,11 @@ class MainWindow(BaseWindow):
             try:
                 self.input_xml(name, load)
             except IOError as msg:
-                ErrorMsg("Could not load existing register set", str(msg))
+                ErrorMsg(
+                    "Could not load existing register set",
+                    str(msg),
+                    self.top_window
+                )
 
             self.active = DbaseStatus(
                 self.dbase,
@@ -1271,7 +1276,11 @@ class MainWindow(BaseWindow):
             self.dbase.read_xml(filename)
             self.filename = filename
         except xml.parsers.expat.ExpatError as msg:
-            ErrorMsg("%s is not a valid regenerate file" % filename, str(msg))
+            ErrorMsg(
+                "%s is not a valid regenerate file" % filename,
+                str(msg),
+                self.top_window
+            )
 
     def on_save_clicked(self, obj):
         """
@@ -1293,8 +1302,11 @@ class MainWindow(BaseWindow):
                     self.clear_modified(item[PrjCol.OBJ])
                 except IOError as msg:
                     os.rename(new_path, old_path)
-                    ErrorMsg("Could not save %s, restoring original" %
-                             old_path, str(msg))
+                    ErrorMsg(
+                        "Could not save %s, restoring original" % old_path,
+                        str(msg),
+                        self.top_window
+                    )
 
         self.prj.set_new_order([item[0] for item in self.prj_model])
         self.instance_obj.get_groups()
@@ -1307,13 +1319,16 @@ class MainWindow(BaseWindow):
         if os.path.isfile(current_path):
             os.rename(current_path, backup_path)
 
-        self.prj.save()
-        self.project_modified(False)
-#        try:
-#            self.prj.save()
-#        except:
-#            os.path.rename(new_path, old_path)
-#            ErrorMsg("Could not save %s, restoring original" % current_path, str(msg))
+        try:
+            self.prj.save()
+            self.project_modified(False)
+        except IOError as msg:
+            os.path.rename(new_path, old_path)
+            ErrorMsg(
+                "Could not save %s, restoring original" % current_path,
+                str(msg),
+                self.top_window
+            )
 
         self.active.modified = False
 
@@ -1349,9 +1364,7 @@ class MainWindow(BaseWindow):
         self.on_save_clicked(obj)
 
     def import_data(self, obj, data):
-        """
-        Imports the data using the specified data importer.
-        """
+        """Imports the data using the specified data importer."""
         choose = self.create_open_selector(
             data[1][1],
             data[2],
@@ -1377,7 +1390,11 @@ class MainWindow(BaseWindow):
             self.update_display()
             self.set_modified()
         except IOError as msg:
-            ErrorMsg("Could not create %s " % name, str(msg))
+            ErrorMsg(
+                "Could not create %s " % name,
+                str(msg),
+                self.top_window
+            )
 
     def redraw(self):
         """Redraws the information in the register list."""
@@ -1405,8 +1422,7 @@ class MainWindow(BaseWindow):
 
             dialog = Question(
                 'Save Changes?',
-                "The file has been modified. "
-                "Do you want to save your changes?",
+                "The file has been modified. Do you want to save your changes?",
                 self.top_window
             )
 
@@ -1472,7 +1488,7 @@ class MainWindow(BaseWindow):
         """
         register = Register()
         register.width = self.dbase.data_bus_width
-        register.address = calculate_next_address(
+        register.address = regenerate.extras.regutils.calculate_next_address(
             self.dbase,
             register.width
         )
@@ -1562,19 +1578,11 @@ class MainWindow(BaseWindow):
                 if check_field(field):
                     txt = "Missing field description for '%s'" % \
                         field.field_name
-                    if field.width == 1:
-                        txt = txt + " (bit %d)" % field.lsb
-                    else:
-                        txt = txt + "(bits [%d:%d])" % (field.msb, field.lsb)
                     msg.append(txt)
                     warn_bit = True
                 if check_reset(field):
                     txt = "Missing reset parameter name for '%s'" % \
                         field.field_name
-                    if field.lsb == field.msb:
-                        txt = txt + " (bit %d)" % field.lsb
-                    else:
-                        txt = txt + "(bits [%d:%d])" % (field.msb, field.lsb)
                     msg.append(txt)
                     warn_bit = True
         if mark and not self.loading_project:
@@ -1604,107 +1612,15 @@ class MainWindow(BaseWindow):
                 warn = True
         return warn
 
-
-def build_new_name(name, reglist):
-    match = REGNAME.match(name)
-    if match:
-        groups = match.groups()
-        index = int(groups[1]) + 1
-        while "".join([groups[0], str(index), groups[2]]) in reglist:
-            index += 1
-        return "".join([groups[0], str(index), groups[2]])
-    else:
-        index = 2
-        while "%s %d" % (name, index) in reglist:
-            index += 1
-        return "%s %d" % (name, index)
-
-
-def build_signal_set(dbase):
-    """
-    Builds a set of all input, output and control signal name in
-    the database.
-    """
-    signal_list = set()
-    for reg in dbase.get_all_registers():
-        for field in reg.get_bit_fields():
-            if field.input_signal:
-                signal_list.add(field.input_signal)
-            if field.output_signal:
-                signal_list.add(field.output_signal)
-            if field.control_signal:
-                signal_list.add(field.control_signal)
-    return signal_list
-
-
-def calculate_next_address(dbase, width):
-    """
-    Calculates the next address based on the last address that was
-    used.
-    """
-    keys = dbase.get_keys()
-    if keys:
-        last_reg = dbase.get_register(keys[-1])
-        dim = max(last_reg.dimension, 1)
-        byte_width = last_reg.width >> 3
-        addr = last_reg.address + (dim * byte_width)
-        byte_width = width >> 3
-        if addr % byte_width != 0:
-            addr += (addr % byte_width)
-    else:
-        addr = 0
-    return addr
-
-
-def signal_from_source(source_name, existing_list):
-    """
-    Builds a copy of a signal name. The existing list contains the names
-    that have already been used. The build_new_name is calleded to try to
-    derive a name based on the passed, looking to replace numerical values
-    embedded in the name. If none is found, then _COPY is appended.
-    """
-    if source_name:
-        signal = build_new_name(source_name, existing_list)
-        if signal:
-            return signal
+    def set_title(self, modified):
+        if modified:
+            self.top_window.set_title(
+                "%s (modified) - regenerate" % self.prj.name
+            )
         else:
-            return source_name + "_COPY"
-    else:
-        return ""
-
-
-def duplicate_register(dbase, reg):
-    """
-    Returns a new register which is a dupilcate of the original register,
-    changing the register description, signals, and token based on the original
-    register.
-    """
-    reglist = set([dbase.get_register(key).register_name
-                   for key in dbase.get_keys()])
-    deflist = set([dbase.get_register(key).token for key in dbase.get_keys()])
-    signals = build_signal_set(dbase)
-
-    new_name = build_new_name(reg.register_name, reglist)
-
-    def_name = build_new_name(reg.token, deflist)
-    if not def_name:
-        def_name = build_define(new_name)
-
-    new_reg = copy.deepcopy(reg)
-    # force the generation of a new UUID
-    new_reg.uuid = ""
-
-    for key in reg.get_bit_field_keys():
-        fld = reg.get_bit_field(key)
-        nfld = new_reg.get_bit_field(key)
-        nfld.input_signal = signal_from_source(fld.input_signal, signals)
-        nfld.output_signal = signal_from_source(fld.output_signal, signals)
-        nfld.control_signal = signal_from_source(fld.control_signal, signals)
-
-    new_reg.address = calculate_next_address(dbase)
-    new_reg.register_name = new_name
-    new_reg.token = def_name
-    return new_reg
+            self.top_window.set_title(
+                "%s - regenerate" % self.prj.name
+            )
 
 
 def check_field(field):

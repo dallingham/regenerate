@@ -6,7 +6,15 @@ from regenerate.db import LOGGER
 
 try:
 
-    from gtkspellcheck import SpellChecker as Spell
+    from gtkspellcheck import SpellChecker
+
+    class Spell(SpellChecker):
+
+        def __init__(self, obj):
+            super(Spell, self).__init__(obj)
+
+        def detach(self):
+            pass
 
 except ImportError:
 

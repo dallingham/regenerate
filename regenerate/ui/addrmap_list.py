@@ -30,10 +30,19 @@ _BITS16 = "16 bits"
 _BITS32 = "32 bits"
 _BITS64 = "64 bits"
 
-SIZE2STR = ((_BITS8, 1), (_BITS16, 2), (_BITS32, 4), (_BITS64, 8))
+SIZE2STR = (
+    (_BITS8, 1),
+    (_BITS16, 2),
+    (_BITS32, 4),
+    (_BITS64, 8)
+)
 
-ACCESS2STR = (("Full Access", 0), ("Read Only", 1),
-              ("Write Only", 2), ("No Access", 3))
+ACCESS2STR = (
+    ("Full Access", 0),
+    ("Read Only", 1),
+    ("Write Only", 2),
+    ("No Access", 3)
+)
 
 INT2SIZE = dict((_i[1], _i[0]) for _i in SIZE2STR)
 STR2SIZE = dict((_i[0], _i[1]) for _i in SIZE2STR)
@@ -56,9 +65,10 @@ class AddrMapMdl(gtk.ListStore):
         Adds a new instance to the model. It is not added to the database until
         either the change_id or change_base is called.
         """
-        node = self.append(None,
-                           row=('new_map', '0', False, False, _BITS32)
-                           )
+        node = self.append(
+            None,
+            row=('new_map', '0', False, False, _BITS32)
+        )
         return self.get_path(node)
 
     def append_instance(self, inst):

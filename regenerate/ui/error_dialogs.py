@@ -22,6 +22,8 @@ Provides reusable dialog boxes for messages
 
 import gtk
 
+DEF_DIALOG_FLAGS = gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT
+
 
 class BaseMsg(gtk.MessageDialog):
     """
@@ -30,7 +32,12 @@ class BaseMsg(gtk.MessageDialog):
 
     def __init__(self, title, msg, dialog_type, buttons=gtk.BUTTONS_CLOSE, parent=None):
 
-        super(BaseMsg, self).__init__(type=dialog_type, buttons=buttons)
+        super(BaseMsg, self).__init__(
+            parent,
+            gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+            dialog_type,
+            buttons=buttons
+        )
 
         if parent is not None:
             self.set_transient_for(parent)
@@ -51,8 +58,10 @@ class ErrorMsg(BaseMsg):
     Error message dialog box
     """
 
-    def __init__(self, err, msg="", parent=None):
-        super(ErrorMsg, self).__init__(err, msg, gtk.MESSAGE_ERROR, parent)
+    def __init__(self, title, msg="", parent=None):
+        super(ErrorMsg, self).__init__(
+            title, msg, gtk.MESSAGE_ERROR, parent=parent
+        )
 
 
 class WarnMsg(BaseMsg):
@@ -60,8 +69,10 @@ class WarnMsg(BaseMsg):
     Warning message dialog box
     """
 
-    def __init__(self, err, msg="", parent=None):
-        super(WarnMsg, self).__init__(err, msg, gtk.MESSAGE_WARNING, parent)
+    def __init__(self, title, msg="", parent=None):
+        super(WarnMsg, self).__init__(
+            title, msg, gtk.MESSAGE_WARNING, parent=parent
+        )
 
 
 class Question(gtk.MessageDialog):
@@ -73,12 +84,16 @@ class Question(gtk.MessageDialog):
     CANCEL = -2
     SAVE = -3
 
-    def __init__(self, err, msg, parent=None):
+    def __init__(self, title, msg, parent=None):
 
-        super(Question, self).__init__(type=gtk.MESSAGE_QUESTION)
+        super(Question, self).__init__(
+            parent,
+            gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+            gtk.MESSAGE_QUESTION
+        )
 
         self.set_markup(
-            '<span weight="bold" size="larger">{0}</span>'.format(err))
+            '<span weight="bold" size="larger">{0}</span>'.format(title))
         self.format_secondary_markup(msg)
         self.add_button('Discard Changes', self.DISCARD)
         self.add_button(gtk.STOCK_CANCEL, self.CANCEL)

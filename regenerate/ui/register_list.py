@@ -420,6 +420,7 @@ class RegisterList(object):
             reg.register_name = text
             self.__set_modified()
         self.__model[path][RegCol.NAME] = reg.register_name
+
         if reg.token == "":
             value = build_define(reg.register_name)
             self.__model[path][RegCol.DEFINE] = value
@@ -503,7 +504,8 @@ class RegisterList(object):
         except ValueError:
             LOGGER.warning(
                 'Address %0x was not changed: invalid value "%s"' %
-                (register.address, new_text))
+                (register.address, new_text)
+            )
 
     def __handle_ram_address(self, register, path, new_text):
         """
@@ -515,7 +517,8 @@ class RegisterList(object):
             ErrorMsg(
                 "Address already used",
                 "The address %0x is already used by another register" %
-                int(new_text, 16))
+                int(new_text, 16)
+            )
 
     def __check_address_align(self, address, width):
         align = width >> 3
@@ -527,13 +530,16 @@ class RegisterList(object):
         """
         address = int(new_text, 16)
         if not self.__check_address_align(address, register.width):
-            ErrorMsg("Address does not match register width",
-                     "The address %04x is not aligned to a %d bit boundary" %
-                     (address, register.width))
+            ErrorMsg(
+                "Address does not match register width",
+                "The address %04x is not aligned to a %d bit boundary" %
+                (address, register.width)
+            )
         elif not self.__new_address_is_not_used(new_text, path):
             ErrorMsg(
                 "Address already used",
-                "%0x is already used by another register" % address)
+                "%0x is already used by another register" % address
+            )
         else:
             self.__reg_update_addr(register, path, new_text)
 
@@ -562,9 +568,11 @@ class RegisterList(object):
 
         new_width = model.get_value(node, 1)
         if not self.__check_address_align(register.address, new_width):
-            ErrorMsg("Address does not match register width",
-                     "The address %04x is not aligned to a %d bit boundary" %
-                     (register.address, new_width))
+            ErrorMsg(
+                "Address does not match register width",
+                "The address %04x is not aligned to a %d bit boundary" %
+                (register.address, new_width)
+            )
         else:
             self.__model[path][col] = model.get_value(node, 0)
             register.width = new_width

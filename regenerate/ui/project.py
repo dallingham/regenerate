@@ -23,49 +23,17 @@ import os
 from regenerate.settings.paths import INSTALL_PATH
 from regenerate.ui.enums import PrjCol
 
-try:
-    import pysvn
-    __client = pysvn.Client()
-
-    def __ood(path):
-        files = []
-        for svn_status in __client.status(path,
-                                          recurse=False,
-                                          get_all=True,
-                                          update=True):
-            if (svn_status.repos_text_status != pysvn.wc_status_kind.none or
-                    svn_status.repos_prop_status != pysvn.wc_status_kind.none):
-                files.append(svn_status.path)
-        return files
-
-    def get_out_of_date(path):
-        try:
-            files = __ood(path)
-        except:
-            files = []
-        return files
-
-    def update_file(path):
-        __client.update(path)
-
-except ImportError:
-
-    def get_out_of_date(filename):
-        return []
-
-    def update_file(path):
-        pass
-
 
 class ProjectModel(gtk.ListStore):
 
-    def __init__(self, use_svn=False):
-        super(ProjectModel, self).__init__(str, str, str, bool, bool, object)
+    def __init__(self):
+        super(ProjectModel, self).__init__(
+            str, str, str, bool, bool, object
+        )
 
         gtk.gdk.threads_init()
         self.file_list = {}
         self.paths = set()
-        self.__use_svn = use_svn
 
     def set_markup(self, node, modified):
         if modified:
@@ -82,15 +50,6 @@ class ProjectModel(gtk.ListStore):
         return False
 
     def load_icons(self):
-        if self.__use_svn:
-            for path in self.paths:
-                for ood_file in get_out_of_date(path):
-                    try:
-                        node = self.file_list[ood_file]
-                        self.set_value(node, PrjCol.ICON, 'out-of-date')
-                        self.set_value(node, PrjCol.OOD, True)
-                    except KeyError:
-                        pass
         self.paths = set()
         self.file_list = {}
 

@@ -99,6 +99,7 @@ class BitFieldEditor(BaseWindow):
 
         self._builder.connect_signals(self)
         self.configure_window(register, parent)
+        self.parent = parent
 
     def setup_description(self, pango_font):
         """
@@ -147,7 +148,8 @@ class BitFieldEditor(BaseWindow):
         Initializes the dialog's data fields from the object
         """
         self._register_obj.set_text(
-            "<b>{0}</b>".format(self._register.register_name))
+            "<b>{0}</b>".format(self._register.register_name)
+        )
         self._register_obj.set_use_markup(True)
 
         self._set_text("field_name", bit_field.full_field_name())
@@ -155,7 +157,8 @@ class BitFieldEditor(BaseWindow):
 
         if bit_field.reset_type == ResetType.NUMERIC:
             self._set_text("reset_value", "{0:x}".format(
-                bit_field.reset_value))
+                bit_field.reset_value)
+            )
         else:
             self._set_text("reset_value", bit_field.reset_parameter)
 
@@ -239,15 +242,11 @@ class BitFieldEditor(BaseWindow):
                 "Maximum number of values reached",
                 "The width of the field only allows for {0} values".format(
                     last),
-                self.top_window
+                parent=self.parent
             )
             return
 
-        try:
-            largest = max([int(val[0], 16) for val in self._value_model
-                           if val[0] != ""])
-        except ValueError:
-            largest = -1
+        largest = find_largest_value(self._value_model)
 
         last -= 1
         if (last == -1 or self._value_model[last][0] or
@@ -386,10 +385,11 @@ class BitFieldEditor(BaseWindow):
         Updates the data model when the text value is changed in the model.
         """
         if new_text in self._used_tokens:
-            ErrorMsg("Duplicate token",
-                     'The token "{0}" has already been used'.format(new_text),
-                     self.top_window
-                     )
+            ErrorMsg(
+                "Duplicate token",
+                'The token "{0}" has already been used'.format(new_text),
+                parent=self.parent
+            )
         else:
             node = self._value_model.get_iter(path)
             old_text = self._value_model.get_value(node, 1)
@@ -408,13 +408,14 @@ class BitFieldEditor(BaseWindow):
         """
         node = self._value_model.get_iter(path)
         try:
-            new_text.decode("ascii")
-        except:
+            new_text = new_text.encode("ascii").decode()
+        except UnicodeEncodeError:
             ErrorMsg(
                 "Invalid ASCII characters detected",
                 "Look for strange punctuations, like dashs and "
                 "quotes that look valid, but are not actual "
-                "ascii characters."
+                "ascii characters.",
+                parent=self.parent
             )
         self._value_model.set_value(node, 2, new_text)
         self._update_values()
@@ -451,3 +452,13 @@ def set_error(obj, message):
 def clear_error(obj):
     obj.set_property('secondary-icon-stock', None)
     obj.set_property('secondary-icon-tooltip-text', '')
+
+
+def find_largest_value(model):
+    try:
+        value_list = [
+            int(value, 16) for (value, token, descr) in model if value != ""
+        ]
+        return max(value_list)
+    except ValueError:
+        return -1
