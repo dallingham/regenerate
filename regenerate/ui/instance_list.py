@@ -204,6 +204,7 @@ class InstanceList(object):
 
             child = self.__model.iter_children(tree_iter)
             while child:
+                cobj = self.col_value(child, InstCol.OBJ)
                 current_group.register_sets.append(
                     GroupInstData(
                         self.col_value(child, InstCol.ID),
@@ -212,10 +213,10 @@ class InstanceList(object):
                         int(self.col_value(child, InstCol.RPT)),
                         int(self.col_value(child, InstCol.OFF), 16),
                         self.col_value(child, InstCol.HDL),
-                        self.col_value(child, InstCol.UVM),
-                        self.col_value(child, InstCol.DEC),
-                        self.col_value(child, InstCol.ARRAY),
-                        self.col_value(child, InstCol.SINGLE_DEC)
+                        cobj.no_uvm,
+                        cobj.no_decode,
+                        cobj.array,
+                        cobj.single_decode
                     )
                 )
                 child = self.__model.iter_next(child)

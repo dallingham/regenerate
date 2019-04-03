@@ -21,6 +21,7 @@ Sdc - Writes out synthesis constraints
 """
 
 from .writer_base import WriterBase, ExportInfo
+import datetime
 
 
 class Xdc(WriterBase):
@@ -72,23 +73,66 @@ class Xdc(WriterBase):
             for field in reg.get_bit_fields():
                 if (field.use_output_enable and field.output_signal and
                         field.output_is_static):
-                    fields.append(field)
+                    fields.append((reg.address, field))
         return fields
+
+    def write_header(self, of):
+        t = datetime.datetime.now()
+        tstr = t.strftime("%H:%M on %Y-%m-%d")
+        of.write("#----------------------------------------------------------\n")
+        of.write("#\n")
+        of.write("# Xilinx XDC Constraints generated %s\n" % tstr)
+        of.write("#\n")
+        of.write("#----------------------------------------------------------\n\n")
 
     def write(self, filename):
         """Writes the output file"""
 
+        name2db = {}
+        for db in self.dblist:
+            name2db[db.set_name] = db
+
         with open(filename, "w") as of:
-            for dbase in self.dblist:
-                ports = self.get_static_ports(dbase)
-                if ports:
-                    of.write("\n\ncurrent_design %s\n\n" % dbase.module_name)
-                    for field in ports:
-                        signal_name = self._build_name(field)
-                        of.write(
-                            "set_false_path -from [get_pins reg_%02d_%s*/DO_reg[*]/C]\n" %
-                            (field.lsb, signal_name.lower())
-                        )
+            self.write_header(of)
+            for group in self._project.get_grouping_list():
+                of.write("#\n# %s group\n#\n\n" % group.name)
+                for group_inst in group.register_sets:
+                    dbase = name2db[group_inst.set]
+                    ports = self.get_static_ports(dbase)
+                    of.write("# %s - %s\n\n" %
+                             (dbase.set_name, dbase.descriptive_title))
+                    for (addr, field) in ports:
+                        signal_name = field.field_name
+                        if group_inst.repeat > 1:
+                            for i in range(0, group_inst.repeat):
+                                hdl = ""
+                                if group.hdl != "":
+                                    hdl = "%s/" % group_hdl.replace(
+                                        ".", "/").replace("]/", "].")
+                                if group_inst.hdl != "":
+                                    hdl = hdl + \
+                                        "%s/" % group_inst.hdl.replace(
+                                            ".", "/").replace("]/", "].")
+                                    hdl = hdl % i
+                                of.write(
+                                    "set_false_path -from [get_pins %sr%02x_%s*/DO_reg[*]/C]\n" %
+                                    (hdl, addr,
+                                     signal_name.lower())
+                                )
+                        else:
+                            hdl = ""
+                            if group.hdl != "":
+                                hdl = "%s/" % group_hdl.replace(
+                                    ".", "/").replace("]/", "].")
+                            if group_inst.hdl != "":
+                                hdl = hdl + \
+                                    "%s/" % group_inst.hdl.replace(
+                                        ".", "/").replace("]/", "].")
+                            of.write(
+                                "set_false_path -from [get_pins %sr%02x_%s*/DO_reg[*]/C]\n" %
+                                (hdl, addr, signal_name.lower())
+                            )
+                    of.write("\n")
 
 
 EXPORTERS = [

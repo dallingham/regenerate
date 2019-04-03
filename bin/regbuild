@@ -26,27 +26,30 @@ import os
 import sys
 from regenerate.db.reg_project import RegProject
 from regenerate.db.register_db import RegisterDb
+import regenerate.writers.c_struct
 
 if os.path.dirname(sys.argv[0]) != ".":
     if sys.argv[0][0] == "/":
         fullPath = os.path.dirname(sys.argv[0])
     else:
-        fullPath = os.path.join(os.getcwd(),os.path.dirname(sys.argv[0]))
+        fullPath = os.path.join(os.getcwd(), os.path.dirname(sys.argv[0]))
 else:
     fullPath = os.getcwd()
 sys.path.insert(0, os.path.dirname(fullPath))
 
-from regenerate.writers import (EXPORTERS, PRJ_EXPORTERS, EXP_CLASS,
-                                EXP_TYPE, EXP_ID, EXP_EXT)
+from regenerate.writers import PRJ_EXPORTERS
+
 
 def build_set(prjmap, project, item, options, path):
 
     prjmap = {}
+
     for x in EXPORTERS:
-        prjmap[x[EXP_ID]] = x[EXP_CLASS]
+        prjmap[x.id] = x.obj_class
 
     writer = prjmap.get(item[0])
-    dbase_name = os.path.abspath(os.path.join(os.path.dirname(project.path), path))
+    dbase_name = os.path.abspath(os.path.join(
+        os.path.dirname(project.path), path))
     db_file_mtime = os.path.getmtime(dbase_name)
 
     dest = os.path.abspath(
@@ -76,7 +79,7 @@ def build_prj(prjmap, project, item, options):
     for dbase_name in project.get_register_set():
         db_file_mtime = os.path.getmtime(dbase_name)
         mod_times.append(db_file_mtime)
-	dbase = RegisterDb()
+        dbase = RegisterDb()
         dbase.read_xml(dbase_name)
         dbase_list.append(dbase)
 
@@ -114,14 +117,14 @@ def run():
 
     prjmap = {}
     for item in PRJ_EXPORTERS:
-        prjmap[item[EXP_ID]] = (item[EXP_CLASS], item[EXP_TYPE][1])
+        prjmap[item.id] = (item.obj_class, item.type[1])
 
     parser = OptionParser(
         usage="%prog [project file]",
         description="Builds a UVM register package from a regenerate database",
         prog="regbuild",
         version=PROGRAM_VERSION
-        )
+    )
     parser.add_option("-f", "--force", action="store_true", dest="force",
                       help="Force rebuilding even if up to date")
     parser.add_option("-v", "--verbose", action="store_true", dest="verbose",
@@ -129,6 +132,8 @@ def run():
     parser.add_option("-u", "--uvm", action="store_true", dest="uvm",
                       help="Generate UVM register package")
     parser.add_option("-r", "--rtl", action="store_true", dest="rtl",
+                      help="Generate RTL")
+    parser.add_option("-c", "--structs-c", action="store_true", dest="structs_c",
                       help="Generate RTL")
 
     (options, args) = parser.parse_args()
@@ -144,23 +149,32 @@ def run():
 
     found_uvm = False
     found_rtl = False
+    found_structs_c = False
+
+    # for item in project.get_project_exports():
+    #     if options.uvm and item[0] == "proj-uvm":
+    #         build_prj(prjmap, project, item, options)
+    #         found_uvm = True
 
     for item in project.get_project_exports():
-        if options.uvm and item[0] == "proj-uvm":
+        if options.structs_c and item[0] == "structs-c":
             build_prj(prjmap, project, item, options)
-            found_uvm = True
+            found_structs_c = True
 
-    for rset in project.get_register_set():
-        path = os.path.relpath(rset, os.path.dirname(project.path))
-        for item in project.get_exports(path):
-            if options.rtl and item[0].startswith("rtl-"):
-                build_set(prjmap, project, item, options, path)
-                found_rtl = True
+    # for rset in project.get_register_set():
+    #     path = os.path.relpath(rset, os.path.dirname(project.path))
+    #     for item in project.get_exports(path):
+    #         if options.rtl and item[0].startswith("rtl-"):
+    #             build_set(prjmap, project, item, options, path)
+    #             found_rtl = True
 
-    if not found_uvm and options.uvm:
-        print "No rule exists for building a register package"
-    if not found_rtl and options.rtl:
-        print "No rule exists for building RTL"
+    # if not found_uvm and options.uvm:
+    #     print "No rule exists for building a register package"
+    # if not found_rtl and options.rtl:
+    #     print "No rule exists for building RTL"
+    if not found_structs_c and options.structs_c:
+        print "No rule exists for building C structures"
+
 
 if __name__ == "__main__":
     try:
@@ -169,4 +183,3 @@ if __name__ == "__main__":
     except IOError, msg:
         sys.stderr.write(str(msg) + "\n")
         sys.exit(1)
-

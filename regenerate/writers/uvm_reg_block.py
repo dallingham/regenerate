@@ -213,6 +213,7 @@ EXPORTERS = [
          ("Test", "UVM Registers"),
          "SystemVerilog files",
          ".sv",
-         'proj-uvm')
+         'proj-uvm'
+     )
      )
 ]

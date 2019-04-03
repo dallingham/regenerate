@@ -199,7 +199,7 @@ package {{project.short_name|lower}}_reg_pkg;
             cov_bits.sample();
          end
        {% endif %}
-       {% if register.get_bit_fields_with_values() |sort | length > 0 %}
+       {% if register.get_bit_fields_with_values() | sort(attribute='lsb') | length > 0 %}
          if (get_coverage(UVM_CVR_FIELD_VALS)) begin
             sample_values();
             cov_fields.sample();

@@ -94,8 +94,11 @@ class BitField(object):
         """Compare for inequality between two bitfields."""
         return not self.__eq__(other)
 
-#    def __cmp__(self, other):
-#        return cmp(self.msb, other.msb)
+    def __lt__(self, other):
+        return self.lsb < other.lsb
+
+    def __gt__(self, other):
+        return self.lsb > other.lsb
 
     def is_constant(self):
         """Indicate if the value is a constant value."""

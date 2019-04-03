@@ -32,13 +32,14 @@ if os.path.dirname(sys.argv[0]) != ".":
     if sys.argv[0][0] == "/":
         fullPath = os.path.dirname(sys.argv[0])
     else:
-        fullPath = os.path.join(os.getcwd(),os.path.dirname(sys.argv[0]))
+        fullPath = os.path.join(os.getcwd(), os.path.dirname(sys.argv[0]))
 else:
     fullPath = os.getcwd()
 sys.path.insert(0, os.path.dirname(fullPath))
 
 import xml.etree.ElementTree as ET
 from regenerate.db import Register, BitField, LOGGER, RegisterDb
+from regenerate.db.enums import BitType
 from collections import defaultdict, Counter
 import re
 import string
@@ -49,23 +50,24 @@ import sre_constants
 ARRAY_ELEMENT = re.compile("^(.*[^d])(\d+)(_reg)?\s*$", re.I)
 
 text2field = {
-    "read-only": BitField.TYPE_READ_ONLY,
-    "read-write": BitField.TYPE_READ_WRITE,
-    "write-only": BitField.TYPE_WRITE_ONLY,
-    "writeOnce": BitField.TYPE_WRITE_ONLY
+    "read-only": BitType.READ_ONLY,
+    "read-write": BitType.READ_WRITE,
+    "write-only": BitType.WRITE_ONLY,
+    "writeOnce": BitType.WRITE_ONLY
 }
 
 text2write = {
-    "oneToClear": BitField.TYPE_WRITE_1_TO_CLEAR_SET,
-    "oneToSet": BitField.TYPE_WRITE_1_TO_SET,
+    "oneToClear": BitType.WRITE_1_TO_CLEAR_SET,
+    "oneToSet": BitType.WRITE_1_TO_SET,
 }
 
 RESERVED = [
     re.compile("^RESERVED"),
     re.compile("^RSVD"),
     re.compile("^UNSD"),
-#    re.compile("^R\d+\s*$")
+    #    re.compile("^R\d+\s*$")
 ]
+
 
 class RegGroup(object):
 
@@ -73,7 +75,7 @@ class RegGroup(object):
         self.addr = 0
         self.regs = []
         self.repeat = 0
-        
+
     def add_reg(self, reg):
         self.regs.append(reg)
 
@@ -82,7 +84,7 @@ class RegGroup(object):
 
     def append_reg_list(self, reg_list):
         self.regs = self.regs + reg_list
-        
+
     def get_regs(self):
         return self.regs
 
@@ -120,12 +122,12 @@ class IpXactParser(object):
         tree = ET.parse(input_file)
         root = tree.getroot()
 
-        scope = root.tag.split("}")[0] + "}" 
+        scope = root.tag.split("}")[0] + "}"
         count = 0
 
         self.vendor = root.find(scope + "vendor").text
         self.db_title = root.find(scope + "name").text
-        
+
         for mem_map in root.find(scope + "memoryMaps"):
 
             if count > 0:
@@ -149,7 +151,8 @@ class IpXactParser(object):
                     if disp_tag is not None:
                         self._reg.register_name = disp_tag.text
                     else:
-                        self._reg.register_name = name_tag.text.replace("_", " ")
+                        self._reg.register_name = name_tag.text.replace(
+                            "_", " ")
 
                     if descr_tag is not None:
                         self._reg.description = descr_tag.text
@@ -163,22 +166,27 @@ class IpXactParser(object):
 
                     for field in register.findall(scope + "field"):
                         self.start_field()
-                        self._field.field_name = field.find(scope + "name").text
-                        self._field.description = field.find(scope + "description").text
-                        self._field.start_position = int(field.find(scope + "bitOffset").text)
-                        self._field.stop_position = self._field.start_position + int(field.find(scope + "bitWidth").text) - 1
-                        if self._field.field_type not in (BitField.TYPE_WRITE_1_TO_SET, 
-                                                          BitField.TYPE_WRITE_1_TO_CLEAR_SET):
+                        self._field.field_name = field.find(
+                            scope + "name").text.upper()
+                        self._field.description = field.find(
+                            scope + "description").text
+                        self._field.start_position = int(
+                            field.find(scope + "bitOffset").text)
+                        self._field.stop_position = self._field.start_position + \
+                            int(field.find(scope + "bitWidth").text) - 1
+                        if self._field.field_type not in (BitType.WRITE_1_TO_SET,
+                                                          BitType.WRITE_1_TO_CLEAR_SET):
                             self._field.field_type = text2field.get(field.find(scope + "access").text,
-                                                                    BitField.TYPE_READ_ONLY)
+                                                                    BitType.READ_ONLY)
                         self.end_field()
 
                     self.end_register()
                     count += 1
 
-        #crossreference(self._db)
+        # crossreference(self._db)
         if self._ignore_count:
-            LOGGER.info("Ignored %0d registers that contained no useful fields" % self._ignore_count)
+            LOGGER.info(
+                "Ignored %0d registers that contained no useful fields" % self._ignore_count)
 
     def start_element(self, tag, attrs):
         """
@@ -199,7 +207,7 @@ class IpXactParser(object):
 
     def end_vendor(self, tag):
         self.vendor = ''.join(self._token_list)
-            
+
     def end_element(self, tag):
         """
         Called every time an XML element end
@@ -238,8 +246,8 @@ class IpXactParser(object):
             new_token = self._reg.token
             index = -1
 
-        if (index >= 1 and self._last_index + 1 == index and 
-            self._last_reg and self._reg.array_cmp(self._last_reg)):
+        if (index >= 1 and self._last_index + 1 == index and
+                self._last_reg and self._reg.array_cmp(self._last_reg)):
             self._last_reg.dimension += 1
             self._last_reg.token = new_token
             self._last_reg.register_name = new_name
@@ -310,15 +318,15 @@ class IpXactParser(object):
 
     def end_access(self, text):
         if self._field:
-            if self._field.field_type not in (BitField.TYPE_WRITE_1_TO_SET, 
-                                              BitField.TYPE_WRITE_1_TO_CLEAR_SET):
+            if self._field.field_type not in (BitType.WRITE_1_TO_SET,
+                                              BitType.WRITE_1_TO_CLEAR_SET):
                 self._field.field_type = text2field.get(text,
-                                                        BitField.TYPE_READ_ONLY)
+                                                        BitType.READ_ONLY)
 
     def end_modifiedWriteValue(self, text):
         if self._field:
             self._field.field_type = text2write.get(text,
-                                                    BitField.TYPE_WRITE_1_TO_CLEAR_SET)
+                                                    BitType.WRITE_1_TO_CLEAR_SET)
 
     def end_name(self, text):
         if self._field:
@@ -355,12 +363,13 @@ class Groupings:
     Groups registers, looking for repeated groups at the specified
     boundaries.
     """
+
     def __init__(self, registers):
 
         self.registers = registers
 
     def group(self, boundary):
-        
+
         # Sort registers into groups based off the boundary
         reglist = defaultdict(list)
         for reg in self.registers:
@@ -372,7 +381,7 @@ class Groupings:
         newlist = defaultdict(RegGroup)
 
         for (i, key) in enumerate(sorted(reglist.keys())):
-            
+
             if i == 0:
                 counter[key] += 1
                 newlist[key].set_reg_list(reglist[key])
@@ -386,14 +395,14 @@ class Groupings:
                     newlist[key].set_reg_list(reglist[key])
                     newlist[key].addr = key
                     counter[key] += 1
-        
+
         # Condense lists
         reglist = []
-        
+
         old_count = -1
         index = 0
         current_reg = RegGroup()
-        
+
         for key in sorted(counter.keys()):
             count = counter[key]
 
@@ -443,7 +452,8 @@ def identical(list1, list2):
         if not item.group_cmp(list2[i]):
             return False
     return True
-            
+
+
 def copy_from_db(db1, db2):
 
     db.owner = db2.owner
@@ -452,10 +462,11 @@ def copy_from_db(db1, db2):
     db.overview_text = db2.overview_text
     db.module_name = db2.module_name
 
+
 def ignore_by_field_name(field):
 
-    if (field.field_type != BitField.TYPE_READ_ONLY or
-        field.reset_value != 0):
+    if (field.field_type != BitType.READ_ONLY or
+            field.reset_value != 0):
         return False
 
     for pattern in RESERVED:
@@ -466,7 +477,7 @@ def ignore_by_field_name(field):
 
     return False
 
-    
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
@@ -489,7 +500,7 @@ if __name__ == "__main__":
                         help="Regular expressions (python) to use to alter names in repeated groups")
     parser.add_argument("--reserved-regex", dest="regex", nargs="*",
                         help="Regular expressions (python) to use to identify reserved fields")
-    
+
     args = parser.parse_args()
 
     if args.regex:
@@ -498,10 +509,10 @@ if __name__ == "__main__":
                 pattern = re.compile(r)
                 RESERVED.append(pattern)
             except sre_constants.error as msg:
-                sys.stderr.write("Could not compile \"%s\" as a regular expression" % r)
+                sys.stderr.write(
+                    "Could not compile \"%s\" as a regular expression" % r)
                 sys.stderr.write(" - %s\n" % str(msg))
                 sys.exit(1)
-            
 
     ip = IpXactParser()
 
@@ -522,7 +533,7 @@ if __name__ == "__main__":
                 dest.append(vals[1])
             else:
                 sys.stderr.write("Ignoring %s\n" % val)
-    
+
     # Save files
 
     for index, rgrp in enumerate(sorted(data)):
@@ -533,11 +544,11 @@ if __name__ == "__main__":
         else:
             title = "%s_%d" % (ip.db_title, index)
             filename = os.path.join(args.root + "_%d" % index + ".xml")
-            
+
         db = RegisterDb()
 
         # copy data from old db, or create our own
-        
+
         if os.path.exists(filename) and args.update:
             db2 = RegisterDb(filename)
             copy_from_db(db, db2)
@@ -554,14 +565,15 @@ if __name__ == "__main__":
             if args.xlate:
                 for i, s in enumerate(src):
                     r.token = re.sub(s, dest[i], r.token, flags=re.I)
-                    r.register_name = re.sub(s, dest[i], r.register_name, flags=re.I)
+                    r.register_name = re.sub(
+                        s, dest[i], r.register_name, flags=re.I)
             if db2 is not None:
                 old_reg = db2.find_register_by_token(r.token)
                 if old_reg:
                     r.register_name = old_reg.register_name
-                
+
             max_addr = max(r.address, max_addr)
-            
+
             db.add_register(r)
 
         if rgrp.repeat == 1:
@@ -571,9 +583,9 @@ if __name__ == "__main__":
 
         if args.xref:
             crossreference(db)
-        
+
         db.save_xml(filename)
-    
+
     if len(data) > 1:
         print "%-20s %-8s Repeat" % ("Register Set", "Address")
         print "%-20s %-8s %s" % ("-" * 20, "-" * 8, "-" * 6)

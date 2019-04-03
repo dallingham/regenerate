@@ -71,6 +71,7 @@ class BitFieldEditor(BaseWindow):
         self._control_obj = self._builder.get_object('control')
         self._register_obj = self._builder.get_object("register_name")
         self._output_obj = self._builder.get_object("output")
+        self._output_enable_obj = self._builder.get_object("outen")
         self._input_obj = self._builder.get_object("input")
         self._value_tree_obj = self._builder.get_object('values')
         self._col = None

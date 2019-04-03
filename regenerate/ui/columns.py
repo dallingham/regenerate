@@ -33,7 +33,6 @@ class BaseColumn(gtk.TreeViewColumn):
             **kwargs
         )
 
-        print(self, title, tooltip)
         header = gtk.Label(title)
         header.show()
         self.set_widget(header)
