@@ -269,12 +269,14 @@ class AddrMapList(object):
         self._col = column
 
         column = EditableColumn(
-            'Address base (hex)',
+            'Address base',
             self._base_changed,
             AddrCol.BASE,
-            True
+            True,
+            tooltip="Base address in hex format"
         )
         column.set_sort_column_id(AddrCol.BASE)
+        column.set_min_width(150)
         self._obj.append_column(column)
 
         column = ComboMapColumn(
@@ -289,7 +291,8 @@ class AddrMapList(object):
         column = ToggleColumn(
             'Fixed Address',
             self._fixed_changed,
-            AddrCol.FIXED
+            AddrCol.FIXED,
+            tooltip="Indicates if the address base is relocatable or fixed"
         )
         column.set_max_width(250)
         self._obj.append_column(column)
@@ -297,7 +300,9 @@ class AddrMapList(object):
         column = ToggleColumn(
             'Exclude from UVM',
             self._uvm_changed,
-            AddrCol.UVM
+            AddrCol.UVM,
+            tooltip="Indicates if the address should be excluded"
+            "from the UVM register package"
         )
         column.set_max_width(250)
         self._obj.append_column(column)

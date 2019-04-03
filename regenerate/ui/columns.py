@@ -24,14 +24,35 @@ import gtk
 import pango
 
 
-class ToggleColumn(gtk.TreeViewColumn):
+class BaseColumn(gtk.TreeViewColumn):
+
+    def __init__(self, title, cell_renderer, tooltip=None, **kwargs):
+
+        super(BaseColumn, self).__init__(
+            cell_renderer=cell_renderer,
+            **kwargs
+        )
+
+        print(self, title, tooltip)
+        header = gtk.Label(title)
+        header.show()
+        self.set_widget(header)
+        if tooltip:
+            try:
+                tooltips = gtk.Tooltips()
+                tooltips.set_tip(header, tooltip)
+            except AttributeError:
+                header.set_tooltip_text(tooltip)
+
+
+class ToggleColumn(BaseColumn):
     """
     A TreeViewColumn that has editable cells. The callback and listmodel
     columns are passed and used to create the CellRenderer.
     """
 
     def __init__(self, title, change_callback, source_column,
-                 visible_callback=None):
+                 tooltip=None, visible_callback=None):
 
         renderer = gtk.CellRendererToggle()
         renderer.set_property('activatable', True)
@@ -39,22 +60,24 @@ class ToggleColumn(gtk.TreeViewColumn):
             renderer.connect('toggled', change_callback, source_column)
 
         super(ToggleColumn, self).__init__(
-            title, renderer,
-            active=source_column
+            title,
+            cell_renderer=renderer,
+            active=source_column,
+            tooltip=tooltip
         )
 
         if visible_callback:
             self.set_cell_data_func(renderer, visible_callback)
 
 
-class EditableColumn(gtk.TreeViewColumn):
+class EditableColumn(BaseColumn):
     """
     A TreeViewColumn that has editable cells. The callback and listmodel
     columns are passed and used to create the CellRenderer.
     """
 
     def __init__(self, title, change_callback, source_column, monospace=False,
-                 visible_callback=None, placeholder=None):
+                 visible_callback=None, placeholder=None, tooltip=None):
 
         self.renderer = gtk.CellRendererText()
         if change_callback:
@@ -73,7 +96,8 @@ class EditableColumn(gtk.TreeViewColumn):
         super(EditableColumn, self).__init__(
             title,
             self.renderer,
-            text=source_column
+            text=source_column,
+            tooltip=tooltip
         )
 
         self.renderer.connect('editing-canceled', self.edit_canceled)
@@ -93,14 +117,14 @@ class EditableColumn(gtk.TreeViewColumn):
         self.renderer.emit('edited', self.path, val)
 
 
-class ComboMapColumn(gtk.TreeViewColumn):
+class ComboMapColumn(BaseColumn):
     """
     A TreeViewColumn that has a menu of options. The callback and listmodel
     columns are passed and used to create the CellRenderer.
     """
 
     def __init__(self, title, callback, data_list, source_column, dtype=int,
-                 visible_callback=None):
+                 visible_callback=None, tooltip=None):
 
         renderer = gtk.CellRendererCombo()
         model = gtk.ListStore(str, dtype)
@@ -116,6 +140,7 @@ class ComboMapColumn(gtk.TreeViewColumn):
         super(ComboMapColumn, self).__init__(
             title,
             renderer,
+            tooltip=tooltip,
             text=source_column
         )
 
@@ -123,14 +148,14 @@ class ComboMapColumn(gtk.TreeViewColumn):
             self.set_cell_data_func(renderer, visible_callback)
 
 
-class SwitchComboMapColumn(gtk.TreeViewColumn):
+class SwitchComboMapColumn(BaseColumn):
     """
     A TreeViewColumn that has a menu of options. The callback and listmodel
     columns are passed and used to create the CellRenderer.
     """
 
     def __init__(self, title, callback, data_list0, data_list1, data_list2,
-                 source_column, dtype=int):
+                 source_column, dtype=int, tooltip=None):
 
         self.renderer = gtk.CellRendererCombo()
 
@@ -157,6 +182,7 @@ class SwitchComboMapColumn(gtk.TreeViewColumn):
         super(SwitchComboMapColumn, self).__init__(
             title,
             self.renderer,
+            tooltip=tooltip,
             text=source_column
         )
 

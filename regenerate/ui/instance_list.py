@@ -322,7 +322,7 @@ class InstanceList(object):
             InstCol.INST
         )
         column.set_sort_column_id(InstCol.INST)
-        column.set_min_width(150)
+        column.set_min_width(175)
         self.__obj.append_column(column)
         self.__col = column
 

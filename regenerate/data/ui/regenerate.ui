@@ -2745,7 +2745,7 @@
                           </object>
                           <packing>
                             <property name="left_attach">2</property>
-                            <property name="right_attach">4</property>
+                            <property name="right_attach">3</property>
                             <property name="y_options"/>
                           </packing>
                         </child>
@@ -2813,7 +2813,7 @@
                           </object>
                           <packing>
                             <property name="left_attach">2</property>
-                            <property name="right_attach">4</property>
+                            <property name="right_attach">3</property>
                             <property name="top_attach">2</property>
                             <property name="bottom_attach">3</property>
                             <property name="y_options"/>
