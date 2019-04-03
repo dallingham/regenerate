@@ -1,0 +1,5 @@
+docutils==0.14
+Jinja2==2.10
+pyenchant==2.0.0
+Pygments==2.2.0
+pygtkspellcheck==4.0.5
