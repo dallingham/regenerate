@@ -256,14 +256,18 @@ class InstanceList(object):
         drop_info = treeview.get_dest_row_at_pos(x, y)
         (name, width) = data.split(":")
 
+        inst = GroupInstData(
+            name, name, 0, 1, int(width, 16), "", False, False, False, False
+        )
+
         row_data = build_row_data(
-            name,
-            name,
-            0,
-            1,
-            int(width, 16),
-            "",
-            None
+            inst.set,
+            inst.inst,
+            inst.offset,
+            inst.repeat,
+            inst.repeat_offset,
+            inst.hdl,
+            inst
         )
         if drop_info:
             path, position = drop_info
