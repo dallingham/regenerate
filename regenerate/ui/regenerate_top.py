@@ -627,13 +627,12 @@ class MainWindow(BaseWindow):
         Called with the remove button is clicked
         """
         selected = self.instance_obj.get_selected_instance()
-        print (selected)
         if selected and selected[1]:
             grp = selected[0].get_value(selected[1], InstCol.OBJ)
+            self.instance_model.remove(selected[1])
+            self.project_modified(True)
             if isinstance(grp, GroupData):
-                self.instance_model.remove(selected[1])
                 self.prj.remove_group_from_grouping_list(grp)
-                self.project_modified(True)
 
     def on_add_instance_clicked(self, obj):
         self.instance_obj.new_instance()

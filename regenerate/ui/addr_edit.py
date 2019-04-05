@@ -109,13 +109,15 @@ class AddrMapEdit(BaseWindow):
             top = self.model.append(None, row=(active, title, "", None, None))
             for item in group.register_sets:
                 access = project.get_access(map_name, group.name, item.inst)
-                self.model.append(top, row=(
-                    True,
-                    item.inst,
-                    options[access][0],
-                    item,
-                    group.name)
-                )
+                self.model.append(top,
+                                  row=(
+                                      True,
+                                      item.inst,
+                                      options[access][0],
+                                      item,
+                                      group.name
+                                  )
+                                  )
 
         self.map_name = map_name
 
