@@ -32,7 +32,7 @@ import re
 import sys
 import xml
 from regenerate import PROGRAM_VERSION, PROGRAM_NAME
-from regenerate.db import RegWriter, RegisterDb, Register, GroupInstData
+from regenerate.db import RegWriter, RegisterDb, Register, GroupInstData, GroupData
 from regenerate.db import BitField, RegProject, LOGGER, TYPES
 from regenerate.db.enums import ResetType, ShareType, BitType
 import regenerate.extras.regutils
@@ -627,11 +627,13 @@ class MainWindow(BaseWindow):
         Called with the remove button is clicked
         """
         selected = self.instance_obj.get_selected_instance()
+        print (selected)
         if selected and selected[1]:
             grp = selected[0].get_value(selected[1], InstCol.OBJ)
-            self.instance_model.remove(selected[1])
-            self.prj.remove_group_from_grouping_list(grp)
-            self.project_modified(True)
+            if isinstance(grp, GroupData):
+                self.instance_model.remove(selected[1])
+                self.prj.remove_group_from_grouping_list(grp)
+                self.project_modified(True)
 
     def on_add_instance_clicked(self, obj):
         self.instance_obj.new_instance()
