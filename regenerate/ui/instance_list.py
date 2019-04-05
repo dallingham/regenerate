@@ -19,7 +19,7 @@
 
 import gtk
 import gobject
-from regenerate.ui.columns import EditableColumn, ToggleColumn
+from regenerate.ui.columns import EditableColumn
 from regenerate.db import GroupInstData, GroupData, LOGGER
 from regenerate.ui.enums import InstCol
 
@@ -389,10 +389,6 @@ class InstanceList(object):
 
     def inst_changed(self, attr, path, new_text):
         getattr(self.__model, attr)(path, new_text)
-        self.modified_callback()
-
-    def inst_bool_changed(self, attr, cell, path):
-        getattr(self.__model, attr)(cell, path)
         self.modified_callback()
 
     def instance_inst_changed(self, cell, path, new_text, col):
