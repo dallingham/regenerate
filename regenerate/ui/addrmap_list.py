@@ -295,7 +295,7 @@ class AddrMapList(object):
             tooltip="Indicates if the address base is relocatable or fixed"
         )
         column.set_max_width(250)
-#        self._obj.append_column(column)
+        self._obj.append_column(column)
 
         column = ToggleColumn(
             'Exclude from UVM',
@@ -305,7 +305,7 @@ class AddrMapList(object):
             "from the UVM register package"
         )
         column.set_max_width(250)
-#        self._obj.append_column(column)
+        self._obj.append_column(column)
 
         self._model = AddrMapMdl()
         self._obj.set_model(self._model)

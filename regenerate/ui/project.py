@@ -69,6 +69,8 @@ class ProjectList(object):
         self.__model = None
         self.__build_prj_window()
 
+        self.__obj.set_tooltip_column(PrjCol.FILE)
+
         self.__obj.enable_model_drag_source(
             gtk.gdk.BUTTON1_MASK,
             [('text/plain', 0, 0)],
