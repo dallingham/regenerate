@@ -39,7 +39,7 @@ AddrCol = enum(
     FIXED=2,
     UVM=3,
     WIDTH=4,
-    ACCESS=5
+    OBJ=5
 )
 
 BitCol = enum(

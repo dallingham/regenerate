@@ -358,6 +358,7 @@ class ModuleTabs(object):
         self.dbase = None
         self.set_modified = modified
         self.icon = builder.get_object('mod_def_warn')
+        self.port_table = builder.get_object('port_table')
 
     def change_db(self, dbase):
         self.dbase = dbase
@@ -378,6 +379,7 @@ class ModuleTabs(object):
             msgs.append("No module name was provided.")
         self.icon.set_property('visible', warn)
         self.icon.set_tooltip_text("\n".join(msgs))
+#        self.port_table.set_sensitive(self.dbase.use_interface is False)
         self.set_modified()
 
     def preview_enable(self):

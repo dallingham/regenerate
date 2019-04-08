@@ -24,11 +24,12 @@ from collections import namedtuple, defaultdict
 import os.path
 import xml.sax.saxutils
 import regenerate.db
+from regenerate.db.addrmap import AddrMapData
 
-AddrMapData = namedtuple(
-    "AddrMapData",
-    ["name", "base", "width", "fixed", "uvm"]
-)
+# AddrMapData = namedtuple(
+#     "AddrMapData",
+#     ["name", "base", "width", "fixed", "uvm"]
+# )
 
 
 def nested_dict(depth, dict_type):
@@ -356,6 +357,16 @@ class RegProject(object):
             return self.access_map[map_name][group_name][block_name]
         except:
             return 0
+
+    def add_or_replace_address_map(self, addr_map):
+        """Sets the specififed address map"""
+        self._modified = True
+        for i, data in enumerate(self._addr_map_list):
+            if data.name == addr_map.name:
+                self._addr_map_list[i] = addr_map
+                return
+        self._addr_map_list.append(addr_map)
+        self._addr_map_grps[addr_map.name] = []
 
     def set_address_map(self, name, base, width, fixed, uvm):
         """Sets the specififed address map"""
