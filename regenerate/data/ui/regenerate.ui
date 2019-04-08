@@ -2122,7 +2122,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkTable" id="table4">
+                          <object class="GtkTable" id="port_table">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="border_width">6</property>

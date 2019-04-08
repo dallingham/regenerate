@@ -28,7 +28,7 @@ from .bitfield_types import *
 from .group_data import GroupData
 from .register import Register
 from .reg_parser import RegParser
-from .reg_project import RegProject, AddrMapData
+from .reg_project import RegProject
 from .group_inst_data import GroupInstData
 from .reg_writer import RegWriter
 from .register_db import RegisterDb
