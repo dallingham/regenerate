@@ -25,12 +25,6 @@ from regenerate.db.group_data import GroupData
 from regenerate.db.group_inst_data import GroupInstData
 
 
-# AddrMapData = namedtuple(
-#    "AddrMapData",
-#    ["name", "base", "width", "fixed", "uvm"]
-# )
-
-
 class ProjectReader(object):
     """
     RegProject is the container object for a regenerate project. The project
