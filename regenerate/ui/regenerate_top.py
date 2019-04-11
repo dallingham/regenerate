@@ -229,8 +229,8 @@ class MainWindow(BaseWindow):
         if isinstance(inst, GroupInstData):
             GroupOptions(
                 inst,
-                self.top_window,
-                self.project_modified
+                self.project_modified,
+                self.top_window
             )
         else:
             GroupDocEditor(
