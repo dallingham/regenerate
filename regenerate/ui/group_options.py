@@ -28,8 +28,7 @@ class GroupOptions (gtk.Dialog):
 
     def __init__(self, instance, modified, parent, width=600, height=260):
 
-        gtk.Dialog.__init__(
-            self,
+        super(GroupOptions, self).__init__(
             title="Instance Options (%s)" % instance.inst,
             parent=parent,
             flags=DEF_DIALOG_FLAGS,

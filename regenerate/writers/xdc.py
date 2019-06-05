@@ -102,12 +102,14 @@ class Xdc(WriterBase):
                     of.write("# %s - %s\n\n" %
                              (dbase.set_name, dbase.descriptive_title))
                     for (addr, field) in ports:
+                        if field.is_constant():
+                            continue
                         signal_name = field.field_name
                         if group_inst.repeat > 1:
                             for i in range(0, group_inst.repeat):
                                 hdl = ""
                                 if group.hdl != "":
-                                    hdl = "%s/" % group_hdl.replace(
+                                    hdl = "%s/" % group.hdl.replace(
                                         ".", "/").replace("]/", "].")
                                 if group_inst.hdl != "":
                                     hdl = hdl + \
@@ -115,21 +117,30 @@ class Xdc(WriterBase):
                                             ".", "/").replace("]/", "].")
                                     hdl = hdl % i
                                 of.write(
-                                    "set_false_path -from [get_pins %sr%02x_%s*/DO_reg[*]/C]\n" %
+                                    "set_multicycle_path 4 -setup -from [get_pins %sr%02x_%s*/DO_reg[*]/C]\n" %
+                                    (hdl, addr,
+                                     signal_name.lower())
+                                )
+                                of.write(
+                                    "set_multicycle_path 3 -hold -from [get_pins %sr%02x_%s*/DO_reg[*]/C]\n" %
                                     (hdl, addr,
                                      signal_name.lower())
                                 )
                         else:
                             hdl = ""
                             if group.hdl != "":
-                                hdl = "%s/" % group_hdl.replace(
+                                hdl = "%s/" % group.hdl.replace(
                                     ".", "/").replace("]/", "].")
                             if group_inst.hdl != "":
                                 hdl = hdl + \
                                     "%s/" % group_inst.hdl.replace(
                                         ".", "/").replace("]/", "].")
                             of.write(
-                                "set_false_path -from [get_pins %sr%02x_%s*/DO_reg[*]/C]\n" %
+                                "set_multicycle_path 4 -setup -from [get_pins %sr%02x_%s*/DO_reg[*]/C]\n" %
+                                (hdl, addr, signal_name.lower())
+                            )
+                            of.write(
+                                "set_multicycle_path 3 -hold -from [get_pins %sr%02x_%s*/DO_reg[*]/C]\n" %
                                 (hdl, addr, signal_name.lower())
                             )
                     of.write("\n")

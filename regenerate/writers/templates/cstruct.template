@@ -1,0 +1,70 @@
+//////////////////////////////////////////////////////////////////////////////
+/// \file
+/// {{project.short_name}} register structure definitions.
+/// Revision:  1.0
+/// Generated: {{current_date}}
+/// \copyright Copyright 2017-2018 {{project.company_name}}.  All rights reserved.
+//////////////////////////////////////////////////////////////////////////////
+
+{% for db, group, grp_map in db_grp_maps %}
+// Block: {{db.set_name}}
+typedef struct reg_{{group.name|lower}}_{{db.set_name|lower}} {
+ {% set next_addr = {'a' : 0} %}
+ {% for register in db.get_all_registers() %}
+   {% if next_addr.a != register.address %}
+   U8  reserved_{{("%02X" | format((register.address-1)|int))}}_{{"%02X" | format(next_addr.a|int)}}[0x{{"%02X" | format((register.address - next_addr.a)|int)}}];
+   {% endif %}
+   {% if register.dimension > 1 %}
+   U{{register.width}} {{fix_reg(register)}}[{{register.dimension}}];
+   {%   if next_addr.update({'a' : register.address + (register.width/8) * register.dimension}) %}{% endif %}
+   {% else %}
+   U{{register.width}} {{fix_reg(register)}};
+   {%   if next_addr.update({'a' : register.address + register.width/8}) %}{% endif %}
+   {% endif %}
+ {% endfor %}
+ {% if next_addr['a'] != 2 ** db.address_bus_width %}
+   U8  reserved_{{("%02X" | format((2 ** db.address_bus_width)-1))}}_{{"%02X" | format(next_addr.a|int)}}[0x{{"%02X" | format(((2 ** db.address_bus_width) - next_addr.a)|int)}}];
+ {% endif %}
+} reg_{{group.name|lower}}_{{db.set_name|lower}}_t;
+
+{% endfor %}
+
+{% for group in group_maps %}
+
+typedef struct reg_{{group.name|lower}} {
+  {% set next_addr = {'a' : 0} %}
+  {% for group_entry in group.register_sets %}
+  {%   if next_addr.a != group_entry.offset %}
+   U8 reserved_{{("%02X" | format((group_entry.offset-1)|int))}}_{{"%02X" | format(next_addr.a)}}[0x{{"%02X" | format((group_entry.offset - next_addr.a)|int)}}];
+  {%   endif %}
+  {%   if group_entry.repeat > 1 or group_entry.array %}
+   reg_{{group.name|lower}}_{{group_entry.set|lower}}_t {{group_entry.inst|lower}}[{{group_entry.repeat}}];
+  {%     if next_addr.update({'a' : group_entry.offset + (group_entry.repeat * group_entry.repeat_offset)}) %}{% endif %}
+  {%   else %}
+   reg_{{group.name|lower}}_{{group_entry.set|lower}}_t {{group_entry.inst|lower}};
+  {%     if next_addr.update({'a' : group_entry.offset + group_entry.repeat_offset}) %}{% endif %}
+  {%   endif %}
+  {% endfor %}
+  {% if next_addr['a'] != group.repeat_offset %}
+   U8 reserved_{{"%04X" | format(group.repeat_offset)}}_{{"%02X" | format(next_addr.a)}}[0x{{"%02X" | format(group.repeat_offset - next_addr.a)}}];
+  {% endif %}
+} reg_{{group.name|lower}}_t;
+{% endfor %}
+
+/* Top level register block */
+typedef struct reg_{{project.short_name|lower}} {
+{% set next_addr = {'a' : 0} %}
+{% for group in group_maps| sort(attribute='base') %}
+{%   if next_addr.a != group.base %}
+   U8 reserved_{{"%04X" | format(group.base-1)}}_{{"%04X" | format(next_addr.a|int)}}[0x{{"%02X" | format((group.base - next_addr.a)|int)}}];
+{%   endif %}
+{%   if group.repeat > 1 %}
+   reg_{{group.name|lower}}_t {{group.name|lower}}[{{group.repeat}}];
+{%     if next_addr.update({'a' : group.base + (group.repeat_offset * group.repeat)}) %}{% endif %}
+{%   else %}
+   reg_{{group.name|lower}}_t {{group.name|lower}};
+{%     if next_addr.update({'a' : group.base + group.repeat_offset}) %}{% endif %}
+{%   endif %}
+{% endfor %}
+} reg_{{project.short_name|lower}}_t;
+

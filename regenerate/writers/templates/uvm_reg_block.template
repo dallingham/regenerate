@@ -61,7 +61,7 @@ package {{project.short_name|lower}}_reg_pkg;
             {% for register in db.get_all_registers()|remove_no_uvm %}
               {% if register.do_not_cover == False and register.is_completely_write_only() == False %}
                 {% if register.dimension > 1 %}
-           bins r_{{fix_reg(register)}} = { {% for i in range(0, register.dimension) %}'h{{ '%x' | format(register.address + (i * (register.width / 8))) }}{% if not loop.last %}, {% endif %}{% endfor %} };
+           bins r_{{fix_reg(register)}} = { {% for i in range(0, register.dimension) %}'h{{ '%x' | format(register.address + (i * ((register.width / 8)|int))) }}{% if not loop.last %}, {% endif %}{% endfor %} };
                 {% else %}
            bins r_{{fix_reg(register)}} = { 'h{{ '%x' | format(register.address) }} };
                 {% endif %}
@@ -74,7 +74,7 @@ package {{project.short_name|lower}}_reg_pkg;
               {% if register.is_completely_read_only() == False %}
                 {% if register.do_not_cover == False and register.is_completely_read_only() == False %}
                   {% if register.dimension > 1 %}
-           bins r_{{fix_reg(register)}} = { {% for i in range(0, register.dimension) %}'h{{ '%x' | format(register.address + (i * (register.width / 8))) }}{% if not loop.last %}, {% endif %}{% endfor %} };
+           bins r_{{fix_reg(register)}} = { {% for i in range(0, register.dimension) %}'h{{ '%x' | format(register.address + (i * ((register.width / 8)|int))) }}{% if not loop.last %}, {% endif %}{% endfor %} };
                   {% else %}
            bins r_{{fix_reg(register)}} = { 'h{{ '%x' | format(register.address) }} };
                   {% endif %}
@@ -319,7 +319,7 @@ package {{project.short_name|lower}}_reg_pkg;
       {% else %}
          {% if reg.dimension > 1 %}
            {% for i in range(0, reg.dimension) %}
-          rmap.add_reg({{fix_reg(reg)}}[{{i}}], 'h{{"%04x" | format(reg.address + (i * (reg.width / 8)))}}, access_mode("{{mode}}", force_mode));
+          rmap.add_reg({{fix_reg(reg)}}[{{i}}], 'h{{"%04x" | format(reg.address + (i * ((reg.width / 8)|int)))}}, access_mode("{{mode}}", force_mode));
            {% endfor %}
          {% else %}
           rmap.add_reg({{fix_reg(reg)}}, 'h{{"%04x" | format(reg.address)}}, access_mode("{{mode}}", force_mode));
