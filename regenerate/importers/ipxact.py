@@ -29,7 +29,7 @@ text2field = {
     "read-only": BitType.READ_ONLY,
     "read-write": BitType.READ_WRITE,
     "write-only": BitType.WRITE_ONLY,
-    "writeOnce": BitType.WRITE_ONLY
+    "writeOnce": BitType.WRITE_ONLY,
 }
 
 text2write = {
@@ -64,11 +64,15 @@ class IpXactParser(object):
         tree = ET.parse(input_file)
         root = tree.getroot()
 
-        for mem_map in root.find("{http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009}memoryMaps"):
+        for mem_map in root.find(
+            "{http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009}memoryMaps"
+        ):
             name = mem_map.find(
-                "{http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009}name")
+                "{http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009}name"
+            )
             descr = mem_map.find(
-                "{http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009}description")
+                "{http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009}description"
+            )
 
         # parser = xml.parsers.expat.ParserCreate()
         # parser.StartElementHandler = self.start_element
@@ -90,7 +94,7 @@ class IpXactParser(object):
         else:
             t = fields[1]
 
-        mname = 'start_' + t
+        mname = "start_" + t
         if hasattr(self, mname):
             method = getattr(self, mname)
             method(attrs)
@@ -99,14 +103,14 @@ class IpXactParser(object):
         """
         Called every time an XML element end
         """
-        text = ''.join(self._token_list)
+        text = "".join(self._token_list)
         fields = tag.split(":")
         if len(fields) == 1:
             t = tag
         else:
             t = fields[1]
 
-        mname = 'end_' + t
+        mname = "end_" + t
         if hasattr(self, mname):
             method = getattr(self, mname)
             method(text)
@@ -174,30 +178,32 @@ class IpXactParser(object):
             self._field.stop_position = self._fld_start + self._fld_width - 1
             self._reg.add_bit_field(self._field)
             if self._reg_reset[0]:
-                self._field.reset_value = (
-                    self._reg_reset[1] >> self._fld_start) & (
-                        (1 << self._field.width) - 1)
+                self._field.reset_value = (self._reg_reset[1] >> self._fld_start) & (
+                    (1 << self._field.width) - 1
+                )
                 self._field.reset_type = ResetType.NUMERIC
 
         self._field = None
 
     def end_access(self, text):
         if self._field:
-            if self._field.field_type not in (BitType.WRITE_1_TO_SET,
-                                              BitType.WRITE_1_TO_CLEAR_SET):
-                self._field.field_type = text2field.get(text,
-                                                        BitType.READ_ONLY)
+            if self._field.field_type not in (
+                BitType.WRITE_1_TO_SET,
+                BitType.WRITE_1_TO_CLEAR_SET,
+            ):
+                self._field.field_type = text2field.get(
+                    text, BitType.READ_ONLY)
 
     def end_modifiedWriteValue(self, text):
         if self._field:
-            self._field.field_type = text2write.get(text,
-                                                    BitType.WRITE_1_TO_CLEAR_SET)
+            self._field.field_type = text2write.get(
+                text, BitType.WRITE_1_TO_CLEAR_SET)
 
     def end_name(self, text):
         if self._field:
             self._field.field_name = text.upper()
         elif self._reg:
-            self._reg.register_name = text.replace('_', ' ')
+            self._reg.register_name = text.replace("_", " ")
             self._reg.token = text.upper()
         elif not self._in_maps and not self._db.descriptive_title:
             self._db.descriptive_title = text.strip()
@@ -222,16 +228,16 @@ class IpXactParser(object):
 
 
 def crossreference(db):
-    names = sorted([reg.register_name for reg in db.get_all_registers()],
-                   key=len,
-                   reverse=True)
+    names = sorted(
+        [reg.register_name for reg in db.get_all_registers()], key=len, reverse=True
+    )
 
-    re_list = [r'([^`])({0}) ((R|r)egister)'.format(name) for name in names]
+    re_list = [r"([^`])({0}) ((R|r)egister)".format(name) for name in names]
 
     for reg in db.get_all_registers():
         for regex in re_list:
-            reg.description = re.sub(regex, r'\1`\2`_ \3', reg.description)
+            reg.description = re.sub(regex, r"\1`\2`_ \3", reg.description)
         for field in reg.get_bit_fields():
             for regex in re_list:
-                field.description = re.sub(regex, r'\1`\2`_ \3',
-                                           field.description)
+                field.description = re.sub(
+                    regex, r"\1`\2`_ \3", field.description)

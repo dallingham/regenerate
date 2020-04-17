@@ -1,5 +1,25 @@
+#
+# Manage registers in a hardware design
+#
+# Copyright (C) 2008  Donald N. Allingham
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+
 def enum(**enums):
-    return type('Enum', (), enums)
+    return type("Enum", (), enums)
 
 
 BitType = enum(
@@ -33,32 +53,13 @@ BitType = enum(
     READ_WRITE_RESET_ON_COMP=27,
     READ_WRITE_PROTECT=28,
     READ_WRITE_PROTECT_1S=29,
-    WRITE_1_TO_CLEAR_SET_CLR=30
+    WRITE_1_TO_CLEAR_SET_CLR=30,
 )
 
-OneShot = enum(
-    NONE=0,
-    ON_ANY=1,
-    ON_ONE=2,
-    ON_ZERO=3,
-    ON_TOGGLE=4
-)
+OneShot = enum(NONE=0, ON_ANY=1, ON_ONE=2, ON_ZERO=3, ON_TOGGLE=4)
 
-ResetType = enum(
-    NUMERIC=0,
-    INPUT=1,
-    PARAMETER=2
-)
+ResetType = enum(NUMERIC=0, INPUT=1, PARAMETER=2)
 
-InputFunction = enum(
-    SET_BITS=0,
-    CLEAR_BITS=1,
-    PARALLEL=2,
-    ASSIGNMENT=3
-)
+InputFunction = enum(SET_BITS=0, CLEAR_BITS=1, PARALLEL=2, ASSIGNMENT=3)
 
-ShareType = enum(
-    NONE=0,
-    READ=1,
-    WRITE=2
-)
+ShareType = enum(NONE=0, READ=1, WRITE=2)

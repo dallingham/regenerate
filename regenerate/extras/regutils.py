@@ -30,8 +30,8 @@ def duplicate_register(dbase, reg):
     changing the register description, signals, and token based on the original
     register.
     """
-    reglist = set([dbase.get_register(key).register_name
-                   for key in dbase.get_keys()])
+    reglist = set(
+        [dbase.get_register(key).register_name for key in dbase.get_keys()])
     deflist = set([dbase.get_register(key).token for key in dbase.get_keys()])
     signals = build_signal_set(dbase)
 
@@ -88,7 +88,7 @@ def calculate_next_address(dbase, width):
         addr = last_reg.address + (dim * byte_width)
         byte_width = width >> 3
         if addr % byte_width != 0:
-            addr += (addr % byte_width)
+            addr += addr % byte_width
     else:
         addr = 0
     return addr

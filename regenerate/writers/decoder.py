@@ -27,10 +27,7 @@ from regenerate.writers.writer_base import WriterBase, ExportInfo
 
 # Define named tuple to hold the data to pass to the template
 
-Ginfo = namedtuple(
-    "Ginfo",
-    ["inst", "lower", "upper", "repeat", "offset"]
-)
+Ginfo = namedtuple("Ginfo", ["inst", "lower", "upper", "repeat", "offset"])
 
 
 def find_group_data(proj, name):
@@ -78,7 +75,7 @@ def build_group_info(proj, group, dblist):
                     (dbinfo.offset) >> 3,
                     size >> 3,
                     dbinfo.repeat,
-                    dbinfo.repeat_offset >> 3
+                    dbinfo.repeat_offset >> 3,
                 )
             )
 
@@ -110,32 +107,25 @@ class AddressDecode(WriterBase):
 
         # Find the RTL template
         dirpath = os.path.dirname(__file__)
-        template_file = os.path.join(
-            dirpath, "templates", "regblk_mux.template")
+        template_file = os.path.join(dirpath, "templates", "regblk_mux.template")
 
         with open(template_file) as ifile:
-            template = Template(
-                ifile.read(),
-                trim_blocks=True,
-                lstrip_blocks=True
-            )
+            template = Template(ifile.read(), trim_blocks=True, lstrip_blocks=True)
 
         ofile.write(
-            template.render(
-                group_name=group.name,
-                blk_insts=ginfo_list,
-                mda=False
-            )
+            template.render(group_name=group.name, blk_insts=ginfo_list, mda=False)
         )
 
 
 EXPORTERS = [
-    (WriterBase.TYPE_GROUP,
-     ExportInfo(
-         AddressDecode,
-         ("RTL", "Address decoder"),
-         "SystemVerilog files",
-         ".sv",
-         'grp-decode')
-     )
+    (
+        WriterBase.TYPE_GROUP,
+        ExportInfo(
+            AddressDecode,
+            ("RTL", "Address decoder"),
+            "SystemVerilog files",
+            ".sv",
+            "grp-decode",
+        ),
+    )
 ]

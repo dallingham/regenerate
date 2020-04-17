@@ -32,23 +32,22 @@ class AddrMapEdit(BaseWindow):
     for an address map.
     """
 
-    def __init__(self, map_name, subsystem_list, builder, project, parent,
-                 callback):
+    def __init__(self, map_name, subsystem_list, builder, project, parent, callback):
 
         super(AddrMapEdit, self).__init__()
         self.project = project
         self.callback = callback
 
         label = gtk.Label(
-            'Select subsystems for the "{0}" address map'.format(map_name))
+            'Select subsystems for the "{0}" address map'.format(map_name)
+        )
         label.set_padding(6, 6)
 
         dialog = gtk.Dialog(
             "Address Map Subsystem Selection",
             None,
             gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
-            (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
-             gtk.STOCK_OK, gtk.RESPONSE_ACCEPT)
+            (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT, gtk.STOCK_OK, gtk.RESPONSE_ACCEPT),
         )
 
         dialog.vbox.pack_start(label, False, False)
@@ -60,8 +59,7 @@ class AddrMapEdit(BaseWindow):
         label.show()
 
         scrolled_window = gtk.ScrolledWindow()
-        scrolled_window.set_policy(gtk.POLICY_AUTOMATIC,
-                                   gtk.POLICY_AUTOMATIC)
+        scrolled_window.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         scrolled_window.show()
         dialog.vbox.pack_end(scrolled_window)
 
@@ -71,10 +69,7 @@ class AddrMapEdit(BaseWindow):
 
         self.view.show()
         col = ToggleColumn(
-            "Enabled",
-            self._enable_changed,
-            0,
-            visible_callback=self.visible_callback2
+            "Enabled", self._enable_changed, 0, visible_callback=self.visible_callback2
         )
 
         self.view.append_column(col)
@@ -83,18 +78,19 @@ class AddrMapEdit(BaseWindow):
         col.set_min_width(200)
         self.view.append_column(col)
 
-        options = [("Full Access", 0),
-                   ("Read Only", 1),
-                   ("Write Only", 2),
-                   ("No Access", 3),
-                   ]
+        options = [
+            ("Full Access", 0),
+            ("Read Only", 1),
+            ("Write Only", 2),
+            ("No Access", 3),
+        ]
 
         col = ComboMapColumn(
             "Access Method",
             self._access_changed,
             options,
             2,
-            visible_callback=self.visible_callback
+            visible_callback=self.visible_callback,
         )
 
         self.view.append_column(col)
@@ -109,15 +105,9 @@ class AddrMapEdit(BaseWindow):
             top = self.model.append(None, row=(active, title, "", None, None))
             for item in group.register_sets:
                 access = project.get_access(map_name, group.name, item.inst)
-                self.model.append(top,
-                                  row=(
-                                      True,
-                                      item.inst,
-                                      options[access][0],
-                                      item,
-                                      group.name
-                                  )
-                                  )
+                self.model.append(
+                    top, row=(True, item.inst, options[access][0], item, group.name)
+                )
 
         self.map_name = map_name
 
@@ -131,27 +121,24 @@ class AddrMapEdit(BaseWindow):
 
     def visible_callback(self, column, cell, model, *obj):
         node = obj[0]
-        cell.set_property('visible', len(model.get_path(node)) != 1)
+        cell.set_property("visible", len(model.get_path(node)) != 1)
 
     def visible_callback2(self, column, cell, model, *obj):
         node = obj[0]
-        cell.set_property('visible', len(model.get_path(node)) == 1)
+        cell.set_property("visible", len(model.get_path(node)) == 1)
 
     def _enable_changed(self, cell, path, source):
         self.model[path][0] = not self.model[path][0]
         self.callback()
 
     def _access_changed(self, obj, path, node, val):
-        mdl = obj.get_property('model')
+        mdl = obj.get_property("model")
         val = mdl.get_value(node, 0)
         val_int = mdl.get_value(node, 1)
         self.model[path][2] = val
 
         self.project.set_access(
-            self.map_name,
-            self.model[path][-1],
-            self.model[path][1],
-            val_int
+            self.map_name, self.model[path][-1], self.model[path][1], val_int
         )
         self.callback()
 

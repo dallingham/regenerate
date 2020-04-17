@@ -26,16 +26,11 @@ import xml.sax.saxutils
 import regenerate.db
 from regenerate.db.addrmap import AddrMapData
 
-# AddrMapData = namedtuple(
-#     "AddrMapData",
-#     ["name", "base", "width", "fixed", "uvm"]
-# )
-
 
 def nested_dict(depth, dict_type):
     if depth == 1:
         return defaultdict(dict_type)
-    return defaultdict(lambda: nested_dict(depth-1, dict_type))
+    return defaultdict(lambda: nested_dict(depth - 1, dict_type))
 
 
 def cleanup(data):
@@ -227,8 +222,7 @@ class RegProject(object):
         file.
         """
         base = os.path.dirname(self.path)
-        return [os.path.normpath(os.path.join(base, i))
-                for i in self._filelist]
+        return [os.path.normpath(os.path.join(base, i)) for i in self._filelist]
 
     def get_grouping_list(self):
         """
@@ -259,9 +253,7 @@ class RegProject(object):
         """Adds a new grouping to the grouping list"""
         self._modified = True
         self._groupings.append(
-            regenerate.db.GroupData(
-                name, start, hdl, repeat, repeat_offset
-            )
+            regenerate.db.GroupData(name, start, hdl, repeat, repeat_offset)
         )
 
     def remove_group_from_grouping_list(self, grp):
@@ -281,8 +273,11 @@ class RegProject(object):
         """Returns the address maps associated with the specified group."""
         used_in_uvm = set([m.name for m in self._addr_map_list if m.uvm == 0])
 
-        return [key for key in self._addr_map_grps
-                if key in used_in_uvm and name in self._addr_map_grps[key]]
+        return [
+            key
+            for key in self._addr_map_grps
+            if key in used_in_uvm and name in self._addr_map_grps[key]
+        ]
 
     def change_address_map_name(self, old_name, new_name):
         """Changes the name of an address map"""
@@ -291,11 +286,7 @@ class RegProject(object):
                 continue
             old_data = self._addr_map_list[i]
             self._addr_map_list[i] = AddrMapData(
-                new_name,
-                old_data.base,
-                old_data.width,
-                old_data.fixed,
-                old_data.uvm
+                new_name, old_data.base, old_data.width, old_data.fixed, old_data.uvm
             )
             self._addr_map_grps[new_name] = self._addr_map_grps[old_name]
             del self._addr_map_grps[old_name]
@@ -322,18 +313,15 @@ class RegProject(object):
 
     def get_address_base(self, name):
         """Returns the base address  of the address map"""
-        return next((d.base for d in self._addr_map_list
-                     if name == d.name), None)
+        return next((d.base for d in self._addr_map_list if name == d.name), None)
 
     def get_address_fixed(self, name):
         """Indicates if the specified address map is at a fixed location"""
-        return next((d.fixed for d in self._addr_map_list
-                     if name == d.name), None)
+        return next((d.fixed for d in self._addr_map_list if name == d.name), None)
 
     def get_address_uvm(self, name):
         """Indicates if the specified address map is at a fixed location"""
-        return next((d.uvm for d in self._addr_map_list
-                     if name == d.name), None)
+        return next((d.uvm for d in self._addr_map_list if name == d.name), None)
 
     def get_address_width(self, name):
         """Returns the width of the address group"""

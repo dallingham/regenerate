@@ -21,9 +21,9 @@ __convert = [
     (u"\u2013", "-"),
     (u"\u2018", "'"),
     (u"\u2019", "'"),
-    (u"\u201c", "\""),
-    (u"\u201d", "\""),
-    (u"\u201f", "\""),
+    (u"\u201c", '"'),
+    (u"\u201d", '"'),
+    (u"\u201f", '"'),
     (u"\u2022", "*"),
     (u"\ue280a2", "*"),
 ]
@@ -32,4 +32,4 @@ __convert = [
 def clean_text(text):
     for (s, d) in __convert:
         text = text.replace(s, d)
-    return text.encode('ascii', 'replace').decode()
+    return text.encode("ascii", "replace").decode()

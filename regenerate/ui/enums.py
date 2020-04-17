@@ -87,9 +87,9 @@ DbMap = enum(
 )
 
 FilterField = enum(
-    ADDR=0,
-    NAME=1,
-    TOKEN=2
+    ADDR=1,
+    NAME=2,
+    TOKEN=3
 )
 
 PrjCol = enum(

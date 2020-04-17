@@ -52,29 +52,30 @@ class Sdc(WriterBase):
                             for i in range(0, grp.repeat):
                                 base = get_signal_info(reg.address, field)[0]
                                 for j in range(0, group.repeat):
-                                    path = build_format(
-                                        group.hdl, j, grp.hdl, i)
+                                    path = build_format(group.hdl, j, grp.hdl, i)
                                     signal_name = "%s/%s" % (path, base)
                                     of.write(
                                         "set_multicycle -from [get_cells{%s}] -setup 4\n"
-                                        % signal_name)
+                                        % signal_name
+                                    )
                                     of.write(
                                         "set_false_path -from [get_cells{%s}] -hold\n"
-                                        % signal_name)
+                                        % signal_name
+                                    )
         of.close()
 
 
 def build_format(top_hdl, top_count, lower_hdl, lower_count):
     if top_hdl and lower_hdl:
         top_hdl = top_hdl.replace("%0d", "%(d)d")
-        top_hdl = top_hdl.replace(".", "/") % {'d': top_count}
+        top_hdl = top_hdl.replace(".", "/") % {"d": top_count}
         lower_hdl = lower_hdl.replace("%0d", "%(d)d")
         lower_hdl = lower_hdl.replace(".", "/")
-        lower_hdl = lower_hdl % {'d': lower_count}
+        lower_hdl = lower_hdl % {"d": lower_count}
         return "%s/%s" % (top_hdl, lower_hdl)
     elif lower_hdl:
         lower_hdl = lower_hdl.replace("%0d", "%(d)d")
-        lower_hdl = lower_hdl.replace(".", "/") % {'d': lower_count}
+        lower_hdl = lower_hdl.replace(".", "/") % {"d": lower_count}
     else:
         return ""
 
@@ -89,12 +90,11 @@ def all_fields(dbase):
 
 
 def has_static_output(field):
-    return (field.use_output_enable and field.output_signal and
-            field.output_is_static)
+    return field.use_output_enable and field.output_signal and field.output_is_static
 
 
 def get_signal_base(field):
-    base = field.output_signal.split('*')
+    base = field.output_signal.split("*")
     if len(base) > 1:
         base = "%s%d%s" % (base[0], field.start_position, base[1])
     else:
@@ -143,12 +143,14 @@ def get_base_signal(address, field):
 
 
 EXPORTERS = [
-    (WriterBase.TYPE_PROJECT,
-     ExportInfo(
-         Sdc,
-         ("Synthesis", "SDC Constraints"),
-         "SDC files",
-         ".sdc",
-         'syn-constraints')
-     )
+    (
+        WriterBase.TYPE_PROJECT,
+        ExportInfo(
+            Sdc,
+            ("Synthesis", "SDC Constraints"),
+            "SDC files",
+            ".sdc",
+            "syn-constraints",
+        ),
+    )
 ]

@@ -52,20 +52,16 @@ support_code = [
     "  uint64 ro;",
     "  uint64 def;",
     "} reg64_data;",
-    ""
+    "",
 ]
 code_reg32 = [
     "static uint32",
     "check_reg32(volatile uint32* addr_ptr, uint32 ro_mask, uint32 defval)",
     "{",
     "  if (*addr_ptr     != defval) return 1;",
-    ""
-    "  *addr_ptr = 0xffffffff;",
+    "" "  *addr_ptr = 0xffffffff;",
     "  if ((*addr_ptr & ro_mask) != ro_mask) return 1;",
-    ""
-    "  *addr_ptr = 0x0;"
-    "  if ((*addr_ptr & ro_mask) != 0x0) return 3;"
-    "",
+    "" "  *addr_ptr = 0x0;" "  if ((*addr_ptr & ro_mask) != 0x0) return 3;" "",
     "  *addr_ptr = defval;",
     "  if (*addr_ptr != defval) return 4;",
     "",
@@ -100,9 +96,7 @@ code_reg16 = [
     "  *addr_ptr = 0xffff;",
     "  if ((*addr_ptr & ro_mask) != ro_mask) return 2;",
     "",
-    "  *addr_ptr = 0x0;"
-    "  if ((*addr_ptr & ro_mask) != 0x0) return 3;"
-    "",
+    "  *addr_ptr = 0x0;" "  if ((*addr_ptr & ro_mask) != 0x0) return 3;" "",
     "  *addr_ptr = defval;",
     "  if (*addr_ptr != defval) return 4;",
     "",
@@ -118,14 +112,13 @@ code_reg8 = [
     "  *addr_ptr = 0xff;",
     "  if ((*addr_ptr & ro_mask) != ro_mask) return 2;",
     "",
-    "  *addr_ptr = 0x0;"
-    "  if ((*addr_ptr & ro_mask) != 0x0) return 3;"
-    "",
+    "  *addr_ptr = 0x0;" "  if ((*addr_ptr & ro_mask) != 0x0) return 3;" "",
     "  *addr_ptr = defval;",
     "  if (*addr_ptr != defval) return 4;",
     "",
     "  return 0;",
-    "}", ]
+    "}",
+]
 
 
 class CTest(WriterBase):
@@ -138,27 +131,34 @@ class CTest(WriterBase):
     def calc_default_value(self, register):
         value = 0
 
-        for rng in [register.get_bit_field(key)
-                    for key in register.get_bit_field_keys()]:
+        for rng in [
+            register.get_bit_field(key) for key in register.get_bit_field_keys()
+        ]:
             value = value | (rng.reset_value << rng.start_position)
         return value
 
     def calc_ro_mask(self, register):
         value = 0x0
 
-        for rng in [register.get_bit_field(key)
-                    for key in register.get_bit_field_keys()]:
+        for rng in [
+            register.get_bit_field(key) for key in register.get_bit_field_keys()
+        ]:
             if rng.field_type in (
-                    BitType.READ_WRITE, BitType.READ_WRITE_1S,
-                    BitType.READ_WRITE_1S_1, BitType.READ_WRITE_LOAD,
-                    BitType.READ_WRITE_LOAD_1S,
-                    BitType.READ_WRITE_LOAD_1S_1,
-                    BitType.READ_WRITE_SET, BitType.READ_WRITE_SET_1S,
-                    BitType.READ_WRITE_SET_1S_1,
-                    BitType.READ_WRITE_CLR, BitType.READ_WRITE_CLR_1S,
-                    BitType.READ_WRITE_PROTECT,
-                    BitType.READ_WRITE_PROTECT_1S,
-                    BitType.READ_WRITE_CLR_1S_1):
+                BitType.READ_WRITE,
+                BitType.READ_WRITE_1S,
+                BitType.READ_WRITE_1S_1,
+                BitType.READ_WRITE_LOAD,
+                BitType.READ_WRITE_LOAD_1S,
+                BitType.READ_WRITE_LOAD_1S_1,
+                BitType.READ_WRITE_SET,
+                BitType.READ_WRITE_SET_1S,
+                BitType.READ_WRITE_SET_1S_1,
+                BitType.READ_WRITE_CLR,
+                BitType.READ_WRITE_CLR_1S,
+                BitType.READ_WRITE_PROTECT,
+                BitType.READ_WRITE_PROTECT_1S,
+                BitType.READ_WRITE_CLR_1S_1,
+            ):
                 for i in range(rng.lsb, rng.msb + 1):
                     value = value | (1 << i)
         return value
@@ -167,17 +167,19 @@ class CTest(WriterBase):
         if rlist:
             for index, pos in enumerate(range(0, len(rlist), MAX_REGS)):
                 cfile.write(
-                    "uint32 check_{0}_{1}{2} (msgptr func);\n".format(name,
-                                                                      size,
-                                                                      string.letters[index]))
+                    "uint32 check_{0}_{1}{2} (msgptr func);\n".format(
+                        name, size, string.letters[index]
+                    )
+                )
 
     def write_call(self, cfile, rlist, name, size):
         if rlist:
             for index, pose in enumerate(range(0, len(rlist), MAX_REGS)):
                 cfile.write(
-                    "  if ((val = check_{0}_{1}{2}(func)) != 0)\n".format(name,
-                                                                          size,
-                                                                          string.letters[index]))
+                    "  if ((val = check_{0}_{1}{2}(func)) != 0)\n".format(
+                        name, size, string.letters[index]
+                    )
+                )
                 cfile.write("    return val;\n")
 
             data = ["    {0x%08x, 0x%08x, 0x%08x}" % val for val in rlist]
@@ -189,8 +191,7 @@ class CTest(WriterBase):
 
         cfile.write("\n")
         cfile.write("uint32\n")
-        cfile.write("check_{0}_{1}{2} (msgptr func)\n".format(
-            name, size, letter))
+        cfile.write("check_{0}_{1}{2} (msgptr func)\n".format(name, size, letter))
         cfile.write("{\n")
         cfile.write("  uint32 val;\n")
         cfile.write("  static reg{0}_data r[] = {{\n".format(suffix))
@@ -199,7 +200,10 @@ class CTest(WriterBase):
         cfile.write("   for (int i = 0; i < {0}; i++) {{\n".format(len(rlist)))
         cfile.write("     func(r[i].addr);\n")
         cfile.write(
-            "     val = check_reg{0}(REG_UINT{0}_PTR(r[i].addr), r[i].ro, r[i].def);\n".format(size))
+            "     val = check_reg{0}(REG_UINT{0}_PTR(r[i].addr), r[i].ro, r[i].def);\n".format(
+                size
+            )
+        )
         cfile.write("     if (val) return (r[i].addr);\n")
         cfile.write("   }\n")
         cfile.write("   return 0;\n")
@@ -259,32 +263,52 @@ class CTest(WriterBase):
             for pos, index in enumerate(range(0, len(rdata8), MAX_REGS)):
                 letter = string.letters[pos]
                 self.write_function(
-                    cfile, rdata8[index: MAX_REGS], dbase.module_name, "8",
-                    letter, "", ""
+                    cfile,
+                    rdata8[index:MAX_REGS],
+                    dbase.module_name,
+                    "8",
+                    letter,
+                    "",
+                    "",
                 )
 
         if rdata16:
             for pos, index in enumerate(range(0, len(rdata16), MAX_REGS)):
                 letter = string.letters[pos]
                 self.write_function(
-                    cfile, rdata16[index: MAX_REGS], dbase.module_name, "16",
-                    letter, "", ""
+                    cfile,
+                    rdata16[index:MAX_REGS],
+                    dbase.module_name,
+                    "16",
+                    letter,
+                    "",
+                    "",
                 )
 
         if rdata32:
             for pos, index in enumerate(range(0, len(rdata32), MAX_REGS)):
                 letter = string.letters[pos]
                 self.write_function(
-                    cfile, rdata32[index:index+MAX_REGS], dbase.module_name,
-                    "32", letter, "", ""
+                    cfile,
+                    rdata32[index : index + MAX_REGS],
+                    dbase.module_name,
+                    "32",
+                    letter,
+                    "",
+                    "",
                 )
 
         if rdata64:
             for pos, index in enumerate(range(0, len(rdata64), MAX_REGS)):
                 letter = string.letters[pos]
                 self.write_function(
-                    cfile, rdata64[index:index+MAX_REGS], dbase.module_name,
-                    "64", letter, "64", "LL"
+                    cfile,
+                    rdata64[index : index + MAX_REGS],
+                    dbase.module_name,
+                    "64",
+                    letter,
+                    "64",
+                    "LL",
                 )
 
     def write(self, filename):
@@ -332,12 +356,8 @@ class CTest(WriterBase):
 
 
 EXPORTERS = [
-    (WriterBase.TYPE_BLOCK,
-     ExportInfo(
-         CTest,
-         ("Test", "C program"),
-         "C files",
-         ".c",
-         'test-c')
-     )
+    (
+        WriterBase.TYPE_BLOCK,
+        ExportInfo(CTest, ("Test", "C program"), "C files", ".c", "test-c"),
+    )
 ]

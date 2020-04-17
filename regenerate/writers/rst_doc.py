@@ -53,10 +53,12 @@ class RstDoc(WriterBase):
     def substitute(self, val):
         text = val.groups()[0]
         if text in self.reglist:
-            return ":ref:`%s <%s-%s-%s>`" % (text,
-                                             norm_name(self._inst),
-                                             norm_name(self._group),
-                                             norm_name(text))
+            return ":ref:`%s <%s-%s-%s>`" % (
+                text,
+                norm_name(self._inst),
+                norm_name(self._group),
+                norm_name(text),
+            )
         else:
             return "`" + text + "`_"
 
@@ -115,14 +117,14 @@ class RstDoc(WriterBase):
                 f.write("\n\n")
 
                 f.write("Description\n")
-                f.write('===========================================\n\n')
+                f.write("===========================================\n\n")
 
                 f.write(group.docs)
 
                 f.write("\n\n")
 
                 f.write("Subblocks\n")
-                f.write('--------------------------------------------\n\n')
+                f.write("--------------------------------------------\n\n")
 
                 for regset in group.register_sets:
 
@@ -132,18 +134,19 @@ class RstDoc(WriterBase):
                         continue
 
                     self.reglist = set(
-                        [reg.register_name for reg in db.get_all_registers()])
+                        [reg.register_name for reg in db.get_all_registers()]
+                    )
 
                     if db.descriptive_title:
-                        title = "{} ({})\n".format(
-                            db.descriptive_title, regset.inst)
+                        title = "{} ({})\n".format(db.descriptive_title, regset.inst)
                     else:
                         title = regset.inst
                     f.write(title)
                     f.write("^" * len(title))
                     f.write("\n\n")
-                    f.write(self.patch_links(db.overview_text,
-                                             db, regset.inst, group.name))
+                    f.write(
+                        self.patch_links(db.overview_text, db, regset.inst, group.name)
+                    )
                     f.write("\n\n")
 
                     for reg in db.get_all_registers():
@@ -156,19 +159,21 @@ class RstDoc(WriterBase):
                             show_uvm=True,
                             group=group.name,
                             maxlines=25,
-                            db=db
+                            db=db,
                         )
                         f.write(rst.restructured_text())
                     f.write("\n\n")
 
 
 EXPORTERS = [
-    (WriterBase.TYPE_PROJECT,
-     ExportInfo(
-         RstDoc,
-         ("Specification", "RestructuredText"),
-         "RestructuredText files",
-         ".rest",
-         'spec-rst')
-     )
+    (
+        WriterBase.TYPE_PROJECT,
+        ExportInfo(
+            RstDoc,
+            ("Specification", "RestructuredText"),
+            "RestructuredText files",
+            ".rest",
+            "spec-rst",
+        ),
+    )
 ]

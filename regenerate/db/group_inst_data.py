@@ -19,9 +19,19 @@
 
 
 class GroupInstData(object):
-
-    def __init__(self, rset, inst, offset, repeat, repeat_offset, hdl,
-                 no_uvm, no_decode, array, single_decode):
+    def __init__(
+        self,
+        rset,
+        inst,
+        offset,
+        repeat,
+        repeat_offset,
+        hdl,
+        no_uvm,
+        no_decode,
+        array,
+        single_decode,
+    ):
         self.set = rset
         self.inst = inst
         self.offset = offset

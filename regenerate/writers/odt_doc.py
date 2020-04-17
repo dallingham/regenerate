@@ -55,10 +55,9 @@ TXTCNTS = "TextContents"
 BTMEND = "BottomEnd"
 TXTEND = "TextEnd"
 
-NEEDED_FORMATS = [HEADING1, HEADING2, CELLHEAD, CELLBODY, CELLITEM, REGADDR,
-                  REGNAME]
+NEEDED_FORMATS = [HEADING1, HEADING2, CELLHEAD, CELLBODY, CELLITEM, REGADDR, REGNAME]
 
-HEAD = '''<?xml version="1.0" encoding="UTF-8"?>
+HEAD = """<?xml version="1.0" encoding="UTF-8"?>
 <office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0" xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0" xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0" xmlns:number="urn:oasis:names:tc:opendocument:xmlns:datastyle:1.0" xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0" xmlns:chart="urn:oasis:names:tc:opendocument:xmlns:chart:1.0" xmlns:dr3d="urn:oasis:names:tc:opendocument:xmlns:dr3d:1.0" xmlns:math="http://www.w3.org/1998/Math/MathML" xmlns:form="urn:oasis:names:tc:opendocument:xmlns:form:1.0" xmlns:script="urn:oasis:names:tc:opendocument:xmlns:script:1.0" xmlns:dom="http://www.w3.org/2001/xml-events" xmlns:xforms="http://www.w3.org/2002/xforms" office:class="text" office:version="1.0">
   <office:scripts/>
   <office:font-face-decls>
@@ -98,12 +97,12 @@ HEAD = '''<?xml version="1.0" encoding="UTF-8"?>
 <office:body>
   <office:text>
     <office:forms form:automatic-focus="false" form:apply-design-mode="false"/>
-'''
+"""
 
-TAIL = '''</office:text>
+TAIL = """</office:text>
   </office:body>
 </office:document-content>
-'''
+"""
 
 
 class OdtDoc(WriterBase):
@@ -122,34 +121,29 @@ class OdtDoc(WriterBase):
     def start_row(self, header=False):
         """Starts a row in a table"""
         if header:
-            self.cnt.write('<table:table-header-rows>')
-        self.cnt.write('<table:table-row>')
+            self.cnt.write("<table:table-header-rows>")
+        self.cnt.write("<table:table-row>")
 
     def end_row(self, header=False):
         """Ends a row in a table"""
-        self.cnt.write('</table:table-row>')
+        self.cnt.write("</table:table-row>")
         if header:
-            self.cnt.write('</table:table-header-rows>')
+            self.cnt.write("</table:table-header-rows>")
 
     def end_table(self):
         """Ends a table"""
-        self.cnt.write('</table:table>')
+        self.cnt.write("</table:table>")
 
     def start_table(self):
         """Starts a table"""
         self.tblcnt += 1
         self.cnt.write('<table:table table:name="mytable%d"' % self.tblcnt)
         self.cnt.write(' table:style-name="ParentTable">')
-        self.cnt.write(
-            '<table:table-column table:style-name="ParentTable.A"/>')
-        self.cnt.write(
-            '<table:table-column table:style-name="ParentTable.B"/>')
-        self.cnt.write(
-            '<table:table-column table:style-name="ParentTable.C"/>')
-        self.cnt.write(
-            '<table:table-column table:style-name="ParentTable.D"/>')
-        self.cnt.write(
-            '<table:table-column table:style-name="ParentTable.E"/>')
+        self.cnt.write('<table:table-column table:style-name="ParentTable.A"/>')
+        self.cnt.write('<table:table-column table:style-name="ParentTable.B"/>')
+        self.cnt.write('<table:table-column table:style-name="ParentTable.C"/>')
+        self.cnt.write('<table:table-column table:style-name="ParentTable.D"/>')
+        self.cnt.write('<table:table-column table:style-name="ParentTable.E"/>')
 
     def write_paragraph(self, para_name, text, level=0):
         """
@@ -162,17 +156,17 @@ class OdtDoc(WriterBase):
             self.cnt.write('<text:p text:style-name="%s">' % para_name)
 
         text = escape(text)
-        text = text.replace('&lt;b&gt;', '<text:span text:style-name="Tbold">')
+        text = text.replace("&lt;b&gt;", '<text:span text:style-name="Tbold">')
         text = text.replace("\t", "<text:tab/>")
-        self.cnt.write(text.replace('&lt;/b&gt;', '</text:span>'))
+        self.cnt.write(text.replace("&lt;/b&gt;", "</text:span>"))
         if level:
-            self.cnt.write('</text:h>')
+            self.cnt.write("</text:h>")
         else:
-            self.cnt.write('</text:p>')
+            self.cnt.write("</text:p>")
 
     def write_table_cell(self, cell_name, para_name, text, values=None):
         """Writes a paragraph of text as a table cell"""
-        self.cnt.write('<table:table-cell')
+        self.cnt.write("<table:table-cell")
         self.cnt.write(' table:style-name="%s"' % cell_name)
         self.cnt.write(' table:value-type="string">')
         for line in text.split("\n"):
@@ -180,12 +174,14 @@ class OdtDoc(WriterBase):
         if values:
             for value in values:
                 if value[1]:
-                    self.write_paragraph(CELLITEM,
-                                         "<b>%s</b>: \t[<b>%s</b>] %s" % value)
+                    self.write_paragraph(
+                        CELLITEM, "<b>%s</b>: \t[<b>%s</b>] %s" % value
+                    )
                 else:
-                    self.write_paragraph(CELLITEM, "<b>%s</b>: \t%s" %
-                                         (value[0], value[2]))
-        self.cnt.write('</table:table-cell>')
+                    self.write_paragraph(
+                        CELLITEM, "<b>%s</b>: \t%s" % (value[0], value[2])
+                    )
+        self.cnt.write("</table:table-cell>")
 
     def __write_register_header(self, reg):
         """
@@ -195,12 +191,12 @@ class OdtDoc(WriterBase):
         self.write_paragraph(HEADING2, reg.register_name, 2)
 
         caddr = reg.address + self._offset
-        self.write_paragraph(REGADDR, '<b>Address</b>:\t0x%08x' % caddr)
-        self.write_paragraph(REGNAME, '<b>Mnemonic:</b>\t%s' % reg.token)
+        self.write_paragraph(REGADDR, "<b>Address</b>:\t0x%08x" % caddr)
+        self.write_paragraph(REGNAME, "<b>Mnemonic:</b>\t%s" % reg.token)
         descr = reg.description
         if descr:
             self.write_paragraph(DEFAULT, descr)
-        self.write_paragraph(DEFAULT, '')
+        self.write_paragraph(DEFAULT, "")
 
     def __write_table_header(self):
         """
@@ -210,8 +206,13 @@ class OdtDoc(WriterBase):
         self.start_table()
         self.start_row(True)
 
-        headers = [('Bit(s)', PARHEAD), ('R/W', PARHEAD), ('Reset', PARHEAD),
-                   ('Name', PARHEAD), ('Description/Function', PAREND)]
+        headers = [
+            ("Bit(s)", PARHEAD),
+            ("R/W", PARHEAD),
+            ("Reset", PARHEAD),
+            ("Name", PARHEAD),
+            ("Description/Function", PAREND),
+        ]
 
         for name in headers:
             self.write_table_cell(name[1], CELLHEAD, name[0])
@@ -222,7 +223,7 @@ class OdtDoc(WriterBase):
         Ends the bit definition table
         """
         self.end_table()
-        self.write_paragraph(DEFAULT, '')
+        self.write_paragraph(DEFAULT, "")
 
     def _write_register(self, reg):
         """
@@ -242,7 +243,7 @@ class OdtDoc(WriterBase):
         last_index = reg.width - 1
 
         for key in regkeys:
-            last = (key == regkeys[-1])
+            last = key == regkeys[-1]
 
             bit_range = reg.get_bit_field(key)
 
@@ -262,20 +263,25 @@ class OdtDoc(WriterBase):
             self.write_table_cell(table_cell, CELLBODY, text)
 
             if bit_range.reset_type == ResetType.NUMERIC:
-                cols = [TYPE_MAP[bit_range.field_type],
-                        rst_val(bit_range.reset_value), bit_range.field_name]
+                cols = [
+                    TYPE_MAP[bit_range.field_type],
+                    rst_val(bit_range.reset_value),
+                    bit_range.field_name,
+                ]
                 description = bit_range.description
             else:
-                cols = [TYPE_MAP[bit_range.field_type], "-",
-                        bit_range.field_name]
-                description = '%s\n\nReset value is loaded from the input "%s"' % \
-                              (bit_range.description, bit_range.reset_input)
+                cols = [TYPE_MAP[bit_range.field_type], "-", bit_range.field_name]
+                description = '%s\n\nReset value is loaded from the input "%s"' % (
+                    bit_range.description,
+                    bit_range.reset_input,
+                )
 
             for val in cols:
                 self.write_table_cell(table_cell, CELLBODY, val)
 
-            self.write_table_cell(table_end_cell, CELLBODY, description,
-                                  bit_range.values)
+            self.write_table_cell(
+                table_end_cell, CELLBODY, description, bit_range.values
+            )
             self.end_row()
 
         if last_index > 0:
@@ -290,8 +296,13 @@ class OdtDoc(WriterBase):
         Prints a row for reserved bits
         """
         self.start_row()
-        cols = [(rng, TXTCNTS), ('R', TXTCNTS), ("0", TXTCNTS), ("", TXTCNTS),
-                ("unused", TXTEND)]
+        cols = [
+            (rng, TXTCNTS),
+            ("R", TXTCNTS),
+            ("0", TXTCNTS),
+            ("", TXTCNTS),
+            ("unused", TXTEND),
+        ]
         for (val, style) in cols:
             self.write_table_cell(style, CELLBODY, val)
         self.end_row()
@@ -352,7 +363,7 @@ class OdtDoc(WriterBase):
 
         text = self._comments.strip()
         if text != "":
-            for pdata in text.split('\n'):
+            for pdata in text.split("\n"):
                 self.write_paragraph(DEFAULT, pdata)
 
         for key in dbase.get_keys():
@@ -371,17 +382,21 @@ def find_odt_template():
         original = zipfile.ZipFile(odtfile)
     except IOError as msg:
         from ui.error_dialogs import ErrorMsg
-        ErrorMsg('Could not open OpenDocument template', str(msg))
+
+        ErrorMsg("Could not open OpenDocument template", str(msg))
         return None
 
     parser = StylesXmlParser(NEEDED_FORMATS[:])
-    status = parser.parse(StringIO(original.read('styles.xml')))
+    status = parser.parse(StringIO(original.read("styles.xml")))
 
     if status:
         from ui.error_dialogs import ErrorMsg
-        ErrorMsg('Bad OpenDocument template',
-                 'The %s file is missing the following '
-                 'paragraph formats:\n' % odtfile + "\n".join(status))
+
+        ErrorMsg(
+            "Bad OpenDocument template",
+            "The %s file is missing the following "
+            "paragraph formats:\n" % odtfile + "\n".join(status),
+        )
         return None
     return original
 
@@ -390,7 +405,7 @@ def rst_val(val):
     """
     formats the value for 8 characters if the value is greater than 0xffff
     """
-    if val > 0xffff:
+    if val > 0xFFFF:
         return "%08x" % val
     else:
         return "%x" % val
@@ -421,18 +436,20 @@ class StylesXmlParser(object):
         the style:style tag.
         """
         if tag == "style:style":
-            name = attrs.get('style:name')
+            name = attrs.get("style:name")
             if name in self.format_list:
                 self.format_list.remove(name)
 
 
 EXPORTERS = [
-    (WriterBase.TYPE_BLOCK,
-     ExportInfo(
-         OdtDoc,
-         ("Documentation", "OpenDocument"),
-         "OpenDocument files",
-         ".odt",
-         'doc-odt')
-     )
+    (
+        WriterBase.TYPE_BLOCK,
+        ExportInfo(
+            OdtDoc,
+            ("Documentation", "OpenDocument"),
+            "OpenDocument files",
+            ".odt",
+            "doc-odt",
+        ),
+    )
 ]

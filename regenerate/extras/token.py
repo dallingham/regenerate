@@ -21,7 +21,8 @@ from collections import namedtuple
 
 InstData = namedtuple(
     "InstData",
-    "group inst set base offset repeat roffset format grpt grpt_offset array")
+    "group inst set base offset repeat roffset format grpt grpt_offset array",
+)
 
 DEFAULT_FORMAT = "%(G)s_%(S)s%(D)s_%(R)s"
 
@@ -37,7 +38,7 @@ def full_token(group_name, reg_name, set_name, index, fmt_string):
         "R": reg_name.upper(),
         "r": reg_name.lower(),
         "S": set_name.upper(),
-        "s": set_name.lower()
+        "s": set_name.lower(),
     }
 
     return fmt_string % name_data
@@ -46,10 +47,13 @@ def full_token(group_name, reg_name, set_name, index, fmt_string):
 def uvm_name(group_name, reg_name, set_name, index):
 
     if index >= 0:
-        return "<top>.%s.%s[%d].%s" % (group_name.lower(), set_name.lower(),
-                                       index, reg_name.lower())
-    return "<top>.%s.%s.%s" % (group_name.lower(), set_name.lower(),
-                               reg_name.lower())
+        return "<top>.%s.%s[%d].%s" % (
+            group_name.lower(),
+            set_name.lower(),
+            index,
+            reg_name.lower(),
+        )
+    return "<top>.%s.%s.%s" % (group_name.lower(), set_name.lower(), reg_name.lower())
 
 
 def in_groups(name, project):
@@ -58,9 +62,20 @@ def in_groups(name, project):
         for group in project.get_grouping_list():
             for regset in [rs for rs in group.register_sets if rs.set == name]:
                 fmt = DEFAULT_FORMAT
-                groups.append(InstData(
-                    group.name, regset.inst, regset.set, group.base,
-                    regset.offset, regset.repeat, regset.repeat_offset, fmt,
-                    group.repeat, group.repeat_offset, regset.array))
+                groups.append(
+                    InstData(
+                        group.name,
+                        regset.inst,
+                        regset.set,
+                        group.base,
+                        regset.offset,
+                        regset.repeat,
+                        regset.repeat_offset,
+                        fmt,
+                        group.repeat,
+                        group.repeat_offset,
+                        regset.array,
+                    )
+                )
 
     return groups

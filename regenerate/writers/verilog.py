@@ -24,7 +24,7 @@ import os
 import re
 from collections import namedtuple, defaultdict
 from jinja2 import FileSystemLoader, Environment
-from regenerate.db import BitField, TYPES, TYPE_TO_OUTPUT, Register
+from regenerate.db import TYPES, TYPE_TO_OUTPUT
 from regenerate.writers.writer_base import WriterBase, ExportInfo
 from regenerate.writers.verilog_reg_def import REG
 from regenerate.db.enums import ShareType, ResetType
@@ -32,23 +32,30 @@ from regenerate.db.enums import ShareType, ResetType
 LOWER_BIT = {128: 4, 64: 3, 32: 2, 16: 1, 8: 0}
 
 
-(F_FIELD, F_START_OFF, F_STOP_OFF, F_START, F_STOP, F_ADDRESS,
- F_REGISTER) = range(7)
+(F_FIELD, F_START_OFF, F_STOP_OFF, F_START,
+ F_STOP, F_ADDRESS, F_REGISTER) = range(7)
 
 BIT_SLICE = re.compile(r"(.*)\[(\d+)\]")
 BUS_SLICE = re.compile(r"(.*)\[(\d+):(\d+)\]")
 
 CellInfo = namedtuple(
     "CellInfo",
-    ["name", "has_input", "has_control",
-     "has_oneshot", "type_descr", "allows_wide",
-     "has_rd", "is_read_only"]
+    [
+        "name",
+        "has_input",
+        "has_control",
+        "has_oneshot",
+        "type_descr",
+        "allows_wide",
+        "has_rd",
+        "is_read_only",
+    ],
 )
 
 ByteInfo = namedtuple(
     "ByteInfo",
-    ["field", "start_offset", "stop_offset", "start", "stop",
-     "address", "register"]
+    ["field", "start_offset", "stop_offset",
+        "start", "stop", "address", "register"],
 )
 
 
@@ -68,8 +75,7 @@ def reset_value(field, start, stop):
     if field.reset_type == ResetType.NUMERIC:
         field_width = (stop - start) + 1
         reset = int(field.reset_value >> int(start - field.lsb))
-        return "{0}'h{1:x}".format(field_width, reset &
-                                   int((2 ** field_width) - 1))
+        return "{0}'h{1:x}".format(field_width, reset & int((2 ** field_width) - 1))
     elif field.reset_type == ResetType.INPUT:
         if stop == start:
             return field.reset_input
@@ -97,9 +103,11 @@ def in_range(lower, upper, lower_limit, upper_limit):
     """
     Checks to see if the range is within the specified range
     """
-    return ((lower_limit <= lower <= upper_limit) or
-            (lower_limit <= upper <= upper_limit) or
-            (lower < lower_limit and upper >= upper_limit))
+    return (
+        (lower_limit <= lower <= upper_limit)
+        or (lower_limit <= upper <= upper_limit)
+        or (lower < lower_limit and upper >= upper_limit)
+    )
 
 
 def rshift(val, shift):
@@ -123,11 +131,19 @@ class Verilog(WriterBase):
         self._cell_info = {}
         for i in TYPES:
             self._cell_info[i.type] = CellInfo(
-                i.id.lower(), i.input, i.control, i.oneshot,
-                i.description, i.wide, i.read, i.readonly)
+                i.id.lower(),
+                i.input,
+                i.control,
+                i.oneshot,
+                i.description,
+                i.wide,
+                i.read,
+                i.readonly,
+            )
 
         self.__sorted_regs = [
-            reg for reg in dbase.get_all_registers()
+            reg
+            for reg in dbase.get_all_registers()
             if not (reg.do_not_generate_code or reg.ram_size > 0)
         ]
         self._used_types = set()
@@ -144,8 +160,15 @@ class Verilog(WriterBase):
         address = int(register.address / nbytes) * nbytes
         bit_offset = int((register.address * 8) % size)
 
-        return ByteInfo(field, start + bit_offset, stop + bit_offset, start,
-                        stop, address + offset, register)
+        return ByteInfo(
+            field,
+            start + bit_offset,
+            stop + bit_offset,
+            start,
+            stop,
+            address + offset,
+            register,
+        )
 
     def __generate_group_list(self, reglist, size):
         """
@@ -161,7 +184,7 @@ class Verilog(WriterBase):
                         data = self._byte_info(
                             field, register, lower, size, offset)
                         item_list.setdefault(data.address, []).append(data)
-                        offset += size/8
+                        offset += size / 8
         return item_list
 
     def write(self, filename):
@@ -177,15 +200,16 @@ class Verilog(WriterBase):
         env = Environment(
             loader=FileSystemLoader(os.path.join(dirpath, "templates")),
             trim_blocks=True,
-            lstrip_blocks=True
+            lstrip_blocks=True,
         )
-        env.filters['drop_write_share'] = drop_write_share
+        env.filters["drop_write_share"] = drop_write_share
 
         template = env.get_template("verilog.template")
 
         reglist = []
-        for reg in [r for r in self._dbase.get_all_registers()
-                    if not r.do_not_generate_code]:
+        for reg in [
+            r for r in self._dbase.get_all_registers() if not r.do_not_generate_code
+        ]:
             if reg.dimension > 1:
                 for i in range(0, reg.dimension):
                     new_reg = copy.copy(reg)
@@ -199,14 +223,16 @@ class Verilog(WriterBase):
 
         word_fields = self.__generate_group_list(reglist, self._data_width)
 
-        if (self._dbase.reset_active_level and
-                not self._dbase.use_interface):
+        if self._dbase.reset_active_level and not self._dbase.use_interface:
             reset_edge = "posedge"
         else:
             reset_edge = "negedge"
 
-        reset_op = "" if (self._dbase.reset_active_level and
-                          not self._dbase.use_interface) else "~"
+        reset_op = (
+            ""
+            if (self._dbase.reset_active_level and not self._dbase.use_interface)
+            else "~"
+        )
 
         parameters = []
         for reg in self._dbase.get_all_registers():
@@ -224,18 +250,18 @@ class Verilog(WriterBase):
             for field in reg.get_bit_fields():
                 if TYPE_TO_OUTPUT[field.field_type] and field.use_output_enable:
                     sig = field.output_signal
-                    root = sig.split('[')
-                    wild = sig.split('*')
+                    root = sig.split("[")
+                    wild = sig.split("*")
                     if len(root) == 1:
                         if field.msb == field.lsb:
                             scalar_ports.append((sig, "", reg.dimension))
                         else:
                             dim[sig] = reg.dimension
-                            for i in range(field.lsb, field.msb+1):
+                            for i in range(field.lsb, field.msb + 1):
                                 array_ports[sig].append(i)
                     elif len(wild) > 1:
                         dim[root[0]] = reg.dimension
-                        for i in range(field.lsb, field.msb+1):
+                        for i in range(field.lsb, field.msb + 1):
                             array_ports[root[0]].append(i)
                     else:
                         match = BUS_SLICE.match(sig)
@@ -260,7 +286,7 @@ class Verilog(WriterBase):
             else:
                 scalar_ports.append((key, "[%d:%d]" % (msb, lsb), dim[key]))
 
-# TODO: fix 64 bit registers with 32 bit width
+        # TODO: fix 64 bit registers with 32 bit width
 
         with open(filename, "w") as ofile:
             ofile.write(
@@ -281,7 +307,7 @@ class Verilog(WriterBase):
                     reset_edge=reset_edge,
                     reset_op=reset_op,
                     reg_type=self.reg_type,
-                    LOWER_BIT=LOWER_BIT
+                    LOWER_BIT=LOWER_BIT,
                 )
             )
             self.write_register_modules(ofile)
@@ -295,7 +321,7 @@ class Verilog(WriterBase):
 
         if text_list:
             if precede_blank:
-                ofile.write('\n')
+                ofile.write("\n")
             ofile.write("/*{0}\n * ".format(border_string))
             ofile.write("\n * ".join(text_list))
             if border:
@@ -324,10 +350,10 @@ class Verilog(WriterBase):
             be_level = "~"
 
         name_map = {
-            'MODULE': self._module,
-            'BE_LEVEL': be_level,
-            'RESET_CONDITION': condition,
-            'RESET_EDGE': edge
+            "MODULE": self._module,
+            "BE_LEVEL": be_level,
+            "RESET_CONDITION": condition,
+            "RESET_EDGE": edge,
         }
 
         for i in self._used_types:
@@ -336,12 +362,16 @@ class Verilog(WriterBase):
                 self.comment(ofile, [self._cell_info[i][4]])
                 ofile.write(REG[self._cell_info[i][0]] % name_map)
             except KeyError:
-                self.comment(ofile, ['No definition for %s_%s_reg\n' %
-                                     (self._module, self._cell_info[i][0])])
+                self.comment(
+                    ofile,
+                    [
+                        "No definition for %s_%s_reg\n"
+                        % (self._module, self._cell_info[i][0])
+                    ],
+                )
 
 
 class SystemVerilog(Verilog):
-
     def __init__(self, project, dbase):
         super(SystemVerilog, self).__init__(project, dbase)
         self.input_logic = "input logic "
@@ -351,40 +381,40 @@ class SystemVerilog(Verilog):
 
 
 class Verilog2001(Verilog):
-
     def __init(self, project, dbase):
         super(Verilog2001, self).__init__(project, dbase)
 
 
 def drop_write_share(list_in):
-    list_out = [l for l in list_in
-                if l[6].share != ShareType.WRITE]
+    list_out = [l for l in list_in if l[6].share != ShareType.WRITE]
     return list_out
 
 
 EXPORTERS = [
-    (WriterBase.TYPE_BLOCK,
-     ExportInfo(
-         SystemVerilog,
-         ("RTL", "SystemVerilog"),
-         "SystemVerilog files",
-         ".sv",
-         'rtl-system-verilog')
-     ),
-    (WriterBase.TYPE_BLOCK,
-     ExportInfo(
-         Verilog2001,
-         ("RTL", "Verilog 2001"),
-         "Verilog files",
-         ".v",
-         'rtl-verilog-2001')
-     ),
-    (WriterBase.TYPE_BLOCK,
-     ExportInfo(
-         Verilog,
-         ("RTL", "Verilog 95"),
-         "Verilog files",
-         ".v",
-         'rtl-verilog-95')
-     )
+    (
+        WriterBase.TYPE_BLOCK,
+        ExportInfo(
+            SystemVerilog,
+            ("RTL", "SystemVerilog"),
+            "SystemVerilog files",
+            ".sv",
+            "rtl-system-verilog",
+        ),
+    ),
+    (
+        WriterBase.TYPE_BLOCK,
+        ExportInfo(
+            Verilog2001,
+            ("RTL", "Verilog 2001"),
+            "Verilog files",
+            ".v",
+            "rtl-verilog-2001",
+        ),
+    ),
+    (
+        WriterBase.TYPE_BLOCK,
+        ExportInfo(
+            Verilog, ("RTL", "Verilog 95"), "Verilog files", ".v", "rtl-verilog-95"
+        ),
+    ),
 ]

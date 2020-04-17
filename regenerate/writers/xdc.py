@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
 """
 Sdc - Writes out synthesis constraints
 """
@@ -38,10 +39,12 @@ class Xdc(WriterBase):
     def find_static_outputs(self):
         static_signals = set()
 
-        for reg in [self._dbase.get_register(reg_key)
-                    for reg_key in self._dbase.get_keys()]:
-            for field in [reg.get_bit_field(field_key)
-                          for field_key in reg.get_bit_field_keys()]:
+        for reg in [
+            self._dbase.get_register(reg_key) for reg_key in self._dbase.get_keys()
+        ]:
+            for field in [
+                reg.get_bit_field(field_key) for field_key in reg.get_bit_field_keys()
+            ]:
                 if field.use_output_enable and field.output_is_static:
                     if field.output_signal:
                         static_signals.add(field.output_signal)
@@ -60,7 +63,7 @@ class Xdc(WriterBase):
 
     def _build_name(self, field):
 
-        base = field.output_signal.split('*')
+        base = field.output_signal.split("*")
         if len(base) > 1:
             base = "%s%d%s" % (base[0], field.start_position, base[1])
         else:
@@ -71,8 +74,11 @@ class Xdc(WriterBase):
         fields = []
         for reg in dbase.get_all_registers():
             for field in reg.get_bit_fields():
-                if (field.use_output_enable and field.output_signal and
-                        field.output_is_static):
+                if (
+                    field.use_output_enable
+                    and field.output_signal
+                    and field.output_is_static
+                ):
                     fields.append((reg.address, field))
         return fields
 
@@ -99,8 +105,10 @@ class Xdc(WriterBase):
                 for group_inst in group.register_sets:
                     dbase = name2db[group_inst.set]
                     ports = self.get_static_ports(dbase)
-                    of.write("# %s - %s\n\n" %
-                             (dbase.set_name, dbase.descriptive_title))
+                    of.write(
+                        "# %s - %s\n\n" % (dbase.set_name,
+                                           dbase.descriptive_title)
+                    )
                     for (addr, field) in ports:
                         if field.is_constant():
                             continue
@@ -109,50 +117,52 @@ class Xdc(WriterBase):
                             for i in range(0, group_inst.repeat):
                                 hdl = ""
                                 if group.hdl != "":
-                                    hdl = "%s/" % group.hdl.replace(
-                                        ".", "/").replace("]/", "].")
+                                    hdl = "%s/" % group.hdl.replace(".", "/").replace(
+                                        "]/", "]."
+                                    )
                                 if group_inst.hdl != "":
-                                    hdl = hdl + \
-                                        "%s/" % group_inst.hdl.replace(
-                                            ".", "/").replace("]/", "].")
+                                    hdl = hdl + "%s/" % group_inst.hdl.replace(
+                                        ".", "/"
+                                    ).replace("]/", "].")
                                     hdl = hdl % i
                                 of.write(
-                                    "set_multicycle_path 4 -setup -from [get_pins %sr%02x_%s*/DO_reg[*]/C]\n" %
-                                    (hdl, addr,
-                                     signal_name.lower())
+                                    "set_multicycle_path 4 -setup -from [get_pins %sr%02x_%s*/DO_reg[*]/C]\n"
+                                    % (hdl, addr, signal_name.lower())
                                 )
                                 of.write(
-                                    "set_multicycle_path 3 -hold -from [get_pins %sr%02x_%s*/DO_reg[*]/C]\n" %
-                                    (hdl, addr,
-                                     signal_name.lower())
+                                    "set_multicycle_path 3 -hold -from [get_pins %sr%02x_%s*/DO_reg[*]/C]\n"
+                                    % (hdl, addr, signal_name.lower())
                                 )
                         else:
                             hdl = ""
                             if group.hdl != "":
-                                hdl = "%s/" % group.hdl.replace(
-                                    ".", "/").replace("]/", "].")
+                                hdl = "%s/" % group.hdl.replace(".", "/").replace(
+                                    "]/", "]."
+                                )
                             if group_inst.hdl != "":
-                                hdl = hdl + \
-                                    "%s/" % group_inst.hdl.replace(
-                                        ".", "/").replace("]/", "].")
+                                hdl = hdl + "%s/" % group_inst.hdl.replace(
+                                    ".", "/"
+                                ).replace("]/", "].")
                             of.write(
-                                "set_multicycle_path 4 -setup -from [get_pins %sr%02x_%s*/DO_reg[*]/C]\n" %
-                                (hdl, addr, signal_name.lower())
+                                "set_multicycle_path 4 -setup -from [get_pins %sr%02x_%s*/DO_reg[*]/C]\n"
+                                % (hdl, addr, signal_name.lower())
                             )
                             of.write(
-                                "set_multicycle_path 3 -hold -from [get_pins %sr%02x_%s*/DO_reg[*]/C]\n" %
-                                (hdl, addr, signal_name.lower())
+                                "set_multicycle_path 3 -hold -from [get_pins %sr%02x_%s*/DO_reg[*]/C]\n"
+                                % (hdl, addr, signal_name.lower())
                             )
                     of.write("\n")
 
 
 EXPORTERS = [
-    (WriterBase.TYPE_PROJECT,
-     ExportInfo(
-         Xdc,
-         ("Synthesis", "Vivado Constraints"),
-         "XDC files",
-         ".xdc",
-         'xdc-constraints')
-     )
+    (
+        WriterBase.TYPE_PROJECT,
+        ExportInfo(
+            Xdc,
+            ("Synthesis", "Vivado Constraints"),
+            "XDC files",
+            ".xdc",
+            "xdc-constraints",
+        ),
+    )
 ]

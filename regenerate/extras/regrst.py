@@ -30,6 +30,7 @@ from regenerate.extras.token import full_token, in_groups, uvm_name
 
 try:
     from docutils.core import publish_parts
+
     _HTML = True
 except ImportError:
     _HTML = False
@@ -43,10 +44,10 @@ except ImportError:
 if sys.version_info[0] == 3:
     REPORT_LEVEL = 4
 else:
-    REPORT_LEVEL = 'quiet'
+    REPORT_LEVEL = "quiet"
 
 
-CSS = '''
+CSS = """
 <style type="text/css">
 table td{
     padding: 3pt;
@@ -206,7 +207,7 @@ span.symbolunder {
 }
 
 </style>
-'''
+"""
 
 
 def reg_addr(register, offset):
@@ -227,20 +228,23 @@ class RegisterRst(object):
     Produces documentation from a register definition
     """
 
-    def __init__(self, register,
-                 regset_name=None,
-                 project=None,
-                 inst=None,
-                 highlight=None,
-                 show_defines=True,
-                 show_uvm=False,
-                 decode=None,
-                 group=None,
-                 maxlines=9999999,
-                 dbase=None,
-                 max_values=24,
-                 bootstrap=False,
-                 header_level=1):
+    def __init__(
+        self,
+        register,
+        regset_name=None,
+        project=None,
+        inst=None,
+        highlight=None,
+        show_defines=True,
+        show_uvm=False,
+        decode=None,
+        group=None,
+        maxlines=9999999,
+        dbase=None,
+        max_values=24,
+        bootstrap=False,
+        header_level=1,
+    ):
 
         self._max_values = max_values
         self._reg = register
@@ -258,8 +262,8 @@ class RegisterRst(object):
         if dbase is None:
             self.reglist = set()
         else:
-            self.reglist = set([reg.register_name
-                                for reg in dbase.get_all_registers()])
+            self.reglist = set(
+                [reg.register_name for reg in dbase.get_all_registers()])
 
         if decode:
             try:
@@ -306,7 +310,7 @@ class RegisterRst(object):
         return "%s-%s-%s" % (
             norm_name(self._inst),
             norm_name(self._group),
-            norm_name(reg_name)
+            norm_name(reg_name),
         )
 
     def field_ref(self, name):
@@ -314,7 +318,7 @@ class RegisterRst(object):
             norm_name(self._inst),
             norm_name(self._group),
             norm_name(self._reg.register_name),
-            norm_name(name)
+            norm_name(name),
         )
 
     def str_title(self, ofile=None):
@@ -327,7 +331,7 @@ class RegisterRst(object):
         rlen = len(self._reg.register_name) + 2
         ofile.write(".. _%s:\n\n" % self.refname(self._reg.register_name))
         ofile.write(self._reg.register_name)
-        ofile.write("\n%s\n\n" % ('_' * rlen))
+        ofile.write("\n%s\n\n" % ("_" * rlen))
 
         if ret_str:
             return ofile.getvalue()
@@ -340,8 +344,10 @@ class RegisterRst(object):
             ofile = StringIO()
             ret_str = True
 
-        ofile.write("%s\n\n" %
-                    self._reg.description.encode('utf-8', 'replace').decode())
+        ofile.write(
+            "%s\n\n" % self._reg.description.encode(
+                "utf-8", "replace").decode()
+        )
 
         if ret_str:
             return ofile.getvalue()
@@ -363,7 +369,8 @@ class RegisterRst(object):
         ofile.write("   :widths: 8, 10, 7, 25, 50\n")
         if self._bootstrap:
             ofile.write(
-                "   :class: table table-bordered table-striped table-condensed display\n")
+                "   :class: table table-bordered table-striped table-condensed display\n"
+            )
         else:
             ofile.write("   :class: bit-table\n")
         ofile.write("   :header-rows: 1\n\n")
@@ -402,32 +409,41 @@ class RegisterRst(object):
             descr = field.description.strip()
             marked_descr = "\n       ".join(descr.split("\n"))
             encoded_descr = marked_descr.encode(
-                'utf-8', 'replace').rstrip().decode()
+                "utf-8", "replace").rstrip().decode()
 
             lines = encoded_descr.split("\n")
 
             if len(lines) > self._maxlines:
-                ofile.write("     - See :ref:`Description for %s <%s>`\n" %
-                            (field.field_name, self.field_ref(field.field_name)))
-                extra_text.append((self.field_ref(field.field_name),
-                                   field.field_name, encoded_descr))
+                ofile.write(
+                    "     - See :ref:`Description for %s <%s>`\n"
+                    % (field.field_name, self.field_ref(field.field_name))
+                )
+                extra_text.append(
+                    (self.field_ref(field.field_name),
+                     field.field_name, encoded_descr)
+                )
             else:
                 ofile.write("     - %s\n" % encoded_descr)
 
             if field.values and len(field.values) < self._max_values:
                 ofile.write("\n")
 
-                for val in sorted(field.values,
-                                  key=lambda x: int(int(x[0], 16))):
+                for val in sorted(field.values, key=lambda x: int(int(x[0], 16))):
                     if val[1] and val[2]:
-                        ofile.write("        0x%x : %s\n            %s\n\n" %
-                                    (int(val[0], 16), val[1], val[2]))
+                        ofile.write(
+                            "        0x%x : %s\n            %s\n\n"
+                            % (int(val[0], 16), val[1], val[2])
+                        )
                     elif val[1]:
-                        ofile.write("        0x%x : %s\n            %s\n\n" %
-                                    (int(val[0], 16), val[1], "*no description available*"))
+                        ofile.write(
+                            "        0x%x : %s\n            %s\n\n"
+                            % (int(val[0], 16), val[1], "*no description available*")
+                        )
                     else:
-                        ofile.write("        0x%x : %s\n            %s\n\n" %
-                                    (int(val[0], 16), "*no token available*", val[2]))
+                        ofile.write(
+                            "        0x%x : %s\n            %s\n\n"
+                            % (int(val[0], 16), "*no token available*", val[2])
+                        )
             last_index = field.lsb - 1
         if last_index >= 0:
             display_reserved(ofile, last_index, 0)
@@ -478,7 +494,8 @@ class RegisterRst(object):
             ofile.write(".. warning::\n")
             ofile.write("   :class: alert alert-warning\n\n")
             ofile.write(
-                "   This register has not been mapped into any address space.\n\n")
+                "   This register has not been mapped into any address space.\n\n"
+            )
 
         elif in_groups(self._regset_name, self._prj):
             ofile.write(".. list-table::\n")
@@ -491,7 +508,8 @@ class RegisterRst(object):
                 ofile.write("   :widths: 50, 16, 16, 17\n")
             if self._bootstrap:
                 ofile.write(
-                    "   :class: table table-bordered table-striped table-condensed\n\n")
+                    "   :class: table table-bordered table-striped table-condensed\n\n"
+                )
             else:
                 ofile.write("   :class: summary\n\n")
             ofile.write("   *")
@@ -514,22 +532,54 @@ class RegisterRst(object):
 
                     if inst.repeat == 1 and not inst.array:
                         if self._reg.dimension <= 1:
-                            self._addr_entry(ofile, inst, use_uvm, use_id,
-                                             addr_maps, grp_inst, -1, -1)
+                            self._addr_entry(
+                                ofile,
+                                inst,
+                                use_uvm,
+                                use_id,
+                                addr_maps,
+                                grp_inst,
+                                -1,
+                                -1,
+                            )
                         else:
                             for i in range(self._reg.dimension):
-                                self._addr_entry(ofile, inst, use_uvm, use_id,
-                                                 addr_maps, grp_inst, -1, i)
+                                self._addr_entry(
+                                    ofile,
+                                    inst,
+                                    use_uvm,
+                                    use_id,
+                                    addr_maps,
+                                    grp_inst,
+                                    -1,
+                                    i,
+                                )
                     else:
                         for ginst in range(0, inst.repeat):
 
                             if self._reg.dimension <= 1:
-                                self._addr_entry(ofile, inst, use_uvm, use_id,
-                                                 addr_maps, grp_inst, ginst, -1)
+                                self._addr_entry(
+                                    ofile,
+                                    inst,
+                                    use_uvm,
+                                    use_id,
+                                    addr_maps,
+                                    grp_inst,
+                                    ginst,
+                                    -1,
+                                )
                             else:
                                 for i in range(self._reg.dimension):
-                                    self._addr_entry(ofile, inst, use_uvm, use_id,
-                                                     addr_maps, grp_inst, ginst, i)
+                                    self._addr_entry(
+                                        ofile,
+                                        inst,
+                                        use_uvm,
+                                        use_id,
+                                        addr_maps,
+                                        grp_inst,
+                                        ginst,
+                                        i,
+                                    )
 
             ofile.write("\n\n")
 
@@ -537,8 +587,9 @@ class RegisterRst(object):
             return ofile.getvalue()
         return ""
 
-    def _addr_entry(self, ofile, inst, use_uvm, use_id, addr_maps,
-                    grp_inst, group_index, index):
+    def _addr_entry(
+        self, ofile, inst, use_uvm, use_id, addr_maps, grp_inst, group_index, index
+    ):
 
         if inst.grpt == 1:
             u_grp_name = inst.group
@@ -556,27 +607,31 @@ class RegisterRst(object):
             else:
                 ofile.write(" - %s[%d]\n" % (name, index))
         if use_id:
-            name = full_token(t_grp_name, self._reg.token,
-                              inst.inst, group_index, inst.format)
+            name = full_token(
+                t_grp_name, self._reg.token, inst.inst, group_index, inst.format
+            )
             if use_uvm:
                 ofile.write("    ")
             ofile.write(" - %s\n" % name)
         for map_name in addr_maps:
             map_base = self._prj.get_address_base(map_name.name)
-            offset = map_base + inst.offset + inst.base + (
-                grp_inst * inst.grpt_offset)
+            offset = map_base + inst.offset + \
+                inst.base + (grp_inst * inst.grpt_offset)
             if group_index > 0:
                 offset += group_index * inst.roffset
 
             if index < 0:
                 ofile.write("     - ``%s``\n" % reg_addr(self._reg, offset))
             else:
-                ofile.write("     - ``%s``\n" % reg_addr(self._reg, offset
-                                                         + (index * (self._reg.width/8))))
+                ofile.write(
+                    "     - ``%s``\n"
+                    % reg_addr(self._reg, offset + (index * (self._reg.width / 8)))
+                )
 
     def _display_uvm_entry(self, inst, index, ofile):
-        name = full_token(inst.group, self._reg.token, self._regset_name,
-                          index, inst.format)
+        name = full_token(
+            inst.group, self._reg.token, self._regset_name, index, inst.format
+        )
         ofile.write("   * - %s\n" % name)
         name = uvm_name(inst.group, self._reg.token, inst.inst, index)
         ofile.write("     - %s\n" % name)
@@ -593,7 +648,8 @@ class RegisterRst(object):
         ofile.write("   :header-rows: 1\n")
         if self._bootstrap:
             ofile.write(
-                "   :class: table table-bordered table-striped table-condensed\n\n")
+                "   :class: table table-bordered table-striped table-condensed\n\n"
+            )
         else:
             ofile.write("   :class: summary\n\n")
         ofile.write("   * - ID\n")
@@ -617,30 +673,38 @@ class RegisterRst(object):
             try:
                 if self._header_level > 1:
                     overrides = {
-                        'initial_header_level': self._header_level,
-                        'doctitle_xform': False,
-                        'report_level': REPORT_LEVEL
+                        "initial_header_level": self._header_level,
+                        "doctitle_xform": False,
+                        "report_level": REPORT_LEVEL,
                     }
                 else:
-                    overrides = {
-                        'report_level': REPORT_LEVEL
-                    }
+                    overrides = {"report_level": REPORT_LEVEL}
                 parts = publish_parts(
-                    text,
-                    writer_name="html",
-                    settings_overrides=overrides
+                    text, writer_name="html", settings_overrides=overrides
                 )
                 if self._highlight is None:
-                    return parts['html_title'] + parts['html_subtitle'] + parts['body']
+                    return parts["html_title"] + parts["html_subtitle"] + parts["body"]
                 paren_re = re.compile(
                     "(%s)" % self._highlight, flags=re.IGNORECASE)
-                return parts['html_title'] + parts['html_subtitle'] + \
-                    paren_re.sub(r"<mark>\1</mark>", parts['body'])
+                return (
+                    parts["html_title"]
+                    + parts["html_subtitle"]
+                    + paren_re.sub(r"<mark>\1</mark>", parts["body"])
+                )
 
             except TypeError as msg:
-                return "<h3>TypeError</h3><p>" + str(msg) + "</p><pre>" + text + "</pre>"
+                return (
+                    "<h3>TypeError</h3><p>" +
+                    str(msg) + "</p><pre>" + text + "</pre>"
+                )
             except AttributeError as msg:
-                return "<h3>AttributeError</h3><p>" + str(msg) + "</p><pre>" + text + "</pre>"
+                return (
+                    "<h3>AttributeError</h3><p>"
+                    + str(msg)
+                    + "</p><pre>"
+                    + text
+                    + "</pre>"
+                )
             except ZeroDivisionError:
                 return "<h3>ZeroDivisionError in Restructured Text</h3>Please contact the developer to get the documentation fixed"
         else:
@@ -662,7 +726,9 @@ class RegisterRst(object):
         return self.html_from_text(self.str_defines(None, True, False) + "\n" + text)
 
     def html_overview(self, text=""):
-        return self.html_from_text(self.str_overview() + "\n" + text) + self.html_from_text(text)
+        return self.html_from_text(
+            self.str_overview() + "\n" + text
+        ) + self.html_from_text(text)
 
 
 def display_reserved(ofile, stop, start):
@@ -670,14 +736,14 @@ def display_reserved(ofile, stop, start):
         ofile.write("   * - ``%02d``\n" % stop)
     else:
         ofile.write("   * - ``%02d:%02d``\n" % (stop, start))
-    ofile.write('     - ``0x0``\n')
-    ofile.write('     - RO\n')
-    ofile.write('     - \n')
-    ofile.write('     - *reserved*\n')
+    ofile.write("     - ``0x0``\n")
+    ofile.write("     - RO\n")
+    ofile.write("     - \n")
+    ofile.write("     - *reserved*\n")
 
 
 def mask(stop, start):
     value = 0
     for i in range(start, stop + 1):
-        value |= (1 << i)
+        value |= 1 << i
     return value

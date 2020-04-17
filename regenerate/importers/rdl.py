@@ -69,7 +69,7 @@ class FieldInfo:
         Takes the command and text, calls the function associated with
         the command (do_<command>), and passes the text to be assigned.
         """
-        mname = 'do_' + command
+        mname = "do_" + command
         if hasattr(self, mname):
             method = getattr(self, mname)
             method(text)
@@ -142,8 +142,8 @@ class RDLParser:
             match = re.match("\s*}\s*([A-Za-z_0-9]+)\s*@(.+)\s*;", line)
             if match:
                 groups = match.groups()
-                reg_list.append((groups[0], groups[1], regwidth,
-                                 field_list[:]))
+                reg_list.append(
+                    (groups[0], groups[1], regwidth, field_list[:]))
                 continue
 
         input_file.close()
@@ -157,7 +157,7 @@ class RDLParser:
         lookup = {
             '"rw"': BitType.READ_WRITE,
             '"w"': BitType.WRITE_ONLY,
-            '"r"': BitType.READ_ONLY
+            '"r"': BitType.READ_ONLY,
         }
 
         for (reg_name, addr_txt, width, field_list) in reg_list:
@@ -197,12 +197,12 @@ def parse_hex_value(value):
     match = re.match("\d+'([hbd])(\S+)", value)
     if match:
         groups = match.groups()
-        if groups[0] == 'h':
-            return int(groups[1].replace('_', ''), 16)
-        elif groups[0] == 'b':
-            return int(groups[1].replace('_', ''), 2)
+        if groups[0] == "h":
+            return int(groups[1].replace("_", ""), 16)
+        elif groups[0] == "b":
+            return int(groups[1].replace("_", ""), 2)
         else:
-            return int(groups[1].replace('_', ''))
+            return int(groups[1].replace("_", ""))
 
     try:
         return int(value, 16)
