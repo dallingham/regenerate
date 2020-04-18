@@ -21,6 +21,7 @@ import copy
 import re
 from regenerate.ui.register_list import build_define
 
+
 REGNAME = re.compile("^(.*)(\d+)(.*)$")
 
 
@@ -52,7 +53,7 @@ def duplicate_register(dbase, reg):
         nfld.output_signal = signal_from_source(fld.output_signal, signals)
         nfld.control_signal = signal_from_source(fld.control_signal, signals)
 
-    new_reg.address = calculate_next_address(dbase)
+    new_reg.address = calculate_next_address(dbase, reg.width)
     new_reg.register_name = new_name
     new_reg.token = def_name
     return new_reg
