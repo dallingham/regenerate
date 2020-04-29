@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-import gtk
+from gi.repository import Gtk
 from regenerate.settings.paths import GLADE_PREF
 from regenerate.settings import ini
 """
@@ -28,7 +28,7 @@ Provides the preferences dialog box
 class Preferences(object):
 
     def __init__(self, parent):
-        self.__builder = gtk.Builder()
+        self.__builder = Gtk.Builder()
         self.__builder.add_from_file(GLADE_PREF)
         self.__properties = self.__builder.get_object('preferences')
 

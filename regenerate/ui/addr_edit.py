@@ -21,7 +21,7 @@ Provides the edit dialog that allows the user to edit the bit field
 information.
 """
 
-import gtk
+from gi.repository import Gtk
 from regenerate.ui.columns import ToggleColumn, EditableColumn, ComboMapColumn
 from regenerate.ui.base_window import BaseWindow
 
@@ -32,25 +32,26 @@ class AddrMapEdit(BaseWindow):
     for an address map.
     """
 
-    def __init__(self, map_name, subsystem_list, builder, project, parent, callback):
+    def __init__(self, map_name, subsystem_list, project, parent, callback):
 
-        super(AddrMapEdit, self).__init__()
+        super().__init__()
         self.project = project
         self.callback = callback
 
-        label = gtk.Label(
+        label = Gtk.Label(
             'Select subsystems for the "{0}" address map'.format(map_name)
         )
         label.set_padding(6, 6)
 
-        dialog = gtk.Dialog(
+        dialog = Gtk.Dialog(
             "Address Map Subsystem Selection",
             None,
-            gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
-            (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT, gtk.STOCK_OK, gtk.RESPONSE_ACCEPT),
+            Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT,
+            (Gtk.STOCK_CANCEL, Gtk.ResponseType.REJECT,
+             Gtk.STOCK_OK, Gtk.ResponseType.ACCEPT),
         )
 
-        dialog.vbox.pack_start(label, False, False)
+        dialog.vbox.pack_start(label, False, False, 0)
         dialog.vbox.set_homogeneous(False)
         dialog.set_default_size(580, 320)
         dialog.set_transient_for(parent)
@@ -58,13 +59,16 @@ class AddrMapEdit(BaseWindow):
 
         label.show()
 
-        scrolled_window = gtk.ScrolledWindow()
-        scrolled_window.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        scrolled_window = Gtk.ScrolledWindow()
+        scrolled_window.set_policy(
+            Gtk.PolicyType.AUTOMATIC,
+            Gtk.PolicyType.AUTOMATIC
+        )
         scrolled_window.show()
-        dialog.vbox.pack_end(scrolled_window)
+        dialog.vbox.pack_end(scrolled_window, False, False, 0)
 
-        self.view = gtk.TreeView()
-        self.model = gtk.TreeStore(bool, str, str, object, str)
+        self.view = Gtk.TreeView()
+        self.model = Gtk.TreeStore(bool, str, str, object, str)
         self.view.set_model(self.model)
 
         self.view.show()
@@ -113,7 +117,7 @@ class AddrMapEdit(BaseWindow):
 
         response = dialog.run()
 
-        if response == gtk.RESPONSE_REJECT:
+        if response == Gtk.ResponseType.REJECT:
             self.cb_list = None
         else:
             self.cb_list = [row[1] for row in self.model if row[0]]

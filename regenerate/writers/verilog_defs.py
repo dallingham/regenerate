@@ -32,8 +32,8 @@ class VerilogDefines(WriterBase):
     Writes out Verilog defines representing the register addresses
     """
 
-    def __init__(self, dbase):
-        super(VerilogDefines, self).__init__(dbase)
+    def __init__(self, project, dbase):
+        super().__init__(project, dbase)
         self._ofile = None
 
     def write_def(self, reg, prefix, offset):

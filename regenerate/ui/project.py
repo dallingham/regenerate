@@ -17,27 +17,26 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-import gtk
-import pango
+from gi.repository import Gtk, Gdk, GdkPixbuf, Pango
 import os
 from regenerate.settings.paths import INSTALL_PATH
 from regenerate.ui.enums import PrjCol
 
 
-class ProjectModel(gtk.ListStore):
+class ProjectModel(Gtk.ListStore):
 
     def __init__(self):
         super(ProjectModel, self).__init__(
             str, str, str, bool, bool, object
         )
 
-        gtk.gdk.threads_init()
+        Gdk.threads_init()
         self.file_list = {}
         self.paths = set()
 
     def set_markup(self, node, modified):
         if modified:
-            icon = gtk.STOCK_EDIT
+            icon = Gtk.STOCK_EDIT
         else:
             icon = None
         self.set_value(node, PrjCol.ICON, icon)
@@ -72,16 +71,16 @@ class ProjectList(object):
         self.__obj.set_tooltip_column(PrjCol.FILE)
 
         self.__obj.enable_model_drag_source(
-            gtk.gdk.BUTTON1_MASK,
+            Gdk.ModifierType.BUTTON1_MASK,
             [('text/plain', 0, 0)],
-            gtk.gdk.ACTION_DEFAULT | gtk.gdk.ACTION_MOVE
+            Gdk.DragAction.DEFAULT | Gdk.DragAction.MOVE
         )
         self.__obj.connect('drag-data-get', self.drag_data_get)
 
-        self.factory = gtk.IconFactory()
+        self.factory = Gtk.IconFactory()
         filename = os.path.join(INSTALL_PATH, "media", "ModifiedIcon.png")
-        pixbuf = gtk.gdk.pixbuf_new_from_file(filename)
-        iconset = gtk.IconSet(pixbuf)
+        pixbuf = GdkPixbuf.Pixbuf.new_from_file(filename)
+        iconset = Gtk.IconSet(pixbuf)
         self.factory.add('out-of-date', iconset)
         self.factory.add_default()
 
@@ -104,14 +103,14 @@ class ProjectList(object):
         self.__obj.set_model(model)
 
     def __build_prj_window(self):
-        renderer = gtk.CellRendererPixbuf()
-        column = gtk.TreeViewColumn("", renderer, stock_id=1)
+        renderer = Gtk.CellRendererPixbuf()
+        column = Gtk.TreeViewColumn("", renderer, stock_id=1)
         column.set_min_width(20)
         self.__obj.append_column(column)
 
-        renderer = gtk.CellRendererText()
-        renderer.set_property('ellipsize', pango.ELLIPSIZE_END)
-        column = gtk.TreeViewColumn("Register Sets", renderer, text=0)
+        renderer = Gtk.CellRendererText()
+        renderer.set_property('ellipsize', Pango.EllipsizeMode.END)
+        column = Gtk.TreeViewColumn("Register Sets", renderer, text=0)
         column.set_min_width(140)
         self.__obj.append_column(column)
 

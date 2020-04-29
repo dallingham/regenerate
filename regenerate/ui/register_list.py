@@ -21,7 +21,7 @@ Provides the editing interface to the register table
 """
 
 from collections import namedtuple
-import gtk
+from gi.repository import Gtk
 from regenerate.ui.columns import EditableColumn, ComboMapColumn
 from regenerate.ui.error_dialogs import ErrorMsg
 from regenerate.db import LOGGER
@@ -95,7 +95,7 @@ REPLACE = {
 }
 
 
-class RegisterModel(gtk.ListStore):
+class RegisterModel(Gtk.ListStore):
     """
     A derivation of the ListStore that defines the columns. The columsn are:
 
@@ -171,7 +171,7 @@ class RegisterModel(gtk.ListStore):
 
         for reg in self.reg2path:
             if self.reg2path[reg] > old_path:
-                self.reg2path[reg] = (self.reg2path[reg][0] - 1, )
+                self.reg2path[reg] = Gtk.TreePath(self.reg2path[reg][0] - 1)
 
     def set_tooltip(self, reg, msg):
         """
@@ -193,7 +193,7 @@ class RegisterModel(gtk.ListStore):
         """
         path = self.reg2path[register]
         if flag:
-            self[path][RegCol.ICON] = gtk.STOCK_DIALOG_WARNING
+            self[path][RegCol.ICON] = Gtk.STOCK_DIALOG_WARNING
         else:
             self[path][RegCol.ICON] = None
 
@@ -322,8 +322,8 @@ class RegisterList(object):
                     placeholder=col.placeholder
                 )
             else:
-                self.__icon_renderer = gtk.CellRendererPixbuf()
-                column = gtk.TreeViewColumn(
+                self.__icon_renderer = Gtk.CellRendererPixbuf()
+                column = Gtk.TreeViewColumn(
                     "",
                     self.__icon_renderer,
                     stock_id=i
@@ -503,8 +503,9 @@ class RegisterList(object):
                 self.__handle_reg_address(register, path, new_text)
         except ValueError:
             LOGGER.warning(
-                'Address %0x was not changed: invalid value "%s"' %
-                (register.address, new_text)
+                'Address %0x was not changed: invalid value "%s"',
+                register.address,
+                new_text
             )
 
     def __handle_ram_address(self, register, path, new_text):

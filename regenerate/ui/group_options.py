@@ -17,14 +17,14 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-import gtk
+from gi.repository import Gtk
 
-DEF_DIALOG_FLAGS = gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT
-DEF_DIALOG_BUTTONS = (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
-                      gtk.STOCK_OK, gtk.RESPONSE_ACCEPT)
+DEF_DIALOG_FLAGS = Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT
+DEF_DIALOG_BUTTONS = (Gtk.STOCK_CANCEL, Gtk.ResponseType.REJECT,
+                      Gtk.STOCK_OK, Gtk.ResponseType.ACCEPT)
 
 
-class GroupOptions (gtk.Dialog):
+class GroupOptions (Gtk.Dialog):
 
     def __init__(self, instance, modified, parent, width=600, height=260):
 
@@ -40,7 +40,7 @@ class GroupOptions (gtk.Dialog):
 
         changed = False
         response = self.run()
-        if response == gtk. RESPONSE_ACCEPT:
+        if response == Gtk.ResponseType.ACCEPT:
             if self.val_array != self.instance.array:
                 self.instance.array = self.val_array
                 changed = True
@@ -61,15 +61,15 @@ class GroupOptions (gtk.Dialog):
     def build_window(self, title):
 
         area = self.get_content_area()
-        title_label = gtk.Label()
+        title_label = Gtk.Label()
         title_label.set_xalign(0.5)
         title_label.set_markup("<b>%s</b>" % title)
 
-        table = gtk.Table(4, 5)
+        table = Gtk.Table(4, 5)
         table.set_row_spacings(6)
         table.set_col_spacings(6)
 
-        uvm_exclude = gtk.CheckButton(
+        uvm_exclude = Gtk.CheckButton(
             "Exclude the instance from the UVM register package")
         uvm_exclude.set_active(self.instance.no_uvm)
         self.val_no_uvm = self.instance.no_uvm
@@ -80,11 +80,11 @@ class GroupOptions (gtk.Dialog):
             3,
             1,
             2,
-            xoptions=gtk.FILL,
-            yoptions=gtk.FILL
+            xoptions=Gtk.AttachOptions.FILL,
+            yoptions=Gtk.AttachOptions.FILL
         )
 
-        decode_exclude = gtk.CheckButton(
+        decode_exclude = Gtk.CheckButton(
             "Exclude from register decode"
         )
         decode_exclude.set_active(self.instance.no_decode)
@@ -96,11 +96,11 @@ class GroupOptions (gtk.Dialog):
             3,
             2,
             3,
-            xoptions=gtk.FILL,
-            yoptions=gtk.FILL
+            xoptions=Gtk.AttachOptions.FILL,
+            yoptions=Gtk.AttachOptions.FILL
         )
 
-        force_arrays = gtk.CheckButton(
+        force_arrays = Gtk.CheckButton(
             "Force array notation even for scalar instances"
         )
         force_arrays.set_active(self.instance.array)
@@ -112,11 +112,11 @@ class GroupOptions (gtk.Dialog):
             3,
             3,
             4,
-            xoptions=gtk.FILL,
-            yoptions=gtk.FILL
+            xoptions=Gtk.AttachOptions.FILL,
+            yoptions=Gtk.AttachOptions.FILL
         )
 
-        single_decode = gtk.CheckButton(
+        single_decode = Gtk.CheckButton(
             "Use a single decode for arrays"
         )
         single_decode.set_active(self.instance.single_decode)
@@ -128,11 +128,11 @@ class GroupOptions (gtk.Dialog):
             3,
             4,
             5,
-            xoptions=gtk.FILL,
-            yoptions=gtk.FILL
+            xoptions=Gtk.AttachOptions.FILL,
+            yoptions=Gtk.AttachOptions.FILL
         )
 
-        box = gtk.VBox(spacing=6)
+        box = Gtk.VBox(spacing=6)
         box.pack_start(title_label, fill=True, expand=True, padding=12)
         box.pack_start(table, fill=True, expand=True, padding=12)
         area.add(box)

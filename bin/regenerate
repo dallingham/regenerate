@@ -1,8 +1,4 @@
-#!/bin/sh
-''''which python3 >/dev/null 2>&1 && exec python3 "$0" "$@" # '''
-''''which python  >/dev/null 2>&1 && exec python  "$0" "$@" # '''
-''''exec echo "Error: I can't find python anywhere"         # '''
-#! /usr/bin/env python
+#! /usr/bin/env python3
 #
 # Manage registers in a hardware design
 #
@@ -31,49 +27,35 @@ import sys
 
 if os.path.dirname(sys.argv[0]) != ".":
     if sys.argv[0][0] == "/":
-        fullPath = os.path.dirname(sys.argv[0])
+        FULL_PATH = os.path.dirname(sys.argv[0])
     else:
-        fullPath = os.path.join(os.getcwd(), os.path.dirname(sys.argv[0]))
+        FULL_PATH = os.path.join(os.getcwd(), os.path.dirname(sys.argv[0]))
 else:
-    fullPath = os.getcwd()
-sys.path.insert(0, os.path.dirname(fullPath))
+    FULL_PATH = os.getcwd()
+sys.path.insert(0, os.path.dirname(FULL_PATH))
 
-fullPath = os.path.join(fullPath, "..", "lib", "python", "regenerate")
-if os.path.exists(fullPath):
-    sys.path.insert(0, os.path.dirname(fullPath))
+FULL_PATH = os.path.join(FULL_PATH, "..", "lib", "python", "regenerate")
+if os.path.exists(FULL_PATH):
+    sys.path.insert(0, os.path.dirname(FULL_PATH))
 
 
 def run_gui(args):
     """
     Actually runs the program
     """
-    import os
+    import gi
 
-    try:
-        if sys.version_info[0] == 2:
-            pygtkcompat = None
-        else:
-            from gi import pygtkcompat
-    except ImportError:
-        pygtkcompat = None
-
-    if pygtkcompat is not None:
-        pygtkcompat.enable()
-        pygtkcompat.enable_gtk(version='3.0')
-
-    import gtk
+    gi.require_version("Gtk", "3.0")
+    gi.require_version("Pango", "1.0")
+    from gi.repository import Gtk
 
     from regenerate.ui.regenerate_top import MainWindow
     from regenerate.settings import ini
 
-    if gtk.pygtk_version < (2, 12, 0):
-        sys.stderr.write('GTK version 2.12 or greater is required\n')
-        sys.exit()
-
     edit = MainWindow()
-    if args:
+    if args.project_file:
         try:
-            edit.open_project(args[0], "file:///" + args[0])
+            edit.open_project(args.project_file, "file:///" + args.project_file)
         except IOError as msg:
             sys.stderr.write("regenerate: error: could not project file: ")
             sys.stderr.write("%s\n" % str(msg))
@@ -87,31 +69,32 @@ def run_gui(args):
     # allows us to get around it. Fortunately, Linux doesn't appear to be
     # broken in the same way.
 
-    if os.name == 'nt':
-        import gobject
-        gobject.threads_init()
-        gtk.threads_enter()
-        gtk.main()
-        gtk.threads_leave()
+    if os.name == "nt":
+        from gi.repository import GObject
+
+        GObject.threads_init()
+        Gtk.threads_enter()
+        Gtk.main()
+        Gtk.threads_leave()
     else:
-        gtk.main()
+        Gtk.main()
 
 
 def run():
     """
     main program
     """
-    from optparse import OptionParser
-    from regenerate import PROGRAM_VERSION, PROGRAM_NAME
+    from argparse import ArgumentParser
 
-    parser = OptionParser(
-        usage="%prog [project file]",
-        description="Manages the registers in an ASIC or FPGA design",
-        prog=PROGRAM_NAME,
-        version=PROGRAM_VERSION
+    parser = ArgumentParser(
+        description="Manages the registers in an ASIC or FPGA design"
     )
 
-    (options, args) = parser.parse_args()
+    parser.add_argument(
+        "project_file", nargs="?", default=None, help="Regenerate project file"
+    )
+
+    args = parser.parse_args()
 
     run_gui(args)
 

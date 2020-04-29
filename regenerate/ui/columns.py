@@ -20,11 +20,10 @@
 Provides TreeView column to simplify usage.
 """
 
-import gtk
-import pango
+from gi.repository import Gtk, Pango
 
 
-class BaseColumn(gtk.TreeViewColumn):
+class BaseColumn(Gtk.TreeViewColumn):
 
     def __init__(self, title, cell_renderer, tooltip=None, **kwargs):
 
@@ -33,12 +32,12 @@ class BaseColumn(gtk.TreeViewColumn):
             **kwargs
         )
 
-        header = gtk.Label(title)
+        header = Gtk.Label(title)
         header.show()
         self.set_widget(header)
         if tooltip:
             try:
-                tooltips = gtk.Tooltips()
+                tooltips = Gtk.Tooltips()
                 tooltips.set_tip(header, tooltip)
             except AttributeError:
                 header.set_tooltip_text(tooltip)
@@ -53,7 +52,7 @@ class ToggleColumn(BaseColumn):
     def __init__(self, title, change_callback, source_column,
                  tooltip=None, visible_callback=None):
 
-        renderer = gtk.CellRendererToggle()
+        renderer = Gtk.CellRendererToggle()
         renderer.set_property('activatable', True)
         if change_callback:
             renderer.connect('toggled', change_callback, source_column)
@@ -78,7 +77,7 @@ class EditableColumn(BaseColumn):
     def __init__(self, title, change_callback, source_column, monospace=False,
                  visible_callback=None, placeholder=None, tooltip=None):
 
-        self.renderer = gtk.CellRendererText()
+        self.renderer = Gtk.CellRendererText()
         if change_callback:
             self.renderer.set_property('editable', True)
             self.renderer.connect('edited', change_callback, source_column)
@@ -88,7 +87,7 @@ class EditableColumn(BaseColumn):
             except TypeError:
                 pass
 
-        self.renderer.set_property('ellipsize', pango.ELLIPSIZE_END)
+        self.renderer.set_property('ellipsize', Pango.EllipsizeMode.END)
         if monospace:
             self.renderer.set_property('family', "Monospace")
 
@@ -125,8 +124,8 @@ class ComboMapColumn(BaseColumn):
     def __init__(self, title, callback, data_list, source_column, dtype=int,
                  visible_callback=None, tooltip=None):
 
-        renderer = gtk.CellRendererCombo()
-        model = gtk.ListStore(str, dtype)
+        renderer = Gtk.CellRendererCombo()
+        model = Gtk.ListStore(str, dtype)
         for item in data_list:
             model.append(row=item)
         renderer.set_property("text-column", 0)
@@ -156,19 +155,19 @@ class SwitchComboMapColumn(BaseColumn):
     def __init__(self, title, callback, data_list0, data_list1, data_list2,
                  source_column, dtype=int, tooltip=None):
 
-        self.renderer = gtk.CellRendererCombo()
+        self.renderer = Gtk.CellRendererCombo()
 
         self.model = []
 
-        self.model.append(gtk.ListStore(str, dtype))
+        self.model.append(Gtk.ListStore(str, dtype))
         for item in data_list0:
             self.model[0].append(row=item)
 
-        self.model.append(gtk.ListStore(str, dtype))
+        self.model.append(Gtk.ListStore(str, dtype))
         for item in data_list1:
             self.model[1].append(row=item)
 
-        self.model.append(gtk.ListStore(str, dtype))
+        self.model.append(Gtk.ListStore(str, dtype))
         for item in data_list2:
             self.model[2].append(row=item)
 

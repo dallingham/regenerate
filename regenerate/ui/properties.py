@@ -17,8 +17,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-import gtk
-import gobject
+#import gtk
+from gi.repository import GObject, Gtk
+#import gobject
 from regenerate.settings.paths import GLADE_PROP
 from columns import EditableColumn
 
@@ -30,7 +31,7 @@ class Properties(object):
 
     def __init__(self, project):
         self.__project = project
-        self.__builder = gtk.Builder()
+        self.__builder = Gtk.Builder()
         self.__builder.add_from_file(GLADE_PROP)
         self.__properties = self.__builder.get_object('properties')
 
@@ -49,7 +50,7 @@ class Properties(object):
         self.__builder.connect_signals(self)
 
         self.__tree = self.__builder.get_object('address_tree')
-        self.__model = gtk.ListStore(str, str, gobject.TYPE_UINT64)
+        self.__model = Gtk.ListStore(str, str, GObject.TYPE_UINT64)
         self.__tree.set_model(self.__model)
 
         column = EditableColumn('Map Name', self.map_name_changed, 0)

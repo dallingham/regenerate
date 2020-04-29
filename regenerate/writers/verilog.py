@@ -121,7 +121,7 @@ class Verilog(WriterBase):
     """
 
     def __init__(self, project, dbase):
-        super(Verilog, self).__init__(project, dbase)
+        super().__init__(project, dbase)
 
         self.input_logic = "input       "
         self.output_logic = "output      "

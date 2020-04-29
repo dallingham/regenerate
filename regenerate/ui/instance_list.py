@@ -17,14 +17,15 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-import gtk
-import gobject
+from gi.repository import Gtk, Gdk, GObject
+#import gobject
+#from gi.repository import GObject
 from regenerate.ui.columns import EditableColumn
 from regenerate.db import GroupInstData, GroupData, LOGGER
 from regenerate.ui.enums import InstCol
 
 
-class InstMdl(gtk.TreeStore):
+class InstMdl(Gtk.TreeStore):
     """
     Provides the list of instances for the module. Instances consist of the
     symbolic ID name and the base address.
@@ -33,7 +34,7 @@ class InstMdl(gtk.TreeStore):
     def __init__(self, project):
 
         super(InstMdl, self).__init__(
-            str, str, str, gobject.TYPE_UINT64, str,
+            str, str, str, GObject.TYPE_UINT64, str,
             str, str, object
         )
 
@@ -70,7 +71,7 @@ class InstMdl(gtk.TreeStore):
 
         if text in items:
             LOGGER.error(
-                '"{0}" has already been used as a group name'.format(text))
+                '"%s" has already been used as a group name', text)
             return
 
         node = self.get_iter(path)
@@ -108,7 +109,7 @@ class InstMdl(gtk.TreeStore):
             self.set_value(node, InstCol.BASE, text)
             self.callback()
         except ValueError:
-            LOGGER.error('Illegal base address: "{0}"'.format(text))
+            LOGGER.error('Illegal base address: "%s"', text)
         obj = self.get_value(node, InstCol.OBJ)
         if obj:
             obj.base = int(text, 16)
@@ -124,7 +125,7 @@ class InstMdl(gtk.TreeStore):
             self.set_value(node, InstCol.RPT, text)
             self.callback()
         except ValueError:
-            LOGGER.error('Illegal repeat count: "{0}"'.format(text))
+            LOGGER.error('Illegal repeat count: "%s"', text)
         obj = self.get_value(node, InstCol.OBJ)
         if obj:
             obj.repeat = int(text)
@@ -140,7 +141,7 @@ class InstMdl(gtk.TreeStore):
             self.set_value(node, InstCol.OFF, "{0:x}".format(value))
             self.callback()
         except ValueError:
-            LOGGER.error('Illegal repeat offset column: "{0}"'.format(text))
+            LOGGER.error('Illegal repeat offset column: "%s"', text)
         obj = self.get_value(node, InstCol.OBJ)
         if obj:
             obj.repeat_offset = int(text, 16)
@@ -240,7 +241,7 @@ class InstanceList(object):
     def __enable_dnd(self):
         self.__obj.enable_model_drag_dest([
             ('text/plain', 0, 0)
-        ], gtk.gdk.ACTION_DEFAULT | gtk.gdk.ACTION_MOVE)
+        ], Gdk.DragAction.DEFAULT | Gdk.DragAction.MOVE)
         self.__obj.connect('drag-data-received',
                            self.__drag_data_received_data)
 
@@ -271,6 +272,7 @@ class InstanceList(object):
         )
         if drop_info:
             path, position = drop_info
+            print (position)
             self.modified_callback()
             if len(path) == 1:
                 node = self.__model.get_iter(path)
@@ -278,8 +280,8 @@ class InstanceList(object):
             else:
                 parent = self.__model.get_iter((path[0], ))
                 node = self.__model.get_iter(path)
-                if position in (gtk.TREE_VIEW_DROP_BEFORE,
-                                gtk.TREE_VIEW_DROP_INTO_OR_BEFORE):
+                if position in (Gtk.TreeViewDropPosition.BEFORE,
+                                Gtk.TreeViewDropPosition.INTO_OR_BEFORE):
                     self.__model.insert_before(parent, node, row_data)
                 else:
                     model.insert_after(parent, node, row_data)

@@ -22,7 +22,7 @@ keeps track of when an output file should be rebuilt.
 """
 
 import os
-import gtk
+from gi.repository import Gtk
 from regenerate.settings.paths import INSTALL_PATH
 from regenerate.ui.base_window import BaseWindow
 from regenerate.ui.columns import EditableColumn, ToggleColumn
@@ -79,14 +79,14 @@ class Build(BaseWindow):
         Builds the interface from the glade description, connects the signals,
         and creates the data models to load into the system.
         """
-        self.__builder = gtk.Builder()
+        self.__builder = Gtk.Builder()
         bfile = os.path.join(INSTALL_PATH, "ui", "build.ui")
         self.__builder.add_from_file(bfile)
         self.__build_top = self.__builder.get_object('build')
         self.__build_list = self.__builder.get_object('buildlist')
         self.__builder.connect_signals(self)
         self.__add_columns()
-        self.__model = gtk.ListStore(bool, str, str, str, object, object, int)
+        self.__model = Gtk.ListStore(bool, str, str, str, object, object, int)
         self.__build_list.set_model(self.__model)
         self.configure(self.__build_top)
         self.__build_top.set_transient_for(parent)
@@ -232,7 +232,7 @@ class Build(BaseWindow):
         """
         if event.button == 3:
             menu = self.__builder.get_object("menu")
-            menu.popup(None, None, None, 1, 0, gtk.get_current_event_time())
+            menu.popup(None, None, None, 1, 0, Gtk.get_current_event_time())
 
     def on_select_all_activate(self, obj):
         """
@@ -266,10 +266,15 @@ class Build(BaseWindow):
         """
         for item in [item for item in self.__model if item[BuildCol.MODIFIED]]:
             writer_class = item[BuildCol.CLASS]
+            print(writer_class)
             dbase = item[BuildCol.DBASE]
             rtype = item[BuildCol.TYPE]
             dest = os.path.abspath(
-                os.path.join(os.path.dirname(self.__prj.path), item[BuildCol.DEST]))
+                os.path.join(
+                    os.path.dirname(self.__prj.path),
+                    item[BuildCol.DEST]
+                )
+            )
 
             try:
                 if rtype == 0:

@@ -17,9 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-import gtk
-import gobject
-import pango
+from gi.repository import GObject, Gtk, Pango
 import string
 
 from regenerate.ui.spell import Spell
@@ -56,12 +54,12 @@ class ModuleWidth(object):
             (64, "64 bits")
         )
 
-        store = gtk.ListStore(str, int)
+        store = Gtk.ListStore(str, int)
         for (val, text) in self.options:
             store.append(row=[text, val])
 
         self.widget.set_model(store)
-        cell = gtk.CellRendererText()
+        cell = Gtk.CellRendererText()
         self.widget.pack_start(cell, True)
         self.widget.add_attribute(cell, 'text', 0)
 
@@ -176,7 +174,7 @@ class ModuleValid(ModuleText):
 
             # Can't modify the cursor position from within this handler,
             # so we add it to be done at the end of the main loop:
-            gobject.idle_add(entry.set_position, new_pos)
+            GObject.idle_add(entry.set_position, new_pos)
 
         # We handled the signal so stop it from being processed further.
         entry.stop_emission("insert_text")
@@ -241,7 +239,7 @@ class ModuleDoc(object):
     """
 
     def __init__(self, text_view, web_view, db_name, modified, use_reg=True):
-        pango_font = pango.FontDescription("monospace")
+        pango_font = Pango.FontDescription("monospace")
 
         self.text_view = text_view
         self.buf = self.text_view.get_buffer()
@@ -282,7 +280,7 @@ class ModuleDoc(object):
             self.callback()
 
     def on_key_press_event(self, obj, event):
-        if event.keyval == gtk.keysyms.F12:
+        if event.keyval == Gdk.KEY_F12:
             if clean_format_if_needed(obj):
                 self.callback()
             return True

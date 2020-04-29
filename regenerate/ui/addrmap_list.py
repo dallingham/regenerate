@@ -20,7 +20,7 @@
 Provides the Address List interface
 """
 
-import gtk
+from gi.repository import Gtk
 from regenerate.db import LOGGER
 from regenerate.db.addrmap import AddrMapData
 from regenerate.ui.columns import EditableColumn, ToggleColumn, ComboMapColumn
@@ -42,7 +42,7 @@ INT2ACCESS = dict((_i[1], _i[0]) for _i in ACCESS2STR)
 STR2ACCESS = dict((_i[0], _i[1]) for _i in ACCESS2STR)
 
 
-class AddrMapMdl(gtk.ListStore):
+class AddrMapMdl(Gtk.ListStore):
     """
     Provides the list of instances for the module. Instances consist of the
     symbolic ID name and the base address.
@@ -101,9 +101,9 @@ class AddrMapList(object):
             for base in self._prj.get_address_maps():
                 if base.width not in INT2SIZE:
                     LOGGER.error(
-                        'Illegal width ({0}) for address map "{1}"'.format(
-                            base.width, base.name
-                        )
+                        'Illegal width (%d) for address map "%s"',
+                        base.width,
+                        base.name
                     )
                     base.width = 4
                 self._model.append(row=get_row_data(base))
@@ -120,7 +120,7 @@ class AddrMapList(object):
         current_maps = set([i.name for i in self._prj.get_address_maps()])
         if new_text in current_maps:
             LOGGER.error(
-                '"{}" has already been used as an address map name'.format(new_text)
+                '"%s" has already been used as an address map name', new_text
             )
         else:
             name = self._model[path][AddrCol.NAME]
@@ -135,7 +135,7 @@ class AddrMapList(object):
         try:
             value = int(new_text, 16)
         except ValueError:
-            LOGGER.error('Illegal address: "{0}"'.format(new_text))
+            LOGGER.error('Illegal address: "%s"', new_text)
             return
 
         if new_text:
@@ -255,8 +255,7 @@ class AddrMapList(object):
 
         if len(model.get_path(node)) > 1:
             return None
-        else:
-            return model.get_value(node, AddrCol.NAME)
+        return model.get_value(node, AddrCol.NAME)
 
     def remove_selected(self):
         """

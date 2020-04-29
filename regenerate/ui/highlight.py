@@ -18,9 +18,9 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 try:
+    from gi.repository import Pango
     from pygments.lexers import VerilogLexer
     from pygments.styles import get_style_by_name
-    import pango
 
     def highlight_text(text, buf):
 
@@ -42,11 +42,11 @@ try:
                 if style['color']:
                     tag.set_property('foreground', '#' + style['color'])
                 if style['bold']:
-                    tag.set_property('weight', pango.WEIGHT_BOLD)
+                    tag.set_property('weight', Pango.Weight.BOLD)
                 if style['italic']:
-                    tag.set_property('style', pango.STYLE_ITALIC)
+                    tag.set_property('style', Pango.Style.ITALIC)
                 if style['underline']:
-                    tag.set_property('underline', pango.UNDERLINE_SINGLE)
+                    tag.set_property('underline', Pango.Underline.SINGLE)
 
 except ImportError:
 

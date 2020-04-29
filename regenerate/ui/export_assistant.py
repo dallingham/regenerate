@@ -17,17 +17,17 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-import gtk
+from gi.repository import Gtk, Gdk
 import os
 
 
-class TextCombo(gtk.ComboBox):
+class TextCombo(Gtk.ComboBox):
 
     def __init__(self):
         super(TextCombo, self).__init__()
 
-        self.model = gtk.ListStore(str)
-        cell = gtk.CellRendererText()
+        self.model = Gtk.ListStore(str)
+        cell = Gtk.CellRendererText()
         self.pack_start(cell, True)
         self.add_attribute(cell, 'text', 0)
         self.set_model(self.model)
@@ -46,7 +46,7 @@ class TextCombo(gtk.ComboBox):
         return val
 
 
-class ExportAssistant(gtk.Assistant):
+class ExportAssistant(Gtk.Assistant):
 
     def __init__(self, project_name, optlist, register_sets, group_names,
                  save_callback, parent):
@@ -139,15 +139,15 @@ class ExportAssistant(gtk.Assistant):
 
         if filename:
             self.save_callback(filename, sel_fmt, sel_set, sel_grp)
-        self.emit('delete_event', gtk.gdk.Event(gtk.gdk.NOTHING))
+        self.emit('delete_event', Gdk.Event(Gdk.EventType.NOTHING))
 
     def build_page_0(self, optlist):
         # Construct page 0
-        table = gtk.Table(3, 3)
+        table = Gtk.Table(3, 3)
         table.set_border_width(3)
         table.show()
 
-        label = gtk.Label(
+        label = Gtk.Label(
             "There are many different types of files that can "
             "be exported. Some files are based on a selected "
             "register set, some are based on a group of "
@@ -159,11 +159,11 @@ class ExportAssistant(gtk.Assistant):
         label.show()
         table.attach(label, 0, 3, 0, 1)
 
-        self.export_combo = gtk.ComboBox()
+        self.export_combo = Gtk.ComboBox()
         self.export_combo.show()
 
-        cell = gtk.CellRendererText()
-        model = gtk.ListStore(str, int, str)
+        cell = Gtk.CellRendererText()
+        model = Gtk.ListStore(str, int, str)
 
         for item in optlist:
             model.append(row=item)
@@ -172,21 +172,21 @@ class ExportAssistant(gtk.Assistant):
         self.export_combo.set_active(0)
         self.export_combo.set_model(model)
 
-        table.attach(self.export_combo, 1, 2, 1, 2, 0, gtk.EXPAND)
+        table.attach(self.export_combo, 1, 2, 1, 2, 0, Gtk.AttachOptions.EXPAND)
 
         self.append_page(table)
         self.set_page_title(table, 'Choose the export type')
-        self.set_page_type(table, gtk.ASSISTANT_PAGE_CONTENT)
+        self.set_page_type(table, Gtk.AssistantPageType.CONTENT)
         self.set_page_complete(table, True)
         return table
 
     def build_page_1(self, register_sets):
         # Construct page 0
-        table = gtk.Table(3, 3)
+        table = Gtk.Table(3, 3)
         table.set_border_width(3)
         table.show()
 
-        label = gtk.Label(
+        label = Gtk.Label(
             "The selected export file is requires that "
             "you select a register set as the source of "
             "your data.\n\n"
@@ -199,20 +199,20 @@ class ExportAssistant(gtk.Assistant):
         self.register_combo.show()
         for item in register_sets:
             self.register_combo.append_text(item)
-        table.attach(self.register_combo, 1, 2, 1, 2, 0, gtk.EXPAND)
+        table.attach(self.register_combo, 1, 2, 1, 2, 0, Gtk.AttachOptions.EXPAND)
 
         self.append_page(table)
         self.set_page_title(table, 'Choose the register set')
-        self.set_page_type(table, gtk.ASSISTANT_PAGE_CONTENT)
+        self.set_page_type(table, Gtk.AssistantPageType.CONTENT)
         return table
 
     def build_page_2(self, groups):
         # Construct page 0
-        table = gtk.Table(3, 3)
+        table = Gtk.Table(3, 3)
         table.set_border_width(3)
         table.show()
 
-        label = gtk.Label(
+        label = Gtk.Label(
             "The selected export file is requires that "
             "you select a group as the source of "
             "your data.\n\n"
@@ -225,23 +225,23 @@ class ExportAssistant(gtk.Assistant):
         self.group_combo.show()
         for item in groups:
             self.group_combo.append_text(item)
-        table.attach(self.group_combo, 1, 2, 1, 2, 0, gtk.EXPAND)
+        table.attach(self.group_combo, 1, 2, 1, 2, 0, Gtk.AttachOptions.EXPAND)
 
         self.append_page(table)
         self.set_page_title(table, 'Choose the group')
-        self.set_page_type(table, gtk.ASSISTANT_PAGE_CONTENT)
+        self.set_page_type(table, Gtk.AssistantPageType.CONTENT)
         return table
 
     def build_page_3(self):
         # Construct page 0
-        self.choose = gtk.FileChooserWidget(
-            action=gtk.FILE_CHOOSER_ACTION_SAVE)
+        self.choose = Gtk.FileChooserWidget(
+            action=Gtk.FileChooserAction.SAVE)
         self.choose.set_current_folder(os.curdir)
         self.choose.show()
         self.choose.set_border_width(12)
         self.append_page(self.choose)
         self.set_page_title(self.choose, 'Choose the destination file')
-        self.set_page_type(self.choose, gtk.ASSISTANT_PAGE_CONTENT)
+        self.set_page_type(self.choose, Gtk.AssistantPageType.CONTENT)
         return self.choose
 
     def populate_summary(self):
@@ -262,34 +262,84 @@ class ExportAssistant(gtk.Assistant):
         self.execute_obj.set_text(msg)
 
     def build_summary(self):
-        self.sum = gtk.Table(4, 5)
+        self.sum = Gtk.Table(4, 5)
         self.sum.set_row_spacings(6)
         self.sum.set_col_spacings(6)
-        self.sum.attach(MyLabel('Export type:'), 1, 2, 0, 1, gtk.FILL, 0)
-        self.sum.attach(MyLabel('Register set:'), 1, 2, 1, 2, gtk.FILL, 0)
-        self.sum.attach(MyLabel('Output file:'), 1, 2, 2, 3, gtk.FILL, 0)
-        self.sum.attach(MyLabel('Execute status:'), 1, 2, 3, 4, gtk.FILL, 0)
+        self.sum.attach(
+            MyLabel('Export type:'),
+            1,
+            2,
+            0,
+            1,
+            Gtk.AttachOptions.FILL,
+            0
+        )
+        self.sum.attach(
+            MyLabel('Register set:'),
+            1,
+            2,
+            1,
+            2,
+            Gtk.AttachOptions.FILL,
+            0
+        )
+        self.sum.attach(
+            MyLabel('Output file:'),
+            1,
+            2,
+            2,
+            3,
+            Gtk.AttachOptions.FILL,
+            0
+        )
+        self.sum.attach(
+            MyLabel('Execute status:'),
+            1,
+            2,
+            3,
+            4,
+            Gtk.AttachOptions.FILL,
+            0
+        )
         self.sum.set_border_width(12)
         self.export_obj = MyLabel()
         self.register_obj = MyLabel()
         self.dest_obj = MyLabel()
         self.execute_obj = MyLabel()
-        self.sum.attach(self.export_obj, 2, 3, 0, 1, gtk.FILL | gtk.EXPAND, 0)
-        self.sum.attach(self.register_obj, 2, 3, 1, 2,
-                        gtk.FILL | gtk.EXPAND, 0)
-        self.sum.attach(self.dest_obj, 2, 3, 2, 3, gtk.FILL | gtk.EXPAND, 0)
-        self.sum.attach(self.execute_obj, 2, 3, 3, 4,
-                        gtk.FILL | gtk.EXPAND, 0)
+        self.sum.attach(
+            self.export_obj,
+            2,
+            3,
+            0,
+            1,
+            Gtk.AttachOptions.FILL | Gtk.AttachOptions.EXPAND,
+            0
+        )
+        self.sum.attach(
+            self.register_obj, 2, 3, 1, 2,
+            Gtk.AttachOptions.FILL | Gtk.AttachOptions.EXPAND,
+            0
+        )
+        self.sum.attach(
+            self.dest_obj, 2, 3, 2, 3,
+            Gtk.AttachOptions.FILL | Gtk.AttachOptions.EXPAND,
+            0
+        )
+        self.sum.attach(
+            self.execute_obj, 2, 3, 3, 4,
+            Gtk.AttachOptions.FILL | Gtk.AttachOptions.EXPAND,
+            0
+        )
         self.sum.show_all()
 
         self.append_page(self.sum)
         self.set_page_title(self.sum, 'Completion')
-        self.set_page_type(self.sum, gtk.ASSISTANT_PAGE_CONFIRM)
+        self.set_page_type(self.sum, Gtk.AssistantPageType.CONFIRM)
         self.show()
         return self.sum
 
 
-class MyLabel(gtk.Label):
+class MyLabel(Gtk.Label):
     def __init__(self, text=""):
         if text is None:
             text = ""
@@ -299,4 +349,4 @@ class MyLabel(gtk.Label):
     def set_text(self, text):
         if text is None:
             text = ""
-        gtk.Label.set_text(self, text)
+        Gtk.Label.set_text(self, text)

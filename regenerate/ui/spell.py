@@ -11,7 +11,8 @@ try:
     class Spell(SpellChecker):
 
         def __init__(self, obj):
-            super(Spell, self).__init__(obj)
+            super().__init__(obj)
+            self.enable()
 
         def detach(self):
             pass

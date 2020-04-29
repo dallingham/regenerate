@@ -24,8 +24,7 @@ information.
 
 #  Standard imports
 
-import gtk
-import pango
+from gi.repository import Gtk, Gdk, Pango
 from regenerate.db import TYPE_TO_ID
 from regenerate.db import TYPE_TO_DESCR, TYPE_TO_ENABLE
 from regenerate.db.enums import ResetType
@@ -64,7 +63,7 @@ class BitFieldEditor(BaseWindow):
         self.modified = modified
         self._register = register
         self._bit_field = bit_field
-        self._builder = gtk.Builder()
+        self._builder = Gtk.Builder()
         self._builder.add_from_file(GLADE_BIT)
         self._top_builder = top_builder
         self._control_obj = self._builder.get_object("control")
@@ -75,8 +74,7 @@ class BitFieldEditor(BaseWindow):
         self._value_tree_obj = self._builder.get_object("values")
         self._col = None
 
-        pango_font = pango.FontDescription("monospace")
-
+        pango_font = Pango.FontDescription("monospace")
         self.setup_description(pango_font)
 
         (input_enb, control_enb) = TYPE_TO_ENABLE[bit_field.field_type]
@@ -286,7 +284,7 @@ class BitFieldEditor(BaseWindow):
         Called on a double click event. If we detect a double click with
         the first button, we call the edit_register method.
         """
-        if event.keyval == gtk.keysyms.F12:
+        if event.keyval == Gdk.KEY_F12:
             if clean_format_if_needed(obj):
                 self.modified()
             return True
@@ -349,7 +347,7 @@ class BitFieldEditor(BaseWindow):
             self.build_column("Description", 2, 0, self._change_description)
         )
 
-        self._value_model = gtk.ListStore(str, str, str)
+        self._value_model = Gtk.ListStore(str, str, str)
         self._model_selection = self._value_tree_obj.get_selection()
         self._value_tree_obj.set_model(self._value_model)
 
@@ -359,10 +357,10 @@ class BitFieldEditor(BaseWindow):
             self._value_model.append(row=value)
 
     def build_column(self, title, text_col, size, callback):
-        render = gtk.CellRendererText()
+        render = Gtk.CellRendererText()
         render.set_property("editable", True)
         render.connect("edited", callback)
-        column = gtk.TreeViewColumn(title, render, text=text_col)
+        column = Gtk.TreeViewColumn(title, render, text=text_col)
         if size:
             column.set_min_width(size)
         return column
@@ -432,7 +430,7 @@ class BitFieldEditor(BaseWindow):
 
 
 def set_error(obj, message):
-    obj.set_property("secondary-icon-stock", gtk.STOCK_DIALOG_ERROR)
+    obj.set_property("secondary-icon-stock", Gtk.STOCK_DIALOG_ERROR)
     obj.set_property("secondary-icon-tooltip-text", message)
 
 

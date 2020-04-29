@@ -18,7 +18,8 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 import logging
-import gobject
+from gi.repository import GObject
+#import gobject
 
 
 class StatusHandler(logging.Handler):
@@ -37,7 +38,7 @@ class StatusHandler(logging.Handler):
 
     def emit(self, record):
         idval = self.status_obj.push(self.status_id, record.getMessage())
-        gobject.timeout_add(self.SECONDS * 1000, self._clear, idval)
+        GObject.timeout_add(self.SECONDS * 1000, self._clear, idval)
 
     def _clear(self, idval):
         self.status_obj.remove(self.status_id, idval)

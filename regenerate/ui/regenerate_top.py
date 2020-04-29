@@ -25,12 +25,11 @@ regenerate
 
 """
 
-import gtk
-import pango
+import xml
 import os
 import re
 import sys
-import xml
+from gi.repository import Gtk, GdkPixbuf, Gdk, Pango
 from regenerate import PROGRAM_VERSION, PROGRAM_NAME
 from regenerate.db import RegWriter, RegisterDb, Register, GroupInstData, GroupData
 from regenerate.db import BitField, RegProject, LOGGER, TYPES
@@ -70,7 +69,7 @@ DEF_MIME = "*" + DEF_EXT
 # Regular expressions to check the validity of entered names. This should
 # probably be configurable, but has not been implemented yet.
 
-VALID_BITS = re.compile("^\s*[\(\[]?(\d+)(\s*[-:]\s*(\d+))?[\)\]]?\s*$")
+VALID_BITS = re.compile(r"""^\s*[\(\[]?(\d+)(\s*[-:]\s*(\d+))?[\)\]]?\s*$""")
 
 
 class DbaseStatus(object):
@@ -116,7 +115,7 @@ class MainWindow(BaseWindow):
 
         self.use_preview = bool(int(ini.get('user', 'use_preview', 0)))
 
-        self.builder = gtk.Builder()
+        self.builder = Gtk.Builder()
         self.builder.add_from_file(GLADE_TOP)
 
         self.setup_main_window()
@@ -186,9 +185,9 @@ class MainWindow(BaseWindow):
         """Setup the recent files management system"""
 
         try:
-            self.recent_manager = gtk.RecentManager.get_default()
+            self.recent_manager = Gtk.RecentManager.get_default()
         except AttributeError:
-            self.recent_manager = gtk.recent_manager_get_default()
+            self.recent_manager = Gtk.recent_manager_get_default()
 
         self.find_obj('file_menu').insert(
             self.create_recent_menu_item(),
@@ -285,7 +284,6 @@ class MainWindow(BaseWindow):
         dialog = AddrMapEdit(
             map_name,
             new_list,
-            self.builder,
             self.prj,
             self.top_window,
             self.set_project_modified
@@ -344,7 +342,7 @@ class MainWindow(BaseWindow):
         self.reg_notebook(value)
 
     def build_group(self, group_name, action_names):
-        group = gtk.ActionGroup(group_name)
+        group = Gtk.ActionGroup(group_name)
         for name in action_names:
             group.add_action(self.find_obj(name))
         group.set_sensitive(False)
@@ -365,15 +363,28 @@ class MainWindow(BaseWindow):
         """
 
         prj_acn = [
-            "save_project_action", "new_set_action", "add_set_action",
-            "build_action", "reg_grouping_action", "project_prop_action"
+            "save_project_action",
+            "new_set_action",
+            "add_set_action",
+            "build_action",
+            "reg_grouping_action",
+            "project_prop_action"
         ]
         reg_acn = [
-            'remove_register_action', 'summary_action',
-            'duplicate_register_action', 'add_bit_action'
+            'remove_register_action',
+            'summary_action',
+            'duplicate_register_action',
+            'add_bit_action'
         ]
-        db_acn = ['add_register_action', 'remove_set_action', 'import_action']
-        fld_acn = ['remove_bit_action', 'edit_bit_action']
+        db_acn = [
+            'add_register_action',
+            'remove_set_action',
+            'import_action'
+        ]
+        fld_acn = [
+            'remove_bit_action',
+            'edit_bit_action'
+        ]
         file_acn = ['revert_action']
 
         if PREVIEW_ENABLED:
@@ -428,11 +439,11 @@ class MainWindow(BaseWindow):
             val = reset_value(field)
             self.bit_model[path][BitCol.RESET] = val
         elif field.reset_type == ResetType.INPUT:
-            if not re.match("^[A-Za-z]\w*$", field.reset_input):
+            if not re.match(r"^[A-Za-z]\w*$", field.reset_input):
                 field.reset_input = "%s_RST" % field.field_name
             self.bit_model[path][BitCol.RESET] = field.reset_input
         else:
-            if not re.match("^[A-Za-z]\w*$", field.reset_parameter):
+            if not re.match(r"^[A-Za-z]\w*$", field.reset_parameter):
                 field.reset_parameter = "pRST_%s" % field.field_name
             self.bit_model[path][BitCol.RESET] = field.reset_parameter
 
@@ -491,7 +502,7 @@ class MainWindow(BaseWindow):
                 self.set_modified()
             else:
                 LOGGER.error(
-                    '"%s" has already been used as a field name' % new_text)
+                    '"%s" has already been used as a field name', new_text)
 
     def bit_update_reset(self, field, path, new_text):
         """
@@ -505,18 +516,18 @@ class MainWindow(BaseWindow):
                 self.bit_model[path][BitCol.RESET] = reset_value(field)
                 self.set_modified()
             except ValueError:
-                LOGGER.error('Illegal reset value: "%s"' % new_text)
+                LOGGER.error('Illegal reset value: "%s"', new_text)
                 return
         elif field.reset_type == ResetType.INPUT:
-            if not re.match("^[A-Za-z]\w*$", new_text):
-                LOGGER.error('"%s" is not a valid input name' % new_text)
+            if not re.match(r"""^[A-Za-z]\w*$""", new_text):
+                LOGGER.error('"%s" is not a valid input name', new_text)
                 new_text = "%s_RST" % field.field_name
             field.reset_input = new_text
             self.bit_model[path][BitCol.RESET] = field.reset_input
             self.set_modified()
         else:
-            if not re.match("^[A-Za-z]\w*$", new_text):
-                LOGGER.error('"%s" is not a valid parameter name' % new_text)
+            if not re.match(r"""^[A-Za-z]\w*$""", new_text):
+                LOGGER.error('"%s" is not a valid parameter name', new_text)
                 new_text = "pRST_%s" % field.field_name
             field.reset_parameter = new_text
             self.bit_model[path][BitCol.RESET] = field.reset_parameter
@@ -538,14 +549,14 @@ class MainWindow(BaseWindow):
         self.set_register_warn_flags(register)
 
     def on_filter_icon_press(self, obj, icon, event):
-        if icon == gtk.ENTRY_ICON_SECONDARY:
-            if event.type == gtk.gdk.BUTTON_PRESS:
+        if icon == Gtk.ENTRY_ICON_SECONDARY:
+            if event.type == Gdk.BUTTON_PRESS:
                 obj.set_text("")
-        elif icon == gtk.ENTRY_ICON_PRIMARY:
-            if event.type == gtk.gdk.BUTTON_PRESS:
+        elif icon == Gtk.ENTRY_ICON_PRIMARY:
+            if event.type == Gdk.BUTTON_PRESS:
                 menu = self.find_obj("filter_menu")
                 menu.popup(None, None, None, 1, 0,
-                           gtk.get_current_event_time())
+                           Gtk.get_current_event_time())
 
     def set_search(self, values, obj):
         if obj.get_active():
@@ -645,10 +656,10 @@ class MainWindow(BaseWindow):
         and added to the export menu.
         """
         menu = self.find_obj('import_menu')
-        submenu = gtk.Menu()
+        submenu = Gtk.Menu()
         menu.set_submenu(submenu)
         for item in IMPORTERS:
-            menu_item = gtk.MenuItem(label=item[1])
+            menu_item = Gtk.MenuItem(label=item[1])
             menu_item.connect('activate', self.import_data, item)
             menu_item.show()
             submenu.append(menu_item)
@@ -701,7 +712,7 @@ class MainWindow(BaseWindow):
                                            descriptive_title)
                 self.selected_dbase.set_text(text)
                 self.selected_dbase.set_use_markup(True)
-                self.selected_dbase.set_ellipsize(pango.ELLIPSIZE_END)
+                self.selected_dbase.set_ellipsize(Pango.EllipsizeMode.END)
                 if self.active.reg_select:
                     for row in self.active.reg_select:
                         self.reglist_obj.select_row(row)
@@ -935,16 +946,17 @@ class MainWindow(BaseWindow):
         Creates a file save selector, using the mime type and regular
         expression to control the selector.
         """
-        choose = gtk.FileChooserDialog(
+        choose = Gtk.FileChooserDialog(
             title,
             self.top_window,
             action,
-            (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, icon, gtk.RESPONSE_OK)
+            (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+             icon, Gtk.Response.Type.OK)
         )
 
         choose.set_current_folder(os.curdir)
         if m_name:
-            mime_filter = gtk.FileFilter()
+            mime_filter = Gtk.FileFilter()
             mime_filter.set_name(m_name)
             mime_filter.add_pattern(m_regex)
             choose.add_filter(mime_filter)
@@ -960,8 +972,8 @@ class MainWindow(BaseWindow):
             title,
             mime_name,
             mime_regex,
-            gtk.FILE_CHOOSER_ACTION_SAVE,
-            gtk.STOCK_SAVE
+            Gtk.FileChooserAction.SAVE,
+            Gtk.STOCK_SAVE
         )
 
     def create_open_selector(self, title, mime_name=None, mime_regex=None):
@@ -973,8 +985,8 @@ class MainWindow(BaseWindow):
             title,
             mime_name,
             mime_regex,
-            gtk.FILE_CHOOSER_ACTION_OPEN,
-            gtk.STOCK_OPEN
+            Gtk.FileChooserAction.OPEN,
+            Gtk.STOCK_OPEN
         )
 
     def on_add_register_set_activate(self, obj):
@@ -990,7 +1002,7 @@ class MainWindow(BaseWindow):
         )
         choose.set_select_multiple(True)
         response = choose.run()
-        if response == gtk.RESPONSE_OK:
+        if response == Gtk.ResponseType.OK:
             for filename in choose.get_filenames():
                 self.open_xml(filename)
                 self.prj.add_register_set(filename)
@@ -1021,18 +1033,18 @@ class MainWindow(BaseWindow):
         selected file is added to the recent manager.
         """
         name = None
-        choose = gtk.FileChooserDialog(
+        choose = Gtk.FileChooserDialog(
             "New",
             self.top_window,
-            gtk.FILE_CHOOSER_ACTION_SAVE,
-            (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
-             gtk.STOCK_SAVE, gtk.RESPONSE_OK)
+            Gtk.FileChooserAction_SAVE,
+            (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+             Gtk.STOCK_SAVE, Gtk.Response.Type.OK)
         )
         choose.set_current_folder(os.curdir)
         choose.show()
 
         response = choose.run()
-        if response == gtk.RESPONSE_OK:
+        if response == Gtk.ResponseType.OK:
             name = choose.get_filename()
         choose.destroy()
         return name
@@ -1046,7 +1058,7 @@ class MainWindow(BaseWindow):
         )
 
         response = choose.run()
-        if response == gtk.RESPONSE_OK:
+        if response == Gtk.ResponseType.OK:
             filename = choose.get_filename()
             ext = os.path.splitext(filename)
             if ext[1] != DEF_EXT:
@@ -1081,7 +1093,7 @@ class MainWindow(BaseWindow):
         filename = choose.get_filename()
         uri = choose.get_uri()
         choose.destroy()
-        if response == gtk.RESPONSE_OK:
+        if response == Gtk.ResponseType.OK:
             self.open_project(filename, uri)
 
     def set_busy_cursor(self, value):
@@ -1091,12 +1103,13 @@ class MainWindow(BaseWindow):
         """
         if os.name == 'posix':
             if value:
-                cursor = gtk.gdk.Cursor(gtk.gdk.WATCH)
-                self.top_window.window.set_cursor(cursor)
+                cursor = Gdk.Cursor.new(Gdk.CursorType.WATCH)
+                self.top_window.get_root_window().set_cursor(cursor)
             else:
-                self.top_window.window.set_cursor(None)
-            while gtk.events_pending():
-                gtk.main_iteration()
+                cursor = Gdk.Cursor.new(Gdk.CursorType.ARROW)
+                self.top_window.get_root_window().set_cursor(cursor)
+            while Gtk.events_pending():
+                Gtk.main_iteration()
 
     def open_project(self, filename, uri):
         self.loading_project = True
@@ -1174,7 +1187,7 @@ class MainWindow(BaseWindow):
         self.reg_model = RegisterModel()
         mdl = self.reg_model.filter_new()
         self.filter_manage.change_filter(mdl, True)
-        self.modelsort = gtk.TreeModelSort(mdl)
+        self.modelsort = Gtk.TreeModelSort(mdl)
         self.reglist_obj.set_model(self.modelsort)
 
         self.bit_model = BitModel()
@@ -1216,7 +1229,7 @@ class MainWindow(BaseWindow):
         self.reg_model = RegisterModel()
         mdl = self.reg_model.filter_new()
         self.filter_manage.change_filter(mdl, True)
-        self.modelsort = gtk.TreeModelSort(mdl)
+        self.modelsort = Gtk.TreeModelSort(mdl)
         self.bit_model = BitModel()
 
         if load:
@@ -1346,7 +1359,7 @@ class MainWindow(BaseWindow):
                 self.find_obj('vpaned').get_position())
         ini.set('user', 'hpos',
                 self.find_obj('hpaned').get_position())
-        gtk.main_quit()
+        Gtk.main_quit()
 
     def save_and_quit(self):
         """
@@ -1373,10 +1386,10 @@ class MainWindow(BaseWindow):
         )
 
         response = choose.run()
-        if response == gtk.RESPONSE_OK:
+        if response == Gtk.ResponseType.OK:
             choose.hide()
-            while gtk.events_pending():
-                gtk.main_iteration()
+            while Gtk.events_pending():
+                Gtk.main_iteration()
 
             filename = choose.get_filename()
             if filename:
@@ -1508,15 +1521,15 @@ class MainWindow(BaseWindow):
         """
         Builds the recent menu, applying the filter
         """
-        recent_menu = gtk.RecentChooserMenu()
+        recent_menu = Gtk.RecentChooserMenu()
         recent_menu.set_show_not_found(False)
         recent_menu.set_show_numbers(True)
         recent_menu.connect("item-activated", self.cb_open_recent)
 
-        recent_menu_item = gtk.MenuItem('Open Recent')
+        recent_menu_item = Gtk.MenuItem('Open Recent')
         recent_menu_item.set_submenu(recent_menu)
 
-        filt = gtk.RecentFilter()
+        filt = Gtk.RecentFilter()
         filt.add_pattern(DEF_MIME)
         recent_menu.set_filter(filt)
         recent_menu_item.show()
@@ -1526,12 +1539,12 @@ class MainWindow(BaseWindow):
         """
         Builds the recent menu, applying the filter
         """
-        recent_menu = gtk.RecentChooserMenu()
+        recent_menu = Gtk.RecentChooserMenu()
         recent_menu.set_show_not_found(False)
         recent_menu.set_show_numbers(True)
         recent_menu.connect("item-activated", self.cb_open_recent)
 
-        filt = gtk.RecentFilter()
+        filt = Gtk.RecentFilter()
         filt.add_pattern(DEF_MIME)
         recent_menu.set_filter(filt)
         return recent_menu
@@ -1540,7 +1553,7 @@ class MainWindow(BaseWindow):
         """
         Displays the About box, describing the program
         """
-        box = gtk.AboutDialog()
+        box = Gtk.AboutDialog()
         box.set_name(PROGRAM_NAME)
         box.set_version(PROGRAM_VERSION)
         box.set_comments(
@@ -1554,7 +1567,7 @@ class MainWindow(BaseWindow):
         except IOError:
             pass
         fname = os.path.join(INSTALL_PATH, "media", "flop.svg")
-        box.set_logo(gtk.gdk.pixbuf_new_from_file(fname))
+        box.set_logo(GdkPixbuf.Pixbuf.new_from_file(fname))
         box.run()
         box.destroy()
 
@@ -1626,14 +1639,14 @@ class MainWindow(BaseWindow):
 
 def check_field(field):
     if field.description.strip() == "":
-        return gtk.STOCK_DIALOG_WARNING
+        return Gtk.STOCK_DIALOG_WARNING
     return None
 
 
 def check_reset(field):
     if (field.reset_type == ResetType.PARAMETER and
             field.reset_parameter.strip() == ""):
-        return gtk.STOCK_DIALOG_WARNING
+        return Gtk.STOCK_DIALOG_WARNING
     return None
 
 

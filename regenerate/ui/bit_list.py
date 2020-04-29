@@ -20,7 +20,7 @@
 Provides both the GTK ListStore and ListView for the bit fields.
 """
 
-import gtk
+from gi.repository import Gtk
 from regenerate.db import TYPES
 from regenerate.db.enums import ResetType
 from regenerate.ui.columns import EditableColumn, ComboMapColumn, SwitchComboMapColumn
@@ -33,7 +33,7 @@ WO2STR = [(t.description, t.type) for t in sorted(TYPES) if t.simple_type == "WO
 (BIT_TITLE, BIT_SIZE, BIT_SORT, BIT_EXPAND, BIT_MONO) = range(5)
 
 
-class BitModel(gtk.ListStore):
+class BitModel(Gtk.ListStore):
     """
     The GTK list store model for the bit fields. This model is added to the
     ListView to provide the data for the bitfields.
@@ -135,8 +135,8 @@ class BitList(object):
                     col[BIT_TITLE], combo_edit, BitModel.RESET2STR, i
                 )
             elif i == BitCol.ICON:
-                renderer = gtk.CellRendererPixbuf()
-                column = gtk.TreeViewColumn("", renderer, stock_id=i)
+                renderer = Gtk.CellRendererPixbuf()
+                column = Gtk.TreeViewColumn("", renderer, stock_id=i)
             else:
                 column = EditableColumn(col[BIT_TITLE], text_edit, i, col[BIT_MONO])
             if i == BitCol.BIT:
@@ -155,8 +155,7 @@ class BitList(object):
         value = self.__obj.get_selection().get_selected_rows()
         if value:
             return value[1]
-        else:
-            return None
+        return None
 
     def select_row(self, path):
         """
@@ -190,8 +189,7 @@ def bits(field):
     """
     if field.lsb == field.msb:
         return "{0:d}".format(field.lsb)
-    else:
-        return "{0:d}:{1:d}".format(field.msb, field.lsb)
+    return "{0:d}:{1:d}".format(field.msb, field.lsb)
 
 
 def reset_value(field):
