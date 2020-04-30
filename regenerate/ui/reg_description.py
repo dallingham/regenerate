@@ -15,7 +15,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-from gi.repository import Gtk, Pango
+from gi.repository import Pango, Gdk
 from regenerate.ui.spell import Spell
 from regenerate.ui.utils import clean_format_if_needed
 from regenerate.ui.preview_editor import PreviewEditor
@@ -40,7 +40,7 @@ class RegisterDescription(object):
         self.callback = change_callback
 
         self.text_view.modify_font(pango_font)
-        self.buf.connect('changed', self.changed)
+        self.buf.connect("changed", self.changed)
 
         Spell(self.text_view)
         self.preview = PreviewEditor(self.buf, web_view)
@@ -71,9 +71,7 @@ class RegisterDescription(object):
         """A change to the text occurred"""
         if self.reg:
             new_text = self.buf.get_text(
-                self.buf.get_start_iter(),
-                self.buf.get_end_iter(),
-                False
+                self.buf.get_start_iter(), self.buf.get_end_iter(), False
             )
             if new_text != self.reg.description:
                 self.reg.description = new_text

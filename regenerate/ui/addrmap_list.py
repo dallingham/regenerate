@@ -33,7 +33,12 @@ _BITS64 = "64 bits"
 
 SIZE2STR = ((_BITS8, 1), (_BITS16, 2), (_BITS32, 4), (_BITS64, 8))
 
-ACCESS2STR = (("Full Access", 0), ("Read Only", 1), ("Write Only", 2), ("No Access", 3))
+ACCESS2STR = (
+    ("Full Access", 0),
+    ("Read Only", 1),
+    ("Write Only", 2),
+    ("No Access", 3),
+)
 
 INT2SIZE = dict((_i[1], _i[0]) for _i in SIZE2STR)
 STR2SIZE = dict((_i[0], _i[1]) for _i in SIZE2STR)
@@ -49,7 +54,7 @@ class AddrMapMdl(Gtk.ListStore):
     """
 
     def __init__(self):
-        super(AddrMapMdl, self).__init__(str, str, bool, bool, str, object)
+        super().__init__(str, str, bool, bool, str, object)
 
     def new_instance(self):
         """
@@ -103,7 +108,7 @@ class AddrMapList(object):
                     LOGGER.error(
                         'Illegal width (%d) for address map "%s"',
                         base.width,
-                        base.name
+                        base.name,
                     )
                     base.width = 4
                 self._model.append(row=get_row_data(base))

@@ -90,7 +90,9 @@ class Register(object):
         return not self.__eq__(other)
 
     def __eq__(self, other):
-        if not all(self.__dict__[i] == other.__dict__[i] for i in self.full_compare):
+        if not all(
+            self.__dict__[i] == other.__dict__[i] for i in self.full_compare
+        ):
             return False
         return self.get_bit_fields() == other.get_bit_fields()
 
@@ -103,14 +105,18 @@ class Register(object):
     def array_cmp(self, other):
         if other is None:
             return False
-        if not all(self.__dict__[i] == other.__dict__[i] for i in self.array_compare):
+        if not all(
+            self.__dict__[i] == other.__dict__[i] for i in self.array_compare
+        ):
             return False
         if other.address + (other.width / 8) != self.address:
             return False
         return self.get_bit_fields() == other.get_bit_fields()
 
     def group_cmp(self, other):
-        if not all(self.__dict__[i] == other.__dict__[i] for i in self.array_compare):
+        if not all(
+            self.__dict__[i] == other.__dict__[i] for i in self.array_compare
+        ):
             return False
         return self.get_bit_fields() == other.get_bit_fields()
 
@@ -284,7 +290,8 @@ class Register(object):
         bit field.
         """
         return sorted(
-            [s for s in self.__bit_fields.values() if s.values], key=lambda x: x.lsb
+            [s for s in self.__bit_fields.values() if s.values],
+            key=lambda x: x.lsb,
         )
 
     def get_bit_field(self, key):

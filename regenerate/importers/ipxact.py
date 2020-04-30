@@ -20,10 +20,11 @@
 Parses the register database, loading the database.
 """
 
+import re
 import xml.etree.ElementTree as ET
 from regenerate.db import Register, BitField
 from regenerate.db.enums import BitType, ResetType
-import re
+
 
 text2field = {
     "read-only": BitType.READ_ONLY,
@@ -31,6 +32,7 @@ text2field = {
     "write-only": BitType.WRITE_ONLY,
     "writeOnce": BitType.WRITE_ONLY,
 }
+
 
 text2write = {
     "oneToClear": BitType.WRITE_1_TO_CLEAR_SET,
@@ -178,9 +180,9 @@ class IpXactParser(object):
             self._field.stop_position = self._fld_start + self._fld_width - 1
             self._reg.add_bit_field(self._field)
             if self._reg_reset[0]:
-                self._field.reset_value = (self._reg_reset[1] >> self._fld_start) & (
-                    (1 << self._field.width) - 1
-                )
+                self._field.reset_value = (
+                    self._reg_reset[1] >> self._fld_start
+                ) & ((1 << self._field.width) - 1)
                 self._field.reset_type = ResetType.NUMERIC
 
         self._field = None
@@ -192,12 +194,14 @@ class IpXactParser(object):
                 BitType.WRITE_1_TO_CLEAR_SET,
             ):
                 self._field.field_type = text2field.get(
-                    text, BitType.READ_ONLY)
+                    text, BitType.READ_ONLY
+                )
 
     def end_modifiedWriteValue(self, text):
         if self._field:
             self._field.field_type = text2write.get(
-                text, BitType.WRITE_1_TO_CLEAR_SET)
+                text, BitType.WRITE_1_TO_CLEAR_SET
+            )
 
     def end_name(self, text):
         if self._field:
@@ -229,7 +233,9 @@ class IpXactParser(object):
 
 def crossreference(db):
     names = sorted(
-        [reg.register_name for reg in db.get_all_registers()], key=len, reverse=True
+        [reg.register_name for reg in db.get_all_registers()],
+        key=len,
+        reverse=True,
     )
 
     re_list = [r"([^`])({0}) ((R|r)egister)".format(name) for name in names]
@@ -240,4 +246,5 @@ def crossreference(db):
         for field in reg.get_bit_fields():
             for regex in re_list:
                 field.description = re.sub(
-                    regex, r"\1`\2`_ \3", field.description)
+                    regex, r"\1`\2`_ \3", field.description
+                )

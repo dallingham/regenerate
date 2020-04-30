@@ -30,14 +30,15 @@ class BaseMsg(Gtk.MessageDialog):
     Base message class
     """
 
-    def __init__(self, title, msg, dialog_type,
-                 buttons=Gtk.ButtonsType.CLOSE, parent=None):
+    def __init__(
+        self, title, msg, dialog_type, buttons=Gtk.ButtonsType.CLOSE, parent=None
+    ):
 
-        super(BaseMsg, self).__init__(
+        super().__init__(
             parent,
-            Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT,
+            DEF_DIALOG_FLAGS,
             dialog_type,
-            buttons=buttons
+            buttons=buttons,
         )
 
         if parent is not None:
@@ -60,9 +61,7 @@ class ErrorMsg(BaseMsg):
     """
 
     def __init__(self, title, msg="", parent=None):
-        super(ErrorMsg, self).__init__(
-            title, msg, Gtk.MessageType.ERROR, parent=parent
-        )
+        super().__init__(title, msg, Gtk.MessageType.ERROR, parent=parent)
 
 
 class WarnMsg(BaseMsg):
@@ -71,7 +70,7 @@ class WarnMsg(BaseMsg):
     """
 
     def __init__(self, title, msg="", parent=None):
-        super(WarnMsg, self).__init__(
+        super().__init__(
             title, msg, Gtk.MessageType.WARNING, parent=parent
         )
 
@@ -87,18 +86,17 @@ class Question(Gtk.MessageDialog):
 
     def __init__(self, title, msg, parent=None):
 
-        super(Question, self).__init__(
+        super().__init__(
             parent,
-            Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT,
-            Gtk.MessageType.QUESTION
+            DEF_DIALOG_FLAGS,
+            Gtk.MessageType.QUESTION,
         )
 
-        self.set_markup(
-            '<span weight="bold" size="larger">{0}</span>'.format(title))
+        self.set_markup('<span weight="bold" size="larger">{}</span>'.format(title))
         self.format_secondary_markup(msg)
-        self.add_button('Discard Changes', self.DISCARD)
+        self.add_button("Discard Changes", self.DISCARD)
         self.add_button(Gtk.STOCK_CANCEL, self.CANCEL)
-        self.add_button('Save Changes', self.SAVE)
+        self.add_button("Save Changes", self.SAVE)
         self.set_default_response(self.CANCEL)
         if parent is not None:
             self.set_transient_for(parent)

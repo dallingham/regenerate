@@ -86,15 +86,20 @@ class RegWriter(object):
     def write_port_information(self, ofile):
         """ Writes the port information to the output file"""
         ofile.write("  <ports>\n")
-        ofile.write("    <interface>%d</interface>\n" %
-                    int(self.dbase.use_interface))
+        ofile.write(
+            "    <interface>%d</interface>\n" % int(self.dbase.use_interface)
+        )
         ofile.write("    <addr>%s</addr>\n" % self.dbase.address_bus_name)
         ofile.write("    <data_in>%s</data_in>\n" % self.dbase.write_data_name)
-        ofile.write("    <data_out>%s</data_out>\n" %
-                    self.dbase.read_data_name)
+        ofile.write(
+            "    <data_out>%s</data_out>\n" % self.dbase.read_data_name
+        )
         ofile.write(
             '    <be active="%d">%s</be>\n'
-            % (self.dbase.byte_strobe_active_level, self.dbase.byte_strobe_name)
+            % (
+                self.dbase.byte_strobe_active_level,
+                self.dbase.byte_strobe_name,
+            )
         )
         ofile.write("    <wr>%s</wr>\n" % self.dbase.write_strobe_name)
         ofile.write("    <ack>%s</ack>\n" % self.dbase.acknowledge_name)
@@ -150,19 +155,22 @@ def write_field(ofile, field):
     ofile.write('    <range start="%d" stop="%d">\n' % (low, high))
     ofile.write("      <name>%s</name>\n" % field.field_name)
     ofile.write("      <uuid>%s</uuid>\n" % field.uuid)
-    ofile.write("      <field_type>%s</field_type>\n" %
-                TYPE_TO_ID[field.field_type])
+    ofile.write(
+        "      <field_type>%s</field_type>\n" % TYPE_TO_ID[field.field_type]
+    )
     ofile.write("      <random>%d</random>\n" % field.can_randomize)
-    ofile.write("      <side_effect>%d</side_effect>\n" %
-                field.output_has_side_effect)
+    ofile.write(
+        "      <side_effect>%d</side_effect>\n" % field.output_has_side_effect
+    )
     ofile.write("      <volatile>%d</volatile>\n" % field.volatile)
     ofile.write("      <error_field>%d</error_field>\n" % field.is_error_field)
     write_signal_info(ofile, field)
     write_input_info(ofile, field)
     write_reset_type(ofile, field)
     write_value_list(ofile, field)
-    ofile.write("      <description>%s</description>\n" %
-                cleanup(field.description))
+    ofile.write(
+        "      <description>%s</description>\n" % cleanup(field.description)
+    )
     ofile.write("    </range>\n")
 
 
@@ -173,8 +181,9 @@ def write_input_info(ofile, field):
     else:
         ldstr = ""
     if field.input_signal:
-        ofile.write("      <input%s>%s</input>\n" %
-                    (ldstr, field.input_signal))
+        ofile.write(
+            "      <input%s>%s</input>\n" % (ldstr, field.input_signal)
+        )
     elif ldstr:
         ofile.write("      <input%s/>\n" % ldstr)
 

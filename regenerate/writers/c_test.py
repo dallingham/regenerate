@@ -123,7 +123,7 @@ code_reg8 = [
 
 class CTest(WriterBase):
     def __init__(self, project, dbase):
-        super(CTest, self).__init__(project, dbase)
+        super().__init__(project, dbase)
         self._offset = 0
         self._ofile = None
         self.module_set = set()
@@ -132,7 +132,8 @@ class CTest(WriterBase):
         value = 0
 
         for rng in [
-            register.get_bit_field(key) for key in register.get_bit_field_keys()
+            register.get_bit_field(key)
+            for key in register.get_bit_field_keys()
         ]:
             value = value | (rng.reset_value << rng.start_position)
         return value
@@ -141,7 +142,8 @@ class CTest(WriterBase):
         value = 0x0
 
         for rng in [
-            register.get_bit_field(key) for key in register.get_bit_field_keys()
+            register.get_bit_field(key)
+            for key in register.get_bit_field_keys()
         ]:
             if rng.field_type in (
                 BitType.READ_WRITE,
@@ -184,14 +186,18 @@ class CTest(WriterBase):
 
             data = ["    {0x%08x, 0x%08x, 0x%08x}" % val for val in rlist]
 
-    def write_function(self, cfile, rlist, name, size, letter, suffix, size_suffix):
+    def write_function(
+        self, cfile, rlist, name, size, letter, suffix, size_suffix
+    ):
 
         format_str = "    {{0x%08x, 0x%08x{0}, 0x%08x{0}}}".format(size_suffix)
         data = [format_str % val for val in rlist]
 
         cfile.write("\n")
         cfile.write("uint32\n")
-        cfile.write("check_{0}_{1}{2} (msgptr func)\n".format(name, size, letter))
+        cfile.write(
+            "check_{0}_{1}{2} (msgptr func)\n".format(name, size, letter)
+        )
         cfile.write("{\n")
         cfile.write("  uint32 val;\n")
         cfile.write("  static reg{0}_data r[] = {{\n".format(suffix))
@@ -230,7 +236,9 @@ class CTest(WriterBase):
             width = register.width
             ext = ext_opt[width]
 
-            for addr in find_addresses(self._project, dbase.set_name, register):
+            for addr in find_addresses(
+                self._project, dbase.set_name, register
+            ):
                 if width == 8:
                     rdata8.append((addr, mask, default))
                 elif width == 16:

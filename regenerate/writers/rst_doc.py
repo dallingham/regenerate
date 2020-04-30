@@ -39,7 +39,7 @@ class RstDoc(WriterBase):
     """
 
     def __init__(self, project, dblist):
-        super(RstDoc, self).__init__(project, None)
+        super().__init__(project, None)
         self.tblcnt = 0
         self.project = project
         self.dblist = dblist
@@ -138,14 +138,18 @@ class RstDoc(WriterBase):
                     )
 
                     if db.descriptive_title:
-                        title = "{} ({})\n".format(db.descriptive_title, regset.inst)
+                        title = "{} ({})\n".format(
+                            db.descriptive_title, regset.inst
+                        )
                     else:
                         title = regset.inst
                     f.write(title)
                     f.write("^" * len(title))
                     f.write("\n\n")
                     f.write(
-                        self.patch_links(db.overview_text, db, regset.inst, group.name)
+                        self.patch_links(
+                            db.overview_text, db, regset.inst, group.name
+                        )
                     )
                     f.write("\n\n")
 

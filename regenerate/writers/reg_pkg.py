@@ -36,7 +36,7 @@ def find_range(address, range_map):
 
 class VerilogConstRegPackage(WriterBase):
     def __init__(self, project, dblist):
-        super(VerilogConstRegPackage, self).__init__(None)
+        super().__init__(None)
         self.dblist = dblist
 
     def write(self, filename):

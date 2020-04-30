@@ -85,7 +85,7 @@ class IpXactWriter(WriterBase):
     """
 
     def __init__(self, project, dbase):
-        super(IpXactWriter, self).__init__(project, dbase)
+        super().__init__(project, dbase)
 
     def write(self, filename):
         """
@@ -98,7 +98,8 @@ class IpXactWriter(WriterBase):
 
         with open(os.path.join(dirpath, "templates", "ipxact.template")) as of:
             template = Template(
-                of.read(), trim_blocks=True, lstrip_blocks=True)
+                of.read(), trim_blocks=True, lstrip_blocks=True
+            )
 
         with open(filename, "w") as ofile:
             text = template.render(
@@ -115,8 +116,11 @@ EXPORTERS = [
     (
         WriterBase.TYPE_BLOCK,
         ExportInfo(
-            IpXactWriter, ("XML",
-                           "IP-XACT"), "IP-XACT files", ".xml", "ip-xact"
+            IpXactWriter,
+            ("XML", "IP-XACT"),
+            "IP-XACT files",
+            ".xml",
+            "ip-xact",
         ),
     )
 ]

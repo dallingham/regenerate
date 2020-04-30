@@ -39,7 +39,7 @@ class Build(BaseWindow):
     """
 
     def __init__(self, project, dbmap, parent):
-        super(Build, self).__init__()
+        super().__init__()
 
         self.__dbmap = dbmap
         self.__prj = project
@@ -68,9 +68,11 @@ class Build(BaseWindow):
         """
         self.__optmap = {}
         self.__mapopt = {}
-        for level, export_list in enumerate([EXPORTERS, GRP_EXPORTERS, PRJ_EXPORTERS]):
+        for level, export_list in enumerate(
+            [EXPORTERS, GRP_EXPORTERS, PRJ_EXPORTERS]
+        ):
             for item in export_list:
-                value = "{0} ({1})".format(item.type[0], item.type[1])
+                value = "{} ({})".format(item.type[0], item.type[1])
                 self.__optmap[item.id] = (value, item.obj_class, level)
                 self.__mapopt[value] = (item.id, item.obj_class, level)
 
@@ -82,8 +84,8 @@ class Build(BaseWindow):
         self.__builder = Gtk.Builder()
         bfile = os.path.join(INSTALL_PATH, "ui", "build.ui")
         self.__builder.add_from_file(bfile)
-        self.__build_top = self.__builder.get_object('build')
-        self.__build_list = self.__builder.get_object('buildlist')
+        self.__build_top = self.__builder.get_object("build")
+        self.__build_list = self.__builder.get_object("buildlist")
         self.__builder.connect_signals(self)
         self.__add_columns()
         self.__model = Gtk.ListStore(bool, str, str, str, object, object, int)
@@ -125,8 +127,7 @@ class Build(BaseWindow):
         timestamps.
         """
         dbase_full_path = os.path.join(
-            os.path.dirname(self.__prj.path),
-            dbase_rel_path
+            os.path.dirname(self.__prj.path), dbase_rel_path
         )
         (base, db_file_mtime) = base_and_modtime(dbase_full_path)
         local_dest = os.path.join(os.path.dirname(self.__prj.path), dest)
@@ -143,7 +144,7 @@ class Build(BaseWindow):
         if the file needs rebuilt, depending on modification flags a file
         timestamps.
         """
-        #mod = file_needs_rebuilt(local_dest, self.__dbmap, [dbase_full_path])
+        # mod = file_needs_rebuilt(local_dest, self.__dbmap, [dbase_full_path])
         mod = True
         self.__modlist.append(mod)
         (fmt, cls, rpttype) = self.__optmap[option]
@@ -163,7 +164,9 @@ class Build(BaseWindow):
                     pass
 
         for group_data in self.__prj.get_grouping_list():
-            for grp_type, grp_dest in self.__prj.get_group_exports(group_data.name):
+            for grp_type, grp_dest in self.__prj.get_group_exports(
+                group_data.name
+            ):
                 self.__add_group_item_to_list(
                     "%s (group)" % group_data.name, grp_type, grp_dest
                 )
@@ -179,7 +182,9 @@ class Build(BaseWindow):
         Called with the modified toggle is changed. Toggles the value in
         the internal list.
         """
-        self.__model[path][BuildCol.MODIFIED] = not self.__model[path][BuildCol.MODIFIED]
+        self.__model[path][BuildCol.MODIFIED] = not self.__model[path][
+            BuildCol.MODIFIED
+        ]
 
     def register_set_callback(self, cell, path, node, col):
         """
@@ -188,7 +193,7 @@ class Build(BaseWindow):
         property). The data is then copied out of the combo_box_model and
         into the database.
         """
-        combo_box_model = cell.get_property('model')
+        combo_box_model = cell.get_property("model")
         self.__model[path][BuildCol.DBASE] = combo_box_model[node][1]
         self.__model[path][BuildCol.BASE] = combo_box_model[node][0]
 
@@ -199,7 +204,7 @@ class Build(BaseWindow):
         property). The data is then copied out of the combo_box_model and
         into the database.
         """
-        combo_box_model = cell.get_property('model')
+        combo_box_model = cell.get_property("model")
         self.__model[path][BuildCol.CLASS] = combo_box_model[node][1]
         self.__model[path][BuildCol.FORMAT] = combo_box_model[node][0]
 
@@ -266,13 +271,11 @@ class Build(BaseWindow):
         """
         for item in [item for item in self.__model if item[BuildCol.MODIFIED]]:
             writer_class = item[BuildCol.CLASS]
-            print(writer_class)
             dbase = item[BuildCol.DBASE]
             rtype = item[BuildCol.TYPE]
             dest = os.path.abspath(
                 os.path.join(
-                    os.path.dirname(self.__prj.path),
-                    item[BuildCol.DEST]
+                    os.path.dirname(self.__prj.path), item[BuildCol.DEST]
                 )
             )
 
@@ -280,13 +283,15 @@ class Build(BaseWindow):
                 if rtype == 0:
                     gen = writer_class(self.__prj, dbase)
                 elif rtype == 1:
-                    db_list = [i[DbMap.DBASE].db
-                               for i in self.__dbmap.values()]
+                    db_list = [
+                        i[DbMap.DBASE].db for i in self.__dbmap.values()
+                    ]
                     grp = item[BuildCol.BASE].split()[0]
                     gen = writer_class(self.__prj, grp, db_list)
                 else:
-                    db_list = [i[DbMap.DBASE].db
-                               for i in self.__dbmap.values()]
+                    db_list = [
+                        i[DbMap.DBASE].db for i in self.__dbmap.values()
+                    ]
                     gen = writer_class(self.__prj, db_list)
                 gen.write(dest)
                 item[BuildCol.MODIFIED] = False
@@ -298,20 +303,36 @@ class Build(BaseWindow):
         Brings up the export assistant, to help the user build a new rule
         to add to the builder.
         """
-        optlist = [(exp_type_fmt(item.type), 0, item.extension)
-                   for item in EXPORTERS] + \
-                  [(exp_type_fmt(item.type), 1, item.extension)
-                   for item in GRP_EXPORTERS] + \
-                  [(exp_type_fmt(item.type), 2, item.extension)
-                   for item in PRJ_EXPORTERS]
+        optlist = (
+            [
+                (exp_type_fmt(item.type), 0, item.extension)
+                for item in EXPORTERS
+            ]
+            + [
+                (exp_type_fmt(item.type), 1, item.extension)
+                for item in GRP_EXPORTERS
+            ]
+            + [
+                (exp_type_fmt(item.type), 2, item.extension)
+                for item in PRJ_EXPORTERS
+            ]
+        )
 
-        reglist = [os.path.splitext(os.path.basename(i))[0]
-                   for i in self.__prj.get_register_set()]
+        reglist = [
+            os.path.splitext(os.path.basename(i))[0]
+            for i in self.__prj.get_register_set()
+        ]
 
         groups = [group.name for group in self.__prj.get_grouping_list()]
 
-        ExportAssistant(self.__prj.short_name, optlist, reglist, groups,
-                        self.add_callback, self.__build_top)
+        ExportAssistant(
+            self.__prj.short_name,
+            optlist,
+            reglist,
+            groups,
+            self.add_callback,
+            self.__build_top,
+        )
 
     def add_callback(self, filename, export_format, register_set, group):
         """
@@ -329,7 +350,7 @@ class Build(BaseWindow):
             register_path = "%s (group)" % group
             self.__add_item_to_list(register_path, option, filename)
         else:
-            register_path = '<project>'
+            register_path = "<project>"
             self.__prj.add_to_project_export_list(option, filename)
             self.__add_item_to_list(register_path, option, filename)
 
@@ -393,4 +414,4 @@ def file_needs_rebuilt(local_dest, dbmap, db_paths):
 
 
 def exp_type_fmt(item):
-    return "{0} ({1})".format(item[0], item[1])
+    return "{} ({})".format(item[0], item[1])

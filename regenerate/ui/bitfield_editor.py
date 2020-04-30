@@ -55,9 +55,11 @@ def modified(f):
 class BitFieldEditor(BaseWindow):
     """Bit field editing class."""
 
-    def __init__(self, dbase, register, bit_field, modified, top_builder, parent):
+    def __init__(
+        self, dbase, register, bit_field, modified, top_builder, parent
+    ):
 
-        super(BitFieldEditor, self).__init__()
+        super().__init__()
 
         self._db = dbase
         self.modified = modified
@@ -89,7 +91,9 @@ class BitFieldEditor(BaseWindow):
         self._check_data()
 
         verilog_obj = self._builder.get_object("verilog_code")
-        highlight_text(self.build_register_text(bit_field), verilog_obj.get_buffer())
+        highlight_text(
+            self.build_register_text(bit_field), verilog_obj.get_buffer()
+        )
         verilog_obj.modify_font(pango_font)
 
         self._builder.connect_signals(self)
@@ -141,23 +145,27 @@ class BitFieldEditor(BaseWindow):
         """
         Initializes the dialog's data fields from the object
         """
-        self._register_obj.set_text("<b>{0}</b>".format(self._register.register_name))
+        self._register_obj.set_text(
+            "<b>{}</b>".format(self._register.register_name)
+        )
         self._register_obj.set_use_markup(True)
 
         self._set_text("field_name", bit_field.full_field_name())
         self._set_text("type", TYPE_TO_DESCR[bit_field.field_type])
 
         if bit_field.reset_type == ResetType.NUMERIC:
-            self._set_text("reset_value", "{0:x}".format(bit_field.reset_value))
+            self._set_text(
+                "reset_value", "{0:x}".format(bit_field.reset_value)
+            )
         else:
             self._set_text("reset_value", bit_field.reset_parameter)
 
         (input_enb, control_enb) = TYPE_TO_ENABLE[bit_field.field_type]
         if input_enb and not bit_field.input_signal:
-            bit_field.input_signal = "{0}_DATA_IN".format(bit_field.field_name)
+            bit_field.input_signal = "{}_DATA_IN".format(bit_field.field_name)
 
         if control_enb and not bit_field.control_signal:
-            bit_field.control_signal = "{0}_LOAD".format(bit_field.field_name)
+            bit_field.control_signal = "{}_LOAD".format(bit_field.field_name)
 
         self._output_obj.set_text(bit_field.output_signal)
         self._input_obj.set_text(bit_field.input_signal)
@@ -230,7 +238,9 @@ class BitFieldEditor(BaseWindow):
         if last >= max_values:
             ErrorMsg(
                 "Maximum number of values reached",
-                "The width of the field only allows for {0} values".format(last),
+                "The width of the field only allows for {0} values".format(
+                    last
+                ),
                 parent=self.parent,
             )
             return
@@ -244,7 +254,9 @@ class BitFieldEditor(BaseWindow):
             or self._value_model[last][1]
             or self._value_model[last][2]
         ):
-            new_val = "" if largest >= max_values else "{0:x}".format(largest + 1)
+            new_val = (
+                "" if largest >= max_values else "{0:x}".format(largest + 1)
+            )
             node = self._value_model.append(row=(new_val, "", ""))
             path = self._value_model.get_path(node)
         else:
@@ -267,7 +279,9 @@ class BitFieldEditor(BaseWindow):
         self._bit_field.output_has_side_effect = obj.get_active()
 
     def _update_values(self):
-        self._bit_field.values = [(val[0], val[1], val[2]) for val in self._value_model]
+        self._bit_field.values = [
+            (val[0], val[1], val[2]) for val in self._value_model
+        ]
 
     @modified
     def on_output_enable_toggled(self, obj):
@@ -441,7 +455,9 @@ def clear_error(obj):
 
 def find_largest_value(model):
     try:
-        value_list = [int(value, 16) for (value, token, descr) in model if value != ""]
+        value_list = [
+            int(value, 16) for (value, token, descr) in model if value != ""
+        ]
         return max(value_list)
     except ValueError:
         return -1

@@ -19,7 +19,6 @@
 
 import logging
 from gi.repository import GObject
-#import gobject
 
 
 class StatusHandler(logging.Handler):
@@ -31,7 +30,7 @@ class StatusHandler(logging.Handler):
     SECONDS = 8
 
     def __init__(self, status_obj):
-        super(StatusHandler, self).__init__()
+        super().__init__()
         self.status_obj = status_obj
         self.status_id = status_obj.get_context_id(__name__)
         self.timer = None

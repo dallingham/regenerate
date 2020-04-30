@@ -56,7 +56,7 @@ class CDefines(WriterBase):
     """
 
     def __init__(self, project, dbase):
-        super(CDefines, self).__init__(project, dbase)
+        super().__init__(project, dbase)
         self._ofile = None
 
     def write_def(self, reg, data, base):
@@ -70,7 +70,11 @@ class CDefines(WriterBase):
         if data.repeat > 1:
             for i in range(0, data.repeat):
                 name = full_token(
-                    data.group, reg.token, self._dbase.module_name, i, data.format
+                    data.group,
+                    reg.token,
+                    self._dbase.module_name,
+                    i,
+                    data.format,
                 )
                 address += i * data.roffset
                 self._ofile.write(
@@ -112,7 +116,11 @@ EXPORTERS = [
     (
         WriterBase.TYPE_BLOCK,
         ExportInfo(
-            CDefines, ("Header files", "C Source"), "C header files", ".h", "headers-c"
+            CDefines,
+            ("Header files", "C Source"),
+            "C header files",
+            ".h",
+            "headers-c",
         ),
     )
 ]

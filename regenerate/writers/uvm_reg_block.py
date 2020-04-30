@@ -47,7 +47,7 @@ class UVMRegBlockRegisters(WriterBase):
         Initialize the object. At the current time, only little endian is
         supported by the package
         """
-        super(UVMRegBlockRegisters, self).__init__(project, None)
+        super().__init__(project, None)
         self.dblist = dblist
 
     def fix_name(self, field):
@@ -188,7 +188,9 @@ def individual_access(field, reg):
     # field we are checking for. Calculate the bytes used, and add them to the
     # used_bytes set
 
-    for x_field in [fld for fld in flds if fld != field and not is_readonly(fld)]:
+    for x_field in [
+        fld for fld in flds if fld != field and not is_readonly(fld)
+    ]:
         for pos in range(x_field.lsb, x_field.msb + 1):
             used_bytes.add(pos / 8)
 
@@ -207,8 +209,7 @@ def remove_no_uvm(slist):
 EXPORTERS = [
     (
         WriterBase.TYPE_PROJECT,
-        ExportInfo
-        (
+        ExportInfo(
             UVMRegBlockRegisters,
             ("Test", "UVM Registers"),
             "SystemVerilog files",

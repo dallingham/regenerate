@@ -29,7 +29,7 @@ class VerilogParameters(WriterBase):
     """
 
     def __init__(self, dbase):
-        super(VerilogParameters, self).__init__(dbase)
+        super().__init__(dbase)
         self._ofile = None
 
     def write_def(self, reg, prefix, offset):
@@ -40,7 +40,9 @@ class VerilogParameters(WriterBase):
         """
         name = prefix + reg.token
 
-        self._ofile.write("parameter p%s = 'h%x\n" % (name, reg.address + offset))
+        self._ofile.write(
+            "parameter p%s = 'h%x\n" % (name, reg.address + offset)
+        )
 
     def write(self, filename):
         """
@@ -64,7 +66,9 @@ class VerilogParameters(WriterBase):
             errd.run()
             return
 
-        self._write_header_comment(self._ofile, "site_verilog.inc", comment_char="//")
+        self._write_header_comment(
+            self._ofile, "site_verilog.inc", comment_char="//"
+        )
 
         for reg_key in self._dbase.get_keys():
             self.write_def(

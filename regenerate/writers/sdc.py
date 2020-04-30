@@ -29,7 +29,7 @@ class Sdc(WriterBase):
     """
 
     def __init__(self, project, dblist):
-        super(Sdc, self).__init__(project, None)
+        super().__init__(project, None)
         self._offset = 0
         self.dblist = dblist
         self._ofile = None
@@ -46,13 +46,19 @@ class Sdc(WriterBase):
             for group in self._project.get_grouping_list():
                 used = set()
                 for grp in group.register_sets:
-                    if grp.set == dbase.set_name and grp.set not in used and grp.hdl:
+                    if (
+                        grp.set == dbase.set_name
+                        and grp.set not in used
+                        and grp.hdl
+                    ):
                         used.add(grp.set)
                         for reg, field in all_fields(dbase):
                             for i in range(0, grp.repeat):
                                 base = get_signal_info(reg.address, field)[0]
                                 for j in range(0, group.repeat):
-                                    path = build_format(group.hdl, j, grp.hdl, i)
+                                    path = build_format(
+                                        group.hdl, j, grp.hdl, i
+                                    )
                                     signal_name = "%s/%s" % (path, base)
                                     of.write(
                                         "set_multicycle -from [get_cells{%s}] -setup 4\n"
@@ -90,7 +96,11 @@ def all_fields(dbase):
 
 
 def has_static_output(field):
-    return field.use_output_enable and field.output_signal and field.output_is_static
+    return (
+        field.use_output_enable
+        and field.output_signal
+        and field.output_is_static
+    )
 
 
 def get_signal_base(field):

@@ -79,7 +79,7 @@ class SpiritWriter(WriterBase):
     """
 
     def __init__(self, project, dbase):
-        super(SpiritWriter, self).__init__(project, dbase)
+        super().__init__(project, dbase)
 
     def write(self, filename):
         """
@@ -93,7 +93,9 @@ class SpiritWriter(WriterBase):
         )
 
         with open(template_file) as ifile:
-            template = Template(ifile.read(), trim_blocks=True, lstrip_blocks=True)
+            template = Template(
+                ifile.read(), trim_blocks=True, lstrip_blocks=True
+            )
 
         with open(filename, "w") as of:
             of.write(

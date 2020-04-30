@@ -89,7 +89,7 @@ class AddressDecode(WriterBase):
     """
 
     def __init__(self, project, group, dblist):
-        super(AddressDecode, self).__init__(project, None)
+        super().__init__(project, None)
         self.dblist = dblist
         self.group = group
 
@@ -107,13 +107,19 @@ class AddressDecode(WriterBase):
 
         # Find the RTL template
         dirpath = os.path.dirname(__file__)
-        template_file = os.path.join(dirpath, "templates", "regblk_mux.template")
+        template_file = os.path.join(
+            dirpath, "templates", "regblk_mux.template"
+        )
 
         with open(template_file) as ifile:
-            template = Template(ifile.read(), trim_blocks=True, lstrip_blocks=True)
+            template = Template(
+                ifile.read(), trim_blocks=True, lstrip_blocks=True
+            )
 
         ofile.write(
-            template.render(group_name=group.name, blk_insts=ginfo_list, mda=False)
+            template.render(
+                group_name=group.name, blk_insts=ginfo_list, mda=False
+            )
         )
 
 

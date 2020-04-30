@@ -39,7 +39,7 @@ class AddrMapEdit(BaseWindow):
         self.callback = callback
 
         label = Gtk.Label(
-            'Select subsystems for the "{0}" address map'.format(map_name)
+            'Select subsystems for the "{}" address map'.format(map_name)
         )
         label.set_padding(6, 6)
 
@@ -73,7 +73,10 @@ class AddrMapEdit(BaseWindow):
 
         self.view.show()
         col = ToggleColumn(
-            "Enabled", self._enable_changed, 0, visible_callback=self.visible_callback2
+            "Enabled",
+            self._enable_changed,
+            0,
+            visible_callback=self.visible_callback2
         )
 
         self.view.append_column(col)
@@ -110,7 +113,14 @@ class AddrMapEdit(BaseWindow):
             for item in group.register_sets:
                 access = project.get_access(map_name, group.name, item.inst)
                 self.model.append(
-                    top, row=(True, item.inst, options[access][0], item, group.name)
+                    top,
+                    row=(
+                        True,
+                        item.inst,
+                        options[access][0],
+                        item,
+                        group.name
+                    )
                 )
 
         self.map_name = map_name
@@ -142,7 +152,10 @@ class AddrMapEdit(BaseWindow):
         self.model[path][2] = val
 
         self.project.set_access(
-            self.map_name, self.model[path][-1], self.model[path][1], val_int
+            self.map_name,
+            self.model[path][-1],
+            self.model[path][1],
+            val_int
         )
         self.callback()
 

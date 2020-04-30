@@ -24,13 +24,9 @@ from gi.repository import Gtk, Pango
 
 
 class BaseColumn(Gtk.TreeViewColumn):
-
     def __init__(self, title, cell_renderer, tooltip=None, **kwargs):
 
-        super(BaseColumn, self).__init__(
-            cell_renderer=cell_renderer,
-            **kwargs
-        )
+        super().__init__(cell_renderer=cell_renderer, **kwargs)
 
         header = Gtk.Label(title)
         header.show()
@@ -49,19 +45,25 @@ class ToggleColumn(BaseColumn):
     columns are passed and used to create the CellRenderer.
     """
 
-    def __init__(self, title, change_callback, source_column,
-                 tooltip=None, visible_callback=None):
+    def __init__(
+        self,
+        title,
+        change_callback,
+        source_column,
+        tooltip=None,
+        visible_callback=None,
+    ):
 
         renderer = Gtk.CellRendererToggle()
-        renderer.set_property('activatable', True)
+        renderer.set_property("activatable", True)
         if change_callback:
-            renderer.connect('toggled', change_callback, source_column)
+            renderer.connect("toggled", change_callback, source_column)
 
-        super(ToggleColumn, self).__init__(
+        super().__init__(
             title,
             cell_renderer=renderer,
             active=source_column,
-            tooltip=tooltip
+            tooltip=tooltip,
         )
 
         if visible_callback:
@@ -74,32 +76,37 @@ class EditableColumn(BaseColumn):
     columns are passed and used to create the CellRenderer.
     """
 
-    def __init__(self, title, change_callback, source_column, monospace=False,
-                 visible_callback=None, placeholder=None, tooltip=None):
+    def __init__(
+        self,
+        title,
+        change_callback,
+        source_column,
+        monospace=False,
+        visible_callback=None,
+        placeholder=None,
+        tooltip=None,
+    ):
 
         self.renderer = Gtk.CellRendererText()
         if change_callback:
-            self.renderer.set_property('editable', True)
-            self.renderer.connect('edited', change_callback, source_column)
+            self.renderer.set_property("editable", True)
+            self.renderer.connect("edited", change_callback, source_column)
         if placeholder:
             try:
-                self.renderer.set_property('placeholder-text', placeholder)
+                self.renderer.set_property("placeholder-text", placeholder)
             except TypeError:
                 pass
 
-        self.renderer.set_property('ellipsize', Pango.EllipsizeMode.END)
+        self.renderer.set_property("ellipsize", Pango.EllipsizeMode.END)
         if monospace:
-            self.renderer.set_property('family', "Monospace")
+            self.renderer.set_property("family", "Monospace")
 
-        super(EditableColumn, self).__init__(
-            title,
-            self.renderer,
-            text=source_column,
-            tooltip=tooltip
+        super().__init__(
+            title, self.renderer, text=source_column, tooltip=tooltip
         )
 
-        self.renderer.connect('editing-canceled', self.edit_canceled)
-        self.renderer.connect('editing-started', self.edit_started)
+        self.renderer.connect("editing-canceled", self.edit_canceled)
+        self.renderer.connect("editing-started", self.edit_started)
         self.path = 0
         self.entry = None
 
@@ -112,7 +119,7 @@ class EditableColumn(BaseColumn):
 
     def edit_canceled(self, obj):
         val = self.entry.get_text()
-        self.renderer.emit('edited', self.path, val)
+        self.renderer.emit("edited", self.path, val)
 
 
 class ComboMapColumn(BaseColumn):
@@ -121,8 +128,16 @@ class ComboMapColumn(BaseColumn):
     columns are passed and used to create the CellRenderer.
     """
 
-    def __init__(self, title, callback, data_list, source_column, dtype=int,
-                 visible_callback=None, tooltip=None):
+    def __init__(
+        self,
+        title,
+        callback,
+        data_list,
+        source_column,
+        dtype=int,
+        visible_callback=None,
+        tooltip=None,
+    ):
 
         renderer = Gtk.CellRendererCombo()
         model = Gtk.ListStore(str, dtype)
@@ -131,16 +146,11 @@ class ComboMapColumn(BaseColumn):
         renderer.set_property("text-column", 0)
         renderer.set_property("model", model)
         renderer.set_property("has-entry", False)
-        renderer.set_property('editable', True)
+        renderer.set_property("editable", True)
         if callback:
-            renderer.connect('changed', callback, source_column)
+            renderer.connect("changed", callback, source_column)
 
-        super(ComboMapColumn, self).__init__(
-            title,
-            renderer,
-            tooltip=tooltip,
-            text=source_column
-        )
+        super().__init__(title, renderer, tooltip=tooltip, text=source_column)
 
         if visible_callback:
             self.set_cell_data_func(renderer, visible_callback)
@@ -152,8 +162,17 @@ class SwitchComboMapColumn(BaseColumn):
     columns are passed and used to create the CellRenderer.
     """
 
-    def __init__(self, title, callback, data_list0, data_list1, data_list2,
-                 source_column, dtype=int, tooltip=None):
+    def __init__(
+        self,
+        title,
+        callback,
+        data_list0,
+        data_list1,
+        data_list2,
+        source_column,
+        dtype=int,
+        tooltip=None,
+    ):
 
         self.renderer = Gtk.CellRendererCombo()
 
@@ -174,14 +193,11 @@ class SwitchComboMapColumn(BaseColumn):
         self.renderer.set_property("text-column", 0)
         self.renderer.set_property("model", self.model[0])
         self.renderer.set_property("has-entry", False)
-        self.renderer.set_property('editable', True)
-        self.renderer.connect('changed', callback, source_column)
+        self.renderer.set_property("editable", True)
+        self.renderer.connect("changed", callback, source_column)
 
-        super(SwitchComboMapColumn, self).__init__(
-            title,
-            self.renderer,
-            tooltip=tooltip,
-            text=source_column
+        super().__init__(
+            title, self.renderer, tooltip=tooltip, text=source_column
         )
 
     def set_mode(self, i):

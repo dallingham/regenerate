@@ -20,7 +20,7 @@
 RegProject is the container object for a regenerate project
 """
 
-from collections import namedtuple, defaultdict
+from collections import defaultdict
 import os.path
 import xml.sax.saxutils
 import regenerate.db
@@ -222,7 +222,9 @@ class RegProject(object):
         file.
         """
         base = os.path.dirname(self.path)
-        return [os.path.normpath(os.path.join(base, i)) for i in self._filelist]
+        return [
+            os.path.normpath(os.path.join(base, i)) for i in self._filelist
+        ]
 
     def get_grouping_list(self):
         """
@@ -286,7 +288,11 @@ class RegProject(object):
                 continue
             old_data = self._addr_map_list[i]
             self._addr_map_list[i] = AddrMapData(
-                new_name, old_data.base, old_data.width, old_data.fixed, old_data.uvm
+                new_name,
+                old_data.base,
+                old_data.width,
+                old_data.fixed,
+                old_data.uvm,
             )
             self._addr_map_grps[new_name] = self._addr_map_grps[old_name]
             del self._addr_map_grps[old_name]
@@ -313,15 +319,21 @@ class RegProject(object):
 
     def get_address_base(self, name):
         """Returns the base address  of the address map"""
-        return next((d.base for d in self._addr_map_list if name == d.name), None)
+        return next(
+            (d.base for d in self._addr_map_list if name == d.name), None
+        )
 
     def get_address_fixed(self, name):
         """Indicates if the specified address map is at a fixed location"""
-        return next((d.fixed for d in self._addr_map_list if name == d.name), None)
+        return next(
+            (d.fixed for d in self._addr_map_list if name == d.name), None
+        )
 
     def get_address_uvm(self, name):
         """Indicates if the specified address map is at a fixed location"""
-        return next((d.uvm for d in self._addr_map_list if name == d.name), None)
+        return next(
+            (d.uvm for d in self._addr_map_list if name == d.name), None
+        )
 
     def get_address_width(self, name):
         """Returns the width of the address group"""

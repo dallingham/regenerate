@@ -18,8 +18,6 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 from gi.repository import Gtk, Gdk, GObject
-#import gobject
-#from gi.repository import GObject
 from regenerate.ui.columns import EditableColumn
 from regenerate.db import GroupInstData, GroupData, LOGGER
 from regenerate.ui.enums import InstCol
@@ -33,9 +31,8 @@ class InstMdl(Gtk.TreeStore):
 
     def __init__(self, project):
 
-        super(InstMdl, self).__init__(
-            str, str, str, GObject.TYPE_UINT64, str,
-            str, str, object
+        super().__init__(
+            str, str, str, GObject.TYPE_UINT64, str, str, str, object
         )
 
         self.callback = self.__null_callback()
@@ -70,8 +67,7 @@ class InstMdl(Gtk.TreeStore):
             items.add(row[InstCol.INST])
 
         if text in items:
-            LOGGER.error(
-                '"%s" has already been used as a group name', text)
+            LOGGER.error('"%s" has already been used as a group name', text)
             return
 
         node = self.get_iter(path)
@@ -154,7 +150,7 @@ class InstMdl(Gtk.TreeStore):
         grps = set([row[0] for row in self])
 
         name = "new_group"
-        for i in range(len(grps)+1):
+        for i in range(len(grps) + 1):
             if name not in grps:
                 break
             name = "new_group%d" % i
@@ -167,7 +163,7 @@ class InstMdl(Gtk.TreeStore):
             new_grp.repeat,
             new_grp.repeat_offset,
             new_grp.hdl,
-            new_grp
+            new_grp,
         )
 
         node = self.append(None, row=row)
@@ -176,7 +172,6 @@ class InstMdl(Gtk.TreeStore):
 
 
 class InstanceList(object):
-
     def __init__(self, obj, callback):
         self.__obj = obj
         self.__col = None
@@ -217,7 +212,7 @@ class InstanceList(object):
                         cobj.no_uvm,
                         cobj.no_decode,
                         cobj.array,
-                        cobj.single_decode
+                        cobj.single_decode,
                     )
                 )
                 child = self.__model.iter_next(child)
@@ -229,24 +224,23 @@ class InstanceList(object):
     def new_instance(self):
         pos, grp = self.__model.new_instance()
         self.__project.get_grouping_list().append(grp)
-        self.__obj.set_cursor(
-            pos,
-            self.__col,
-            start_editing=True
-        )
+        self.__obj.set_cursor(pos, self.__col, start_editing=True)
 
     def get_selected_instance(self):
         return self.__obj.get_selection().get_selected()
 
     def __enable_dnd(self):
-        self.__obj.enable_model_drag_dest([
-            ('text/plain', 0, 0)
-        ], Gdk.DragAction.DEFAULT | Gdk.DragAction.MOVE)
-        self.__obj.connect('drag-data-received',
-                           self.__drag_data_received_data)
+        self.__obj.enable_model_drag_dest(
+            [("text/plain", 0, 0)],
+            Gdk.DragAction.DEFAULT | Gdk.DragAction.MOVE,
+        )
+        self.__obj.connect(
+            "drag-data-received", self.__drag_data_received_data
+        )
 
-    def __drag_data_received_data(self, treeview, context, x, y, selection,
-                                  info, etime):
+    def __drag_data_received_data(
+        self, treeview, context, x, y, selection, info, etime
+    ):
         model = treeview.get_model()
 
         try:
@@ -268,20 +262,21 @@ class InstanceList(object):
             inst.repeat,
             inst.repeat_offset,
             inst.hdl,
-            inst
+            inst,
         )
         if drop_info:
             path, position = drop_info
-            print (position)
             self.modified_callback()
             if len(path) == 1:
                 node = self.__model.get_iter(path)
                 self.__model.append(node, row_data)
             else:
-                parent = self.__model.get_iter((path[0], ))
+                parent = self.__model.get_iter((path[0],))
                 node = self.__model.get_iter(path)
-                if position in (Gtk.TreeViewDropPosition.BEFORE,
-                                Gtk.TreeViewDropPosition.INTO_OR_BEFORE):
+                if position in (
+                    Gtk.TreeViewDropPosition.BEFORE,
+                    Gtk.TreeViewDropPosition.INTO_OR_BEFORE,
+                ):
                     self.__model.insert_before(parent, node, row_data)
                 else:
                     model.insert_after(parent, node, row_data)
@@ -289,8 +284,9 @@ class InstanceList(object):
     def __populate(self):
         if self.__project is None:
             return
-        group_list = sorted(self.__project.get_grouping_list(),
-                            key=lambda x: x.base)
+        group_list = sorted(
+            self.__project.get_grouping_list(), key=lambda x: x.base
+        )
         for item in group_list:
 
             node = self.__model.append(
@@ -302,8 +298,8 @@ class InstanceList(object):
                     item.repeat,
                     item.repeat_offset,
                     item.hdl,
-                    item
-                )
+                    item,
+                ),
             )
 
             item_sets = item.register_sets
@@ -317,16 +313,14 @@ class InstanceList(object):
                         entry.repeat,
                         entry.repeat_offset,
                         entry.hdl,
-                        entry
-                    )
+                        entry,
+                    ),
                 )
 
     def __build_instance_table(self):
 
         column = EditableColumn(
-            'Instance',
-            self.instance_inst_changed,
-            InstCol.INST
+            "Instance", self.instance_inst_changed, InstCol.INST
         )
         column.set_sort_column_id(InstCol.INST)
         column.set_min_width(175)
@@ -334,47 +328,39 @@ class InstanceList(object):
         self.__col = column
 
         column = EditableColumn(
-            'Subsystem',
+            "Subsystem",
             self.instance_id_changed,
             InstCol.ID,
-            visible_callback=self.visible_callback
+            visible_callback=self.visible_callback,
         )
         column.set_sort_column_id(InstCol.ID)
         column.set_min_width(150)
         self.__obj.append_column(column)
 
         column = EditableColumn(
-            'Address base',
-            self.instance_base_changed,
-            InstCol.BASE,
-            True
+            "Address base", self.instance_base_changed, InstCol.BASE, True
         )
         column.set_sort_column_id(InstCol.SORT)
         column.set_min_width(150)
         self.__obj.append_column(column)
 
         column = EditableColumn(
-            'Repeat',
-            self.instance_repeat_changed,
-            InstCol.RPT,
-            True
+            "Repeat", self.instance_repeat_changed, InstCol.RPT, True
         )
         column.set_min_width(125)
         self.__obj.append_column(column)
 
         column = EditableColumn(
-            'Repeat Offset',
+            "Repeat Offset",
             self.instance_repeat_offset_changed,
             InstCol.OFF,
-            True
+            True,
         )
         column.set_min_width(150)
         self.__obj.append_column(column)
 
         column = EditableColumn(
-            'HDL Path',
-            self.instance_hdl_changed,
-            InstCol.HDL
+            "HDL Path", self.instance_hdl_changed, InstCol.HDL
         )
         column.set_min_width(250)
         column.set_sort_column_id(InstCol.HDL)
@@ -383,9 +369,9 @@ class InstanceList(object):
     def visible_callback(self, column, cell, model, *obj):
         node = obj[0]
         if len(model.get_path(node)) == 1:
-            cell.set_property('visible', False)
+            cell.set_property("visible", False)
         else:
-            cell.set_property('visible', True)
+            cell.set_property("visible", True)
 
     def instance_id_changed(self, cell, path, new_text, col):
         """
@@ -444,6 +430,6 @@ def build_row_data(inst, name, offset, rpt, rpt_offset, hdl, obj):
         "{0:d}".format(rpt),
         "{0:x}".format(rpt_offset),
         hdl,
-        obj
+        obj,
     )
     return row

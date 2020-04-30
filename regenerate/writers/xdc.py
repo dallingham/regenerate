@@ -21,8 +21,8 @@
 Sdc - Writes out synthesis constraints
 """
 
-from .writer_base import WriterBase, ExportInfo
 import datetime
+from regenerate.writers.writer_base import WriterBase, ExportInfo
 
 
 class Xdc(WriterBase):
@@ -31,7 +31,7 @@ class Xdc(WriterBase):
     """
 
     def __init__(self, project, dblist):
-        super(Xdc, self).__init__(project, None)
+        super().__init__(project, None)
         self._offset = 0
         self.dblist = dblist
         self._ofile = None
@@ -40,10 +40,12 @@ class Xdc(WriterBase):
         static_signals = set()
 
         for reg in [
-            self._dbase.get_register(reg_key) for reg_key in self._dbase.get_keys()
+            self._dbase.get_register(reg_key)
+            for reg_key in self._dbase.get_keys()
         ]:
             for field in [
-                reg.get_bit_field(field_key) for field_key in reg.get_bit_field_keys()
+                reg.get_bit_field(field_key)
+                for field_key in reg.get_bit_field_keys()
             ]:
                 if field.use_output_enable and field.output_is_static:
                     if field.output_signal:
@@ -85,11 +87,15 @@ class Xdc(WriterBase):
     def write_header(self, of):
         t = datetime.datetime.now()
         tstr = t.strftime("%H:%M on %Y-%m-%d")
-        of.write("#----------------------------------------------------------\n")
+        of.write(
+            "#----------------------------------------------------------\n"
+        )
         of.write("#\n")
         of.write("# Xilinx XDC Constraints generated %s\n" % tstr)
         of.write("#\n")
-        of.write("#----------------------------------------------------------\n\n")
+        of.write(
+            "#----------------------------------------------------------\n\n"
+        )
 
     def write(self, filename):
         """Writes the output file"""
@@ -106,8 +112,8 @@ class Xdc(WriterBase):
                     dbase = name2db[group_inst.set]
                     ports = self.get_static_ports(dbase)
                     of.write(
-                        "# %s - %s\n\n" % (dbase.set_name,
-                                           dbase.descriptive_title)
+                        "# %s - %s\n\n"
+                        % (dbase.set_name, dbase.descriptive_title)
                     )
                     for (addr, field) in ports:
                         if field.is_constant():
@@ -117,9 +123,9 @@ class Xdc(WriterBase):
                             for i in range(0, group_inst.repeat):
                                 hdl = ""
                                 if group.hdl != "":
-                                    hdl = "%s/" % group.hdl.replace(".", "/").replace(
-                                        "]/", "]."
-                                    )
+                                    hdl = "%s/" % group.hdl.replace(
+                                        ".", "/"
+                                    ).replace("]/", "].")
                                 if group_inst.hdl != "":
                                     hdl = hdl + "%s/" % group_inst.hdl.replace(
                                         ".", "/"
@@ -136,9 +142,9 @@ class Xdc(WriterBase):
                         else:
                             hdl = ""
                             if group.hdl != "":
-                                hdl = "%s/" % group.hdl.replace(".", "/").replace(
-                                    "]/", "]."
-                                )
+                                hdl = "%s/" % group.hdl.replace(
+                                    ".", "/"
+                                ).replace("]/", "].")
                             if group_inst.hdl != "":
                                 hdl = hdl + "%s/" % group_inst.hdl.replace(
                                     ".", "/"

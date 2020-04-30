@@ -20,7 +20,7 @@
 Sdc - Writes out synthesis constraints
 """
 
-from .writer_base import WriterBase, ExportInfo
+from regenerate.writers.writer_base import WriterBase, ExportInfo
 
 
 class Spyglass(WriterBase):
@@ -29,7 +29,7 @@ class Spyglass(WriterBase):
     """
 
     def __init__(self, project, dblist):
-        super(Spyglass, self).__init__(project, None)
+        super().__init__(project, None)
         self._offset = 0
         self.dblist = dblist
         self._ofile = None
@@ -38,10 +38,12 @@ class Spyglass(WriterBase):
         static_signals = set()
 
         for reg in [
-            self._dbase.get_register(reg_key) for reg_key in self._dbase.get_keys()
+            self._dbase.get_register(reg_key)
+            for reg_key in self._dbase.get_keys()
         ]:
             for field in [
-                reg.get_bit_field(field_key) for field_key in reg.get_bit_field_keys()
+                reg.get_bit_field(field_key)
+                for field_key in reg.get_bit_field_keys()
             ]:
                 if field.use_output_enable and field.output_is_static:
                     if field.output_signal:

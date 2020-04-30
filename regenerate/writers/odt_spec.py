@@ -134,7 +134,7 @@ class OdtSpec(WriterBase):
     """
 
     def __init__(self, project, dblist):
-        super(OdtSpec, self).__init__(project, None)
+        super().__init__(project, None)
         self.tblcnt = 0
         self.project = project
         self.dblist = dblist
@@ -166,11 +166,21 @@ class OdtSpec(WriterBase):
         self.tblcnt += 1
         self.cnt.write('<table:table table:name="mytable%d"' % self.tblcnt)
         self.cnt.write(' table:style-name="ParentTable">')
-        self.cnt.write('<table:table-column table:style-name="ParentTable.A"/>')
-        self.cnt.write('<table:table-column table:style-name="ParentTable.B"/>')
-        self.cnt.write('<table:table-column table:style-name="ParentTable.C"/>')
-        self.cnt.write('<table:table-column table:style-name="ParentTable.D"/>')
-        self.cnt.write('<table:table-column table:style-name="ParentTable.E"/>')
+        self.cnt.write(
+            '<table:table-column table:style-name="ParentTable.A"/>'
+        )
+        self.cnt.write(
+            '<table:table-column table:style-name="ParentTable.B"/>'
+        )
+        self.cnt.write(
+            '<table:table-column table:style-name="ParentTable.C"/>'
+        )
+        self.cnt.write(
+            '<table:table-column table:style-name="ParentTable.D"/>'
+        )
+        self.cnt.write(
+            '<table:table-column table:style-name="ParentTable.E"/>'
+        )
 
     def add_image(self, path):
         img = gtk.gdk.pixbuf_new_from_file(path)
@@ -179,10 +189,12 @@ class OdtSpec(WriterBase):
 
         self.cnt.write('<text:p text:style-name="Default">\n')
         self.cnt.write(
-            '<draw:frame draw:style-name="fr1" draw:name="graphics%d" ' % self.img_cnt
+            '<draw:frame draw:style-name="fr1" draw:name="graphics%d" '
+            % self.img_cnt
         )
         self.cnt.write(
-            'svg:width="%.2fin" svg:height="%.2fin" ' % (width / 144.0, height / 144.0)
+            'svg:width="%.2fin" svg:height="%.2fin" '
+            % (width / 144.0, height / 144.0)
         )
         self.cnt.write('text:anchor-type="paragraph" draw:z-index="0">\n')
         self.cnt.write(
@@ -220,7 +232,9 @@ class OdtSpec(WriterBase):
                 '<text:bookmark-start text:name="__RefHeading__%s"/>' % hashid
             )
             self.cnt.write(text.encode("ascii", "replace"))
-            self.cnt.write('<text:bookmark-end text:name="__RefHeading__%s"/>' % hashid)
+            self.cnt.write(
+                '<text:bookmark-end text:name="__RefHeading__%s"/>' % hashid
+            )
         else:
             self.cnt.write(text.encode("ascii", "replace"))
         if level:
@@ -258,11 +272,14 @@ class OdtSpec(WriterBase):
         offset_addr = reg.address + self._offset
         name = "%s%s" % (self._prefix, reg.token)
         self.write_paragraph(REGNAME, "<b>Define:</b>\t%s" % name)
-        self.write_paragraph(REGADDR, "<b>Offset Address</b>:\t0x%08x" % offset_addr)
+        self.write_paragraph(
+            REGADDR, "<b>Offset Address</b>:\t0x%08x" % offset_addr
+        )
         addr_map = self.project.get_address_maps()
         for i in addr_map:
             self.write_paragraph(
-                REGADDR, "<b>%s Address</b>:\t0x%08x" % (i, offset_addr + addr_map[i])
+                REGADDR,
+                "<b>%s Address</b>:\t0x%08x" % (i, offset_addr + addr_map[i]),
             )
         if new_id:
             descr = reg.description
@@ -340,7 +357,9 @@ class OdtSpec(WriterBase):
                 self._write_register_table(reg)
 
     def _write_register_reference(self, reg, new_id):
-        hashid = hashlib.md5("%s-%s" % (self._dbase.module_name, new_id)).hexdigest()
+        hashid = hashlib.md5(
+            "%s-%s" % (self._dbase.module_name, new_id)
+        ).hexdigest()
         self.cnt.write('<text:p text:stype-name="Default">See section ')
         self.cnt.write(
             '<text:bookmark-ref text:reference-format="number-all-superior" '
@@ -391,10 +410,14 @@ class OdtSpec(WriterBase):
                 ]
                 description = bit_range.description
             else:
-                cols = [TYPE_MAP[bit_range.field_type], "-", bit_range.field_name]
-                description = '%s\n\nReset value is loaded from the input "%s"' % (
-                    bit_range.description,
-                    bit_range.reset_input,
+                cols = [
+                    TYPE_MAP[bit_range.field_type],
+                    "-",
+                    bit_range.field_name,
+                ]
+                description = (
+                    '%s\n\nReset value is loaded from the input "%s"'
+                    % (bit_range.description, bit_range.reset_input)
                 )
 
             for val in cols:
@@ -492,7 +515,9 @@ class OdtSpec(WriterBase):
             for inst in my_db.instances:
                 name = find_range(inst[1], addr_rng)
                 if name:
-                    my_list.setdefault(name, []).append((my_db, inst[0], inst[1]))
+                    my_list.setdefault(name, []).append(
+                        (my_db, inst[0], inst[1])
+                    )
 
         keys = addr_rng.items()
         keys.sort(key=lambda x: x[1])

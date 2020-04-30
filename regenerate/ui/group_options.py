@@ -20,21 +20,29 @@
 from gi.repository import Gtk
 
 DEF_DIALOG_FLAGS = Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT
-DEF_DIALOG_BUTTONS = (Gtk.STOCK_CANCEL, Gtk.ResponseType.REJECT,
-                      Gtk.STOCK_OK, Gtk.ResponseType.ACCEPT)
+DEF_DIALOG_BUTTONS = (
+    Gtk.STOCK_CANCEL,
+    Gtk.ResponseType.REJECT,
+    Gtk.STOCK_OK,
+    Gtk.ResponseType.ACCEPT,
+)
 
 
-class GroupOptions (Gtk.Dialog):
-
+class GroupOptions(Gtk.Dialog):
     def __init__(self, instance, modified, parent, width=600, height=260):
 
-        super(GroupOptions, self).__init__(
+        super().__init__(
             title="Instance Options (%s)" % instance.inst,
             parent=parent,
             flags=DEF_DIALOG_FLAGS,
-            buttons=DEF_DIALOG_BUTTONS
+            buttons=DEF_DIALOG_BUTTONS,
         )
         self.instance = instance
+        self.val_no_uvm = False
+        self.val_no_decode = False
+        self.val_single_decode = False
+        self.val_array = False
+
         self.set_size_request(width, height)
         self.build_window(instance.inst)
 
@@ -70,7 +78,8 @@ class GroupOptions (Gtk.Dialog):
         table.set_col_spacings(6)
 
         uvm_exclude = Gtk.CheckButton(
-            "Exclude the instance from the UVM register package")
+            "Exclude the instance from the UVM register package"
+        )
         uvm_exclude.set_active(self.instance.no_uvm)
         self.val_no_uvm = self.instance.no_uvm
 
@@ -81,12 +90,10 @@ class GroupOptions (Gtk.Dialog):
             1,
             2,
             xoptions=Gtk.AttachOptions.FILL,
-            yoptions=Gtk.AttachOptions.FILL
+            yoptions=Gtk.AttachOptions.FILL,
         )
 
-        decode_exclude = Gtk.CheckButton(
-            "Exclude from register decode"
-        )
+        decode_exclude = Gtk.CheckButton("Exclude from register decode")
         decode_exclude.set_active(self.instance.no_decode)
         self.val_no_decode = self.instance.no_decode
 
@@ -97,12 +104,10 @@ class GroupOptions (Gtk.Dialog):
             2,
             3,
             xoptions=Gtk.AttachOptions.FILL,
-            yoptions=Gtk.AttachOptions.FILL
+            yoptions=Gtk.AttachOptions.FILL,
         )
 
-        force_arrays = Gtk.CheckButton(
-            "Force array notation even for scalar instances"
-        )
+        force_arrays = Gtk.CheckButton("Force array notation even for scalar instances")
         force_arrays.set_active(self.instance.array)
         self.val_array = self.instance.array
 
@@ -113,12 +118,10 @@ class GroupOptions (Gtk.Dialog):
             3,
             4,
             xoptions=Gtk.AttachOptions.FILL,
-            yoptions=Gtk.AttachOptions.FILL
+            yoptions=Gtk.AttachOptions.FILL,
         )
 
-        single_decode = Gtk.CheckButton(
-            "Use a single decode for arrays"
-        )
+        single_decode = Gtk.CheckButton("Use a single decode for arrays")
         single_decode.set_active(self.instance.single_decode)
         self.val_single_decode = self.instance.single_decode
 
@@ -129,7 +132,7 @@ class GroupOptions (Gtk.Dialog):
             4,
             5,
             xoptions=Gtk.AttachOptions.FILL,
-            yoptions=Gtk.AttachOptions.FILL
+            yoptions=Gtk.AttachOptions.FILL,
         )
 
         box = Gtk.VBox(spacing=6)

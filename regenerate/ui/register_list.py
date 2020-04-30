@@ -29,69 +29,69 @@ from regenerate.db.enums import ShareType
 from regenerate.extras.remap import REMAP_NAME
 from regenerate.ui.enums import RegCol, RegColType
 
-BAD_TOKENS = ' /-@!#$%^&*()+=|{}[]:"\';\\,.?'
+BAD_TOKENS = " /-@!#$%^&*()+=|{}[]:\"';\\,.?"
 
 REPLACE = {
-    'ADDRESS': 'ADDR',
-    'ALTERNATE': 'ALT',
-    'ARBITER': 'ARB',
-    'ARBITRATION': 'ARB',
-    'CLEAR': 'CLR',
-    'CLOCK': 'CLK',
-    'COMMAND': 'CMD',
-    'COMPARE': 'CMP',
-    'CONFIG': 'CFG',
-    'CONFIGURATION': 'CFG',
-    'CONTROL': 'CTRL',
-    'COUNT': 'CNT',
-    'COUNTER': 'CNTR',
-    'CURRENT': 'CUR',
-    'DEBUG': 'DBG',
-    'DELAY': 'DLY',
-    'DESTINATION': 'DEST',
-    'DIVIDER': 'DIV',
-    'ENABLE': 'EN',
-    'ERROR': 'ERR',
-    'ERRORS': 'ERRS',
-    'EXTERNAL': 'EXT',
-    'FABRIC': 'FAB',
-    'HARDWARE': 'HW',
-    'HEADER': 'HDR',
-    'INTERRUPT': 'INT',
-    'LOAD': 'LD',
-    'MAILBOX': 'MBX',
-    'MANAGEMENT': 'MGMT',
-    'MASTER': 'MSTR',
-    'MAXIMUM': 'MAX',
-    'MESSAGE': 'MSG',
-    'MINIMUM': 'MIN',
-    'NUMBER': 'NUM',
-    'PACKET': 'PKT',
-    'PARITY': 'PAR',
-    'POINTER': 'PTR',
-    'POWER': 'PWR',
-    'RANGE': 'RNG',
-    'READ': 'RD',
-    'RECEIVE': 'RX',
-    'REFERENCE': 'REF',
-    'REGISTER': '',
-    'REQUEST': 'REQ',
-    'REQUESTER': 'REQ',
-    'RESET': 'RST',
-    'RESPONSE': 'RSP',
-    'SELECT': 'SEL',
-    'SLAVE': 'SLV',
-    'SOFTWARE': 'SW',
-    'SOURCE': 'SRC',
-    'SPACE': 'SPC',
-    'STATUS': 'STAT',
-    'SYSTEM': 'SYS',
-    'TRANSACTION': 'TXN',
-    'TRANSLATION': 'TRANS',
-    'TRANSMIT': 'TX',
-    'VALUE': 'VAL',
-    'VECTOR': 'VECT',
-    'WRITE': 'WR',
+    "ADDRESS": "ADDR",
+    "ALTERNATE": "ALT",
+    "ARBITER": "ARB",
+    "ARBITRATION": "ARB",
+    "CLEAR": "CLR",
+    "CLOCK": "CLK",
+    "COMMAND": "CMD",
+    "COMPARE": "CMP",
+    "CONFIG": "CFG",
+    "CONFIGURATION": "CFG",
+    "CONTROL": "CTRL",
+    "COUNT": "CNT",
+    "COUNTER": "CNTR",
+    "CURRENT": "CUR",
+    "DEBUG": "DBG",
+    "DELAY": "DLY",
+    "DESTINATION": "DEST",
+    "DIVIDER": "DIV",
+    "ENABLE": "EN",
+    "ERROR": "ERR",
+    "ERRORS": "ERRS",
+    "EXTERNAL": "EXT",
+    "FABRIC": "FAB",
+    "HARDWARE": "HW",
+    "HEADER": "HDR",
+    "INTERRUPT": "INT",
+    "LOAD": "LD",
+    "MAILBOX": "MBX",
+    "MANAGEMENT": "MGMT",
+    "MASTER": "MSTR",
+    "MAXIMUM": "MAX",
+    "MESSAGE": "MSG",
+    "MINIMUM": "MIN",
+    "NUMBER": "NUM",
+    "PACKET": "PKT",
+    "PARITY": "PAR",
+    "POINTER": "PTR",
+    "POWER": "PWR",
+    "RANGE": "RNG",
+    "READ": "RD",
+    "RECEIVE": "RX",
+    "REFERENCE": "REF",
+    "REGISTER": "",
+    "REQUEST": "REQ",
+    "REQUESTER": "REQ",
+    "RESET": "RST",
+    "RESPONSE": "RSP",
+    "SELECT": "SEL",
+    "SLAVE": "SLV",
+    "SOFTWARE": "SW",
+    "SOURCE": "SRC",
+    "SPACE": "SPC",
+    "STATUS": "STAT",
+    "SYSTEM": "SYS",
+    "TRANSACTION": "TXN",
+    "TRANSLATION": "TRANS",
+    "TRANSMIT": "TX",
+    "VALUE": "VAL",
+    "VECTOR": "VECT",
+    "WRITE": "WR",
 }
 
 
@@ -113,17 +113,10 @@ class RegisterModel(Gtk.ListStore):
         ("64 bits", 64),
     )
 
-    STR2BIT = {
-        8: "8 bits",
-        16: "16 bits",
-        32: "32 bits",
-        64: "64 bits",
-    }
+    STR2BIT = {8: "8 bits", 16: "16 bits", 32: "32 bits", 64: "64 bits"}
 
     def __init__(self):
-        super(RegisterModel, self).__init__(
-            str, str, str, str, int, str, int, str, object
-        )
+        super().__init__(str, str, str, str, int, str, int, str, object)
         self.reg2path = {}
 
     def append_register(self, register):
@@ -148,7 +141,7 @@ class RegisterModel(Gtk.ListStore):
                     self.STR2BIT[register.width],
                     register.address,
                     None,
-                    register
+                    register,
                 )
             )
         )
@@ -219,7 +212,7 @@ class RegisterModel(Gtk.ListStore):
 
 ColDef = namedtuple(
     "ColDef",
-    ["title", "size", "sort_column", "expand", "type", "mono", "placeholder"]
+    ["title", "size", "sort_column", "expand", "type", "mono", "placeholder"],
 )
 
 
@@ -229,32 +222,48 @@ class RegisterList(object):
     """
 
     _COLS = (  # Title,   Size, Column, Expand, Type, Monospace
+        ColDef("", 30, RegCol.ICON, False, RegColType.ICON, False, None),
         ColDef(
-            '', 30, RegCol.ICON, False, RegColType.ICON, False, None
+            "Address",
+            125,
+            RegCol.SORT,
+            False,
+            RegColType.TEXT,
+            True,
+            "Address",
         ),
         ColDef(
-            'Address', 125, RegCol.SORT, False, RegColType.TEXT, True,
-            'Address'
+            "Name",
+            200,
+            RegCol.NAME,
+            True,
+            RegColType.TEXT,
+            False,
+            "Missing Register Descriptive Name",
         ),
         ColDef(
-            'Name', 200, RegCol.NAME, True, RegColType.TEXT, False,
-            'Missing Register Descriptive Name'
+            "Token",
+            150,
+            RegCol.DEFINE,
+            True,
+            RegColType.TEXT,
+            True,
+            "Missing Register Token Name",
         ),
         ColDef(
-            'Token', 150, RegCol.DEFINE, True, RegColType.TEXT, True,
-            'Missing Register Token Name'
+            "Dimension", 100, RegCol.DIM, False, RegColType.TEXT, False, None
         ),
-        ColDef(
-            'Dimension', 100, RegCol.DIM, False, RegColType.TEXT, False,
-            None
-        ),
-        ColDef(
-            'Width', 225, -1, False, RegColType.COMBO, False, None
-        ),
+        ColDef("Width", 225, -1, False, RegColType.COMBO, False, None),
     )
 
-    def __init__(self, obj, select_change_function, mod_function, update_addr,
-                 set_warn_flags):
+    def __init__(
+        self,
+        obj,
+        select_change_function,
+        mod_function,
+        update_addr,
+        set_warn_flags,
+    ):
         self.__obj = obj
         self.__model = None
         self.__col = None
@@ -264,7 +273,7 @@ class RegisterList(object):
         self.__set_modified = mod_function
         self.__update_addr = update_addr
         self.__set_warn_flags = set_warn_flags
-        self.__selection.connect('changed', select_change_function)
+        self.__selection.connect("changed", select_change_function)
         self.__build_columns()
 
     def get_selected_row(self):
@@ -308,10 +317,7 @@ class RegisterList(object):
         for (i, col) in enumerate(self._COLS):
             if col.type == RegColType.COMBO:
                 column = ComboMapColumn(
-                    col.title,
-                    self.__combo_edited,
-                    RegisterModel.BIT2STR,
-                    i
+                    col.title, self.__combo_edited, RegisterModel.BIT2STR, i
                 )
             elif col.type == RegColType.TEXT:
                 column = EditableColumn(
@@ -319,14 +325,12 @@ class RegisterList(object):
                     self.__text_edited,
                     i,
                     col.mono,
-                    placeholder=col.placeholder
+                    placeholder=col.placeholder,
                 )
             else:
                 self.__icon_renderer = Gtk.CellRendererPixbuf()
                 column = Gtk.TreeViewColumn(
-                    "",
-                    self.__icon_renderer,
-                    stock_id=i
+                    "", self.__icon_renderer, stock_id=i
                 )
                 self.__icon_col = column
 
@@ -374,7 +378,7 @@ class RegisterList(object):
         """
         Updates the address associated with a RAM address
         """
-        (addr_str, len_str) = text.split(':')
+        (addr_str, len_str) = text.split(":")
         try:
             new_addr = int(addr_str, 16)
             new_length = int(len_str, 16)
@@ -388,7 +392,7 @@ class RegisterList(object):
                 "Deleting the register caused an internal "
                 "inconsistency.\nPlease exit without saving "
                 "to prevent any corruption to\n"
-                "your database and report this error."
+                "your database and report this error.",
             )
 
     def __reg_update_addr(self, reg, path, text):
@@ -408,7 +412,7 @@ class RegisterList(object):
                 "Deleting the register caused an internal "
                 "inconsistency.\nPlease exit without saving to "
                 "prevent any corruption to\n"
-                "your database and report this error."
+                "your database and report this error.",
             )
 
     def __reg_update_name(self, reg, path, text):
@@ -448,7 +452,7 @@ class RegisterList(object):
         text has been edited
         """
         for i in BAD_TOKENS:
-            text = text.replace(i, '_')
+            text = text.replace(i, "_")
         text = text.upper()
         if text != reg.token:
             reg.token = text
@@ -505,7 +509,7 @@ class RegisterList(object):
             LOGGER.warning(
                 'Address %0x was not changed: invalid value "%s"',
                 register.address,
-                new_text
+                new_text,
             )
 
     def __handle_ram_address(self, register, path, new_text):
@@ -517,8 +521,8 @@ class RegisterList(object):
         else:
             ErrorMsg(
                 "Address already used",
-                "The address %0x is already used by another register" %
-                int(new_text, 16)
+                "The address %0x is already used by another register"
+                % int(new_text, 16),
             )
 
     def __check_address_align(self, address, width):
@@ -533,13 +537,13 @@ class RegisterList(object):
         if not self.__check_address_align(address, register.width):
             ErrorMsg(
                 "Address does not match register width",
-                "The address %04x is not aligned to a %d bit boundary" %
-                (address, register.width)
+                "The address %04x is not aligned to a %d bit boundary"
+                % (address, register.width),
             )
         elif not self.__new_address_is_not_used(new_text, path):
             ErrorMsg(
                 "Address already used",
-                "%0x is already used by another register" % address
+                "%0x is already used by another register" % address,
             )
         else:
             self.__reg_update_addr(register, path, new_text)
@@ -564,15 +568,15 @@ class RegisterList(object):
         """
         Called when the combo box in the table has been altered
         """
-        model = cell.get_property('model')
+        model = cell.get_property("model")
         register = self.__model.get_register_at_path(path)
 
         new_width = model.get_value(node, 1)
         if not self.__check_address_align(register.address, new_width):
             ErrorMsg(
                 "Address does not match register width",
-                "The address %04x is not aligned to a %d bit boundary" %
-                (register.address, new_width)
+                "The address %04x is not aligned to a %d bit boundary"
+                % (register.address, new_width),
             )
         else:
             self.__model[path][col] = model.get_value(node, 0)
@@ -585,12 +589,14 @@ def build_define(text):
     Converts a register name into a define token
     """
     for i in BAD_TOKENS:
-        text = text.replace(i, '_')
+        text = text.replace(i, "_")
     if text in REMAP_NAME:
         text = "%s_REG" % text
 
     return "_".join(
-        [REPLACE.get(i.upper(), i.upper())
-         for i in text.split('_')
-         if REPLACE.get(i.upper(), i.upper()) != ""]
+        [
+            REPLACE.get(i.upper(), i.upper())
+            for i in text.split("_")
+            if REPLACE.get(i.upper(), i.upper()) != ""
+        ]
     )

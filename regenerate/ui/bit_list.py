@@ -50,7 +50,7 @@ class BitModel(Gtk.ListStore):
         Initialize the base class with the object types that we are going to
         be adding to the model.
         """
-        super(BitModel, self).__init__(str, str, str, str, str, str, int, object)
+        super().__init__(str, str, str, str, str, str, int, object)
 
     def append_field(self, field):
         """
@@ -138,7 +138,12 @@ class BitList(object):
                 renderer = Gtk.CellRendererPixbuf()
                 column = Gtk.TreeViewColumn("", renderer, stock_id=i)
             else:
-                column = EditableColumn(col[BIT_TITLE], text_edit, i, col[BIT_MONO])
+                column = EditableColumn(
+                    col[BIT_TITLE],
+                    text_edit,
+                    i,
+                    col[BIT_MONO]
+                )
             if i == BitCol.BIT:
                 self.__col = column
             if col[BIT_SORT] >= 0:

@@ -39,7 +39,7 @@ class RegInfo:
         Takes the command and text, calls the function associated with
         the command (do_<command>), and passes the text to be assigned.
         """
-        mname = 'do_' + command
+        mname = "do_" + command
         if hasattr(self, mname):
             method = getattr(self, mname)
             method(text)
@@ -129,7 +129,7 @@ class FieldInfo:
         Takes the command and text, calls the function associated with
         the command (do_<command>), and passes the text to be assigned.
         """
-        mname = 'do_' + command
+        mname = "do_" + command
         if hasattr(self, mname):
             method = getattr(self, mname)
             method(text)
@@ -156,22 +156,23 @@ class DenaliRDLParser:
 
             for line in input_file:
                 match = re.match(
-                    "addrmap\s+(.*)\s*{\s*default\s+regwidth\s*=\s*(\d+)\s*;",
-                    line)
+                    r"addrmap\s+(.*)\s*{\s*default\s+regwidth\s*=\s*(\d+)\s*;",
+                    line,
+                )
                 if match:
                     groups = match.groups()
                     self.dbase.descriptive_title = groups[0].strip()
                     self.dbase.data_bus_width = int(groups[1])
                     continue
 
-                match = re.match("\s*reg\s+{", line)
+                match = re.match(r"\s*reg\s+{", line)
                 if match:
                     reg = RegInfo()
                     reg_list.append(reg)
                     reg.address = addr
                     continue
 
-                match = re.match("\s*reg\s+(\S+)\s*{", line)
+                match = re.match(r"\s*reg\s+(\S+)\s*{", line)
                 if match:
                     groups = match.groups()
                     reg = RegInfo()
@@ -182,12 +183,12 @@ class DenaliRDLParser:
                     reg_list.append(reg)
                     continue
 
-                match = re.match("\s*field\s+{", line)
+                match = re.match(r"\s*field\s+{", line)
                 if match:
                     field = FieldInfo()
                     continue
 
-                match = re.match("\s*(\S+)\s*=\s*(.*);", line)
+                match = re.match(r"\s*(\S+)\s*=\s*(.*);", line)
                 if match:
                     groups = match.groups()
                     if field:
@@ -197,7 +198,8 @@ class DenaliRDLParser:
                     continue
 
                 match = re.match(
-                    "\s*}\s*([^[]+)\[(\d+):(\d+)\]\s*=\s*([\dx]+)\s*;", line)
+                    r"\s*}\s*([^[]+)\[(\d+):(\d+)\]\s*=\s*([\dx]+)\s*;", line
+                )
                 if match:
                     groups = match.groups()
                     field.name = groups[0].strip()
@@ -207,7 +209,7 @@ class DenaliRDLParser:
                     reg.field_list.append(field)
                     continue
 
-                match = re.match("\s*}\s*([^[]+)\[(\d+):(\d+)\]\s*;", line)
+                match = re.match(r"\s*}\s*([^[]+)\[(\d+):(\d+)\]\s*;", line)
                 if match:
                     groups = match.groups()
                     field.name = groups[0].strip()
@@ -218,7 +220,8 @@ class DenaliRDLParser:
                     continue
 
                 match = re.match(
-                    "\s*}\s*([_A-Za-z_0-9]+)\s*@([0-9A-Fa-fx]+)\s*;", line)
+                    r"\s*}\s*([_A-Za-z_0-9]+)\s*@([0-9A-Fa-fx]+)\s*;", line
+                )
                 if match:
                     groups = match.groups()
                     reg.reg_name = groups[0]
@@ -226,7 +229,7 @@ class DenaliRDLParser:
                     addr = reg.address + (reg.width / 8)
                     continue
 
-                match = re.match("\s*}\s*;", line)
+                match = re.match(r"\s*}\s*;", line)
                 if match:
                     continue
 
@@ -238,9 +241,9 @@ class DenaliRDLParser:
         loads the new data into the database.
         """
         lookup = {
-            'rw': BitType.READ_WRITE,
-            'w': BitType.WRITE_ONLY,
-            'r': BitType.READ_ONLY
+            "rw": BitType.READ_WRITE,
+            "w": BitType.WRITE_ONLY,
+            "r": BitType.READ_ONLY,
         }
 
         name_count = {}
@@ -284,8 +287,9 @@ class DenaliRDLParser:
 
                 field = BitField()
                 field.field_name = name
-                field.field_type = lookup.get(item.software_access,
-                                              BitField.READ_ONLY)
+                field.field_type = lookup.get(
+                    item.software_access, BitField.READ_ONLY
+                )
                 field.start_position = item.start - delta
                 field.stop_position = item.stop - delta
                 field.reset_value = item.reset
@@ -302,21 +306,22 @@ def parse_hex_value(value):
     in the SystemRDL spec use verilog style (32'h<value>, 5'b<value>).
     """
 
-    match = re.match("(0x)?[A-Fa-f0-9]+$", value)
+    match = re.match(r"(0x)?[A-Fa-f0-9]+$", value)
     if match:
         return int(value, 16)
 
-    match = re.match("\"?\d+\'([hbd])(\S+)\"?", value)
+    match = re.match(r'"?\d+\'([hbd])(\S+)"?', value)
     if match:
         groups = match.groups()
-        if groups[0] == 'h':
-            return int(groups[1].replace('_', ''), 16)
-        elif groups[0] == 'b':
-            return int(groups[1].replace('_', ''), 2)
-        elif groups[0] == 'd':
-            return int(groups[1].replace('_', ''), 10)
+        if groups[0] == "h":
+            val = int(groups[1].replace("_", ""), 16)
+        elif groups[0] == "b":
+            val = int(groups[1].replace("_", ""), 2)
+        elif groups[0] == "d":
+            val = int(groups[1].replace("_", ""), 10)
         else:
-            return int(groups[1].replace('_', ''))
+            val = int(groups[1].replace("_", ""))
+        return val
 
     try:
         return int(value, 16)
