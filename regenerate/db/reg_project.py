@@ -81,6 +81,12 @@ class RegProject(object):
         self.path = name
         reader.open(name)
 
+    def loads(self, data):
+        """Reads XML from a string"""
+
+        reader = regenerate.db.ProjectReader(self)
+        reader.loads(data)
+
     def set_new_order(self, new_order):
         """Alters the order of the items in the files in the list."""
         self._modified = True
@@ -226,9 +232,12 @@ class RegProject(object):
         Returns the register databases (XML files) referenced by the project
         file.
         """
-        base = os.path.dirname(self.path)
-        return [os.path.normpath(os.path.join(base, i))
-                for i in self._filelist]
+        if self.path is None:
+            return self._filelist
+        else:
+            base = os.path.dirname(self.path)
+            return [os.path.normpath(os.path.join(base, i))
+                    for i in self._filelist]
 
     def get_grouping_list(self):
         """

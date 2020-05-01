@@ -258,17 +258,16 @@ class RegisterRst(object):
         if dbase is None:
             self.reglist = set()
         else:
-            self.reglist = set([reg.register_name
-                                for reg in dbase.get_all_registers()])
+            self.reglist = dbase.get_all_registers()
 
         if decode:
             try:
-                if isinstance(decode, (unicode, str)):
-                    decode = int(decode, 16)
+                if decode is None:
+                    return None
                 elif isinstance(decode, int):
                     decode = decode
                 else:
-                    decode = None
+                    decode = int(decode, 16)
             except ValueError:
                 decode = None
         self._decode = decode
@@ -289,6 +288,17 @@ class RegisterRst(object):
         """
         ofile = StringIO()
 
+        # used = set()
+        # for reg in self.reglist:
+        #     if reg.register_name not in used:
+        #         used.add(reg.register_name)
+        #         if self._inst and self._group:
+        #             url = "/".join((self._group, self._inst,
+        #                             reg.token.lower()))
+        #             ofile.write(".. _`{0}`: {1}\n\n".format(
+        #                 reg.register_name, url))
+
+        # ofile.write("\n\n")
         self.str_title(ofile)
 
         self.str_overview(ofile)
@@ -300,6 +310,7 @@ class RegisterRst(object):
             self._write_defines(ofile, True, False)
 
         ofile.write(text)
+
         return ofile.getvalue()
 
     def refname(self, reg_name):
@@ -393,9 +404,9 @@ class RegisterRst(object):
                 if val != field.reset_value:
                     ofile.write("     - :resetvalue:`0x%x`\n" % val)
                 else:
-                    ofile.write("     - 0x%x\n" % val)
+                    ofile.write("     - ``0x%x``\n" % val)
             else:
-                ofile.write("     - 0x%x\n" % field.reset_value)
+                ofile.write("     - ``0x%x``\n" % field.reset_value)
 
             ofile.write("     - %s\n" % TYPE_TO_SIMPLE_TYPE[field.field_type])
             ofile.write("     - %s\n" % field.field_name)

@@ -49,6 +49,24 @@ class ProjectReader(object):
             parser.ParseFile(ofile)
         self._prj.modified = False
 
+    def loads(self, data):
+        """Loads the data from a text string"""
+        self.path = "<string>"
+
+        try:
+            from CStringIO import StringIO
+        except:
+            from io import BytesIO as StringIO
+
+        ofile = StringIO(data)
+
+        parser = xml.parsers.expat.ParserCreate()
+        parser.StartElementHandler = self.startElement
+        parser.EndElementHandler = self.endElement
+        parser.CharacterDataHandler = self.characters
+        parser.ParseFile(ofile)
+        self._prj.modified = False
+
     def startElement(self, tag, attrs):  # pylint: disable=invalid-name
         """
         Called every time an XML element begins

@@ -60,15 +60,16 @@ class BitModel(gtk.ListStore):
         Adds the field to the model, filling out the fields in the model.
         """
         node = self.append(
-            row=[None,
-                 bits(field),
-                 field.field_name,
-                 TYPE2STR[field.field_type][0],
-                 get_field_reset_data(field),
-                 self.RESET2STR[field.reset_type][0],
-                 field.lsb,
-                 field
-                 ]
+            row=[
+                None,
+                bits(field),
+                field.field_name,
+                TYPE2STR[field.field_type][0],
+                get_field_reset_data(field),
+                self.RESET2STR[field.reset_type][0],
+                field.lsb,
+                field
+            ]
         )
         return self.get_path(node)
 

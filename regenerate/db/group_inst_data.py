@@ -32,3 +32,14 @@ class GroupInstData(object):
         self.no_decode = no_decode
         self.array = array
         self.single_decode = single_decode
+
+    def __eq__(self, other):
+        return (self.set == other.set and
+                self.inst == other.inst and
+                self.offset == other.offset and
+                self.repeat == other.repeat and
+                self.hdl == other.hdl and
+                self.no_uvm == other.no_uvm and
+                self.no_decode == other.no_decode and
+                self.array == other.array and
+                self.single_decode == other.single_decode)

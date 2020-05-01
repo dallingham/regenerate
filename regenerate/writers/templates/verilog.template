@@ -17,10 +17,10 @@ module {{db.module_name}}
    #(
 {%   for p in parameters %}
 {%     if p[0] == p[1] %}
-    parameter bit {{p[2]}}{% if not loop.last %},{% endif %}
+    parameter bit {{p[2]}} = 0{% if not loop.last %},{% endif %}
 
 {%     else %}
-    parameter bit [{{p[0]}}:{{p[1]}}] {{p[2]}}{% if not loop.last %},{% endif %}
+    parameter bit [{{p[0]}}:{{p[1]}}] {{p[2]}} = 0{% if not loop.last %},{% endif %}
 
 {%     endif %}
 {%   endfor %}
@@ -363,17 +363,17 @@ module {{db.module_name}}
 
    {{always}} @(posedge {{clk_name}} or {{reset_edge}} {{reset_name}}) begin
       if ({{reset_op}}{{reset_name}}) begin
-         mux_rdata <= 64'h0;
+         mux_rdata <= '0;
       end else begin
         if ({{read_strobe_name}}) begin
            unique case ({{address_bus_name}})
 {% for addr, val in word_fields|dictsort %}
               {{db.address_bus_width - LOWER_BIT[db.data_bus_width]}}'h{{"%x"|format(rshift(addr|int, LOWER_BIT[db.data_bus_width]))}}: mux_rdata <= r{{"%02x"|format(addr|int)}};
 {% endfor %}
-              default: mux_rdata <= {{db.data_bus_width}}'h0;
+              default: mux_rdata <= '0;
            endcase
          end else begin
-            mux_rdata <= {{db.data_bus_width}}'h0;
+            mux_rdata <= '0;
          end
       end
    end

@@ -40,21 +40,21 @@ class GroupOptions (gtk.Dialog):
 
         changed = False
         response = self.run()
-        if response == gtk. RESPONSE_ACCEPT:
-            if self.val_array != self.instance.array:
-                self.instance.array = self.val_array
+        if response in (gtk.RESPONSE_ACCEPT, gtk.RESPONSE_OK):
+            if self.force_arrays.get_active() != self.instance.array:
+                self.instance.array = self.force_arrays.get_active()
                 changed = True
-            if self.val_no_decode != self.instance.no_decode:
-                self.instance.no_decode = self.val_no_decode
+            if self.decode_exclude.get_active() != self.instance.no_decode:
+                self.instance.no_decode = self.decode_exclude.get_active()
                 changed = True
-            if self.val_no_uvm != self.instance.no_uvm:
-                self.instance.no_uvm = self.val_no_uvm
+            if self.uvm_exclude.get_active() != self.instance.no_uvm:
+                self.instance.no_uvm = self.uvm_exclude.get_active()
                 changed = True
-            if self.val_single_decode != self.instance.single_decode:
-                self.instance.single_decode = self.val_single_decode
+            if self.single_decode.get_active() != self.instance.single_decode:
+                self.instance.single_decode = self.single_decode.get_active()
                 changed = True
         if changed:
-            modified()
+            modified(True)
         self.hide()
         self.destroy()
 
@@ -69,13 +69,13 @@ class GroupOptions (gtk.Dialog):
         table.set_row_spacings(6)
         table.set_col_spacings(6)
 
-        uvm_exclude = gtk.CheckButton(
+        self.uvm_exclude = gtk.CheckButton(
             "Exclude the instance from the UVM register package")
-        uvm_exclude.set_active(self.instance.no_uvm)
+        self.uvm_exclude.set_active(self.instance.no_uvm)
         self.val_no_uvm = self.instance.no_uvm
 
         table.attach(
-            uvm_exclude,
+            self.uvm_exclude,
             1,
             3,
             1,
@@ -84,14 +84,14 @@ class GroupOptions (gtk.Dialog):
             yoptions=gtk.FILL
         )
 
-        decode_exclude = gtk.CheckButton(
+        self.decode_exclude = gtk.CheckButton(
             "Exclude from register decode"
         )
-        decode_exclude.set_active(self.instance.no_decode)
+        self.decode_exclude.set_active(self.instance.no_decode)
         self.val_no_decode = self.instance.no_decode
 
         table.attach(
-            decode_exclude,
+            self.decode_exclude,
             1,
             3,
             2,
@@ -100,14 +100,14 @@ class GroupOptions (gtk.Dialog):
             yoptions=gtk.FILL
         )
 
-        force_arrays = gtk.CheckButton(
+        self.force_arrays = gtk.CheckButton(
             "Force array notation even for scalar instances"
         )
-        force_arrays.set_active(self.instance.array)
+        self.force_arrays.set_active(self.instance.array)
         self.val_array = self.instance.array
 
         table.attach(
-            force_arrays,
+            self.force_arrays,
             1,
             3,
             3,
@@ -116,14 +116,14 @@ class GroupOptions (gtk.Dialog):
             yoptions=gtk.FILL
         )
 
-        single_decode = gtk.CheckButton(
+        self.single_decode = gtk.CheckButton(
             "Use a single decode for arrays"
         )
-        single_decode.set_active(self.instance.single_decode)
+        self.single_decode.set_active(self.instance.single_decode)
         self.val_single_decode = self.instance.single_decode
 
         table.attach(
-            single_decode,
+            self.single_decode,
             1,
             3,
             4,
@@ -138,15 +138,3 @@ class GroupOptions (gtk.Dialog):
         area.add(box)
 
         self.show_all()
-
-    def uvm_toggle(self, obj):
-        self.val_no_uvm = obj.get_active()
-
-    def decode_toggle(self, obj):
-        self.val_no_decode = obj.get_active()
-
-    def single_toggle(self, obj):
-        self.val_single_decode = obj.get_active()
-
-    def arrays_toggle(self, obj):
-        self.val_array = obj.get_active()
