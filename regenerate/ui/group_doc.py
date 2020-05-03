@@ -22,8 +22,7 @@ changes to the buffer cause an update on the webkit display, after the
 text is converted from restructuredText to HTML.
 """
 
-import gtk
-import pango
+from gi.repository import Gtk, Gdk, Pango
 from regenerate.ui.spell import Spell
 from regenerate.ui.preview_editor import PreviewEditor, PREVIEW_ENABLED
 from regenerate.settings.paths import GLADE_GTXT
@@ -33,7 +32,7 @@ from regenerate.ui.utils import clean_format_if_needed
 class GroupDocEditor(object):
     def __init__(self, group_inst, callback, parent):
 
-        builder = gtk.Builder()
+        builder = Gtk.Builder()
         builder.add_from_file(GLADE_GTXT)
         self.callback = callback
         self.group_doc = builder.get_object('group_text')
@@ -42,7 +41,7 @@ class GroupDocEditor(object):
         self.text_buf = builder.get_object('overview1').get_buffer()
 
         builder.get_object('overview1').modify_font(
-            pango.FontDescription("monospace")
+            Pango.FontDescription("monospace")
         )
 
         preview = PreviewEditor(
@@ -79,7 +78,7 @@ class GroupDocEditor(object):
         self.group_doc.show()
 
     def on_key_press_event(self, obj, event):
-        if event.keyval == gtk.keysyms.F12:
+        if event.keyval == Gdk.KEY_F12:
             clean_format_if_needed(obj)
             return True
         return False

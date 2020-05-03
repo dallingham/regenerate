@@ -20,9 +20,9 @@
 Imports data from a Denali RDL file
 """
 
+import re
 from regenerate.db import Register, BitField
 from regenerate.db.enums import BitType
-import re
 
 
 class FieldInfo:
@@ -69,7 +69,7 @@ class FieldInfo:
         Takes the command and text, calls the function associated with
         the command (do_<command>), and passes the text to be assigned.
         """
-        mname = 'do_' + command
+        mname = "do_" + command
         if hasattr(self, mname):
             method = getattr(self, mname)
             method(text)
@@ -100,7 +100,7 @@ class RDLParser:
         i = 0
         for line in input_file:
             i += 1
-            match = re.match("\s*reg\s+{", line)
+            match = re.match(r"\s*reg\s+{", line)
             if match:
                 field_list = []
                 regwidth = default_reg
@@ -113,24 +113,24 @@ class RDLParser:
                 self.dbase.data_bus_width = default_reg
                 continue
 
-            match = re.match("\s*regwidth\s*=\s*(.*);", line)
+            match = re.match(r"\s*regwidth\s*=\s*(.*);", line)
             if match:
                 groups = match.groups()
                 regwidth = int(groups[0])
                 continue
 
-            match = re.match("\s*field\s+{", line)
+            match = re.match(r"\s*field\s+{", line)
             if match:
                 field = FieldInfo()
                 continue
 
-            match = re.match("\s*(\S+)\s*=\s*(.*);", line)
+            match = re.match(r"\s*(\S+)\s*=\s*(.*);", line)
             if match:
                 groups = match.groups()
                 field.dispatch(groups[0], groups[1])
                 continue
 
-            match = re.match("\s*}\s*([^[]+)\[(\d+):(\d+)\]\s*;", line)
+            match = re.match(r"\s*}\s*([^[]+)\[(\d+):(\d+)\]\s*;", line)
             if match:
                 groups = match.groups()
                 field.name = groups[0]
@@ -139,11 +139,12 @@ class RDLParser:
                 field_list.append(field)
                 continue
 
-            match = re.match("\s*}\s*([A-Za-z_0-9]+)\s*@(.+)\s*;", line)
+            match = re.match(r"\s*}\s*([A-Za-z_0-9]+)\s*@(.+)\s*;", line)
             if match:
                 groups = match.groups()
-                reg_list.append((groups[0], groups[1], regwidth,
-                                 field_list[:]))
+                reg_list.append(
+                    (groups[0], groups[1], regwidth, field_list[:])
+                )
                 continue
 
         input_file.close()
@@ -157,7 +158,7 @@ class RDLParser:
         lookup = {
             '"rw"': BitType.READ_WRITE,
             '"w"': BitType.WRITE_ONLY,
-            '"r"': BitType.READ_ONLY
+            '"r"': BitType.READ_ONLY,
         }
 
         for (reg_name, addr_txt, width, field_list) in reg_list:
@@ -190,19 +191,20 @@ def parse_hex_value(value):
     in the SystemRDL spec use verilog style (32'h<value>, 5'b<value>).
     """
 
-    match = re.match("(0x)?[A-Fa-f0-9]+", value)
+    match = re.match(r"(0x)?[A-Fa-f0-9]+", value)
     if match:
         return int(value, 16)
 
-    match = re.match("\d+'([hbd])(\S+)", value)
+    match = re.match(r"\d+'([hbd])(\S+)", value)
     if match:
         groups = match.groups()
-        if groups[0] == 'h':
-            return int(groups[1].replace('_', ''), 16)
-        elif groups[0] == 'b':
-            return int(groups[1].replace('_', ''), 2)
+        if groups[0] == "h":
+            val = int(groups[1].replace("_", ""), 16)
+        elif groups[0] == "b":
+            val = int(groups[1].replace("_", ""), 2)
         else:
-            return int(groups[1].replace('_', ''))
+            val = int(groups[1].replace("_", ""))
+        return val
 
     try:
         return int(value, 16)

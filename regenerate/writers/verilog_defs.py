@@ -22,7 +22,7 @@ DefsWriter - Writes out Verilog defines representing the register addresses
 
 from .writer_base import WriterBase, ExportInfo
 
-HEADER = ["`ifdef $M$_DEFS\n", "`else\n", "`define $M$_DEFS 1\n", "\n", ]
+HEADER = ["`ifdef $M$_DEFS\n", "`else\n", "`define $M$_DEFS 1\n", "\n"]
 
 TRAILER = ["" "`endif" ""]
 
@@ -32,8 +32,8 @@ class VerilogDefines(WriterBase):
     Writes out Verilog defines representing the register addresses
     """
 
-    def __init__(self, dbase):
-        super(VerilogDefines, self).__init__(dbase)
+    def __init__(self, project, dbase):
+        super().__init__(project, dbase)
         self._ofile = None
 
     def write_def(self, reg, prefix, offset):
@@ -48,8 +48,7 @@ class VerilogDefines(WriterBase):
             name = "ADDR%04x" % address
         name = "%s%s" % (prefix, name)
 
-        self._ofile.write("`define %-30s (32'h%x)\n" % (name,
-                                                        (address + offset)))
+        self._ofile.write("`define %-30s (32'h%x)\n" % (name, (address + offset)))
 
     def write(self, filename):
         """
@@ -59,6 +58,7 @@ class VerilogDefines(WriterBase):
             self._ofile = open(filename, "w")
         except IOError as msg:
             import gtk
+
             errd = gtk.MessageDialog(type=gtk.MESSAGE_ERROR)
             errd.set_markup("Could not create %s" % filename)
             errd.format_secondary_text(str(msg))
@@ -66,27 +66,36 @@ class VerilogDefines(WriterBase):
             return
         except:
             import gtk
+
             errd = gtk.MessageDialog(type=gtk.MESSAGE_ERROR)
             errd.set_markup("Could not create %s" % filename)
             errd.run()
             return
 
-        self._write_comment_header(self._ofile, 'site_verilog.inc',
-                                   comment_char='//')
+        self._write_comment_header(self._ofile, "site_verilog.inc", comment_char="//")
 
         self.write_header(self._ofile, HEADER)
 
         for reg_key in self._dbase.get_keys():
-            self.write_def(self._dbase.get_register(reg_key), self._prefix,
-                           self._offset)
-        self._ofile.write('\n')
+            self.write_def(
+                self._dbase.get_register(reg_key), self._prefix, self._offset
+            )
+        self._ofile.write("\n")
 
         for line in TRAILER:
-            self._ofile.write('%s\n' % line.replace('$M$', self._module))
+            self._ofile.write("%s\n" % line.replace("$M$", self._module))
         self._ofile.close()
 
 
 EXPORTERS = [
-    (WriterBase.TYPE_BLOCK, ExportInfo(VerilogDefines, ("RTL", "Verilog defines"),
-                                       "Verilog header files", ".vh", 'rtl-verilog-defines'))
+    (
+        WriterBase.TYPE_BLOCK,
+        ExportInfo(
+            VerilogDefines,
+            ("RTL", "Verilog defines"),
+            "Verilog header files",
+            ".vh",
+            "rtl-verilog-defines",
+        ),
+    )
 ]

@@ -38,23 +38,47 @@ class BitField(object):
         BitType.READ_ONLY_VALUE,
         BitType.READ_ONLY_LOAD,
         BitType.READ_ONLY_CLEAR_LOAD,
-        BitType.READ_ONLY_VALUE_1S
+        BitType.READ_ONLY_VALUE_1S,
     )
 
-    write_only_types = (
-        BitType.WRITE_ONLY,
+    write_only_types = (BitType.WRITE_ONLY,)
+
+    full_compare = (
+        "_output_signal",
+        "_input_signal",
+        "_id",
+        "lsb",
+        "msb",
+        "_field_name",
+        "use_output_enable",
+        "field_type",
+        "volatile",
+        "is_error_field",
+        "_reset_value",
+        "reset_input",
+        "reset_type",
+        "reset_parameter",
+        "description",
+        "control_signal",
+        "output_is_static",
+        "output_has_side_effect",
+        "values",
     )
 
-    full_compare = ("_output_signal", "_input_signal", "_id", "lsb", "msb",
-                    "_field_name", "use_output_enable", "field_type",
-                    "volatile", "is_error_field", "_reset_value",
-                    "reset_input", "reset_type", "reset_parameter",
-                    "description", "control_signal", "output_is_static",
-                    "output_has_side_effect", "values")
-
-    doc_compare = ("_id", "lsb", "msb", "_field_name", "field_type",
-                   "is_error_field", "_reset_value", "reset_input",
-                   "reset_type", "reset_parameter", "description", "values")
+    doc_compare = (
+        "_id",
+        "lsb",
+        "msb",
+        "_field_name",
+        "field_type",
+        "is_error_field",
+        "_reset_value",
+        "reset_input",
+        "reset_type",
+        "reset_parameter",
+        "description",
+        "values",
+    )
 
     def __init__(self, stop=0, start=0):
         """Initialize the bitfield."""
@@ -87,8 +111,7 @@ class BitField(object):
 
     def __eq__(self, other):
         """Compare for equality between two bitfieids."""
-        return all(self.__dict__[i] == other.__dict__[i]
-                   for i in self.full_compare)
+        return all(self.__dict__[i] == other.__dict__[i] for i in self.full_compare)
 
     def __ne__(self, other):
         """Compare for inequality between two bitfields."""

@@ -28,20 +28,24 @@ from regenerate.settings.paths import INSTALL_PATH
 
 
 ExportInfo = namedtuple(
-    "ExportInfo",
-    ["obj_class", "type", "description", "extension", "id"]
+    "ExportInfo", ["obj_class", "type", "description", "extension", "id"]
 )
 
-if os.name == 'nt':
+
+if os.name == "nt":
 
     def get_username():
         import getpass
+
         return getpass.getuser()
+
+
 else:
 
     def get_username():
         import pwd
-        return pwd.getpwnam(os.environ['USER'])[4].split(',')[0]
+
+        return pwd.getpwnam(os.environ["USER"])[4].split(",")[0]
 
 
 class WriterBase(object):  # IGNORE:R0921 - we know this is a abstract class
@@ -85,7 +89,7 @@ class WriterBase(object):  # IGNORE:R0921 - we know this is a abstract class
 
         self._prefix = ""
 
-    def _write_header_comment(self, ofile, default_path, comment_char='#'):
+    def _write_header_comment(self, ofile, default_path, comment_char="#"):
         """
         Looks for the header include file to allow users to define their own
         header. If not, default to the built in header.
@@ -122,13 +126,13 @@ class WriterBase(object):  # IGNORE:R0921 - we know this is a abstract class
         else:
             module = self._module
 
-        fixed = self._filename.upper().replace('.', '_')
-        line = line.replace('$M$', module)
-        line = line.replace('$Y$', year)
-        line = line.replace('$f$', self._filename)
-        line = line.replace('$F$', fixed)
-        line = line.replace('$D$', date)
-        line = line.replace('$U$', user)
+        fixed = self._filename.upper().replace(".", "_")
+        line = line.replace("$M$", module)
+        line = line.replace("$Y$", year)
+        line = line.replace("$f$", self._filename)
+        line = line.replace("$F$", fixed)
+        line = line.replace("$D$", date)
+        line = line.replace("$U$", user)
         ofile.write(line)
 
     def write(self, filename):

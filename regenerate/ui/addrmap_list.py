@@ -20,7 +20,7 @@
 Provides the Address List interface
 """
 
-import gtk
+from gi.repository import Gtk
 from regenerate.db import LOGGER
 from regenerate.db.addrmap import AddrMapData
 from regenerate.ui.columns import EditableColumn, ToggleColumn, ComboMapColumn
@@ -31,18 +31,13 @@ _BITS16 = "16 bits"
 _BITS32 = "32 bits"
 _BITS64 = "64 bits"
 
-SIZE2STR = (
-    (_BITS8, 1),
-    (_BITS16, 2),
-    (_BITS32, 4),
-    (_BITS64, 8)
-)
+SIZE2STR = ((_BITS8, 1), (_BITS16, 2), (_BITS32, 4), (_BITS64, 8))
 
 ACCESS2STR = (
     ("Full Access", 0),
     ("Read Only", 1),
     ("Write Only", 2),
-    ("No Access", 3)
+    ("No Access", 3),
 )
 
 INT2SIZE = dict((_i[1], _i[0]) for _i in SIZE2STR)
@@ -52,24 +47,21 @@ INT2ACCESS = dict((_i[1], _i[0]) for _i in ACCESS2STR)
 STR2ACCESS = dict((_i[0], _i[1]) for _i in ACCESS2STR)
 
 
-class AddrMapMdl(gtk.ListStore):
+class AddrMapMdl(Gtk.ListStore):
     """
     Provides the list of instances for the module. Instances consist of the
     symbolic ID name and the base address.
     """
 
     def __init__(self):
-        super(AddrMapMdl, self).__init__(
-            str, str, bool, bool, str, object)
+        super().__init__(str, str, bool, bool, str, object)
 
     def new_instance(self):
         """
         Adds a new instance to the model. It is not added to the database until
         either the change_id or change_base is called.
         """
-        new_obj = AddrMapData(
-            "new_map", 0, 8, False, False
-        )
+        new_obj = AddrMapData("new_map", 0, 8, False, False)
         node = self.append(None, row=get_row_data(new_obj))
         return self.get_path(node)
 
@@ -79,9 +71,7 @@ class AddrMapMdl(gtk.ListStore):
 
     def get_values(self):
         """Returns the list of instance tuples from the model."""
-        return [(val[0], int(val[1], 16))
-                for val in self
-                if val[0]]
+        return [(val[0], int(val[1], 16)) for val in self if val[0]]
 
 
 class AddrMapList(object):
@@ -116,10 +106,9 @@ class AddrMapList(object):
             for base in self._prj.get_address_maps():
                 if base.width not in INT2SIZE:
                     LOGGER.error(
-                        'Illegal width ({0}) for address map "{1}"'.format(
-                            base.width,
-                            base.name
-                        )
+                        'Illegal width (%d) for address map "%s"',
+                        base.width,
+                        base.name,
                     )
                     base.width = 4
                 self._model.append(row=get_row_data(base))
@@ -136,9 +125,7 @@ class AddrMapList(object):
         current_maps = set([i.name for i in self._prj.get_address_maps()])
         if new_text in current_maps:
             LOGGER.error(
-                '"{}" has already been used as an address map name'.format(
-                    new_text
-                )
+                '"%s" has already been used as an address map name', new_text
             )
         else:
             name = self._model[path][AddrCol.NAME]
@@ -153,7 +140,7 @@ class AddrMapList(object):
         try:
             value = int(new_text, 16)
         except ValueError:
-            LOGGER.error('Illegal address: "{0}"'.format(new_text))
+            LOGGER.error('Illegal address: "%s"', new_text)
             return
 
         if new_text:
@@ -170,7 +157,7 @@ class AddrMapList(object):
         the internal list.
         """
 
-        model = cell.get_property('model')
+        model = cell.get_property("model")
         self._model[path][col] = model.get_value(node, 0)
         width = model.get_value(node, 1)
         obj = self.get_obj(path)
@@ -205,51 +192,44 @@ class AddrMapList(object):
         """
         Builds the columns, adding them to the address map list.
         """
-        column = EditableColumn(
-            'Map Name',
-            self._name_changed,
-            AddrCol.NAME
-        )
+        column = EditableColumn("Map Name", self._name_changed, AddrCol.NAME)
         column.set_min_width(175)
         column.set_sort_column_id(AddrCol.NAME)
         self._obj.append_column(column)
         self._col = column
 
         column = EditableColumn(
-            'Address base',
+            "Address base",
             self._base_changed,
             AddrCol.BASE,
             True,
-            tooltip="Base address in hex format"
+            tooltip="Base address in hex format",
         )
         column.set_sort_column_id(AddrCol.BASE)
         column.set_min_width(150)
         self._obj.append_column(column)
 
         column = ComboMapColumn(
-            'Access Width',
-            self._width_changed,
-            SIZE2STR,
-            AddrCol.WIDTH
+            "Access Width", self._width_changed, SIZE2STR, AddrCol.WIDTH
         )
         column.set_min_width(150)
         self._obj.append_column(column)
 
         column = ToggleColumn(
-            'Fixed Address',
+            "Fixed Address",
             self._fixed_changed,
             AddrCol.FIXED,
-            tooltip="Indicates if the address base is relocatable or fixed"
+            tooltip="Indicates if the address base is relocatable or fixed",
         )
         column.set_max_width(250)
         self._obj.append_column(column)
 
         column = ToggleColumn(
-            'Exclude from UVM',
+            "Exclude from UVM",
             self._uvm_changed,
             AddrCol.UVM,
             tooltip="Indicates if the address should be excluded"
-            "from the UVM register package"
+            "from the UVM register package",
         )
         column.set_max_width(250)
         self._obj.append_column(column)
@@ -280,8 +260,7 @@ class AddrMapList(object):
 
         if len(model.get_path(node)) > 1:
             return None
-        else:
-            return model.get_value(node, AddrCol.NAME)
+        return model.get_value(node, AddrCol.NAME)
 
     def remove_selected(self):
         """
@@ -309,9 +288,7 @@ class AddrMapList(object):
         """
         name = self._create_new_map_name()
         obj = AddrMapData(name, 0, 8, False, False)
-        node = self._model.append(
-            row=get_row_data(obj)
-        )
+        node = self._model.append(row=get_row_data(obj))
 
         path = self._model.get_path(node)
         self._callback()
@@ -340,5 +317,5 @@ def get_row_data(map_obj):
         map_obj.fixed,
         map_obj.uvm,
         INT2SIZE[map_obj.width],
-        map_obj
+        map_obj,
     )

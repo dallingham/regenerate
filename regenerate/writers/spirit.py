@@ -57,7 +57,7 @@ ACCESS_MAP = {
     BitType.WRITE_1_TO_SET: "read-write",
     BitType.WRITE_ONLY: "write-only",
     BitType.READ_WRITE_PROTECT: "read-write",
-    BitType.READ_WRITE_PROTECT_1S:  "read-write",
+    BitType.READ_WRITE_PROTECT_1S: "read-write",
 }
 
 WRITE_MAP = {
@@ -68,7 +68,7 @@ WRITE_MAP = {
     BitType.WRITE_1_TO_CLEAR_LOAD: "oneToClear",
     BitType.WRITE_1_TO_CLEAR_LOAD_1S: "oneToClear",
     BitType.WRITE_1_TO_CLEAR_LOAD_1S_1: "oneToClear",
-    BitType.WRITE_1_TO_SET: "oneToSet"
+    BitType.WRITE_1_TO_SET: "oneToSet",
 }
 
 
@@ -79,7 +79,7 @@ class SpiritWriter(WriterBase):
     """
 
     def __init__(self, project, dbase):
-        super(SpiritWriter, self).__init__(project, dbase)
+        super().__init__(project, dbase)
 
     def write(self, filename):
         """
@@ -89,16 +89,12 @@ class SpiritWriter(WriterBase):
         """
 
         template_file = os.path.join(
-            os.path.dirname(__file__),
-            "templates",
-            "ipxact.templ"
+            os.path.dirname(__file__), "templates", "ipxact.templ"
         )
 
         with open(template_file) as ifile:
             template = Template(
-                ifile.read(),
-                trim_blocks=True,
-                lstrip_blocks=True
+                ifile.read(), trim_blocks=True, lstrip_blocks=True
             )
 
         with open(filename, "w") as of:
@@ -109,6 +105,7 @@ class SpiritWriter(WriterBase):
                     ACCESS_MAP=ACCESS_MAP,
                     scope="spirit",
                     refs=[
-                        'xmlns:spirit="http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009"']
+                        'xmlns:spirit="http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009"'
+                    ],
                 )
             )

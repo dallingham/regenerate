@@ -24,8 +24,7 @@ information.
 
 #  Standard imports
 
-import gtk
-import pango
+from gi.repository import Gtk, Gdk, Pango
 from regenerate.db import TYPE_TO_ID
 from regenerate.db import TYPE_TO_DESCR, TYPE_TO_ENABLE
 from regenerate.db.enums import ResetType
@@ -56,28 +55,28 @@ def modified(f):
 class BitFieldEditor(BaseWindow):
     """Bit field editing class."""
 
-    def __init__(self, dbase, register, bit_field, modified,
-                 top_builder, parent):
+    def __init__(
+        self, dbase, register, bit_field, modified, top_builder, parent
+    ):
 
-        super(BitFieldEditor, self).__init__()
+        super().__init__()
 
         self._db = dbase
         self.modified = modified
         self._register = register
         self._bit_field = bit_field
-        self._builder = gtk.Builder()
+        self._builder = Gtk.Builder()
         self._builder.add_from_file(GLADE_BIT)
         self._top_builder = top_builder
-        self._control_obj = self._builder.get_object('control')
+        self._control_obj = self._builder.get_object("control")
         self._register_obj = self._builder.get_object("register_name")
         self._output_obj = self._builder.get_object("output")
         self._output_enable_obj = self._builder.get_object("outen")
         self._input_obj = self._builder.get_object("input")
-        self._value_tree_obj = self._builder.get_object('values')
+        self._value_tree_obj = self._builder.get_object("values")
         self._col = None
 
-        pango_font = pango.FontDescription("monospace")
-
+        pango_font = Pango.FontDescription("monospace")
         self.setup_description(pango_font)
 
         (input_enb, control_enb) = TYPE_TO_ENABLE[bit_field.field_type]
@@ -87,14 +86,13 @@ class BitFieldEditor(BaseWindow):
         self.build_values_list()
 
         self._initialize_from_data(bit_field)
-        self._output_obj.set_sensitive(self._get_active('outen'))
+        self._output_obj.set_sensitive(self._get_active("outen"))
 
         self._check_data()
 
-        verilog_obj = self._builder.get_object('verilog_code')
+        verilog_obj = self._builder.get_object("verilog_code")
         highlight_text(
-            self.build_register_text(bit_field),
-            verilog_obj.get_buffer()
+            self.build_register_text(bit_field), verilog_obj.get_buffer()
         )
         verilog_obj.modify_font(pango_font)
 
@@ -120,8 +118,7 @@ class BitFieldEditor(BaseWindow):
         self._top_window.set_transient_for(parent)
         self._top_window.set_title(
             "Edit Bit Field - [{0:02x}] {1}".format(
-                register.address,
-                register.register_name
+                register.address, register.register_name
             )
         )
         self.configure(self._top_window)
@@ -134,10 +131,10 @@ class BitFieldEditor(BaseWindow):
             be_level = "" if self._db.byte_strobe_active_level else "~"
 
             name_map = {
-                'MODULE': self._db.module_name,
-                'BE_LEVEL': be_level,
-                'RESET_CONDITION': condition,
-                'RESET_EDGE': edge
+                "MODULE": self._db.module_name,
+                "BE_LEVEL": be_level,
+                "RESET_CONDITION": condition,
+                "RESET_EDGE": edge,
             }
             text = REG[TYPE_TO_ID[bit_field.field_type].lower()] % name_map
         except KeyError:
@@ -149,39 +146,39 @@ class BitFieldEditor(BaseWindow):
         Initializes the dialog's data fields from the object
         """
         self._register_obj.set_text(
-            "<b>{0}</b>".format(self._register.register_name)
+            "<b>{}</b>".format(self._register.register_name)
         )
         self._register_obj.set_use_markup(True)
 
         self._set_text("field_name", bit_field.full_field_name())
-        self._set_text('type', TYPE_TO_DESCR[bit_field.field_type])
+        self._set_text("type", TYPE_TO_DESCR[bit_field.field_type])
 
         if bit_field.reset_type == ResetType.NUMERIC:
-            self._set_text("reset_value", "{0:x}".format(
-                bit_field.reset_value)
+            self._set_text(
+                "reset_value", "{0:x}".format(bit_field.reset_value)
             )
         else:
             self._set_text("reset_value", bit_field.reset_parameter)
 
         (input_enb, control_enb) = TYPE_TO_ENABLE[bit_field.field_type]
         if input_enb and not bit_field.input_signal:
-            bit_field.input_signal = "{0}_DATA_IN".format(bit_field.field_name)
+            bit_field.input_signal = "{}_DATA_IN".format(bit_field.field_name)
 
         if control_enb and not bit_field.control_signal:
-            bit_field.control_signal = "{0}_LOAD".format(bit_field.field_name)
+            bit_field.control_signal = "{}_LOAD".format(bit_field.field_name)
 
         self._output_obj.set_text(bit_field.output_signal)
         self._input_obj.set_text(bit_field.input_signal)
 
-        self._set_active('volatile', bit_field.volatile)
-        self._set_active('random', bit_field.can_randomize)
-        self._set_active('error_bit', bit_field.is_error_field)
-        self._set_active('static', bit_field.output_is_static)
+        self._set_active("volatile", bit_field.volatile)
+        self._set_active("random", bit_field.can_randomize)
+        self._set_active("error_bit", bit_field.is_error_field)
+        self._set_active("static", bit_field.output_is_static)
         self._set_active("side_effect", bit_field.output_has_side_effect)
         self._set_active("outen", bit_field.use_output_enable)
 
         text_buffer = self._builder.get_object("descr").get_buffer()
-        text_buffer.connect('changed', self._description_changed)
+        text_buffer.connect("changed", self._description_changed)
         text_buffer.set_text(bit_field.description)
 
         self._control_obj.set_text(self._bit_field.control_signal)
@@ -242,29 +239,31 @@ class BitFieldEditor(BaseWindow):
             ErrorMsg(
                 "Maximum number of values reached",
                 "The width of the field only allows for {0} values".format(
-                    last),
-                parent=self.parent
+                    last
+                ),
+                parent=self.parent,
             )
             return
 
         largest = find_largest_value(self._value_model)
 
         last -= 1
-        if (last == -1 or self._value_model[last][0] or
-                self._value_model[last][1] or self._value_model[last][2]):
-            new_val = "" if largest >= max_values else "{0:x}".format(
-                largest + 1)
-            node = self._value_model.append(row=(new_val, '', ''))
+        if (
+            last == -1
+            or self._value_model[last][0]
+            or self._value_model[last][1]
+            or self._value_model[last][2]
+        ):
+            new_val = (
+                "" if largest >= max_values else "{0:x}".format(largest + 1)
+            )
+            node = self._value_model.append(row=(new_val, "", ""))
             path = self._value_model.get_path(node)
         else:
-            path = (last, )
+            path = (last,)
 
         focus_column = self._col
-        self._value_tree_obj.set_cursor(
-            path,
-            focus_column,
-            start_editing=True
-        )
+        self._value_tree_obj.set_cursor(path, focus_column, start_editing=True)
         self.modified()
 
     @modified
@@ -280,8 +279,9 @@ class BitFieldEditor(BaseWindow):
         self._bit_field.output_has_side_effect = obj.get_active()
 
     def _update_values(self):
-        self._bit_field.values = [(val[0], val[1], val[2])
-                                  for val in self._value_model]
+        self._bit_field.values = [
+            (val[0], val[1], val[2]) for val in self._value_model
+        ]
 
     @modified
     def on_output_enable_toggled(self, obj):
@@ -298,7 +298,7 @@ class BitFieldEditor(BaseWindow):
         Called on a double click event. If we detect a double click with
         the first button, we call the edit_register method.
         """
-        if event.keyval == gtk.keysyms.F12:
+        if event.keyval == Gdk.KEY_F12:
             if clean_format_if_needed(obj):
                 self.modified()
             return True
@@ -319,9 +319,7 @@ class BitFieldEditor(BaseWindow):
     @modified
     def _description_changed(self, obj):
         self._bit_field.description = obj.get_text(
-            obj.get_start_iter(),
-            obj.get_end_iter(),
-            False
+            obj.get_start_iter(), obj.get_end_iter(), False
         )
 
     def _check_data(self):
@@ -363,7 +361,7 @@ class BitFieldEditor(BaseWindow):
             self.build_column("Description", 2, 0, self._change_description)
         )
 
-        self._value_model = gtk.ListStore(str, str, str)
+        self._value_model = Gtk.ListStore(str, str, str)
         self._model_selection = self._value_tree_obj.get_selection()
         self._value_tree_obj.set_model(self._value_model)
 
@@ -373,10 +371,10 @@ class BitFieldEditor(BaseWindow):
             self._value_model.append(row=value)
 
     def build_column(self, title, text_col, size, callback):
-        render = gtk.CellRendererText()
-        render.set_property('editable', True)
-        render.connect('edited', callback)
-        column = gtk.TreeViewColumn(title, render, text=text_col)
+        render = Gtk.CellRendererText()
+        render.set_property("editable", True)
+        render.connect("edited", callback)
+        column = Gtk.TreeViewColumn(title, render, text=text_col)
         if size:
             column.set_min_width(size)
         return column
@@ -389,7 +387,7 @@ class BitFieldEditor(BaseWindow):
             ErrorMsg(
                 "Duplicate token",
                 'The token "{0}" has already been used'.format(new_text),
-                parent=self.parent
+                parent=self.parent,
             )
         else:
             node = self._value_model.get_iter(path)
@@ -416,7 +414,7 @@ class BitFieldEditor(BaseWindow):
                 "Look for strange punctuations, like dashs and "
                 "quotes that look valid, but are not actual "
                 "ascii characters.",
-                parent=self.parent
+                parent=self.parent,
             )
         self._value_model.set_value(node, 2, new_text)
         self._update_values()
@@ -446,13 +444,13 @@ class BitFieldEditor(BaseWindow):
 
 
 def set_error(obj, message):
-    obj.set_property('secondary-icon-stock', gtk.STOCK_DIALOG_ERROR)
-    obj.set_property('secondary-icon-tooltip-text', message)
+    obj.set_property("secondary-icon-stock", Gtk.STOCK_DIALOG_ERROR)
+    obj.set_property("secondary-icon-tooltip-text", message)
 
 
 def clear_error(obj):
-    obj.set_property('secondary-icon-stock', None)
-    obj.set_property('secondary-icon-tooltip-text', '')
+    obj.set_property("secondary-icon-stock", None)
+    obj.set_property("secondary-icon-tooltip-text", "")
 
 
 def find_largest_value(model):

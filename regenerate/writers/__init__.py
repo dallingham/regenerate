@@ -34,8 +34,7 @@ import platform
 import sys
 
 ExportInfo = namedtuple(
-    "ExportInfo",
-    ["obj_class", "type", "description", "extension", "id"]
+    "ExportInfo", ["obj_class", "type", "description", "extension", "id"]
 )
 
 
@@ -46,48 +45,32 @@ PRJ_EXPORTERS = []
 IMPORT_PATHS = ("regenerate.site_local", "regenerate.writers")
 
 MODULES = [
-    ("verilog",
-     ["Verilog", "Verilog2001", "SystemVerilog"]),
-    ("verilog_defs",
-     ["VerilogDefines"]),
-    ("verilog_param",
-     ["VerilogParameters"]),
-    ("reg_pkg",
-     ["VerilogConstRegPackage"]),
-    ("decoder",
-     ["AddressDecode"]),
-    ("ipxact",
-     ["IpXactWriter"]),
-    ("c_test",
-     ["CTest"]),
-    ("c_struct",
-     ["CStruct"]),
-    ("c_defines",
-     ["CDefines"]),
-    ("asm_equ",
-     ["AsmEqu"]),
-    ("odt_doc",
-     ["OdtDoc"]),
-    ("rst_doc",
-     ["RstDoc"]),
-    ("uvm_reg_block",
-     ["UVMRegBlockRegisters"]),
-    ("sdc",
-     ["Sdc"]),
-    ("xdc",
-     ["Xdc"]),
-    ("spyglass",
-     ["Spyglass"]),
+    ("verilog", ["Verilog", "Verilog2001", "SystemVerilog"]),
+    ("verilog_defs", ["VerilogDefines"]),
+    ("verilog_param", ["VerilogParameters"]),
+    ("reg_pkg", ["VerilogConstRegPackage"]),
+    ("decoder", ["AddressDecode"]),
+    ("ipxact", ["IpXactWriter"]),
+    ("c_test", ["CTest"]),
+    ("c_struct", ["CStruct"]),
+    ("c_defines", ["CDefines"]),
+    ("asm_equ", ["AsmEqu"]),
+    ("odt_doc", ["OdtDoc"]),
+    ("rst_doc", ["RstDoc"]),
+    ("uvm_reg_block", ["UVMRegBlockRegisters"]),
+    ("sdc", ["Sdc"]),
+    ("xdc", ["Xdc"]),
+    ("spyglass", ["Spyglass"]),
 ]
 
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #
 #  Dynamically load writes for Linux. To get the packaging tools to work,
 #  we must use the stanard import for windows
 #
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
-if platform.system() == 'windows':
+if platform.system() == "windows":
 
     from .verilog import Verilog, Verilog2001, SystemVerilog
     from .verilog_defs import VerilogDefines

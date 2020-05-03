@@ -15,8 +15,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-import gtk
-import pango
+from gi.repository import Pango, Gdk
 from regenerate.ui.spell import Spell
 from regenerate.ui.utils import clean_format_if_needed
 from regenerate.ui.preview_editor import PreviewEditor
@@ -33,7 +32,7 @@ class RegisterDescription(object):
     """
 
     def __init__(self, text_view, web_view, change_callback):
-        pango_font = pango.FontDescription("monospace")
+        pango_font = Pango.FontDescription("monospace")
 
         self.text_view = text_view
         self.buf = self.text_view.get_buffer()
@@ -41,7 +40,7 @@ class RegisterDescription(object):
         self.callback = change_callback
 
         self.text_view.modify_font(pango_font)
-        self.buf.connect('changed', self.changed)
+        self.buf.connect("changed", self.changed)
 
         Spell(self.text_view)
         self.preview = PreviewEditor(self.buf, web_view)
@@ -72,16 +71,14 @@ class RegisterDescription(object):
         """A change to the text occurred"""
         if self.reg:
             new_text = self.buf.get_text(
-                self.buf.get_start_iter(),
-                self.buf.get_end_iter(),
-                False
+                self.buf.get_start_iter(), self.buf.get_end_iter(), False
             )
             if new_text != self.reg.description:
                 self.reg.description = new_text
                 self.callback(self.reg)
 
     def on_key_press_event(self, obj, event):
-        if event.keyval == gtk.keysyms.F12:
+        if event.keyval == Gdk.KEY_F12:
             if clean_format_if_needed(obj):
                 self.callback(self.reg)
             return True

@@ -20,7 +20,7 @@
 Sdc - Writes out synthesis constraints
 """
 
-from .writer_base import WriterBase, ExportInfo
+from regenerate.writers.writer_base import WriterBase, ExportInfo
 
 
 class Spyglass(WriterBase):
@@ -29,7 +29,7 @@ class Spyglass(WriterBase):
     """
 
     def __init__(self, project, dblist):
-        super(Spyglass, self).__init__(project, None)
+        super().__init__(project, None)
         self._offset = 0
         self.dblist = dblist
         self._ofile = None
@@ -37,10 +37,14 @@ class Spyglass(WriterBase):
     def find_static_outputs(self):
         static_signals = set()
 
-        for reg in [self._dbase.get_register(reg_key)
-                    for reg_key in self._dbase.get_keys()]:
-            for field in [reg.get_bit_field(field_key)
-                          for field_key in reg.get_bit_field_keys()]:
+        for reg in [
+            self._dbase.get_register(reg_key)
+            for reg_key in self._dbase.get_keys()
+        ]:
+            for field in [
+                reg.get_bit_field(field_key)
+                for field_key in reg.get_bit_field_keys()
+            ]:
                 if field.use_output_enable and field.output_is_static:
                     if field.output_signal:
                         static_signals.add(field.output_signal)
@@ -59,7 +63,7 @@ class Spyglass(WriterBase):
 
     def _build_name(self, field):
 
-        base = field.output_signal.split('*')
+        base = field.output_signal.split("*")
         if len(base) > 1:
             base = "%s%d%s" % (base[0], field.start_position, base[1])
         else:
@@ -70,8 +74,11 @@ class Spyglass(WriterBase):
         fields = []
         for reg in dbase.get_all_registers():
             for field in reg.get_bit_fields():
-                if (field.use_output_enable and field.output_signal and
-                        field.output_is_static):
+                if (
+                    field.use_output_enable
+                    and field.output_signal
+                    and field.output_is_static
+                ):
                     fields.append(field)
         return fields
 
@@ -85,17 +92,18 @@ class Spyglass(WriterBase):
                     of.write("\n\ncurrent_design %s\n\n" % dbase.module_name)
                     for field in ports:
                         signal_name = self._build_name(field)
-                        of.write(
-                            "quasi_static -name %s\n" % signal_name)
+                        of.write("quasi_static -name %s\n" % signal_name)
 
 
 EXPORTERS = [
-    (WriterBase.TYPE_PROJECT,
-     ExportInfo(
-         Spyglass,
-         ("Spyglass CDC Checking", "SGDC Constraints"),
-         "SGDC files",
-         ".sgdc",
-         'spy-constraints')
-     )
+    (
+        WriterBase.TYPE_PROJECT,
+        ExportInfo(
+            Spyglass,
+            ("Spyglass CDC Checking", "SGDC Constraints"),
+            "SGDC files",
+            ".sgdc",
+            "spy-constraints",
+        ),
+    )
 ]

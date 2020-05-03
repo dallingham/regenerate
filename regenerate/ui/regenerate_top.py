@@ -25,17 +25,28 @@ regenerate
 
 """
 
-import gtk
-import pango
+import xml
 import os
 import re
 import sys
-import xml
+from gi.repository import Gtk, GdkPixbuf, Gdk, Pango
 from regenerate import PROGRAM_VERSION, PROGRAM_NAME
-from regenerate.db import RegWriter, RegisterDb, Register, GroupInstData, GroupData
-from regenerate.db import BitField, RegProject, LOGGER, TYPES
+from regenerate.db import (
+    RegWriter,
+    RegisterDb,
+    Register,
+    GroupInstData,
+    GroupData,
+    BitField,
+    RegProject,
+    LOGGER,
+    TYPES,
+)
 from regenerate.db.enums import ResetType, ShareType, BitType
-import regenerate.extras.regutils
+from regenerate.extras.regutils import (
+    calculate_next_address,
+    duplicate_register,
+)
 from regenerate.extras.remap import REMAP_NAME
 from regenerate.importers import IMPORTERS
 from regenerate.settings import ini
@@ -64,13 +75,13 @@ TYPE_ENB = {}
 for data_type in TYPES:
     TYPE_ENB[data_type.type] = (data_type.input, data_type.control)
 
-DEF_EXT = '.rprj'
+DEF_EXT = ".rprj"
 DEF_MIME = "*" + DEF_EXT
 
 # Regular expressions to check the validity of entered names. This should
 # probably be configurable, but has not been implemented yet.
 
-VALID_BITS = re.compile("^\s*[\(\[]?(\d+)(\s*[-:]\s*(\d+))?[\)\]]?\s*$")
+VALID_BITS = re.compile(r"""^\s*[\(\[]?(\d+)(\s*[-:]\s*(\d+))?[\)\]]?\s*$""")
 
 
 class DbaseStatus(object):
@@ -80,8 +91,16 @@ class DbaseStatus(object):
     rows in the models.
     """
 
-    def __init__(self, database, filename, name, reg_model, modelsort,
-                 modelfilter, bit_model):
+    def __init__(
+        self,
+        database,
+        filename,
+        name,
+        reg_model,
+        modelsort,
+        modelfilter,
+        bit_model,
+    ):
         self.db = database
         self.path = filename
         self.reg_model = reg_model
@@ -100,7 +119,7 @@ class MainWindow(BaseWindow):
 
     def __init__(self):
 
-        super(MainWindow, self).__init__()
+        super().__init__()
 
         self.skip_changes = False
         self.filename = None
@@ -114,9 +133,9 @@ class MainWindow(BaseWindow):
         self.instance_model = None
         self.prj = None
 
-        self.use_preview = bool(int(ini.get('user', 'use_preview', 0)))
+        self.use_preview = bool(int(ini.get("user", "use_preview", 0)))
 
-        self.builder = gtk.Builder()
+        self.builder = Gtk.Builder()
         self.builder.add_from_file(GLADE_TOP)
 
         self.setup_main_window()
@@ -127,42 +146,38 @@ class MainWindow(BaseWindow):
         self.top_notebook = self.find_obj("notebook1")
         self.module_notebook = self.find_obj("module_notebook")
 
-        self.module_tabs = ModuleTabs(
-            self.builder,
-            self.set_modified
-        )
+        self.module_tabs = ModuleTabs(self.builder, self.set_modified)
 
         self.reglist_obj = RegisterList(
             self.find_obj("register_list"),
             self.selected_reg_changed,
             self.set_modified,
             self.update_register_addr,
-            self.set_register_warn_flags
+            self.set_register_warn_flags,
         )
 
         self.reg_description = RegisterDescription(
-            self.find_obj('register_description'),
-            self.find_obj('scroll_reg_webkit'),
-            self.register_description_callback
+            self.find_obj("register_description"),
+            self.find_obj("scroll_reg_webkit"),
+            self.register_description_callback,
         )
 
         self.bitfield_obj = BitList(
             self.find_obj("bitfield_list"),
             self.bit_combo_edit,
             self.bit_text_edit,
-            self.bit_changed
+            self.bit_changed,
         )
 
         self.setup_project()
         self.setup_recent_menu()
 
         self.instance_obj = InstanceList(
-            self.find_obj('instances'),
-            self.set_project_modified
+            self.find_obj("instances"), self.set_project_modified
         )
 
         self.restore_position_and_size()
-        self.find_obj('preview').set_active(self.use_preview)
+        self.find_obj("preview").set_active(self.use_preview)
         if self.use_preview:
             self.enable_preview()
         self.top_window.show()
@@ -186,18 +201,13 @@ class MainWindow(BaseWindow):
         """Setup the recent files management system"""
 
         try:
-            self.recent_manager = gtk.RecentManager.get_default()
+            self.recent_manager = Gtk.RecentManager.get_default()
         except AttributeError:
-            self.recent_manager = gtk.recent_manager_get_default()
+            self.recent_manager = Gtk.recent_manager_get_default()
 
-        self.find_obj('file_menu').insert(
-            self.create_recent_menu_item(),
-            2
-        )
+        self.find_obj("file_menu").insert(self.create_recent_menu_item(), 2)
 
-        self.find_obj("open_btn").set_menu(
-            self.create_recent_menu()
-        )
+        self.find_obj("open_btn").set_menu(self.create_recent_menu())
 
     def find_obj(self, name):
         return self.builder.get_object(name)
@@ -227,35 +237,24 @@ class MainWindow(BaseWindow):
         (mdl, node) = self.instance_obj.get_selected_instance()
         inst = mdl.get_value(node, InstCol.OBJ)
         if isinstance(inst, GroupInstData):
-            GroupOptions(
-                inst,
-                self.project_modified,
-                self.top_window
-            )
+            GroupOptions(inst, self.project_modified, self.top_window)
         else:
-            GroupDocEditor(
-                inst,
-                self.project_modified,
-                self.top_window
-            )
+            GroupDocEditor(inst, self.project_modified, self.top_window)
 
     def setup_project(self):
         self.project_tabs = ProjectTabs(
-            self.builder,
-            self.set_project_modified
+            self.builder, self.set_project_modified
         )
 
         self.prj_obj = ProjectList(
-            self.find_obj("project_list"),
-            self.prj_selection_changed
+            self.find_obj("project_list"), self.prj_selection_changed
         )
         self.prj_model = ProjectModel()
         self.prj_obj.set_model(self.prj_model)
 
-        self.addr_map_obj = self.find_obj('address_tree')
+        self.addr_map_obj = self.find_obj("address_tree")
         self.addr_map_list = AddrMapList(
-            self.addr_map_obj,
-            self.set_project_modified
+            self.addr_map_obj, self.set_project_modified
         )
 
     def set_project_modified(self):
@@ -279,16 +278,16 @@ class MainWindow(BaseWindow):
 
         current = self.prj.get_address_map_groups(map_name)
 
-        new_list = [(grp, grp.name in current)
-                    for grp in self.prj.get_grouping_list()]
+        new_list = [
+            (grp, grp.name in current) for grp in self.prj.get_grouping_list()
+        ]
 
         dialog = AddrMapEdit(
             map_name,
             new_list,
-            self.builder,
             self.prj,
             self.top_window,
-            self.set_project_modified
+            self.set_project_modified,
         )
 
         new_list = dialog.get_list()
@@ -316,16 +315,16 @@ class MainWindow(BaseWindow):
     def restore_position_and_size(self):
         "Restore the desired position and size from the user's config file"
 
-        height = int(ini.get('user', 'height', 0))
-        width = int(ini.get('user', 'width', 0))
-        vpos = int(ini.get('user', 'vpos', 0))
-        hpos = int(ini.get('user', 'hpos', 0))
+        height = int(ini.get("user", "height", 0))
+        width = int(ini.get("user", "width", 0))
+        vpos = int(ini.get("user", "vpos", 0))
+        hpos = int(ini.get("user", "hpos", 0))
         if height and width:
             self.top_window.resize(width, height)
         if vpos:
-            self.find_obj('vpaned').set_position(vpos)
+            self.find_obj("vpaned").set_position(vpos)
         if hpos:
-            self.find_obj('hpaned').set_position(hpos)
+            self.find_obj("hpaned").set_position(hpos)
 
     def enable_registers(self, value):
         """
@@ -344,7 +343,7 @@ class MainWindow(BaseWindow):
         self.reg_notebook(value)
 
     def build_group(self, group_name, action_names):
-        group = gtk.ActionGroup(group_name)
+        group = Gtk.ActionGroup(group_name)
         for name in action_names:
             group.add_action(self.find_obj(name))
         group.set_sensitive(False)
@@ -365,16 +364,22 @@ class MainWindow(BaseWindow):
         """
 
         prj_acn = [
-            "save_project_action", "new_set_action", "add_set_action",
-            "build_action", "reg_grouping_action", "project_prop_action"
+            "save_project_action",
+            "new_set_action",
+            "add_set_action",
+            "build_action",
+            "reg_grouping_action",
+            "project_prop_action",
         ]
         reg_acn = [
-            'remove_register_action', 'summary_action',
-            'duplicate_register_action', 'add_bit_action'
+            "remove_register_action",
+            "summary_action",
+            "duplicate_register_action",
+            "add_bit_action",
         ]
-        db_acn = ['add_register_action', 'remove_set_action', 'import_action']
-        fld_acn = ['remove_bit_action', 'edit_bit_action']
-        file_acn = ['revert_action']
+        db_acn = ["add_register_action", "remove_set_action", "import_action"]
+        fld_acn = ["remove_bit_action", "edit_bit_action"]
+        file_acn = ["revert_action"]
 
         if PREVIEW_ENABLED:
             prj_acn.append("preview_action")
@@ -394,7 +399,7 @@ class MainWindow(BaseWindow):
         and the path tells us the row. So [path][col] is the index into the
         table.
         """
-        model = cell.get_property('model')
+        model = cell.get_property("model")
         self.bit_model[path][col] = model.get_value(node, 0)
         field = self.bit_model.get_bitfield_at_path(path)
         if col == BitCol.TYPE:
@@ -409,17 +414,20 @@ class MainWindow(BaseWindow):
 
         if not field.output_signal:
             field.output_signal = "%s_%s_OUT" % (
-                register.token, field.field_name
+                register.token,
+                field.field_name,
             )
 
         if TYPE_ENB[field.field_type][0] and not field.input_signal:
             field.input_signal = "%s_%s_IN" % (
-                register.token, field.field_name
+                register.token,
+                field.field_name,
             )
 
         if TYPE_ENB[field.field_type][1] and not field.control_signal:
             field.control_signal = "%s_%s_LD" % (
-                register.token, field.field_name
+                register.token,
+                field.field_name,
             )
 
     def update_reset_field(self, field, model, path, node):
@@ -428,11 +436,11 @@ class MainWindow(BaseWindow):
             val = reset_value(field)
             self.bit_model[path][BitCol.RESET] = val
         elif field.reset_type == ResetType.INPUT:
-            if not re.match("^[A-Za-z]\w*$", field.reset_input):
+            if not re.match(r"^[A-Za-z]\w*$", field.reset_input):
                 field.reset_input = "%s_RST" % field.field_name
             self.bit_model[path][BitCol.RESET] = field.reset_input
         else:
-            if not re.match("^[A-Za-z]\w*$", field.reset_parameter):
+            if not re.match(r"^[A-Za-z]\w*$", field.reset_parameter):
                 field.reset_parameter = "pRST_%s" % field.field_name
             self.bit_model[path][BitCol.RESET] = field.reset_parameter
 
@@ -477,13 +485,14 @@ class MainWindow(BaseWindow):
         display) and alter the corresponding field.
         """
         if new_text != field.field_name:
-            new_text = new_text.upper().replace(' ', '_')
-            new_text = new_text.replace('/', '_').replace('-', '_')
+            new_text = new_text.upper().replace(" ", "_")
+            new_text = new_text.replace("/", "_").replace("-", "_")
 
             register = self.reglist_obj.get_selected_register()
 
-            current_names = [f.field_name for f in register.get_bit_fields()
-                             if f != field]
+            current_names = [
+                f.field_name for f in register.get_bit_fields() if f != field
+            ]
 
             if new_text not in current_names:
                 self.bit_model[path][BitCol.NAME] = new_text
@@ -491,7 +500,8 @@ class MainWindow(BaseWindow):
                 self.set_modified()
             else:
                 LOGGER.error(
-                    '"%s" has already been used as a field name' % new_text)
+                    '"%s" has already been used as a field name', new_text
+                )
 
     def bit_update_reset(self, field, path, new_text):
         """
@@ -505,18 +515,18 @@ class MainWindow(BaseWindow):
                 self.bit_model[path][BitCol.RESET] = reset_value(field)
                 self.set_modified()
             except ValueError:
-                LOGGER.error('Illegal reset value: "%s"' % new_text)
+                LOGGER.error('Illegal reset value: "%s"', new_text)
                 return
         elif field.reset_type == ResetType.INPUT:
-            if not re.match("^[A-Za-z]\w*$", new_text):
-                LOGGER.error('"%s" is not a valid input name' % new_text)
+            if not re.match(r"""^[A-Za-z]\w*$""", new_text):
+                LOGGER.error('"%s" is not a valid input name', new_text)
                 new_text = "%s_RST" % field.field_name
             field.reset_input = new_text
             self.bit_model[path][BitCol.RESET] = field.reset_input
             self.set_modified()
         else:
-            if not re.match("^[A-Za-z]\w*$", new_text):
-                LOGGER.error('"%s" is not a valid parameter name' % new_text)
+            if not re.match(r"""^[A-Za-z]\w*$""", new_text):
+                LOGGER.error('"%s" is not a valid parameter name', new_text)
                 new_text = "pRST_%s" % field.field_name
             field.reset_parameter = new_text
             self.bit_model[path][BitCol.RESET] = field.reset_parameter
@@ -538,14 +548,15 @@ class MainWindow(BaseWindow):
         self.set_register_warn_flags(register)
 
     def on_filter_icon_press(self, obj, icon, event):
-        if icon == gtk.ENTRY_ICON_SECONDARY:
-            if event.type == gtk.gdk.BUTTON_PRESS:
+        if icon == Gtk.ENTRY_ICON_SECONDARY:
+            if event.type == Gdk.BUTTON_PRESS:
                 obj.set_text("")
-        elif icon == gtk.ENTRY_ICON_PRIMARY:
-            if event.type == gtk.gdk.BUTTON_PRESS:
+        elif icon == Gtk.ENTRY_ICON_PRIMARY:
+            if event.type == Gdk.BUTTON_PRESS:
                 menu = self.find_obj("filter_menu")
-                menu.popup(None, None, None, 1, 0,
-                           gtk.get_current_event_time())
+                menu.popup(
+                    None, None, None, 1, 0, Gtk.get_current_event_time()
+                )
 
     def set_search(self, values, obj):
         if obj.get_active():
@@ -553,8 +564,7 @@ class MainWindow(BaseWindow):
 
     def on_address_token_name_toggled(self, obj):
         self.set_search(
-            (FilterField.TOKEN, FilterField.NAME, FilterField.TOKEN),
-            obj
+            (FilterField.TOKEN, FilterField.NAME, FilterField.TOKEN), obj
         )
 
     def on_token_name_toggled(self, obj):
@@ -593,6 +603,7 @@ class MainWindow(BaseWindow):
 
         if reg:
             from regenerate.ui.summary_window import SummaryWindow
+
             SummaryWindow(self.builder, reg, self.active.name, self.prj)
 
     def on_build_action_activate(self, obj):
@@ -644,12 +655,12 @@ class MainWindow(BaseWindow):
         menu is extracted from the glade description, the submenu is built,
         and added to the export menu.
         """
-        menu = self.find_obj('import_menu')
-        submenu = gtk.Menu()
+        menu = self.find_obj("import_menu")
+        submenu = Gtk.Menu()
         menu.set_submenu(submenu)
         for item in IMPORTERS:
-            menu_item = gtk.MenuItem(label=item[1])
-            menu_item.connect('activate', self.import_data, item)
+            menu_item = Gtk.MenuItem(label=item[1])
+            menu_item.connect("activate", self.import_data, item)
             menu_item.show()
             submenu.append(menu_item)
         submenu.show()
@@ -660,7 +671,7 @@ class MainWindow(BaseWindow):
             text = "%d" % self.dbase.total_bits()
         else:
             text = ""
-        self.find_obj('reg_count').set_text(text)
+        self.find_obj("reg_count").set_text(text)
 
     def on_notebook_switch_page(self, obj, page, page_num):
         if page_num == 1:
@@ -697,11 +708,13 @@ class MainWindow(BaseWindow):
                 self.reglist_obj.set_model(self.modelsort)
                 self.bit_model = self.active.bit_field_list
                 self.bitfield_obj.set_model(self.bit_model)
-                text = "<b>%s - %s</b>" % (self.dbase.module_name, self.dbase.
-                                           descriptive_title)
+                text = "<b>%s - %s</b>" % (
+                    self.dbase.module_name,
+                    self.dbase.descriptive_title,
+                )
                 self.selected_dbase.set_text(text)
                 self.selected_dbase.set_use_markup(True)
-                self.selected_dbase.set_ellipsize(pango.ELLIPSIZE_END)
+                self.selected_dbase.set_ellipsize(Pango.EllipsizeMode.END)
                 if self.active.reg_select:
                     for row in self.active.reg_select:
                         self.reglist_obj.select_row(row)
@@ -736,11 +749,11 @@ class MainWindow(BaseWindow):
                 field = reg.get_bit_field(key)
                 self.bit_model.append_field(field)
 
-            self.find_obj('no_rtl').set_active(reg.do_not_generate_code)
-            self.find_obj('no_uvm').set_active(reg.do_not_use_uvm)
-            self.find_obj('no_test').set_active(reg.do_not_test)
-            self.find_obj('no_cover').set_active(reg.do_not_cover)
-            self.find_obj('hide_doc').set_active(reg.hide)
+            self.find_obj("no_rtl").set_active(reg.do_not_generate_code)
+            self.find_obj("no_uvm").set_active(reg.do_not_use_uvm)
+            self.find_obj("no_test").set_active(reg.do_not_test)
+            self.find_obj("no_cover").set_active(reg.do_not_cover)
+            self.find_obj("hide_doc").set_active(reg.hide)
 
             self.reg_notebook.set_sensitive(True)
             self.reg_selected.set_sensitive(True)
@@ -756,11 +769,11 @@ class MainWindow(BaseWindow):
 
     def set_share(self, reg):
         if reg.share == ShareType.NONE:
-            self.find_obj('no_sharing').set_active(True)
+            self.find_obj("no_sharing").set_active(True)
         elif reg.share == ShareType.READ:
-            self.find_obj('read_access').set_active(True)
+            self.find_obj("read_access").set_active(True)
         else:
-            self.find_obj('write_access').set_active(True)
+            self.find_obj("write_access").set_active(True)
 
     def set_modified(self):
         """
@@ -768,8 +781,7 @@ class MainWindow(BaseWindow):
         value is set, and the status bar is updated with an appropriate
         message.
         """
-        if (self.active and not self.active.modified and
-                not self.skip_changes):
+        if self.active and not self.active.modified and not self.skip_changes:
             self.active.modified = True
             self.prj_model.set_markup(self.active.node, True)
             self.file_modified.set_sensitive(True)
@@ -804,8 +816,8 @@ class MainWindow(BaseWindow):
             if self.duplicate_address(register.address):
                 self.set_share(register)
                 LOGGER.error(
-                    'Register cannot be set to non-sharing '
-                    'if it shares an address with another'
+                    "Register cannot be set to non-sharing "
+                    "if it shares an address with another"
                 )
             else:
                 register.share = ShareType.NONE
@@ -819,13 +831,13 @@ class MainWindow(BaseWindow):
             other = self.find_shared_address(register)
             if other and other.share != ShareType.WRITE:
                 self.set_share(register)
-                LOGGER.error('The shared register is not of Write Access type')
+                LOGGER.error("The shared register is not of Write Access type")
             elif register.is_completely_read_only():
                 register.share = ShareType.READ
                 self.set_modified()
             else:
                 self.set_share(register)
-                LOGGER.error('All bits in the register must be read only')
+                LOGGER.error("All bits in the register must be read only")
             self.bitfield_obj.set_mode(register.share)
 
     def on_write_access_toggled(self, obj):
@@ -835,13 +847,13 @@ class MainWindow(BaseWindow):
             other = self.find_shared_address(register)
             if other and other.share != ShareType.READ:
                 self.set_share(register)
-                LOGGER.error('The shared register is not of Read Access type')
+                LOGGER.error("The shared register is not of Read Access type")
             elif register.is_completely_write_only():
                 register.share = ShareType.WRITE
                 self.set_modified()
             else:
                 self.set_share(register)
-                LOGGER.error('All bits in the register must be write only')
+                LOGGER.error("All bits in the register must be write only")
             self.bitfield_obj.set_mode(register.share)
 
     def on_add_bit_action_activate(self, obj):
@@ -877,7 +889,7 @@ class MainWindow(BaseWindow):
                 field,
                 self.set_field_modified,
                 self.builder,
-                self.top_window
+                self.top_window,
             )
 
     def set_field_modified(self):
@@ -923,10 +935,7 @@ class MainWindow(BaseWindow):
         """
         reg = self.reglist_obj.get_selected_register()
         if reg:
-            reg_copy = regenerate.extras.regutils.duplicate_register(
-                self.dbase,
-                reg
-            )
+            reg_copy = duplicate_register(self.dbase, reg)
             self.insert_new_register(reg_copy)
             self.set_register_warn_flags(reg_copy)
 
@@ -935,16 +944,21 @@ class MainWindow(BaseWindow):
         Creates a file save selector, using the mime type and regular
         expression to control the selector.
         """
-        choose = gtk.FileChooserDialog(
+        choose = Gtk.FileChooserDialog(
             title,
             self.top_window,
             action,
-            (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, icon, gtk.RESPONSE_OK)
+            (
+                Gtk.STOCK_CANCEL,
+                Gtk.ResponseType.CANCEL,
+                icon,
+                Gtk.Response.Type.OK,
+            ),
         )
 
         choose.set_current_folder(os.curdir)
         if m_name:
-            mime_filter = gtk.FileFilter()
+            mime_filter = Gtk.FileFilter()
             mime_filter.set_name(m_name)
             mime_filter.add_pattern(m_regex)
             choose.add_filter(mime_filter)
@@ -960,8 +974,8 @@ class MainWindow(BaseWindow):
             title,
             mime_name,
             mime_regex,
-            gtk.FILE_CHOOSER_ACTION_SAVE,
-            gtk.STOCK_SAVE
+            Gtk.FileChooserAction.SAVE,
+            Gtk.STOCK_SAVE,
         )
 
     def create_open_selector(self, title, mime_name=None, mime_regex=None):
@@ -973,8 +987,8 @@ class MainWindow(BaseWindow):
             title,
             mime_name,
             mime_regex,
-            gtk.FILE_CHOOSER_ACTION_OPEN,
-            gtk.STOCK_OPEN
+            Gtk.FileChooserAction.OPEN,
+            Gtk.STOCK_OPEN,
         )
 
     def on_add_register_set_activate(self, obj):
@@ -984,13 +998,11 @@ class MainWindow(BaseWindow):
         open_xml routine with the result.
         """
         choose = self.create_open_selector(
-            "Open Register Database",
-            'XML files',
-            '*.xml'
+            "Open Register Database", "XML files", "*.xml"
         )
         choose.set_select_multiple(True)
         response = choose.run()
-        if response == gtk.RESPONSE_OK:
+        if response == Gtk.ResponseType.OK:
             for filename in choose.get_filenames():
                 self.open_xml(filename)
                 self.prj.add_register_set(filename)
@@ -1021,18 +1033,22 @@ class MainWindow(BaseWindow):
         selected file is added to the recent manager.
         """
         name = None
-        choose = gtk.FileChooserDialog(
+        choose = Gtk.FileChooserDialog(
             "New",
             self.top_window,
-            gtk.FILE_CHOOSER_ACTION_SAVE,
-            (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
-             gtk.STOCK_SAVE, gtk.RESPONSE_OK)
+            Gtk.FileChooserAction_SAVE,
+            (
+                Gtk.STOCK_CANCEL,
+                Gtk.ResponseType.CANCEL,
+                Gtk.STOCK_SAVE,
+                Gtk.Response.Type.OK,
+            ),
         )
         choose.set_current_folder(os.curdir)
         choose.show()
 
         response = choose.run()
-        if response == gtk.RESPONSE_OK:
+        if response == Gtk.ResponseType.OK:
             name = choose.get_filename()
         choose.destroy()
         return name
@@ -1040,13 +1056,11 @@ class MainWindow(BaseWindow):
     def on_new_project_clicked(self, obj):
 
         choose = self.create_save_selector(
-            "New Project",
-            "Regenerate Project",
-            DEF_MIME
+            "New Project", "Regenerate Project", DEF_MIME
         )
 
         response = choose.run()
-        if response == gtk.RESPONSE_OK:
+        if response == Gtk.ResponseType.OK:
             filename = choose.get_filename()
             ext = os.path.splitext(filename)
             if ext[1] != DEF_EXT:
@@ -1064,7 +1078,7 @@ class MainWindow(BaseWindow):
             if self.recent_manager:
                 sys.stdout.write("Add %s=n" % filename)
                 self.recent_manager.add_item("file:///" + filename)
-            self.find_obj('save_btn').set_sensitive(True)
+            self.find_obj("save_btn").set_sensitive(True)
             self.prj_loaded.set_sensitive(True)
             self.load_project_tab()
         choose.destroy()
@@ -1072,16 +1086,14 @@ class MainWindow(BaseWindow):
     def on_open_action_activate(self, obj):
 
         choose = self.create_open_selector(
-            "Open Project",
-            "Regenerate Project",
-            DEF_MIME
+            "Open Project", "Regenerate Project", DEF_MIME
         )
 
         response = choose.run()
         filename = choose.get_filename()
         uri = choose.get_uri()
         choose.destroy()
-        if response == gtk.RESPONSE_OK:
+        if response == Gtk.ResponseType.OK:
             self.open_project(filename, uri)
 
     def set_busy_cursor(self, value):
@@ -1089,14 +1101,15 @@ class MainWindow(BaseWindow):
         This seems to cause Windows to hang, so don't change the cursor
         to indicate busy under Windows.
         """
-        if os.name == 'posix':
+        if os.name == "posix":
             if value:
-                cursor = gtk.gdk.Cursor(gtk.gdk.WATCH)
-                self.top_window.window.set_cursor(cursor)
+                cursor = Gdk.Cursor.new(Gdk.CursorType.WATCH)
+                self.top_window.get_root_window().set_cursor(cursor)
             else:
-                self.top_window.window.set_cursor(None)
-            while gtk.events_pending():
-                gtk.main_iteration()
+                cursor = Gdk.Cursor.new(Gdk.CursorType.ARROW)
+                self.top_window.get_root_window().set_cursor(cursor)
+            while Gtk.events_pending():
+                Gtk.main_iteration()
 
     def open_project(self, filename, uri):
         self.loading_project = True
@@ -1108,20 +1121,18 @@ class MainWindow(BaseWindow):
             self.project_tabs.change_db(self.prj)
             self.initialize_project_address_maps()
         except xml.parsers.expat.ExpatError as msg:
-            ErrorMsg("%s was not a valid project file" % filename,
-                     str(msg),
-                     self.top_window
-                     )
+            ErrorMsg(
+                "%s was not a valid project file" % filename,
+                str(msg),
+                self.top_window,
+            )
             return
         except IOError as msg:
-            ErrorMsg("Could not open %s" % filename,
-                     str(msg),
-                     self.top_window
-                     )
+            ErrorMsg("Could not open %s" % filename, str(msg), self.top_window)
             return
 
         ini.set("user", "last_project", os.path.abspath(filename))
-        idval = self.status_obj.get_context_id('mod')
+        idval = self.status_obj.get_context_id("mod")
         self.status_obj.push(idval, "Loading %s ..." % filename)
         self.set_busy_cursor(True)
 
@@ -1133,7 +1144,7 @@ class MainWindow(BaseWindow):
                 ErrorMsg(
                     "%s was not a valid register set file" % f,
                     str(msg),
-                    self.top_window
+                    self.top_window,
                 )
                 continue
 
@@ -1141,7 +1152,7 @@ class MainWindow(BaseWindow):
         self.prj_model.load_icons()
         if self.recent_manager and uri:
             self.recent_manager.add_item(uri)
-        self.find_obj('save_btn').set_sensitive(True)
+        self.find_obj("save_btn").set_sensitive(True)
         self.set_busy_cursor(False)
 
         self.set_title(False)
@@ -1174,7 +1185,7 @@ class MainWindow(BaseWindow):
         self.reg_model = RegisterModel()
         mdl = self.reg_model.filter_new()
         self.filter_manage.change_filter(mdl, True)
-        self.modelsort = gtk.TreeModelSort(mdl)
+        self.modelsort = Gtk.TreeModelSort(mdl)
         self.reglist_obj.set_model(self.modelsort)
 
         self.bit_model = BitModel()
@@ -1183,10 +1194,11 @@ class MainWindow(BaseWindow):
         self.active = DbaseStatus(
             self.dbase,
             name,
-            base, self.reg_model,
+            base,
+            self.reg_model,
             self.modelsort,
             self.filter_manage.get_model(),
-            self.bit_model
+            self.bit_model,
         )
 
         self.active.node = self.prj_model.add_dbase(name, self.active)
@@ -1208,15 +1220,15 @@ class MainWindow(BaseWindow):
         if not os.access(name, os.W_OK):
             WarnMsg(
                 "Read only file",
-                'You will not be able to save this file unless\n'
-                'you change permissions.',
-                self.top_window
+                "You will not be able to save this file unless\n"
+                "you change permissions.",
+                self.top_window,
             )
 
         self.reg_model = RegisterModel()
         mdl = self.reg_model.filter_new()
         self.filter_manage.change_filter(mdl, True)
-        self.modelsort = gtk.TreeModelSort(mdl)
+        self.modelsort = Gtk.TreeModelSort(mdl)
         self.bit_model = BitModel()
 
         if load:
@@ -1251,7 +1263,7 @@ class MainWindow(BaseWindow):
                 ErrorMsg(
                     "Could not load existing register set",
                     str(msg),
-                    self.top_window
+                    self.top_window,
                 )
 
             self.active = DbaseStatus(
@@ -1261,7 +1273,7 @@ class MainWindow(BaseWindow):
                 self.reg_model,
                 self.modelsort,
                 self.filter_manage.get_model(),
-                self.bit_model
+                self.bit_model,
             )
 
             self.active.node = self.prj_model.add_dbase(name, self.active)
@@ -1280,7 +1292,7 @@ class MainWindow(BaseWindow):
             ErrorMsg(
                 "%s is not a valid regenerate file" % filename,
                 str(msg),
-                self.top_window
+                self.top_window,
             )
 
     def on_save_clicked(self, obj):
@@ -1306,7 +1318,7 @@ class MainWindow(BaseWindow):
                     ErrorMsg(
                         "Could not save %s, restoring original" % old_path,
                         str(msg),
-                        self.top_window
+                        self.top_window,
                     )
 
         self.prj.set_new_order([item[0] for item in self.prj_model])
@@ -1328,7 +1340,7 @@ class MainWindow(BaseWindow):
             ErrorMsg(
                 "Could not save %s, restoring original" % current_path,
                 str(msg),
-                self.top_window
+                self.top_window,
             )
 
         self.active.modified = False
@@ -1339,14 +1351,12 @@ class MainWindow(BaseWindow):
         then exit.
         """
         (width, height) = self.top_window.get_size()
-        ini.set('user', 'use_preview', int(self.use_preview))
-        ini.set('user', 'width', width)
-        ini.set('user', 'height', height)
-        ini.set('user', 'vpos',
-                self.find_obj('vpaned').get_position())
-        ini.set('user', 'hpos',
-                self.find_obj('hpaned').get_position())
-        gtk.main_quit()
+        ini.set("user", "use_preview", int(self.use_preview))
+        ini.set("user", "width", width)
+        ini.set("user", "height", height)
+        ini.set("user", "vpos", self.find_obj("vpaned").get_position())
+        ini.set("user", "hpos", self.find_obj("hpaned").get_position())
+        Gtk.main_quit()
 
     def save_and_quit(self):
         """
@@ -1366,17 +1376,13 @@ class MainWindow(BaseWindow):
 
     def import_data(self, obj, data):
         """Imports the data using the specified data importer."""
-        choose = self.create_open_selector(
-            data[1][1],
-            data[2],
-            "*" + data[3]
-        )
+        choose = self.create_open_selector(data[1][1], data[2], "*" + data[3])
 
         response = choose.run()
-        if response == gtk.RESPONSE_OK:
+        if response == Gtk.ResponseType.OK:
             choose.hide()
-            while gtk.events_pending():
-                gtk.main_iteration()
+            while Gtk.events_pending():
+                Gtk.main_iteration()
 
             filename = choose.get_filename()
             if filename:
@@ -1391,20 +1397,16 @@ class MainWindow(BaseWindow):
             self.update_display()
             self.set_modified()
         except IOError as msg:
-            ErrorMsg(
-                "Could not create %s " % name,
-                str(msg),
-                self.top_window
-            )
+            ErrorMsg("Could not create %s " % name, str(msg), self.top_window)
 
     def redraw(self):
         """Redraws the information in the register list."""
         self.module_tabs.change_db(self.dbase)
 
         if self.dbase.array_is_reg:
-            self.find_obj('register_notation').set_active(True)
+            self.find_obj("register_notation").set_active(True)
         else:
-            self.find_obj('array_notation').set_active(True)
+            self.find_obj("array_notation").set_active(True)
 
         self.update_bit_count()
 
@@ -1418,13 +1420,16 @@ class MainWindow(BaseWindow):
         Called when the quit button is clicked.  Checks to see if the
         data needs to be saved first.
         """
-        if (self.modified or self.prj_model.is_not_saved() or
-                (self.prj and self.prj.modified)):
+        if (
+            self.modified
+            or self.prj_model.is_not_saved()
+            or (self.prj and self.prj.modified)
+        ):
 
             dialog = Question(
-                'Save Changes?',
+                "Save Changes?",
                 "The file has been modified. Do you want to save your changes?",
-                self.top_window
+                self.top_window,
             )
 
             status = dialog.run()
@@ -1489,10 +1494,7 @@ class MainWindow(BaseWindow):
         """
         register = Register()
         register.width = self.dbase.data_bus_width
-        register.address = regenerate.extras.regutils.calculate_next_address(
-            self.dbase,
-            register.width
-        )
+        register.address = calculate_next_address(self.dbase, register.width)
         self.insert_new_register(register)
 
     def cb_open_recent(self, chooser):
@@ -1502,21 +1504,21 @@ class MainWindow(BaseWindow):
         recent_item = chooser.get_current_item()
         fname = recent_item.get_uri()
         if recent_item.exists():
-            self.open_project(fname.replace('file:///', ''), fname)
+            self.open_project(fname.replace("file:///", ""), fname)
 
     def create_recent_menu_item(self):
         """
         Builds the recent menu, applying the filter
         """
-        recent_menu = gtk.RecentChooserMenu()
+        recent_menu = Gtk.RecentChooserMenu()
         recent_menu.set_show_not_found(False)
         recent_menu.set_show_numbers(True)
         recent_menu.connect("item-activated", self.cb_open_recent)
 
-        recent_menu_item = gtk.MenuItem('Open Recent')
+        recent_menu_item = Gtk.MenuItem("Open Recent")
         recent_menu_item.set_submenu(recent_menu)
 
-        filt = gtk.RecentFilter()
+        filt = Gtk.RecentFilter()
         filt.add_pattern(DEF_MIME)
         recent_menu.set_filter(filt)
         recent_menu_item.show()
@@ -1526,12 +1528,12 @@ class MainWindow(BaseWindow):
         """
         Builds the recent menu, applying the filter
         """
-        recent_menu = gtk.RecentChooserMenu()
+        recent_menu = Gtk.RecentChooserMenu()
         recent_menu.set_show_not_found(False)
         recent_menu.set_show_numbers(True)
         recent_menu.connect("item-activated", self.cb_open_recent)
 
-        filt = gtk.RecentFilter()
+        filt = Gtk.RecentFilter()
         filt.add_pattern(DEF_MIME)
         recent_menu.set_filter(filt)
         return recent_menu
@@ -1540,13 +1542,14 @@ class MainWindow(BaseWindow):
         """
         Displays the About box, describing the program
         """
-        box = gtk.AboutDialog()
+        box = Gtk.AboutDialog()
         box.set_name(PROGRAM_NAME)
         box.set_version(PROGRAM_VERSION)
         box.set_comments(
             "%s allows you to manage your\n"
-            "registers for an ASIC or FPGA based design." % PROGRAM_NAME)
-        box.set_authors(['Donald N. Allingham'])
+            "registers for an ASIC or FPGA based design." % PROGRAM_NAME
+        )
+        box.set_authors(["Donald N. Allingham"])
         try:
             with open(os.path.join(INSTALL_PATH, "LICENSE.txt")) as f:
                 data = f.read()
@@ -1554,7 +1557,7 @@ class MainWindow(BaseWindow):
         except IOError:
             pass
         fname = os.path.join(INSTALL_PATH, "media", "flop.svg")
-        box.set_logo(gtk.gdk.pixbuf_new_from_file(fname))
+        box.set_logo(GdkPixbuf.Pixbuf.new_from_file(fname))
         box.run()
         box.destroy()
 
@@ -1573,22 +1576,27 @@ class MainWindow(BaseWindow):
         else:
             for field in reg.get_bit_fields():
                 if field.field_name.lower() in REMAP_NAME:
-                    txt = "Field name (%s) is a SystemVerilog reserved word" % \
-                        field.field_name
+                    txt = (
+                        "Field name (%s) is a SystemVerilog reserved word"
+                        % field.field_name
+                    )
                     msg.append(txt)
                 if check_field(field):
-                    txt = "Missing field description for '%s'" % \
-                        field.field_name
+                    txt = (
+                        "Missing field description for '%s'" % field.field_name
+                    )
                     msg.append(txt)
                     warn_bit = True
                 if check_reset(field):
-                    txt = "Missing reset parameter name for '%s'" % \
-                        field.field_name
+                    txt = (
+                        "Missing reset parameter name for '%s'"
+                        % field.field_name
+                    )
                     msg.append(txt)
                     warn_bit = True
         if mark and not self.loading_project:
-            self.find_obj('reg_descr_warn').set_property('visible', warn_reg)
-            self.find_obj('reg_bit_warn').set_property('visible', warn_bit)
+            self.find_obj("reg_descr_warn").set_property("visible", warn_reg)
+            self.find_obj("reg_bit_warn").set_property("visible", warn_bit)
         self.reg_model.set_warning_for_register(reg, warn_reg or warn_bit)
         if msg:
             tip = "\n".join(msg)
@@ -1598,9 +1606,8 @@ class MainWindow(BaseWindow):
 
     def set_description_warn_flag(self):
         if not self.loading_project:
-            self.find_obj('mod_descr_warn').set_property(
-                'visible',
-                self.dbase.overview_text == ""
+            self.find_obj("mod_descr_warn").set_property(
+                "visible", self.dbase.overview_text == ""
             )
 
     def set_bits_warn_flag(self):
@@ -1619,21 +1626,21 @@ class MainWindow(BaseWindow):
                 "%s (modified) - regenerate" % self.prj.name
             )
         else:
-            self.top_window.set_title(
-                "%s - regenerate" % self.prj.name
-            )
+            self.top_window.set_title("%s - regenerate" % self.prj.name)
 
 
 def check_field(field):
     if field.description.strip() == "":
-        return gtk.STOCK_DIALOG_WARNING
+        return Gtk.STOCK_DIALOG_WARNING
     return None
 
 
 def check_reset(field):
-    if (field.reset_type == ResetType.PARAMETER and
-            field.reset_parameter.strip() == ""):
-        return gtk.STOCK_DIALOG_WARNING
+    if (
+        field.reset_type == ResetType.PARAMETER
+        and field.reset_parameter.strip() == ""
+    ):
+        return Gtk.STOCK_DIALOG_WARNING
     return None
 
 

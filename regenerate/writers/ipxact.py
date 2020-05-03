@@ -22,7 +22,6 @@ Actual program. Parses the arguments, and initiates the main window
 
 import os
 from jinja2 import Template
-from regenerate.db import BitField
 from regenerate.db.enums import BitType
 from regenerate.writers.writer_base import WriterBase, ExportInfo
 
@@ -57,7 +56,7 @@ ACCESS_MAP = {
     BitType.WRITE_1_TO_SET: "read-write",
     BitType.WRITE_ONLY: "write-only",
     BitType.READ_WRITE_PROTECT: "read-write",
-    BitType.READ_WRITE_PROTECT_1S:  "read-write",
+    BitType.READ_WRITE_PROTECT_1S: "read-write",
 }
 
 WRITE_MAP = {
@@ -68,13 +67,15 @@ WRITE_MAP = {
     BitType.WRITE_1_TO_CLEAR_LOAD: "oneToClear",
     BitType.WRITE_1_TO_CLEAR_LOAD_1S: "oneToClear",
     BitType.WRITE_1_TO_CLEAR_LOAD_1S_1: "oneToClear",
-    BitType.WRITE_1_TO_SET: "oneToSet"
+    BitType.WRITE_1_TO_SET: "oneToSet",
 }
 
 
-XML = ['xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"',
-       'xmlns:ipxact="http://www.accellera.org/XMLSchema/IPXACT/1685-2014"',
-       'xsi:schemaLocation="http://www.accellera.org/XMLSchema/IPXACT/1685-2014 http://www.accellera.org/XMLSchema/IPXACT/1685-2014/index.xsd"']
+XML = [
+    'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"',
+    'xmlns:ipxact="http://www.accellera.org/XMLSchema/IPXACT/1685-2014"',
+    'xsi:schemaLocation="http://www.accellera.org/XMLSchema/IPXACT/1685-2014 http://www.accellera.org/XMLSchema/IPXACT/1685-2014/index.xsd"',
+]
 
 
 class IpXactWriter(WriterBase):
@@ -84,7 +85,7 @@ class IpXactWriter(WriterBase):
     """
 
     def __init__(self, project, dbase):
-        super(IpXactWriter, self).__init__(project, dbase)
+        super().__init__(project, dbase)
 
     def write(self, filename):
         """
@@ -97,9 +98,7 @@ class IpXactWriter(WriterBase):
 
         with open(os.path.join(dirpath, "templates", "ipxact.template")) as of:
             template = Template(
-                of.read(),
-                trim_blocks=True,
-                lstrip_blocks=True
+                of.read(), trim_blocks=True, lstrip_blocks=True
             )
 
         with open(filename, "w") as ofile:
@@ -108,18 +107,20 @@ class IpXactWriter(WriterBase):
                 WRITE_MAP=WRITE_MAP,
                 ACCESS_MAP=ACCESS_MAP,
                 scope="ipxact",
-                refs=XML
+                refs=XML,
             )
             ofile.write(text)
 
 
 EXPORTERS = [
-    (WriterBase.TYPE_BLOCK,
-     ExportInfo(
-         IpXactWriter,
-         ("XML", "IP-XACT"),
-         "IP-XACT files",
-         ".xml",
-         'ip-xact')
-     )
+    (
+        WriterBase.TYPE_BLOCK,
+        ExportInfo(
+            IpXactWriter,
+            ("XML", "IP-XACT"),
+            "IP-XACT files",
+            ".xml",
+            "ip-xact",
+        ),
+    )
 ]

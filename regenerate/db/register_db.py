@@ -41,23 +41,23 @@ class RegisterDb(object):
     """
 
     def __init__(self, filename=None):
-        self.__clock = rules.get('rules', 'clock_default', DEF_CLK_NAME)
-        self.__reset = rules.get('rules', 'reset_default', DEF_RST_NAME)
+        self.__clock = rules.get("rules", "clock_default", DEF_CLK_NAME)
+        self.__reset = rules.get("rules", "reset_default", DEF_RST_NAME)
         self.__write_data = rules.get(
-            'rules', 'write_data_default', DEF_WDATA_NAME
+            "rules", "write_data_default", DEF_WDATA_NAME
         )
         self.__read_data = rules.get(
-            'rules', 'read_data_default', DEF_RDATA_NAME
+            "rules", "read_data_default", DEF_RDATA_NAME
         )
         self.__write_strobe = rules.get(
-            'rules', 'write_strobe_default', DEF_WR_NAME
+            "rules", "write_strobe_default", DEF_WR_NAME
         )
         self.__read_strobe = rules.get(
-            'rules', 'read_strobe_default', DEF_RD_NAME
+            "rules", "read_strobe_default", DEF_RD_NAME
         )
-        self.__addr = rules.get('rules', 'address_default', DEF_ADDR_NAME)
-        self.__be = rules.get('rules', 'byte_strobe_default', DEF_BE_NAME)
-        self.__ack = rules.get('rule', 'ack_default', DEF_ACK_NAME)
+        self.__addr = rules.get("rules", "address_default", DEF_ADDR_NAME)
+        self.__be = rules.get("rules", "byte_strobe_default", DEF_BE_NAME)
+        self.__ack = rules.get("rule", "ack_default", DEF_ACK_NAME)
         self.__module = "unnamed_regs"
         self.__title = ""
         self.__registers = {}
@@ -89,8 +89,10 @@ class RegisterDb(object):
 
     def get_keys(self):
         """Returns the register keys, which is the address of the register"""
-        return [a.uuid for a in sorted(self.__registers.values(),
-                                       key=lambda a: a.address)]
+        return [
+            a.uuid
+            for a in sorted(self.__registers.values(), key=lambda a: a.address)
+        ]
 
     def get_all_registers(self):
         """Returns the register keys, which is the address of the register"""
@@ -252,7 +254,7 @@ class RegisterDb(object):
         """
         Sets __module, which is accessed via the module_name property
         """
-        self.__module = name.replace(' ', '_')
+        self.__module = name.replace(" ", "_")
 
     @property
     def clock_name(self):
@@ -313,14 +315,20 @@ class RegisterDb(object):
     def find_registers_by_name_regexp(self, name):
         """Finds a register with the given name, or None if not found"""
         regexp = re.compile(name)
-        return [self.__registers[i] for i in self.__registers
-                if regexp.match(self.__registers[i].register_name)]
+        return [
+            self.__registers[i]
+            for i in self.__registers
+            if regexp.match(self.__registers[i].register_name)
+        ]
 
     def find_registers_by_token_regexp(self, name):
         """Finds a register with the given name, or None if not found"""
         regexp = re.compile(name)
-        return [self.__registers[i] for i in self.__registers
-                if regexp.match(self.__registers[i].token)]
+        return [
+            self.__registers[i]
+            for i in self.__registers
+            if regexp.match(self.__registers[i].token)
+        ]
 
     def address_size_in_bytes(self):
         return 1 << self.address_bus_width

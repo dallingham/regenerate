@@ -22,27 +22,21 @@ changes to the buffer cause an update on the webkit display, after the
 text is converted from restructuredText to HTML.
 """
 
+from regenerate.ui.preview import html_string
 from regenerate.db import LOGGER
-import os
 
 PREVIEW_ENABLED = True
 
-from .preview import html_string
 
 try:
-    import webkit
+    import gi
+    gi.require_version('WebKit', '3.0')
+    from gi.repository import WebKit as webkit
 
 except ImportError:
-
-    try:
-        import gi
-        gi.require_version('WebKit', '3.0')
-        from gi.repository import WebKit as webkit
-
-    except ImportError:
-        PREVIEW_ENABLED = False
-        LOGGER.warning("Webkit is not installed, preview of formatted "
-                       "comments will not be available")
+    PREVIEW_ENABLED = False
+    LOGGER.warning("Webkit is not installed, preview of formatted "
+                   "comments will not be available")
 
 
 class PreviewEditor(object):

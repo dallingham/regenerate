@@ -9,12 +9,13 @@ try:
     from gtkspellcheck import SpellChecker
 
     class Spell(SpellChecker):
-
         def __init__(self, obj):
-            super(Spell, self).__init__(obj)
+            super().__init__(obj)
+            self.enable()
 
         def detach(self):
             pass
+
 
 except ImportError:
 
@@ -33,5 +34,7 @@ except ImportError:
             def detach(self):
                 pass
 
-            LOGGER.warning("gtkspell/gtkspellcheck is not installed, "
-                           "spell checking will not be available")
+            LOGGER.warning(
+                "gtkspell/gtkspellcheck is not installed, "
+                "spell checking will not be available"
+            )

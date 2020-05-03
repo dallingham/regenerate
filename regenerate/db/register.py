@@ -30,21 +30,42 @@ class Register(object):
     """Defines a hardware register."""
 
     full_compare = (
-
-        "address", "ram_size", "description", "width", "_id", "_token",
-        "_do_not_test", "_name", "_hide", "dimension", "_do_not_generate_code",
-        "_do_not_cover", "_do_not_use_uvm"
-
+        "address",
+        "ram_size",
+        "description",
+        "width",
+        "_id",
+        "_token",
+        "_do_not_test",
+        "_name",
+        "_hide",
+        "dimension",
+        "_do_not_generate_code",
+        "_do_not_cover",
+        "_do_not_use_uvm",
     )
 
     array_compare = (
-        "ram_size", "width", "_do_not_test", "_hide", "_do_not_generate_code",
-        "_do_not_cover", "_do_not_use_uvm", "share"
+        "ram_size",
+        "width",
+        "_do_not_test",
+        "_hide",
+        "_do_not_generate_code",
+        "_do_not_cover",
+        "_do_not_use_uvm",
+        "share",
     )
 
     doc_compare = (
-        "address", "ram_size", "description", "width", "_id", "_token",
-        "_name", "_hide", "dimension"
+        "address",
+        "ram_size",
+        "description",
+        "width",
+        "_id",
+        "_token",
+        "_name",
+        "_hide",
+        "dimension",
     )
 
     def __init__(self, address=0, width=32, name=""):
@@ -69,8 +90,9 @@ class Register(object):
         return not self.__eq__(other)
 
     def __eq__(self, other):
-        if not all(self.__dict__[i] == other.__dict__[i]
-                   for i in self.full_compare):
+        if not all(
+            self.__dict__[i] == other.__dict__[i] for i in self.full_compare
+        ):
             return False
         return self.get_bit_fields() == other.get_bit_fields()
 
@@ -83,16 +105,18 @@ class Register(object):
     def array_cmp(self, other):
         if other is None:
             return False
-        if not all(self.__dict__[i] == other.__dict__[i]
-                   for i in self.array_compare):
+        if not all(
+            self.__dict__[i] == other.__dict__[i] for i in self.array_compare
+        ):
             return False
-        if other.address + (other.width/8) != self.address:
+        if other.address + (other.width / 8) != self.address:
             return False
         return self.get_bit_fields() == other.get_bit_fields()
 
     def group_cmp(self, other):
-        if not all(self.__dict__[i] == other.__dict__[i]
-                   for i in self.array_compare):
+        if not all(
+            self.__dict__[i] == other.__dict__[i] for i in self.array_compare
+        ):
             return False
         return self.get_bit_fields() == other.get_bit_fields()
 
@@ -265,8 +289,10 @@ class Register(object):
         Returns a dictionary of bit fields. The key is msb of the
         bit field.
         """
-        return sorted([s for s in self.__bit_fields.values() if s.values],
-                      key=lambda x: x.lsb)
+        return sorted(
+            [s for s in self.__bit_fields.values() if s.values],
+            key=lambda x: x.lsb,
+        )
 
     def get_bit_field(self, key):
         """Returns the bit field associated with the specified key."""
@@ -296,8 +322,9 @@ class Register(object):
         Removes the specified bit field from the dictionary. We cannot
         use the msb, since it may have changed.
         """
-        delete_keys = [key for key in self.__bit_fields
-                       if self.__bit_fields[key] == field]
+        delete_keys = [
+            key for key in self.__bit_fields if self.__bit_fields[key] == field
+        ]
         for key in delete_keys:
             del self.__bit_fields[key]
 
@@ -338,7 +365,7 @@ class Register(object):
         val = 0
         for key in self.__bit_fields:
             field = self.__bit_fields[key]
-            val |= (field.reset_value << field.lsb)
+            val |= field.reset_value << field.lsb
         return val
 
     def reset_mask(self):

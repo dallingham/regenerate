@@ -17,30 +17,38 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-import gtk
+from gi.repository import Gtk
 
-DEF_DIALOG_FLAGS = gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT
-DEF_DIALOG_BUTTONS = (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
-                      gtk.STOCK_OK, gtk.RESPONSE_ACCEPT)
+DEF_DIALOG_FLAGS = Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT
+DEF_DIALOG_BUTTONS = (
+    Gtk.STOCK_CANCEL,
+    Gtk.ResponseType.REJECT,
+    Gtk.STOCK_OK,
+    Gtk.ResponseType.ACCEPT,
+)
 
 
-class GroupOptions (gtk.Dialog):
-
+class GroupOptions(Gtk.Dialog):
     def __init__(self, instance, modified, parent, width=600, height=260):
 
-        super(GroupOptions, self).__init__(
+        super().__init__(
             title="Instance Options (%s)" % instance.inst,
             parent=parent,
             flags=DEF_DIALOG_FLAGS,
-            buttons=DEF_DIALOG_BUTTONS
+            buttons=DEF_DIALOG_BUTTONS,
         )
         self.instance = instance
+        self.val_no_uvm = False
+        self.val_no_decode = False
+        self.val_single_decode = False
+        self.val_array = False
+
         self.set_size_request(width, height)
         self.build_window(instance.inst)
 
         changed = False
         response = self.run()
-        if response in (gtk.RESPONSE_ACCEPT, gtk.RESPONSE_OK):
+        if response in (Gtk.ResponseType.ACCEPT, Gtk.ResponseType.OK):
             if self.force_arrays.get_active() != self.instance.array:
                 self.instance.array = self.force_arrays.get_active()
                 changed = True
@@ -61,15 +69,15 @@ class GroupOptions (gtk.Dialog):
     def build_window(self, title):
 
         area = self.get_content_area()
-        title_label = gtk.Label()
+        title_label = Gtk.Label()
         title_label.set_xalign(0.5)
         title_label.set_markup("<b>%s</b>" % title)
 
-        table = gtk.Table(4, 5)
+        table = Gtk.Table(4, 5)
         table.set_row_spacings(6)
         table.set_col_spacings(6)
 
-        self.uvm_exclude = gtk.CheckButton(
+        self.uvm_exclude = Gtk.CheckButton(
             "Exclude the instance from the UVM register package")
         self.uvm_exclude.set_active(self.instance.no_uvm)
         self.val_no_uvm = self.instance.no_uvm
@@ -80,11 +88,11 @@ class GroupOptions (gtk.Dialog):
             3,
             1,
             2,
-            xoptions=gtk.FILL,
-            yoptions=gtk.FILL
+            xoptions=Gtk.AttachOptions.FILL,
+            yoptions=Gtk.AttachOptions.FILL,
         )
 
-        self.decode_exclude = gtk.CheckButton(
+        self.decode_exclude = Gtk.CheckButton(
             "Exclude from register decode"
         )
         self.decode_exclude.set_active(self.instance.no_decode)
@@ -96,11 +104,11 @@ class GroupOptions (gtk.Dialog):
             3,
             2,
             3,
-            xoptions=gtk.FILL,
-            yoptions=gtk.FILL
+            xoptions=Gtk.AttachOptions.FILL,
+            yoptions=Gtk.AttachOptions.FILL,
         )
 
-        self.force_arrays = gtk.CheckButton(
+        self.force_arrays = Gtk.CheckButton(
             "Force array notation even for scalar instances"
         )
         self.force_arrays.set_active(self.instance.array)
@@ -112,11 +120,11 @@ class GroupOptions (gtk.Dialog):
             3,
             3,
             4,
-            xoptions=gtk.FILL,
-            yoptions=gtk.FILL
+            xoptions=Gtk.AttachOptions.FILL,
+            yoptions=Gtk.AttachOptions.FILL,
         )
 
-        self.single_decode = gtk.CheckButton(
+        self.single_decode = Gtk.CheckButton(
             "Use a single decode for arrays"
         )
         self.single_decode.set_active(self.instance.single_decode)
@@ -128,11 +136,11 @@ class GroupOptions (gtk.Dialog):
             3,
             4,
             5,
-            xoptions=gtk.FILL,
-            yoptions=gtk.FILL
+            xoptions=Gtk.AttachOptions.FILL,
+            yoptions=Gtk.AttachOptions.FILL,
         )
 
-        box = gtk.VBox(spacing=6)
+        box = Gtk.VBox(spacing=6)
         box.pack_start(title_label, fill=True, expand=True, padding=12)
         box.pack_start(table, fill=True, expand=True, padding=12)
         area.add(box)

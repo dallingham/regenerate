@@ -110,8 +110,7 @@ class CStruct(WriterBase):
 
         env = Environment(trim_blocks=True, lstrip_blocks=True)
 
-        template_file = os.path.join(dirpath, "templates",
-                                     "cstruct.template")
+        template_file = os.path.join(dirpath, "templates", "cstruct.template")
 
         with open(template_file) as ifile:
             template = env.from_string(ifile.read())
@@ -119,16 +118,20 @@ class CStruct(WriterBase):
         used_dbs = self.get_used_databases()
 
         with open(filename, "w") as of:
-            of.write(template.render(project=self._project, dblist=used_dbs,
-                                     db_grp_maps=self.get_db_groups(),
-                                     group_maps=self._build_group_maps(),
-                                     fix_name=self.fix_name,
-                                     fix_reg=self.fix_reg_name,
-                                     use_new=False,
-                                     used_maps=self._used_maps(),
-                                     map2grp=self.build_map_name_to_groups(),
-                                     current_date=time.strftime("%B %d, %Y")
-                                     ))
+            of.write(
+                template.render(
+                    project=self._project,
+                    dblist=used_dbs,
+                    db_grp_maps=self.get_db_groups(),
+                    group_maps=self._build_group_maps(),
+                    fix_name=self.fix_name,
+                    fix_reg=self.fix_reg_name,
+                    use_new=False,
+                    used_maps=self._used_maps(),
+                    map2grp=self.build_map_name_to_groups(),
+                    current_date=time.strftime("%B %d, %Y"),
+                )
+            )
 
     def get_db_groups(self):
         data_set = []
@@ -160,6 +163,14 @@ class CStruct(WriterBase):
 
 
 EXPORTERS = [
-    (WriterBase.TYPE_PROJECT, ExportInfo(CStruct, ("Header files", "C Structures"),
-                                         "Structures for C Headers", ".h", 'structs-c'))
+    (
+        WriterBase.TYPE_PROJECT,
+        ExportInfo(
+            CStruct,
+            ("Header files", "C Structures"),
+            "Structures for C Headers",
+            ".h",
+            "structs-c",
+        ),
+    )
 ]

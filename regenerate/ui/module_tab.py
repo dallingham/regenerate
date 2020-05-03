@@ -17,9 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-import gtk
-import gobject
-import pango
+from gi.repository import GObject, Gtk, Pango
 import string
 
 from regenerate.ui.spell import Spell
@@ -36,7 +34,7 @@ class ModuleWidth(object):
         self.dbname = db_name
         self.dbase = None
         self.modified = modified
-        self.widget.connect('changed', self.on_change)
+        self.widget.connect("changed", self.on_change)
         self.build_data_width_box()
 
     def build_data_width_box(self):
@@ -53,23 +51,24 @@ class ModuleWidth(object):
             (8, "8 bits"),
             (16, "16 bits"),
             (32, "32 bits"),
-            (64, "64 bits")
+            (64, "64 bits"),
         )
 
-        store = gtk.ListStore(str, int)
+        store = Gtk.ListStore(str, int)
         for (val, text) in self.options:
             store.append(row=[text, val])
 
         self.widget.set_model(store)
-        cell = gtk.CellRendererText()
+        cell = Gtk.CellRendererText()
         self.widget.pack_start(cell, True)
-        self.widget.add_attribute(cell, 'text', 0)
+        self.widget.add_attribute(cell, "text", 0)
 
     def change_db(self, dbase):
         self.dbase = dbase
         if dbase:
             self.widget.set_active(
-                self.convert_value_to_index(getattr(self.dbase, self.dbname)))
+                self.convert_value_to_index(getattr(self.dbase, self.dbname))
+            )
         else:
             self.widget.set_active(0)
 
@@ -101,7 +100,7 @@ class ModuleBool(object):
         self.dbname = db_name
         self.dbase = None
         self.modified = modified
-        self.widget.connect('toggled', self.on_change)
+        self.widget.connect("toggled", self.on_change)
 
     def change_db(self, dbase):
         self.dbase = dbase
@@ -125,7 +124,7 @@ class ModuleText(object):
         self.dbname = db_name
         self.dbase = None
         self.modified = modified
-        self.widget.connect('changed', self.on_change)
+        self.widget.connect("changed", self.on_change)
         try:
             if placeholder:
                 self.widget.set_placeholder_text(placeholder)
@@ -151,20 +150,21 @@ class ModuleValid(ModuleText):
     code to the insert-text function.
     """
 
-    def __init__(self, widget, db_name, modified, valid_data, placeholder=None):
-        super(ModuleValid, self).__init__(
-            widget, db_name, modified, placeholder)
+    def __init__(
+        self, widget, db_name, modified, valid_data, placeholder=None
+    ):
+        super().__init__(widget, db_name, modified, placeholder)
         self.valid_data = valid_data
-        self.widget.connect('insert-text', self.on_insert)
+        self.widget.connect("insert-text", self.on_insert)
 
     def on_insert(self, entry, text, length, position):
         # Called when the user inserts some text, by typing or pasting.
         position = entry.get_position()
 
         # Build a new string with allowed characters only.
-        result = ''.join([c for c in text if c in self.valid_data])
+        result = "".join([c for c in text if c in self.valid_data])
 
-        if result != '':
+        if result != "":
             # Insert the new text at cursor (and block the handler to
             # avoid recursion).
             entry.handler_block_by_func(self.on_insert)
@@ -176,7 +176,7 @@ class ModuleValid(ModuleText):
 
             # Can't modify the cursor position from within this handler,
             # so we add it to be done at the end of the main loop:
-            gobject.idle_add(entry.set_position, new_pos)
+            GObject.idle_add(entry.set_position, new_pos)
 
         # We handled the signal so stop it from being processed further.
         entry.stop_emission("insert_text")
@@ -189,12 +189,12 @@ class ModuleWord(ModuleValid):
     """
 
     def __init__(self, widget, db_name, modified, placeholder=None):
-        super(ModuleWord, self).__init__(
+        super().__init__(
             widget,
             db_name,
             modified,
             string.ascii_letters + string.digits + "_",
-            placeholder=placeholder
+            placeholder=placeholder,
         )
 
 
@@ -205,12 +205,8 @@ class ModuleInt(ModuleValid):
     """
 
     def __init__(self, widget, db_name, modified, placeholder=None):
-        super(ModuleInt, self).__init__(
-            widget,
-            db_name,
-            modified,
-            string.digits,
-            placeholder=placeholder
+        super().__init__(
+            widget, db_name, modified, string.digits, placeholder=placeholder
         )
 
     def on_change(self, obj):
@@ -241,14 +237,14 @@ class ModuleDoc(object):
     """
 
     def __init__(self, text_view, web_view, db_name, modified, use_reg=True):
-        pango_font = pango.FontDescription("monospace")
+        pango_font = Pango.FontDescription("monospace")
 
         self.text_view = text_view
         self.buf = self.text_view.get_buffer()
         self.callback = modified
 
         self.text_view.modify_font(pango_font)
-        self.buf.connect('changed', self.on_changed)
+        self.buf.connect("changed", self.on_changed)
 
         Spell(self.text_view)
         self.preview = PreviewEditor(self.buf, web_view, use_reg)
@@ -274,15 +270,13 @@ class ModuleDoc(object):
         """A change to the text occurred"""
         if self.dbase:
             new_text = self.buf.get_text(
-                self.buf.get_start_iter(),
-                self.buf.get_end_iter(),
-                False
+                self.buf.get_start_iter(), self.buf.get_end_iter(), False
             )
             setattr(self.dbase, self.db_name, new_text)
             self.callback()
 
     def on_key_press_event(self, obj, event):
-        if event.keyval == gtk.keysyms.F12:
+        if event.keyval == Gdk.KEY_F12:
             if clean_format_if_needed(obj):
                 self.callback()
             return True
@@ -290,41 +284,84 @@ class ModuleDoc(object):
 
 
 class ModuleTabs(object):
-
     def __init__(self, builder, modified):
 
         item_list = [
-            ('clock_signal', 'clock_name', ModuleWord, "Missing clock name"),
-            ('reset_signal', 'reset_name', ModuleWord, "Missing reset name"),
-            ('write_data_bus', "write_data_name", ModuleWord,
-             "Missing write data bus name"),
-            ('read_data_bus', "read_data_name", ModuleWord,
-             "Missing read data bus name"),
-            ('byte_en_signal', "byte_strobe_name", ModuleWord,
-             "Missing byte enable name"),
-            ('write_strobe', "write_strobe_name", ModuleWord,
-             "Missing write strobe name"),
-            ('ack', 'acknowledge_name', ModuleWord,
-             "Missing acknowledge signal name"),
-            ('read_strobe', 'read_strobe_name', ModuleWord,
-             "Missing read strobe name"),
-            ('address_bus', 'address_bus_name', ModuleWord,
-             "Missing address bus name"),
-            ('address_width', 'address_bus_width', ModuleInt,
-             'Missing address bus width'),
-            ('module', 'module_name', ModuleWord, "Missing module name"),
-            ('owner', 'owner', ModuleText,
-             "Missing owner name or email address"),
-            ('organization', 'organization', ModuleText,
-             "Missing company/organization name"),
-            ('title', 'descriptive_title', ModuleText,
-             "Missing description of the module"),
-            ('reset_level', 'reset_active_level', ModuleBool, None),
-            ('interface', 'use_interface', ModuleBool, None),
-            ('byte_en_level', 'byte_strobe_active_level', ModuleBool, None),
-            ('internal_only', 'internal_only', ModuleBool, None),
-            ('coverage', 'coverage', ModuleBool, None),
-            ('data_width', 'data_bus_width', ModuleWidth, None),
+            ("clock_signal", "clock_name", ModuleWord, "Missing clock name"),
+            ("reset_signal", "reset_name", ModuleWord, "Missing reset name"),
+            (
+                "write_data_bus",
+                "write_data_name",
+                ModuleWord,
+                "Missing write data bus name",
+            ),
+            (
+                "read_data_bus",
+                "read_data_name",
+                ModuleWord,
+                "Missing read data bus name",
+            ),
+            (
+                "byte_en_signal",
+                "byte_strobe_name",
+                ModuleWord,
+                "Missing byte enable name",
+            ),
+            (
+                "write_strobe",
+                "write_strobe_name",
+                ModuleWord,
+                "Missing write strobe name",
+            ),
+            (
+                "ack",
+                "acknowledge_name",
+                ModuleWord,
+                "Missing acknowledge signal name",
+            ),
+            (
+                "read_strobe",
+                "read_strobe_name",
+                ModuleWord,
+                "Missing read strobe name",
+            ),
+            (
+                "address_bus",
+                "address_bus_name",
+                ModuleWord,
+                "Missing address bus name",
+            ),
+            (
+                "address_width",
+                "address_bus_width",
+                ModuleInt,
+                "Missing address bus width",
+            ),
+            ("module", "module_name", ModuleWord, "Missing module name"),
+            (
+                "owner",
+                "owner",
+                ModuleText,
+                "Missing owner name or email address",
+            ),
+            (
+                "organization",
+                "organization",
+                ModuleText,
+                "Missing company/organization name",
+            ),
+            (
+                "title",
+                "descriptive_title",
+                ModuleText,
+                "Missing description of the module",
+            ),
+            ("reset_level", "reset_active_level", ModuleBool, None),
+            ("interface", "use_interface", ModuleBool, None),
+            ("byte_en_level", "byte_strobe_active_level", ModuleBool, None),
+            ("internal_only", "internal_only", ModuleBool, None),
+            ("coverage", "coverage", ModuleBool, None),
+            ("data_width", "data_bus_width", ModuleWidth, None),
         ]
 
         self.object_list = []
@@ -336,7 +373,7 @@ class ModuleTabs(object):
                         builder.get_object(widget_name),
                         db_name,
                         self.after_modified,
-                        placeholder=placeholder
+                        placeholder=placeholder,
                     )
                 )
             else:
@@ -344,21 +381,21 @@ class ModuleTabs(object):
                     class_type(
                         builder.get_object(widget_name),
                         db_name,
-                        self.after_modified
+                        self.after_modified,
                     )
                 )
 
         self.preview = ModuleDoc(
-            builder.get_object('overview'),
-            builder.get_object('scroll_webkit'),
+            builder.get_object("overview"),
+            builder.get_object("scroll_webkit"),
             "overview_text",
-            self.after_modified
+            self.after_modified,
         )
 
         self.dbase = None
         self.set_modified = modified
-        self.icon = builder.get_object('mod_def_warn')
-        self.port_table = builder.get_object('port_table')
+        self.icon = builder.get_object("mod_def_warn")
+        self.port_table = builder.get_object("port_table")
 
     def change_db(self, dbase):
         self.dbase = dbase
@@ -377,9 +414,9 @@ class ModuleTabs(object):
         if self.dbase.module_name == "":
             warn = True
             msgs.append("No module name was provided.")
-        self.icon.set_property('visible', warn)
+        self.icon.set_property("visible", warn)
         self.icon.set_tooltip_text("\n".join(msgs))
-#        self.port_table.set_sensitive(self.dbase.use_interface is False)
+        #        self.port_table.set_sensitive(self.dbase.use_interface is False)
         self.set_modified()
 
     def preview_enable(self):
@@ -392,16 +429,17 @@ class ModuleTabs(object):
 
 
 class ProjectTabs(object):
-
     def __init__(self, builder, modified):
 
         item_list = [
-            ('project_name', 'name', ModuleText,
-             "Missing project name"),
-            ('short_name', 'short_name', ModuleWord,
-             "Missing short name"),
-            ('company_name', "company_name", ModuleText,
-             "Missing company name"),
+            ("project_name", "name", ModuleText, "Missing project name"),
+            ("short_name", "short_name", ModuleWord, "Missing short name"),
+            (
+                "company_name",
+                "company_name",
+                ModuleText,
+                "Missing company name",
+            ),
         ]
 
         self.object_list = []
@@ -413,7 +451,7 @@ class ProjectTabs(object):
                         builder.get_object(widget_name),
                         db_name,
                         self.after_modified,
-                        placeholder=placeholder
+                        placeholder=placeholder,
                     )
                 )
             else:
@@ -421,21 +459,21 @@ class ProjectTabs(object):
                     class_type(
                         builder.get_object(widget_name),
                         db_name,
-                        self.after_modified
+                        self.after_modified,
                     )
                 )
 
         self.preview = ModuleDoc(
-            builder.get_object('project_doc'),
-            builder.get_object('project_webkit'),
-            'documentation',
+            builder.get_object("project_doc"),
+            builder.get_object("project_webkit"),
+            "documentation",
             self.after_modified,
-            False
+            False,
         )
 
         self.dbase = None
         self.set_modified = modified
-        self.icon = builder.get_object('mod_def_warn')
+        self.icon = builder.get_object("mod_def_warn")
 
     def change_db(self, dbase):
         self.dbase = dbase

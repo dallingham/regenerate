@@ -29,7 +29,7 @@ class VerilogParameters(WriterBase):
     """
 
     def __init__(self, dbase):
-        super(VerilogParameters, self).__init__(dbase)
+        super().__init__(dbase)
         self._ofile = None
 
     def write_def(self, reg, prefix, offset):
@@ -40,8 +40,9 @@ class VerilogParameters(WriterBase):
         """
         name = prefix + reg.token
 
-        self._ofile.write("parameter p%s = 'h%x\n" %
-                          (name, reg.address + offset))
+        self._ofile.write(
+            "parameter p%s = 'h%x\n" % (name, reg.address + offset)
+        )
 
     def write(self, filename):
         """
@@ -51,6 +52,7 @@ class VerilogParameters(WriterBase):
             self._ofile = open(filename, "w")
         except IOError as msg:
             import gtk
+
             errd = gtk.MessageDialog(type=gtk.MESSAGE_ERROR)
             errd.set_markup("Could not create %s" % filename)
             errd.format_secondary_text(str(msg))
@@ -58,31 +60,33 @@ class VerilogParameters(WriterBase):
             return
         except:
             import gtk
+
             errd = gtk.MessageDialog(type=gtk.MESSAGE_ERROR)
             errd.set_markup("Could not create %s" % filename)
             errd.run()
             return
 
-        self._write_header_comment(self._ofile, "site_verilog.inc",
-                                   comment_char='//')
+        self._write_header_comment(
+            self._ofile, "site_verilog.inc", comment_char="//"
+        )
 
         for reg_key in self._dbase.get_keys():
             self.write_def(
-                self._dbase.get_register(reg_key),
-                self._prefix,
-                self._offset
+                self._dbase.get_register(reg_key), self._prefix, self._offset
             )
-        self._ofile.write('\n')
+        self._ofile.write("\n")
         self._ofile.close()
 
 
 EXPORTERS = [
-    (WriterBase.TYPE_BLOCK,
-     ExportInfo(
-         VerilogParameters,
-         ("RTL", "Verilog parameters"),
-         "Verilog header files",
-         ".vh",
-         'rtl-verilog-parmaeters')
-     )
+    (
+        WriterBase.TYPE_BLOCK,
+        ExportInfo(
+            VerilogParameters,
+            ("RTL", "Verilog parameters"),
+            "Verilog header files",
+            ".vh",
+            "rtl-verilog-parmaeters",
+        ),
+    )
 ]

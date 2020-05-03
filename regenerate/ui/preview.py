@@ -81,8 +81,10 @@ def html_string(text):
     }
 
     try:
-        return __CSS + publish_string(text,
-                                      writer_name="html",
-                                      settings_overrides=overrides)
+        return __CSS + publish_string(
+            text,
+            writer_name="html",
+            settings_overrides=overrides
+        )
     except TypeError:
         return __CSS + publish_string(text, writer_name="html")

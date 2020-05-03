@@ -17,8 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-import gtk
-import gobject
+from gi.repository import GObject, Gtk
 from regenerate.settings.paths import GLADE_PROP
 from columns import EditableColumn
 
@@ -30,33 +29,27 @@ class Properties(object):
 
     def __init__(self, project):
         self.__project = project
-        self.__builder = gtk.Builder()
+        self.__builder = Gtk.Builder()
         self.__builder.add_from_file(GLADE_PROP)
-        self.__properties = self.__builder.get_object('properties')
+        self.__properties = self.__builder.get_object("properties")
 
-        self.__builder.get_object('short_name').set_text(
-            project.short_name
-        )
+        self.__builder.get_object("short_name").set_text(project.short_name)
 
-        self.__builder.get_object('project_name').set_text(
-            project.name
-        )
+        self.__builder.get_object("project_name").set_text(project.name)
 
-        self.__builder.get_object('company_name').set_text(
-            project.company_name
-        )
+        self.__builder.get_object("company_name").set_text(project.company_name)
 
         self.__builder.connect_signals(self)
 
-        self.__tree = self.__builder.get_object('address_tree')
-        self.__model = gtk.ListStore(str, str, gobject.TYPE_UINT64)
+        self.__tree = self.__builder.get_object("address_tree")
+        self.__model = Gtk.ListStore(str, str, GObject.TYPE_UINT64)
         self.__tree.set_model(self.__model)
 
-        column = EditableColumn('Map Name', self.map_name_changed, 0)
+        column = EditableColumn("Map Name", self.map_name_changed, 0)
         column.set_min_width(200)
         self.__tree.append_column(column)
 
-        column = EditableColumn('Base Address', self.map_address_changed, 1)
+        column = EditableColumn("Base Address", self.map_address_changed, 1)
         self.__tree.append_column(column)
 
         for base in project.get_address_maps():
@@ -94,7 +87,7 @@ class Properties(object):
 
     def on_add_map_clicked(self, obj):
         self.__model.append(row=("<new name>", 0, 0))
-        self.__project.set_address_map('<new name>', 0)
+        self.__project.set_address_map("<new name>", 0)
 
     def on_project_name_changed(self, obj):
         """
@@ -116,7 +109,7 @@ class Properties(object):
         try:
             int(new_text, 16)
         except ValueError:
-            obj.stop_emission('insert-text')
+            obj.stop_emission("insert-text")
 
     def on_short_name_changed(self, obj):
         """
@@ -125,7 +118,7 @@ class Properties(object):
         object. The name must not have spaces, so we immediately replace any
         spaces.
         """
-        self.__project.short_name = obj.get_text().replace(' ', '').strip()
+        self.__project.short_name = obj.get_text().replace(" ", "").strip()
         obj.set_text(self.__project.short_name)
 
     def on_close_button_clicked(self, obj):

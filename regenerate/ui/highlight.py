@@ -18,14 +18,14 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 try:
+    from gi.repository import Pango
     from pygments.lexers import VerilogLexer
     from pygments.styles import get_style_by_name
-    import pango
 
     def highlight_text(text, buf):
 
         styles = {}
-        STYLE = get_style_by_name('emacs')
+        STYLE = get_style_by_name("emacs")
         for token, value in VerilogLexer().get_tokens(text):
             while not STYLE.styles_token(token) and token.parent:
                 token = token.parent
@@ -37,16 +37,17 @@ try:
             for token in styles:
                 tag = styles[token]
                 style = STYLE.style_for_token(token)
-                if style['bgcolor']:
-                    tag.set_property('background', '#' + style['bgcolor'])
-                if style['color']:
-                    tag.set_property('foreground', '#' + style['color'])
-                if style['bold']:
-                    tag.set_property('weight', pango.WEIGHT_BOLD)
-                if style['italic']:
-                    tag.set_property('style', pango.STYLE_ITALIC)
-                if style['underline']:
-                    tag.set_property('underline', pango.UNDERLINE_SINGLE)
+                if style["bgcolor"]:
+                    tag.set_property("background", "#" + style["bgcolor"])
+                if style["color"]:
+                    tag.set_property("foreground", "#" + style["color"])
+                if style["bold"]:
+                    tag.set_property("weight", Pango.Weight.BOLD)
+                if style["italic"]:
+                    tag.set_property("style", Pango.Style.ITALIC)
+                if style["underline"]:
+                    tag.set_property("underline", Pango.Underline.SINGLE)
+
 
 except ImportError:
 

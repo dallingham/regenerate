@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
 """
 Actual program. Parses the arguments, and initiates the main window
 """
@@ -46,7 +47,7 @@ class UVMRegBlockRegisters(WriterBase):
         Initialize the object. At the current time, only little endian is
         supported by the package
         """
-        super(UVMRegBlockRegisters, self).__init__(project, None)
+        super().__init__(project, None)
         self.dblist = dblist
 
     def fix_name(self, field):
@@ -110,12 +111,10 @@ class UVMRegBlockRegisters(WriterBase):
         """
 
         env = Environment(trim_blocks=True, lstrip_blocks=True)
-        env.filters['remove_no_uvm'] = remove_no_uvm
+        env.filters["remove_no_uvm"] = remove_no_uvm
 
         template_file = os.path.join(
-            os.path.dirname(__file__),
-            "templates",
-            "uvm_reg_block.template"
+            os.path.dirname(__file__), "templates", "uvm_reg_block.template"
         )
 
         with open(template_file) as of:
@@ -126,7 +125,8 @@ class UVMRegBlockRegisters(WriterBase):
         with open(filename, "w") as ofile:
             ofile.write(
                 template.render(
-                    project=self._project, dblist=used_dbs,
+                    project=self._project,
+                    dblist=used_dbs,
                     individual_access=individual_access,
                     ACCESS_MAP=ACCESS_MAP,
                     TYPE_TO_INPUT=TYPE_TO_INPUT,
@@ -137,7 +137,7 @@ class UVMRegBlockRegisters(WriterBase):
                     use_new=False,
                     used_maps=self._used_maps(),
                     map2grp=self.build_map_name_to_groups(),
-                    current_date=time.strftime("%B %d, %Y")
+                    current_date=time.strftime("%B %d, %Y"),
                 )
             )
 
@@ -188,8 +188,9 @@ def individual_access(field, reg):
     # field we are checking for. Calculate the bytes used, and add them to the
     # used_bytes set
 
-    for x_field in [fld for fld in flds
-                    if fld != field and not is_readonly(fld)]:
+    for x_field in [
+        fld for fld in flds if fld != field and not is_readonly(fld)
+    ]:
         for pos in range(x_field.lsb, x_field.msb + 1):
             used_bytes.add(pos / 8)
 
@@ -202,18 +203,18 @@ def individual_access(field, reg):
 
 
 def remove_no_uvm(slist):
-    return [reg for reg in slist
-            if reg.do_not_use_uvm is False]
+    return [reg for reg in slist if reg.do_not_use_uvm is False]
 
 
 EXPORTERS = [
-    (WriterBase.TYPE_PROJECT,
-     ExportInfo(
-         UVMRegBlockRegisters,
-         ("Test", "UVM Registers"),
-         "SystemVerilog files",
-         ".sv",
-         'proj-uvm'
-     )
-     )
+    (
+        WriterBase.TYPE_PROJECT,
+        ExportInfo(
+            UVMRegBlockRegisters,
+            ("Test", "UVM Registers"),
+            "SystemVerilog files",
+            ".sv",
+            "proj-uvm",
+        ),
+    )
 ]

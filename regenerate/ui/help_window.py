@@ -27,27 +27,26 @@ from regenerate.ui.base_window import BaseWindow
 from regenerate.db import LOGGER
 
 try:
-    import webkit
+    import gi
+
+    gi.require_version("WebKit", "3.0")
+    from gi.repository import WebKit as webkit
+
     WEBKIT = True
-
 except ImportError:
-
-    try:
-        import gi
-        gi.require_version('WebKit', '3.0')
-        from gi.repository import WebKit as webkit
-        WEBKIT = True
-    except ImportError:
-        PREVIEW_ENABLED = False
-        LOGGER.warning("Webkit is not installed, preview of formatted "
-                       "comments will not be available")
-        WEBKIT = False
+    PREVIEW_ENABLED = False
+    LOGGER.warning(
+        "Webkit is not installed, preview of formatted "
+        "comments will not be available"
+    )
+    WEBKIT = False
 
 
 class HelpWindow(BaseWindow):
     """
     Presents help contents in a window
     """
+
     window = None
     wkit = None
     container = None
@@ -55,7 +54,7 @@ class HelpWindow(BaseWindow):
 
     def __init__(self, builder, filename):
 
-        super(HelpWindow, self).__init__()
+        super().__init__()
         if not WEBKIT:
             return
 
@@ -64,22 +63,24 @@ class HelpWindow(BaseWindow):
             f = open(fname)
             data = f.read()
         except IOError as msg:
-            data = "Help file '{0}' could not be found\n{1}".format(fname,
-                                                                    str(msg))
+            data = "Help file '{}' could not be found\n{}".format(
+                fname, str(msg)
+            )
 
         if HelpWindow.window is None:
             HelpWindow.window = builder.get_object("help_win")
             self.configure(HelpWindow.window)
             HelpWindow.wkit = webkit.WebView()
-            HelpWindow.container = builder.get_object('help_scroll')
+            HelpWindow.container = builder.get_object("help_scroll")
             HelpWindow.container.add(HelpWindow.wkit)
-            HelpWindow.button = builder.get_object('help_close')
-            HelpWindow.button.connect('clicked', self.hide)
-            HelpWindow.window.connect('destroy', self.destroy)
-            HelpWindow.window.connect('delete_event', self.delete)
+            HelpWindow.button = builder.get_object("help_close")
+            HelpWindow.button.connect("clicked", self.hide)
+            HelpWindow.window.connect("destroy", self.destroy)
+            HelpWindow.window.connect("delete_event", self.delete)
 
-        HelpWindow.wkit.load_string(html_string(data), "text/html", "utf-8",
-                                    "")
+        HelpWindow.wkit.load_string(
+            html_string(data), "text/html", "utf-8", ""
+        )
         HelpWindow.window.show_all()
 
     def destroy(self, obj):

@@ -28,7 +28,7 @@ from regenerate.writers.writer_base import WriterBase, ExportInfo
 def find_range(address, range_map):
     for i in range_map:
         lower, upper = range_map[i]
-        if (lower <= address <= upper):
+        if lower <= address <= upper:
             return i
     else:
         return None
@@ -36,14 +36,14 @@ def find_range(address, range_map):
 
 class VerilogConstRegPackage(WriterBase):
     def __init__(self, project, dblist):
-        super(VerilogConstRegPackage, self).__init__(None)
+        super().__init__(None)
         self.dblist = dblist
 
     def write(self, filename):
         with open(filename, "w") as cfile:
             base = os.path.splitext(os.path.basename(filename))[0]
-            cfile.write('package %s;\n' % base)
-            cfile.write('import vlsi_pkg::*;\n')
+            cfile.write("package %s;\n" % base)
+            cfile.write("import vlsi_pkg::*;\n")
 
             for db in self.dblist:
 
@@ -52,18 +52,22 @@ class VerilogConstRegPackage(WriterBase):
                     for key in db.get_keys():
                         reg = db.get_register(key)
                         addr = i[1] + reg.address
-                        cfile.write("const xfer_addr %s_%s = 64'h%x;\n" %
-                                    (i[0], reg.token, addr))
-            cfile.write('\nendpackage : %s\n' % base)
+                        cfile.write(
+                            "const xfer_addr %s_%s = 64'h%x;\n"
+                            % (i[0], reg.token, addr)
+                        )
+            cfile.write("\nendpackage : %s\n" % base)
 
 
 EXPORTERS = [
-    (WriterBase.TYPE_PROJECT,
-     ExportInfo(
-         VerilogConstRegPackage,
-         ("Headers", "SystemVerilog Register Constants"),
-         "SystemVerilog files",
-         ".sv",
-         'headers-system-verilog')
-     ),
+    (
+        WriterBase.TYPE_PROJECT,
+        ExportInfo(
+            VerilogConstRegPackage,
+            ("Headers", "SystemVerilog Register Constants"),
+            "SystemVerilog files",
+            ".sv",
+            "headers-system-verilog",
+        ),
+    )
 ]

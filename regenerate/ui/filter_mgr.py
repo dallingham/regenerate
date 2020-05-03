@@ -22,6 +22,7 @@ from regenerate.ui.enums import FilterField
 
 
 class FilterManager(object):
+
     def __init__(self, obj, model=None):
         self._obj = obj
         self._model = model

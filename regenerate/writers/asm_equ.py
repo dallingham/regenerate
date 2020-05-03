@@ -30,7 +30,7 @@ class AsmEqu(WriterBase):
     """
 
     def __init__(self, dbase):
-        super(AsmEqu, self).__init__(dbase)
+        super().__init__(dbase)
         self._offset = 0
         self._ofile = None
 
@@ -50,21 +50,27 @@ class AsmEqu(WriterBase):
         Writes the output file
         """
         with open(filename, "w") as self._ofile:
-            self._write_header_comment(self._ofile, 'site_asm.inc',
-                                       comment_char=';; ')
+            self._write_header_comment(
+                self._ofile, "site_asm.inc", comment_char=";; "
+            )
             for reg_key in self._dbase.get_keys():
-                self.write_def(self._dbase.get_register(reg_key), self._prefix,
-                               self._offset)
-            self._ofile.write('\n')
+                self.write_def(
+                    self._dbase.get_register(reg_key),
+                    self._prefix,
+                    self._offset,
+                )
+            self._ofile.write("\n")
 
 
 EXPORTERS = [
-    (WriterBase.TYPE_BLOCK,
-     ExportInfo(
-         AsmEqu,
-         ("Header files", "Assembler Source"),
-         "Assembler files",
-         ".s",
-         'headers-asm')
-     )
+    (
+        WriterBase.TYPE_BLOCK,
+        ExportInfo(
+            AsmEqu,
+            ("Header files", "Assembler Source"),
+            "Assembler files",
+            ".s",
+            "headers-asm",
+        ),
+    )
 ]

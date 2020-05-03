@@ -56,7 +56,7 @@ class CDefines(WriterBase):
     """
 
     def __init__(self, project, dbase):
-        super(CDefines, self).__init__(project, dbase)
+        super().__init__(project, dbase)
         self._ofile = None
 
     def write_def(self, reg, data, base):
@@ -69,16 +69,26 @@ class CDefines(WriterBase):
         address = reg.address + base + data.base
         if data.repeat > 1:
             for i in range(0, data.repeat):
-                name = full_token(data.group, reg.token,
-                                  self._dbase.module_name, i, data.format)
-                address += (i * data.roffset)
-                self._ofile.write("#define %-30s (*((volatile %s)0x%x))\n" %
-                                  (name, REG_TYPE[reg.width], address))
+                name = full_token(
+                    data.group,
+                    reg.token,
+                    self._dbase.module_name,
+                    i,
+                    data.format,
+                )
+                address += i * data.roffset
+                self._ofile.write(
+                    "#define %-30s (*((volatile %s)0x%x))\n"
+                    % (name, REG_TYPE[reg.width], address)
+                )
         else:
-            name = full_token(data.group, reg.token, self._dbase.module_name,
-                              -1, data.format)
-            self._ofile.write("#define %-30s (*((volatile %s)0x%x))\n" %
-                              (name, REG_TYPE[reg.width], address))
+            name = full_token(
+                data.group, reg.token, self._dbase.module_name, -1, data.format
+            )
+            self._ofile.write(
+                "#define %-30s (*((volatile %s)0x%x))\n"
+                % (name, REG_TYPE[reg.width], address)
+            )
 
     def write(self, filename):
         """
@@ -96,19 +106,21 @@ class CDefines(WriterBase):
                 for data in in_groups(self._dbase.module_name, self._project):
                     for register in self._dbase.get_all_registers():
                         self.write_def(register, data, base)
-                    self._ofile.write('\n')
+                    self._ofile.write("\n")
 
             for line in TRAILER:
-                self._ofile.write('%s\n' % line.replace('$M$', self._module))
+                self._ofile.write("%s\n" % line.replace("$M$", self._module))
 
 
 EXPORTERS = [
-    (WriterBase.TYPE_BLOCK,
-     ExportInfo(
-         CDefines,
-         ("Header files", "C Source"),
-         "C header files",
-         ".h",
-         'headers-c')
-     )
+    (
+        WriterBase.TYPE_BLOCK,
+        ExportInfo(
+            CDefines,
+            ("Header files", "C Source"),
+            "C header files",
+            ".h",
+            "headers-c",
+        ),
+    )
 ]

@@ -81,7 +81,7 @@ class RegParser(object):
         self.__field = None
         self.__in_ports = False
         self.__current_val = 0
-        self.__current_token = ''
+        self.__current_token = ""
         self.__reset_type = 0
         self.__reset_parameter = ""
         self.__token_list = []
@@ -101,15 +101,15 @@ class RegParser(object):
     def start_element(self, tag, attrs):
         """Called every time an XML element begins"""
         self.__token_list = []
-        mname = 'start_' + tag
+        mname = "start_" + tag
         if hasattr(self, mname):
             method = getattr(self, mname)
             method(attrs)
 
     def end_element(self, tag):
         """Called every time an XML element end """
-        text = ''.join(self.__token_list)
-        mname = 'end_' + tag
+        text = "".join(self.__token_list)
+        mname = "end_" + tag
         if hasattr(self, mname):
             method = getattr(self, mname)
             method(text)
@@ -127,18 +127,18 @@ class RegParser(object):
         Called when the module tag is first encounterd. Pulls off the ID tag
         if it exists, and pulls out the description
         """
-        self.__db.module_name = attrs['name']
-        if 'owner' in attrs:
-            self.__db.owner = attrs['owner']
-        if 'organization' in attrs:
-            self.__db.organization = attrs['organization']
-        self.__db.internal_only = bool(int(attrs.get('internal', "0")))
-        if 'id' in attrs:
-            self.save_id = cnv_str(attrs, 'id').upper()
-        array = attrs.get('array', "mem")
-        self.__db.coverage = bool(int(attrs.get('coverage', "1")))
+        self.__db.module_name = attrs["name"]
+        if "owner" in attrs:
+            self.__db.owner = attrs["owner"]
+        if "organization" in attrs:
+            self.__db.organization = attrs["organization"]
+        self.__db.internal_only = bool(int(attrs.get("internal", "0")))
+        if "id" in attrs:
+            self.save_id = cnv_str(attrs, "id").upper()
+        array = attrs.get("array", "mem")
+        self.__db.coverage = bool(int(attrs.get("coverage", "1")))
         self.__db.array_is_reg = array == "reg"
-        self.__db.descriptive_title = cnv_str(attrs, 'title')
+        self.__db.descriptive_title = cnv_str(attrs, "title")
 
     def start_base(self, attrs):
         """
@@ -148,8 +148,8 @@ class RegParser(object):
            addr_width
            data_width
         """
-        self.__db.address_bus_width = cnv_int(attrs, 'addr_width', 32)
-        self.__db.data_bus_width = cnv_int(attrs, 'data_width', 32)
+        self.__db.address_bus_width = cnv_int(attrs, "addr_width", 32)
+        self.__db.data_bus_width = cnv_int(attrs, "data_width", 32)
 
     def start_signal(self, attrs):
         """
@@ -160,18 +160,19 @@ class RegParser(object):
            side_effect
            type
         """
-        self.__field.use_output_enable = cnv_bool(attrs, 'enb')
-        self.__field.output_is_static = cnv_bool(attrs, 'static')
-        if 'side_effect' in attrs:
+        self.__field.use_output_enable = cnv_bool(attrs, "enb")
+        self.__field.output_is_static = cnv_bool(attrs, "static")
+        if "side_effect" in attrs:
             self.__field.output_has_side_effect = cnv_bool(
-                attrs, 'side_effect')
-        if 'volatile' in attrs:
-            self.__field.volatile = cnv_bool(attrs, 'volatile')
-        if 'random' in attrs:
-            self.__field.can_randomize = cnv_bool(attrs, 'random')
-        if 'error_field' in attrs:
-            self.__field.is_error_field = cnv_bool(attrs, 'error_field')
-        ftype = attrs.get('field_type')
+                attrs, "side_effect"
+            )
+        if "volatile" in attrs:
+            self.__field.volatile = cnv_bool(attrs, "volatile")
+        if "random" in attrs:
+            self.__field.can_randomize = cnv_bool(attrs, "random")
+        if "error_field" in attrs:
+            self.__field.is_error_field = cnv_bool(attrs, "error_field")
+        ftype = attrs.get("field_type")
         if ftype:
             self.__field.field_type = ID_TO_TYPE[ftype]
 
@@ -182,7 +183,7 @@ class RegParser(object):
           function
           load
         """
-        self.__field.control_signal = cnv_str(attrs, 'load')
+        self.__field.control_signal = cnv_str(attrs, "load")
 
     def start_register(self, attrs):
         """
@@ -193,12 +194,12 @@ class RegParser(object):
           hide
         """
         self.__reg = Register()
-        self.__reg.do_not_generate_code = cnv_bool(attrs, 'nocode')
-        self.__reg.do_not_test = cnv_bool(attrs, 'dont_test')
-        self.__reg.do_cover = cnv_bool(attrs, 'dont_cover')
-        self.__reg.do_not_use_uvm = cnv_bool(attrs, 'dont_use_uvm')
-        self.__reg.hide = cnv_bool(attrs, 'hide')
-        self.__reg.share = int(attrs.get('share', 0))
+        self.__reg.do_not_generate_code = cnv_bool(attrs, "nocode")
+        self.__reg.do_not_test = cnv_bool(attrs, "dont_test")
+        self.__reg.do_cover = cnv_bool(attrs, "dont_cover")
+        self.__reg.do_not_use_uvm = cnv_bool(attrs, "dont_use_uvm")
+        self.__reg.hide = cnv_bool(attrs, "hide")
+        self.__reg.share = int(attrs.get("share", 0))
 
     def start_ports(self, attrs):
         """Called when the ports tag is encountered."""
@@ -211,8 +212,8 @@ class RegParser(object):
           val
           token
         """
-        self.__current_val = attrs['val']
-        self.__current_token = attrs.get('token', '')
+        self.__current_val = attrs["val"]
+        self.__current_token = attrs.get("token", "")
 
     def start_range(self, attrs):
         """
@@ -221,8 +222,8 @@ class RegParser(object):
           start
           stop
         """
-        start = cnv_int(attrs, 'start')
-        stop = cnv_int(attrs, 'stop')
+        start = cnv_int(attrs, "start")
+        stop = cnv_int(attrs, "stop")
         self.__field = BitField(stop, start)
         self.__reg.add_bit_field(self.__field)
 
@@ -232,7 +233,7 @@ class RegParser(object):
 
           active
         """
-        self.__db.be_level = cnv_int(attrs, 'active')
+        self.__db.be_level = cnv_int(attrs, "active")
 
     def start_reset(self, attrs):
         """
@@ -249,11 +250,11 @@ class RegParser(object):
         if type is not specified, the it is assumed to be RESET_NUMERIC
         """
         if self.__in_ports:
-            self.__db.reset_active_level = cnv_int(attrs, 'active')
+            self.__db.reset_active_level = cnv_int(attrs, "active")
         else:
             try:
-                self.__reset_type = int(attrs.get('type', "0"))
-                self.__reset_parameter = attrs.get('parameter', '')
+                self.__reset_type = int(attrs.get("type", "0"))
+                self.__reset_parameter = attrs.get("parameter", "")
             except ValueError:
                 self.__reset_type = ResetType.NUMERIC
 

@@ -20,7 +20,7 @@
 Provides both the GTK ListStore and ListView for the bit fields.
 """
 
-import gtk
+from gi.repository import Gtk
 from regenerate.db import TYPES
 from regenerate.db.enums import ResetType
 from regenerate.ui.columns import EditableColumn, ComboMapColumn, SwitchComboMapColumn
@@ -35,7 +35,7 @@ WO2STR = [(t.description, t.type)
 (BIT_TITLE, BIT_SIZE, BIT_SORT, BIT_EXPAND, BIT_MONO) = range(5)
 
 
-class BitModel(gtk.ListStore):
+class BitModel(Gtk.ListStore):
     """
     The GTK list store model for the bit fields. This model is added to the
     ListView to provide the data for the bitfields.
@@ -44,7 +44,7 @@ class BitModel(gtk.ListStore):
     RESET2STR = (
         ("Constant", ResetType.NUMERIC),
         ("Input Port", ResetType.INPUT),
-        ("Parameter", ResetType.PARAMETER)
+        ("Parameter", ResetType.PARAMETER),
     )
 
     def __init__(self):
@@ -52,8 +52,7 @@ class BitModel(gtk.ListStore):
         Initialize the base class with the object types that we are going to
         be adding to the model.
         """
-        super(BitModel, self).__init__(
-            str, str, str, str, str, str, int, object)
+        super().__init__(str, str, str, str, str, str, int, object)
 
     def append_field(self, field):
         """
@@ -89,12 +88,12 @@ class BitList(object):
 
     # Title, Size, Sort, Expand, Monospace
     BIT_COLS = (
-        ('', 20, -1, False, False),
-        ('Bits', 60, BitCol.SORT, False, True),
-        ('Name', 60, BitCol.NAME, True, True),
-        ('Type', 325, -1, True, False),
-        ('Reset', 160, -1, False, True),
-        ('Reset Type', 105, -1, False, False),
+        ("", 20, -1, False, False),
+        ("Bits", 60, BitCol.SORT, False, True),
+        ("Name", 60, BitCol.NAME, True, True),
+        ("Type", 325, -1, True, False),
+        ("Reset", 160, -1, False, True),
+        ("Reset Type", 105, -1, False, False),
     )
 
     def __init__(self, obj, combo_edit, text_edit, selection_changed):
@@ -110,7 +109,7 @@ class BitList(object):
         self.__col = None
         self.__model = None
         self.__build_bitfield_columns(combo_edit, text_edit)
-        self.__obj.get_selection().connect('changed', selection_changed)
+        self.__obj.get_selection().connect("changed", selection_changed)
 
     def set_model(self, model):
         """
@@ -130,28 +129,16 @@ class BitList(object):
         for (i, col) in enumerate(self.BIT_COLS):
             if i == BitCol.TYPE:
                 column = SwitchComboMapColumn(
-                    col[BIT_TITLE],
-                    combo_edit,
-                    TYPE2STR,
-                    RO2STR,
-                    WO2STR,
-                    i
+                    col[BIT_TITLE], combo_edit, TYPE2STR, RO2STR, WO2STR, i
                 )
                 self.type_column = column
             elif i == BitCol.RESET_TYPE:
                 column = ComboMapColumn(
-                    col[BIT_TITLE],
-                    combo_edit,
-                    BitModel.RESET2STR,
-                    i
+                    col[BIT_TITLE], combo_edit, BitModel.RESET2STR, i
                 )
             elif i == BitCol.ICON:
-                renderer = gtk.CellRendererPixbuf()
-                column = gtk.TreeViewColumn(
-                    "",
-                    renderer,
-                    stock_id=i
-                )
+                renderer = Gtk.CellRendererPixbuf()
+                column = Gtk.TreeViewColumn("", renderer, stock_id=i)
             else:
                 column = EditableColumn(
                     col[BIT_TITLE],
@@ -175,8 +162,7 @@ class BitList(object):
         value = self.__obj.get_selection().get_selected_rows()
         if value:
             return value[1]
-        else:
-            return None
+        return None
 
     def select_row(self, path):
         """
@@ -201,11 +187,7 @@ class BitList(object):
         Adds a new field to the model, and sets editing to begin
         """
         path = self.__model.append_field(field)
-        self.__obj.set_cursor(
-            path,
-            self.__col,
-            start_editing=True
-        )
+        self.__obj.set_cursor(path, self.__col, start_editing=True)
 
 
 def bits(field):
@@ -214,8 +196,7 @@ def bits(field):
     """
     if field.lsb == field.msb:
         return "{0:d}".format(field.lsb)
-    else:
-        return "{0:d}:{1:d}".format(field.msb, field.lsb)
+    return "{0:d}:{1:d}".format(field.msb, field.lsb)
 
 
 def reset_value(field):

@@ -1,5 +1,10 @@
-docutils
-Jinja2
-pyenchant
-Pygments
-pygtkspellcheck
+docutils==0.16
+Jinja2==2.11.2
+MarkupSafe==1.1.1
+pyenchant==3.0.1
+Pygments==2.6.1
+pygtkspellcheck==4.0.5
+ruamel.yaml==0.16.10
+ruamel.yaml.clib==0.2.0
+vext==0.7.3
+vext.gi==0.7.0

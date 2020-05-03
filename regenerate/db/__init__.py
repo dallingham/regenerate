@@ -35,15 +35,16 @@ from .register_db import RegisterDb
 from .proj_reader import ProjectReader
 from .proj_writer import ProjectWriter
 
-LOGGER = logging.getLogger('regenerate')
+LOGGER = logging.getLogger("regenerate")
 
 if os.name == "nt":
     LOGGER.setLevel(40)
 
 # create console handler and set level to debug
 __ch = logging.StreamHandler()
-__formatter = logging.Formatter('%(asctime)s - %(name)s - '
-                                '%(levelname)s - %(message)s')
+__formatter = logging.Formatter(
+    "%(asctime)s - %(name)s - " "%(levelname)s - %(message)s"
+)
 # add formatter to ch
 __ch.setFormatter(__formatter)
 # add ch to logger

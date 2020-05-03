@@ -24,19 +24,14 @@ from regenerate.ui.base_window import BaseWindow
 WEBKIT = True
 
 try:
-    import webkit
-
+    import gi
+    gi.require_version('WebKit', '3.0')
+    from gi.repository import WebKit as webkit
 except ImportError:
-
-    try:
-        import gi
-        gi.require_version('WebKit', '3.0')
-        from gi.repository import WebKit as webkit
-    except ImportError:
-        PREVIEW_ENABLED = False
-        LOGGER.warning("Webkit is not installed, preview of formatted "
-                       "comments will not be available")
-        WEBKIT = False
+    PREVIEW_ENABLED = False
+    LOGGER.warning("Webkit is not installed, preview of formatted "
+                   "comments will not be available")
+    WEBKIT = False
 
 
 class SummaryWindow(BaseWindow):
@@ -48,7 +43,7 @@ class SummaryWindow(BaseWindow):
 
     def __init__(self, builder, reg, regset_name, project):
 
-        super(SummaryWindow, self).__init__()
+        super().__init__()
         if not WEBKIT:
             return
 

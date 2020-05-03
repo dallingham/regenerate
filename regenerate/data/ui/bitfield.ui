@@ -1,33 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.22.1 -->
 <interface>
-  <requires lib="gtk+" version="2.16"/>
-  <!-- interface-naming-policy project-wide -->
-  <object class="GtkAction" id="signal_help_action"/>
+  <requires lib="gtk+" version="3.6"/>
   <object class="GtkDialog" id="editfield">
     <property name="height_request">600</property>
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
     <property name="default_width">550</property>
     <property name="type_hint">normal</property>
-    <signal name="destroy-event" handler="on_destroy_event" swapped="no"/>
     <signal name="delete-event" handler="on_delete_event" swapped="no"/>
+    <signal name="destroy-event" handler="on_destroy_event" swapped="no"/>
+    <child>
+      <placeholder/>
+    </child>
     <child internal-child="vbox">
-      <object class="GtkVBox" id="dialog-vbox1">
+      <object class="GtkBox" id="dialog-vbox1">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="spacing">2</property>
         <child internal-child="action_area">
-          <object class="GtkHButtonBox" id="dialog-action_area1">
+          <object class="GtkButtonBox" id="dialog-action_area1">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="layout_style">end</property>
             <child>
               <object class="GtkButton" id="close">
                 <property name="label">gtk-close</property>
+                <property name="use_action_appearance">False</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_action_appearance">False</property>
                 <property name="use_stock">True</property>
                 <signal name="clicked" handler="on_close_clicked" swapped="no"/>
               </object>
@@ -74,8 +76,8 @@
                           <object class="GtkLabel" id="label27">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="xalign">0</property>
                             <property name="label" translatable="yes">Name: </property>
+                            <property name="xalign">0</property>
                           </object>
                           <packing>
                             <property name="x_options">GTK_FILL</property>
@@ -85,8 +87,8 @@
                           <object class="GtkLabel" id="label29">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="xalign">0</property>
                             <property name="label" translatable="yes">Type: </property>
+                            <property name="xalign">0</property>
                           </object>
                           <packing>
                             <property name="top_attach">1</property>
@@ -98,8 +100,8 @@
                           <object class="GtkLabel" id="label30">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="xalign">0</property>
                             <property name="label" translatable="yes">Reset: </property>
+                            <property name="xalign">0</property>
                           </object>
                           <packing>
                             <property name="top_attach">2</property>
@@ -152,9 +154,9 @@
                   <object class="GtkLabel" id="register_name">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="yalign">0.43999999761581421</property>
                     <property name="label" translatable="yes">&lt;b&gt;&lt;/b&gt;</property>
                     <property name="use_markup">True</property>
+                    <property name="yalign">0.43999999761581421</property>
                   </object>
                 </child>
               </object>
@@ -172,14 +174,14 @@
                   <object class="GtkScrolledWindow" id="scrolledwindow6">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <property name="hscrollbar_policy">automatic</property>
-                    <property name="vscrollbar_policy">automatic</property>
                     <property name="shadow_type">in</property>
                     <child>
                       <object class="GtkTextView" id="descr">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="wrap_mode">word</property>
+                        <property name="input_hints">GTK_INPUT_HINT_SPELLCHECK | GTK_INPUT_HINT_NONE</property>
+                        <property name="monospace">True</property>
                         <signal name="key-press-event" handler="on_descr_key_press_event" swapped="no"/>
                       </object>
                     </child>
@@ -206,11 +208,71 @@
                     <property name="column_spacing">6</property>
                     <property name="row_spacing">6</property>
                     <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
                       <object class="GtkLabel" id="outputsignal">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="xalign">0</property>
                         <property name="label" translatable="yes">Output signal</property>
+                        <property name="xalign">0</property>
                       </object>
                       <packing>
                         <property name="left_attach">1</property>
@@ -225,8 +287,8 @@
                       <object class="GtkLabel" id="input0_label">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="xalign">0</property>
                         <property name="label" translatable="yes">Input Signal</property>
+                        <property name="xalign">0</property>
                       </object>
                       <packing>
                         <property name="left_attach">1</property>
@@ -241,8 +303,8 @@
                       <object class="GtkLabel" id="label25">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="xalign">0</property>
                         <property name="label" translatable="yes">Control Signal</property>
+                        <property name="xalign">0</property>
                       </object>
                       <packing>
                         <property name="left_attach">1</property>
@@ -259,11 +321,8 @@
                         <property name="can_focus">True</property>
                         <property name="tooltip_text" translatable="yes">Optional output signal routed to the top of the module.</property>
                         <property name="invisible_char">●</property>
-                        <property name="invisible_char_set">True</property>
                         <property name="primary_icon_activatable">False</property>
                         <property name="secondary_icon_activatable">False</property>
-                        <property name="primary_icon_sensitive">True</property>
-                        <property name="secondary_icon_sensitive">True</property>
                         <signal name="changed" handler="on_output_changed" swapped="no"/>
                       </object>
                       <packing>
@@ -280,11 +339,8 @@
                         <property name="can_focus">True</property>
                         <property name="tooltip_text" translatable="yes">Input signal added to the module definition and routed as the data input for the field.</property>
                         <property name="invisible_char">●</property>
-                        <property name="invisible_char_set">True</property>
                         <property name="primary_icon_activatable">False</property>
                         <property name="secondary_icon_activatable">False</property>
-                        <property name="primary_icon_sensitive">True</property>
-                        <property name="secondary_icon_sensitive">True</property>
                         <signal name="changed" handler="on_input_changed" swapped="no"/>
                       </object>
                       <packing>
@@ -301,11 +357,8 @@
                         <property name="can_focus">True</property>
                         <property name="tooltip_text" translatable="yes">Control signal that determines when the input signal is loaded into the field. When this signal is high, data is loaded.</property>
                         <property name="invisible_char">●</property>
-                        <property name="invisible_char_set">True</property>
                         <property name="primary_icon_activatable">False</property>
                         <property name="secondary_icon_activatable">False</property>
-                        <property name="primary_icon_sensitive">True</property>
-                        <property name="secondary_icon_sensitive">True</property>
                         <signal name="changed" handler="on_control_changed" swapped="no"/>
                       </object>
                       <packing>
@@ -319,11 +372,11 @@
                     <child>
                       <object class="GtkCheckButton" id="outen">
                         <property name="label" translatable="yes">Enable output</property>
+                        <property name="use_action_appearance">False</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">False</property>
                         <property name="tooltip_text" translatable="yes">Enables usage of the output signal. If this is enabled, the output signal is routed to the top of the module.</property>
-                        <property name="use_action_appearance">False</property>
                         <property name="draw_indicator">True</property>
                         <signal name="toggled" handler="on_output_enable_toggled" swapped="no"/>
                       </object>
@@ -340,10 +393,10 @@
                       <object class="GtkLabel" id="label2">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="xalign">0</property>
-                        <property name="yalign">0.37999999523162842</property>
                         <property name="label" translatable="yes">&lt;b&gt;Signals&lt;/b&gt;</property>
                         <property name="use_markup">True</property>
+                        <property name="xalign">0</property>
+                        <property name="yalign">0.37999999523162842</property>
                       </object>
                       <packing>
                         <property name="right_attach">5</property>
@@ -354,9 +407,9 @@
                       <object class="GtkLabel" id="label3">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="xalign">0</property>
                         <property name="label" translatable="yes">&lt;b&gt;Field Properties&lt;/b&gt;</property>
                         <property name="use_markup">True</property>
+                        <property name="xalign">0</property>
                       </object>
                       <packing>
                         <property name="right_attach">5</property>
@@ -368,10 +421,10 @@
                     <child>
                       <object class="GtkCheckButton" id="static">
                         <property name="label" translatable="yes">Output is static</property>
+                        <property name="use_action_appearance">False</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">False</property>
-                        <property name="use_action_appearance">False</property>
                         <property name="draw_indicator">True</property>
                         <signal name="toggled" handler="on_static_toggled" swapped="no"/>
                       </object>
@@ -387,10 +440,10 @@
                     <child>
                       <object class="GtkCheckButton" id="side_effect">
                         <property name="label" translatable="yes">Has write site effects</property>
+                        <property name="use_action_appearance">False</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">False</property>
-                        <property name="use_action_appearance">False</property>
                         <property name="yalign">0.61000001430511475</property>
                         <property name="draw_indicator">True</property>
                         <signal name="toggled" handler="on_side_effect_toggled" swapped="no"/>
@@ -407,10 +460,10 @@
                     <child>
                       <object class="GtkCheckButton" id="volatile">
                         <property name="label" translatable="yes">Volatile (not guaranteed to be stable between reads)</property>
+                        <property name="use_action_appearance">False</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">False</property>
-                        <property name="use_action_appearance">False</property>
                         <property name="draw_indicator">True</property>
                         <signal name="toggled" handler="on_volatile_changed" swapped="no"/>
                       </object>
@@ -424,10 +477,10 @@
                     </child>
                     <child>
                       <object class="GtkButton" id="button1">
+                        <property name="use_action_appearance">False</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
-                        <property name="use_action_appearance">False</property>
                         <property name="relief">half</property>
                         <signal name="clicked" handler="on_signal_help_clicked" swapped="no"/>
                         <child>
@@ -449,10 +502,10 @@
                     </child>
                     <child>
                       <object class="GtkButton" id="button2">
+                        <property name="use_action_appearance">False</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
-                        <property name="use_action_appearance">False</property>
                         <property name="relief">half</property>
                         <signal name="clicked" handler="on_property_help_clicked" swapped="no"/>
                         <child>
@@ -475,10 +528,10 @@
                     <child>
                       <object class="GtkCheckButton" id="error_bit">
                         <property name="label" translatable="yes">Is an error status field (non-zero indicates an error)</property>
+                        <property name="use_action_appearance">False</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">False</property>
-                        <property name="use_action_appearance">False</property>
                         <property name="draw_indicator">True</property>
                         <signal name="toggled" handler="on_error_bit_toggled" swapped="no"/>
                       </object>
@@ -493,10 +546,10 @@
                     <child>
                       <object class="GtkCheckButton" id="random">
                         <property name="label" translatable="yes">Can be safely randomized</property>
+                        <property name="use_action_appearance">False</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">False</property>
-                        <property name="use_action_appearance">False</property>
                         <property name="draw_indicator">True</property>
                         <signal name="toggled" handler="on_random_toggled" swapped="no"/>
                       </object>
@@ -507,66 +560,6 @@
                         <property name="bottom_attach">10</property>
                         <property name="y_options">GTK_FILL</property>
                       </packing>
-                    </child>
-                    <child>
-                      <placeholder/>
-                    </child>
-                    <child>
-                      <placeholder/>
-                    </child>
-                    <child>
-                      <placeholder/>
-                    </child>
-                    <child>
-                      <placeholder/>
-                    </child>
-                    <child>
-                      <placeholder/>
-                    </child>
-                    <child>
-                      <placeholder/>
-                    </child>
-                    <child>
-                      <placeholder/>
-                    </child>
-                    <child>
-                      <placeholder/>
-                    </child>
-                    <child>
-                      <placeholder/>
-                    </child>
-                    <child>
-                      <placeholder/>
-                    </child>
-                    <child>
-                      <placeholder/>
-                    </child>
-                    <child>
-                      <placeholder/>
-                    </child>
-                    <child>
-                      <placeholder/>
-                    </child>
-                    <child>
-                      <placeholder/>
-                    </child>
-                    <child>
-                      <placeholder/>
-                    </child>
-                    <child>
-                      <placeholder/>
-                    </child>
-                    <child>
-                      <placeholder/>
-                    </child>
-                    <child>
-                      <placeholder/>
-                    </child>
-                    <child>
-                      <placeholder/>
-                    </child>
-                    <child>
-                      <placeholder/>
                     </child>
                   </object>
                   <packing>
@@ -593,13 +586,14 @@
                       <object class="GtkScrolledWindow" id="scrolledwindow7">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
-                        <property name="hscrollbar_policy">automatic</property>
-                        <property name="vscrollbar_policy">automatic</property>
                         <property name="shadow_type">in</property>
                         <child>
                           <object class="GtkTreeView" id="values">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
+                            <child internal-child="selection">
+                              <object class="GtkTreeSelection"/>
+                            </child>
                           </object>
                         </child>
                       </object>
@@ -616,10 +610,10 @@
                         <property name="layout_style">start</property>
                         <child>
                           <object class="GtkButton" id="add">
+                            <property name="use_action_appearance">False</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
-                            <property name="use_action_appearance">False</property>
                             <signal name="clicked" handler="on_add_clicked" swapped="no"/>
                             <child>
                               <object class="GtkImage" id="image6">
@@ -637,10 +631,10 @@
                         </child>
                         <child>
                           <object class="GtkButton" id="remove">
+                            <property name="use_action_appearance">False</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
-                            <property name="use_action_appearance">False</property>
                             <signal name="clicked" handler="on_remove_clicked" swapped="no"/>
                             <child>
                               <object class="GtkImage" id="image7">
@@ -658,10 +652,10 @@
                         </child>
                         <child>
                           <object class="GtkButton" id="button3">
+                            <property name="use_action_appearance">False</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
-                            <property name="use_action_appearance">False</property>
                             <signal name="clicked" handler="on_help_clicked" swapped="no"/>
                             <child>
                               <object class="GtkImage" id="image3">
@@ -705,14 +699,13 @@
                   <object class="GtkScrolledWindow" id="scrolledwindow1">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <property name="hscrollbar_policy">automatic</property>
-                    <property name="vscrollbar_policy">automatic</property>
                     <property name="shadow_type">in</property>
                     <child>
                       <object class="GtkTextView" id="verilog_code">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="editable">False</property>
+                        <property name="monospace">True</property>
                       </object>
                     </child>
                   </object>
@@ -724,9 +717,9 @@
                   <object class="GtkLabel" id="label1">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="yalign">0.43999999761581421</property>
                     <property name="label" translatable="yes">&lt;b&gt;Implementation&lt;/b&gt;</property>
                     <property name="use_markup">True</property>
+                    <property name="yalign">0.43999999761581421</property>
                   </object>
                   <packing>
                     <property name="position">3</property>
@@ -753,5 +746,6 @@
       <action-widget response="0">close</action-widget>
     </action-widgets>
   </object>
+  <object class="GtkAction" id="signal_help_action"/>
   <object class="GtkTextBuffer" id="textbuffer1"/>
 </interface>
