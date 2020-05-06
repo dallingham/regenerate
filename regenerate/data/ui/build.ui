@@ -82,7 +82,7 @@
                     <property name="can_focus">True</property>
                     <signal name="button-press-event" handler="on_buildlist_button_press_event" swapped="no"/>
                     <child internal-child="selection">
-                      <object class="GtkTreeSelection"/>
+                      <object class="GtkTreeSelection" id="buildlist_selection"/>
                     </child>
                   </object>
                 </child>
