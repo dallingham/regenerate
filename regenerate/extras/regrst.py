@@ -263,7 +263,8 @@ class RegisterRst(object):
             self.reglist = set()
         else:
             self.reglist = set(
-                [reg.register_name for reg in dbase.get_all_registers()])
+                [reg.register_name for reg in dbase.get_all_registers()]
+            )
 
         if decode:
             try:
@@ -345,8 +346,8 @@ class RegisterRst(object):
             ret_str = True
 
         ofile.write(
-            "%s\n\n" % self._reg.description.encode(
-                "utf-8", "replace").decode()
+            "%s\n\n"
+            % self._reg.description.encode("utf-8", "replace").decode()
         )
 
         if ret_str:
@@ -408,8 +409,9 @@ class RegisterRst(object):
             ofile.write("     - %s\n" % field.field_name)
             descr = field.description.strip()
             marked_descr = "\n       ".join(descr.split("\n"))
-            encoded_descr = marked_descr.encode(
-                "utf-8", "replace").rstrip().decode()
+            encoded_descr = (
+                marked_descr.encode("utf-8", "replace").rstrip().decode()
+            )
 
             lines = encoded_descr.split("\n")
 
@@ -419,8 +421,11 @@ class RegisterRst(object):
                     % (field.field_name, self.field_ref(field.field_name))
                 )
                 extra_text.append(
-                    (self.field_ref(field.field_name),
-                     field.field_name, encoded_descr)
+                    (
+                        self.field_ref(field.field_name),
+                        field.field_name,
+                        encoded_descr,
+                    )
                 )
             else:
                 ofile.write("     - %s\n" % encoded_descr)
@@ -428,7 +433,9 @@ class RegisterRst(object):
             if field.values and len(field.values) < self._max_values:
                 ofile.write("\n")
 
-                for val in sorted(field.values, key=lambda x: int(int(x[0], 16))):
+                for val in sorted(
+                    field.values, key=lambda x: int(int(x[0], 16))
+                ):
                     if val[1] and val[2]:
                         ofile.write(
                             "        0x%x : %s\n            %s\n\n"
@@ -437,7 +444,11 @@ class RegisterRst(object):
                     elif val[1]:
                         ofile.write(
                             "        0x%x : %s\n            %s\n\n"
-                            % (int(val[0], 16), val[1], "*no description available*")
+                            % (
+                                int(val[0], 16),
+                                val[1],
+                                "*no description available*",
+                            )
                         )
                     else:
                         ofile.write(
@@ -486,7 +497,8 @@ class RegisterRst(object):
         for inst in instances:
             for x_map in x_addr_maps:
                 groups_in_addr_map = self._prj.get_address_map_groups(
-                    x_map.name)
+                    x_map.name
+                )
                 if inst.group in groups_in_addr_map:
                     addr_maps.add(x_map)
 
@@ -588,7 +600,15 @@ class RegisterRst(object):
         return ""
 
     def _addr_entry(
-        self, ofile, inst, use_uvm, use_id, addr_maps, grp_inst, group_index, index
+        self,
+        ofile,
+        inst,
+        use_uvm,
+        use_id,
+        addr_maps,
+        grp_inst,
+        group_index,
+        index,
     ):
 
         if inst.grpt == 1:
@@ -600,23 +620,32 @@ class RegisterRst(object):
 
         ofile.write("   *")
         if use_uvm:
-            name = uvm_name(u_grp_name, self._reg.token,
-                            inst.inst, group_index)
+            name = uvm_name(
+                u_grp_name, self._reg.token, inst.inst, group_index
+            )
             if index < 0:
                 ofile.write(" - %s\n" % name)
             else:
                 ofile.write(" - %s[%d]\n" % (name, index))
         if use_id:
             name = full_token(
-                t_grp_name, self._reg.token, inst.inst, group_index, inst.format
+                t_grp_name,
+                self._reg.token,
+                inst.inst,
+                group_index,
+                inst.format,
             )
             if use_uvm:
                 ofile.write("    ")
             ofile.write(" - %s\n" % name)
         for map_name in addr_maps:
             map_base = self._prj.get_address_base(map_name.name)
-            offset = map_base + inst.offset + \
-                inst.base + (grp_inst * inst.grpt_offset)
+            offset = (
+                map_base
+                + inst.offset
+                + inst.base
+                + (grp_inst * inst.grpt_offset)
+            )
             if group_index > 0:
                 offset += group_index * inst.roffset
 
@@ -625,7 +654,9 @@ class RegisterRst(object):
             else:
                 ofile.write(
                     "     - ``%s``\n"
-                    % reg_addr(self._reg, offset + (index * (self._reg.width / 8)))
+                    % reg_addr(
+                        self._reg, offset + (index * (self._reg.width // 8))
+                    )
                 )
 
     def _display_uvm_entry(self, inst, index, ofile):
@@ -683,9 +714,14 @@ class RegisterRst(object):
                     text, writer_name="html", settings_overrides=overrides
                 )
                 if self._highlight is None:
-                    return parts["html_title"] + parts["html_subtitle"] + parts["body"]
+                    return (
+                        parts["html_title"]
+                        + parts["html_subtitle"]
+                        + parts["body"]
+                    )
                 paren_re = re.compile(
-                    "(%s)" % self._highlight, flags=re.IGNORECASE)
+                    "(%s)" % self._highlight, flags=re.IGNORECASE
+                )
                 return (
                     parts["html_title"]
                     + parts["html_subtitle"]
@@ -694,8 +730,11 @@ class RegisterRst(object):
 
             except TypeError as msg:
                 return (
-                    "<h3>TypeError</h3><p>" +
-                    str(msg) + "</p><pre>" + text + "</pre>"
+                    "<h3>TypeError</h3><p>"
+                    + str(msg)
+                    + "</p><pre>"
+                    + text
+                    + "</pre>"
                 )
             except AttributeError as msg:
                 return (
@@ -723,7 +762,9 @@ class RegisterRst(object):
         return self.html_from_text(self.str_title())
 
     def html_addresses(self, text=""):
-        return self.html_from_text(self.str_defines(None, True, False) + "\n" + text)
+        return self.html_from_text(
+            self.str_defines(None, True, False) + "\n" + text
+        )
 
     def html_overview(self, text=""):
         return self.html_from_text(

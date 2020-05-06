@@ -22,7 +22,12 @@ Provides the editing interface to the register table
 
 from collections import namedtuple
 from gi.repository import Gtk
-from regenerate.ui.columns import EditableColumn, ComboMapColumn
+from regenerate.ui.columns import (
+    EditableColumn,
+    ComboMapColumn,
+    EditComboMapColumn,
+    MyComboMapColumn,
+)
 from regenerate.ui.error_dialogs import ErrorMsg
 from regenerate.db import LOGGER
 from regenerate.db.enums import ShareType
@@ -116,7 +121,7 @@ class RegisterModel(Gtk.ListStore):
     STR2BIT = {8: "8 bits", 16: "16 bits", 32: "32 bits", 64: "64 bits"}
 
     def __init__(self):
-        super().__init__(str, str, str, str, int, str, int, str, object)
+        super().__init__(str, str, str, str, str, str, int, str, object)
         self.reg2path = {}
 
     def append_register(self, register):
@@ -130,21 +135,21 @@ class RegisterModel(Gtk.ListStore):
         else:
             addr = "%04x" % register.address
 
-        path = self.get_path(
-            self.append(
-                row=(
-                    None,
-                    addr,
-                    register.register_name,
-                    register.token,
-                    register.dimension,
-                    self.STR2BIT[register.width],
-                    register.address,
-                    None,
-                    register,
-                )
-            )
+        data = (
+            None,
+            addr,
+            register.register_name,
+            register.token,
+            register.dimension_str,
+            self.STR2BIT[register.width],
+            register.address,
+            None,
+            register,
         )
+
+        node = self.append(row=data)
+        path = self.get_path(node)
+
         self.reg2path[register] = path
         return path
 
@@ -225,7 +230,7 @@ class RegisterList(object):
         ColDef("", 30, RegCol.ICON, False, RegColType.ICON, False, None),
         ColDef(
             "Address",
-            125,
+            100,
             RegCol.SORT,
             False,
             RegColType.TEXT,
@@ -251,9 +256,9 @@ class RegisterList(object):
             "Missing Register Token Name",
         ),
         ColDef(
-            "Dimension", 100, RegCol.DIM, False, RegColType.TEXT, False, None
+            "Dimension", 150, RegCol.DIM, False, RegColType.COMBO, False, None
         ),
-        ColDef("Width", 225, -1, False, RegColType.COMBO, False, None),
+        ColDef("Width", 150, -1, False, RegColType.COMBO, False, None),
     )
 
     def __init__(
@@ -275,6 +280,11 @@ class RegisterList(object):
         self.__set_warn_flags = set_warn_flags
         self.__selection.connect("changed", select_change_function)
         self.__build_columns()
+        self.__parameter_names = set()
+
+    def set_parameters(self, parameters):
+        self.__parameters_names = set([(p[0], p[0]) for p in parameters])
+        self.dim_column.update_menu(sorted(list(self.__parameters_names)))
 
     def get_selected_row(self):
         """
@@ -316,9 +326,22 @@ class RegisterList(object):
         """
         for (i, col) in enumerate(self._COLS):
             if col.type == RegColType.COMBO:
-                column = ComboMapColumn(
-                    col.title, self.__combo_edited, RegisterModel.BIT2STR, i
-                )
+                if col.title == "Dimension":
+                    column = MyComboMapColumn(
+                        col.title,
+                        self.__dimension_menu,
+                        self.__dimension_text,
+                        [],
+                        i,
+                    )
+                    self.dim_column = column
+                else:
+                    column = ComboMapColumn(
+                        col.title,
+                        self.__combo_edited,
+                        RegisterModel.BIT2STR,
+                        i,
+                    )
             elif col.type == RegColType.TEXT:
                 column = EditableColumn(
                     col.title,
@@ -436,15 +459,10 @@ class RegisterList(object):
         Updates the name associated with the register. Called after the text
         has been edited
         """
-        try:
-            value = int(text)
-        except ValueError:
-            return
-
-        if value != reg.dimension:
-            reg.dimension = value
+        if text != reg.dimension_str:
+            reg.dimension = text
             self.__set_modified()
-        self.__model[path][RegCol.DIM] = value
+        self.__model[path][RegCol.DIM] = text
 
     def __reg_update_define(self, reg, path, text, cell):
         """
@@ -563,6 +581,30 @@ class RegisterList(object):
             self.__reg_update_dim(register, path, new_text)
         elif col == RegCol.DEFINE:
             self.__reg_update_define(register, path, new_text, cell)
+
+    def __dimension_text(self, cell, path, new_text, col):
+        """
+        Called when text has been edited. Selects the correct function
+        depending on the edited column
+        """
+        register = self.__model.get_register_at_path(path)
+        new_text = new_text.strip()
+        try:
+            value = int(new_text, 16)
+            self.__reg_update_dim(register, path, new_text)
+        except ValueError:
+            if new_text in self.__parameter_names:
+                self.__reg_update_dim(register, path, new_text)
+
+    def __dimension_menu(self, cell, path, node, col):
+        """
+        Called when text has been edited. Selects the correct function
+        depending on the edited column
+        """
+        model = cell.get_property("model")
+        register = self.__model.get_register_at_path(path)
+        new_value = model.get_value(node, 1)
+        self.__reg_update_dim(register, path, new_value)
 
     def __combo_edited(self, cell, path, node, col):
         """

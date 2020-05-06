@@ -140,6 +140,9 @@ class RegParser(object):
         self.__db.array_is_reg = array == "reg"
         self.__db.descriptive_title = cnv_str(attrs, "title")
 
+    def start_parameter(self, attrs):
+        self.__db.add_parameter(attrs["name"], int(attrs["value"]))
+
     def start_base(self, attrs):
         """
         Called when the base tag is encountered. Attributes are:
@@ -345,9 +348,9 @@ class RegParser(object):
         register token value.
         """
         try:
-            self.__reg.dimension = int(text)
+            self.__reg.dimension = text
         except ValueError:
-            self.__reg.dimension = 1
+            self.__reg.dimension = "1"
 
     def end_uuid(self, text):
         """

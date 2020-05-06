@@ -25,12 +25,15 @@ WEBKIT = True
 
 try:
     import gi
-    gi.require_version('WebKit', '3.0')
+
+    gi.require_version("WebKit", "3.0")
     from gi.repository import WebKit as webkit
 except ImportError:
     PREVIEW_ENABLED = False
-    LOGGER.warning("Webkit is not installed, preview of formatted "
-                   "comments will not be available")
+    LOGGER.warning(
+        "Webkit is not installed, preview of formatted "
+        "comments will not be available"
+    )
     WEBKIT = False
 
 
@@ -51,19 +54,21 @@ class SummaryWindow(BaseWindow):
             SummaryWindow.window = builder.get_object("summary_window")
             self.configure(SummaryWindow.window)
             SummaryWindow.wkit = webkit.WebView()
-            SummaryWindow.container = builder.get_object('summary_scroll')
+            SummaryWindow.container = builder.get_object("summary_scroll")
             SummaryWindow.container.add(SummaryWindow.wkit)
-            SummaryWindow.button = builder.get_object('close_button')
-            SummaryWindow.button.connect('clicked', self.hide)
-            SummaryWindow.window.connect('destroy', self.destroy)
-            SummaryWindow.window.connect('delete_event', self.delete)
+            SummaryWindow.button = builder.get_object("summary_button")
+            SummaryWindow.button.connect("clicked", self.hide)
+            SummaryWindow.window.connect("destroy", self.destroy)
+            SummaryWindow.window.connect("delete_event", self.delete)
+            SummaryWindow.window.show_all()
+        else:
+            SummaryWindow.window.show()
 
-        reg_info = regenerate.extras.RegisterRst(reg, regset_name, project,
-                                                 show_uvm=True)
-
+        reg_info = regenerate.extras.RegisterRst(
+            reg, regset_name, project, show_uvm=True
+        )
         text = reg_info.html_css()
         SummaryWindow.wkit.load_string(text, "text/html", "utf-8", "")
-        SummaryWindow.window.show_all()
 
     def destroy(self, obj):
         SummaryWindow.window.hide()

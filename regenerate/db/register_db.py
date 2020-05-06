@@ -61,6 +61,7 @@ class RegisterDb(object):
         self.__module = "unnamed_regs"
         self.__title = ""
         self.__registers = {}
+        self.__parameters = []
 
         self.array_is_reg = False
         self.internal_only = False
@@ -108,6 +109,7 @@ class RegisterDb(object):
     def add_register(self, reg):
         """Adds the register to the database."""
         self.__registers[reg.uuid] = reg
+        reg.set_parameters(self.__parameters)
 
     def delete_register(self, reg):
         """Removes the register to the database."""
@@ -318,3 +320,15 @@ class RegisterDb(object):
 
     def address_size_in_bytes(self):
         return 1 << self.address_bus_width
+
+    def get_parameters(self):
+        return self.__parameters
+
+    def add_parameter(self, name, value):
+        self.__parameters.append((name, value))
+
+    def remove_parameter(self, name):
+        self.__parameters = [p for p in self.__parameters if p[0] != name]
+
+    def set_parameters(self, parameter_list):
+        self.__parameters = parameter_list

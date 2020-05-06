@@ -39,7 +39,7 @@ class Register(object):
         "_do_not_test",
         "_name",
         "_hide",
-        "dimension",
+        "_dimension",
         "_do_not_generate_code",
         "_do_not_cover",
         "_do_not_use_uvm",
@@ -65,16 +65,17 @@ class Register(object):
         "_token",
         "_name",
         "_hide",
-        "dimension",
+        "_dimension",
     )
 
     def __init__(self, address=0, width=32, name=""):
         self.address = address
-        self.dimension = 1
+        self._dimension = "1"
         self.ram_size = 0
         self.description = ""
         self.width = width
         self._id = ""
+        self._plist = []
 
         self._token = ""
         self._do_not_test = False
@@ -154,6 +155,25 @@ class Register(object):
                 return self.find_first_unused_bit()
             return lbits[-1] + 1
         return 0
+
+    @property
+    def dimension(self):
+        try:
+            return int(self._dimension)
+        except ValueError:
+            if self._plist:
+                for (name, value) in self._plist:
+                    if name == self._dimension:
+                        return value
+            return 1
+
+    @dimension.setter
+    def dimension(self, value):
+        self._dimension = str(value)
+
+    @property
+    def dimension_str(self):
+        return self._dimension
 
     @property
     def uuid(self):
@@ -375,3 +395,6 @@ class Register(object):
             for i in range(field.lsb, field.msb + 1):
                 val |= 1 << i
         return val
+
+    def set_parameters(self, plist):
+        self._plist = plist

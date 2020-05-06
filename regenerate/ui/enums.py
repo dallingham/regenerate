@@ -116,3 +116,8 @@ class RegColType(IntEnum):
     TEXT = 0
     COMBO = 1
     ICON = 2
+
+
+class ParameterCol(IntEnum):
+    NAME = 0
+    VALUE = 1

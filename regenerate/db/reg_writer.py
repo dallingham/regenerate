@@ -80,6 +80,7 @@ class RegWriter(object):
         ofile.write("  <array>%s</array>\n" % array)
 
         self.write_signal_list(ofile)
+        self.write_parameter_list(ofile)
         ofile.write("</module>\n")
         ofile.close()
 
@@ -116,6 +117,18 @@ class RegWriter(object):
         for reg in self.dbase.get_all_registers():
             write_register(ofile, reg)
 
+    def write_parameter_list(self, ofile):
+        plist = self.dbase.get_parameters()
+        if plist:
+            ofile.write("  <parameters>\n")
+            for (name, value) in plist:
+                ofile.write(
+                    '    <parameter name="{}" value="{}"/>\n'.format(
+                        name, value
+                    )
+                )
+            ofile.write("  </parameters>\n")
+
 
 def write_register(ofile, reg):
     """Writes the specified register to the output file"""
@@ -123,7 +136,7 @@ def write_register(ofile, reg):
     ofile.write("    <name>%s</name>\n" % reg.register_name)
     ofile.write("    <token>%s</token>\n" % reg.token)
     ofile.write("    <uuid>%s</uuid>\n" % reg.uuid)
-    ofile.write("    <dimension>%d</dimension>\n" % reg.dimension)
+    ofile.write("    <dimension>%s</dimension>\n" % reg.dimension_str)
     ofile.write("    <address>%d</address>\n" % reg.address)
     ofile.write("    <nocode>%d</nocode>\n" % reg.do_not_generate_code)
     ofile.write("    <dont_test>%d</dont_test>\n" % reg.do_not_test)

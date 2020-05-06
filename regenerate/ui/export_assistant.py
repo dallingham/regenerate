@@ -47,8 +47,13 @@ class TextCombo(Gtk.ComboBox):
 
 class ExportAssistant(Gtk.Assistant):
     def __init__(
-            self, project_name, optlist, register_sets,
-            group_names, save_callback, parent
+        self,
+        project_name,
+        optlist,
+        register_sets,
+        group_names,
+        save_callback,
+        parent,
     ):
         super().__init__()
 
@@ -154,7 +159,15 @@ class ExportAssistant(Gtk.Assistant):
         )
         label.set_line_wrap(True)
         label.show()
-        table.attach(label, 0, 3, 0, 1)
+        table.attach(
+            label,
+            0,
+            3,
+            0,
+            1,
+            Gtk.AttachOptions.FILL | Gtk.AttachOptions.EXPAND,
+            Gtk.AttachOptions.SHRINK,
+        )
 
         self.export_combo = Gtk.ComboBox()
         self.export_combo.show()
@@ -175,8 +188,8 @@ class ExportAssistant(Gtk.Assistant):
             2,
             1,
             2,
-            0,
-            Gtk.AttachOptions.EXPAND
+            Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL,
+            Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL,
         )
 
         self.append_page(table)
@@ -205,13 +218,7 @@ class ExportAssistant(Gtk.Assistant):
         for item in register_sets:
             self.register_combo.append_text(item)
         table.attach(
-            self.register_combo,
-            1,
-            2,
-            1,
-            2,
-            0,
-            Gtk.AttachOptions.EXPAND
+            self.register_combo, 1, 2, 1, 2, 0, Gtk.AttachOptions.EXPAND
         )
 
         self.append_page(table)
@@ -278,40 +285,16 @@ class ExportAssistant(Gtk.Assistant):
         self.sum.set_row_spacings(6)
         self.sum.set_col_spacings(6)
         self.sum.attach(
-            MyLabel("Export type:"),
-            1,
-            2,
-            0,
-            1,
-            Gtk.AttachOptions.FILL,
-            0
+            MyLabel("Export type:"), 1, 2, 0, 1, Gtk.AttachOptions.FILL, 0
         )
         self.sum.attach(
-            MyLabel("Register set:"),
-            1,
-            2,
-            1,
-            2,
-            Gtk.AttachOptions.FILL,
-            0
+            MyLabel("Register set:"), 1, 2, 1, 2, Gtk.AttachOptions.FILL, 0
         )
         self.sum.attach(
-            MyLabel("Output file:"),
-            1,
-            2,
-            2,
-            3,
-            Gtk.AttachOptions.FILL,
-            0
+            MyLabel("Output file:"), 1, 2, 2, 3, Gtk.AttachOptions.FILL, 0
         )
         self.sum.attach(
-            MyLabel("Execute status:"),
-            1,
-            2,
-            3,
-            4,
-            Gtk.AttachOptions.FILL,
-            0
+            MyLabel("Execute status:"), 1, 2, 3, 4, Gtk.AttachOptions.FILL, 0
         )
         self.sum.set_border_width(12)
         self.export_obj = MyLabel()
@@ -364,7 +347,6 @@ class ExportAssistant(Gtk.Assistant):
 
 
 class MyLabel(Gtk.Label):
-    
     def __init__(self, text=""):
         if text is None:
             text = ""

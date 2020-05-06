@@ -221,7 +221,8 @@ class ModuleInt(ModuleValid):
     def change_db(self, dbase):
         self.dbase = dbase
         if dbase:
-            self.widget.set_text(str(getattr(dbase, self.dbname)))
+            val = getattr(dbase, self.dbname)
+            self.widget.set_text(str(val))
         else:
             self.widget.set_text("")
 
@@ -416,7 +417,7 @@ class ModuleTabs(object):
             msgs.append("No module name was provided.")
         self.icon.set_property("visible", warn)
         self.icon.set_tooltip_text("\n".join(msgs))
-        #        self.port_table.set_sensitive(self.dbase.use_interface is False)
+        self.port_table.set_sensitive(self.dbase.use_interface is False)
         self.set_modified()
 
     def preview_enable(self):

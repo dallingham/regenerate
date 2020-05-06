@@ -52,6 +52,7 @@ from regenerate.importers import IMPORTERS
 from regenerate.settings import ini
 from regenerate.settings.paths import GLADE_TOP, INSTALL_PATH
 from regenerate.ui.addrmap_list import AddrMapList
+from regenerate.ui.parameter_list import ParameterList
 from regenerate.ui.base_window import BaseWindow
 from regenerate.ui.bit_list import BitModel, BitList, bits, reset_value
 from regenerate.ui.bitfield_editor import BitFieldEditor
@@ -256,6 +257,15 @@ class MainWindow(BaseWindow):
         self.addr_map_list = AddrMapList(
             self.addr_map_obj, self.set_project_modified
         )
+
+        self.parameter_list_obj = self.find_obj("parameter_list")
+        self.parameter_list = ParameterList(
+            self.parameter_list_obj, self.set_parameters_modified
+        )
+
+    def set_parameters_modified(self):
+        self.set_modified()
+        self.reglist_obj.set_parameters(self.dbase.get_parameters())
 
     def set_project_modified(self):
         self.project_modified(True)
@@ -561,6 +571,12 @@ class MainWindow(BaseWindow):
     def set_search(self, values, obj):
         if obj.get_active():
             self.filter_manage.set_search_fields(values)
+
+    def on_add_param_clicked(self, obj):
+        self.parameter_list.add_clicked()
+
+    def on_remove_param_clicked(self, obj):
+        self.parameter_list.remove_clicked()
 
     def on_address_token_name_toggled(self, obj):
         self.set_search(
@@ -952,7 +968,7 @@ class MainWindow(BaseWindow):
                 Gtk.STOCK_CANCEL,
                 Gtk.ResponseType.CANCEL,
                 icon,
-                Gtk.Response.Type.OK,
+                Gtk.ResponseType.OK,
             ),
         )
 
@@ -1041,7 +1057,7 @@ class MainWindow(BaseWindow):
                 Gtk.STOCK_CANCEL,
                 Gtk.ResponseType.CANCEL,
                 Gtk.STOCK_SAVE,
-                Gtk.Response.Type.OK,
+                Gtk.ResponseType.OK,
             ),
         )
         choose.set_current_folder(os.curdir)
@@ -1402,6 +1418,8 @@ class MainWindow(BaseWindow):
     def redraw(self):
         """Redraws the information in the register list."""
         self.module_tabs.change_db(self.dbase)
+        self.parameter_list.set_db(self.dbase)
+        self.reglist_obj.set_parameters(self.dbase.get_parameters())
 
         if self.dbase.array_is_reg:
             self.find_obj("register_notation").set_active(True)
