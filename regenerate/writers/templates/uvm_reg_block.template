@@ -270,11 +270,9 @@ package {{project.short_name|lower}}_reg_pkg;
    {% for map in grp_map %}
     uvm_reg_map {{map}}_map;
    {% endfor %}
-   {% if grp_map|length > 1 %}
-     {% for map in grp_map %}
+   {% for map in grp_map %}
     bit disable_{{map}}_map = 1'b0;
-     {% endfor %}
-   {% endif %}
+   {% endfor %}
 
    {% if db.coverage %}
     {{db.set_name|lower}}_reg_access_wrapper {{db.set_name|lower}}_access_cg;
@@ -447,11 +445,9 @@ package {{project.short_name|lower}}_reg_pkg;
   {% for item in group_maps[group] %}
      uvm_reg_map {{item}}_map;
   {% endfor %}
-  {% if used_maps|length > 1 %}
-    {% for map in group_maps[group] %}
+  {% for map in group_maps[group] %}
      bit disable_{{map}}_map = 1'b0;
-    {% endfor %}
-  {% endif %}
+  {% endfor %}
 
      function new(string name = "{{group.name|lower}}_grp_reg_blk");
         super.new(name, build_coverage(UVM_NO_COVERAGE));
@@ -471,7 +467,7 @@ package {{project.short_name|lower}}_reg_pkg;
   {% endif %}
 
   {% for group_entry in group.register_sets %}
-    {% if group_entry.repeat > 1 or group_entry.array %}
+   {% if group_entry.repeat > 1 or group_entry.array %}
         for (int i = 0; i < {{group_entry.repeat}}; i++) begin
            {% if use_new %}
            {{group_entry.inst|lower}}[i] = new($sformatf("{{group_entry.inst|lower}}[%0d]", i));
@@ -483,11 +479,11 @@ package {{project.short_name|lower}}_reg_pkg;
       {% else %}
            {{group_entry.inst|lower}}[i].configure(this, "");
       {% endif %}
+      
       {% for item in group_maps[group] %}
-        {% if group_maps[group]| length > 1 %}
            {{group_entry.inst|lower}}[i].disable_{{item}}_map = disable_{{item}}_map;
-        {% endif %}
       {% endfor %}
+      
            {{group_entry.inst|lower}}[i].build();
       {% for item in group_maps[group] %}
         {% if group_maps[group]| length > 1 %}
@@ -509,11 +505,11 @@ package {{project.short_name|lower}}_reg_pkg;
         {{group_entry.inst|lower}} = {{group.name|lower}}_{{group_entry.set|lower}}_reg_blk::type_id::create("{{group_entry.inst|lower}}");
         {% endif %}
         {{group_entry.inst|lower}}.configure(this, "{{group_entry.hdl}}");
+	
       {% for item in group_maps[group] %}
-        {% if group_maps[group]| length > 1 %}
         {{group_entry.inst|lower}}.disable_{{item}}_map = disable_{{item}}_map;
-        {% endif %}
       {% endfor %}
+      
         {{group_entry.inst|lower}}.build();
       {% for item in group_maps[group] %}
         {% if group_maps[group]| length > 1 %}
@@ -575,21 +571,21 @@ package {{project.short_name|lower}}_reg_pkg;
     {% else %}
         {{group.name|lower}} = {{group.name|lower}}_grp_reg_blk::type_id::create("{{group.name|lower}}");
     {% endif %}
+    {% if group.hdl != "" %}
         {{group.name|lower}}.configure(this, "{{group.hdl}}");
+    {% else %}
+        {{group.name|lower}}.configure(this);
+    {% endif %}
     {% if used_maps|length > 1 %}
-      {% for set in used_maps %}
-        {% if group.name in map2grp[set] %}
+      {% for set in group_maps[group] %}
         {{group.name|lower}}.disable_{{set}}_map = disable_{{set}}_map;
-        {% endif %}
       {% endfor %}
     {% endif %}
         {{group.name|lower}}.build();
 
     {% if used_maps|length > 1 %}
-      {%- for set in used_maps -%}
-        {% if group.name in map2grp[set] %}
+      {%- for set in group_maps[group] -%}
         if (!disable_{{set}}_map) {{set}}_map.add_submap({{group.name|lower}}.{{set}}_map, 'h{{"%x" | format(group.base)}});
-        {% endif %}
       {% endfor %}
     {%- else -%}
       {% for set in used_maps %}
@@ -605,24 +601,20 @@ package {{project.short_name|lower}}_reg_pkg;
     {% else  %}
            {{group.name|lower}}[i] = {{group.name|lower}}_grp_reg_blk::type_id::create($sformatf("{{group.name|lower}}[%0d]", i));
     {% endif %}
+    {% if group.hdl != "" %}
            {{group.name|lower}}[i].configure(this, $sformatf("{{group.hdl}}", i));
-    {% for mname in project.get_address_maps() %}
-      {% if mname.name in used_maps %}
-        {% if used_maps|length > 1 %}
-           {{group.name|lower}}[i].disable_{{mname.name}}_map = disable_{{mname.name}}_map;
-        {% endif %}
-      {% endif %}
+    {% else %}
+           {{group.name|lower}}[i].configure(this);
+    {% endif %}
+    {% for set in group_maps[group] %}
+           {{group.name|lower}}[i].disable_{{set}}_map = disable_{{set}}_map;
     {% endfor %}
            {{group.name|lower}}[i].build();
 
-    {% for mname in project.get_address_maps() %}
-      {% if mname.name in used_maps %}
-        {% if used_maps|length > 1 %}
-           if (!disable_{{mname.name}}_map) {{mname.name}}_map.add_submap({{group.name|lower}}[i].{{mname.name}}_map, 'h{{"%x" | format(group.base)}} + (i * 'h{{"%x" | format(group.repeat_offset)}}));
+    {% for set in group_maps[group] %}
+           if (!disable_{{set}}_map) {{set}}_map.add_submap({{group.name|lower}}[i].{{set}}_map, 'h{{"%x" | format(group.base)}} + (i * 'h{{"%x" | format(group.repeat_offset)}}));
         {% else %}
-           {{mname.name}}_map.add_submap({{group.name|lower}}[i].{{mname.name}}_map, 'h{{"%x" | format(group.base)}} + (i * 'h{{"%x" | format(group.repeat_offset)}}));
-        {% endif %}
-      {% endif %}
+           {{set}}_map.add_submap({{group.name|lower}}[i].{{set}}_map, 'h{{"%x" | format(group.base)}} + (i * 'h{{"%x" | format(group.repeat_offset)}}));
     {% endfor %}
         end
 

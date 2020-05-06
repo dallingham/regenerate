@@ -414,7 +414,7 @@ class MainWindow(BaseWindow):
         field = self.bit_model.get_bitfield_at_path(path)
         if col == BitCol.TYPE:
             self.update_type_info(field, model, path, node)
-        elif col == BitCol.RESET:
+        elif col == BitCol.RESET_TYPE:
             self.update_reset_field(field, model, path, node)
         self.set_modified()
 

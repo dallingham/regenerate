@@ -27,8 +27,10 @@ from regenerate.ui.columns import EditableColumn, ComboMapColumn, SwitchComboMap
 from regenerate.ui.enums import BitCol
 
 TYPE2STR = [(t.description, t.type) for t in sorted(TYPES)]
-RO2STR = [(t.description, t.type) for t in sorted(TYPES) if t.simple_type == "RO"]
-WO2STR = [(t.description, t.type) for t in sorted(TYPES) if t.simple_type == "WO"]
+RO2STR = [(t.description, t.type)
+          for t in sorted(TYPES) if t.simple_type == "RO"]
+WO2STR = [(t.description, t.type)
+          for t in sorted(TYPES) if t.simple_type == "WO"]
 
 (BIT_TITLE, BIT_SIZE, BIT_SORT, BIT_EXPAND, BIT_MONO) = range(5)
 
@@ -65,7 +67,7 @@ class BitModel(Gtk.ListStore):
                 get_field_reset_data(field),
                 self.RESET2STR[field.reset_type][0],
                 field.lsb,
-                field,
+                field
             ]
         )
         return self.get_path(node)

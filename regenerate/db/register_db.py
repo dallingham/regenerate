@@ -123,6 +123,20 @@ class RegisterDb(object):
             parser.parse(ifile)
         return self
 
+    def loads(self, data, filename):
+        """Reads the XML file, loading the databsae."""
+
+        try:
+            from CStringIO import StringIO
+        except:
+            from io import BytesIO as StringIO
+
+        self.set_name = os.path.splitext(os.path.basename(filename))[0]
+        ifile = StringIO(data)
+        parser = regenerate.db.RegParser(self)
+        parser.parse(ifile)
+        return self
+
     def save_xml(self, filename):
         """Saves the database to the specified XML file"""
         writer = regenerate.db.RegWriter(self)
