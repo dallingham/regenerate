@@ -167,6 +167,8 @@ class MainWindow(BaseWindow):
             self.find_obj("bitfield_list"),
             self.bit_combo_edit,
             self.bit_text_edit,
+            self.bit_reset_text_edit,
+            self.bit_reset_menu_edit,
             self.bit_changed,
         )
 
@@ -266,6 +268,7 @@ class MainWindow(BaseWindow):
     def set_parameters_modified(self):
         self.set_modified()
         self.reglist_obj.set_parameters(self.dbase.get_parameters())
+        self.bitfield_obj.set_parameters(self.dbase.get_parameters())
 
     def set_project_modified(self):
         self.project_modified(True)
@@ -451,7 +454,7 @@ class MainWindow(BaseWindow):
             self.bit_model[path][BitCol.RESET] = field.reset_input
         else:
             if not re.match(r"^[A-Za-z]\w*$", field.reset_parameter):
-                field.reset_parameter = "pRST_%s" % field.field_name
+                field.reset_parameter = build_parameter_name(field.field_name)
             self.bit_model[path][BitCol.RESET] = field.reset_parameter
 
     def bit_update_bits(self, field, path, new_text):
@@ -513,49 +516,59 @@ class MainWindow(BaseWindow):
                     '"%s" has already been used as a field name', new_text
                 )
 
-    def bit_update_reset(self, field, path, new_text):
-        """
-        Called when the reset value of the BitList is edited. If the new text
-        is different from the stored value, we alter the model (to change the
-        display) and alter the corresponding field.
-        """
-        if field.reset_type == ResetType.NUMERIC:
-            try:
-                field.reset_value = int(new_text, 16)
-                self.bit_model[path][BitCol.RESET] = reset_value(field)
-                self.set_modified()
-            except ValueError:
-                LOGGER.error('Illegal reset value: "%s"', new_text)
-                return
-        elif field.reset_type == ResetType.INPUT:
-            if not re.match(r"""^[A-Za-z]\w*$""", new_text):
-                LOGGER.error('"%s" is not a valid input name', new_text)
-                new_text = "%s_RST" % field.field_name
-            field.reset_input = new_text
-            self.bit_model[path][BitCol.RESET] = field.reset_input
+    def bit_reset_text_edit(self, cell, path, new_val, col):
+        field = self.bit_model.get_bitfield_at_path(path)
+
+        if re.match(r"^[a-fA-F0-9]+$", new_val):
+            field.reset_value = int(new_val, 16)
+            self.bit_model[path][col] = new_val
+            self.bit_model[path][BitCol.RESET_TYPE] = "Constant"
+            field = self.bit_model.get_bitfield_at_path(path)
+            field.reset_type = ResetType.NUMERIC
             self.set_modified()
-        else:
-            if not re.match(r"""^[A-Za-z]\w*$""", new_text):
-                LOGGER.error('"%s" is not a valid parameter name', new_text)
-                new_text = "pRST_%s" % field.field_name
-            field.reset_parameter = new_text
-            self.bit_model[path][BitCol.RESET] = field.reset_parameter
+        elif re.match(r"""^[A-Za-z]\w*$""", new_val):
+            field.reset_inputr = new_val
+            field.reset_type = ResetType.INPUT
             self.set_modified()
+            self.bit_model[path][BitCol.RESET] = new_val
+            self.bit_model[path][BitCol.RESET_TYPE] = "Input Port"
+
+    def bit_reset_menu_edit(self, cell, path, node, col):
+        model = cell.get_property("model")
+        new_val = model.get_value(node, 0)
+        field = self.bit_model.get_bitfield_at_path(path)
+        field.reset_parameter = new_val
+        field.reset_type = ResetType.PARAMETER
+        self.set_modified()
+        self.bit_model[path][BitCol.RESET] = new_val
+        self.bit_model[path][BitCol.RESET_TYPE] = "Parameter"
 
     def bit_text_edit(self, cell, path, new_text, col):
         """
         Primary callback when a text field is edited in the BitList. Based off
         the column, we pass it to a function to handle the data.
         """
+        model = cell.get_property("model")
+        new_val = model.get_value(node, 0)
         field = self.bit_model.get_bitfield_at_path(path)
-        if col == BitCol.BIT:
-            self.bit_update_bits(field, path, new_text)
-        elif col == BitCol.NAME:
-            self.bit_update_name(field, path, new_text)
-        elif col == BitCol.RESET:
-            self.bit_update_reset(field, path, new_text)
-        register = self.reglist_obj.get_selected_register()
-        self.set_register_warn_flags(register)
+
+        if re.match("[a-fA-F0-9]+", new_val):
+            field.reset_value = int(new_val, 16)
+            self.bit_model[path][col] = model.get_value(node, 0)
+            field = self.bit_model.get_bitfield_at_path(path)
+            field.reset_type = ResetType.NUMERIC
+        else:
+            print("Not a hex number")
+
+        # field = self.bit_model.get_bitfield_at_path(path)
+        # if col == BitCol.BIT:
+        #     self.bit_update_bits(field, path, new_text)
+        # elif col == BitCol.NAME:
+        #     self.bit_update_name(field, path, new_text)
+        # elif col == BitCol.RESET:
+        #     self.bit_update_reset(field, path, new_text)
+        # register = self.reglist_obj.get_selected_register()
+        # self.set_register_warn_flags(register)
 
     def on_filter_icon_press(self, obj, icon, event):
         if icon == Gtk.ENTRY_ICON_SECONDARY:
@@ -1420,6 +1433,7 @@ class MainWindow(BaseWindow):
         self.module_tabs.change_db(self.dbase)
         self.parameter_list.set_db(self.dbase)
         self.reglist_obj.set_parameters(self.dbase.get_parameters())
+        self.bitfield_obj.set_parameters(self.dbase.get_parameters())
 
         if self.dbase.array_is_reg:
             self.find_obj("register_notation").set_active(True)
@@ -1664,3 +1678,8 @@ def check_reset(field):
 
 def sort_regset(x):
     return os.path.basename(x)
+
+
+def build_parameter_name(name):
+    name_list = name.split("_")
+    return "pRst" + "".join([n.capitalize() for n in name_list])

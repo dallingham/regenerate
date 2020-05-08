@@ -236,4 +236,4 @@ class ParameterList(object):
 
 
 def get_row_data(map_obj):
-    return (map_obj.name, "{0:x}".format(map_obj.value))
+    return (map_obj.name, "{0:x}".format(int(map_obj.value)))

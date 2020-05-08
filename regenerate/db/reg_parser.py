@@ -87,6 +87,7 @@ class RegParser(object):
         self.__token_list = []
         self.save_id = None
         self.existing_ids = set()
+        self.found_parameters = set()
 
     def parse(self, input_file):
         """
@@ -142,6 +143,12 @@ class RegParser(object):
 
     def start_parameter(self, attrs):
         self.__db.add_parameter(attrs["name"], int(attrs["value"]))
+
+    def end_parameters(self, attrs):
+        current_params = set([n[0] for n in self.__db.get_parameters()])
+        for name in self.found_parameters:
+            if name not in current_params:
+                self.__db.add_parameter(name, "0")
 
     def start_base(self, attrs):
         """
@@ -331,6 +338,7 @@ class RegParser(object):
             self.__field.reset_parameter = self.__reset_parameter
             self.__field.reset_value = int(text, 16)
             self.__field.reset_type = ResetType.PARAMETER
+            self.found_parameters.add(self.__reset_parameter)
         else:
             self.__field.reset_value = int(text, 16)
             self.__field.reset_type = ResetType.NUMERIC

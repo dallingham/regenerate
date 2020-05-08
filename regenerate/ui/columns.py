@@ -122,6 +122,33 @@ class EditableColumn(BaseColumn):
         self.renderer.emit("edited", self.path, val)
 
 
+class ReadOnlyColumn(BaseColumn):
+    """
+    A TreeViewColumn that has editable cells. The callback and listmodel
+    columns are passed and used to create the CellRenderer.
+    """
+
+    def __init__(
+        self,
+        title,
+        source_column,
+        monospace=False,
+        visible_callback=None,
+        placeholder=None,
+        tooltip=None,
+    ):
+
+        self.renderer = Gtk.CellRendererText()
+        self.renderer.set_property("ellipsize", Pango.EllipsizeMode.END)
+        if monospace:
+            self.renderer.set_property("family", "Monospace")
+
+        super().__init__(
+            title, self.renderer, text=source_column, tooltip=tooltip
+        )
+        self.renderer.set_property("editable", False)
+
+
 class ComboMapColumn(BaseColumn):
     """
     A TreeViewColumn that has a menu of options. The callback and listmodel
@@ -149,8 +176,6 @@ class ComboMapColumn(BaseColumn):
         self.renderer.set_property("editable", True)
         if callback:
             self.renderer.connect("changed", callback, source_column)
-        self.renderer.connect("editing-canceled", self.edit_canceled)
-        self.renderer.connect("editing-started", self.edit_started)
 
         super().__init__(
             title, self.renderer, tooltip=tooltip, text=source_column
@@ -158,14 +183,6 @@ class ComboMapColumn(BaseColumn):
 
         if visible_callback:
             self.set_cell_data_func(self.renderer, visible_callback)
-
-    def edit_started(self, cell, entry, path):
-        self.path = path
-        self.entry = entry
-
-    def edit_canceled(self, obj):
-        val = self.entry.get_text()
-        self.renderer.emit("edited", self.path, val)
 
 
 class MyComboMapColumn(BaseColumn):

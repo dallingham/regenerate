@@ -23,14 +23,22 @@ Provides both the GTK ListStore and ListView for the bit fields.
 from gi.repository import Gtk
 from regenerate.db import TYPES
 from regenerate.db.enums import ResetType
-from regenerate.ui.columns import EditableColumn, ComboMapColumn, SwitchComboMapColumn
+from regenerate.ui.columns import (
+    EditableColumn,
+    ComboMapColumn,
+    MyComboMapColumn,
+    SwitchComboMapColumn,
+    ReadOnlyColumn,
+)
 from regenerate.ui.enums import BitCol
 
 TYPE2STR = [(t.description, t.type) for t in sorted(TYPES)]
-RO2STR = [(t.description, t.type)
-          for t in sorted(TYPES) if t.simple_type == "RO"]
-WO2STR = [(t.description, t.type)
-          for t in sorted(TYPES) if t.simple_type == "WO"]
+RO2STR = [
+    (t.description, t.type) for t in sorted(TYPES) if t.simple_type == "RO"
+]
+WO2STR = [
+    (t.description, t.type) for t in sorted(TYPES) if t.simple_type == "WO"
+]
 
 (BIT_TITLE, BIT_SIZE, BIT_SORT, BIT_EXPAND, BIT_MONO) = range(5)
 
@@ -41,11 +49,7 @@ class BitModel(Gtk.ListStore):
     ListView to provide the data for the bitfields.
     """
 
-    RESET2STR = (
-        ("Constant", ResetType.NUMERIC),
-        ("Input Port", ResetType.INPUT),
-        ("Parameter", ResetType.PARAMETER),
-    )
+    RESET2STR = ("Constant", "Input Port", "Parameter")
 
     def __init__(self):
         """
@@ -65,9 +69,9 @@ class BitModel(Gtk.ListStore):
                 field.field_name,
                 TYPE2STR[field.field_type][0],
                 get_field_reset_data(field),
-                self.RESET2STR[field.reset_type][0],
+                self.RESET2STR[field.reset_type],
                 field.lsb,
-                field
+                field,
             ]
         )
         return self.get_path(node)
@@ -96,7 +100,15 @@ class BitList(object):
         ("Reset Type", 105, -1, False, False),
     )
 
-    def __init__(self, obj, combo_edit, text_edit, selection_changed):
+    def __init__(
+        self,
+        obj,
+        combo_edit,
+        text_edit,
+        reset_text_edit,
+        reset_menu_edit,
+        selection_changed,
+    ):
         """
         Creates the object, connecting it to the ListView (obj). Three
         callbacks are associated with the object.
@@ -108,8 +120,14 @@ class BitList(object):
         self.__obj = obj
         self.__col = None
         self.__model = None
-        self.__build_bitfield_columns(combo_edit, text_edit)
+        self.__build_bitfield_columns(
+            combo_edit, text_edit, reset_text_edit, reset_menu_edit
+        )
         self.__obj.get_selection().connect("changed", selection_changed)
+
+    def set_parameters(self, parameters):
+        my_parameters = sorted([(p[0], p[0]) for p in parameters])
+        self.reset_column.update_menu(my_parameters)
 
     def set_model(self, model):
         """
@@ -121,7 +139,9 @@ class BitList(object):
     def set_mode(self, mode):
         self.type_column.set_mode(mode)
 
-    def __build_bitfield_columns(self, combo_edit, text_edit):
+    def __build_bitfield_columns(
+        self, combo_edit, text_edit, reset_text_edit, reset_menu_edit
+    ):
         """
         Builds the columns for the tree view. First, removes the old columns in
         the column list. The builds new columns and inserts them into the tree.
@@ -133,18 +153,18 @@ class BitList(object):
                 )
                 self.type_column = column
             elif i == BitCol.RESET_TYPE:
-                column = ComboMapColumn(
-                    col[BIT_TITLE], combo_edit, BitModel.RESET2STR, i
-                )
+                column = ReadOnlyColumn(col[BIT_TITLE], i, col[BIT_MONO])
             elif i == BitCol.ICON:
                 renderer = Gtk.CellRendererPixbuf()
                 column = Gtk.TreeViewColumn("", renderer, stock_id=i)
+            elif i == BitCol.RESET:
+                column = MyComboMapColumn(
+                    col[BIT_TITLE], reset_menu_edit, reset_text_edit, [], i
+                )
+                self.reset_column = column
             else:
                 column = EditableColumn(
-                    col[BIT_TITLE],
-                    text_edit,
-                    i,
-                    col[BIT_MONO]
+                    col[BIT_TITLE], text_edit, i, col[BIT_MONO]
                 )
             if i == BitCol.BIT:
                 self.__col = column
