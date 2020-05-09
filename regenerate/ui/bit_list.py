@@ -224,7 +224,7 @@ def reset_value(field):
     Returns a string representation of the reset value.
     """
     strval = "{0:x}".format(field.reset_value)
-    return strval.zfill(int(field.width / 4))
+    return "0x" + strval.zfill(int(field.width / 4))
 
 
 def get_field_reset_data(field):

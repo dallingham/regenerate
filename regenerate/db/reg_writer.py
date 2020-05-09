@@ -121,10 +121,10 @@ class RegWriter(object):
         plist = self.dbase.get_parameters()
         if plist:
             ofile.write("  <parameters>\n")
-            for (name, value) in plist:
+            for (name, value, min_val, max_val) in plist:
                 ofile.write(
-                    '    <parameter name="{}" value="{}"/>\n'.format(
-                        name, value
+                    '    <parameter name="{}" value="{:d}" min="{:d}" max="{:d}"/>\n'.format(
+                        name, value, min_val, max_val
                     )
                 )
             ofile.write("  </parameters>\n")

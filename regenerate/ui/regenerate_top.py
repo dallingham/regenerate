@@ -519,9 +519,9 @@ class MainWindow(BaseWindow):
     def bit_reset_text_edit(self, cell, path, new_val, col):
         field = self.bit_model.get_bitfield_at_path(path)
 
-        if re.match(r"^[a-fA-F0-9]+$", new_val):
+        if re.match(r"^(0x)?[a-fA-F0-9]+$", new_val):
             field.reset_value = int(new_val, 16)
-            self.bit_model[path][col] = new_val
+            self.bit_model[path][col] = reset_value(field)
             self.bit_model[path][BitCol.RESET_TYPE] = "Constant"
             field = self.bit_model.get_bitfield_at_path(path)
             field.reset_type = ResetType.NUMERIC
@@ -540,7 +540,7 @@ class MainWindow(BaseWindow):
         field.reset_parameter = new_val
         field.reset_type = ResetType.PARAMETER
         self.set_modified()
-        self.bit_model[path][BitCol.RESET] = new_val
+        self.bit_model[path][BitCol.RESET] = hex(int(new_val, 16))
         self.bit_model[path][BitCol.RESET_TYPE] = "Parameter"
 
     def bit_text_edit(self, cell, path, new_text, col):
@@ -554,21 +554,11 @@ class MainWindow(BaseWindow):
 
         if re.match("[a-fA-F0-9]+", new_val):
             field.reset_value = int(new_val, 16)
-            self.bit_model[path][col] = model.get_value(node, 0)
+            self.bit_model[path][col] = hex(int(new_val, 16))
             field = self.bit_model.get_bitfield_at_path(path)
             field.reset_type = ResetType.NUMERIC
         else:
             print("Not a hex number")
-
-        # field = self.bit_model.get_bitfield_at_path(path)
-        # if col == BitCol.BIT:
-        #     self.bit_update_bits(field, path, new_text)
-        # elif col == BitCol.NAME:
-        #     self.bit_update_name(field, path, new_text)
-        # elif col == BitCol.RESET:
-        #     self.bit_update_reset(field, path, new_text)
-        # register = self.reglist_obj.get_selected_register()
-        # self.set_register_warn_flags(register)
 
     def on_filter_icon_press(self, obj, icon, event):
         if icon == Gtk.ENTRY_ICON_SECONDARY:

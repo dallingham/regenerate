@@ -338,8 +338,8 @@ class RegisterDb(object):
     def get_parameters(self):
         return self.__parameters
 
-    def add_parameter(self, name, value):
-        self.__parameters.append((name, value))
+    def add_parameter(self, name, value, min_val, max_val):
+        self.__parameters.append((name, value, min_val, max_val))
 
     def remove_parameter(self, name):
         self.__parameters = [p for p in self.__parameters if p[0] != name]
