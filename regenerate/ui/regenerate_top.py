@@ -1056,7 +1056,7 @@ class MainWindow(BaseWindow):
         choose = Gtk.FileChooserDialog(
             "New",
             self.top_window,
-            Gtk.FileChooserAction_SAVE,
+            Gtk.FileChooserAction.SAVE,
             (
                 Gtk.STOCK_CANCEL,
                 Gtk.ResponseType.CANCEL,
