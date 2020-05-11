@@ -52,6 +52,7 @@ from regenerate.importers import IMPORTERS
 from regenerate.settings import ini
 from regenerate.settings.paths import GLADE_TOP, INSTALL_PATH
 from regenerate.ui.addrmap_list import AddrMapList
+from regenerate.ui.addr_edit import AddrMapEdit
 from regenerate.ui.parameter_list import ParameterList
 from regenerate.ui.base_window import BaseWindow
 from regenerate.ui.bit_list import BitModel, BitList, bits, reset_value
@@ -221,9 +222,7 @@ class MainWindow(BaseWindow):
 
     def on_instances_cursor_changed(self, obj):
         """Called when the row of the treeview changes."""
-        (mdl, node) = self.instance_obj.get_selected_instance()
-        btn = self.find_obj("instance_edit_btn")
-        btn.set_sensitive(True)
+        self.find_obj("instance_edit_btn").set_sensitive(True)
 
     def on_addrmap_cursor_changed(self, obj):
         """Called when the row of the treeview changes."""
@@ -283,8 +282,6 @@ class MainWindow(BaseWindow):
         self.project_modified(False)
 
     def on_edit_map_clicked(self, obj):
-        from regenerate.ui.addr_edit import AddrMapEdit
-
         map_name = self.addr_map_list.get_selected()
         if map_name is None:
             return
@@ -311,6 +308,9 @@ class MainWindow(BaseWindow):
 
     def on_addr_map_help_clicked(self, obj):
         HelpWindow(self.builder, "addr_map_help.rst")
+
+    def on_param_help_clicked(self, obj):
+        HelpWindow(self.builder, "parameter_help.rst")
 
     def on_group_help_clicked(self, obj):
         HelpWindow(self.builder, "project_group_help.rst")
@@ -412,13 +412,10 @@ class MainWindow(BaseWindow):
         and the path tells us the row. So [path][col] is the index into the
         table.
         """
+        field = self.bit_model.get_bitfield_at_path(path)
         model = cell.get_property("model")
         self.bit_model[path][col] = model.get_value(node, 0)
-        field = self.bit_model.get_bitfield_at_path(path)
-        if col == BitCol.TYPE:
-            self.update_type_info(field, model, path, node)
-        elif col == BitCol.RESET_TYPE:
-            self.update_reset_field(field, model, path, node)
+        self.update_type_info(field, model, path, node)
         self.set_modified()
 
     def update_type_info(self, field, model, path, node):
@@ -521,17 +518,16 @@ class MainWindow(BaseWindow):
 
         if re.match(r"^(0x)?[a-fA-F0-9]+$", new_val):
             field.reset_value = int(new_val, 16)
+            field.reset_type = ResetType.NUMERIC
             self.bit_model[path][col] = reset_value(field)
             self.bit_model[path][BitCol.RESET_TYPE] = "Constant"
-            field = self.bit_model.get_bitfield_at_path(path)
-            field.reset_type = ResetType.NUMERIC
             self.set_modified()
         elif re.match(r"""^[A-Za-z]\w*$""", new_val):
-            field.reset_inputr = new_val
+            field.reset_input = new_val
             field.reset_type = ResetType.INPUT
-            self.set_modified()
             self.bit_model[path][BitCol.RESET] = new_val
             self.bit_model[path][BitCol.RESET_TYPE] = "Input Port"
+            self.set_modified()
 
     def bit_reset_menu_edit(self, cell, path, node, col):
         model = cell.get_property("model")
@@ -539,9 +535,9 @@ class MainWindow(BaseWindow):
         field = self.bit_model.get_bitfield_at_path(path)
         field.reset_parameter = new_val
         field.reset_type = ResetType.PARAMETER
-        self.set_modified()
-        self.bit_model[path][BitCol.RESET] = hex(int(new_val, 16))
+        self.bit_model[path][BitCol.RESET] = new_val
         self.bit_model[path][BitCol.RESET_TYPE] = "Parameter"
+        self.set_modified()
 
     def bit_text_edit(self, cell, path, new_text, col):
         """
@@ -549,12 +545,11 @@ class MainWindow(BaseWindow):
         the column, we pass it to a function to handle the data.
         """
         model = cell.get_property("model")
-        new_val = model.get_value(node, 0)
         field = self.bit_model.get_bitfield_at_path(path)
 
-        if re.match("[a-fA-F0-9]+", new_val):
-            field.reset_value = int(new_val, 16)
-            self.bit_model[path][col] = hex(int(new_val, 16))
+        if re.match("[a-fA-F0-9]+", new_text):
+            field.reset_value = int(new_text, 16)
+            self.bit_model[path][col] = hex(int(new_text, 16))
             field = self.bit_model.get_bitfield_at_path(path)
             field.reset_type = ResetType.NUMERIC
         else:

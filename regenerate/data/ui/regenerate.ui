@@ -114,9 +114,9 @@
     </child>
     <child>
       <object class="GtkBox" id="vbox5">
-        <property name="orientation">vertical</property>
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
         <child>
           <object class="GtkLabel" id="help_title">
             <property name="visible">True</property>
@@ -323,9 +323,10 @@
           </packing>
         </child>
         <child>
-          <object class="GtkVPaned" id="vpaned4">
+          <object class="GtkPaned" id="vpaned4">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
+            <property name="orientation">vertical</property>
             <property name="position">200</property>
             <property name="position_set">True</property>
             <child>
@@ -426,6 +427,84 @@
     <property name="stock_id">gtk-file</property>
     <signal name="activate" handler="on_summary_action_activate" swapped="no"/>
   </object>
+  <object class="GtkWindow" id="summary_window">
+    <property name="can_focus">False</property>
+    <property name="default_width">800</property>
+    <property name="default_height">600</property>
+    <child>
+      <placeholder/>
+    </child>
+    <child>
+      <object class="GtkBox" id="vbox3">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkLabel" id="summary_titl">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Register Summary</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="padding">12</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkScrolledWindow" id="summary_scroll">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="shadow_type">in</property>
+            <child>
+              <placeholder/>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkHButtonBox" id="hbuttonbox1">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="border_width">6</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="summary_button">
+                <property name="label">gtk-close</property>
+                <property name="use_action_appearance">False</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="padding">6</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
+  <object class="GtkTextBuffer" id="textbuffer1">
+    <property name="text" translatable="yes">Address sharing allows two registers to be located at the same address. In order for addresses to be shared, one register must be entirely read-only and the other register must be entirely write-only. </property>
+  </object>
+  <object class="GtkTextBuffer" id="textbuffer2">
+    <property name="text" translatable="yes">Address sharing allows for more than one register to be located at the same address. If an address is shared, then two registers will share the address. One register must be read-only. The other register must be write-only.</property>
+  </object>
   <object class="GtkWindow" id="regenerate">
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">regenerate</property>
@@ -437,9 +516,9 @@
     </child>
     <child>
       <object class="GtkBox" id="vbox1">
-        <property name="orientation">vertical</property>
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
         <child>
           <object class="GtkMenuBar" id="menubar1">
             <property name="visible">True</property>
@@ -929,7 +1008,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkHPaned" id="hpaned">
+          <object class="GtkPaned" id="hpaned">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <child>
@@ -962,9 +1041,9 @@
                 <property name="show_border">False</property>
                 <child>
                   <object class="GtkBox" id="vbox6">
-		    <property name="orientation">vertical</property>
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="orientation">vertical</property>
                     <property name="spacing">6</property>
                     <child>
                       <object class="GtkTable" id="table5">
@@ -1016,9 +1095,10 @@
                         <property name="show_border">False</property>
                         <signal name="switch-page" handler="on_notebook_switch_page" swapped="no"/>
                         <child>
-                          <object class="GtkVPaned" id="vpaned">
+                          <object class="GtkPaned" id="vpaned">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
+                            <property name="orientation">vertical</property>
                             <property name="position">250</property>
                             <property name="position_set">True</property>
                             <child>
@@ -1154,7 +1234,6 @@
                                 </child>
                                 <child type="tab">
                                   <object class="GtkBox" id="hbox4">
-				    <property name="orientation">horizontal</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
                                     <child>
@@ -1163,8 +1242,9 @@
                                         <property name="stock">gtk-dialog-warning</property>
                                       </object>
                                       <packing>
-                                        <property name="expand">True</property>
+                                        <property name="expand">False</property>
                                         <property name="fill">True</property>
+                                        <property name="padding">3</property>
                                         <property name="position">0</property>
                                       </packing>
                                     </child>
@@ -1186,9 +1266,10 @@
                                   </packing>
                                 </child>
                                 <child>
-                                  <object class="GtkVPaned" id="vpaned2">
+                                  <object class="GtkPaned" id="vpaned2">
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
+                                    <property name="orientation">vertical</property>
                                     <property name="position">100</property>
                                     <property name="position_set">True</property>
                                     <child>
@@ -1228,7 +1309,6 @@
                                 </child>
                                 <child type="tab">
                                   <object class="GtkBox" id="hbox5">
-				    <property name="orientation">horizontal</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
                                     <child>
@@ -1237,8 +1317,9 @@
                                         <property name="stock">gtk-dialog-warning</property>
                                       </object>
                                       <packing>
-                                        <property name="expand">True</property>
+                                        <property name="expand">False</property>
                                         <property name="fill">True</property>
+                                        <property name="padding">3</property>
                                         <property name="position">0</property>
                                       </packing>
                                     </child>
@@ -1251,6 +1332,7 @@
                                       <packing>
                                         <property name="expand">True</property>
                                         <property name="fill">True</property>
+                                        <property name="padding">3</property>
                                         <property name="position">1</property>
                                       </packing>
                                     </child>
@@ -1269,6 +1351,78 @@
                                     <property name="n_columns">3</property>
                                     <property name="column_spacing">6</property>
                                     <property name="row_spacing">6</property>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
                                     <child>
                                       <placeholder/>
                                     </child>
@@ -1651,8 +1805,41 @@
                                     <property name="border_width">6</property>
                                     <property name="n_rows">5</property>
                                     <property name="n_columns">3</property>
-                                    <property name="column_spacing">6</property>
-                                    <property name="row_spacing">6</property>
+                                    <property name="column_spacing">12</property>
+                                    <property name="row_spacing">3</property>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
                                     <child>
                                       <placeholder/>
                                     </child>
@@ -1998,6 +2185,36 @@
                                     <child>
                                       <placeholder/>
                                     </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <object class="GtkTextView">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="editable">False</property>
+                                        <property name="wrap_mode">word</property>
+                                        <property name="buffer">textbuffer2</property>
+                                      </object>
+                                      <packing>
+                                        <property name="right_attach">3</property>
+                                        <property name="y_options">GTK_FILL</property>
+                                        <property name="x_padding">12</property>
+                                        <property name="y_padding">12</property>
+                                      </packing>
+                                    </child>
                                   </object>
                                   <packing>
                                     <property name="position">3</property>
@@ -2034,9 +2251,9 @@
                         </child>
                         <child>
                           <object class="GtkBox" id="vbox2">
-			    <property name="orientation">vertical</property>
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
+                            <property name="orientation">vertical</property>
                             <property name="spacing">6</property>
                             <child>
                               <object class="GtkTable" id="table2">
@@ -2048,6 +2265,9 @@
                                 <property name="n_columns">5</property>
                                 <property name="column_spacing">12</property>
                                 <property name="row_spacing">12</property>
+                                <child>
+                                  <placeholder/>
+                                </child>
                                 <child>
                                   <placeholder/>
                                 </child>
@@ -2468,6 +2688,26 @@
                                         <property name="position">1</property>
                                       </packing>
                                     </child>
+                                    <child>
+                                      <object class="GtkButton" id="param_help">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="receives_default">True</property>
+                                        <signal name="clicked" handler="on_param_help_clicked" swapped="no"/>
+                                        <child>
+                                          <object class="GtkImage">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">False</property>
+                                            <property name="stock">gtk-help</property>
+                                          </object>
+                                        </child>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">True</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">2</property>
+                                      </packing>
+                                    </child>
                                   </object>
                                   <packing>
                                     <property name="left_attach">3</property>
@@ -2477,6 +2717,9 @@
                                     <property name="x_options">GTK_SHRINK</property>
                                     <property name="y_options">GTK_FILL</property>
                                   </packing>
+                                </child>
+                                <child>
+                                  <placeholder/>
                                 </child>
                                 <child>
                                   <object class="GtkLabel">
@@ -2527,12 +2770,6 @@
                                     <property name="y_options"/>
                                   </packing>
                                 </child>
-                                <child>
-                                  <placeholder/>
-                                </child>
-                                <child>
-                                  <placeholder/>
-                                </child>
                               </object>
                               <packing>
                                 <property name="expand">True</property>
@@ -2553,12 +2790,12 @@
                             <child>
                               <object class="GtkImage" id="mod_def_warn">
                                 <property name="can_focus">False</property>
-                                <property name="xpad">3</property>
                                 <property name="stock">gtk-dialog-warning</property>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
                                 <property name="fill">True</property>
+                                <property name="padding">3</property>
                                 <property name="position">0</property>
                               </packing>
                             </child>
@@ -2581,9 +2818,10 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkVPaned" id="vpaned1">
+                          <object class="GtkPaned" id="vpaned1">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
+                            <property name="orientation">vertical</property>
                             <property name="position">200</property>
                             <property name="position_set">True</property>
                             <child>
@@ -2640,6 +2878,7 @@
                               <packing>
                                 <property name="expand">False</property>
                                 <property name="fill">True</property>
+                                <property name="padding">3</property>
                                 <property name="position">0</property>
                               </packing>
                             </child>
@@ -3115,6 +3354,15 @@
                                 <child>
                                   <placeholder/>
                                 </child>
+                                <child>
+                                  <placeholder/>
+                                </child>
+                                <child>
+                                  <placeholder/>
+                                </child>
+                                <child>
+                                  <placeholder/>
+                                </child>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
@@ -3172,6 +3420,7 @@
                               <packing>
                                 <property name="expand">False</property>
                                 <property name="fill">True</property>
+                                <property name="padding">3</property>
                                 <property name="position">0</property>
                               </packing>
                             </child>
@@ -3456,7 +3705,7 @@
                             <property name="right_attach">5</property>
                             <property name="top_attach">6</property>
                             <property name="bottom_attach">7</property>
-                            <property name="x_options"/>
+                            <property name="x_options">GTK_SHRINK</property>
                           </packing>
                         </child>
                         <child>
@@ -3607,7 +3856,7 @@
                             <property name="right_attach">5</property>
                             <property name="top_attach">4</property>
                             <property name="bottom_attach">5</property>
-                            <property name="x_options"/>
+                            <property name="x_options">GTK_SHRINK</property>
                           </packing>
                         </child>
                         <child>
@@ -3624,6 +3873,15 @@
                             <property name="bottom_attach">4</property>
                             <property name="y_options"/>
                           </packing>
+                        </child>
+                        <child>
+                          <placeholder/>
+                        </child>
+                        <child>
+                          <placeholder/>
+                        </child>
+                        <child>
+                          <placeholder/>
                         </child>
                         <child>
                           <placeholder/>
@@ -3719,6 +3977,15 @@
                         <child>
                           <placeholder/>
                         </child>
+                        <child>
+                          <placeholder/>
+                        </child>
+                        <child>
+                          <placeholder/>
+                        </child>
+                        <child>
+                          <placeholder/>
+                        </child>
                       </object>
                     </child>
                     <child type="tab">
@@ -3733,9 +4000,10 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkVPaned" id="vpaned3">
+                      <object class="GtkPaned" id="vpaned3">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
+                        <property name="orientation">vertical</property>
                         <property name="position">200</property>
                         <property name="position_set">True</property>
                         <child>
@@ -3836,80 +4104,5 @@
         </child>
       </object>
     </child>
-  </object>
-  <object class="GtkWindow" id="summary_window">
-    <property name="can_focus">False</property>
-    <property name="default_width">800</property>
-    <property name="default_height">600</property>
-    <child>
-      <placeholder/>
-    </child>
-    <child>
-      <object class="GtkBox" id="vbox3">
-        <property name="orientation">vertical</property>
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <child>
-          <object class="GtkLabel" id="summary_titl">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="label" translatable="yes">Register Summary</property>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="padding">12</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkScrolledWindow" id="summary_scroll">
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="shadow_type">in</property>
-            <child>
-              <placeholder/>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">True</property>
-            <property name="fill">True</property>
-            <property name="position">1</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkHButtonBox" id="hbuttonbox1">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="border_width">6</property>
-            <property name="layout_style">end</property>
-            <child>
-              <object class="GtkButton" id="summary_button">
-                <property name="label">gtk-close</property>
-                <property name="use_action_appearance">False</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="padding">6</property>
-            <property name="position">2</property>
-          </packing>
-        </child>
-      </object>
-    </child>
-  </object>
-  <object class="GtkTextBuffer" id="textbuffer1">
-    <property name="text" translatable="yes">Address sharing allows two registers to be located at the same address. In order for addresses to be shared, one register must be entirely read-only and the other register must be entirely write-only. </property>
   </object>
 </interface>

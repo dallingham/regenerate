@@ -25,7 +25,6 @@ from regenerate.db import TYPES
 from regenerate.db.enums import ResetType
 from regenerate.ui.columns import (
     EditableColumn,
-    ComboMapColumn,
     MyComboMapColumn,
     SwitchComboMapColumn,
     ReadOnlyColumn,
@@ -59,9 +58,7 @@ class BitModel(Gtk.ListStore):
         super().__init__(str, str, str, str, str, str, int, object)
 
     def append_field(self, field):
-        """
-        Adds the field to the model, filling out the fields in the model.
-        """
+        "Adds the field to the model, filling out the fields in the model."
         node = self.append(
             row=[
                 None,
@@ -130,9 +127,7 @@ class BitList(object):
         self.reset_column.update_menu(my_parameters)
 
     def set_model(self, model):
-        """
-        Associates a List Model with the list view.
-        """
+        "Associates a List Model with the list view."
         self.__model = model
         self.__obj.set_model(model)
 
@@ -155,8 +150,9 @@ class BitList(object):
             elif i == BitCol.RESET_TYPE:
                 column = ReadOnlyColumn(col[BIT_TITLE], i, col[BIT_MONO])
             elif i == BitCol.ICON:
-                renderer = Gtk.CellRendererPixbuf()
-                column = Gtk.TreeViewColumn("", renderer, stock_id=i)
+                column = Gtk.TreeViewColumn(
+                    "", Gtk.CellRendererPixbuf(), stock_id=i
+                )
             elif i == BitCol.RESET:
                 column = MyComboMapColumn(
                     col[BIT_TITLE], reset_menu_edit, reset_text_edit, [], i
@@ -176,25 +172,20 @@ class BitList(object):
             self.__obj.append_column(column)
 
     def get_selected_row(self):
-        """
-        Returns the path of the selected row
-        """
+        "Returns the path of the selected row"
         value = self.__obj.get_selection().get_selected_rows()
         if value:
             return value[1]
         return None
 
     def select_row(self, path):
-        """
-        Selectes the row associated with the path
-        """
+        "Selectes the row associated with the path"
         if path:
             self.__obj.get_selection().select_path(path)
 
     def select_field(self):
-        """
-        Returns the field object associated with selected row.
-        """
+        "Returns the field object associated with selected row."
+
         data = self.__obj.get_selection().get_selected()
         if data:
             (store, node) = data
@@ -203,34 +194,29 @@ class BitList(object):
         return None
 
     def add_new_field(self, field):
-        """
-        Adds a new field to the model, and sets editing to begin
-        """
+        "Adds a new field to the model, and sets editing to begin"
         path = self.__model.append_field(field)
         self.__obj.set_cursor(path, self.__col, start_editing=True)
 
 
 def bits(field):
-    """
-    Returns a text representation of the bit field range
-    """
+    "Returns a text representation of the bit field range"
+
     if field.lsb == field.msb:
-        return "{0:d}".format(field.lsb)
-    return "{0:d}:{1:d}".format(field.msb, field.lsb)
+        return "{:d}".format(field.lsb)
+    return "{:d}:{:d}".format(field.msb, field.lsb)
 
 
 def reset_value(field):
-    """
-    Returns a string representation of the reset value.
-    """
-    strval = "{0:x}".format(field.reset_value)
+    "Returns a string representation of the reset value."
+
+    strval = "{:x}".format(field.reset_value)
     return "0x" + strval.zfill(int(field.width / 4))
 
 
 def get_field_reset_data(field):
-    """
-    Converts the fields reset value/type into a displayable value.
-    """
+    "Converts the fields reset value/type into a displayable value."
+
     if field.reset_type == ResetType.NUMERIC:
         reset = reset_value(field)
     elif field.reset_type == ResetType.INPUT:
