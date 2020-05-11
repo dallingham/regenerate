@@ -222,7 +222,7 @@ class MyComboMapColumn(BaseColumn):
 
     def update_menu(self, item_list):
         self.item_list = item_list[:]
-        self._model.clear()  # = Gtk.ListStore(str, str)
+        self._model.clear()
         for item in item_list:
             self._model.append(row=item)
 

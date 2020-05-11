@@ -121,3 +121,5 @@ class RegColType(IntEnum):
 class ParameterCol(IntEnum):
     NAME = 0
     VALUE = 1
+    MIN = 2
+    MAX = 3

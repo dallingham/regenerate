@@ -19,6 +19,8 @@
 
 
 class ParameterData(object):
-    def __init__(self, name, value):
+    def __init__(self, name, value, min_val, max_val):
         self.name = name
         self.value = value
+        self.min_val = min_val
+        self.max_val = max_val

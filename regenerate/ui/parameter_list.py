@@ -29,19 +29,19 @@ from regenerate.db.parammap import ParameterData
 
 class ParameterListMdl(Gtk.ListStore):
     """
-    Provides the list of instances for the module. Instances consist of the
-    symbolic ID name and the base address.
+    Provides the list of parameters for the module. The parameter information
+    consists of name, default value, and the minimum and maximum values.
     """
 
     def __init__(self):
-        super().__init__(str, str)
+        super().__init__(str, str, str, str)
 
-    def new_instance(self, name, val):
+    def new_instance(self, name, val, min_val, max_val):
         """
         Adds a new instance to the model. It is not added to the database until
         either the change_id or change_base is called.
         """
-        node = self.append((name, val))
+        node = self.append((name, val, min_val, max_val))
         return self.get_path(node)
 
     def append_instance(self, inst):
@@ -50,12 +50,28 @@ class ParameterListMdl(Gtk.ListStore):
 
     def get_values(self):
         """Returns the list of instance tuples from the model."""
-        return [(val[0], int(val[1], 16)) for val in self if val[0]]
+        val_list = []
+        for val in self:
+            if val[0]:
+                try:
+                    def_val = int(val[1], 16)
+                except ValueError:
+                    def_val = 1
+                try:
+                    min_val = int(val[2], 16)
+                except ValueError:
+                    min_val = 0
+                try:
+                    max_val = int(val[3], 16)
+                except ValueError:
+                    max_val = 0xFFFFFFFF
+
+                val_list.append((val[0], def_val, min_val, max_val))
 
 
 class ParameterList(object):
     """
-    Container for the Address Map control logic.
+    Container for the Parameter List control logic.
     """
 
     def __init__(self, obj, callback):
@@ -82,8 +98,8 @@ class ParameterList(object):
         """
         if self._db is not None:
             self._model.clear()
-        for (name, value) in self._db.get_parameters():
-            self.append(name, value)
+        for (name, value, min_val, max_val) in self._db.get_parameters():
+            self.append(name, value, min_val, max_val)
 
     def remove_clicked(self):
         name = self.get_selected()
@@ -101,8 +117,8 @@ class ParameterList(object):
             index = index + 1
             name = "{}{}".format(base, index)
 
-        self._model.new_instance(name, "1")
-        self._db.add_parameter(name, "1")
+        self._model.new_instance(name, hex(1), hex(0), hex(0xFFFFFFFF))
+        self._db.add_parameter(name, hex(1), hex(0), hex(0xFFFFFFFF))
         self._callback()
 
     def _name_changed(self, cell, path, new_text, col):
@@ -116,26 +132,41 @@ class ParameterList(object):
             self._model[path][ParameterCol.NAME] = new_text
             self._db.remove_parameter(name)
             self._db.add_parameter(
-                new_text, int(self._model[path][ParameterCol.VALUE], 16)
+                new_text,
+                int(self._model[path][ParameterCol.VALUE], 16),
+                int(self._model[path][ParameterCol.MIN], 16),
+                int(self._model[path][ParameterCol.MAX], 16),
             )
             self._callback()
 
-    def _value_changed(self, cell, path, new_text, col):
-        """
-        Called when the base address field is changed.
-        """
+    def __param_val_changed(self, path, new_text, my_col):
         try:
             value = int(new_text, 16)
         except ValueError:
-            LOGGER.error('Illegal address: "%s"', new_text)
+            LOGGER.error('Illegal value: "%s"', new_text)
             return
 
-        if new_text != self._model[path][ParameterCol.VALUE]:
-            self._model[path][ParameterCol.VALUE] = new_text
+        if new_text != self._model[path][my_col]:
+            self._model[path][my_col] = hex(value)
             name = self._model[path][ParameterCol.NAME]
+            min_val = int(self._model[path][ParameterCol.MIN], 16)
+            max_val = int(self._model[path][ParameterCol.MAX], 16)
+            value = int(self._model[path][ParameterCol.VALUE], 16)
             self._db.remove_parameter(name)
-            self._db.add_parameter(name, value)
+            self._db.add_parameter(name, value, min_val, max_val)
             self._callback()
+
+    def _value_changed(self, cell, path, new_text, col):
+        """Called when the base address field is changed."""
+        self.__param_val_changed(path, new_text, ParameterCol.VALUE)
+
+    def _min_changed(self, cell, path, new_text, col):
+        """Called when the base address field is changed."""
+        self.__param_val_changed(path, new_text, ParameterCol.MIN)
+
+    def _max_changed(self, cell, path, new_text, col):
+        """Called when the base address field is changed."""
+        self.__param_val_changed(path, new_text, ParameterCol.MAX)
 
     def _build_instance_table(self):
         """
@@ -144,7 +175,7 @@ class ParameterList(object):
         column = EditableColumn(
             "Parameter Name", self._name_changed, ParameterCol.NAME
         )
-        column.set_min_width(250)
+        column.set_min_width(300)
         column.set_sort_column_id(ParameterCol.NAME)
         self._obj.append_column(column)
         self._col = column
@@ -160,6 +191,28 @@ class ParameterList(object):
         column.set_min_width(150)
         self._obj.append_column(column)
 
+        column = EditableColumn(
+            "Minimum Value",
+            self._min_changed,
+            ParameterCol.MIN,
+            True,
+            tooltip="Minimum value of the parameter",
+        )
+        column.set_sort_column_id(ParameterCol.VALUE)
+        column.set_min_width(150)
+        self._obj.append_column(column)
+
+        column = EditableColumn(
+            "Maximum Value",
+            self._max_changed,
+            ParameterCol.MAX,
+            True,
+            tooltip="Maximum value of the parameter",
+        )
+        column.set_sort_column_id(ParameterCol.VALUE)
+        column.set_min_width(150)
+        self._obj.append_column(column)
+
         self._model = ParameterListMdl()
         self._obj.set_model(self._model)
 
@@ -169,11 +222,11 @@ class ParameterList(object):
         """
         self._model.clear()
 
-    def append(self, name, value):
+    def append(self, name, value, max_val, min_val):
         """
         Add the data to the list.
         """
-        obj = ParameterData(name, value)
+        obj = ParameterData(name, value, max_val, min_val)
         self._model.append(row=get_row_data(obj))
 
     def get_selected(self):
@@ -206,34 +259,11 @@ class ParameterList(object):
             model.remove(node)
             self._callback()
 
-    def add_new_map(self):
-        """
-        Creates a new address map and adds it to the project. Uses default
-        data, and sets the first field to start editing.
-        """
-        name = self._create_new_map_name()
-        obj = ParameterData(name, 0)
-        node = self._model.append(row=get_row_data(obj))
-
-        path = self._model.get_path(node)
-        self._callback()
-        self._prj.add_or_replace_address_map(obj)
-        self._obj.set_cursor(path, self._col, start_editing=True)
-
-    def _create_new_map_name(self):
-        template = "NewMap"
-        index = 0
-        current_maps = set([i.name for i in self._prj.get_address_maps()])
-
-        name = template
-        while name in current_maps:
-            name = "{}{}".format(template, index)
-            index += 1
-        return name
-
-    def get_obj(self, path):
-        return self._model[path][ParameterCol.OBJ]
-
 
 def get_row_data(map_obj):
-    return (map_obj.name, "{0:x}".format(int(map_obj.value)))
+    return (
+        map_obj.name,
+        hex(int(map_obj.value)),
+        hex(int(map_obj.min_val)),
+        hex(int(map_obj.max_val)),
+    )

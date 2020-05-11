@@ -47,11 +47,15 @@ class AddrMapEdit(BaseWindow):
             "Address Map Subsystem Selection",
             None,
             Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT,
-            (Gtk.STOCK_CANCEL, Gtk.ResponseType.REJECT,
-             Gtk.STOCK_OK, Gtk.ResponseType.ACCEPT),
+            (
+                Gtk.STOCK_CANCEL,
+                Gtk.ResponseType.REJECT,
+                Gtk.STOCK_OK,
+                Gtk.ResponseType.ACCEPT,
+            ),
         )
 
-        dialog.vbox.pack_start(label, False, False, 0)
+        dialog.vbox.pack_start(label, False, False, 12)
         dialog.vbox.set_homogeneous(False)
         dialog.set_default_size(580, 320)
         dialog.set_transient_for(parent)
@@ -61,11 +65,10 @@ class AddrMapEdit(BaseWindow):
 
         scrolled_window = Gtk.ScrolledWindow()
         scrolled_window.set_policy(
-            Gtk.PolicyType.AUTOMATIC,
-            Gtk.PolicyType.AUTOMATIC
+            Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC
         )
         scrolled_window.show()
-        dialog.vbox.pack_end(scrolled_window, False, False, 0)
+        dialog.vbox.pack_end(scrolled_window, True, True, 12)
 
         self.view = Gtk.TreeView()
         self.model = Gtk.TreeStore(bool, str, str, object, str)
@@ -76,7 +79,7 @@ class AddrMapEdit(BaseWindow):
             "Enabled",
             self._enable_changed,
             0,
-            visible_callback=self.visible_callback2
+            visible_callback=self.visible_callback2,
         )
 
         self.view.append_column(col)
@@ -119,8 +122,8 @@ class AddrMapEdit(BaseWindow):
                         item.inst,
                         options[access][0],
                         item,
-                        group.name
-                    )
+                        group.name,
+                    ),
                 )
 
         self.map_name = map_name
@@ -152,10 +155,7 @@ class AddrMapEdit(BaseWindow):
         self.model[path][2] = val
 
         self.project.set_access(
-            self.map_name,
-            self.model[path][-1],
-            self.model[path][1],
-            val_int
+            self.map_name, self.model[path][-1], self.model[path][1], val_int
         )
         self.callback()
 
