@@ -177,7 +177,10 @@ class MainWindow(BaseWindow):
         self.setup_recent_menu()
 
         self.instance_obj = InstanceList(
-            self.find_obj("instances"), self.set_project_modified
+            self.find_obj("instances"),
+            self.find_obj("infobar"),
+            self.find_obj("infobar_label"),
+            self.set_project_modified,
         )
 
         self.restore_position_and_size()
@@ -305,6 +308,9 @@ class MainWindow(BaseWindow):
             self.prj.set_address_map_group_list(map_name, new_list)
             self.addr_map_list.set_project(self.prj)
             self.set_project_modified()
+
+    def on_infobar_response(self, obj, obj2):
+        obj.set_revealed(False)
 
     def on_addr_map_help_clicked(self, obj):
         HelpWindow(self.builder, "addr_map_help.rst")

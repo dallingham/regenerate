@@ -172,8 +172,10 @@ class InstMdl(Gtk.TreeStore):
 
 
 class InstanceList(object):
-    def __init__(self, obj, callback):
+    def __init__(self, obj, infobar, infolabel, callback):
         self.__obj = obj
+        self.__infobar = infobar
+        self.__infolabel = infolabel
         self.__col = None
         self.__project = None
         self.__model = None
@@ -181,6 +183,8 @@ class InstanceList(object):
         self.__enable_dnd()
         self.__obj.set_sensitive(False)
         self.modified_callback = callback
+        self.need_subsystem = True
+        self.need_regset = True
 
     def set_project(self, project):
         self.__project = project
@@ -225,6 +229,8 @@ class InstanceList(object):
         pos, grp = self.__model.new_instance()
         self.__project.get_grouping_list().append(grp)
         self.__obj.set_cursor(pos, self.__col, start_editing=True)
+        self.need_subsystem = False
+        self.infobar_update()
 
     def get_selected_instance(self):
         return self.__obj.get_selection().get_selected()
@@ -280,6 +286,8 @@ class InstanceList(object):
                     self.__model.insert_before(parent, node, row_data)
                 else:
                     model.insert_after(parent, node, row_data)
+        self.need_regset = False
+        self.infobar_update()
 
     def __populate(self):
         if self.__project is None:
@@ -287,8 +295,10 @@ class InstanceList(object):
         group_list = sorted(
             self.__project.get_grouping_list(), key=lambda x: x.base
         )
+
         for item in group_list:
 
+            self.need_subsystem = False
             node = self.__model.append(
                 None,
                 row=build_row_data(
@@ -304,6 +314,7 @@ class InstanceList(object):
 
             item_sets = item.register_sets
             for entry in sorted(item_sets, key=lambda x: x.offset):
+                self.need_regset = False
                 self.__model.append(
                     node,
                     row=build_row_data(
@@ -316,6 +327,22 @@ class InstanceList(object):
                         entry,
                     ),
                 )
+        self.infobar_update()
+
+    def infobar_update(self):
+        if self.need_subsystem:
+            self.__infolabel.set_text(
+                "Add a subsystem instance by clicking on the Add button next to the subsystem table."
+            )
+            self.__infobar.set_revealed(True)
+        elif self.need_regset:
+            self.__infolabel.set_text(
+                "Add a register set to a subsystem by dragging it from the sidebar and "
+                "dropping it on the instance in the subsystem table."
+            )
+            self.__infobar.set_revealed(True)
+        else:
+            self.__infobar.set_revealed(False)
 
     def __build_instance_table(self):
 

@@ -1141,19 +1141,15 @@
                                         <property name="layout_style">start</property>
                                         <child>
                                           <object class="GtkButton" id="add_field">
+                                            <property name="label">gtk-add</property>
                                             <property name="related_action">add_bit_action</property>
                                             <property name="visible">True</property>
                                             <property name="can_focus">True</property>
                                             <property name="receives_default">True</property>
                                             <property name="tooltip_text" translatable="yes">Add a new bit field</property>
                                             <property name="use_underline">True</property>
-                                            <child>
-                                              <object class="GtkImage">
-                                                <property name="visible">True</property>
-                                                <property name="can_focus">False</property>
-                                                <property name="stock">gtk-add</property>
-                                              </object>
-                                            </child>
+                                            <property name="use_stock">True</property>
+                                            <property name="always_show_image">True</property>
                                           </object>
                                           <packing>
                                             <property name="expand">False</property>
@@ -1163,21 +1159,17 @@
                                         </child>
                                         <child>
                                           <object class="GtkButton" id="edit_field">
+                                            <property name="label">gtk-edit</property>
                                             <property name="related_action">edit_bit_action</property>
                                             <property name="visible">True</property>
                                             <property name="can_focus">True</property>
                                             <property name="receives_default">True</property>
                                             <property name="tooltip_text" translatable="yes">Edit the selected bit field</property>
                                             <property name="use_underline">True</property>
+                                            <property name="use_stock">True</property>
                                             <property name="xalign">0.46000000834465027</property>
+                                            <property name="always_show_image">True</property>
                                             <signal name="clicked" handler="on_edit_field_clicked" swapped="no"/>
-                                            <child>
-                                              <object class="GtkImage">
-                                                <property name="visible">True</property>
-                                                <property name="can_focus">False</property>
-                                                <property name="stock">gtk-edit</property>
-                                              </object>
-                                            </child>
                                           </object>
                                           <packing>
                                             <property name="expand">False</property>
@@ -1187,19 +1179,15 @@
                                         </child>
                                         <child>
                                           <object class="GtkButton" id="delete_field">
+                                            <property name="label">gtk-remove</property>
                                             <property name="related_action">remove_bit_action</property>
                                             <property name="visible">True</property>
                                             <property name="can_focus">True</property>
                                             <property name="receives_default">True</property>
                                             <property name="tooltip_text" translatable="yes">Remove the selected bit field</property>
                                             <property name="use_underline">True</property>
-                                            <child>
-                                              <object class="GtkImage">
-                                                <property name="visible">True</property>
-                                                <property name="can_focus">False</property>
-                                                <property name="stock">gtk-remove</property>
-                                              </object>
-                                            </child>
+                                            <property name="use_stock">True</property>
+                                            <property name="always_show_image">True</property>
                                           </object>
                                           <packing>
                                             <property name="expand">False</property>
@@ -1351,6 +1339,30 @@
                                     <property name="n_columns">3</property>
                                     <property name="column_spacing">6</property>
                                     <property name="row_spacing">6</property>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
                                     <child>
                                       <placeholder/>
                                     </child>
@@ -1807,6 +1819,21 @@
                                     <property name="n_columns">3</property>
                                     <property name="column_spacing">12</property>
                                     <property name="row_spacing">3</property>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
                                     <child>
                                       <placeholder/>
                                     </child>
@@ -3363,6 +3390,9 @@
                                 <child>
                                   <placeholder/>
                                 </child>
+                                <child>
+                                  <placeholder/>
+                                </child>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
@@ -3469,161 +3499,566 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <child>
-                      <object class="GtkTable" id="table7">
+                      <object class="GtkBox">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="border_width">6</property>
-                        <property name="n_rows">7</property>
-                        <property name="n_columns">5</property>
-                        <property name="column_spacing">6</property>
-                        <property name="row_spacing">6</property>
+                        <property name="orientation">vertical</property>
                         <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <object class="GtkLabel" id="label26">
+                          <object class="GtkTable" id="table7">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">Project name:</property>
-                            <property name="xalign">0</property>
-                          </object>
-                          <packing>
-                            <property name="left_attach">1</property>
-                            <property name="right_attach">2</property>
-                            <property name="x_options">GTK_FILL</property>
-                            <property name="y_options"/>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkEntry" id="project_name">
-                            <property name="visible">True</property>
-                            <property name="can_focus">True</property>
-                            <property name="invisible_char">●</property>
-                            <property name="primary_icon_activatable">False</property>
-                            <property name="secondary_icon_activatable">False</property>
-                          </object>
-                          <packing>
-                            <property name="left_attach">2</property>
-                            <property name="right_attach">3</property>
-                            <property name="y_options"/>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkLabel" id="short_nam">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">Project short name:</property>
-                            <property name="xalign">0</property>
-                          </object>
-                          <packing>
-                            <property name="left_attach">1</property>
-                            <property name="right_attach">2</property>
-                            <property name="top_attach">1</property>
-                            <property name="bottom_attach">2</property>
-                            <property name="x_options">GTK_FILL</property>
-                            <property name="y_options"/>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkEntry" id="short_name">
-                            <property name="visible">True</property>
-                            <property name="can_focus">True</property>
-                            <property name="invisible_char">●</property>
-                            <property name="primary_icon_activatable">False</property>
-                            <property name="secondary_icon_activatable">False</property>
-                          </object>
-                          <packing>
-                            <property name="left_attach">2</property>
-                            <property name="right_attach">3</property>
-                            <property name="top_attach">1</property>
-                            <property name="bottom_attach">2</property>
-                            <property name="y_options"/>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkLabel" id="label31">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">Company/Organization:</property>
-                            <property name="xalign">0</property>
-                          </object>
-                          <packing>
-                            <property name="left_attach">1</property>
-                            <property name="right_attach">2</property>
-                            <property name="top_attach">2</property>
-                            <property name="bottom_attach">3</property>
-                            <property name="x_options">GTK_FILL</property>
-                            <property name="y_options"/>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkEntry" id="company_name">
-                            <property name="visible">True</property>
-                            <property name="can_focus">True</property>
-                            <property name="invisible_char">●</property>
-                            <property name="primary_icon_activatable">False</property>
-                            <property name="secondary_icon_activatable">False</property>
-                          </object>
-                          <packing>
-                            <property name="left_attach">2</property>
-                            <property name="right_attach">3</property>
-                            <property name="top_attach">2</property>
-                            <property name="bottom_attach">3</property>
-                            <property name="y_options"/>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkLabel" id="label32">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">&lt;b&gt;Address Maps&lt;/b&gt;</property>
-                            <property name="use_markup">True</property>
-                            <property name="xalign">0</property>
-                          </object>
-                          <packing>
-                            <property name="right_attach">5</property>
-                            <property name="top_attach">5</property>
-                            <property name="bottom_attach">6</property>
-                            <property name="y_options"/>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkVButtonBox" id="vbuttonbox3">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="layout_style">start</property>
+                            <property name="border_width">6</property>
+                            <property name="n_rows">7</property>
+                            <property name="n_columns">5</property>
+                            <property name="column_spacing">6</property>
+                            <property name="row_spacing">6</property>
                             <child>
-                              <object class="GtkButton" id="add_map">
-                                <property name="use_action_appearance">False</property>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <object class="GtkLabel" id="label26">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">Project name:</property>
+                                <property name="xalign">0</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="right_attach">2</property>
+                                <property name="x_options">GTK_FILL</property>
+                                <property name="y_options"/>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkEntry" id="project_name">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
-                                <property name="receives_default">True</property>
-                                <property name="tooltip_text" translatable="yes">Add a new address map</property>
-                                <signal name="clicked" handler="on_add_map_clicked" swapped="no"/>
+                                <property name="invisible_char">●</property>
+                                <property name="primary_icon_activatable">False</property>
+                                <property name="secondary_icon_activatable">False</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">2</property>
+                                <property name="right_attach">3</property>
+                                <property name="y_options"/>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkLabel" id="short_nam">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">Project short name:</property>
+                                <property name="xalign">0</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="right_attach">2</property>
+                                <property name="top_attach">1</property>
+                                <property name="bottom_attach">2</property>
+                                <property name="x_options">GTK_FILL</property>
+                                <property name="y_options"/>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkEntry" id="short_name">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="invisible_char">●</property>
+                                <property name="primary_icon_activatable">False</property>
+                                <property name="secondary_icon_activatable">False</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">2</property>
+                                <property name="right_attach">3</property>
+                                <property name="top_attach">1</property>
+                                <property name="bottom_attach">2</property>
+                                <property name="y_options"/>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkLabel" id="label31">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">Company/Organization:</property>
+                                <property name="xalign">0</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="right_attach">2</property>
+                                <property name="top_attach">2</property>
+                                <property name="bottom_attach">3</property>
+                                <property name="x_options">GTK_FILL</property>
+                                <property name="y_options"/>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkEntry" id="company_name">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="invisible_char">●</property>
+                                <property name="primary_icon_activatable">False</property>
+                                <property name="secondary_icon_activatable">False</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">2</property>
+                                <property name="right_attach">3</property>
+                                <property name="top_attach">2</property>
+                                <property name="bottom_attach">3</property>
+                                <property name="y_options"/>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkLabel" id="label32">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">&lt;b&gt;Address Maps&lt;/b&gt;</property>
+                                <property name="use_markup">True</property>
+                                <property name="xalign">0</property>
+                              </object>
+                              <packing>
+                                <property name="right_attach">5</property>
+                                <property name="top_attach">5</property>
+                                <property name="bottom_attach">6</property>
+                                <property name="y_options"/>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkVButtonBox" id="vbuttonbox3">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="layout_style">start</property>
                                 <child>
-                                  <object class="GtkImage" id="image3">
+                                  <object class="GtkButton" id="add_map">
+                                    <property name="use_action_appearance">False</property>
                                     <property name="visible">True</property>
-                                    <property name="can_focus">False</property>
-                                    <property name="stock">gtk-add</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="receives_default">True</property>
+                                    <property name="tooltip_text" translatable="yes">Add a new address map</property>
+                                    <signal name="clicked" handler="on_add_map_clicked" swapped="no"/>
+                                    <child>
+                                      <object class="GtkImage" id="image3">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
+                                        <property name="stock">gtk-add</property>
+                                      </object>
+                                    </child>
                                   </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkButton" id="remove_map">
+                                    <property name="use_action_appearance">False</property>
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="receives_default">True</property>
+                                    <property name="tooltip_text" translatable="yes">Deleete the selected address map</property>
+                                    <signal name="clicked" handler="on_remove_map_clicked" swapped="no"/>
+                                    <child>
+                                      <object class="GtkImage" id="image4">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
+                                        <property name="stock">gtk-remove</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkButton" id="edit_map">
+                                    <property name="use_action_appearance">False</property>
+                                    <property name="visible">True</property>
+                                    <property name="sensitive">False</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="receives_default">True</property>
+                                    <property name="tooltip_text" translatable="yes">Select subsystems for the current address map</property>
+                                    <signal name="clicked" handler="on_edit_map_clicked" swapped="no"/>
+                                    <child>
+                                      <object class="GtkImage" id="image22">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
+                                        <property name="stock">gtk-edit</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">2</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkButton" id="addr_map_help">
+                                    <property name="use_action_appearance">False</property>
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="receives_default">True</property>
+                                    <property name="tooltip_text" translatable="yes">Provides help with Address Maps</property>
+                                    <signal name="clicked" handler="on_addr_map_help_clicked" swapped="no"/>
+                                    <child>
+                                      <object class="GtkImage" id="image5">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
+                                        <property name="stock">gtk-help</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">3</property>
+                                  </packing>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="left_attach">4</property>
+                                <property name="right_attach">5</property>
+                                <property name="top_attach">6</property>
+                                <property name="bottom_attach">7</property>
+                                <property name="x_options">GTK_SHRINK</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkScrolledWindow" id="scrolledwindow7">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="shadow_type">in</property>
+                                <child>
+                                  <object class="GtkTreeView" id="address_tree">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <signal name="cursor-changed" handler="on_addrmap_cursor_changed" swapped="no"/>
+                                    <child internal-child="selection">
+                                      <object class="GtkTreeSelection"/>
+                                    </child>
+                                  </object>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="right_attach">4</property>
+                                <property name="top_attach">6</property>
+                                <property name="bottom_attach">7</property>
+                                <property name="y_options">GTK_FILL</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkScrolledWindow" id="scrolledwindow5">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="hscrollbar_policy">never</property>
+                                <property name="shadow_type">in</property>
+                                <child>
+                                  <object class="GtkTreeView" id="instances">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <signal name="cursor-changed" handler="on_instances_cursor_changed" swapped="no"/>
+                                    <child internal-child="selection">
+                                      <object class="GtkTreeSelection"/>
+                                    </child>
+                                  </object>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="right_attach">4</property>
+                                <property name="top_attach">4</property>
+                                <property name="bottom_attach">5</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkVButtonBox" id="vbuttonbox2">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="layout_style">start</property>
+                                <child>
+                                  <object class="GtkButton" id="button4">
+                                    <property name="use_action_appearance">False</property>
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="receives_default">True</property>
+                                    <property name="tooltip_text" translatable="yes">Adds a new subsystem</property>
+                                    <signal name="clicked" handler="on_add_instance_clicked" swapped="no"/>
+                                    <child>
+                                      <object class="GtkImage" id="image2">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
+                                        <property name="stock">gtk-add</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">True</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkButton" id="instance_delete_btn">
+                                    <property name="use_action_appearance">False</property>
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="receives_default">True</property>
+                                    <property name="tooltip_text" translatable="yes">Deletes the selected subsystem</property>
+                                    <signal name="clicked" handler="on_delete_instance_clicked" swapped="no"/>
+                                    <child>
+                                      <object class="GtkImage" id="image1">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
+                                        <property name="stock">gtk-remove</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">True</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkButton" id="instance_edit_btn">
+                                    <property name="use_action_appearance">False</property>
+                                    <property name="visible">True</property>
+                                    <property name="sensitive">False</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="receives_default">True</property>
+                                    <property name="tooltip_text" translatable="yes">Edits the documentation for the selected subsystem</property>
+                                    <signal name="clicked" handler="on_group_doc_clicked" swapped="no"/>
+                                    <child>
+                                      <object class="GtkImage" id="image21">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
+                                        <property name="stock">gtk-edit</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">2</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkButton" id="group_help">
+                                    <property name="use_action_appearance">False</property>
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="receives_default">True</property>
+                                    <property name="tooltip_text" translatable="yes">Provides help with Subsystems</property>
+                                    <signal name="clicked" handler="on_group_help_clicked" swapped="no"/>
+                                    <child>
+                                      <object class="GtkImage" id="image20">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
+                                        <property name="stock">gtk-help</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">3</property>
+                                  </packing>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="left_attach">4</property>
+                                <property name="right_attach">5</property>
+                                <property name="top_attach">4</property>
+                                <property name="bottom_attach">5</property>
+                                <property name="x_options">GTK_SHRINK</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkLabel" id="label33">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">&lt;b&gt;Subsystems&lt;/b&gt;</property>
+                                <property name="use_markup">True</property>
+                                <property name="xalign">0</property>
+                              </object>
+                              <packing>
+                                <property name="right_attach">5</property>
+                                <property name="top_attach">3</property>
+                                <property name="bottom_attach">4</property>
+                                <property name="y_options"/>
+                              </packing>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <object class="GtkLabel" id="label34">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">3</property>
+                                <property name="right_attach">4</property>
+                                <property name="top_attach">1</property>
+                                <property name="bottom_attach">2</property>
+                                <property name="y_options"/>
+                              </packing>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="expand">True</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkInfoBar" id="infobar">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="show_close_button">True</property>
+                            <signal name="response" handler="on_infobar_response" swapped="no"/>
+                            <child internal-child="action_area">
+                              <object class="GtkButtonBox">
+                                <property name="can_focus">False</property>
+                                <property name="spacing">6</property>
+                                <property name="layout_style">end</property>
+                                <child>
+                                  <placeholder/>
+                                </child>
+                                <child>
+                                  <placeholder/>
+                                </child>
+                                <child>
+                                  <placeholder/>
                                 </child>
                               </object>
                               <packing>
@@ -3632,359 +4067,35 @@
                                 <property name="position">0</property>
                               </packing>
                             </child>
-                            <child>
-                              <object class="GtkButton" id="remove_map">
-                                <property name="use_action_appearance">False</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">True</property>
-                                <property name="tooltip_text" translatable="yes">Deleete the selected address map</property>
-                                <signal name="clicked" handler="on_remove_map_clicked" swapped="no"/>
+                            <child internal-child="content_area">
+                              <object class="GtkBox">
+                                <property name="can_focus">False</property>
+                                <property name="spacing">16</property>
                                 <child>
-                                  <object class="GtkImage" id="image4">
+                                  <object class="GtkLabel" id="infobar_label">
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
-                                    <property name="stock">gtk-remove</property>
+                                    <property name="label" translatable="yes">Add a register set to a subsystem by dragging it from the side bar and dropping it on the instance in the subsystem table.</property>
                                   </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">0</property>
+                                  </packing>
                                 </child>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
                                 <property name="fill">False</property>
-                                <property name="position">1</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkButton" id="edit_map">
-                                <property name="use_action_appearance">False</property>
-                                <property name="visible">True</property>
-                                <property name="sensitive">False</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">True</property>
-                                <property name="tooltip_text" translatable="yes">Select subsystems for the current address map</property>
-                                <signal name="clicked" handler="on_edit_map_clicked" swapped="no"/>
-                                <child>
-                                  <object class="GtkImage" id="image22">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">False</property>
-                                    <property name="stock">gtk-edit</property>
-                                  </object>
-                                </child>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">False</property>
-                                <property name="position">2</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkButton" id="addr_map_help">
-                                <property name="use_action_appearance">False</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">True</property>
-                                <property name="tooltip_text" translatable="yes">Provides help with Address Maps</property>
-                                <signal name="clicked" handler="on_addr_map_help_clicked" swapped="no"/>
-                                <child>
-                                  <object class="GtkImage" id="image5">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">False</property>
-                                    <property name="stock">gtk-help</property>
-                                  </object>
-                                </child>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">False</property>
-                                <property name="position">3</property>
-                              </packing>
-                            </child>
-                          </object>
-                          <packing>
-                            <property name="left_attach">4</property>
-                            <property name="right_attach">5</property>
-                            <property name="top_attach">6</property>
-                            <property name="bottom_attach">7</property>
-                            <property name="x_options">GTK_SHRINK</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkScrolledWindow" id="scrolledwindow7">
-                            <property name="visible">True</property>
-                            <property name="can_focus">True</property>
-                            <property name="shadow_type">in</property>
-                            <child>
-                              <object class="GtkTreeView" id="address_tree">
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <signal name="cursor-changed" handler="on_addrmap_cursor_changed" swapped="no"/>
-                                <child internal-child="selection">
-                                  <object class="GtkTreeSelection"/>
-                                </child>
-                              </object>
-                            </child>
-                          </object>
-                          <packing>
-                            <property name="left_attach">1</property>
-                            <property name="right_attach">4</property>
-                            <property name="top_attach">6</property>
-                            <property name="bottom_attach">7</property>
-                            <property name="y_options">GTK_FILL</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkScrolledWindow" id="scrolledwindow5">
-                            <property name="visible">True</property>
-                            <property name="can_focus">True</property>
-                            <property name="hscrollbar_policy">never</property>
-                            <property name="shadow_type">in</property>
-                            <child>
-                              <object class="GtkTreeView" id="instances">
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <signal name="cursor-changed" handler="on_instances_cursor_changed" swapped="no"/>
-                                <child internal-child="selection">
-                                  <object class="GtkTreeSelection"/>
-                                </child>
-                              </object>
-                            </child>
-                          </object>
-                          <packing>
-                            <property name="left_attach">1</property>
-                            <property name="right_attach">4</property>
-                            <property name="top_attach">4</property>
-                            <property name="bottom_attach">5</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkVButtonBox" id="vbuttonbox2">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="layout_style">start</property>
-                            <child>
-                              <object class="GtkButton" id="button4">
-                                <property name="use_action_appearance">False</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">True</property>
-                                <property name="tooltip_text" translatable="yes">Adds a new subsystem</property>
-                                <signal name="clicked" handler="on_add_instance_clicked" swapped="no"/>
-                                <child>
-                                  <object class="GtkImage" id="image2">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">False</property>
-                                    <property name="stock">gtk-add</property>
-                                  </object>
-                                </child>
-                              </object>
-                              <packing>
-                                <property name="expand">True</property>
-                                <property name="fill">True</property>
                                 <property name="position">0</property>
                               </packing>
                             </child>
-                            <child>
-                              <object class="GtkButton" id="instance_delete_btn">
-                                <property name="use_action_appearance">False</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">True</property>
-                                <property name="tooltip_text" translatable="yes">Deletes the selected subsystem</property>
-                                <signal name="clicked" handler="on_delete_instance_clicked" swapped="no"/>
-                                <child>
-                                  <object class="GtkImage" id="image1">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">False</property>
-                                    <property name="stock">gtk-remove</property>
-                                  </object>
-                                </child>
-                              </object>
-                              <packing>
-                                <property name="expand">True</property>
-                                <property name="fill">True</property>
-                                <property name="position">1</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkButton" id="instance_edit_btn">
-                                <property name="use_action_appearance">False</property>
-                                <property name="visible">True</property>
-                                <property name="sensitive">False</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">True</property>
-                                <property name="tooltip_text" translatable="yes">Edits the documentation for the selected subsystem</property>
-                                <signal name="clicked" handler="on_group_doc_clicked" swapped="no"/>
-                                <child>
-                                  <object class="GtkImage" id="image21">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">False</property>
-                                    <property name="stock">gtk-edit</property>
-                                  </object>
-                                </child>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">False</property>
-                                <property name="position">2</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkButton" id="group_help">
-                                <property name="use_action_appearance">False</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">True</property>
-                                <property name="tooltip_text" translatable="yes">Provides help with Subsystems</property>
-                                <signal name="clicked" handler="on_group_help_clicked" swapped="no"/>
-                                <child>
-                                  <object class="GtkImage" id="image20">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">False</property>
-                                    <property name="stock">gtk-help</property>
-                                  </object>
-                                </child>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">False</property>
-                                <property name="position">3</property>
-                              </packing>
-                            </child>
                           </object>
                           <packing>
-                            <property name="left_attach">4</property>
-                            <property name="right_attach">5</property>
-                            <property name="top_attach">4</property>
-                            <property name="bottom_attach">5</property>
-                            <property name="x_options">GTK_SHRINK</property>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
                           </packing>
-                        </child>
-                        <child>
-                          <object class="GtkLabel" id="label33">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">&lt;b&gt;Subsystems&lt;/b&gt;</property>
-                            <property name="use_markup">True</property>
-                            <property name="xalign">0</property>
-                          </object>
-                          <packing>
-                            <property name="right_attach">5</property>
-                            <property name="top_attach">3</property>
-                            <property name="bottom_attach">4</property>
-                            <property name="y_options"/>
-                          </packing>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <object class="GtkLabel" id="label34">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                          </object>
-                          <packing>
-                            <property name="left_attach">3</property>
-                            <property name="right_attach">4</property>
-                            <property name="top_attach">1</property>
-                            <property name="bottom_attach">2</property>
-                            <property name="y_options"/>
-                          </packing>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
                         </child>
                       </object>
                     </child>
