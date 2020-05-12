@@ -249,7 +249,7 @@ class BitList(object):
         model = cell.get_property("model")
         self.__model[path][col] = model.get_value(node, 0)
         self.update_type_info(field, model, path, node)
-        self.modified()
+        self.__modified()
 
     def update_type_info(self, field, model, path, node):
         field.field_type = model.get_value(node, 1)
@@ -294,7 +294,6 @@ class BitList(object):
                 start = stop
 
             # TODO: check for overlapping bits
-            print(start, stop)
             register = self.__model.register
             if stop >= register.width:
                 LOGGER.error("Bit position is greater than register width")

@@ -240,6 +240,7 @@
     <property name="label" translatable="yes">Import Register Set</property>
     <property name="short_label" translatable="yes">Import</property>
   </object>
+  <object class="GtkListStore" id="liststore1"/>
   <object class="GtkAction" id="new_set_action">
     <property name="label" translatable="yes">New Register Set</property>
     <property name="short_label" translatable="yes">New Set</property>
@@ -393,6 +394,7 @@
     <property name="label" translatable="yes">Register Set Groupings</property>
     <property name="short_label" translatable="yes">Groupings</property>
   </object>
+  <object class="GtkTextBuffer" id="register_description_buffer"/>
   <object class="GtkTextBuffer" id="register_text_buffer"/>
   <object class="GtkAction" id="remove_bit_action">
     <property name="label">_Remove Bit Action</property>
@@ -1211,6 +1213,7 @@
                                           <object class="GtkTreeView" id="bitfield_list">
                                             <property name="visible">True</property>
                                             <property name="can_focus">True</property>
+                                            <property name="model">liststore1</property>
                                             <child internal-child="selection">
                                               <object class="GtkTreeSelection" id="bitfield_list_selection"/>
                                             </child>
@@ -1269,6 +1272,7 @@
                                             <property name="visible">True</property>
                                             <property name="can_focus">True</property>
                                             <property name="wrap_mode">word</property>
+                                            <property name="buffer">register_description_buffer</property>
                                           </object>
                                         </child>
                                       </object>
@@ -1339,6 +1343,30 @@
                                     <property name="n_columns">3</property>
                                     <property name="column_spacing">6</property>
                                     <property name="row_spacing">6</property>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
                                     <child>
                                       <placeholder/>
                                     </child>
@@ -2090,6 +2118,21 @@
                                       <placeholder/>
                                     </child>
                                     <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child>
                                       <object class="GtkRadioButton" id="no_sharing">
                                         <property name="label" translatable="yes">No sharing</property>
                                         <property name="use_action_appearance">False</property>
@@ -2228,7 +2271,7 @@
                                       <placeholder/>
                                     </child>
                                     <child>
-                                      <object class="GtkTextView">
+                                      <object class="GtkTextView" id="address_sharing_view">
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="editable">False</property>
@@ -2630,7 +2673,7 @@
                                   </packing>
                                 </child>
                                 <child>
-                                  <object class="GtkScrolledWindow">
+                                  <object class="GtkScrolledWindow" id="parameter_list_scrolled_window">
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="shadow_type">in</property>
@@ -2656,7 +2699,7 @@
                                   </packing>
                                 </child>
                                 <child>
-                                  <object class="GtkLabel">
+                                  <object class="GtkLabel" id="dna00000">
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
                                     <property name="label" translatable="yes">Parameters</property>
@@ -2670,7 +2713,7 @@
                                   </packing>
                                 </child>
                                 <child>
-                                  <object class="GtkButtonBox">
+                                  <object class="GtkButtonBox" id="dna00001">
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
                                     <property name="orientation">vertical</property>
@@ -2682,7 +2725,7 @@
                                         <property name="receives_default">True</property>
                                         <signal name="clicked" handler="on_add_param_clicked" swapped="no"/>
                                         <child>
-                                          <object class="GtkImage">
+                                          <object class="GtkImage" id="dna00002">
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
                                             <property name="stock">gtk-add</property>
@@ -2702,7 +2745,7 @@
                                         <property name="receives_default">True</property>
                                         <signal name="clicked" handler="on_remove_param_clicked" swapped="no"/>
                                         <child>
-                                          <object class="GtkImage">
+                                          <object class="GtkImage" id="dna0">
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
                                             <property name="stock">gtk-remove</property>
@@ -2722,7 +2765,7 @@
                                         <property name="receives_default">True</property>
                                         <signal name="clicked" handler="on_param_help_clicked" swapped="no"/>
                                         <child>
-                                          <object class="GtkImage">
+                                          <object class="GtkImage" id="dna1">
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
                                             <property name="stock">gtk-help</property>
@@ -2749,7 +2792,7 @@
                                   <placeholder/>
                                 </child>
                                 <child>
-                                  <object class="GtkLabel">
+                                  <object class="GtkLabel" id="dna2">
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
                                   </object>
@@ -2784,7 +2827,7 @@
                                   </packing>
                                 </child>
                                 <child>
-                                  <object class="GtkLabel">
+                                  <object class="GtkLabel" id="dna3">
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
                                     <property name="label" translatable="yes">Options</property>
@@ -2811,7 +2854,7 @@
                           </packing>
                         </child>
                         <child type="tab">
-                          <object class="GtkBox">
+                          <object class="GtkBox" id="dna4">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <child>
@@ -2892,7 +2935,7 @@
                           </packing>
                         </child>
                         <child type="tab">
-                          <object class="GtkBox">
+                          <object class="GtkBox" id="dna5">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <child>
@@ -2928,7 +2971,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkGrid">
+                          <object class="GtkGrid" id="dna6">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <child>
@@ -3393,6 +3436,9 @@
                                 <child>
                                   <placeholder/>
                                 </child>
+                                <child>
+                                  <placeholder/>
+                                </child>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
@@ -3438,7 +3484,7 @@
                           </packing>
                         </child>
                         <child type="tab">
-                          <object class="GtkBox">
+                          <object class="GtkBox" id="dna7">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <child>
@@ -3487,7 +3533,7 @@
                         <property name="revealed">False</property>
                         <signal name="response" handler="on_infobar_response" swapped="no"/>
                         <child internal-child="action_area">
-                          <object class="GtkButtonBox">
+                          <object class="GtkButtonBox" id="dna8">
                             <property name="can_focus">False</property>
                             <property name="spacing">6</property>
                             <property name="layout_style">end</property>
@@ -3508,7 +3554,7 @@
                           </packing>
                         </child>
                         <child internal-child="content_area">
-                          <object class="GtkBox">
+                          <object class="GtkBox" id="dna9">
                             <property name="can_focus">False</property>
                             <property name="spacing">16</property>
                             <child>
@@ -3563,7 +3609,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <child>
-                      <object class="GtkBox">
+                      <object class="GtkBox" id="dna10">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="orientation">vertical</property>
@@ -3818,7 +3864,7 @@
                                     <property name="can_focus">True</property>
                                     <signal name="cursor-changed" handler="on_addrmap_cursor_changed" swapped="no"/>
                                     <child internal-child="selection">
-                                      <object class="GtkTreeSelection"/>
+                                      <object class="GtkTreeSelection" id="dna11"/>
                                     </child>
                                   </object>
                                 </child>
@@ -3843,7 +3889,7 @@
                                     <property name="can_focus">True</property>
                                     <signal name="cursor-changed" handler="on_instances_cursor_changed" swapped="no"/>
                                     <child internal-child="selection">
-                                      <object class="GtkTreeSelection"/>
+                                      <object class="GtkTreeSelection" id="dna12"/>
                                     </child>
                                   </object>
                                 </child>
@@ -4016,6 +4062,9 @@
                               <placeholder/>
                             </child>
                             <child>
+                              <placeholder/>
+                            </child>
+                            <child>
                               <object class="GtkLabel" id="label34">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
@@ -4027,6 +4076,9 @@
                                 <property name="bottom_attach">2</property>
                                 <property name="y_options"/>
                               </packing>
+                            </child>
+                            <child>
+                              <placeholder/>
                             </child>
                             <child>
                               <placeholder/>
@@ -4111,7 +4163,7 @@
                             <property name="show_close_button">True</property>
                             <signal name="response" handler="on_infobar_response" swapped="no"/>
                             <child internal-child="action_area">
-                              <object class="GtkButtonBox">
+                              <object class="GtkButtonBox" id="dna13">
                                 <property name="can_focus">False</property>
                                 <property name="spacing">6</property>
                                 <property name="layout_style">end</property>
@@ -4132,7 +4184,7 @@
                               </packing>
                             </child>
                             <child internal-child="content_area">
-                              <object class="GtkBox">
+                              <object class="GtkBox" id="dna14">
                                 <property name="can_focus">False</property>
                                 <property name="spacing">16</property>
                                 <child>

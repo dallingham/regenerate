@@ -329,20 +329,29 @@ class InstanceList(object):
                 )
         self.infobar_update()
 
+    def _infobar_reveal(self, prop):
+        try:
+            self.__infobar.set_revealed(prop)
+        except AttributeError:
+            if prop:
+                self.__infobar.show()
+            else:
+                self.__infobar.hide()
+
     def infobar_update(self):
         if self.need_subsystem:
             self.__infolabel.set_text(
                 "Add a subsystem instance by clicking on the Add button next to the subsystem table."
             )
-            self.__infobar.set_revealed(True)
+            self._infobar_reveal(True)
         elif self.need_regset:
             self.__infolabel.set_text(
                 "Add a register set to a subsystem by dragging it from the sidebar and "
                 "dropping it on the instance in the subsystem table."
             )
-            self.__infobar.set_revealed(True)
+            self._infobar_reveal(True)
         else:
-            self.__infobar.set_revealed(False)
+            self._infobar_reveal(False)
 
     def __build_instance_table(self):
 

@@ -278,13 +278,22 @@ class MainWindow(BaseWindow):
         self.set_title(value)
         self.prj.modified = value
 
+    def infobar_reveal(self, prop):
+        try:
+            self.prj_infobar.set_revealed(prop)
+        except AttributeError:
+            if prop:
+                self.prj_infobar.show()
+            else:
+                self.prj_infobar.hide()
+
     def load_project_tab(self):
         self.project_tabs.change_db(self.prj)
         self.addr_map_list.set_project(self.prj)
         if len(self.prj.files) > 0:
-            self.prj_infobar.set_revealed(False)
+            self.infobar_reveal(False)
         else:
-            self.prj_infobar.set_revealed(True)
+            self.infobar_reveal(True)
         self.project_modified(False)
 
     def on_edit_map_clicked(self, obj):
@@ -313,7 +322,10 @@ class MainWindow(BaseWindow):
             self.set_project_modified()
 
     def on_infobar_response(self, obj, obj2):
-        obj.set_revealed(False)
+        try:
+            obj.set_revealed(False)
+        except AttributeError:
+            obj.hide()
 
     def on_addr_map_help_clicked(self, obj):
         HelpWindow(self.builder, "addr_map_help.rst")
@@ -945,7 +957,7 @@ class MainWindow(BaseWindow):
                 self.open_xml(filename)
                 self.prj.add_register_set(filename)
                 self.set_project_modified()
-                self.prj_infobar.set_revealed(False)
+                self.infobar_reveal(False)
             self.prj_model.load_icons()
         choose.destroy()
 
@@ -1016,7 +1028,7 @@ class MainWindow(BaseWindow):
             self.prj_infobar_label.set_text(
                 "Add a register set to the project by selecting from the File menu"
             )
-            self.prj_infobar.set_revealed(True)
+            self.infobar_reveal(True)
             self.project_modified(False)
             if self.recent_manager:
                 sys.stdout.write("Add %s=n" % filename)
