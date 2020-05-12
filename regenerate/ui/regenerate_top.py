@@ -147,6 +147,8 @@ class MainWindow(BaseWindow):
         self.reg_notebook = self.find_obj("reg_notebook")
         self.top_notebook = self.find_obj("notebook1")
         self.module_notebook = self.find_obj("module_notebook")
+        self.prj_infobar = self.find_obj("register_infobar")
+        self.prj_infobar_label = self.find_obj("register_infobar_label")
 
         self.module_tabs = ModuleTabs(self.builder, self.set_modified)
 
@@ -282,6 +284,10 @@ class MainWindow(BaseWindow):
     def load_project_tab(self):
         self.project_tabs.change_db(self.prj)
         self.addr_map_list.set_project(self.prj)
+        if len(self.prj.files) > 0:
+            self.prj_infobar.set_revealed(False)
+        else:
+            self.prj_infobar.set_revealed(True)
         self.project_modified(False)
 
     def on_edit_map_clicked(self, obj):
@@ -550,16 +556,10 @@ class MainWindow(BaseWindow):
         Primary callback when a text field is edited in the BitList. Based off
         the column, we pass it to a function to handle the data.
         """
-        model = cell.get_property("model")
         field = self.bit_model.get_bitfield_at_path(path)
-
-        if re.match("[a-fA-F0-9]+", new_text):
-            field.reset_value = int(new_text, 16)
-            self.bit_model[path][col] = hex(int(new_text, 16))
-            field = self.bit_model.get_bitfield_at_path(path)
-            field.reset_type = ResetType.NUMERIC
-        else:
-            print("Not a hex number")
+        field.field_name = new_text
+        self.bit_model[path][col] = new_text
+        self.set_modified()
 
     def on_filter_icon_press(self, obj, icon, event):
         if icon == Gtk.ENTRY_ICON_SECONDARY:
@@ -634,6 +634,7 @@ class MainWindow(BaseWindow):
             modified = item[PrjCol.MODIFIED]
             obj = item[PrjCol.OBJ]
             dbmap[name] = (obj, modified)
+
         Build(self.prj, dbmap, self.top_window)
 
     def on_revert_action_activate(self, obj):
@@ -1027,6 +1028,7 @@ class MainWindow(BaseWindow):
                 self.open_xml(filename)
                 self.prj.add_register_set(filename)
                 self.set_project_modified()
+                self.prj_infobar.set_revealed(False)
             self.prj_model.load_icons()
         choose.destroy()
 
@@ -1094,6 +1096,10 @@ class MainWindow(BaseWindow):
             self.prj_model = ProjectModel()
             self.prj_obj.set_model(self.prj_model)
             self.prj.save()
+            self.prj_infobar_label.set_text(
+                "Add a register set to the project by selecting from the File menu"
+            )
+            self.prj_infobar.set_revealed(True)
             self.project_modified(False)
             if self.recent_manager:
                 sys.stdout.write("Add %s=n" % filename)
