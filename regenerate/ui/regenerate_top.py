@@ -55,7 +55,7 @@ from regenerate.ui.addrmap_list import AddrMapList
 from regenerate.ui.addr_edit import AddrMapEdit
 from regenerate.ui.parameter_list import ParameterList
 from regenerate.ui.base_window import BaseWindow
-from regenerate.ui.bit_list import BitModel, BitList, bits, reset_value
+from regenerate.ui.bit_list import BitModel, BitList, reset_value
 from regenerate.ui.bitfield_editor import BitFieldEditor
 from regenerate.ui.build import Build
 from regenerate.ui.error_dialogs import ErrorMsg, WarnMsg, Question
@@ -82,8 +82,6 @@ DEF_MIME = "*" + DEF_EXT
 
 # Regular expressions to check the validity of entered names. This should
 # probably be configurable, but has not been implemented yet.
-
-VALID_BITS = re.compile(r"""^\s*[\(\[]?(\d+)(\s*[-:]\s*(\d+))?[\)\]]?\s*$""")
 
 
 class DbaseStatus(object):
@@ -168,11 +166,10 @@ class MainWindow(BaseWindow):
 
         self.bitfield_obj = BitList(
             self.find_obj("bitfield_list"),
-            self.bit_combo_edit,
-            self.bit_text_edit,
             self.bit_reset_text_edit,
             self.bit_reset_menu_edit,
             self.bit_changed,
+            self.set_modified,
         )
 
         self.setup_project()
@@ -417,19 +414,6 @@ class MainWindow(BaseWindow):
         self.field_selected = self.build_group("field_selected", fld_acn)
         self.file_modified = self.build_group("file_modified", file_acn)
 
-    def bit_combo_edit(self, cell, path, node, col):
-        """
-        The callback function that occurs whenever a combo entry is altered
-        in the BitList. The 'col' value tells us which column was selected,
-        and the path tells us the row. So [path][col] is the index into the
-        table.
-        """
-        field = self.bit_model.get_bitfield_at_path(path)
-        model = cell.get_property("model")
-        self.bit_model[path][col] = model.get_value(node, 0)
-        self.update_type_info(field, model, path, node)
-        self.set_modified()
-
     def update_type_info(self, field, model, path, node):
         field.field_type = model.get_value(node, 1)
         register = self.reglist_obj.get_selected_register()
@@ -466,65 +450,6 @@ class MainWindow(BaseWindow):
                 field.reset_parameter = build_parameter_name(field.field_name)
             self.bit_model[path][BitCol.RESET] = field.reset_parameter
 
-    def bit_update_bits(self, field, path, new_text):
-        """
-        Called when the bits column of the BitList is edited. If the new text
-        does not match a valid bit combination (determined by the VALID_BITS
-        regular expression, then we do not modifiy the ListStore, which
-        prevents the display from being altered. If it does match, we extract
-        the start or start and stop positions, and alter the model and the
-        corresponding field.
-        """
-
-        match = VALID_BITS.match(new_text)
-        if match:
-            groups = match.groups()
-            stop = int(groups[0])
-
-            if groups[2]:
-                start = int(groups[2])
-            else:
-                start = stop
-
-            register = self.reglist_obj.get_selected_register()
-            if stop >= register.width:
-                LOGGER.error("Bit position is greater than register width")
-                return
-
-            if stop != field.msb or start != field.lsb:
-                field.msb, field.lsb = stop, start
-                r = self.reglist_obj.get_selected_register()
-                r.change_bit_field(field)
-                self.set_modified()
-
-            self.bit_model[path][BitCol.BIT] = bits(field)
-            self.bit_model[path][BitCol.SORT] = field.start_position
-
-    def bit_update_name(self, field, path, new_text):
-        """
-        Called when the bits name of the BitList is edited. If the new text
-        is different from the stored value, we alter the model (to change the
-        display) and alter the corresponding field.
-        """
-        if new_text != field.field_name:
-            new_text = new_text.upper().replace(" ", "_")
-            new_text = new_text.replace("/", "_").replace("-", "_")
-
-            register = self.reglist_obj.get_selected_register()
-
-            current_names = [
-                f.field_name for f in register.get_bit_fields() if f != field
-            ]
-
-            if new_text not in current_names:
-                self.bit_model[path][BitCol.NAME] = new_text
-                field.field_name = new_text
-                self.set_modified()
-            else:
-                LOGGER.error(
-                    '"%s" has already been used as a field name', new_text
-                )
-
     def bit_reset_text_edit(self, cell, path, new_val, col):
         field = self.bit_model.get_bitfield_at_path(path)
 
@@ -549,16 +474,6 @@ class MainWindow(BaseWindow):
         field.reset_type = ResetType.PARAMETER
         self.bit_model[path][BitCol.RESET] = new_val
         self.bit_model[path][BitCol.RESET_TYPE] = "Parameter"
-        self.set_modified()
-
-    def bit_text_edit(self, cell, path, new_text, col):
-        """
-        Primary callback when a text field is edited in the BitList. Based off
-        the column, we pass it to a function to handle the data.
-        """
-        field = self.bit_model.get_bitfield_at_path(path)
-        field.field_name = new_text
-        self.bit_model[path][col] = new_text
         self.set_modified()
 
     def on_filter_icon_press(self, obj, icon, event):
@@ -765,6 +680,7 @@ class MainWindow(BaseWindow):
         self.reg_description.set_register(reg)
         if reg:
             self.bit_model.clear()
+            self.bit_model.register = reg
             self.bitfield_obj.set_mode(reg.share)
             for key in reg.get_bit_field_keys():
                 field = reg.get_bit_field(key)
@@ -784,6 +700,7 @@ class MainWindow(BaseWindow):
         else:
             if self.bit_model:
                 self.bit_model.clear()
+                self.register = None
             self.reg_notebook.set_sensitive(False)
             self.reg_selected.set_sensitive(False)
         self.skip_changes = old_skip

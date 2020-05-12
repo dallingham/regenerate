@@ -20,8 +20,9 @@
 Provides both the GTK ListStore and ListView for the bit fields.
 """
 
+import re
 from gi.repository import Gtk
-from regenerate.db import TYPES
+from regenerate.db import TYPES, LOGGER
 from regenerate.db.enums import ResetType
 from regenerate.ui.columns import (
     EditableColumn,
@@ -31,6 +32,9 @@ from regenerate.ui.columns import (
 )
 from regenerate.ui.enums import BitCol
 
+VALID_BITS = re.compile(r"""^\s*[\(\[]?(\d+)(\s*[-:]\s*(\d+))?[\)\]]?\s*$""")
+
+
 TYPE2STR = [(t.description, t.type) for t in sorted(TYPES)]
 RO2STR = [
     (t.description, t.type) for t in sorted(TYPES) if t.simple_type == "RO"
@@ -38,6 +42,11 @@ RO2STR = [
 WO2STR = [
     (t.description, t.type) for t in sorted(TYPES) if t.simple_type == "WO"
 ]
+
+TYPE_ENB = {}
+for data_type in TYPES:
+    TYPE_ENB[data_type.type] = (data_type.input, data_type.control)
+
 
 (BIT_TITLE, BIT_SIZE, BIT_SORT, BIT_EXPAND, BIT_MONO) = range(5)
 
@@ -56,6 +65,7 @@ class BitModel(Gtk.ListStore):
         be adding to the model.
         """
         super().__init__(str, str, str, str, str, str, int, object)
+        self.register = None
 
     def append_field(self, field):
         "Adds the field to the model, filling out the fields in the model."
@@ -100,26 +110,23 @@ class BitList(object):
     def __init__(
         self,
         obj,
-        combo_edit,
-        text_edit,
         reset_text_edit,
         reset_menu_edit,
         selection_changed,
+        modified,
     ):
         """
         Creates the object, connecting it to the ListView (obj). Three
         callbacks are associated with the object.
 
-        combo_edit - called when the type combo is edited
         text_edit - called when a text field is edited
         selection_changed - called when the selected field is changed
         """
         self.__obj = obj
         self.__col = None
         self.__model = None
-        self.__build_bitfield_columns(
-            combo_edit, text_edit, reset_text_edit, reset_menu_edit
-        )
+        self.__modified = modified
+        self.__build_bitfield_columns(reset_text_edit, reset_menu_edit)
         self.__obj.get_selection().connect("changed", selection_changed)
 
     def set_parameters(self, parameters):
@@ -134,9 +141,7 @@ class BitList(object):
     def set_mode(self, mode):
         self.type_column.set_mode(mode)
 
-    def __build_bitfield_columns(
-        self, combo_edit, text_edit, reset_text_edit, reset_menu_edit
-    ):
+    def __build_bitfield_columns(self, reset_text_edit, reset_menu_edit):
         """
         Builds the columns for the tree view. First, removes the old columns in
         the column list. The builds new columns and inserts them into the tree.
@@ -144,7 +149,12 @@ class BitList(object):
         for (i, col) in enumerate(self.BIT_COLS):
             if i == BitCol.TYPE:
                 column = SwitchComboMapColumn(
-                    col[BIT_TITLE], combo_edit, TYPE2STR, RO2STR, WO2STR, i
+                    col[BIT_TITLE],
+                    self.field_type_edit,
+                    TYPE2STR,
+                    RO2STR,
+                    WO2STR,
+                    i,
                 )
                 self.type_column = column
             elif i == BitCol.RESET_TYPE:
@@ -158,12 +168,16 @@ class BitList(object):
                     col[BIT_TITLE], reset_menu_edit, reset_text_edit, [], i
                 )
                 self.reset_column = column
-            else:
+            elif i == BitCol.NAME:
                 column = EditableColumn(
-                    col[BIT_TITLE], text_edit, i, col[BIT_MONO]
+                    col[BIT_TITLE], self.field_name_edit, i, col[BIT_MONO]
                 )
-            if i == BitCol.BIT:
+            elif i == BitCol.BIT:
+                column = EditableColumn(
+                    col[BIT_TITLE], self.update_bits, i, col[BIT_MONO]
+                )
                 self.__col = column
+
             if col[BIT_SORT] >= 0:
                 column.set_sort_column_id(col[BIT_SORT])
             column.set_min_width(col[BIT_SIZE])
@@ -197,6 +211,102 @@ class BitList(object):
         "Adds a new field to the model, and sets editing to begin"
         path = self.__model.append_field(field)
         self.__obj.set_cursor(path, self.__col, start_editing=True)
+
+    def field_name_edit(self, cell, path, new_text, col):
+        """
+        Primary callback when a text field is edited in the BitList. Based off
+        the column, we pass it to a function to handle the data.
+        """
+
+        field = self.__model.get_bitfield_at_path(path)
+        if new_text != field.field_name:
+            new_text = new_text.upper().replace(" ", "_")
+            new_text = new_text.replace("/", "_").replace("-", "_")
+
+            register = self.__model.register
+
+            current_names = [
+                f.field_name for f in register.get_bit_fields() if f != field
+            ]
+
+            if new_text not in current_names:
+                self.__model[path][BitCol.NAME] = new_text
+                field.field_name = new_text
+                self.__modified()
+            else:
+                LOGGER.error(
+                    '"%s" has already been used as a field name', new_text
+                )
+
+    def field_type_edit(self, cell, path, node, col):
+        """
+        The callback function that occurs whenever a combo entry is altered
+        in the BitList. The 'col' value tells us which column was selected,
+        and the path tells us the row. So [path][col] is the index into the
+        table.
+        """
+        field = self.__model.get_bitfield_at_path(path)
+        model = cell.get_property("model")
+        self.__model[path][col] = model.get_value(node, 0)
+        self.update_type_info(field, model, path, node)
+        self.modified()
+
+    def update_type_info(self, field, model, path, node):
+        field.field_type = model.get_value(node, 1)
+
+        if not field.output_signal:
+            field.output_signal = "%s_%s_OUT" % (
+                self.__model.register.token,
+                field.field_name,
+            )
+
+        if TYPE_ENB[field.field_type][0] and not field.input_signal:
+            field.input_signal = "%s_%s_IN" % (
+                self.__model.register.token,
+                field.field_name,
+            )
+
+        if TYPE_ENB[field.field_type][1] and not field.control_signal:
+            field.control_signal = "%s_%s_LD" % (
+                self.__model.register.token,
+                field.field_name,
+            )
+
+    def update_bits(self, cell, path, new_text, col):
+        """
+        Called when the bits column of the BitList is edited. If the new text
+        does not match a valid bit combination (determined by the VALID_BITS
+        regular expression, then we do not modifiy the ListStore, which
+        prevents the display from being altered. If it does match, we extract
+        the start or start and stop positions, and alter the model and the
+        corresponding field.
+        """
+
+        field = self.__model.get_bitfield_at_path(path)
+        match = VALID_BITS.match(new_text)
+        if match:
+            groups = match.groups()
+            stop = int(groups[0])
+
+            if groups[2]:
+                start = int(groups[2])
+            else:
+                start = stop
+
+            # TODO: check for overlapping bits
+            print(start, stop)
+            register = self.__model.register
+            if stop >= register.width:
+                LOGGER.error("Bit position is greater than register width")
+                return
+
+            if stop != field.msb or start != field.lsb:
+                field.msb, field.lsb = stop, start
+                register.change_bit_field(field)
+                self.__modified()
+
+            self.__model[path][BitCol.BIT] = bits(field)
+            self.__model[path][BitCol.SORT] = field.start_position
 
 
 def bits(field):
