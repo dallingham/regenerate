@@ -166,8 +166,8 @@ class MainWindow(BaseWindow):
 
         self.bitfield_obj = BitList(
             self.find_obj("bitfield_list"),
-            self.bit_reset_text_edit,
-            self.bit_reset_menu_edit,
+            self.find_obj("error_infobar_label"),
+            self.find_obj("error_infobar"),
             self.bit_changed,
             self.set_modified,
         )
@@ -425,68 +425,6 @@ class MainWindow(BaseWindow):
         self.db_selected = self.build_group("database_selected", db_acn)
         self.field_selected = self.build_group("field_selected", fld_acn)
         self.file_modified = self.build_group("file_modified", file_acn)
-
-    def update_type_info(self, field, model, path, node):
-        field.field_type = model.get_value(node, 1)
-        register = self.reglist_obj.get_selected_register()
-
-        if not field.output_signal:
-            field.output_signal = "%s_%s_OUT" % (
-                register.token,
-                field.field_name,
-            )
-
-        if TYPE_ENB[field.field_type][0] and not field.input_signal:
-            field.input_signal = "%s_%s_IN" % (
-                register.token,
-                field.field_name,
-            )
-
-        if TYPE_ENB[field.field_type][1] and not field.control_signal:
-            field.control_signal = "%s_%s_LD" % (
-                register.token,
-                field.field_name,
-            )
-
-    def update_reset_field(self, field, model, path, node):
-        field.reset_type = model.get_value(node, 1)
-        if field.reset_type == ResetType.NUMERIC:
-            val = reset_value(field)
-            self.bit_model[path][BitCol.RESET] = val
-        elif field.reset_type == ResetType.INPUT:
-            if not re.match(r"^[A-Za-z]\w*$", field.reset_input):
-                field.reset_input = "%s_RST" % field.field_name
-            self.bit_model[path][BitCol.RESET] = field.reset_input
-        else:
-            if not re.match(r"^[A-Za-z]\w*$", field.reset_parameter):
-                field.reset_parameter = build_parameter_name(field.field_name)
-            self.bit_model[path][BitCol.RESET] = field.reset_parameter
-
-    def bit_reset_text_edit(self, cell, path, new_val, col):
-        field = self.bit_model.get_bitfield_at_path(path)
-
-        if re.match(r"^(0x)?[a-fA-F0-9]+$", new_val):
-            field.reset_value = int(new_val, 16)
-            field.reset_type = ResetType.NUMERIC
-            self.bit_model[path][col] = reset_value(field)
-            self.bit_model[path][BitCol.RESET_TYPE] = "Constant"
-            self.set_modified()
-        elif re.match(r"""^[A-Za-z]\w*$""", new_val):
-            field.reset_input = new_val
-            field.reset_type = ResetType.INPUT
-            self.bit_model[path][BitCol.RESET] = new_val
-            self.bit_model[path][BitCol.RESET_TYPE] = "Input Port"
-            self.set_modified()
-
-    def bit_reset_menu_edit(self, cell, path, node, col):
-        model = cell.get_property("model")
-        new_val = model.get_value(node, 0)
-        field = self.bit_model.get_bitfield_at_path(path)
-        field.reset_parameter = new_val
-        field.reset_type = ResetType.PARAMETER
-        self.bit_model[path][BitCol.RESET] = new_val
-        self.bit_model[path][BitCol.RESET_TYPE] = "Parameter"
-        self.set_modified()
 
     def on_filter_icon_press(self, obj, icon, event):
         if icon == Gtk.ENTRY_ICON_SECONDARY:

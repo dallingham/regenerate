@@ -22,7 +22,7 @@ Provides both the GTK ListStore and ListView for the bit fields.
 
 import re
 from gi.repository import Gtk
-from regenerate.db import TYPES, LOGGER
+from regenerate.db import TYPES
 from regenerate.db.enums import ResetType
 from regenerate.ui.columns import (
     EditableColumn,
@@ -108,12 +108,7 @@ class BitList(object):
     )
 
     def __init__(
-        self,
-        obj,
-        reset_text_edit,
-        reset_menu_edit,
-        selection_changed,
-        modified,
+        self, obj, infobar_label, infobar, selection_changed, modified
     ):
         """
         Creates the object, connecting it to the ListView (obj). Three
@@ -126,8 +121,17 @@ class BitList(object):
         self.__col = None
         self.__model = None
         self.__modified = modified
-        self.__build_bitfield_columns(reset_text_edit, reset_menu_edit)
-        self.__obj.get_selection().connect("changed", selection_changed)
+        self.__infobar = infobar
+        self.__infobar_label = infobar_label
+        self.__build_bitfield_columns()
+        self.__obj.get_selection().connect(
+            "changed", self.my_selection_changed
+        )
+        self.selection_changed = selection_changed
+
+    def my_selection_changed(self, obj):
+        self.clear_msg()
+        self.selection_changed(obj)
 
     def set_parameters(self, parameters):
         my_parameters = sorted([(p[0], p[0]) for p in parameters])
@@ -141,7 +145,7 @@ class BitList(object):
     def set_mode(self, mode):
         self.type_column.set_mode(mode)
 
-    def __build_bitfield_columns(self, reset_text_edit, reset_menu_edit):
+    def __build_bitfield_columns(self):
         """
         Builds the columns for the tree view. First, removes the old columns in
         the column list. The builds new columns and inserts them into the tree.
@@ -165,7 +169,11 @@ class BitList(object):
                 )
             elif i == BitCol.RESET:
                 column = MyComboMapColumn(
-                    col[BIT_TITLE], reset_menu_edit, reset_text_edit, [], i
+                    col[BIT_TITLE],
+                    self.reset_menu_edit,
+                    self.reset_text_edit,
+                    [],
+                    i,
                 )
                 self.reset_column = column
             elif i == BitCol.NAME:
@@ -233,10 +241,45 @@ class BitList(object):
                 self.__model[path][BitCol.NAME] = new_text
                 field.field_name = new_text
                 self.__modified()
+                self.clear_msg()
             else:
-                LOGGER.error(
-                    '"%s" has already been used as a field name', new_text
+                self.show_msg(
+                    '"%s" has already been used as a field name' % new_text
                 )
+
+    def reset_text_edit(self, cell, path, new_val, col):
+        field = self.__model.get_bitfield_at_path(path)
+
+        print("Reset Text Edit")
+        if re.match(r"^(0x)?[a-fA-F0-9]+$", new_val):
+            if self.check_reset(field, int(new_val, 16)) == False:
+                return
+            field.reset_value = int(new_val, 16)
+            field.reset_type = ResetType.NUMERIC
+            self.__model[path][col] = reset_value(field)
+            self.__model[path][BitCol.RESET_TYPE] = "Constant"
+            self.__modified()
+        elif re.match(r"""^[A-Za-z]\w*$""", new_val):
+            field.reset_input = new_val
+            field.reset_type = ResetType.INPUT
+            self.__model[path][BitCol.RESET] = new_val
+            self.__model[path][BitCol.RESET_TYPE] = "Input Port"
+            self.__modified()
+        else:
+            self.show_msg(
+                '"%s" is not a valid constant, parameter, or signal name'
+                % new_val
+            )
+
+    def reset_menu_edit(self, cell, path, node, col):
+        model = cell.get_property("model")
+        new_val = model.get_value(node, 0)
+        field = self.__model.get_bitfield_at_path(path)
+        field.reset_parameter = new_val
+        field.reset_type = ResetType.PARAMETER
+        self.__model[path][BitCol.RESET] = new_val
+        self.__model[path][BitCol.RESET_TYPE] = "Parameter"
+        self.__modified()
 
     def field_type_edit(self, cell, path, node, col):
         """
@@ -288,24 +331,83 @@ class BitList(object):
             groups = match.groups()
             stop = int(groups[0])
 
+            start = stop
             if groups[2]:
                 start = int(groups[2])
-            else:
-                start = stop
 
             # TODO: check for overlapping bits
-            register = self.__model.register
-            if stop >= register.width:
-                LOGGER.error("Bit position is greater than register width")
+
+            if self.check_for_overlaps(field, start, stop) == False:
+                return
+
+            if self.check_for_width(start, stop) == False:
                 return
 
             if stop != field.msb or start != field.lsb:
                 field.msb, field.lsb = stop, start
-                register.change_bit_field(field)
+                self.__model.register.change_bit_field(field)
                 self.__modified()
 
             self.__model[path][BitCol.BIT] = bits(field)
             self.__model[path][BitCol.SORT] = field.start_position
+        else:
+            self.show_msg(
+                '"%s" is not a valid bit range. '
+                "It should be a single integer or two integers "
+                "separated by a colon." % new_text
+            )
+
+    def show_msg(self, text):
+        self.__infobar_label.set_text(text)
+        try:
+            self.__infobar.show()
+            self.__infobar.set_revealed(True)
+        except AttributeError:
+            self.__infobar.show()
+
+    def clear_msg(self):
+        try:
+            self.__infobar.set_revealed(False)
+            self.__infobar.hide()
+        except AttributeError:
+            self.__infobar.hide()
+
+    def check_for_width(self, start, stop):
+        register = self.__model.register
+        if stop >= register.width:
+            self.show_msg(
+                "Bit position (%d) is greater than register width (%d)"
+                % (stop, register.width)
+            )
+            return False
+        return True
+
+    def check_reset(self, field, value):
+        maxval = (1 << ((field.msb - field.lsb) + 1)) - 1
+        if value > maxval:
+            self.show_msg(
+                "Reset value (0x%x) is greater than the maximum value (0x%x)"
+                % (value, maxval)
+            )
+            return False
+        return True
+
+    def check_for_overlaps(self, field, start, stop):
+        register = self.__model.register
+
+        used = set()
+        for f in register.get_bit_fields():
+            if f != field:
+                for bit in range(f.lsb, f.msb + 1):
+                    used.add(bit)
+
+        for bit in range(start, stop + 1):
+            if bit in used:
+                self.show_msg(
+                    "Bit %d overlaps with the bits in another register" % bit
+                )
+                return False
+        return True
 
 
 def bits(field):
