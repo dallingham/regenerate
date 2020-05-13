@@ -1139,7 +1139,7 @@
                                                 <property name="can_focus">True</property>
                                                 <property name="model">liststore1</property>
                                                 <child internal-child="selection">
-                                                  <object class="GtkTreeSelection"/>
+                                                  <object class="GtkTreeSelection" id="dna4000"/>
                                                 </child>
                                               </object>
                                             </child>
@@ -1157,7 +1157,7 @@
                                             <property name="message_type">error</property>
                                             <property name="revealed">False</property>
                                             <child internal-child="action_area">
-                                              <object class="GtkButtonBox">
+                                              <object class="GtkButtonBox" id="dna4001">
                                                 <property name="can_focus">False</property>
                                                 <property name="spacing">6</property>
                                                 <property name="layout_style">end</property>
