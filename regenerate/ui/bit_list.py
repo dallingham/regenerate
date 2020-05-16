@@ -335,8 +335,6 @@ class BitList(object):
             if groups[2]:
                 start = int(groups[2])
 
-            # TODO: check for overlapping bits
-
             if self.check_for_overlaps(field, start, stop) == False:
                 return
 

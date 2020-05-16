@@ -156,13 +156,20 @@ class Register(object):
             return lbits[-1] + 1
         return 0
 
+    def dimension_is_param(self):
+        try:
+            int(self._dimension, 0)
+            return False
+        except:
+            return True
+
     @property
     def dimension(self):
         try:
             return int(self._dimension)
         except ValueError:
             if self._plist:
-                for (name, value) in self._plist:
+                for (name, value, minval, maxval) in self._plist:
                     if name == self._dimension:
                         return value
             return 1

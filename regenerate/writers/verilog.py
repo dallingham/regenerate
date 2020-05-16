@@ -32,8 +32,15 @@ from regenerate.db.enums import ShareType, ResetType
 LOWER_BIT = {128: 4, 64: 3, 32: 2, 16: 1, 8: 0}
 
 
-(F_FIELD, F_START_OFF, F_STOP_OFF, F_START,
- F_STOP, F_ADDRESS, F_REGISTER) = range(7)
+(
+    F_FIELD,
+    F_START_OFF,
+    F_STOP_OFF,
+    F_START,
+    F_STOP,
+    F_ADDRESS,
+    F_REGISTER,
+) = range(7)
 
 BIT_SLICE = re.compile(r"(.*)\[(\d+)\]")
 BUS_SLICE = re.compile(r"(.*)\[(\d+):(\d+)\]")
@@ -54,8 +61,15 @@ CellInfo = namedtuple(
 
 ByteInfo = namedtuple(
     "ByteInfo",
-    ["field", "start_offset", "stop_offset",
-        "start", "stop", "address", "register"],
+    [
+        "field",
+        "start_offset",
+        "stop_offset",
+        "start",
+        "stop",
+        "address",
+        "register",
+    ],
 )
 
 
@@ -75,7 +89,9 @@ def reset_value(field, start, stop):
     if field.reset_type == ResetType.NUMERIC:
         field_width = (stop - start) + 1
         reset = int(field.reset_value >> int(start - field.lsb))
-        return "{0}'h{1:x}".format(field_width, reset & int((2 ** field_width) - 1))
+        return "{0}'h{1:x}".format(
+            field_width, reset & int((2 ** field_width) - 1)
+        )
     elif field.reset_type == ResetType.INPUT:
         if stop == start:
             return field.reset_input
@@ -93,7 +109,7 @@ def break_into_bytes(start, stop):
     data = []
 
     while index <= stop:
-        next_boundary = (int(index / 8) + 1) * 8
+        next_boundary = (int(index // 8) + 1) * 8
         data.append((index, min(stop, next_boundary - 1)))
         index = next_boundary
     return data
@@ -156,8 +172,8 @@ class Verilog(WriterBase):
         start = max(field.lsb, lower)
         stop = min(field.msb, lower + size - 1)
 
-        nbytes = int(size / 8)
-        address = int(register.address / nbytes) * nbytes
+        nbytes = int(size // 8)
+        address = int(register.address // nbytes) * nbytes
         bit_offset = int((register.address * 8) % size)
 
         return ByteInfo(
@@ -182,9 +198,10 @@ class Verilog(WriterBase):
                 for lower in range(0, register.width, size):
                     if in_range(field.lsb, field.msb, lower, lower + size - 1):
                         data = self._byte_info(
-                            field, register, lower, size, offset)
+                            field, register, lower, size, offset
+                        )
                         item_list.setdefault(data.address, []).append(data)
-                        offset += size / 8
+                        offset += size // 8
         return item_list
 
     def write(self, filename):
@@ -208,12 +225,14 @@ class Verilog(WriterBase):
 
         reglist = []
         for reg in [
-            r for r in self._dbase.get_all_registers() if not r.do_not_generate_code
+            r
+            for r in self._dbase.get_all_registers()
+            if not r.do_not_generate_code
         ]:
             if reg.dimension > 1:
                 for i in range(0, reg.dimension):
                     new_reg = copy.copy(reg)
-                    new_reg.address = reg.address + (i * int(reg.width / 8))
+                    new_reg.address = reg.address + (i * int(reg.width // 8))
                     new_reg.dimension = i
                     reglist.append(new_reg)
             else:
@@ -230,7 +249,10 @@ class Verilog(WriterBase):
 
         reset_op = (
             ""
-            if (self._dbase.reset_active_level and not self._dbase.use_interface)
+            if (
+                self._dbase.reset_active_level
+                and not self._dbase.use_interface
+            )
             else "~"
         )
 
@@ -239,52 +261,25 @@ class Verilog(WriterBase):
             for field in reg.get_bit_fields():
                 if field.reset_type == ResetType.PARAMETER:
                     parameters.append(
-                        (field.msb, field.lsb, field.reset_parameter))
+                        (field.msb, field.lsb, field.reset_parameter)
+                    )
 
-        scalar_ports = []
-        array_ports = defaultdict(list)
-        dim = {}
-        for reg in self._dbase.get_all_registers():
-            if reg.do_not_generate_code:
-                continue
-            for field in reg.get_bit_fields():
-                if TYPE_TO_OUTPUT[field.field_type] and field.use_output_enable:
-                    sig = field.output_signal
-                    root = sig.split("[")
-                    wild = sig.split("*")
-                    if len(root) == 1:
-                        if field.msb == field.lsb:
-                            scalar_ports.append((sig, "", reg.dimension))
-                        else:
-                            dim[sig] = reg.dimension
-                            for i in range(field.lsb, field.msb + 1):
-                                array_ports[sig].append(i)
-                    elif len(wild) > 1:
-                        dim[root[0]] = reg.dimension
-                        for i in range(field.lsb, field.msb + 1):
-                            array_ports[root[0]].append(i)
-                    else:
-                        match = BUS_SLICE.match(sig)
-                        if match:
-                            grp = match.groups()
-                            for i in range(int(grp[1]), int(grp[2])):
-                                array_ports[grp[0]].append(i)
-                            continue
+        input_signals = build_input_signals(self._dbase, self._cell_info)
+        standard_ports = build_standard_ports(self._dbase)
+        port_widths = build_port_widths(self._dbase)
+        output_signals = build_output_signals(self._dbase, self._cell_info)
+        reg_list = build_logic_list(self._dbase, word_fields, self._cell_info)
+        oneshot_assigns = build_oneshot_assignments(
+            word_fields, self._cell_info
+        )
+        assign_list = build_assignments(word_fields, self._cell_info)
 
-                        match = BIT_SLICE.match(sig)
-                        if match:
-                            grp = match.groups()
-                            dim[grp[0]] = reg.dimension
-                            array_ports[grp[0]].append(int(grp[1]))
-                            continue
-
-        for key in array_ports:
-            msb = max(array_ports[key])
-            lsb = min(array_ports[key])
-            if msb == lsb:
-                scalar_ports.append((key, "[%d]" % lsb, dim[key]))
-            else:
-                scalar_ports.append((key, "[%d:%d]" % (msb, lsb), dim[key]))
+        write_address_selects = build_write_address_selects(
+            self._dbase, word_fields, self._cell_info
+        )
+        read_address_selects = build_read_address_selects(
+            self._dbase, word_fields, self._cell_info
+        )
 
         # TODO: fix 64 bit registers with 32 bit width
 
@@ -292,18 +287,25 @@ class Verilog(WriterBase):
             ofile.write(
                 template.render(
                     db=self._dbase,
+                    ports=standard_ports,
+                    reg_list=reg_list,
+                    port_width=port_widths,
+                    input_signals=input_signals,
+                    output_signals=output_signals,
+                    oneshot_assigns=oneshot_assigns,
+                    write_address_selects=write_address_selects,
+                    read_address_selects=read_address_selects,
                     rshift=rshift,
                     parameters=parameters,
                     cell_info=self._cell_info,
                     word_fields=word_fields,
+                    assign_list=assign_list,
                     break_into_bytes=break_into_bytes,
-                    sorted_regs=sorted(reglist, key=lambda r: r.address),
                     full_reset_value=full_reset_value,
                     reset_value=reset_value,
                     input_logic=self.input_logic,
                     output_logic=self.output_logic,
                     always=self.always,
-                    output_ports=scalar_ports,
                     reset_edge=reset_edge,
                     reset_op=reset_op,
                     reg_type=self.reg_type,
@@ -390,6 +392,309 @@ def drop_write_share(list_in):
     return list_out
 
 
+def build_port_widths(db):
+    return {
+        "byte_strobe": "[{}:0]".format(db.data_bus_width // 8 - 1),
+        "addr": "[{}:0]".format(
+            db.address_bus_width - 1, LOWER_BIT[db.data_bus_width]
+        ),
+        "write_data": "[{}:0]".format(db.data_bus_width - 1),
+    }
+
+
+def reg_field_name(reg, field):
+    mode = ["_", "_r_", "_w"]
+    return "r%02x%s%s" % (
+        reg.address,
+        mode[reg.share],
+        field.field_name.lower(),
+    )
+
+
+def build_write_address_selects(db, word_fields, cell_info):
+
+    assigns = []
+
+    for addr in word_fields:
+        val = word_fields[addr]
+        rval = addr >> LOWER_BIT[db.data_bus_width]
+
+        assigns.append(
+            (
+                "write_r%02x" % addr,
+                "%d'h%x"
+                % (db.address_bus_width - LOWER_BIT[db.data_bus_width], rval),
+            )
+        )
+    return assigns
+
+
+def build_read_address_selects(db, word_fields, cell_info):
+    assigns = []
+    for addr in word_fields:
+        val = word_fields[addr]
+
+        for (
+            field,
+            start_offset,
+            stop_offset,
+            start_pos,
+            stop_pos,
+            faddr,
+            reg,
+        ) in val:
+            if not cell_info[field.field_type].has_rd:
+                continue
+            lower_bit = LOWER_BIT[db.data_bus_width]
+            assigns.append(
+                (
+                    "read_r%02x" % addr,
+                    "%d'h%x"
+                    % (db.address_bus_width - lower_bit, addr >> lower_bit),
+                )
+            )
+    return assigns
+
+
+def build_output_signals(db, cell_info):
+
+    scalar_ports = []
+    array_ports = defaultdict(list)
+    dim = {}
+    signals = []
+    for reg in db.get_all_registers():
+        if reg.do_not_generate_code:
+            continue
+        for field in reg.get_bit_fields():
+            if cell_info[field.field_type].has_oneshot:
+                if reg.dimension > 1:
+                    signals.append(
+                        (
+                            "{}_1S[{}]".format(
+                                field.output_signal, reg.dimension
+                            ),
+                            "",
+                        )
+                    )
+                else:
+                    signals.append(("{}_1S".format(field.output_signal), ""))
+
+            if TYPE_TO_OUTPUT[field.field_type] and field.use_output_enable:
+                sig = field.output_signal
+                root = sig.split("[")
+                wild = sig.split("*")
+                if len(root) == 1:
+                    if field.msb == field.lsb:
+                        scalar_ports.append((sig, "", reg.dimension))
+                    else:
+                        dim[sig] = reg.dimension
+                        for i in range(field.lsb, field.msb + 1):
+                            array_ports[sig].append(i)
+                elif len(wild) > 1:
+                    dim[root[0]] = reg.dimension
+                    for i in range(field.lsb, field.msb + 1):
+                        array_ports[root[0]].append(i)
+                else:
+                    match = BUS_SLICE.match(sig)
+                    if match:
+                        grp = match.groups()
+                        for i in range(int(grp[1]), int(grp[2])):
+                            array_ports[grp[0]].append(i)
+                        continue
+
+                    match = BIT_SLICE.match(sig)
+                    if match:
+                        grp = match.groups()
+                        dim[grp[0]] = reg.dimension
+                        array_ports[grp[0]].append(int(grp[1]))
+                        continue
+
+    for key in array_ports:
+        msb = max(array_ports[key])
+        lsb = min(array_ports[key])
+        if msb == lsb:
+            scalar_ports.append((key, "[%d]" % lsb, dim[key]))
+        else:
+            scalar_ports.append((key, "[%d:%d]" % (msb, lsb), dim[key]))
+
+    for (name, vect, dim) in scalar_ports:
+        if dim > 1:
+            signals.append(("{}{}" % (name, dim), vect))
+        else:
+            signals.append((name, vect))
+
+    return sorted(signals)
+
+
+def build_logic_list(db, word_fields, cell_info):
+    reg_list = []
+
+    for addr in word_fields:
+        val = word_fields[addr]
+        for (
+            field,
+            start_offset,
+            stop_offset,
+            start_pos,
+            stop_pos,
+            faddr,
+            reg,
+        ) in val:
+            if field.msb == field.lsb:
+                reg_list.append((reg_field_name(reg, field), ""))
+            else:
+                reg_list.append(
+                    (
+                        reg_field_name(reg, field),
+                        "[{}:{}]".format(stop_pos, start_pos),
+                    )
+                )
+            if cell_info[field.field_type].has_oneshot:
+                for b in break_into_bytes(start_pos, stop_pos):
+                    reg_list.append(
+                        (
+                            (
+                                "{}_{}_1S".format(
+                                    reg_field_name(reg, field), b[0]
+                                )
+                            ),
+                            "",
+                        )
+                    )
+    return reg_list
+
+
+def build_input_signals(db, cell_info):
+    signals = set()
+    for reg in db.get_all_registers():
+        for field in reg.get_bit_fields():
+            ci = cell_info[field.field_type]
+            if ci.has_control:
+                if reg.dimension > 1:
+                    name = "{}[{}]".format(field.control_signal, reg.dimension)
+                    signals.add((name, ""))
+                else:
+                    signals.add((field.control_signal, ""))
+            if (
+                ci.has_input
+                and field.input_signal
+                and field.input_signal not in signals
+            ):
+                if field.width == 1:
+                    vector = ""
+                else:
+                    vector = "[{}:{}]".format(field.msb, field.lsb)
+                if reg.dimension > 1:
+                    signals.add(
+                        (
+                            "{}[{}]".format(field.input_signal, reg.dimension),
+                            vector,
+                        )
+                    )
+                else:
+                    signals.add((field.input_signal, vector))
+    return sorted(signals)
+
+
+def build_oneshot_assignments(word_fields, cell_info):
+
+    assign_list = []
+
+    for addr in word_fields:
+        val = word_fields[addr]
+        for (
+            f,
+            start_offset,
+            stop_offset,
+            start_pos,
+            stop_pos,
+            faddr,
+            reg,
+        ) in val:
+            if cell_info[f.field_type][3]:
+
+                if reg.dimension > 1:
+                    name = "{}_1S[{}]".format(f.output_signal, reg.dimension)
+                else:
+                    name = f.output_signal
+                or_list = []
+                for b in break_into_bytes(f.lsb, f.msb):
+                    or_list.append(
+                        "r{:x}_{}_{}_1S".format(
+                            reg.address, f.field_name.lower(), b[0]
+                        )
+                    )
+                assign_list.append((name, " | ".join(or_list)))
+    return assign_list
+
+
+def build_assignments(word_fields, cell_info):
+
+    assign_list = []
+
+    for addr in word_fields:
+        val = word_fields[addr]
+        for (
+            f,
+            start_offset,
+            stop_offset,
+            start_pos,
+            stop_pos,
+            faddr,
+            reg,
+        ) in val:
+            if reg.share == 0:
+                mode = "_"
+            elif reg.share == 1:
+                mode = "_r_"
+            else:
+                mode = "_w_"
+            if f.use_output_enable and f.output_signal != "":
+                if reg.dimension != -1:
+                    assign_list.append(
+                        (
+                            "{}[{}]".format(f.output_signal, reg.dimension),
+                            "r%02x%s%s"
+                            % (reg.address, mode, f.field_name.lower()),
+                        )
+                    )
+                else:
+                    assign_list.append(
+                        (
+                            f.resolved_output_signal(),
+                            "r%02x%s%s"
+                            % (reg.address, mode, f.field_name.lower()),
+                        )
+                    )
+    return assign_list
+
+
+def build_standard_ports(db):
+    if db.use_interface:
+        return {
+            "clk": "MGMT.CLK",
+            "reset": "MGMT.RSTn",
+            "write_strobe": "MGMT.WR",
+            "read_strobe": "MGMT.RD",
+            "byte_strobe": "MGMT.BE",
+            "write_data": "MGMT.WDATA",
+            "read_data": "MGMT.RDATA",
+            "ack": "MGMT.ACK",
+            "addr": "MGMT.ADDR[%d:3]" % (db.address_bus_width - 1,),
+        }
+    return {
+        "clk": db.clock_name,
+        "reset": db.reset_name,
+        "write_strobe": db.write_strobe_name,
+        "read_strobe": db.read_strobe_name,
+        "byte_strobe": db.byte_strobe_name,
+        "write_data": db.write_data_name,
+        "read_data": db.read_data_name,
+        "ack": db.acknowledge_name,
+        "addr": db.address_bus_name,
+    }
+
+
 EXPORTERS = [
     (
         WriterBase.TYPE_BLOCK,
@@ -414,7 +719,11 @@ EXPORTERS = [
     (
         WriterBase.TYPE_BLOCK,
         ExportInfo(
-            Verilog, ("RTL", "Verilog 95"), "Verilog files", ".v", "rtl-verilog-95"
+            Verilog,
+            ("RTL", "Verilog 95"),
+            "Verilog files",
+            ".v",
+            "rtl-verilog-95",
         ),
     ),
 ]
