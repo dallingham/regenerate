@@ -17,6 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+import re
 from gi.repository import Gtk, Gdk, GObject
 from regenerate.ui.columns import EditableColumn
 from regenerate.db import GroupInstData, GroupData, LOGGER
@@ -67,7 +68,17 @@ class InstMdl(Gtk.TreeStore):
             items.add(row[InstCol.INST])
 
         if text in items:
-            LOGGER.error('"%s" has already been used as a group name', text)
+            LOGGER.error(
+                '"%s" has already been used as a subsystem name', text)
+            return
+
+        if not re.match(r"^[A-Za-z_][A-Za-z0-9_]\[.*\]+$", text):
+            LOGGER.error(
+                "Array notation not valid. Use the repeat/repeat count to create arrays")
+            return
+
+        if not re.match(r"^[A-Za-z_][A-Za-z0-9_]+$", text):
+            LOGGER.error("%s is not a valid subsystem name", text)
             return
 
         node = self.get_iter(path)
