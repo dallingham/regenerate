@@ -272,7 +272,7 @@ class Verilog(WriterBase):
         oneshot_assigns = build_oneshot_assignments(
             word_fields, self._cell_info
         )
-        assign_list = build_assignments(word_fields, self._cell_info)
+        assign_list = build_assignments(word_fields)
 
         write_address_selects = build_write_address_selects(
             self._dbase, word_fields, self._cell_info
@@ -280,6 +280,8 @@ class Verilog(WriterBase):
         read_address_selects = build_read_address_selects(
             self._dbase, word_fields, self._cell_info
         )
+
+        reg_read_output = register_output_definitions(self._dbase, word_fields)
 
         # TODO: fix 64 bit registers with 32 bit width
 
@@ -295,7 +297,9 @@ class Verilog(WriterBase):
                     oneshot_assigns=oneshot_assigns,
                     write_address_selects=write_address_selects,
                     read_address_selects=read_address_selects,
+                    reg_read_output=reg_read_output,
                     rshift=rshift,
+                    reg_field_name=reg_field_name,
                     parameters=parameters,
                     cell_info=self._cell_info,
                     word_fields=word_fields,
@@ -309,7 +313,7 @@ class Verilog(WriterBase):
                     reset_edge=reset_edge,
                     reset_op=reset_op,
                     reg_type=self.reg_type,
-                    LOWER_BIT=LOWER_BIT,
+                    low_bit=LOWER_BIT[self._dbase.data_bus_width],
                 )
             )
             self.write_register_modules(ofile)
@@ -416,7 +420,6 @@ def build_write_address_selects(db, word_fields, cell_info):
     assigns = []
 
     for addr in word_fields:
-        val = word_fields[addr]
         rval = addr >> LOWER_BIT[db.data_bus_width]
 
         assigns.append(
@@ -616,7 +619,7 @@ def build_oneshot_assignments(word_fields, cell_info):
                 if reg.dimension > 1:
                     name = "{}_1S[{}]".format(f.output_signal, reg.dimension)
                 else:
-                    name = f.output_signal
+                    name = "{}_1S".format(f.output_signal)
                 or_list = []
                 for b in break_into_bytes(f.lsb, f.msb):
                     or_list.append(
@@ -628,7 +631,7 @@ def build_oneshot_assignments(word_fields, cell_info):
     return assign_list
 
 
-def build_assignments(word_fields, cell_info):
+def build_assignments(word_fields):
 
     assign_list = []
 
@@ -667,6 +670,61 @@ def build_assignments(word_fields, cell_info):
                         )
                     )
     return assign_list
+
+
+def register_output_definitions(db, word_fields):
+
+    full_list = []
+
+    for addr in word_fields:
+        val = word_fields[addr]
+
+        last = db.data_bus_width - 1
+        wire_name = ("r%02x" % addr, "[%d:0]" % (db.data_bus_width - 1,))
+        clist = []
+
+        val = reversed(val)
+        for (
+            field,
+            start_offset,
+            stop_offset,
+            start_pos,
+            stop_pos,
+            faddr,
+            reg,
+        ) in val:
+
+            width = stop_pos - start_pos + 1
+            if reg.share == 0:
+                mode = "_"
+            elif reg.share == 1:
+                mode = "_r_"
+            else:
+                continue
+
+            if start_offset + width <= last:
+                clist.append("%d'b0" % (last - (start_offset + width) + 1,))
+            if start_pos == stop_pos:
+                clist.append(
+                    "r%02x%s%s" % (reg.address, mode, field.field_name.lower())
+                )
+            else:
+                clist.append(
+                    "r%02x%s%s[%d:%d]"
+                    % (
+                        reg.address,
+                        mode,
+                        field.field_name.lower(),
+                        stop_pos,
+                        start_pos,
+                    )
+                )
+            last = start_offset - 1
+
+        if start_offset != 0:
+            clist.append("%d'b0" % start_offset)
+        full_list.append((wire_name, clist))
+    return full_list
 
 
 def build_standard_ports(db):
