@@ -60,6 +60,11 @@ module {{db.module_name}}
    {{reg_type}} prev_read;
    {{reg_type}} [{{db.data_bus_width-1}}:0] mux_rdata;
 
+{% for wire_name, comp_list in reg_read_output %}
+   wire {{wire_name[1]}} {{wire_name[0]}};
+{% endfor %}
+
+
 /*
  * Address Selects
  */
@@ -211,12 +216,13 @@ module {{db.module_name}}
  */
 
 {% for wire_name, comp_list in reg_read_output %}
-   wire {{wire_name[1]}} {{wire_name[0]}} = {
+   assign {{wire_name[1]}} = {
    {% for obj in comp_list %}
       {{obj}}{% if not loop.last %},{% endif %}
 
    {% endfor %}
    };
+
 {% endfor %}
    {% set bit_width = db.address_bus_width - low_bit %}
    
@@ -224,15 +230,19 @@ module {{db.module_name}}
       if ({{reset_op}}{{ports['reset']}}) begin
          mux_rdata <= '0;
       end else begin
-        if ({{ports['read_strobe']}}) begin
-           unique case ({{ports['addr']}})
+         if ({{ports['read_strobe']}}) begin
 {% for addr, val in word_fields|dictsort %}
-              {{bit_width}}'h{{"%x"|format(rshift(addr, low_bit))}}: mux_rdata <= r{{"%02x"|format(addr)}};
-{% endfor %}
-              default: mux_rdata <= '0;
-           endcase
-         end else begin
-            mux_rdata <= '0;
+{%   if loop.first %}
+            unique if ({{ports['addr']}} == {{bit_width}}'h{{"%x"|format(rshift(addr, low_bit))}}) begin
+{%-   else %}	   
+            end else if ({{ports['addr']}} == {{bit_width}}'h{{"%x"|format(rshift(addr, low_bit))}}) begin
+{%-   endif %}	   
+               mux_rdata <= r{{"%02x"|format(addr)}};
+{%- endfor %}
+
+            end else begin
+	       mux_rdata <= '0;
+            end
          end
       end
    end

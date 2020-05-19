@@ -522,7 +522,7 @@ def build_output_signals(db, cell_info):
 
     for (name, vect, dim) in scalar_ports:
         if dim > 1:
-            signals.append(("{}{}" % (name, dim), vect))
+            signals.append(("{}{}".format(name, dim), vect))
         else:
             signals.append((name, vect))
 
