@@ -16,13 +16,8 @@ module {{db.module_name}}
 {% if parameters|length > 0 %}
    #(
 {%   for p in parameters %}
-{%     if p[0] == p[1] %}
-    parameter bit {{p[2]}} = 0{% if not loop.last %},{% endif %}
+    parameter int {{p[2]}} = {{p[3]}}{% if not loop.last %},{% endif %}
 
-{%     else %}
-    parameter bit [{{p[0]}}:{{p[1]}}] {{p[2]}} = 0{% if not loop.last %},{% endif %}
-
-{%     endif %}
 {%   endfor %}
     )
 {% endif %}
@@ -50,30 +45,59 @@ module {{db.module_name}}
 {% endif %}
    );
 
+   genvar i;
+   
 /*
  * Register Declarations
  */
 {% for r in reg_list %}
    {{reg_type}} {{r[1]}} {{r[0]}};
 {% endfor %}
-   {{reg_type}} prev_write;
-   {{reg_type}} prev_read;
-   {{reg_type}} [{{db.data_bus_width-1}}:0] mux_rdata;
+   {{reg_type}}          prev_write;
+   {{reg_type}}          prev_read;
+   {{reg_type}} [{{db.data_bus_width-1}}:0]   mux_rdata;
 
 {% for wire_name, comp_list in reg_read_output %}
    wire {{wire_name[1]}} {{wire_name[0]}};
 {% endfor %}
 
-
 /*
  * Address Selects
  */
 {% for data in write_address_selects %}
-   wire {{data[0]}} = (~prev_write & {{ports['write_strobe']}}) & ({{ports['addr']}} == {{data[1]}});
+{%   if data[2].dimension_is_param() %}
+   wire {{data[0]}}[{{data[2].dimension_str}}];
+{%-   else %}
+   wire {{data[0]}};
+{%-   endif %}   
 {% endfor %}
 {% for data in read_address_selects %}
-   wire {{data[0]}} = (~prev_read & {{ports['read_strobe']}}) & ({{ports['addr']}} == {{data[1]}});
+   wire {{data[0]}};
 {% endfor %}
+
+{% for data in write_address_selects %}
+{%   if data[2].dimension_is_param() %}
+   generate
+      for (i=0 ; i < {{data[2].dimension_str}}; i++) begin : g_{{data[0]}}
+         assign {{data[0]}}[i] = (~prev_write & {{ports['write_strobe']}}) & ({{ports['addr']}} == ({{data[1]}} + i));
+      end
+   endgenerate
+{%   else %}
+   assign {{data[0]}} = (~prev_write & {{ports['write_strobe']}}) & ({{ports['addr']}} == {{data[1]}});
+{%   endif %}
+{% endfor %}
+{% for data in read_address_selects %}
+{%   if data[2].dimension_is_param() %}
+   generate
+      for (i=0 ; i < {{data[2].dimension_str}}; i++) begin : g_{{data[0]}}
+         assign {{data[0]}}[i] = (~prev_read & {{ports['read_strobe']}}) & ({{ports['addr']}} == ({{data[1]}} + i));
+      end
+   endgenerate
+{%   else %}
+   assign {{data[0]}} = (~prev_read & {{ports['read_strobe']}}) & ({{ports['addr']}} == {{data[1]}});
+{%   endif %}   
+{% endfor %}
+
 
 /*
  * Output Assignments
@@ -82,7 +106,15 @@ module {{db.module_name}}
    assign {{data[0]}} = {{data[1]}};
 {% endfor %}
 {% for data in assign_list %}
+{%   if data[2] == "" %}
    assign {{data[0]}} = {{data[1]}};
+{%   else %}
+   generate
+      for (i = 0; i < {{data[2]}}; i++) begin : g_{{data[1]}}
+         assign {{data[0]}}[i] = {{data[1]}}[i];
+      end
+   endgenerate
+{%   endif %}
 {% endfor %}
    assign {{ports['read_data']}} = mux_rdata;
 

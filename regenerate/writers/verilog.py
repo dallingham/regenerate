@@ -229,7 +229,10 @@ class Verilog(WriterBase):
             for r in self._dbase.get_all_registers()
             if not r.do_not_generate_code
         ]:
-            if reg.dimension > 1:
+            if reg.dimension_is_param():
+                new_reg = copy.copy(reg)
+                reglist.append(new_reg)
+            elif reg.dimension > 1:
                 for i in range(0, reg.dimension):
                     new_reg = copy.copy(reg)
                     new_reg.address = reg.address + (i * int(reg.width // 8))
@@ -257,12 +260,8 @@ class Verilog(WriterBase):
         )
 
         parameters = []
-        for reg in self._dbase.get_all_registers():
-            for field in reg.get_bit_fields():
-                if field.reset_type == ResetType.PARAMETER:
-                    parameters.append(
-                        (field.msb, field.lsb, field.reset_parameter)
-                    )
+        for para in self._dbase.get_parameters():
+            parameters.append((31, 0, para[0], para[1]))
 
         input_signals = build_input_signals(self._dbase, self._cell_info)
         standard_ports = build_standard_ports(self._dbase)
@@ -427,6 +426,7 @@ def build_write_address_selects(db, word_fields, cell_info):
                 "write_r%02x" % addr,
                 "%d'h%x"
                 % (db.address_bus_width - LOWER_BIT[db.data_bus_width], rval),
+                word_fields[addr][0][-1],
             )
         )
     return assigns
@@ -454,6 +454,7 @@ def build_read_address_selects(db, word_fields, cell_info):
                     "read_r%02x" % addr,
                     "%d'h%x"
                     % (db.address_bus_width - lower_bit, addr >> lower_bit),
+                    word_fields[addr][0][-1],
                 )
             )
     return assigns
@@ -476,11 +477,13 @@ def build_output_signals(db, cell_info):
                             "{}_1S[{}]".format(
                                 field.output_signal, reg.dimension
                             ),
-                            "",
+                            "        ",
                         )
                     )
                 else:
-                    signals.append(("{}_1S".format(field.output_signal), ""))
+                    signals.append(
+                        ("{}_1S".format(field.output_signal), "        ")
+                    )
 
             if TYPE_TO_OUTPUT[field.field_type] and field.use_output_enable:
                 sig = field.output_signal
@@ -521,10 +524,11 @@ def build_output_signals(db, cell_info):
             scalar_ports.append((key, "[%d:%d]" % (msb, lsb), dim[key]))
 
     for (name, vect, dim) in scalar_ports:
+        vect = vect + "         "
         if dim > 1:
-            signals.append(("{}{}".format(name, dim), vect))
+            signals.append(("{}{}".format(name, dim), vect[0:8]))
         else:
-            signals.append((name, vect))
+            signals.append((name, vect[0:8]))
 
     return sorted(signals)
 
@@ -544,26 +548,54 @@ def build_logic_list(db, word_fields, cell_info):
             reg,
         ) in val:
             if field.msb == field.lsb:
-                reg_list.append((reg_field_name(reg, field), ""))
-            else:
-                reg_list.append(
-                    (
-                        reg_field_name(reg, field),
-                        "[{}:{}]".format(stop_pos, start_pos),
-                    )
-                )
-            if cell_info[field.field_type].has_oneshot:
-                for b in break_into_bytes(start_pos, stop_pos):
+                if reg.dimension_is_param():
                     reg_list.append(
                         (
-                            (
-                                "{}_{}_1S".format(
-                                    reg_field_name(reg, field), b[0]
-                                )
-                            ),
-                            "",
+                            reg_field_name(reg, field)
+                            + "[%s]" % reg.dimension_str,
+                            "        ",
                         )
                     )
+                else:
+                    reg_list.append((reg_field_name(reg, field), "        "))
+            else:
+                vect = "[{}:{}]      ".format(stop_pos, start_pos)
+                if reg.dimension_is_param():
+                    reg_list.append(
+                        (
+                            reg_field_name(reg, field)
+                            + "[%s]" % reg.dimension_str,
+                            vect[0:8],
+                        )
+                    )
+                else:
+                    reg_list.append((reg_field_name(reg, field), vect[0:8]))
+            if cell_info[field.field_type].has_oneshot:
+                for b in break_into_bytes(start_pos, stop_pos):
+                    if reg.dimension_is_param():
+                        reg_list.append(
+                            (
+                                (
+                                    "{}_{}_1S[%s]".format(
+                                        reg_field_name(reg, field),
+                                        b[0],
+                                        reg.dimension_str,
+                                    )
+                                ),
+                                "        ",
+                            )
+                        )
+                    else:
+                        reg_list.append(
+                            (
+                                (
+                                    "{}_{}_1S".format(
+                                        reg_field_name(reg, field), b[0]
+                                    )
+                                ),
+                                "        ",
+                            )
+                        )
     return reg_list
 
 
@@ -573,29 +605,43 @@ def build_input_signals(db, cell_info):
         for field in reg.get_bit_fields():
             ci = cell_info[field.field_type]
             if ci.has_control:
-                if reg.dimension > 1:
+                if reg.dimension_is_param():
+                    name = "{}[{}]".format(
+                        field.control_signal, reg.dimension_str
+                    )
+                    signals.add((name, "        "))
+                elif reg.dimension > 1:
                     name = "{}[{}]".format(field.control_signal, reg.dimension)
-                    signals.add((name, ""))
+                    signals.add((name, "        "))
                 else:
-                    signals.add((field.control_signal, ""))
+                    signals.add((field.control_signal, "        "))
             if (
                 ci.has_input
                 and field.input_signal
                 and field.input_signal not in signals
             ):
                 if field.width == 1:
-                    vector = ""
+                    vector = "        "
                 else:
-                    vector = "[{}:{}]".format(field.msb, field.lsb)
-                if reg.dimension > 1:
+                    vector = "[{}:{}]      ".format(field.msb, field.lsb)
+                if reg.dimension_is_param():
+                    signals.add(
+                        (
+                            "{}[{}]".format(
+                                field.input_signal, reg.dimension_str
+                            ),
+                            vector[0:8],
+                        )
+                    )
+                elif reg.dimension > 1:
                     signals.add(
                         (
                             "{}[{}]".format(field.input_signal, reg.dimension),
-                            vector,
+                            vector[0:8],
                         )
                     )
                 else:
-                    signals.add((field.input_signal, vector))
+                    signals.add((field.input_signal, vector[0:8]))
     return sorted(signals)
 
 
@@ -653,12 +699,22 @@ def build_assignments(word_fields):
             else:
                 mode = "_w_"
             if f.use_output_enable and f.output_signal != "":
-                if reg.dimension != -1:
+                if reg.dimension_is_param():
+                    assign_list.append(
+                        (
+                            "{}".format(f.output_signal),
+                            "r%02x%s%s"
+                            % (reg.address, mode, f.field_name.lower()),
+                            reg.dimension_str,
+                        )
+                    )
+                elif reg.dimension != -1:
                     assign_list.append(
                         (
                             "{}[{}]".format(f.output_signal, reg.dimension),
                             "r%02x%s%s"
                             % (reg.address, mode, f.field_name.lower()),
+                            "",
                         )
                     )
                 else:
@@ -667,6 +723,7 @@ def build_assignments(word_fields):
                             f.resolved_output_signal(),
                             "r%02x%s%s"
                             % (reg.address, mode, f.field_name.lower()),
+                            "",
                         )
                     )
     return assign_list
@@ -680,7 +737,14 @@ def register_output_definitions(db, word_fields):
         val = word_fields[addr]
 
         last = db.data_bus_width - 1
-        wire_name = ("r%02x" % addr, "[%d:0]" % (db.data_bus_width - 1,))
+        reg = val[0][-1]
+        if reg.dimension_is_param():
+            wire_name = (
+                "r%02x[%s]" % (addr, reg.dimension_str),
+                "[%d:0]" % (db.data_bus_width - 1,),
+            )
+        else:
+            wire_name = ("r%02x" % addr, "[%d:0]" % (db.data_bus_width - 1,))
         clist = []
 
         val = reversed(val)
