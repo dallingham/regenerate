@@ -27,7 +27,6 @@ regenerate
 
 import xml
 import os
-import re
 import sys
 from gi.repository import Gtk, GdkPixbuf, Gdk, Pango
 from regenerate import PROGRAM_VERSION, PROGRAM_NAME
@@ -41,6 +40,7 @@ from regenerate.db import (
     RegProject,
     LOGGER,
     TYPES,
+    remove_default_handler,
 )
 from regenerate.db.enums import ResetType, ShareType, BitType
 from regenerate.extras.regutils import (
@@ -114,6 +114,22 @@ class DbaseStatus(object):
         self.node = None
 
 
+class MessageHelp(Gtk.Popover):
+    def __init__(self):
+        super().__init__()
+        self.__label = Gtk.Label()
+        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        vbox.pack_start(self.__label, False, True, 10)
+        self.add(vbox)
+        self.set_position(Gtk.PositionType.BOTTOM)
+
+    def set_text(self, obj, msg):
+        self.__label.set_text(msg)
+        self.set_relative_to(obj)
+        self.show_all()
+        self.popup()
+
+
 class MainWindow(BaseWindow):
     """Main window of the Regenerate program"""
 
@@ -132,6 +148,7 @@ class MainWindow(BaseWindow):
         self.modelsort = None
         self.instance_model = None
         self.prj = None
+        self.dbmap = {}
 
         self.use_preview = bool(int(ini.get("user", "use_preview", 0)))
 
@@ -143,7 +160,7 @@ class MainWindow(BaseWindow):
 
         self.selected_dbase = self.find_obj("selected_dbase")
         self.reg_notebook = self.find_obj("reg_notebook")
-        self.top_notebook = self.find_obj("notebook1")
+        self.top_notebook = self.find_obj("main_notebook")
         self.module_notebook = self.find_obj("module_notebook")
         self.prj_infobar = self.find_obj("register_infobar")
         self.prj_infobar_label = self.find_obj("register_infobar_label")
@@ -179,7 +196,7 @@ class MainWindow(BaseWindow):
             self.find_obj("instances"),
             self.find_obj("infobar"),
             self.find_obj("infobar_label"),
-            self.set_project_modified,
+            self.check_subsystem_addresses,
         )
 
         self.restore_position_and_size()
@@ -197,10 +214,17 @@ class MainWindow(BaseWindow):
             pass
         self.filter_manage = FilterManager(filter_obj)
 
+    def check_subsystem_addresses(self):
+        if check_address_ranges(self.prj, self.dbmap):
+            self.set_project_modified()
+            return True
+        return False
+
     def setup_main_window(self):
         self.top_window = self.find_obj("regenerate")
         self.configure(self.top_window)
         self.status_obj = self.find_obj("statusbar")
+        remove_default_handler()
         LOGGER.addHandler(StatusHandler(self.status_obj))
 
     def setup_recent_menu(self):
@@ -558,6 +582,9 @@ class MainWindow(BaseWindow):
         else:
             text = ""
         self.find_obj("reg_count").set_text(text)
+
+    def on_main_notebook_switch_page(self, obj, page, page_num):
+        pass
 
     def on_notebook_switch_page(self, obj, page, page_num):
         if page_num == 1:
@@ -1084,6 +1111,8 @@ class MainWindow(BaseWindow):
         self.bit_model = BitModel()
         self.bitfield_obj.set_model(self.bit_model)
 
+        self.dbmap[self.dbase.set_name] = self.dbase
+
         self.active = DbaseStatus(
             self.dbase,
             name,
@@ -1109,6 +1138,7 @@ class MainWindow(BaseWindow):
         old_skip = self.skip_changes
         self.skip_changes = True
         self.dbase = RegisterDb()
+        self.dbmap[self.dbase.set_name] = self.dbase
         self.load_database(name)
         if not os.access(name, os.W_OK):
             WarnMsg(
@@ -1181,6 +1211,7 @@ class MainWindow(BaseWindow):
         try:
             self.dbase.read_xml(filename)
             self.filename = filename
+            self.dbmap[self.dbase.set_name] = self.dbase
         except xml.parsers.expat.ExpatError as msg:
             ErrorMsg(
                 "%s is not a valid regenerate file" % filename,
@@ -1544,6 +1575,53 @@ def sort_regset(x):
     return os.path.basename(x)
 
 
-def build_parameter_name(name):
-    name_list = name.split("_")
-    return "pRst" + "".join([n.capitalize() for n in name_list])
+def check_address_ranges(project, dbmap):
+
+    for group in project.get_grouping_list():
+
+        glist = []
+        for d in group.register_sets:
+            space = 1 << dbmap[d.set].address_bus_width
+            if space > d.repeat_offset:
+                LOGGER.warning(
+                    "%s.%s - %d bits specified for register set (size %x) which is greater than the repeat offset of %x",
+                    group.name,
+                    d.inst,
+                    dbmap[d.set].address_bus_width,
+                    space,
+                    d.repeat_offset,
+                )
+                return False
+
+            glist.append(
+                (
+                    d.offset,
+                    d.offset + (d.repeat * d.repeat_offset) - 1,
+                    d.inst,
+                    1 << dbmap[d.set].address_bus_width,
+                    group.name,
+                )
+            )
+
+    prev_start = 0
+    prev_stop = 0
+    prev_name = ""
+    for (new_start, new_stop, new_name, db_width, new_group) in sorted(glist):
+        if prev_stop > new_start:
+            LOGGER.warning(
+                "%s.%s (%x:%x) overlaps with %s.%s (%x:%x)",
+                new_group,
+                prev_name,
+                prev_start,
+                prev_stop,
+                new_group,
+                new_name,
+                new_start,
+                new_stop,
+            )
+            return False
+        prev_name = new_name
+        prev_start = new_start
+        prev_stop = new_stop
+
+    return True

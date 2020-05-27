@@ -18,7 +18,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 import logging
-from gi.repository import GObject
+from gi.repository import GObject, Gtk, Gdk
 
 
 class StatusHandler(logging.Handler):
@@ -27,16 +27,34 @@ class StatusHandler(logging.Handler):
     statusbar for 5 seconds
     """
 
-    SECONDS = 8
+    SECONDS = 10
 
     def __init__(self, status_obj):
         super().__init__()
         self.status_obj = status_obj
+        style = status_obj.get_style_context()
+        self.normal_color = style.get_background_color(Gtk.StateType.NORMAL)
         self.status_id = status_obj.get_context_id(__name__)
         self.timer = None
+        self.error_color = Gdk.RGBA()
+        self.error_color.red = 0.5
+        self.error_color.green = 0
+        self.error_color.blue = 0
+        self.error_color.alpha = 1
 
     def emit(self, record):
-        idval = self.status_obj.push(self.status_id, record.getMessage())
+        if record.levelno == 30:
+            self.status_obj.override_color(
+                Gtk.StateFlags.NORMAL, self.error_color
+            )
+        else:
+            self.status_obj.override_color(
+                Gtk.StateFlags.NORMAL, self.normal_color
+            )
+
+        idval = self.status_obj.push(
+            self.status_id, "ERROR: {}".format(record.getMessage())
+        )
         GObject.timeout_add(self.SECONDS * 1000, self._clear, idval)
 
     def _clear(self, idval):

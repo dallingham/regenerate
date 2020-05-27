@@ -231,8 +231,9 @@ class RegProject(object):
             return self._filelist
         else:
             base = os.path.dirname(self.path)
-            return [os.path.normpath(os.path.join(base, i))
-                    for i in self._filelist]
+            return [
+                os.path.normpath(os.path.join(base, i)) for i in self._filelist
+            ]
 
     def get_grouping_list(self):
         """
@@ -348,7 +349,7 @@ class RegProject(object):
         for data in self._addr_map_list:
             if name == data.name:
                 return data.width
-        regenerate.db.LOGGER.error("Address map not found (%s)" % name)
+        regenerate.db.LOGGER.error("Address map not found (%s)", name)
         return None
 
     def set_access(self, map_name, group_name, block_name, access):

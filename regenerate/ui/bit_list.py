@@ -22,7 +22,7 @@ Provides both the GTK ListStore and ListView for the bit fields.
 
 import re
 from gi.repository import Gtk
-from regenerate.db import TYPES
+from regenerate.db import TYPES, LOGGER
 from regenerate.db.enums import ResetType
 from regenerate.ui.columns import (
     EditableColumn,
@@ -102,7 +102,7 @@ class BitList(object):
         ("", 20, -1, False, False),
         ("Bits", 60, BitCol.SORT, False, True),
         ("Name", 60, BitCol.NAME, True, True),
-        ("Type", 325, -1, True, False),
+        ("Type", 300, -1, True, False),
         ("Reset", 160, -1, False, True),
         ("Reset Type", 105, -1, False, False),
     )
@@ -250,7 +250,6 @@ class BitList(object):
     def reset_text_edit(self, cell, path, new_val, col):
         field = self.__model.get_bitfield_at_path(path)
 
-        print("Reset Text Edit")
         if re.match(r"^(0x)?[a-fA-F0-9]+$", new_val):
             if self.check_reset(field, int(new_val, 16)) == False:
                 return
@@ -356,19 +355,10 @@ class BitList(object):
             )
 
     def show_msg(self, text):
-        self.__infobar_label.set_text(text)
-        try:
-            self.__infobar.show()
-            self.__infobar.set_revealed(True)
-        except AttributeError:
-            self.__infobar.show()
+        LOGGER.warning(text)
 
     def clear_msg(self):
-        try:
-            self.__infobar.set_revealed(False)
-            self.__infobar.hide()
-        except AttributeError:
-            self.__infobar.hide()
+        pass
 
     def check_for_width(self, start, stop):
         register = self.__model.register

@@ -131,9 +131,9 @@ class RegisterModel(Gtk.ListStore):
         column.
         """
         if register.ram_size:
-            addr = "%04x:%x" % (register.address, register.ram_size)
+            addr = "0x%04x:0x%x" % (register.address, register.ram_size)
         else:
-            addr = "%04x" % register.address
+            addr = "0x%04x" % register.address
 
         data = (
             None,
@@ -209,9 +209,9 @@ class RegisterModel(Gtk.ListStore):
         """
         node = self.get_iter(path)
         if length:
-            self.set(node, RegCol.ADDR, "%04x:%x" % (addr, length))
+            self.set(node, RegCol.ADDR, "0x%04x:0x%x" % (addr, length))
         else:
-            self.set(node, RegCol.ADDR, "%04x" % addr)
+            self.set(node, RegCol.ADDR, "0x%04x" % addr)
         self.set(node, RegCol.SORT, addr)
 
 
@@ -334,6 +334,7 @@ class RegisterList(object):
                         [],
                         i,
                     )
+                    column.set_resizable(True)
                     self.dim_column = column
                 else:
                     column = ComboMapColumn(
@@ -342,6 +343,7 @@ class RegisterList(object):
                         RegisterModel.BIT2STR,
                         i,
                     )
+                    column.set_resizable(True)
             elif col.type == RegColType.TEXT:
                 column = EditableColumn(
                     col.title,
@@ -350,11 +352,13 @@ class RegisterList(object):
                     col.mono,
                     placeholder=col.placeholder,
                 )
+                column.set_resizable(True)
             else:
                 self.__icon_renderer = Gtk.CellRendererPixbuf()
                 column = Gtk.TreeViewColumn(
                     "", self.__icon_renderer, stock_id=i
                 )
+                column.set_resizable(True)
                 self.__icon_col = column
 
             column.set_min_width(col.size)
@@ -591,10 +595,21 @@ class RegisterList(object):
         new_text = new_text.strip()
         try:
             value = int(new_text, 16)
-            self.__reg_update_dim(register, path, new_text)
+            if value < 1:
+                LOGGER.warning(
+                    "The dimension for a register must be 1 or greater"
+                )
+            else:
+                self.__reg_update_dim(register, path, new_text)
         except ValueError:
             if new_text in self.__parameter_names:
                 self.__reg_update_dim(register, path, new_text)
+            else:
+                LOGGER.warning(
+                    '"%s" is not a valid dimension. It must be an '
+                    "integer greater than 1 or a defined parameter",
+                    new_text,
+                )
 
     def __dimension_menu(self, cell, path, node, col):
         """

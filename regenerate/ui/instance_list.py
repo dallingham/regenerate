@@ -68,17 +68,19 @@ class InstMdl(Gtk.TreeStore):
             items.add(row[InstCol.INST])
 
         if text in items:
-            LOGGER.error(
-                '"%s" has already been used as a subsystem name', text)
+            LOGGER.warning(
+                '"%s" has already been used as a subsystem name', text
+            )
             return
 
         if not re.match(r"^[A-Za-z_][A-Za-z0-9_]\[.*\]+$", text):
-            LOGGER.error(
-                "Array notation not valid. Use the repeat/repeat count to create arrays")
+            LOGGER.warning(
+                "Array notation not valid. Use the repeat/repeat count to create arrays"
+            )
             return
 
         if not re.match(r"^[A-Za-z_][A-Za-z0-9_]+$", text):
-            LOGGER.error("%s is not a valid subsystem name", text)
+            LOGGER.warning("%s is not a valid subsystem name", text)
             return
 
         node = self.get_iter(path)
@@ -110,13 +112,14 @@ class InstMdl(Gtk.TreeStore):
         Called when the base address of an instance has been edited in the
         InstanceList
         """
+
         node = self.get_iter(path)
         try:
-            self.set_value(node, InstCol.SORT, int(text, 16))
-            self.set_value(node, InstCol.BASE, text)
+            self.set_value(node, InstCol.SORT, int(text, 0))
+            self.set_value(node, InstCol.BASE, "0x{:04x}".format(int(text, 0)))
             self.callback()
-        except ValueError:
-            LOGGER.error('Illegal base address: "%s"', text)
+        except AttributeError:
+            LOGGER.warning('Illegal base address: "%s"', text)
         obj = self.get_value(node, InstCol.OBJ)
         if obj:
             obj.base = int(text, 16)
@@ -128,11 +131,25 @@ class InstMdl(Gtk.TreeStore):
         """
         node = self.get_iter(path)
         try:
-            int(text)
+            value = int(text)
             self.set_value(node, InstCol.RPT, text)
             self.callback()
         except ValueError:
-            LOGGER.error('Illegal repeat count: "%s"', text)
+            LOGGER.warning(
+                '"%s" is not a valid repeat count. '
+                "The repeat count must be an integer equal or greater than 1.",
+                text,
+            )
+            return
+
+        if value < 1:
+            LOGGER.warning(
+                '"%s" is not a valid repeat count. '
+                "The repeat count must be an integer equal or greater than 1.",
+                text,
+            )
+            return
+
         obj = self.get_value(node, InstCol.OBJ)
         if obj:
             obj.repeat = int(text)
@@ -142,16 +159,28 @@ class InstMdl(Gtk.TreeStore):
         Called when the base address of an instance has been edited in the
         InstanceList
         """
+
         node = self.get_iter(path)
         try:
             value = int(text, 16)
-            self.set_value(node, InstCol.OFF, "{0:x}".format(value))
-            self.callback()
         except ValueError:
-            LOGGER.error('Illegal repeat offset column: "%s"', text)
+            LOGGER.warning(
+                '"%s" is not a valid repeat offset. '
+                "The repeat offset must be a valid hexidecimal number",
+                text,
+            )
+            return
+
         obj = self.get_value(node, InstCol.OBJ)
-        if obj:
-            obj.repeat_offset = int(text, 16)
+        if obj is None:
+            return
+
+        original = obj.repeat_offset
+        obj.repeat_offset = value
+        if not self.callback():
+            obj.repeat_offset = original
+        else:
+            self.set_value(node, InstCol.OFF, "0x{:04x}".format(value))
 
     def new_instance(self):
         """
@@ -180,6 +209,22 @@ class InstMdl(Gtk.TreeStore):
         node = self.append(None, row=row)
         self.callback()
         return (self.get_path(node), new_grp)
+
+
+class MessageHelp(Gtk.Popover):
+    def __init__(self):
+        super().__init__()
+        self.__label = Gtk.Label()
+        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        vbox.pack_start(self.__label, False, True, 10)
+        self.add(vbox)
+        self.set_position(Gtk.PositionType.BOTTOM)
+
+    def set_text(self, obj, msg):
+        self.__label.set_text(msg)
+        self.set_relative_to(obj)
+        self.show_all()
+        self.popup()
 
 
 class InstanceList(object):
@@ -370,7 +415,8 @@ class InstanceList(object):
             "Instance", self.instance_inst_changed, InstCol.INST
         )
         column.set_sort_column_id(InstCol.INST)
-        column.set_min_width(175)
+        column.set_min_width(200)
+        column.set_resizable(True)
         self.__obj.append_column(column)
         self.__col = column
 
@@ -382,6 +428,7 @@ class InstanceList(object):
         )
         column.set_sort_column_id(InstCol.ID)
         column.set_min_width(150)
+        column.set_resizable(True)
         self.__obj.append_column(column)
 
         column = EditableColumn(
@@ -389,12 +436,14 @@ class InstanceList(object):
         )
         column.set_sort_column_id(InstCol.SORT)
         column.set_min_width(150)
+        column.set_resizable(True)
         self.__obj.append_column(column)
 
         column = EditableColumn(
             "Repeat", self.instance_repeat_changed, InstCol.RPT, True
         )
         column.set_min_width(125)
+        column.set_resizable(True)
         self.__obj.append_column(column)
 
         column = EditableColumn(
@@ -404,6 +453,7 @@ class InstanceList(object):
             True,
         )
         column.set_min_width(150)
+        column.set_resizable(True)
         self.__obj.append_column(column)
 
         column = EditableColumn(
@@ -411,6 +461,7 @@ class InstanceList(object):
         )
         column.set_min_width(250)
         column.set_sort_column_id(InstCol.HDL)
+        column.set_resizable(True)
         self.__obj.append_column(column)
 
     def visible_callback(self, column, cell, model, *obj):
@@ -424,11 +475,10 @@ class InstanceList(object):
         """
         Updates the data model when the text value is changed in the model.
         """
-        LOGGER.error("Subsystem name cannot be changed")
+        LOGGER.warning("Subsystem name cannot be changed")
 
     def inst_changed(self, attr, path, new_text):
         getattr(self.__model, attr)(path, new_text)
-        self.modified_callback()
 
     def instance_inst_changed(self, cell, path, new_text, col):
         """
@@ -472,10 +522,10 @@ def build_row_data(inst, name, offset, rpt, rpt_offset, hdl, obj):
     row = (
         inst,
         name,
-        "{0:x}".format(offset),
+        "0x{:04x}".format(offset),
         offset,
-        "{0:d}".format(rpt),
-        "{0:x}".format(rpt_offset),
+        "{:d}".format(rpt),
+        "0x{:04x}".format(rpt_offset),
         hdl,
         obj,
     )

@@ -195,6 +195,7 @@ class AddrMapList(object):
         column = EditableColumn("Map Name", self._name_changed, AddrCol.NAME)
         column.set_min_width(175)
         column.set_sort_column_id(AddrCol.NAME)
+        column.set_resizable(True)
         self._obj.append_column(column)
         self._col = column
 
@@ -207,12 +208,14 @@ class AddrMapList(object):
         )
         column.set_sort_column_id(AddrCol.BASE)
         column.set_min_width(150)
+        column.set_resizable(True)
         self._obj.append_column(column)
 
         column = ComboMapColumn(
             "Access Width", self._width_changed, SIZE2STR, AddrCol.WIDTH
         )
         column.set_min_width(150)
+        column.set_resizable(True)
         self._obj.append_column(column)
 
         column = ToggleColumn(
@@ -222,6 +225,7 @@ class AddrMapList(object):
             tooltip="Indicates if the address base is relocatable or fixed",
         )
         column.set_max_width(250)
+        column.set_resizable(True)
         self._obj.append_column(column)
 
         column = ToggleColumn(
@@ -232,6 +236,7 @@ class AddrMapList(object):
             "from the UVM register package",
         )
         column.set_max_width(250)
+        column.set_resizable(True)
         self._obj.append_column(column)
 
         self._model = AddrMapMdl()
@@ -313,7 +318,7 @@ class AddrMapList(object):
 def get_row_data(map_obj):
     return (
         map_obj.name,
-        "{0:x}".format(map_obj.base),
+        "0x{:04x}".format(map_obj.base),
         map_obj.fixed,
         map_obj.uvm,
         INT2SIZE[map_obj.width],

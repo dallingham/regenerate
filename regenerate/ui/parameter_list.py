@@ -139,34 +139,84 @@ class ParameterList(object):
             )
             self._callback()
 
-    def __param_val_changed(self, path, new_text, my_col):
+    def check_hex(self, new_text):
         try:
-            value = int(new_text, 16)
+            int(new_text, 16)
+            return True
         except ValueError:
-            LOGGER.error('Illegal value: "%s"', new_text)
+            LOGGER.warning('Illegal hexidecimal value: "%s"', new_text)
+            return False
+
+    def _value_changed(self, cell, path, new_text, col):
+        """Called when the base address field is changed."""
+        if self.check_hex(new_text) is False:
             return
 
-        if new_text != self._model[path][my_col]:
-            self._model[path][my_col] = hex(value)
-            name = self._model[path][ParameterCol.NAME]
-            min_val = int(self._model[path][ParameterCol.MIN], 16)
-            max_val = int(self._model[path][ParameterCol.MAX], 16)
-            value = int(self._model[path][ParameterCol.VALUE], 16)
+        name = self._model[path][ParameterCol.NAME]
+        value = int(new_text, 16)
+        min_val = int(self._model[path][ParameterCol.MIN], 16)
+        max_val = int(self._model[path][ParameterCol.MAX], 16)
+
+        if not (min_val <= value <= max_val):
+            LOGGER.warning(
+                "Default value (0x%x) for %s must be between the "
+                "minimum (0x%x) and the maximum (0x%x)",
+                value,
+                name,
+                min_val,
+                max_val,
+            )
+        else:
+            self._model[path][ParameterCol.VALUE] = new_text
             self._db.remove_parameter(name)
             self._db.add_parameter(name, value, min_val, max_val)
             self._callback()
 
-    def _value_changed(self, cell, path, new_text, col):
-        """Called when the base address field is changed."""
-        self.__param_val_changed(path, new_text, ParameterCol.VALUE)
-
     def _min_changed(self, cell, path, new_text, col):
-        """Called when the base address field is changed."""
-        self.__param_val_changed(path, new_text, ParameterCol.MIN)
+        if self.check_hex(new_text) is False:
+            return
+
+        name = self._model[path][ParameterCol.NAME]
+        min_val = int(new_text, 16)
+        value = int(self._model[path][ParameterCol.VALUE], 16)
+        max_val = int(self._model[path][ParameterCol.MAX], 16)
+
+        if min_val > value:
+            LOGGER.warning(
+                "Minimum value (0x%x) for %s must be less than or  "
+                "equal default value (0x%x)",
+                min_val,
+                name,
+                value,
+            )
+        else:
+            self._model[path][ParameterCol.MIN] = new_text
+            self._db.remove_parameter(name)
+            self._db.add_parameter(name, value, min_val, max_val)
+            self._callback()
 
     def _max_changed(self, cell, path, new_text, col):
-        """Called when the base address field is changed."""
-        self.__param_val_changed(path, new_text, ParameterCol.MAX)
+        if self.check_hex(new_text) is False:
+            return
+
+        name = self._model[path][ParameterCol.NAME]
+        max_val = int(new_text, 16)
+        min_val = int(self._model[path][ParameterCol.MIN], 16)
+        value = int(self._model[path][ParameterCol.VALUE], 16)
+
+        if max_val < value:
+            LOGGER.warning(
+                "Maximum value (0x%x) for %s must be greater than or  "
+                "equal default value (0x%x)",
+                max_val,
+                name,
+                value,
+            )
+        else:
+            self._model[path][ParameterCol.MAX] = new_text
+            self._db.remove_parameter(name)
+            self._db.add_parameter(name, value, min_val, max_val)
+            self._callback()
 
     def _build_instance_table(self):
         """

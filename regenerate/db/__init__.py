@@ -49,3 +49,7 @@ __formatter = logging.Formatter(
 __ch.setFormatter(__formatter)
 # add ch to logger
 LOGGER.addHandler(__ch)
+
+
+def remove_default_handler():
+    LOGGER.removeHandler(__ch)
