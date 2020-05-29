@@ -248,7 +248,7 @@ module {{db.module_name}}
  */
 
 {% for wire_name, comp_list in reg_read_output %}
-   assign {{wire_name[1]}} = {
+   assign {{wire_name[0]}} = {
    {% for obj in comp_list %}
       {{obj}}{% if not loop.last %},{% endif %}
 

@@ -211,20 +211,20 @@ class InstMdl(Gtk.TreeStore):
         return (self.get_path(node), new_grp)
 
 
-class MessageHelp(Gtk.Popover):
-    def __init__(self):
-        super().__init__()
-        self.__label = Gtk.Label()
-        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        vbox.pack_start(self.__label, False, True, 10)
-        self.add(vbox)
-        self.set_position(Gtk.PositionType.BOTTOM)
+# class MessageHelp(Gtk.Popover):
+#     def __init__(self):
+#         super().__init__()
+#         self.__label = Gtk.Label()
+#         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+#         vbox.pack_start(self.__label, False, True, 10)
+#         self.add(vbox)
+#         self.set_position(Gtk.PositionType.BOTTOM)
 
-    def set_text(self, obj, msg):
-        self.__label.set_text(msg)
-        self.set_relative_to(obj)
-        self.show_all()
-        self.popup()
+#     def set_text(self, obj, msg):
+#         self.__label.set_text(msg)
+#         self.set_relative_to(obj)
+#         self.show_all()
+#         self.popup()
 
 
 class InstanceList(object):
