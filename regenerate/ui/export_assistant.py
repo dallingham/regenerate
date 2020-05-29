@@ -112,15 +112,15 @@ class ExportAssistant(Gtk.Assistant):
     def forward(self, current_page):
         if current_page == 0:
             if self.selected_export_is_project():
-                return 3
+                return ExportPages.FILE_SELECT
             elif self.selected_export_is_group():
-                return 2
+                return ExportPages.GROUP_SELECT
             else:
-                return 1
-        elif current_page == 1:
-            return 3
-        elif current_page == 2:
-            return 3
+                return ExportPages.REGSET_SELECT
+        elif current_page == ExportPages.REGSET_SELECT:
+            return ExportPages.GROUP_SELECT
+        elif current_page == ExportPages.GROUP_SELECT:
+            return ExportPages.FILE_SELECT
         else:
             return current_page + 1
 

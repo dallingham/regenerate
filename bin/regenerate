@@ -55,7 +55,9 @@ def run_gui(args):
     edit = MainWindow()
     if args.project_file:
         try:
-            edit.open_project(args.project_file, "file:///" + args.project_file)
+            edit.open_project(
+                args.project_file, "file:///" + args.project_file
+            )
         except IOError as msg:
             sys.stderr.write("regenerate: error: could not project file: ")
             sys.stderr.write("%s\n" % str(msg))
@@ -96,15 +98,21 @@ def run():
 
     args = parser.parse_args()
 
-    run_gui(args)
+    if "DISPLAY" in os.environ:
+        run_gui(args)
+    else:
+        sys.stderr.write(
+            'ERROR: Display not available. Did you forget to give ssh the "-X" option?\n'
+        )
+        sys.exit(1)
 
 
 if __name__ == "__main__":
 
-   if (sys.version_info[0], sys.version_info[1]) < (3, 4) :
-      sys.stderr.write(
-	  "Error: regenerate requires python version 3.4 or higher to run\n"
-      )
-      sys.exit(1)
-      
-   run()
+    if (sys.version_info[0], sys.version_info[1]) < (3, 4):
+        sys.stderr.write(
+            "Error: regenerate requires python version 3.4 or higher to run\n"
+        )
+        sys.exit(1)
+
+    run()
