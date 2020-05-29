@@ -22,6 +22,8 @@ from enum import IntEnum
 
 
 class InstCol(IntEnum):
+    """Instance columns numbers for the InstanceList"""
+
     INST = 0
     ID = 1
     BASE = 2
@@ -33,6 +35,8 @@ class InstCol(IntEnum):
 
 
 class AddrCol(IntEnum):
+    """Address columns for the AddressMaps"""
+
     NAME = 0
     BASE = 1
     FIXED = 2
@@ -42,6 +46,8 @@ class AddrCol(IntEnum):
 
 
 class BitCol(IntEnum):
+    """BitField columns for the BitField List"""
+
     ICON = 0
     BIT = 1
     NAME = 2
@@ -53,12 +59,16 @@ class BitCol(IntEnum):
 
 
 class Level(IntEnum):
+    """Report level, indicating what type of data is included in a report"""
+
     BLOCK = 0
     GROUP = 1
     PROJECT = 2
 
 
 class BuildCol(IntEnum):
+    """Column numbers for the Build list"""
+
     MODIFIED = 0
     BASE = 1
     FORMAT = 2
@@ -69,6 +79,8 @@ class BuildCol(IntEnum):
 
 
 class MapOpt(IntEnum):
+    """Positions for Exporter information in the report exporter map"""
+
     ID = 0
     CLASS = 1
     REGISTER_SET = 2
@@ -92,6 +104,8 @@ class FilterField(IntEnum):
 
 
 class PrjCol(IntEnum):
+    """Column numbers for the Project List"""
+
     NAME = 0
     ICON = 1
     FILE = 2
@@ -101,6 +115,8 @@ class PrjCol(IntEnum):
 
 
 class RegCol(IntEnum):
+    """Column numbers for the Register List"""
+
     ICON = 0
     ADDR = 1
     NAME = 2
@@ -119,7 +135,19 @@ class RegColType(IntEnum):
 
 
 class ParameterCol(IntEnum):
+    """Column numbers for the Parameter List"""
+
     NAME = 0
     VALUE = 1
     MIN = 2
     MAX = 3
+
+
+class ExportPages(IntEnum):
+    """Page names for the export builder"""
+
+    REPORT_SELECT = 0
+    REGSET_SELECT = 1
+    GROUP_SELECT = 2
+    FILE_SELECT = 3
+    SUMMARY = 4
