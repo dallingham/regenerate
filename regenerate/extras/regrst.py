@@ -293,18 +293,17 @@ class RegisterRst(object):
         Returns the definition of the register in RestructuredText format
         """
         ofile = StringIO()
+        used = set()
+        for reg in self.reglist:
+            if reg.register_name not in used:
+                used.add(reg.register_name)
+                if self._inst and self._group:
+                    url = "/".join((self._group, self._inst,
+                                    reg.token.lower()))
+                    ofile.write(".. _`{0}`: {1}\n\n".format(
+                        reg.register_name, url))
 
-        # used = set()
-        # for reg in self.reglist:
-        #     if reg.register_name not in used:
-        #         used.add(reg.register_name)
-        #         if self._inst and self._group:
-        #             url = "/".join((self._group, self._inst,
-        #                             reg.token.lower()))
-        #             ofile.write(".. _`{0}`: {1}\n\n".format(
-        #                 reg.register_name, url))
-
-        # ofile.write("\n\n")
+        ofile.write("\n\n")
         self.str_title(ofile)
 
         self.str_overview(ofile)
