@@ -55,7 +55,7 @@ from regenerate.ui.addrmap_list import AddrMapList
 from regenerate.ui.addr_edit import AddrMapEdit
 from regenerate.ui.parameter_list import ParameterList
 from regenerate.ui.base_window import BaseWindow
-from regenerate.ui.bit_list import BitModel, BitList, reset_value
+from regenerate.ui.bit_list import BitModel, BitList
 from regenerate.ui.bitfield_editor import BitFieldEditor
 from regenerate.ui.build import Build
 from regenerate.ui.error_dialogs import ErrorMsg, WarnMsg, Question
@@ -1577,9 +1577,10 @@ def sort_regset(x):
 
 def check_address_ranges(project, dbmap):
 
+    glist = []
+
     for group in project.get_grouping_list():
 
-        glist = []
         for d in group.register_sets:
             space = 1 << dbmap[d.set].address_bus_width
             if space > d.repeat_offset:

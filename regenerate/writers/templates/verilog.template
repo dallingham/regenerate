@@ -141,8 +141,8 @@ module {{db.module_name}}
  *------------------------------------------------------------------------------
  */
 {%   if reg.dimension_is_param() %}
-   generate
-      for (i = 0; i < {{reg.dimension_str}}; i++) begin : g_r{{"%02x"|format(reg.address)}}
+generate
+   for (i = 0; i < {{reg.dimension_str}}; i++) begin : g_r{{"%02x"|format(reg.address)}}
 {%   endif %}
 
 {%   if field.field_type == 0 %}
@@ -237,19 +237,31 @@ module {{db.module_name}}
 {%      endif %}
 {%      if stop == start %}
 {%        if field.lsb == field.msb %}
+{%           if reg.dimension_is_param() %}
+      .DO     ({{reg_field_name(reg, field)}}[i])
+{%           else %}
       .DO     ({{reg_field_name(reg, field)}})
+{%           endif %}
 {%        else %}
+{%           if reg.dimension_is_param() %}
+      .DO     ({{reg_field_name(reg, field)}}[i][{{start}}])
+{%           else %}
       .DO     ({{reg_field_name(reg, field)}}[{{start}}])
+{%           endif %}
 {%        endif %}
 {%      else %}
+{%         if reg.dimension_is_param() %}
+      .DO     ({{reg_field_name(reg, field)}}[i][{{stop}}:{{start}}])
+{%         else %}
       .DO     ({{reg_field_name(reg, field)}}[{{stop}}:{{start}}])
+{%         endif %}
 {%      endif %}
      );
 
 {%     endfor %}
 {%   if reg.dimension_is_param() %}
-      end
-   endgenerate
+    end
+ endgenerate
 {%   endif %}
 {%   endif %}
 {%   endfor %}

@@ -599,8 +599,8 @@ class RegisterList(object):
                 LOGGER.warning(
                     "The dimension for a register must be 1 or greater"
                 )
-            else:
-                self.__reg_update_dim(register, path, new_text)
+                return
+            self.__reg_update_dim(register, path, new_text)
         except ValueError:
             if new_text in self.__parameter_names:
                 self.__reg_update_dim(register, path, new_text)

@@ -471,7 +471,16 @@ def build_output_signals(db, cell_info):
             continue
         for field in reg.get_bit_fields():
             if cell_info[field.field_type].has_oneshot:
-                if reg.dimension > 1:
+                if reg.dimension_is_param():
+                    signals.append(
+                        (
+                            "{}_1S[{}]".format(
+                                field.output_signal, reg.dimension_str
+                            ),
+                            "        ",
+                        )
+                    )
+                elif reg.dimension > 1:
                     signals.append(
                         (
                             "{}_1S[{}]".format(
@@ -491,13 +500,13 @@ def build_output_signals(db, cell_info):
                 wild = sig.split("*")
                 if len(root) == 1:
                     if field.msb == field.lsb:
-                        scalar_ports.append((sig, "", reg.dimension))
+                        scalar_ports.append((sig, "", reg.dimension_str))
                     else:
-                        dim[sig] = reg.dimension
+                        dim[sig] = reg.dimension_str
                         for i in range(field.lsb, field.msb + 1):
                             array_ports[sig].append(i)
                 elif len(wild) > 1:
-                    dim[root[0]] = reg.dimension
+                    dim[root[0]] = reg.dimension_str
                     for i in range(field.lsb, field.msb + 1):
                         array_ports[root[0]].append(i)
                 else:
@@ -511,7 +520,7 @@ def build_output_signals(db, cell_info):
                     match = BIT_SLICE.match(sig)
                     if match:
                         grp = match.groups()
-                        dim[grp[0]] = reg.dimension
+                        dim[grp[0]] = reg.dimension_str
                         array_ports[grp[0]].append(int(grp[1]))
                         continue
 
@@ -525,8 +534,8 @@ def build_output_signals(db, cell_info):
 
     for (name, vect, dim) in scalar_ports:
         vect = vect + "         "
-        if dim > 1:
-            signals.append(("{}{}".format(name, dim), vect[0:8]))
+        if type(dim) == str or dim > 1:
+            signals.append(("{}[{}]".format(name, dim), vect[0:8]))
         else:
             signals.append((name, vect[0:8]))
 
@@ -576,7 +585,7 @@ def build_logic_list(db, word_fields, cell_info):
                         reg_list.append(
                             (
                                 (
-                                    "{}_{}_1S[%s]".format(
+                                    "{}_{}_1S[{}]".format(
                                         reg_field_name(reg, field),
                                         b[0],
                                         reg.dimension_str,
