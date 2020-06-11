@@ -116,7 +116,9 @@ class ProjectReader(object):
         """Called when an group_export tag is found"""
         dest = attrs["dest"]
         option = attrs["option"]
-        self._prj.append_to_group_export_list(self._current_group.name, dest, option)
+        self._prj.append_to_group_export_list(
+            self._current_group.name, dest, option
+        )
 
     def start_project_export(self, attrs):
         """Called when a project_export tag is found"""
@@ -181,7 +183,9 @@ class ProjectReader(object):
 
     def start_map_group(self, attrs):
         self.current_map_group = attrs.get("name")
-        self._prj.add_address_map_group(self._current_map, self.current_map_group)
+        self._prj.add_address_map_group(
+            self._current_map, self.current_map_group
+        )
 
     def end_map_group(self, text):
         """
@@ -196,5 +200,14 @@ class ProjectReader(object):
 
     def end_access(self, text):
         self._prj.set_access(
-            self._current_map, self.current_map_group, text, self.current_access
+            self._current_map,
+            self.current_map_group,
+            text,
+            self.current_access,
         )
+
+    def start_parameter(self, attrs):
+        self._prj.add_parameter(attrs["name"], int(attrs["value"]))
+
+    def end_parameters(self, attrs):
+        pass

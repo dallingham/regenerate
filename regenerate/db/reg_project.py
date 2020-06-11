@@ -62,6 +62,7 @@ class RegProject(object):
         self._modified = False
         self.path = path
         self.access_map = nested_dict(3, int)
+        self.__parameters = []
         if path:
             self.open(path)
 
@@ -473,3 +474,15 @@ class RegProject(object):
                     if gd.inst == old:
                         gd.inst = cur
         self._modified = True
+
+    def get_parameters(self):
+        return self.__parameters
+
+    def add_parameter(self, name, value):
+        self.__parameters.append((name, value))
+
+    def remove_parameter(self, name):
+        self.__parameters = [p for p in self.__parameters if p[0] != name]
+
+    def set_parameters(self, parameter_list):
+        self.__parameters = parameter_list

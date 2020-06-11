@@ -54,6 +54,8 @@ from regenerate.settings.paths import GLADE_TOP, INSTALL_PATH
 from regenerate.ui.addrmap_list import AddrMapList
 from regenerate.ui.addr_edit import AddrMapEdit
 from regenerate.ui.parameter_list import ParameterList
+from regenerate.ui.prj_param_list import PrjParameterList
+from regenerate.ui.param_overrides import OverridesList
 from regenerate.ui.base_window import BaseWindow
 from regenerate.ui.bit_list import BitModel, BitList
 from regenerate.ui.bitfield_editor import BitFieldEditor
@@ -290,6 +292,16 @@ class MainWindow(BaseWindow):
             self.parameter_list_obj, self.set_parameters_modified
         )
 
+        self.prj_parameter_list_obj = self.find_obj("prj_param_list")
+        self.prj_parameter_list = PrjParameterList(
+            self.prj_parameter_list_obj, self.set_parameters_modified
+        )
+
+        self.overrides_obj = self.find_obj("prj_subparam_list")
+        self.overrides_list = OverridesList(
+            self.overrides_obj, self.set_parameters_modified
+        )
+
     def set_parameters_modified(self):
         self.set_modified()
         self.reglist_obj.set_parameters(self.dbase.get_parameters())
@@ -356,6 +368,9 @@ class MainWindow(BaseWindow):
 
     def on_param_help_clicked(self, obj):
         HelpWindow(self.builder, "parameter_help.rst")
+
+    def on_prj_param_help_clicked(self, obj):
+        HelpWindow(self.builder, "prj_parameter_help.rst")
 
     def on_group_help_clicked(self, obj):
         HelpWindow(self.builder, "project_group_help.rst")
@@ -468,8 +483,14 @@ class MainWindow(BaseWindow):
     def on_add_param_clicked(self, obj):
         self.parameter_list.add_clicked()
 
+    def on_add_prj_param_clicked(self, obj):
+        self.prj_parameter_list.add_clicked()
+
     def on_remove_param_clicked(self, obj):
         self.parameter_list.remove_clicked()
+
+    def on_prj_remove_param_clicked(self, obj):
+        self.prj_parameter_list.remove_clicked()
 
     def on_address_token_name_toggled(self, obj):
         self.set_search(
@@ -1050,6 +1071,8 @@ class MainWindow(BaseWindow):
         except IOError as msg:
             ErrorMsg("Could not open %s" % filename, str(msg), self.top_window)
             return
+
+        self.prj_parameter_list.set_prj(self.prj)
 
         ini.set("user", "last_project", os.path.abspath(filename))
         idval = self.status_obj.get_context_id("mod")

@@ -43,7 +43,11 @@ class ProjectWriter(object):
             ofile.write('<?xml version="1.0"?>\n')
             ofile.write(
                 '<project name="%s" short_name="%s" company_name="%s">\n'
-                % (self._prj.name, self._prj.short_name, self._prj.company_name)
+                % (
+                    self._prj.name,
+                    self._prj.short_name,
+                    self._prj.company_name,
+                )
             )
 
             if self._prj.documentation:
@@ -58,20 +62,39 @@ class ProjectWriter(object):
             if self._prj.get_grouping_list:
                 self._print_groupings(ofile)
 
+            if self._prj.get_parameters():
+                self._print_parameter_list(ofile)
+
             for fname in self._prj.files:
                 if self._prj.get_exports(fname):
                     ofile.write('  <registerset name="%s">\n' % fname)
                     for pair in self._prj.get_exports(fname):
-                        ofile.write('    <export option="%s" path="%s"/>\n' % pair)
+                        ofile.write(
+                            '    <export option="%s" path="%s"/>\n' % pair
+                        )
                     ofile.write("  </registerset>\n")
                 else:
                     ofile.write('  <registerset name="%s"/>\n' % fname)
 
             for pair in self._prj.get_project_exports():
-                ofile.write('  <project_export option="%s" path="%s"/>\n' % pair)
+                ofile.write(
+                    '  <project_export option="%s" path="%s"/>\n' % pair
+                )
 
             ofile.write("</project>\n")
             self._prj.modified = False
+
+    def _print_parameter_list(self, ofile):
+        plist = self._prj.get_parameters()
+        if plist:
+            ofile.write("  <parameters>\n")
+            for (name, value) in plist:
+                ofile.write(
+                    '    <parameter name="{}" value="{:d}"/>\n'.format(
+                        name, int(value, 0)
+                    )
+                )
+            ofile.write("  </parameters>\n")
 
     def _print_address_maps(self, ofile):
         """
@@ -81,10 +104,12 @@ class ProjectWriter(object):
         for data in self._prj.get_address_maps():
             groups = self._prj.get_address_map_groups(data.name)
             ofile.write(
-                '    <address_map name="%s" base="%x" ' % (data.name, data.base)
+                '    <address_map name="%s" base="%x" '
+                % (data.name, data.base)
             )
             ofile.write(
-                'fixed="%d" width="%d" no_uvm="%d"' % (data.fixed, data.width, data.uvm)
+                'fixed="%d" width="%d" no_uvm="%d"'
+                % (data.fixed, data.width, data.uvm)
             )
             if groups:
                 ofile.write(">\n")
@@ -96,7 +121,8 @@ class ProjectWriter(object):
                         ofile.write('      <map_group name="%s">\n' % group)
                         for inst, val in access_list:
                             ofile.write(
-                                '        <access type="%d">%s</access>\n' % (val, inst)
+                                '        <access type="%d">%s</access>\n'
+                                % (val, inst)
                             )
                         ofile.write("      </map_group>\n")
                     else:
@@ -130,7 +156,8 @@ class ProjectWriter(object):
                     % (item.set, item.inst, item.offset)
                 )
                 ofile.write(
-                    'repeat="%s" repeat_offset="%s"' % (item.repeat, item.repeat_offset)
+                    'repeat="%s" repeat_offset="%s"'
+                    % (item.repeat, item.repeat_offset)
                 )
                 if item.hdl:
                     ofile.write(' hdl="%s"' % item.hdl)
@@ -139,12 +166,16 @@ class ProjectWriter(object):
                 if item.no_decode:
                     ofile.write(' no_decode="%s"' % int(item.no_decode))
                 if item.single_decode:
-                    ofile.write(' single_decode="%s"' % int(item.single_decode))
+                    ofile.write(
+                        ' single_decode="%s"' % int(item.single_decode)
+                    )
                 if item.array:
                     ofile.write(' array="%s"' % int(item.array))
                 ofile.write("/>\n")
             for item in self._prj.get_group_exports(group.name):
-                ofile.write('      <group_export dest="%s" option="%s"/>' % item)
+                ofile.write(
+                    '      <group_export dest="%s" option="%s"/>' % item
+                )
             ofile.write("\n    </grouping>\n")
         ofile.write("  </groupings>\n")
 
