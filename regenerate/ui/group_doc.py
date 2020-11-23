@@ -24,7 +24,7 @@ text is converted from restructuredText to HTML.
 
 from gi.repository import Gtk, Gdk, Pango
 from regenerate.ui.spell import Spell
-from regenerate.ui.preview_editor import PreviewEditor, PREVIEW_ENABLED
+from regenerate.ui.preview_editor import PreviewEditor
 from regenerate.settings.paths import GLADE_GTXT
 from regenerate.ui.utils import clean_format_if_needed
 
@@ -66,10 +66,7 @@ class GroupDocEditor(object):
         )
 
         builder.get_object('title').set_text(group_inst.name)
-        if PREVIEW_ENABLED:
-            preview.enable()
-        else:
-            preview.disable()
+        preview.enable()
         self.__spell = Spell(builder.get_object('overview1'))
 
         self.group_doc.connect('delete-event', self.on_delete_event)

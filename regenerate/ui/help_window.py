@@ -25,21 +25,26 @@ from regenerate.settings.paths import HELP_PATH
 from regenerate.ui.preview import html_string
 from regenerate.ui.base_window import BaseWindow
 from regenerate.db import LOGGER
+from regenerate.ui.html_display import HtmlDisplay
 
-try:
-    import gi
+# try:
+#     import gi
+#     gi.require_version('WebKit2', '4.0')
+#     from gi.repository import WebKit2 as webkit
+#     WEBKIT = True
+    
+# except ValueError:
 
-    gi.require_version("WebKit", "3.0")
-    from gi.repository import WebKit as webkit
-
-    WEBKIT = True
-except ImportError:
-    PREVIEW_ENABLED = False
-    LOGGER.warning(
-        "Webkit is not installed, preview of formatted "
-        "comments will not be available"
-    )
-    WEBKIT = False
+#     try:
+#         gi.require_version("WebKit", "3.0")
+#         from gi.repository import WebKit as webkit
+#         WEBKIT = True
+#     except ImportError:
+        
+#         WEBKIT = False
+#         PREVIEW_ENABLED = False
+#         LOGGER.warning("Webkit is not installed, preview of formatted "
+#                        "comments will not be available")
 
 
 class HelpWindow(BaseWindow):
@@ -55,8 +60,6 @@ class HelpWindow(BaseWindow):
     def __init__(self, builder, filename):
 
         super().__init__()
-        if not WEBKIT:
-            return
 
         try:
             fname = os.path.join(HELP_PATH, filename)
@@ -70,7 +73,7 @@ class HelpWindow(BaseWindow):
         if HelpWindow.window is None:
             HelpWindow.window = builder.get_object("help_win")
             self.configure(HelpWindow.window)
-            HelpWindow.wkit = webkit.WebView()
+            HelpWindow.wkit = HtmlDisplay()
             HelpWindow.container = builder.get_object("help_scroll")
             HelpWindow.container.add(HelpWindow.wkit)
             HelpWindow.button = builder.get_object("help_close")
@@ -81,9 +84,12 @@ class HelpWindow(BaseWindow):
         else:
             HelpWindow.window.show()
 
-        HelpWindow.wkit.load_string(
-            html_string(data), "text/html", "utf-8", ""
-        )
+        try:
+            HelpWindow.wkit.load_html(html_string(data), "text/html")
+        except:
+            HelpWindow.wkit.load_html_string(
+                html_string(data), "text/html"
+            )
 
     def destroy(self, obj):
         HelpWindow.window.hide()

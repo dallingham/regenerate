@@ -20,21 +20,7 @@
 import regenerate.extras
 from regenerate.db import LOGGER
 from regenerate.ui.base_window import BaseWindow
-
-WEBKIT = True
-
-try:
-    import gi
-
-    gi.require_version("WebKit", "3.0")
-    from gi.repository import WebKit as webkit
-except ImportError:
-    PREVIEW_ENABLED = False
-    LOGGER.warning(
-        "Webkit is not installed, preview of formatted "
-        "comments will not be available"
-    )
-    WEBKIT = False
+from regenerate.ui.html_display import HtmlDisplay
 
 
 class SummaryWindow(BaseWindow):
@@ -47,13 +33,11 @@ class SummaryWindow(BaseWindow):
     def __init__(self, builder, reg, regset_name, project):
 
         super().__init__()
-        if not WEBKIT:
-            return
 
         if SummaryWindow.window is None:
             SummaryWindow.window = builder.get_object("summary_window")
             self.configure(SummaryWindow.window)
-            SummaryWindow.wkit = webkit.WebView()
+            SummaryWindow.wkit = HtmlDisplay()
             SummaryWindow.container = builder.get_object("summary_scroll")
             SummaryWindow.container.add(SummaryWindow.wkit)
             SummaryWindow.button = builder.get_object("summary_button")
@@ -68,7 +52,10 @@ class SummaryWindow(BaseWindow):
             reg, regset_name, project, show_uvm=True
         )
         text = reg_info.html_css()
-        SummaryWindow.wkit.load_string(text, "text/html", "utf-8", "")
+        try:
+            SummaryWindow.wkit.load_html(text, "text/html")
+        except:
+            SummaryWindow.wkit.load_html_string(text, "text/html")
 
     def destroy(self, obj):
         SummaryWindow.window.hide()

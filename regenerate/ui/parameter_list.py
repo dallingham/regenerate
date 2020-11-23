@@ -125,10 +125,11 @@ class ParameterList(object):
         """
         Called when the name field is changed.
         """
+
         current = set([p[0] for p in self._db.get_parameters()])
 
         name = self._model[path][ParameterCol.NAME]
-        if name != new_text and name not in current:
+        if name != new_text and new_text not in current:
             self._model[path][ParameterCol.NAME] = new_text
             self._db.remove_parameter(name)
             self._db.add_parameter(

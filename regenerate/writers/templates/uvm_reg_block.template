@@ -173,14 +173,17 @@ package {{project.short_name|lower}}_reg_pkg;
 
       function new(string name = "{{fix_reg(register)}}");
          super.new(name, {{register.width}}, build_coverage(UVM_CVR_FIELD_VALS|UVM_CVR_REG_BITS));
+
+         add_coverage(build_coverage(UVM_CVR_FIELD_VALS|UVM_CVR_REG_BITS));
+	 
      {% if db.coverage and register.do_not_cover == False %}
        {% if register.get_bit_fields() | length > 0 %}
-         if (get_coverage(UVM_CVR_REG_BITS)) begin
+         if (has_coverage(UVM_CVR_REG_BITS)) begin
             cov_bits = new;
          end
        {% endif %}
        {% if register.get_bit_fields_with_values() | length > 0 %}
-         if (get_coverage(UVM_CVR_FIELD_VALS)) begin
+         if (has_coverage(UVM_CVR_FIELD_VALS)) begin
             cov_fields = new;
          end
        {% endif %}
@@ -192,7 +195,7 @@ package {{project.short_name|lower}}_reg_pkg;
                            bit is_read, uvm_reg_map map);
          super.sample(data, byte_en, is_read, map);
        {% if register.get_bit_fields() | length > 0 %}
-         if (get_coverage(UVM_CVR_REG_BITS)) begin
+         if (has_coverage(UVM_CVR_REG_BITS)) begin
             m_data = data;
             m_be = byte_en;
             m_is_read = is_read;
@@ -200,7 +203,7 @@ package {{project.short_name|lower}}_reg_pkg;
          end
        {% endif %}
        {% if register.get_bit_fields_with_values() | sort(attribute='lsb') | length > 0 %}
-         if (get_coverage(UVM_CVR_FIELD_VALS)) begin
+         if (has_coverage(UVM_CVR_FIELD_VALS)) begin
             sample_values();
             cov_fields.sample();
          end
@@ -280,6 +283,7 @@ package {{project.short_name|lower}}_reg_pkg;
 
     function new(string name = "{{group.name|lower}}_{{db.set_name|lower}}_reg_blk");
        super.new(name, build_coverage(UVM_CVR_ADDR_MAP));
+       add_coverage(build_coverage(UVM_CVR_ADDR_MAP));
     endfunction
 
     function string access_mode(string def, int force_mode);
@@ -351,7 +355,7 @@ package {{project.short_name|lower}}_reg_pkg;
     virtual function void build();
 
 {% if db.coverage %}
-      if (get_coverage(UVM_CVR_ADDR_MAP)) begin
+      if (has_coverage(UVM_CVR_ADDR_MAP)) begin
   {% if use_new %}
         {{db.set_name|lower}}_access_cg = new("{{db.set_name|lower}}_access_cg");
   {% else %}
@@ -418,7 +422,7 @@ package {{project.short_name|lower}}_reg_pkg;
 
    {% if db.coverage %}
     function void sample(uvm_reg_addr_t offset, bit is_read, uvm_reg_map  map);
-       if (get_coverage(UVM_CVR_ADDR_MAP)) begin
+       if (has_coverage(UVM_CVR_ADDR_MAP)) begin
           {{db.set_name|lower}}_access_cg.sample(offset, is_read);
        end
     endfunction: sample

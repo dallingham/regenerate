@@ -24,19 +24,7 @@ text is converted from restructuredText to HTML.
 
 from regenerate.ui.preview import html_string
 from regenerate.db import LOGGER
-
-PREVIEW_ENABLED = True
-
-
-try:
-    import gi
-    gi.require_version('WebKit', '3.0')
-    from gi.repository import WebKit as webkit
-
-except ImportError:
-    PREVIEW_ENABLED = False
-    LOGGER.warning("Webkit is not installed, preview of formatted "
-                   "comments will not be available")
+from regenerate.ui.html_display import HtmlDisplay
 
 
 class PreviewEditor(object):
@@ -45,10 +33,8 @@ class PreviewEditor(object):
     """
 
     def __init__(self, text_buffer, webkit_container, use_reg=True):
-        if not PREVIEW_ENABLED:
-            return
 
-        self.__webkit = webkit.WebView()
+        self.__webkit = HtmlDisplay()
         self.__container = webkit_container
         self.__container.add(self.__webkit)
         self.__container.hide()
@@ -73,7 +59,10 @@ class PreviewEditor(object):
                 data.append(".. _`{0}`: /".format(reg.register_name))
             text = text + "\n\n" + "\n".join(data)
 
-        self.__webkit.load_string(html_string(text), "text/html", "utf-8", "")
+        try:
+            self.__webkit.load_html(html_string(text), "text/html") #, "utf-8", "")
+        except:
+            self.__webkit.load_html_string(html_string(text), "text/html") #, "utf-8", "")
 
     def set_dbase(self, dbase):
         self.__active_db = dbase
@@ -82,10 +71,9 @@ class PreviewEditor(object):
         """
         Enables updating and display of the webkit display
         """
-        if PREVIEW_ENABLED:
-            self.__update_text()
-            self.__container.show()
-            self.__webkit.show()
+        self.__update_text()
+        self.__container.show()
+        self.__webkit.show()
         self.__update = True
 
     def disable(self):
@@ -93,9 +81,8 @@ class PreviewEditor(object):
         Disables updating and display of the webkit display
         """
         self.__update = False
-        if PREVIEW_ENABLED:
-            self.__webkit.hide()
-            self.__container.hide()
+        self.__webkit.hide()
+        self.__container.hide()
 
     def _changed(self, obj):
         """

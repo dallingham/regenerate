@@ -284,6 +284,8 @@ class Verilog(WriterBase):
 
         # TODO: fix 64 bit registers with 32 bit width
 
+        print("PARAMETERS", parameters)
+
         with open(filename, "w") as ofile:
             ofile.write(
                 template.render(

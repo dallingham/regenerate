@@ -4,37 +4,48 @@
 
 from regenerate.db import LOGGER
 
-try:
+# try:
 
-    from gtkspellcheck import SpellChecker
+#    from gtkspellcheck import SpellChecker
 
-    class Spell(SpellChecker):
-        def __init__(self, obj):
-            super().__init__(obj)
-            self.enable()
+#    class Spell(SpellChecker):
+#        def __init__(self, obj):
+#            super().__init__(obj)
+#            self.enable()
 
-        def detach(self):
-            pass
+#        def detach(self):
+#            pass
 
 
-except ImportError:
+# except ImportError:
 
-    try:
+#     try:
+        
+#         from gtkspell import Spell
 
-        from gtkspell import Spell
 
-    except ImportError:
+#     except ImportError:
+        
+#         class Spell(object):
+#             "Empty class for compatiblity if the spell checker is not found"
+            
+#             def __init__(self, obj):
+#                 pass
+            
+#             def detach(self):
+#                 pass
+            
+#             LOGGER.warning(
+#                 "gtkspell/gtkspellcheck is not installed, "
+#                 "spell checking will not be available"
+#             )
 
-        class Spell(object):
-            "Empty class for compatiblity if the spell checker is not found"
-
-            def __init__(self, obj):
-                pass
-
-            def detach(self):
-                pass
-
-            LOGGER.warning(
-                "gtkspell/gtkspellcheck is not installed, "
-                "spell checking will not be available"
-            )
+class Spell(object):
+   "Empty class for compatiblity if the spell checker is not found"
+            
+   def __init__(self, obj):
+      pass
+            
+   def detach(self):
+      pass
+            

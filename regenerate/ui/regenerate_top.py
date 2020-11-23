@@ -56,7 +56,9 @@ from regenerate.ui.addr_edit import AddrMapEdit
 from regenerate.ui.parameter_list import ParameterList
 from regenerate.ui.base_window import BaseWindow
 from regenerate.ui.bit_list import BitModel, BitList, reset_value
+print("4.2")
 from regenerate.ui.bitfield_editor import BitFieldEditor
+print("4.3")
 from regenerate.ui.build import Build
 from regenerate.ui.error_dialogs import ErrorMsg, WarnMsg, Question
 from regenerate.ui.enums import FilterField, BitCol, InstCol, PrjCol
@@ -67,7 +69,6 @@ from regenerate.ui.help_window import HelpWindow
 from regenerate.ui.instance_list import InstMdl, InstanceList
 from regenerate.ui.module_tab import ModuleTabs, ProjectTabs
 from regenerate.ui.preferences import Preferences
-from regenerate.ui.preview_editor import PREVIEW_ENABLED
 from regenerate.ui.project import ProjectModel, ProjectList
 from regenerate.ui.reg_description import RegisterDescription
 from regenerate.ui.register_list import RegisterModel, RegisterList
@@ -112,22 +113,6 @@ class DbaseStatus(object):
         self.reg_select = None
         self.bit_select = None
         self.node = None
-
-
-# class MessageHelp(Gtk.Popover):
-#     def __init__(self):
-#         super().__init__()
-#         self.__label = Gtk.Label()
-#         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-#         vbox.pack_start(self.__label, False, True, 10)
-#         self.add(vbox)
-#         self.set_position(Gtk.PositionType.BOTTOM)
-
-#     def set_text(self, obj, msg):
-#         self.__label.set_text(msg)
-#         self.set_relative_to(obj)
-#         self.show_all()
-#         self.popup()
 
 
 class MainWindow(BaseWindow):
@@ -439,10 +424,7 @@ class MainWindow(BaseWindow):
         fld_acn = ["remove_bit_action", "edit_bit_action"]
         file_acn = ["revert_action"]
 
-        if PREVIEW_ENABLED:
-            prj_acn.append("preview_action")
-        else:
-            self.build_group("unused", ["preview_action"])
+        prj_acn.append("preview_action")
 
         self.prj_loaded = self.build_group("project_loaded", prj_acn)
         self.reg_selected = self.build_group("reg_selected", reg_acn)
