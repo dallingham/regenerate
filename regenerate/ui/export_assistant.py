@@ -19,6 +19,7 @@
 
 import os
 from gi.repository import Gtk, Gdk
+from regenerate.ui.enums import ExportPages
 
 
 class TextCombo(Gtk.ComboBox):

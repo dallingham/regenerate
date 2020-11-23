@@ -141,8 +141,8 @@ module {{db.module_name}}
  *------------------------------------------------------------------------------
  */
 {%   if reg.dimension_is_param() %}
-   generate
-      for (i = 0; i < {{reg.dimension_str}}; i++) begin : g_r{{"%02x"|format(reg.address)}}
+generate
+   for (i = 0; i < {{reg.dimension_str}}; i++) begin : g_r{{"%02x"|format(reg.address)}}
 {%   endif %}
 
 {%   if field.field_type == 0 %}
@@ -201,34 +201,34 @@ module {{db.module_name}}
 {%        if stop == start %}
 {%          if reg.dimension_is_param() %}
 {%            if field.lsb == field.msb %}
-      .IN     ({{field.input_signal}}[i]), // 1
+      .IN     ({{field.input_signal}}[i]),
 {%            else %}      
-      .IN     ({{field.input_signal}}[i][{{stop}}]), // 2
+      .IN     ({{field.input_signal}}[i][{{stop}}]),
 {%            endif %}      
 {%          elif reg.dimension >= 0 %}
 {%            if start == stop %}
 {%               if field.lsb == field.msb %}
-      .IN     ({{field.input_signal}}[{{reg.dimension}}]), //3
+      .IN     ({{field.input_signal}}[{{reg.dimension}}]),
 {%               else %}      
-      .IN     ({{field.input_signal}}[{{reg.dimension}}][{{stop}}]), // 4
+      .IN     ({{field.input_signal}}[{{reg.dimension}}][{{stop}}]),
 {%               endif %}      
 {%            else %}      
-      .IN     ({{field.input_signal}}[{{reg.dimension}}][{{stop}}:{{start}}]),  // 5
+      .IN     ({{field.input_signal}}[{{reg.dimension}}][{{stop}}:{{start}}]),
 {%            endif %}      
 {%          else %}
 {%            if field.lsb == field.msb %}
-      .IN     ({{field.input_signal}}),  // 6
+      .IN     ({{field.input_signal}}),
 {%            else %}
-      .IN     ({{field.input_signal}}[{{start}}]), // 7
+      .IN     ({{field.input_signal}}[{{start}}]),
 {%            endif %}
 {%          endif %}
 {%        else %}
 {%          if reg.dimension_is_param() %}
-      .IN     ({{field.input_signal}}[i][{{stop}}:{{start}}]), // 8
+      .IN     ({{field.input_signal}}[i][{{stop}}:{{start}}]),
 {%          elif reg.dimension >= 0 %}
-      .IN     ({{field.input_signal}}[{{reg.dimension}}][{{stop}}:{{start}}]), // 9
+      .IN     ({{field.input_signal}}[{{reg.dimension}}][{{stop}}:{{start}}]),
 {%          else %}
-      .IN     ({{field.input_signal}}[{{stop}}:{{start}}]),  // 10
+      .IN     ({{field.input_signal}}[{{stop}}:{{start}}]),
 {%          endif %}
 {%        endif %}
 {%      endif %}
@@ -237,19 +237,31 @@ module {{db.module_name}}
 {%      endif %}
 {%      if stop == start %}
 {%        if field.lsb == field.msb %}
+{%           if reg.dimension_is_param() %}
+      .DO     ({{reg_field_name(reg, field)}}[i])
+{%           else %}
       .DO     ({{reg_field_name(reg, field)}})
+{%           endif %}
 {%        else %}
+{%           if reg.dimension_is_param() %}
+      .DO     ({{reg_field_name(reg, field)}}[i][{{start}}])
+{%           else %}
       .DO     ({{reg_field_name(reg, field)}}[{{start}}])
+{%           endif %}
 {%        endif %}
 {%      else %}
+{%         if reg.dimension_is_param() %}
+      .DO     ({{reg_field_name(reg, field)}}[i][{{stop}}:{{start}}])
+{%         else %}
       .DO     ({{reg_field_name(reg, field)}}[{{stop}}:{{start}}])
+{%         endif %}
 {%      endif %}
      );
 
 {%     endfor %}
 {%   if reg.dimension_is_param() %}
-      end
-   endgenerate
+    end
+ endgenerate
 {%   endif %}
 {%   endif %}
 {%   endfor %}

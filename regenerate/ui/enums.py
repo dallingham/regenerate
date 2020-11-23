@@ -143,6 +143,13 @@ class ParameterCol(IntEnum):
     MAX = 3
 
 
+class PrjParameterCol(IntEnum):
+    """Column numbers for the Parameter List"""
+
+    NAME = 0
+    VALUE = 1
+
+
 class ExportPages(IntEnum):
     """Page names for the export builder"""
 

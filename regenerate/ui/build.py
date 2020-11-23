@@ -28,7 +28,14 @@ from regenerate.ui.base_window import BaseWindow
 from regenerate.ui.columns import EditableColumn, ToggleColumn
 from regenerate.ui.error_dialogs import ErrorMsg
 from regenerate.ui.export_assistant import ExportAssistant
-from regenerate.ui.enums import Level, BuildCol, MapOpt, OptMap, DbMap
+from regenerate.ui.enums import (
+    Level,
+    BuildCol,
+    MapOpt,
+    OptMap,
+    DbMap,
+    ExportPages,
+)
 from regenerate.writers import EXPORTERS, PRJ_EXPORTERS, GRP_EXPORTERS
 
 
