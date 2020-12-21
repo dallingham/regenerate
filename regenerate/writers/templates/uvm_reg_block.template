@@ -74,9 +74,9 @@ package {{project.short_name|lower}}_reg_pkg;
               {% if register.is_completely_read_only() == False %}
                 {% if register.do_not_cover == False and register.is_completely_read_only() == False %}
                   {% if register.dimension > 1 %}
-           bins r_{{fix_reg(register)}} = { {% for i in range(0, register.dimension) %}'h{{ '%x' | format(register.address + (i * ((register.width / 8)|int))) }}{% if not loop.last %}, {% endif %}{% endfor %} };
+           bins w_{{fix_reg(register)}} = { {% for i in range(0, register.dimension) %}'h{{ '%x' | format(register.address + (i * ((register.width / 8)|int))) }}{% if not loop.last %}, {% endif %}{% endfor %} };
                   {% else %}
-           bins r_{{fix_reg(register)}} = { 'h{{ '%x' | format(register.address) }} };
+           bins w_{{fix_reg(register)}} = { 'h{{ '%x' | format(register.address) }} };
                   {% endif %}
                 {% endif %}
               {% endif %}

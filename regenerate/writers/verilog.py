@@ -284,8 +284,6 @@ class Verilog(WriterBase):
 
         # TODO: fix 64 bit registers with 32 bit width
 
-        print("PARAMETERS", parameters)
-
         with open(filename, "w") as ofile:
             ofile.write(
                 template.render(
@@ -537,7 +535,14 @@ def build_output_signals(db, cell_info):
     for (name, vect, dim) in scalar_ports:
         vect = vect + "         "
         if type(dim) == str or dim > 1:
-            signals.append(("{}[{}]".format(name, dim), vect[0:8]))
+            try:
+                val = int(dim)
+                if val > 1:
+                    signals.append(("{}[{}]".format(name, dim), vect[0:8]))
+                else:
+                    signals.append(("{}".format(name), vect[0:8]))
+            except:
+                signals.append(("{}[{}]".format(name, dim), vect[0:8]))
         else:
             signals.append((name, vect[0:8]))
 

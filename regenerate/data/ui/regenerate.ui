@@ -2,19 +2,19 @@
 <!-- Generated with glade 3.22.1 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
-  <object class="GtkMessageDialog">
+  <object id="foobar0" class="GtkMessageDialog">
     <property name="can_focus">False</property>
     <property name="type_hint">dialog</property>
     <child>
       <placeholder/>
     </child>
     <child internal-child="vbox">
-      <object class="GtkBox">
+      <object class="GtkBox" id="dna95000">
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child internal-child="action_area">
-          <object class="GtkButtonBox">
+          <object class="GtkButtonBox" id="dna95001">
             <property name="can_focus">False</property>
             <property name="homogeneous">True</property>
             <property name="layout_style">end</property>
@@ -4727,14 +4727,14 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkGrid">
+                      <object class="GtkGrid" id="dna95002">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="border_width">12</property>
                         <property name="row_spacing">12</property>
                         <property name="column_spacing">12</property>
                         <child>
-                          <object class="GtkScrolledWindow">
+                          <object class="GtkScrolledWindow" id="dna95003">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="shadow_type">in</property>
@@ -4745,7 +4745,7 @@
                                 <property name="hexpand">True</property>
                                 <property name="vexpand">True</property>
                                 <child internal-child="selection">
-                                  <object class="GtkTreeSelection"/>
+                                  <object class="GtkTreeSelection" id="dna95004"/>
                                 </child>
                               </object>
                             </child>
@@ -4756,13 +4756,13 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkButtonBox">
+                          <object class="GtkButtonBox" id="dna95005">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="orientation">vertical</property>
                             <property name="layout_style">start</property>
                             <child>
-                              <object class="GtkButton">
+                              <object class="GtkButton" id="dna95006">
                                 <property name="label">gtk-add</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
@@ -4777,7 +4777,7 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkButton">
+                              <object class="GtkButton" id="dna95007">
                                 <property name="label">gtk-remove</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
@@ -4792,7 +4792,7 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkButton">
+                              <object class="GtkButton" id="dna95008">
                                 <property name="label">gtk-help</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
@@ -4813,7 +4813,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkButtonBox">
+                          <object class="GtkButtonBox" id="dna95009">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="orientation">vertical</property>
@@ -4867,7 +4867,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkScrolledWindow">
+                          <object class="GtkScrolledWindow" id="dna95010">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="hexpand">True</property>
@@ -4879,7 +4879,7 @@
                                 <property name="can_focus">True</property>
                                 <property name="hexpand">True</property>
                                 <child internal-child="selection">
-                                  <object class="GtkTreeSelection"/>
+                                  <object class="GtkTreeSelection" id="dna95011"/>
                                 </child>
                               </object>
                             </child>
@@ -4922,7 +4922,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkLabel">
+                          <object class="GtkLabel" id="dna95012">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                           </object>
@@ -4964,7 +4964,7 @@
                       </packing>
                     </child>
                     <child type="tab">
-                      <object class="GtkLabel">
+                      <object class="GtkLabel" id="dna95013">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">&lt;b&gt;Project Parameters&lt;/b&gt;</property>

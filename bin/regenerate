@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 #
+#
 # Manage registers in a hardware design
 #
 # Copyright (C) 2008  Donald N. Allingham

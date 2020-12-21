@@ -73,7 +73,7 @@ class InstMdl(Gtk.TreeStore):
             )
             return
 
-        if not re.match(r"^[A-Za-z_][A-Za-z0-9_]\[.*\]+$", text):
+        if re.match(r"^[A-Za-z_][A-Za-z0-9_]\[.*\]+$", text):
             LOGGER.warning(
                 "Array notation not valid. Use the repeat/repeat count to create arrays"
             )
