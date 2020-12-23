@@ -24,12 +24,18 @@ import os
 from regenerate.settings.paths import INSTALL_PATH
 
 
-class BaseWindow(object):
+class BaseWindow:
+    """
+    Provides the base window class. Currently, only provides the
+    common icon, selecting the SVG if possible, if not, defaulting
+    to the PNG.
+    """
 
     def __init__(self):
         pass
 
     def configure(self, obj):
+        """Sets the icon image to the passed object"""
         try:
             image = os.path.join(INSTALL_PATH, "media", "flop.svg")
             obj.set_icon_from_file(image)

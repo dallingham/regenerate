@@ -21,10 +21,10 @@ Provides the Address List interface
 """
 
 from gi.repository import Gtk
-from regenerate.db import LOGGER
+from regenerate.db import LOGGER, ParameterData
 from regenerate.ui.columns import EditableColumn
 from regenerate.ui.enums import ParameterCol
-from regenerate.db.parammap import ParameterData
+from regenerate.ui.utils import check_hex
 
 
 class ParameterListMdl(Gtk.ListStore):
@@ -69,7 +69,7 @@ class ParameterListMdl(Gtk.ListStore):
                 val_list.append((val[0], def_val, min_val, max_val))
 
 
-class ParameterList(object):
+class ParameterList:
     """
     Container for the Parameter List control logic.
     """
@@ -83,12 +83,12 @@ class ParameterList(object):
         self._obj.set_sensitive(True)
         self._callback = callback
 
-    def set_db(self, db):
+    def set_db(self, dbase):
         """
         Sets the database for the paramter list, and repopulates the list
         from the database.
         """
-        self._db = db
+        self._db = dbase
         self._obj.set_sensitive(True)
         self.populate()
 
@@ -102,31 +102,33 @@ class ParameterList(object):
             self.append(name, value, min_val, max_val)
 
     def remove_clicked(self):
+        """Remove the entry"""
         name = self.get_selected()
         self._db.remove_parameter(name)
         self.remove_selected()
         self._callback()
 
     def add_clicked(self):
-        current = set([p[0] for p in self._db.get_parameters()])
+        """Add a new entry, after picking a new name"""
+        current = set({p[0] for p in self._db.get_parameters()})
         base = "pParameter"
         index = 0
 
-        name = "{}{}".format(base, index)
+        name = f"{base}{index}"
         while name in current:
             index = index + 1
-            name = "{}{}".format(base, index)
+            name = f"{base}{index}"
 
         self._model.new_instance(name, hex(1), hex(0), hex(0xFFFFFFFF))
         self._db.add_parameter(name, hex(1), hex(0), hex(0xFFFFFFFF))
         self._callback()
 
-    def _name_changed(self, cell, path, new_text, col):
+    def _name_changed(self, _cell, path, new_text, _col):
         """
         Called when the name field is changed.
         """
 
-        current = set([p[0] for p in self._db.get_parameters()])
+        current = set({p[0] for p in self._db.get_parameters()})
 
         name = self._model[path][ParameterCol.NAME]
         if name != new_text and new_text not in current:
@@ -140,17 +142,9 @@ class ParameterList(object):
             )
             self._callback()
 
-    def check_hex(self, new_text):
-        try:
-            int(new_text, 16)
-            return True
-        except ValueError:
-            LOGGER.warning('Illegal hexidecimal value: "%s"', new_text)
-            return False
-
-    def _value_changed(self, cell, path, new_text, col):
+    def _value_changed(self, _cell, path, new_text, _col):
         """Called when the base address field is changed."""
-        if self.check_hex(new_text) is False:
+        if check_hex(new_text) is False:
             return
 
         name = self._model[path][ParameterCol.NAME]
@@ -173,8 +167,8 @@ class ParameterList(object):
             self._db.add_parameter(name, value, min_val, max_val)
             self._callback()
 
-    def _min_changed(self, cell, path, new_text, col):
-        if self.check_hex(new_text) is False:
+    def _min_changed(self, _cell, path, new_text, _col):
+        if check_hex(new_text) is False:
             return
 
         name = self._model[path][ParameterCol.NAME]
@@ -196,8 +190,8 @@ class ParameterList(object):
             self._db.add_parameter(name, value, min_val, max_val)
             self._callback()
 
-    def _max_changed(self, cell, path, new_text, col):
-        if self.check_hex(new_text) is False:
+    def _max_changed(self, _cell, path, new_text, _col):
+        if check_hex(new_text) is False:
             return
 
         name = self._model[path][ParameterCol.NAME]
@@ -277,7 +271,7 @@ class ParameterList(object):
         """
         Add the data to the list.
         """
-        obj = ParameterData(name, value, max_val, min_val)
+        obj = ParameterData(name, value, min_val, max_val)
         self._model.append(row=get_row_data(obj))
 
     def get_selected(self):
@@ -306,12 +300,13 @@ class ParameterList(object):
             # remove group from address map
             pass
         else:
-            name = model.get_value(node, ParameterCol.NAME)
+            _ = model.get_value(node, ParameterCol.NAME)
             model.remove(node)
             self._callback()
 
 
 def get_row_data(map_obj):
+    """Return row data from the object"""
     return (
         map_obj.name,
         hex(int(map_obj.value)),

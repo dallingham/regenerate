@@ -15,13 +15,17 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""
+Register description management
+"""
+
 from gi.repository import Pango, Gdk
 from regenerate.ui.spell import Spell
 from regenerate.ui.utils import clean_format_if_needed
 from regenerate.ui.preview_editor import PreviewEditor
 
 
-class RegisterDescription(object):
+class RegisterDescription:
     """
     Handles the Register description. Sets the font to a monospace font,
     sets up the changed handler, sets up the spell checker, and makes
@@ -67,7 +71,7 @@ class RegisterDescription(object):
             self.buf.set_text(reg.description)
         self.buf.set_modified(False)
 
-    def changed(self, obj):
+    def changed(self, _obj):
         """A change to the text occurred"""
         if self.reg:
             new_text = self.buf.get_text(
@@ -78,6 +82,8 @@ class RegisterDescription(object):
                 self.callback(self.reg)
 
     def on_key_press_event(self, obj, event):
+        """If F12 pressed, clean the selection"""
+
         if event.keyval == Gdk.KEY_F12:
             if clean_format_if_needed(obj):
                 self.callback(self.reg)

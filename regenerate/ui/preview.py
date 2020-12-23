@@ -24,25 +24,29 @@ try:
     from docutils.core import publish_string
 except ImportError:
     from regenerate.db import LOGGER
-    LOGGER.warning("docutils is not installed, preview of formatted "
-                   "comments will not be available")
 
-    def publish_string(text, writer_name):
+    LOGGER.warning(
+        "docutils is not installed, preview of formatted "
+        "comments will not be available"
+    )
+
+    def publish_string(text, _writer_name):
         """
         Provides an alternative publish_string function if docutils is
         not available. Simply returns the text.
         """
         return text
 
+
 import sys
 
 if sys.version_info[0] == 3:
     REPORT_LEVEL = 4
 else:
-    REPORT_LEVEL = 'quiet'
+    REPORT_LEVEL = "quiet"
 
 
-__CSS = '''
+__CSS = """
 <style type="text/css">
 table.docutils td{
     padding: 3pt;
@@ -66,7 +70,7 @@ body{
     font-family: Arial,Helvetica,Sans;
 }
 </style>
-'''
+"""
 
 
 def html_string(text):
@@ -75,16 +79,11 @@ def html_string(text):
     the CSS string.
     """
 
-    overrides = {
-        'output_encoding': 'unicode',
-        'report_level': REPORT_LEVEL
-    }
+    overrides = {"output_encoding": "unicode", "report_level": REPORT_LEVEL}
 
     try:
         return __CSS + publish_string(
-            text,
-            writer_name="html",
-            settings_overrides=overrides
+            text, writer_name="html", settings_overrides=overrides
         )
     except TypeError:
         return __CSS + publish_string(text, writer_name="html")

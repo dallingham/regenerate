@@ -31,7 +31,12 @@ class BaseMsg(Gtk.MessageDialog):
     """
 
     def __init__(
-        self, title, msg, dialog_type, buttons=Gtk.ButtonsType.CLOSE, parent=None
+        self,
+        title,
+        msg,
+        dialog_type,
+        buttons=Gtk.ButtonsType.CLOSE,
+        parent=None,
     ):
 
         super().__init__(
@@ -43,7 +48,7 @@ class BaseMsg(Gtk.MessageDialog):
 
         if parent is not None:
             self.set_transient_for(parent)
-        self.set_markup('<span weight="bold" size="larger">%s</span>' % title)
+        self.set_markup(f'<span weight="bold" size="larger">{title}</span>')
         self.format_secondary_markup(msg)
         self.run_dialog()
 
@@ -70,9 +75,7 @@ class WarnMsg(BaseMsg):
     """
 
     def __init__(self, title, msg="", parent=None):
-        super().__init__(
-            title, msg, Gtk.MessageType.WARNING, parent=parent
-        )
+        super().__init__(title, msg, Gtk.MessageType.WARNING, parent=parent)
 
 
 class Question(Gtk.MessageDialog):
@@ -92,7 +95,7 @@ class Question(Gtk.MessageDialog):
             Gtk.MessageType.QUESTION,
         )
 
-        self.set_markup('<span weight="bold" size="larger">{}</span>'.format(title))
+        self.set_markup(f'<span weight="bold" size="larger">{title}</span>')
         self.format_secondary_markup(msg)
         self.add_button("Discard Changes", self.DISCARD)
         self.add_button(Gtk.STOCK_CANCEL, self.CANCEL)

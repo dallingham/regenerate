@@ -25,7 +25,6 @@ from gi.repository import Gtk
 from regenerate.ui.columns import (
     EditableColumn,
     ComboMapColumn,
-    EditComboMapColumn,
     MyComboMapColumn,
 )
 from regenerate.ui.error_dialogs import ErrorMsg
@@ -221,7 +220,7 @@ ColDef = namedtuple(
 )
 
 
-class RegisterList(object):
+class RegisterList:
     """
     Provides the interface to the register table
     """
@@ -283,7 +282,7 @@ class RegisterList(object):
         self.__parameter_names = set()
 
     def set_parameters(self, parameters):
-        self.__parameters_names = set([(p[0], p[0]) for p in parameters])
+        self.__parameters_names = set({(p[0], p[0]) for p in parameters})
         self.dim_column.update_menu(sorted(list(self.__parameters_names)))
 
     def get_selected_row(self):
@@ -468,7 +467,7 @@ class RegisterList(object):
             self.__set_modified()
         self.__model[path][RegCol.DIM] = text
 
-    def __reg_update_define(self, reg, path, text, cell):
+    def __reg_update_define(self, reg, path, text, _cell):
         """
         Updates the token name associated with the register. Called after the
         text has been edited
@@ -586,7 +585,7 @@ class RegisterList(object):
         elif col == RegCol.DEFINE:
             self.__reg_update_define(register, path, new_text, cell)
 
-    def __dimension_text(self, cell, path, new_text, col):
+    def __dimension_text(self, _cell, path, new_text, _col):
         """
         Called when text has been edited. Selects the correct function
         depending on the edited column
@@ -611,7 +610,7 @@ class RegisterList(object):
                     new_text,
                 )
 
-    def __dimension_menu(self, cell, path, node, col):
+    def __dimension_menu(self, cell, path, node, _col):
         """
         Called when text has been edited. Selects the correct function
         depending on the edited column
@@ -648,7 +647,7 @@ def build_define(text):
     for i in BAD_TOKENS:
         text = text.replace(i, "_")
     if text in REMAP_NAME:
-        text = "%s_REG" % text
+        text = f"{text}_REG"
 
     return "_".join(
         [

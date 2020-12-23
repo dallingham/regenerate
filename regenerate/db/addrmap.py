@@ -17,8 +17,13 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""
+Contains the data in the address map
+"""
 
-class AddrMapData(object):
+
+class AddrMapData:
+    """Address map data"""
 
     def __init__(self, name, base, width, fixed, uvm):
         self.name = name

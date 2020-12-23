@@ -113,11 +113,16 @@ class EditableColumn(BaseColumn):
         if visible_callback:
             self.set_cell_data_func(self.renderer, visible_callback)
 
-    def edit_started(self, cell, entry, path):
+    def edit_started(self, _cell, entry, path):
+        """Called when editing of the cell begins"""
         self.path = path
         self.entry = entry
 
-    def edit_canceled(self, obj):
+    def edit_canceled(self, _obj):
+        """
+        Called with editing of the cell is canceled, and we need
+        to restore the original value.
+        """
         val = self.entry.get_text()
         self.renderer.emit("edited", self.path, val)
 
@@ -133,8 +138,8 @@ class ReadOnlyColumn(BaseColumn):
         title,
         source_column,
         monospace=False,
-        visible_callback=None,
-        placeholder=None,
+        _visible_callback=None,
+        _placeholder=None,
         tooltip=None,
     ):
 
@@ -198,7 +203,7 @@ class MyComboMapColumn(BaseColumn):
         text_callback,
         data_list,
         source_column,
-        dtype=str,
+        _dtype=str,
         visible_callback=None,
         tooltip=None,
     ):
@@ -221,6 +226,7 @@ class MyComboMapColumn(BaseColumn):
             self.set_cell_data_func(self.renderer, visible_callback)
 
     def update_menu(self, item_list):
+        """Update the menu with the supplied items."""
         self.item_list = item_list[:]
         self._model.clear()
         for item in item_list:
@@ -247,7 +253,7 @@ class EditComboMapColumn(BaseColumn):
         self.dtype = dtype
         self.renderer = Gtk.CellRendererText()
         self.renderer.set_property("editable", True)
-
+        self.path = None
         self.update_menu(data_list)
 
         if callback:
@@ -265,6 +271,7 @@ class EditComboMapColumn(BaseColumn):
             self.set_cell_data_func(self.renderer, visible_callback)
 
     def update_menu(self, item_list):
+        """Update the menu from the passed list"""
         self.item_list = item_list[:]
         self.model = Gtk.ListStore(str, str)
         for item in item_list:
@@ -274,15 +281,18 @@ class EditComboMapColumn(BaseColumn):
         self.completion.set_text_column(1)
         self.completion.connect("match-selected", self.renderer_match_selected)
 
-    def renderer_match_selected(self, completion, model, tree_iter):
-        """ beware ! the model and tree_iter passed in here are the model from the
-        EntryCompletion, which may or may not be the same as the model of the Treeview """
+    def renderer_match_selected(self, _completion, model, tree_iter):
+        """
+        The model and tree_iter passed in here are the model from the
+        EntryCompletion, which may or may not be the same as the model of the
+        Treeview
+        """
         text_match = self.model[tree_iter][1]
         model[self.path][1] = text_match
 
-    def renderer_text_editing_started(self, renderer, editable, path):
-        """ since the editable widget gets created for every edit, we need to 
-        connect the completion to every editable upon creation """
+    def renderer_text_editing_started(self, _renderer, editable, path):
+        """since the editable widget gets created for every edit, we need to
+        connect the completion to every editable upon creation"""
         editable.set_completion(self.completion)
         self.path = path  # save the path for later usage
 
@@ -332,4 +342,5 @@ class SwitchComboMapColumn(BaseColumn):
         )
 
     def set_mode(self, i):
+        """Set the model for the renderer"""
         self.renderer.set_property("model", self.model[i])

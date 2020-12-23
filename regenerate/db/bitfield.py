@@ -28,7 +28,7 @@ def clean_signal(name):
     return "_".join(name.strip().split())
 
 
-class BitField(object):
+class BitField:
     """Holds all the data of a bit field (one or more bits of a register)."""
 
     PARAMETERS = {}
@@ -111,7 +111,9 @@ class BitField(object):
 
     def __eq__(self, other):
         """Compare for equality between two bitfieids."""
-        return all(self.__dict__[i] == other.__dict__[i] for i in self.full_compare)
+        return all(
+            self.__dict__[i] == other.__dict__[i] for i in self.full_compare
+        )
 
     def __ne__(self, other):
         """Compare for inequality between two bitfields."""
@@ -232,12 +234,11 @@ class BitField(object):
         nlist = self._output_signal.split("*")
         if len(nlist) == 1:
             return self._output_signal
+        if self.msb == self.lsb:
+            index = "%d" % self.lsb
         else:
-            if self.msb == self.lsb:
-                index = "%d" % self.lsb
-            else:
-                index = "%d:%d" % (self.msb, self.lsb)
-            return "%s%s%s" % (nlist[0], index, nlist[1])
+            index = "%d:%d" % (self.msb, self.lsb)
+        return "%s%s%s" % (nlist[0], index, nlist[1])
 
     @output_signal.setter
     def output_signal(self, output):

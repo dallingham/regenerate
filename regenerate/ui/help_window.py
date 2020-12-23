@@ -20,31 +20,12 @@
 Provides a dialog window that displays the contents of a file, converting
 the contents from restructuredText to HTML.
 """
+
 import os
 from regenerate.settings.paths import HELP_PATH
 from regenerate.ui.preview import html_string
 from regenerate.ui.base_window import BaseWindow
-from regenerate.db import LOGGER
 from regenerate.ui.html_display import HtmlDisplay
-
-# try:
-#     import gi
-#     gi.require_version('WebKit2', '4.0')
-#     from gi.repository import WebKit2 as webkit
-#     WEBKIT = True
-    
-# except ValueError:
-
-#     try:
-#         gi.require_version("WebKit", "3.0")
-#         from gi.repository import WebKit as webkit
-#         WEBKIT = True
-#     except ImportError:
-        
-#         WEBKIT = False
-#         PREVIEW_ENABLED = False
-#         LOGGER.warning("Webkit is not installed, preview of formatted "
-#                        "comments will not be available")
 
 
 class HelpWindow(BaseWindow):
@@ -63,8 +44,8 @@ class HelpWindow(BaseWindow):
 
         try:
             fname = os.path.join(HELP_PATH, filename)
-            f = open(fname)
-            data = f.read()
+            with open(fname) as ifile:
+                data = ifile.read()
         except IOError as msg:
             data = "Help file '{}' could not be found\n{}".format(
                 fname, str(msg)
@@ -87,17 +68,18 @@ class HelpWindow(BaseWindow):
         try:
             HelpWindow.wkit.load_html(html_string(data), "text/html")
         except:
-            HelpWindow.wkit.load_html_string(
-                html_string(data), "text/html"
-            )
+            HelpWindow.wkit.load_html_string(html_string(data), "text/html")
 
-    def destroy(self, obj):
+    def destroy(self, _obj):
+        """Hide the window with the destroy event is received"""
         HelpWindow.window.hide()
         return True
 
-    def delete(self, obj, event):
+    def delete(self, _obj, _event):
+        """Hide the window with the delete event is received"""
         HelpWindow.window.hide()
         return True
 
-    def hide(self, obj):
+    def hide(self, _obj):
+        """Hide the window"""
         HelpWindow.window.hide()

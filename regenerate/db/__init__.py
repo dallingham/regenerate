@@ -34,6 +34,9 @@ from .reg_writer import RegWriter
 from .register_db import RegisterDb
 from .proj_reader import ProjectReader
 from .proj_writer import ProjectWriter
+from .addrmap import AddrMapData
+from .parammap import ParameterData, PrjParameterData
+from .enums import *
 
 LOGGER = logging.getLogger("regenerate")
 
@@ -41,15 +44,16 @@ if os.name == "nt":
     LOGGER.setLevel(40)
 
 # create console handler and set level to debug
-__ch = logging.StreamHandler()
-__formatter = logging.Formatter(
+__CH = logging.StreamHandler()
+__FORMATTER = logging.Formatter(
     "%(asctime)s - %(name)s - " "%(levelname)s - %(message)s"
 )
 # add formatter to ch
-__ch.setFormatter(__formatter)
+__CH.setFormatter(__FORMATTER)
 # add ch to logger
-LOGGER.addHandler(__ch)
+LOGGER.addHandler(__CH)
 
 
 def remove_default_handler():
-    LOGGER.removeHandler(__ch)
+    """Removes the default log handler"""
+    LOGGER.removeHandler(__CH)

@@ -17,15 +17,19 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-from gi.repository import GObject, Gtk, Pango
+"""
+Handle the module tab
+"""
+
 import string
+from gi.repository import GObject, Gtk, Pango, Gdk
 
 from regenerate.ui.spell import Spell
 from regenerate.ui.utils import clean_format_if_needed
 from regenerate.ui.preview_editor import PreviewEditor
 
 
-class ModuleWidth(object):
+class ModuleWidth:
     """Connects a database value to a selector."""
 
     def __init__(self, widget, db_name, modified):
@@ -64,6 +68,8 @@ class ModuleWidth(object):
         self.widget.add_attribute(cell, "text", 0)
 
     def change_db(self, dbase):
+        """Change the database to a new one"""
+
         self.dbase = dbase
         if dbase:
             self.widget.set_active(
@@ -73,25 +79,30 @@ class ModuleWidth(object):
             self.widget.set_active(0)
 
     def on_change(self, obj):
+        """Called on the change event"""
+
         if self.dbase:
             setattr(self.dbase, self.dbname, 8 << obj.get_active())
             self.modified()
 
     def convert_value_to_index(self, value):
+        """Convert the bit size to an index"""
+
         if value == 8:
             return 0
         elif value == 16:
             return 1
         elif value == 32:
             return 2
-        else:
-            return 3
+        return 3
 
     def convert_index_to_value(self, index):
+        """Converts the index back to a bit size value"""
+
         return self.options[index][0]
 
 
-class ModuleBool(object):
+class ModuleBool:
     """Connects a database value (boolean) to a checkbox."""
 
     def __init__(self, widget, db_name, modified):
@@ -103,6 +114,8 @@ class ModuleBool(object):
         self.widget.connect("toggled", self.on_change)
 
     def change_db(self, dbase):
+        """Change the database"""
+
         self.dbase = dbase
         if dbase:
             self.widget.set_active(getattr(dbase, self.dbname))
@@ -110,12 +123,14 @@ class ModuleBool(object):
             self.widget.set_active(0)
 
     def on_change(self, obj):
+        """Called on the change event"""
+
         if self.dbase:
             setattr(self.dbase, self.dbname, obj.get_active())
             self.modified()
 
 
-class ModuleText(object):
+class ModuleText:
     """Connects a database text value to an entry box."""
 
     def __init__(self, widget, db_name, modified, placeholder=None):
@@ -132,6 +147,8 @@ class ModuleText(object):
             pass
 
     def change_db(self, dbase):
+        """Called with the database is changed"""
+
         self.dbase = dbase
         if dbase:
             self.widget.set_text(getattr(dbase, self.dbname))
@@ -139,6 +156,8 @@ class ModuleText(object):
             self.widget.set_text("")
 
     def on_change(self, obj):
+        """Called on the change event"""
+
         if self.dbase:
             setattr(self.dbase, self.dbname, obj.get_text())
             self.modified()
@@ -157,8 +176,9 @@ class ModuleValid(ModuleText):
         self.valid_data = valid_data
         self.widget.connect("insert-text", self.on_insert)
 
-    def on_insert(self, entry, text, length, position):
-        # Called when the user inserts some text, by typing or pasting.
+    def on_insert(self, entry, text, _length, position):
+        """Called when the user inserts some text, by typing or pasting."""
+
         position = entry.get_position()
 
         # Build a new string with allowed characters only.
@@ -184,7 +204,7 @@ class ModuleValid(ModuleText):
 
 class ModuleWord(ModuleValid):
     """
-    Connects a database value to a text entry, but restricts the input 
+    Connects a database value to a text entry, but restricts the input
     to a single word (no spaces).
     """
 
@@ -210,6 +230,8 @@ class ModuleInt(ModuleValid):
         )
 
     def on_change(self, obj):
+        """Called on the change event"""
+
         if self.dbase:
             if obj.get_text():
                 int_val = int(obj.get_text())
@@ -219,6 +241,8 @@ class ModuleInt(ModuleValid):
             self.modified()
 
     def change_db(self, dbase):
+        """Change the database"""
+
         self.dbase = dbase
         if dbase:
             val = getattr(dbase, self.dbname)
@@ -227,7 +251,7 @@ class ModuleInt(ModuleValid):
             self.widget.set_text("")
 
 
-class ModuleDoc(object):
+class ModuleDoc:
     """
     Handles the Register description. Sets the font to a monospace font,
     sets up the changed handler, sets up the spell checker, and makes
@@ -254,21 +278,25 @@ class ModuleDoc(object):
 
     def preview_enable(self):
         """Enables the preview window"""
+
         self.preview.enable()
 
     def preview_disable(self):
         """Disables the preview window"""
+
         self.preview.disable()
 
     def change_db(self, dbase):
         """Change the database so the preview window can resolve references"""
+
         self.dbase = dbase
         if self.dbase:
             self.buf.set_text(getattr(self.dbase, self.db_name))
         self.preview.set_dbase(self.dbase)
 
-    def on_changed(self, obj):
+    def on_changed(self, _obj):
         """A change to the text occurred"""
+
         if self.dbase:
             new_text = self.buf.get_text(
                 self.buf.get_start_iter(), self.buf.get_end_iter(), False
@@ -277,6 +305,8 @@ class ModuleDoc(object):
             self.callback()
 
     def on_key_press_event(self, obj, event):
+        """Look for the F12 key"""
+
         if event.keyval == Gdk.KEY_F12:
             if clean_format_if_needed(obj):
                 self.callback()
@@ -284,7 +314,7 @@ class ModuleDoc(object):
         return False
 
 
-class ModuleTabs(object):
+class ModuleTabs:
     def __init__(self, builder, modified):
 
         item_list = [
@@ -429,7 +459,9 @@ class ModuleTabs(object):
         self.preview.preview_disable()
 
 
-class ProjectTabs(object):
+class ProjectTabs:
+    """Handles the project tabs"""
+
     def __init__(self, builder, modified):
 
         item_list = [

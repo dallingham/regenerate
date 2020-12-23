@@ -17,6 +17,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""
+Project model and list
+"""
+
 import os
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango
 from regenerate.settings.paths import INSTALL_PATH
@@ -24,6 +28,10 @@ from regenerate.ui.enums import PrjCol
 
 
 class ProjectModel(Gtk.ListStore):
+    """
+    Provides the model for the project list
+    """
+
     def __init__(self):
         super().__init__(str, str, str, bool, bool, object)
 
@@ -32,6 +40,8 @@ class ProjectModel(Gtk.ListStore):
         self.paths = set()
 
     def set_markup(self, node, modified):
+        """Sets the icon if the project has been modified"""
+
         if modified:
             icon = Gtk.STOCK_EDIT
         else:
@@ -40,16 +50,21 @@ class ProjectModel(Gtk.ListStore):
         self.set_value(node, PrjCol.MODIFIED, modified)
 
     def is_not_saved(self):
+        """True if the project is not saved"""
+
         for item in self:
             if item[PrjCol.MODIFIED]:
                 return True
         return False
 
     def load_icons(self):
+        """Clear paths and the file list"""
         self.paths = set()
         self.file_list = {}
 
     def add_dbase(self, filename, dbase):
+        """Add the the database to the model"""
+
         base = os.path.splitext(os.path.basename(filename))[0]
         node = self.append(row=[base, "", filename, False, False, dbase])
         self.file_list[filename] = node
@@ -57,7 +72,8 @@ class ProjectModel(Gtk.ListStore):
         return node
 
 
-class ProjectList(object):
+class ProjectList:
+    """Project list"""
 
     def __init__(self, obj, selection_callback):
         self.__obj = obj
@@ -82,7 +98,8 @@ class ProjectList(object):
         self.factory.add("out-of-date", iconset)
         self.factory.add_default()
 
-    def drag_data_get(self, treeview, context, selection, target_id, etime):
+    def drag_data_get(self, treeview, _context, selection, _target_id, _etime):
+        """Get the data when a drag starts"""
 
         tselection = treeview.get_selection()
         model, tree_iter = tselection.get_selected()
@@ -97,10 +114,14 @@ class ProjectList(object):
             selection.set_text(data, -1)
 
     def set_model(self, model):
+        """Sets the model"""
+
         self.__model = model
         self.__obj.set_model(model)
 
     def __build_prj_window(self):
+        """Build the project window"""
+
         renderer = Gtk.CellRendererPixbuf()
         column = Gtk.TreeViewColumn("", renderer, stock_id=1)
         column.set_min_width(20)
@@ -113,13 +134,18 @@ class ProjectList(object):
         self.__obj.append_column(column)
 
     def get_selected(self):
+        """Return the selected object"""
         return self.__obj.get_selection().get_selected()
 
     def select(self, node):
+        """Select the specified row"""
+
         selection = self.__obj.get_selection()
         if node and selection:
             selection.select_iter(node)
 
     def select_path(self, path):
+        """Select based on path"""
+
         selection = self.__obj.get_selection()
         selection.select_path(path)

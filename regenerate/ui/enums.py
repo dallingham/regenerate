@@ -17,6 +17,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""
+Provide the enumerated types for the user interface.
+"""
 
 from enum import IntEnum
 
@@ -87,17 +90,23 @@ class MapOpt(IntEnum):
 
 
 class OptMap(IntEnum):
+    """Option map"""
+
     DESCRIPTION = 0
     CLASS = 1
     REGISTER_SET = 2
 
 
 class DbMap(IntEnum):
+    """Database column map"""
+
     DBASE = 0
     MODIFIED = 1
 
 
 class FilterField(IntEnum):
+    """Filter field columns"""
+
     ADDR = 1
     NAME = 2
     TOKEN = 3
@@ -129,6 +138,8 @@ class RegCol(IntEnum):
 
 
 class RegColType(IntEnum):
+    """Register column type"""
+
     TEXT = 0
     COMBO = 1
     ICON = 2

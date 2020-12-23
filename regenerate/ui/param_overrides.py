@@ -21,10 +21,10 @@ Provides the Address List interface
 """
 
 from gi.repository import Gtk
-from regenerate.db import LOGGER
 from regenerate.ui.columns import EditableColumn
 from regenerate.ui.enums import PrjParameterCol
 from regenerate.db.parammap import ParameterData
+from regenerate.ui.utils import find_next_free, check_hex
 
 
 class OverridesListMdl(Gtk.ListStore):
@@ -101,14 +101,8 @@ class OverridesList(object):
 
     def add_clicked(self):
         current = set([p[0] for p in self._db.get_parameters()])
-        base = "pParameter"
-        index = 0
 
-        name = "{}{}".format(base, index)
-        while name in current:
-            index = index + 1
-            name = "{}{}".format(base, index)
-
+        name = find_next_free("pParameter", current)
         self._model.new_instance(name, hex(1))
         self._db.add_parameter(name, hex(1))
         self._callback()
@@ -128,17 +122,9 @@ class OverridesList(object):
             )
             self._callback()
 
-    def check_hex(self, new_text):
-        try:
-            int(new_text, 16)
-            return True
-        except ValueError:
-            LOGGER.warning('Illegal hexidecimal value: "%s"', new_text)
-            return False
-
     def _value_changed(self, cell, path, new_text, col):
         """Called when the base address field is changed."""
-        if self.check_hex(new_text) is False:
+        if check_hex(new_text) is False:
             return
 
         name = self._model[path][PrjParameterCol.NAME]

@@ -42,11 +42,11 @@ from regenerate.writers.verilog_reg_def import REG
 from regenerate.ui.highlight import highlight_text
 
 
-def modified(f):
+def modified(func):
     """Decorator to set modified values"""
 
     def modify_value(self, obj):
-        f(self, obj)
+        func(self, obj)
         self.modified()
 
     return modify_value
@@ -56,13 +56,13 @@ class BitFieldEditor(BaseWindow):
     """Bit field editing class."""
 
     def __init__(
-        self, dbase, register, bit_field, modified, top_builder, parent
+        self, dbase, register, bit_field, modified_func, top_builder, parent
     ):
 
         super().__init__()
 
         self._db = dbase
-        self.modified = modified
+        self.modified = modified_func
         self._register = register
         self._bit_field = bit_field
         self._builder = Gtk.Builder()
@@ -125,6 +125,7 @@ class BitFieldEditor(BaseWindow):
         self._top_window.show_all()
 
     def build_register_text(self, bit_field):
+        """Returns the type of the verilog instantiation of the type"""
         try:
             edge = "posedge" if self._db.reset_active_level else "negedge"
             condition = "" if self._db.reset_active_level else "~"
@@ -142,12 +143,9 @@ class BitFieldEditor(BaseWindow):
         return text
 
     def _initialize_from_data(self, bit_field):
-        """
-        Initializes the dialog's data fields from the object
-        """
-        self._register_obj.set_text(
-            "<b>{}</b>".format(self._register.register_name)
-        )
+        """Initializes the dialog's data fields from the object"""
+
+        self._register_obj.set_text(f"<b>{self._register.register_name}</b>")
         self._register_obj.set_use_markup(True)
 
         self._set_text("field_name", bit_field.full_field_name())
@@ -162,10 +160,10 @@ class BitFieldEditor(BaseWindow):
 
         (input_enb, control_enb) = TYPE_TO_ENABLE[bit_field.field_type]
         if input_enb and not bit_field.input_signal:
-            bit_field.input_signal = "{}_DATA_IN".format(bit_field.field_name)
+            bit_field.input_signal = f"{bit_field.field_name}_DATA_IN"
 
         if control_enb and not bit_field.control_signal:
-            bit_field.control_signal = "{}_LOAD".format(bit_field.field_name)
+            bit_field.control_signal = f"{bit_field.field_name}_LOAD"
 
         self._output_obj.set_text(bit_field.output_signal)
         self._input_obj.set_text(bit_field.input_signal)
@@ -183,50 +181,61 @@ class BitFieldEditor(BaseWindow):
 
         self._control_obj.set_text(self._bit_field.control_signal)
 
-    def on_help_clicked(self, obj):
+    def on_help_clicked(self, _obj):
+        """Display the help window"""
         HelpWindow(self._top_builder, "bitfield_value_help.rst")
 
-    def on_property_help_clicked(self, obj):
+    def on_property_help_clicked(self, _obj):
+        """Display the help window"""
         HelpWindow(self._top_builder, "bitfield_signal_prop_help.rst")
 
-    def on_signal_help_clicked(self, obj):
+    def on_signal_help_clicked(self, _obj):
+        """Display the help window"""
         HelpWindow(self._top_builder, "bitfield_signal_help.rst")
 
     def _set_field_value(self, val, obj):
+        """Sets the field value"""
         setattr(self._bit_field, val, obj.get_active())
 
     @modified
     def on_output_changed(self, obj):
+        """Called with the output signal changed"""
         self._bit_field.output_signal = obj.get_text()
         self._check_data()
 
     @modified
     def on_input_changed(self, obj):
+        """Called with the input signal changed"""
         self._bit_field.input_signal = obj.get_text()
         self._check_data()
 
     @modified
     def on_volatile_changed(self, obj):
+        """Called with the volatile flag changed"""
         self._set_field_value("volatile", obj)
 
     @modified
     def on_random_toggled(self, obj):
+        """Called with the random flag changed"""
         self._set_field_value("can_randomize", obj)
 
     @modified
     def on_error_bit_toggled(self, obj):
+        """Called with the error field flag changed"""
         self._set_field_value("is_error_field", obj)
 
     @modified
     def on_static_toggled(self, obj):
+        """Called with the static flag changed"""
         self._set_field_value("output_is_static", obj)
 
     @modified
     def on_control_changed(self, obj):
+        """Called with the control signal changed"""
         self._bit_field.control_signal = obj.get_text()
         self._check_data()
 
-    def on_add_clicked(self, obj):
+    def on_add_clicked(self, _obj):
         """
         Called with the add button is clicked. Search the existing values
         in the list, finding the next highest value to use as the default.
@@ -238,9 +247,7 @@ class BitFieldEditor(BaseWindow):
         if last >= max_values:
             ErrorMsg(
                 "Maximum number of values reached",
-                "The width of the field only allows for {0} values".format(
-                    last
-                ),
+                f"The width of the field only allows for {last} values",
                 parent=self.parent,
             )
             return
@@ -267,18 +274,18 @@ class BitFieldEditor(BaseWindow):
         self.modified()
 
     @modified
-    def on_remove_clicked(self, obj):
-        """
-        Called with the remove button is clicked
-        """
+    def on_remove_clicked(self, _obj):
+        """Called with the remove button is clicked"""
         self._value_model.remove(self._model_selection.get_selected()[1])
         self._update_values()
 
     @modified
     def on_side_effect_toggled(self, obj):
+        """Called with the side effect flag toggled"""
         self._bit_field.output_has_side_effect = obj.get_active()
 
     def _update_values(self):
+        """Update the bit field values from the model"""
         self._bit_field.values = [
             (val[0], val[1], val[2]) for val in self._value_model
         ]
@@ -304,13 +311,15 @@ class BitFieldEditor(BaseWindow):
             return True
         return False
 
-    def on_destroy_event(self, obj):
+    def on_destroy_event(self, _obj):
+        """On destroy, detach the spell checker"""
         self._spell.detach()
 
-    def on_delete_event(self, obj, event):
+    def on_delete_event(self, _obj, _event):
+        """On delete, detach the spell checker"""
         self._spell.detach()
 
-    def on_close_clicked(self, obj):
+    def on_close_clicked(self, _obj):
         """
         Saves the data from the interface to the internal BitField structure
         """
@@ -318,14 +327,13 @@ class BitFieldEditor(BaseWindow):
 
     @modified
     def _description_changed(self, obj):
+        """Called with the description changes"""
         self._bit_field.description = obj.get_text(
             obj.get_start_iter(), obj.get_end_iter(), False
         )
 
     def _check_data(self):
-        """
-        Checks the input signal validity
-        """
+        """Checks the input signal validity"""
         input_error = False
         output_error = False
         control_error = False
@@ -338,27 +346,30 @@ class BitFieldEditor(BaseWindow):
             clear_error(self._output_obj)
 
     def _set_active(self, name, value):
+        """Set the active flag"""
         self._builder.get_object(name).set_active(value)
 
     def _get_active(self, name):
+        """Get the active flag"""
         return self._builder.get_object(name).get_active()
 
     def _set_text(self, name, value):
+        """Set the text"""
         self._builder.get_object(name).set_text(value)
 
     def build_values_list(self):
         """
         Builds the columns associated with the list view
         """
-        self._col = self.build_column("Value", 0, 50, self._change_val)
+        self._col = build_column("Value", 0, 50, self._change_val)
         self._value_tree_obj.append_column(self._col)
 
         self._value_tree_obj.append_column(
-            self.build_column("Token", 1, 100, self._change_text)
+            build_column("Token", 1, 100, self._change_text)
         )
 
         self._value_tree_obj.append_column(
-            self.build_column("Description", 2, 0, self._change_description)
+            build_column("Description", 2, 0, self._change_description)
         )
 
         self._value_model = Gtk.ListStore(str, str, str)
@@ -370,23 +381,14 @@ class BitFieldEditor(BaseWindow):
             self._used_tokens.add(value[1])
             self._value_model.append(row=value)
 
-    def build_column(self, title, text_col, size, callback):
-        render = Gtk.CellRendererText()
-        render.set_property("editable", True)
-        render.connect("edited", callback)
-        column = Gtk.TreeViewColumn(title, render, text=text_col)
-        if size:
-            column.set_min_width(size)
-        return column
-
-    def _change_text(self, text, path, new_text):
+    def _change_text(self, _text, path, new_text):
         """
         Updates the data model when the text value is changed in the model.
         """
         if new_text in self._used_tokens:
             ErrorMsg(
                 "Duplicate token",
-                'The token "{0}" has already been used'.format(new_text),
+                f'The token "{new_text}" has already been used',
                 parent=self.parent,
             )
         else:
@@ -401,7 +403,7 @@ class BitFieldEditor(BaseWindow):
             self._update_values()
             self.modified()
 
-    def _change_description(self, text, path, new_text):
+    def _change_description(self, _text, path, new_text):
         """
         Updates the data model when the text value is changed in the model.
         """
@@ -420,7 +422,7 @@ class BitFieldEditor(BaseWindow):
         self._update_values()
         self.modified()
 
-    def _change_val(self, text, path, new_text):  # IGNORE:W0613
+    def _change_val(self, _text, path, new_text):
         """
         Called with the value has changed value field. Checks to make sure that
         value is a valid hex value, and within the correct range.
@@ -444,16 +446,20 @@ class BitFieldEditor(BaseWindow):
 
 
 def set_error(obj, message):
+    """Set the error icon message"""
     obj.set_property("secondary-icon-stock", Gtk.STOCK_DIALOG_ERROR)
     obj.set_property("secondary-icon-tooltip-text", message)
 
 
 def clear_error(obj):
+    """Clear the error icon message"""
     obj.set_property("secondary-icon-stock", None)
     obj.set_property("secondary-icon-tooltip-text", "")
 
 
 def find_largest_value(model):
+    """Find the largets value from the model"""
+
     try:
         value_list = [
             int(value, 16) for (value, token, descr) in model if value != ""
@@ -461,3 +467,15 @@ def find_largest_value(model):
         return max(value_list)
     except ValueError:
         return -1
+
+
+def build_column(title, text_col, size, callback):
+    """Build the column"""
+
+    render = Gtk.CellRendererText()
+    render.set_property("editable", True)
+    render.connect("edited", callback)
+    column = Gtk.TreeViewColumn(title, render, text=text_col)
+    if size:
+        column.set_min_width(size)
+    return column

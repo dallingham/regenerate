@@ -22,7 +22,7 @@ Provides the Address List interface
 
 from gi.repository import Gtk
 from regenerate.db import LOGGER
-from regenerate.db.addrmap import AddrMapData
+from regenerate.db import AddrMapData
 from regenerate.ui.columns import EditableColumn, ToggleColumn, ComboMapColumn
 from regenerate.ui.enums import AddrCol
 
@@ -74,7 +74,7 @@ class AddrMapMdl(Gtk.ListStore):
         return [(val[0], int(val[1], 16)) for val in self if val[0]]
 
 
-class AddrMapList(object):
+class AddrMapList:
     """
     Container for the Address Map control logic.
     """
@@ -106,14 +106,14 @@ class AddrMapList(object):
             for base in self._prj.get_address_maps():
                 if base.width not in INT2SIZE:
                     LOGGER.error(
-                        'Illegal width (%d) for address map "%s"',
+                        'Illegal width (%0d) for address map "%s"',
                         base.width,
                         base.name,
                     )
                     base.width = 4
                 self._model.append(row=get_row_data(base))
 
-    def _name_changed(self, cell, path, new_text, col):
+    def _name_changed(self, _cell, path, new_text, _col):
         """
         Called when the name field is changed.
         """
@@ -122,7 +122,7 @@ class AddrMapList(object):
         if map_obj.name == new_text:
             return
 
-        current_maps = set([i.name for i in self._prj.get_address_maps()])
+        current_maps = set({i.name for i in self._prj.get_address_maps()})
         if new_text in current_maps:
             LOGGER.error(
                 '"%s" has already been used as an address map name', new_text
@@ -133,12 +133,12 @@ class AddrMapList(object):
             self._model[path][AddrCol.NAME] = new_text
             self._callback()
 
-    def _base_changed(self, cell, path, new_text, col):
+    def _base_changed(self, _cell, path, new_text, _col):
         """
         Called when the base address field is changed.
         """
         try:
-            value = int(new_text, 16)
+            _ = int(new_text, 16)
         except ValueError:
             LOGGER.error('Illegal address: "%s"', new_text)
             return
@@ -164,7 +164,7 @@ class AddrMapList(object):
         obj.width = width
         self._callback()
 
-    def _fixed_changed(self, cell, path, source):
+    def _fixed_changed(self, _cell, path, _source):
         """
         Called with the modified toggle is changed. Toggles the value in
         the internal list.
@@ -176,7 +176,7 @@ class AddrMapList(object):
         self._model[path][AddrCol.FIXED] = not fixed
         self._callback()
 
-    def _uvm_changed(self, cell, path, source):
+    def _uvm_changed(self, _cell, path, _source):
         """
         Called with the modified toggle is changed. Toggles the value in
         the internal list.
@@ -248,7 +248,7 @@ class AddrMapList(object):
         """
         self._model.clear()
 
-    def append(self, base, addr, fixed, uvm, width, access):
+    def append(self, base, addr, fixed, uvm, width, _access):
         """
         Add the data to the list.
         """
@@ -281,7 +281,7 @@ class AddrMapList(object):
             # remove group from address map
             pass
         else:
-            name = model.get_value(node, AddrCol.NAME)
+            _ = model.get_value(node, AddrCol.NAME)
             model.remove(node)
             self._callback()
             # self._prj.remove_address_map(name)
@@ -301,21 +301,24 @@ class AddrMapList(object):
         self._obj.set_cursor(path, self._col, start_editing=True)
 
     def _create_new_map_name(self):
+        """Creates a new map, finding an unused name"""
         template = "NewMap"
         index = 0
-        current_maps = set([i.name for i in self._prj.get_address_maps()])
+        current_maps = set({i.name for i in self._prj.get_address_maps()})
 
         name = template
         while name in current_maps:
-            name = "{0}{1}".format(template, index)
+            name = f"{template}{index}"
             index += 1
         return name
 
-    def get_obj(self, path):
-        return self._model[path][AddrCol.OBJ]
+    def get_obj(self, row):
+        """Returns the object at the specified row"""
+        return self._model[row][AddrCol.OBJ]
 
 
 def get_row_data(map_obj):
+    """Builds the data for the table row"""
     return (
         map_obj.name,
         "0x{:04x}".format(map_obj.base),

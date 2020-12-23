@@ -34,7 +34,6 @@ from regenerate.ui.enums import (
     MapOpt,
     OptMap,
     DbMap,
-    ExportPages,
 )
 from regenerate.writers import EXPORTERS, PRJ_EXPORTERS, GRP_EXPORTERS
 
@@ -79,7 +78,7 @@ class Build(BaseWindow):
             [EXPORTERS, GRP_EXPORTERS, PRJ_EXPORTERS]
         ):
             for item in export_list:
-                value = "{} ({})".format(item.type[0], item.type[1])
+                value = f"{item.type[0]} ({item.type[1]})"
                 self.__optmap[item.id] = (value, item.obj_class, level)
                 self.__mapopt[value] = (item.id, item.obj_class, level)
 
@@ -124,7 +123,7 @@ class Build(BaseWindow):
         register_set = self.__prj.get_register_set()
         mod = file_needs_rebuilt(local_dest, self.__dbmap, register_set)
         self.__modlist.append(mod)
-        (fmt, cls, dbtype) = self.__optmap[option]
+        (fmt, cls, _) = self.__optmap[option]
         self.__model.append(row=[mod, "<project>", fmt, dest, cls, None, 2])
 
     def __add_dbase_item_to_list(self, dbase_rel_path, option, dest):
@@ -136,12 +135,12 @@ class Build(BaseWindow):
         dbase_full_path = os.path.join(
             os.path.dirname(self.__prj.path), dbase_rel_path
         )
-        (base, db_file_mtime) = base_and_modtime(dbase_full_path)
+        (base, _) = base_and_modtime(dbase_full_path)
         local_dest = os.path.join(os.path.dirname(self.__prj.path), dest)
 
         mod = file_needs_rebuilt(local_dest, self.__dbmap, [dbase_full_path])
         self.__modlist.append(mod)
-        (fmt, cls, rpttype) = self.__optmap[option]
+        (fmt, cls, _) = self.__optmap[option]
         dbase = self.__dbmap[base][DbMap.DBASE].db
         self.__model.append(row=(mod, base, fmt, dest, cls, dbase, 0))
 
@@ -154,7 +153,7 @@ class Build(BaseWindow):
         # mod = file_needs_rebuilt(local_dest, self.__dbmap, [dbase_full_path])
         mod = True
         self.__modlist.append(mod)
-        (fmt, cls, rpttype) = self.__optmap[option]
+        (fmt, cls, _) = self.__optmap[option]
         self.__model.append(row=(mod, group_name, fmt, dest, cls, None, 1))
 
     def __populate(self):
@@ -181,10 +180,10 @@ class Build(BaseWindow):
         for (option, dest) in self.__prj.get_project_exports():
             try:
                 self.__add_prj_item_to_list(option, dest)
-            except KeyError as msg:
+            except KeyError:
                 pass
 
-    def toggle_callback(self, cell, path, source):
+    def toggle_callback(self, _cell, path, _source):
         """
         Called with the modified toggle is changed. Toggles the value in
         the internal list.
@@ -193,7 +192,7 @@ class Build(BaseWindow):
             BuildCol.MODIFIED
         ]
 
-    def register_set_callback(self, cell, path, node, col):
+    def register_set_callback(self, cell, path, node, _col):
         """
         Called when the register set is changed. The combo_box_model is
         attached to the cell that caused the change (on the 'model'
@@ -204,7 +203,7 @@ class Build(BaseWindow):
         self.__model[path][BuildCol.DBASE] = combo_box_model[node][1]
         self.__model[path][BuildCol.BASE] = combo_box_model[node][0]
 
-    def format_callback(self, cell, path, node, col):
+    def format_callback(self, cell, path, node, _col):
         """
         Called when the format is changed. The combo_box_model is
         attached to the cell that caused the change (on the 'model'
@@ -237,7 +236,7 @@ class Build(BaseWindow):
         column.set_sort_column_id(BuildCol.DEST)
         self.__build_list.append_column(column)
 
-    def on_buildlist_button_press_event(self, obj, event):
+    def on_buildlist_button_press_event(self, _obj, event):
         """
         Callback the pops open the menu if the right mouse button
         is clicked (event.button == 3, in GTK terms)
@@ -246,7 +245,7 @@ class Build(BaseWindow):
             menu = self.__builder.get_object("menu")
             menu.popup(None, None, None, 1, 0, Gtk.get_current_event_time())
 
-    def on_select_all_activate(self, obj):
+    def on_select_all_activate(self, _obj):
         """
         Called with the menu item has been selected to select all
         targets for rebuild. Simply sets all the modified flags to True.
@@ -254,7 +253,7 @@ class Build(BaseWindow):
         for item in self.__model:
             item[BuildCol.MODIFIED] = True
 
-    def on_unselect_all_activate(self, obj):
+    def on_unselect_all_activate(self, _obj):
         """
         Called with the menu item has been selected to unselect all
         targets for rebuild. Simply sets all the modified flags to False.
@@ -262,7 +261,7 @@ class Build(BaseWindow):
         for item in self.__model:
             item[BuildCol.MODIFIED] = False
 
-    def on_select_ood_activate(self, obj):
+    def on_select_ood_activate(self, _obj):
         """
         Called when the menu item has been selected to select all out of
         data targets for rebuild. We have already determined this from
@@ -272,7 +271,7 @@ class Build(BaseWindow):
         for (count, item) in enumerate(self.__model):
             item[BuildCol.MODIFIED] = self.__modlist[count]
 
-    def on_run_build_clicked(self, obj):
+    def on_run_build_clicked(self, _obj):
         """
         Called when the build button is pressed.
         """
@@ -305,7 +304,7 @@ class Build(BaseWindow):
             except IOError as msg:
                 ErrorMsg("Error running exporter", str(msg))
 
-    def on_add_build_clicked(self, obj):
+    def on_add_build_clicked(self, _obj):
         """
         Brings up the export assistant, to help the user build a new rule
         to add to the builder.
@@ -361,7 +360,7 @@ class Build(BaseWindow):
             self.__prj.add_to_project_export_list(option, filename)
             self.__add_item_to_list(register_path, option, filename)
 
-    def on_remove_build_clicked(self, obj):
+    def on_remove_build_clicked(self, _obj):
         """
         Called when the user had opted to delete an existing rule.
         Deletes the selected rule.
@@ -378,7 +377,7 @@ class Build(BaseWindow):
             self.__prj.remove_from_project_export_list(option, filename)
         self.__model.remove(sel[1])
 
-    def on_close_clicked(self, obj):
+    def on_close_clicked(self, _obj):
         """
         Closes the builder.
         """
@@ -421,4 +420,4 @@ def file_needs_rebuilt(local_dest, dbmap, db_paths):
 
 
 def exp_type_fmt(item):
-    return "{} ({})".format(item[0], item[1])
+    return f"{item[0]} ({item[1]})"

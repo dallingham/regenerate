@@ -20,11 +20,11 @@
 Writes the XML file containing all the information in the register database
 """
 
+import os
+import xml.sax.saxutils
 from regenerate.db import TYPE_TO_ID
 from regenerate.db.textutils import clean_text
 from regenerate.db.enums import ResetType
-import os
-import xml.sax.saxutils
 
 
 def create_backup_file(filename):
@@ -39,7 +39,7 @@ def create_backup_file(filename):
         os.rename(filename, backup)
 
 
-class RegWriter(object):
+class RegWriter:
     """Writes the XML file."""
 
     def __init__(self, dbase):
@@ -114,10 +114,13 @@ class RegWriter(object):
 
     def write_signal_list(self, ofile):
         """Writes the signal list to the output file"""
+
         for reg in self.dbase.get_all_registers():
             write_register(ofile, reg)
 
     def write_parameter_list(self, ofile):
+        """Writes the parameter list"""
+
         plist = self.dbase.get_parameters()
         if plist:
             ofile.write("  <parameters>\n")

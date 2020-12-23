@@ -17,12 +17,23 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""
+Holds the infomration for a group. This includes the name, base address,
+HDL path, the repeat count, repeat offset, and the title.
+"""
 
-class GroupData(object):
+
+class GroupData:
     """Basic group information."""
 
     def __init__(
-        self, name="", base=0, hdl="", repeat=1, repeat_offset=0x10000, title=""
+        self,
+        name="",
+        base=0,
+        hdl="",
+        repeat=1,
+        repeat_offset=0x10000,
+        title="",
     ):
         """Initialize the group data item."""
         self.name = name
@@ -35,6 +46,8 @@ class GroupData(object):
         self.docs = ""
 
     def __hash__(self):
+        "Return the ID as the hash for the instance"
+
         return id(self)
 
     def __ne__(self, other):
@@ -43,22 +56,16 @@ class GroupData(object):
 
     def __eq__(self, other):
         """Compare for equality."""
-        if other is None:
-            return False
-        if self.name != other.name:
-            return False
-        if self.base != other.base:
-            return False
-        if self.hdl != other.hdl:
-            return False
-        if self.title != other.title:
-            return False
-        if self.repeat != other.repeat:
-            return False
-        if self.repeat_offset != other.repeat_offset:
-            return False
-        if self.docs != other.docs:
-            return False
-        if self.register_sets != other.register_sets:
+        if (
+            other is None
+            or self.name != other.name
+            or self.base != other.base
+            or self.hdl != other.hdl
+            or self.title != other.title
+            or self.repeat != other.repeat
+            or self.repeat_offset != other.repeat_offset
+            or self.docs != other.docs
+            or self.register_sets != other.register_sets
+        ):
             return False
         return True

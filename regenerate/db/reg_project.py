@@ -28,6 +28,7 @@ from regenerate.db.addrmap import AddrMapData
 
 
 def nested_dict(depth, dict_type):
+    """Builds a nexted dictionary"""
     if depth == 1:
         return defaultdict(dict_type)
     return defaultdict(lambda: nested_dict(depth - 1, dict_type))
@@ -38,7 +39,7 @@ def cleanup(data):
     return xml.sax.saxutils.escape(regenerate.db.textutils.clean_text(data))
 
 
-class RegProject(object):
+class RegProject:
     """
     RegProject is the container object for a regenerate project. The project
     consists of several different types. General project information (name,
@@ -51,6 +52,8 @@ class RegProject(object):
         self.short_name = "unnamed"
         self.company_name = ""
         self.documentation = ""
+        self.path = path
+        self._access_map = nested_dict(3, int)
         self._filelist = []
         self._groupings = []
         self._addr_map_list = []
@@ -60,13 +63,12 @@ class RegProject(object):
         self._group_exports = {}
         self._token_list = []
         self._modified = False
-        self.path = path
-        self.access_map = nested_dict(3, int)
         self.__parameters = []
         if path:
             self.open(path)
 
     def save(self):
+        """Saves the project to the XML file"""
         writer = regenerate.db.ProjectWriter(self)
         writer.save(self.path)
 
@@ -92,11 +94,13 @@ class RegProject(object):
         self._filelist = [htbl[i] for i in new_order]
 
     def append_register_set_to_list(self, name):
+        """Adds a register set"""
+
         self._modified = True
         self._filelist.append(name)
         self._exports[name] = []
 
-    def add_register_set(self, path, alter_path=True):
+    def add_register_set(self, path, _alter_path=True):
         """
         Adds a new register set to the project. Note that this only records
         the filename, and does not actually keep a reference to the RegisterDb.
@@ -230,11 +234,10 @@ class RegProject(object):
         """
         if self.path is None:
             return self._filelist
-        else:
-            base = os.path.dirname(self.path)
-            return [
-                os.path.normpath(os.path.join(base, i)) for i in self._filelist
-            ]
+        base = os.path.dirname(self.path)
+        return [
+            os.path.normpath(os.path.join(base, i)) for i in self._filelist
+        ]
 
     def get_grouping_list(self):
         """
@@ -283,7 +286,7 @@ class RegProject(object):
 
     def get_address_maps_used_by_group(self, name):
         """Returns the address maps associated with the specified group."""
-        used_in_uvm = set([m.name for m in self._addr_map_list if m.uvm == 0])
+        used_in_uvm = set({m.name for m in self._addr_map_list if m.uvm == 0})
 
         return [
             key
@@ -322,8 +325,8 @@ class RegProject(object):
 
     def remove_address_map_group(self, name, group_name):
         """Removes an address map from a group"""
-        for (i, group_name) in self._addr_map_grps[name]:
-            if group_name == name:
+        for (i, gname) in self._addr_map_grps[name]:
+            if gname == name:
                 del self._addr_map_grps[name][i]
                 return
 
@@ -354,22 +357,29 @@ class RegProject(object):
         return None
 
     def set_access(self, map_name, group_name, block_name, access):
-        self.access_map[map_name][group_name][block_name] = access
+        """Sets the access mode"""
+
+        self._access_map[map_name][group_name][block_name] = access
 
     def get_access_items(self, map_name, group_name):
+        """Gets the access items for the map/group"""
+
         items = []
-        for key in self.access_map[map_name][group_name]:
-            items.append((key, self.access_map[map_name][group_name][key]))
+        for key in self._access_map[map_name][group_name]:
+            items.append((key, self._access_map[map_name][group_name][key]))
         return items
 
     def get_access(self, map_name, group_name, block_name):
+        """Gets the access mode"""
+
         try:
-            return self.access_map[map_name][group_name][block_name]
-        except:
+            return self._access_map[map_name][group_name][block_name]
+        except KeyError:
             return 0
 
     def add_or_replace_address_map(self, addr_map):
         """Sets the specififed address map"""
+
         self._modified = True
         for i, data in enumerate(self._addr_map_list):
             if data.name == addr_map.name:
@@ -380,6 +390,7 @@ class RegProject(object):
 
     def set_address_map(self, name, base, width, fixed, uvm):
         """Sets the specififed address map"""
+
         self._modified = True
         new_data = AddrMapData(name, base, width, fixed, uvm)
         for i, data in enumerate(self._addr_map_list):
@@ -391,6 +402,7 @@ class RegProject(object):
 
     def remove_address_map(self, name):
         """Removes the address map"""
+
         self._modified = True
         for i, data in enumerate(self._addr_map_list):
             if data.name == name:
@@ -400,6 +412,7 @@ class RegProject(object):
 
     @property
     def files(self):
+        """Returns the file list"""
         return tuple(self._filelist)
 
     @property
@@ -427,14 +440,16 @@ class RegProject(object):
         # delete the items we found.
 
         to_delete = []
-        for m in self.access_map:
-            for subsys in self.access_map[m]:
+        for access_map in self._access_map:
+            for subsys in self._access_map[access_map]:
                 if subsys == old:
-                    to_delete.append((m, old, cur))
+                    to_delete.append((access_map, old, cur))
 
-        for (m, old, cur) in to_delete:
-            self.access_map[m][cur] = self.access_map[m][old]
-            del self.access_map[m][old]
+        for (access_map, nold, ncur) in to_delete:
+            self._access_map[access_map][ncur] = self._access_map[access_map][
+                nold
+            ]
+            del self._access_map[access_map][nold]
 
         # Search groups for items to rename. Just change the name
         for g_data in self._groupings:
@@ -458,31 +473,39 @@ class RegProject(object):
         # as we search it.
 
         to_delete = []
-        for m in self.access_map:
-            for b in self.access_map[m][subsystem]:
-                if b == old:
-                    to_delete.append((m, subsystem, cur, old))
+        for access_map in self._access_map:
+            for obj in self._access_map[access_map][subsystem]:
+                if obj == old:
+                    to_delete.append((access_map, subsystem, cur, old))
 
-        for (m, s, cur, old) in to_delete:
-            self.access_map[m][s][cur] = self.access_map[m][s][old]
-            del self.access_map[m][s][old]
+        for (access_map, subsys, ncur, nold) in to_delete:
+            self._access_map[access_map][subsys][ncur] = self._access_map[
+                access_map
+            ][subsys][nold]
+            del self._access_map[access_map][subsys][nold]
 
         # Search groups for items to rename
         for g_data in self._groupings:
             if g_data.name == subsystem:
-                for gd in g_data.register_sets:
-                    if gd.inst == old:
-                        gd.inst = cur
+                for ginst in g_data.register_sets:
+                    if ginst.inst == old:
+                        ginst.inst = cur
         self._modified = True
 
     def get_parameters(self):
+        """Returns the parameter list"""
         return self.__parameters
 
     def add_parameter(self, name, value):
+        """Adds a parameter to the parameter list"""
         self.__parameters.append((name, value))
 
     def remove_parameter(self, name):
-        self.__parameters = [p for p in self.__parameters if p[0] != name]
+        """Removes a parameter from the parameter list"""
+        self.__parameters = [
+            param for param in self.__parameters if param[0] != name
+        ]
 
     def set_parameters(self, parameter_list):
+        """Sets the parameter list"""
         self.__parameters = parameter_list

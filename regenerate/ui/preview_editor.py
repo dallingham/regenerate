@@ -23,11 +23,10 @@ text is converted from restructuredText to HTML.
 """
 
 from regenerate.ui.preview import html_string
-from regenerate.db import LOGGER
 from regenerate.ui.html_display import HtmlDisplay
 
 
-class PreviewEditor(object):
+class PreviewEditor:
     """
     Connects a text buffer to a webkit display.
     """
@@ -39,7 +38,7 @@ class PreviewEditor(object):
         self.__container.add(self.__webkit)
         self.__container.hide()
         self.__text_buffer = text_buffer
-        self.__text_buffer.connect('changed', self._changed)
+        self.__text_buffer.connect("changed", self._changed)
         self.__update = False
         self.__adjust = self.__container.get_vadjustment()
         self.__active_db = None
@@ -50,21 +49,22 @@ class PreviewEditor(object):
         Extracts text from the buffer, converts it to HTML, and loads it
         into the webkit display
         """
-        text = self.__text_buffer.get_text(self.__text_buffer.get_start_iter(),
-                                           self.__text_buffer.get_end_iter(),
-                                           False)
+        text = self.__text_buffer.get_text(
+            self.__text_buffer.get_start_iter(),
+            self.__text_buffer.get_end_iter(),
+            False,
+        )
         if self.__use_reg and self.__active_db:
             data = []
             for reg in self.__active_db.get_all_registers():
                 data.append(".. _`{0}`: /".format(reg.register_name))
             text = text + "\n\n" + "\n".join(data)
 
-        try:
-            self.__webkit.load_html(html_string(text), "text/html") #, "utf-8", "")
-        except:
-            self.__webkit.load_html_string(html_string(text), "text/html") #, "utf-8", "")
+        self.__webkit.show_html(html_string(text))
 
     def set_dbase(self, dbase):
+        """Sets the database"""
+
         self.__active_db = dbase
 
     def enable(self):
@@ -84,7 +84,7 @@ class PreviewEditor(object):
         self.__webkit.hide()
         self.__container.hide()
 
-    def _changed(self, obj):
+    def _changed(self, _obj):
         """
         Text buffer callback tying the buffer to the display
         """

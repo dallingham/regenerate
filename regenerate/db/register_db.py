@@ -19,10 +19,17 @@
 """
 Provides the container database for a set of registers.
 """
+
+try:
+    from CStringIO import StringIO
+except ImportError:
+    from io import BytesIO as StringIO
+
 import os
 import re
 import regenerate.db
 from regenerate.settings import rules
+
 
 DEF_CLK_NAME = "CLK"
 DEF_RST_NAME = "RSTn"
@@ -35,7 +42,7 @@ DEF_BE_NAME = "BE"
 DEF_ACK_NAME = "ACK"
 
 
-class RegisterDb(object):
+class RegisterDb:
     """
     Container database for a set of registers.
     """
@@ -125,11 +132,6 @@ class RegisterDb(object):
 
     def loads(self, data, filename):
         """Reads the XML file, loading the databsae."""
-
-        try:
-            from CStringIO import StringIO
-        except:
-            from io import BytesIO as StringIO
 
         self.set_name = os.path.splitext(os.path.basename(filename))[0]
         ifile = StringIO(data)
@@ -333,16 +335,21 @@ class RegisterDb(object):
         ]
 
     def address_size_in_bytes(self):
+        """Returns the address size in bytes"""
         return 1 << self.address_bus_width
 
     def get_parameters(self):
+        """Returns the parameter list"""
         return self.__parameters
 
     def add_parameter(self, name, value, min_val, max_val):
+        """Adds a parameter to the list"""
         self.__parameters.append((name, value, min_val, max_val))
 
     def remove_parameter(self, name):
+        """Removes a parameter from the list if it exists"""
         self.__parameters = [p for p in self.__parameters if p[0] != name]
 
     def set_parameters(self, parameter_list):
+        """Sets the parameter list"""
         self.__parameters = parameter_list

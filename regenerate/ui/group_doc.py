@@ -29,72 +29,73 @@ from regenerate.settings.paths import GLADE_GTXT
 from regenerate.ui.utils import clean_format_if_needed
 
 
-class GroupDocEditor(object):
+class GroupDocEditor:
+    """
+    Text editing for the Group Documentation.
+    """
+
     def __init__(self, group_inst, callback, parent):
 
         builder = Gtk.Builder()
         builder.add_from_file(GLADE_GTXT)
         self.callback = callback
-        self.group_doc = builder.get_object('group_text')
-        self.group_title = builder.get_object('group_title')
+        self.group_doc = builder.get_object("group_text")
+        self.group_title = builder.get_object("group_title")
         self.group_inst = group_inst
-        self.text_buf = builder.get_object('overview1').get_buffer()
+        self.text_buf = builder.get_object("overview1").get_buffer()
 
-        builder.get_object('overview1').modify_font(
+        builder.get_object("overview1").modify_font(
             Pango.FontDescription("monospace")
         )
 
         preview = PreviewEditor(
-            self.text_buf,
-            builder.get_object('scroll_webkit1')
+            self.text_buf, builder.get_object("scroll_webkit1")
         )
 
         self.text_buf.set_text(group_inst.docs)
         self.group_title.set_text(group_inst.title)
 
         builder.get_object("overview1").connect(
-            "key-press-event",
-            self.on_key_press_event
+            "key-press-event", self.on_key_press_event
         )
-        builder.get_object("button2").connect(
-            "button-press-event",
-            self._save
-        )
+        builder.get_object("button2").connect("button-press-event", self._save)
         builder.get_object("button3").connect(
-            "button-press-event",
-            self._cancel
+            "button-press-event", self._cancel
         )
 
-        builder.get_object('title').set_text(group_inst.name)
+        builder.get_object("title").set_text(group_inst.name)
         preview.enable()
-        self.__spell = Spell(builder.get_object('overview1'))
+        self.__spell = Spell(builder.get_object("overview1"))
 
-        self.group_doc.connect('delete-event', self.on_delete_event)
-        self.group_doc.connect('destroy-event', self.on_destroy_event)
+        self.group_doc.connect("delete-event", self.on_delete_event)
+        self.group_doc.connect("destroy-event", self.on_destroy_event)
         self.group_doc.set_transient_for(parent)
         self.group_doc.show()
 
     def on_key_press_event(self, obj, event):
+        """Called with a key is pressed, seeing if F12 has been selected"""
         if event.keyval == Gdk.KEY_F12:
             clean_format_if_needed(obj)
             return True
         return False
 
-    def on_destroy_event(self, obj):
+    def on_destroy_event(self, _obj):
+        """Disconnect the spell checker when the window goes away"""
         self.__spell.detach()
 
-    def on_delete_event(self, obj, event):
+    def on_delete_event(self, _obj, _event):
+        """Disconnect the spell checker when the window goes away"""
         self.__spell.detach()
 
-    def _cancel(self, obj, data):
+    def _cancel(self, _obj, _data):
+        """Called when Cancel is selected"""
         self.group_doc.destroy()
 
-    def _save(self, obj, data):
+    def _save(self, _obj, _data):
+        """Save data text into the group object"""
 
         new_docs = self.text_buf.get_text(
-            self.text_buf.get_start_iter(),
-            self.text_buf.get_end_iter(),
-            False
+            self.text_buf.get_start_iter(), self.text_buf.get_end_iter(), False
         )
 
         if self.group_inst.docs != new_docs:

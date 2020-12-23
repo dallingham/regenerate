@@ -24,21 +24,17 @@ from xml.sax.saxutils import escape
 from regenerate.db.textutils import clean_text
 
 
-class ProjectWriter(object):
+class ProjectWriter:
     """
-    RegProject is the container object for a regenerate project. The project
-    consists of several different types. General project information (name,
-    company_name, etc.), the list of register sets, groupings of instances,
-    and exports (register set and entire project exports), and address maps.
+    ProjectWriter writes the data in the project to the XML file.
     """
 
     def __init__(self, project):
         self._prj = project
 
     def save(self, path):
-        """
-        Saves the data to an XML file.
-        """
+        """Saves the data to an XML file."""
+
         with open(path, "w") as ofile:
             ofile.write('<?xml version="1.0"?>\n')
             ofile.write(
@@ -178,20 +174,3 @@ class ProjectWriter(object):
                 )
             ofile.write("\n    </grouping>\n")
         ofile.write("  </groupings>\n")
-
-
-def escape(data, entities={}):
-    """Escape &, <, and > in a string of data.
-
-    You can escape other strings of data by passing a dictionary as
-    the optional entities parameter.  The keys and values must all be
-    strings; each key will be replaced with its corresponding value.
-    """
-
-    # must do ampersand first
-    data = data.replace("&", "&amp;")
-    data = data.replace(">", "&gt;")
-    data = data.replace("<", "&lt;")
-    if entities:
-        data = __dict_replace(data, entities)
-    return data

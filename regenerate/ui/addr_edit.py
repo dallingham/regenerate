@@ -39,7 +39,7 @@ class AddrMapEdit(BaseWindow):
         self.callback = callback
 
         label = Gtk.Label(
-            'Select subsystems for the "{}" address map'.format(map_name)
+            f'Select subsystems for the "{map_name}" address map'
         )
         label.set_padding(6, 6)
 
@@ -55,8 +55,9 @@ class AddrMapEdit(BaseWindow):
             ),
         )
 
-        dialog.vbox.pack_start(label, False, False, 12)
-        dialog.vbox.set_homogeneous(False)
+        box = dialog.get_content_area()
+        box.pack_start(label, False, False, 12)
+        box.set_homogeneous(False)
         dialog.set_default_size(580, 320)
         dialog.set_transient_for(parent)
         self.configure(dialog)
@@ -68,7 +69,7 @@ class AddrMapEdit(BaseWindow):
             Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC
         )
         scrolled_window.show()
-        dialog.vbox.pack_end(scrolled_window, True, True, 12)
+        box.pack_end(scrolled_window, True, True, 12)
 
         self.view = Gtk.TreeView()
         self.model = Gtk.TreeStore(bool, str, str, object, str)
@@ -136,19 +137,27 @@ class AddrMapEdit(BaseWindow):
             self.cb_list = [row[1] for row in self.model if row[0]]
         dialog.destroy()
 
-    def visible_callback(self, column, cell, model, *obj):
+    def visible_callback(self, _column, cell, model, *obj):
+        """Determines if the cell is visible"""
+
         node = obj[0]
         cell.set_property("visible", len(model.get_path(node)) != 1)
 
-    def visible_callback2(self, column, cell, model, *obj):
+    def visible_callback2(self, _column, cell, model, *obj):
+        """Determines if the cell is visible"""
+
         node = obj[0]
         cell.set_property("visible", len(model.get_path(node)) == 1)
 
-    def _enable_changed(self, cell, path, source):
+    def _enable_changed(self, _cell, path, _source):
+        """Called when enable changed"""
+
         self.model[path][0] = not self.model[path][0]
         self.callback()
 
     def _access_changed(self, obj, path, node, val):
+        """Called when the access changed"""
+
         mdl = obj.get_property("model")
         val = mdl.get_value(node, 0)
         val_int = mdl.get_value(node, 1)
@@ -160,4 +169,6 @@ class AddrMapEdit(BaseWindow):
         self.callback()
 
     def get_list(self):
+        """Return the callback list"""
+
         return self.cb_list

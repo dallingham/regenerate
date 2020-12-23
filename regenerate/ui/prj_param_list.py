@@ -21,10 +21,10 @@ Provides the Address List interface
 """
 
 from gi.repository import Gtk
-from regenerate.db import LOGGER
+from regenerate.db import PrjParameterData
 from regenerate.ui.columns import EditableColumn
 from regenerate.ui.enums import PrjParameterCol
-from regenerate.db.parammap import PrjParameterData
+from regenerate.ui.utils import find_next_free, check_hex
 
 
 class PrjParameterListMdl(Gtk.ListStore):
@@ -61,7 +61,7 @@ class PrjParameterListMdl(Gtk.ListStore):
                 val_list.append((val[0], def_val))
 
 
-class PrjParameterList(object):
+class PrjParameterList:
     """
     Container for the Parameter List control logic.
     """
@@ -94,30 +94,25 @@ class PrjParameterList(object):
             self.append(name, value)
 
     def remove_clicked(self):
+        """Remove parameter"""
         name = self.get_selected()
         self._prj.remove_parameter(name)
         self.remove_selected()
         self._callback()
 
     def add_clicked(self):
-        current = set([p[0] for p in self._prj.get_parameters()])
-        base = "pParameter"
-        index = 0
-
-        name = "{}{}".format(base, index)
-        while name in current:
-            index = index + 1
-            name = "{}{}".format(base, index)
-
+        """Add a new parameter, creating an unused name"""
+        current = set({p[0] for p in self._prj.get_parameters()})
+        name = find_next_free("pParameter", current)
         self._model.new_instance(name, hex(1))
         self._prj.add_parameter(name, hex(1))
         self._callback()
 
-    def _name_changed(self, cell, path, new_text, col):
+    def _name_changed(self, _cell, path, new_text, _col):
         """
         Called when the name field is changed.
         """
-        current = set([p[0] for p in self._prj.get_parameters()])
+        current = set({p[0] for p in self._prj.get_parameters()})
 
         name = self._model[path][PrjParameterCol.NAME]
         if name != new_text and new_text not in current:
@@ -128,17 +123,9 @@ class PrjParameterList(object):
             )
             self._callback()
 
-    def check_hex(self, new_text):
-        try:
-            int(new_text, 16)
-            return True
-        except ValueError:
-            LOGGER.warning('Illegal hexidecimal value: "%s"', new_text)
-            return False
-
-    def _value_changed(self, cell, path, new_text, col):
+    def _value_changed(self, _cell, path, new_text, _col):
         """Called when the base address field is changed."""
-        if self.check_hex(new_text) is False:
+        if check_hex(new_text) is False:
             return
 
         name = self._model[path][PrjParameterCol.NAME]
@@ -214,10 +201,11 @@ class PrjParameterList(object):
             # remove group from address map
             pass
         else:
-            name = model.get_value(node, PrjParameterCol.NAME)
+            _ = model.get_value(node, PrjParameterCol.NAME)
             model.remove(node)
             self._callback()
 
 
 def get_row_data(map_obj):
+    """Get the data from the row"""
     return (map_obj.name, hex(int(map_obj.value)))

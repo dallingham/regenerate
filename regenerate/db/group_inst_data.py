@@ -17,8 +17,14 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""
+Manages the instance of a register within a group.
+"""
 
-class GroupInstData(object):
+
+class GroupInstData:
+    """Instance information when contained in a group"""
+
     def __init__(
         self,
         rset,
@@ -44,12 +50,14 @@ class GroupInstData(object):
         self.single_decode = single_decode
 
     def __eq__(self, other):
-        return (self.set == other.set and
-                self.inst == other.inst and
-                self.offset == other.offset and
-                self.repeat == other.repeat and
-                self.hdl == other.hdl and
-                self.no_uvm == other.no_uvm and
-                self.no_decode == other.no_decode and
-                self.array == other.array and
-                self.single_decode == other.single_decode)
+        return (
+            self.set == other.set
+            and self.inst == other.inst
+            and self.offset == other.offset
+            and self.repeat == other.repeat
+            and self.hdl == other.hdl
+            and self.no_uvm == other.no_uvm
+            and self.no_decode == other.no_decode
+            and self.array == other.array
+            and self.single_decode == other.single_decode
+        )

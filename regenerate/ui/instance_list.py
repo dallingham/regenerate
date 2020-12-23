@@ -17,6 +17,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""
+Instance List and Model
+"""
+
 import re
 from gi.repository import Gtk, Gdk, GObject
 from regenerate.ui.columns import EditableColumn
@@ -58,8 +62,8 @@ class InstMdl(Gtk.TreeStore):
 
         # get the previous value, bail if it is the same as the new value
 
-        i2 = self.get_iter(path)
-        old_value = self.get_value(i2, InstCol.INST)
+        iter2 = self.get_iter(path)
+        old_value = self.get_value(iter2, InstCol.INST)
         if old_value == text:
             return
 
@@ -75,12 +79,13 @@ class InstMdl(Gtk.TreeStore):
 
         if re.match(r"^[A-Za-z_][A-Za-z0-9_]\[.*\]+$", text):
             LOGGER.warning(
-                "Array notation not valid. Use the repeat/repeat count to create arrays"
+                "Array notation not valid. "
+                "Use the repeat/repeat count to create arrays"
             )
             return
 
         if not re.match(r"^[A-Za-z_][A-Za-z0-9_]+$", text):
-            LOGGER.warning("%s is not a valid subsystem name", text)
+            LOGGER.warning("{text} is not a valid subsystem name")
             return
 
         node = self.get_iter(path)
@@ -187,7 +192,7 @@ class InstMdl(Gtk.TreeStore):
         Adds a new instance to the model. It is not added to the database until
         either the change_id or change_base is called.
         """
-        grps = set([row[0] for row in self])
+        grps = set({row[0] for row in self})
 
         name = "new_group"
         for i in range(len(grps) + 1):
@@ -211,23 +216,9 @@ class InstMdl(Gtk.TreeStore):
         return (self.get_path(node), new_grp)
 
 
-# class MessageHelp(Gtk.Popover):
-#     def __init__(self):
-#         super().__init__()
-#         self.__label = Gtk.Label()
-#         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-#         vbox.pack_start(self.__label, False, True, 10)
-#         self.add(vbox)
-#         self.set_position(Gtk.PositionType.BOTTOM)
+class InstanceList:
+    """Instance list"""
 
-#     def set_text(self, obj, msg):
-#         self.__label.set_text(msg)
-#         self.set_relative_to(obj)
-#         self.show_all()
-#         self.popup()
-
-
-class InstanceList(object):
     def __init__(self, obj, infobar, infolabel, callback):
         self.__obj = obj
         self.__infobar = infobar
@@ -243,16 +234,22 @@ class InstanceList(object):
         self.need_regset = True
 
     def set_project(self, project):
+        """Set the project object for the instance list"""
+
         self.__project = project
         self.__obj.set_sensitive(True)
         self.__populate()
 
     def set_model(self, model):
+        """Set the model object for the instance list"""
+
         self.__obj.set_model(model)
         self.__model = model
         self.__model.callback = self.modified_callback
 
     def get_groups(self):
+        """Get the groups that are currently in the list"""
+
         tree_iter = self.__model.get_iter_first()
         while tree_iter is not None:
             current_group = self.__model.get_value(tree_iter, InstCol.OBJ)
@@ -279,9 +276,13 @@ class InstanceList(object):
             tree_iter = self.__model.iter_next(tree_iter)
 
     def col_value(self, node, col):
+        """Get the value at the particular node and column"""
+
         return self.__model.get_value(node, col)
 
     def new_instance(self):
+        """Create a new empty instance in the list/model"""
+
         pos, grp = self.__model.new_instance()
         self.__project.get_grouping_list().append(grp)
         self.__obj.set_cursor(pos, self.__col, start_editing=True)
@@ -289,9 +290,13 @@ class InstanceList(object):
         self.infobar_update()
 
     def get_selected_instance(self):
+        """Get the selected instance"""
+
         return self.__obj.get_selection().get_selected()
 
     def __enable_dnd(self):
+        """Enable dg-n-drop"""
+
         self.__obj.enable_model_drag_dest(
             [("text/plain", 0, 0)],
             Gdk.DragAction.DEFAULT | Gdk.DragAction.MOVE,
@@ -301,8 +306,10 @@ class InstanceList(object):
         )
 
     def __drag_data_received_data(
-        self, treeview, context, x, y, selection, info, etime
+        self, treeview, _context, xpos, ypos, selection, _info, _etime
     ):
+        """Called with drag data is recieved"""
+
         model = treeview.get_model()
 
         try:
@@ -310,7 +317,7 @@ class InstanceList(object):
         except AttributeError:
             data = selection.get_text()
 
-        drop_info = treeview.get_dest_row_at_pos(x, y)
+        drop_info = treeview.get_dest_row_at_pos(xpos, ypos)
         (name, width) = data.split(":")
 
         inst = GroupInstData(
@@ -346,6 +353,8 @@ class InstanceList(object):
         self.infobar_update()
 
     def __populate(self):
+        """Fill the list from the project"""
+
         if self.__project is None:
             return
         group_list = sorted(
@@ -386,6 +395,8 @@ class InstanceList(object):
         self.infobar_update()
 
     def _infobar_reveal(self, prop):
+        """Show the info bar"""
+
         try:
             self.__infobar.set_revealed(prop)
         except AttributeError:
@@ -395,21 +406,25 @@ class InstanceList(object):
                 self.__infobar.hide()
 
     def infobar_update(self):
+        """Update in info bar"""
+
         if self.need_subsystem:
             self.__infolabel.set_text(
-                "Add a subsystem instance by clicking on the Add button next to the subsystem table."
+                "Add a subsystem instance by clicking on the Add button next "
+                "to the subsystem table."
             )
             self._infobar_reveal(True)
         elif self.need_regset:
             self.__infolabel.set_text(
-                "Add a register set to a subsystem by dragging it from the sidebar and "
-                "dropping it on the instance in the subsystem table."
+                "Add a register set to a subsystem by dragging it from the "
+                "sidebar and dropping it on the instance in the subsystem table."
             )
             self._infobar_reveal(True)
         else:
             self._infobar_reveal(False)
 
     def __build_instance_table(self):
+        """Build the table, adding the columns"""
 
         column = EditableColumn(
             "Instance", self.instance_inst_changed, InstCol.INST
@@ -464,54 +479,58 @@ class InstanceList(object):
         column.set_resizable(True)
         self.__obj.append_column(column)
 
-    def visible_callback(self, column, cell, model, *obj):
+    def visible_callback(self, _column, cell, model, *obj):
+        """Determine if the cell should be seen"""
+
         node = obj[0]
         if len(model.get_path(node)) == 1:
             cell.set_property("visible", False)
         else:
             cell.set_property("visible", True)
 
-    def instance_id_changed(self, cell, path, new_text, col):
+    def instance_id_changed(self, _cell, _path, _new_text, _col):
         """
         Updates the data model when the text value is changed in the model.
         """
         LOGGER.warning("Subsystem name cannot be changed")
 
     def inst_changed(self, attr, path, new_text):
+        """Called with the instance name changed"""
+
         getattr(self.__model, attr)(path, new_text)
 
-    def instance_inst_changed(self, cell, path, new_text, col):
+    def instance_inst_changed(self, _cell, path, new_text, _col):
         """
         Updates the data model when the text value is changed in the model.
         """
         self.inst_changed("change_inst", path, new_text)
 
-    def instance_base_changed(self, cell, path, new_text, col):
+    def instance_base_changed(self, _cell, path, new_text, _col):
         """
         Updates the data model when the text value is changed in the model.
         """
         self.inst_changed("change_base", path, new_text)
 
-    def instance_format_changed(self, cell, path, new_text, col):
+    def instance_format_changed(self, _cell, path, new_text, _col):
         """
         Updates the data model when the text value is changed in the model.
         """
         if len(path) > 1:
             self.inst_changed("change_format", path, new_text)
 
-    def instance_hdl_changed(self, cell, path, new_text, col):
+    def instance_hdl_changed(self, _cell, path, new_text, _col):
         """
         Updates the data model when the text value is changed in the model.
         """
         self.inst_changed("change_hdl", path, new_text)
 
-    def instance_repeat_changed(self, cell, path, new_text, col):
+    def instance_repeat_changed(self, _cell, path, new_text, _col):
         """
         Updates the data model when the text value is changed in the model.
         """
         self.inst_changed("change_repeat", path, new_text)
 
-    def instance_repeat_offset_changed(self, cell, path, new_text, col):
+    def instance_repeat_offset_changed(self, _cell, path, new_text, _col):
         """
         Updates the data model when the text value is changed in the model.
         """
@@ -519,6 +538,8 @@ class InstanceList(object):
 
 
 def build_row_data(inst, name, offset, rpt, rpt_offset, hdl, obj):
+    """Build row data from the data"""
+
     row = (
         inst,
         name,

@@ -17,11 +17,16 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""
+Enumerated types for the database
+"""
 
 from enum import IntEnum
 
 
 class BitType(IntEnum):
+    """The bit field type"""
+
     READ_ONLY = 0
     READ_ONLY_VALUE = 1
     READ_ONLY_LOAD = 2
@@ -56,6 +61,8 @@ class BitType(IntEnum):
 
 
 class OneShot(IntEnum):
+    "One shot type"
+
     NONE = 0
     ON_ANY = 1
     ON_ONE = 2
@@ -64,12 +71,16 @@ class OneShot(IntEnum):
 
 
 class ResetType(IntEnum):
+    "Reset type"
+
     NUMERIC = 0
     INPUT = 1
     PARAMETER = 2
 
 
 class InputFunction(IntEnum):
+    "Action taken on control signal"
+
     SET_BITS = 0
     CLEAR_BITS = 1
     PARALLEL = 2
@@ -77,6 +88,8 @@ class InputFunction(IntEnum):
 
 
 class ShareType(IntEnum):
+    "Shared register type"
+
     NONE = 0
     READ = 1
     WRITE = 2

@@ -17,46 +17,56 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""
+Manages the search filter
+"""
+
 from regenerate.db import LOGGER
 from regenerate.ui.enums import FilterField
 
 
-class FilterManager(object):
+class FilterManager:
+    """
+    Manages the search filter.
+    """
 
     def __init__(self, obj, model=None):
         self._obj = obj
         self._model = model
         self._text = ""
-        self._fields = (
-            FilterField.ADDR,
-            FilterField.NAME,
-            FilterField.TOKEN
-        )
-        self._obj.connect('changed', self._filter_changed)
+        self._fields = (FilterField.ADDR, FilterField.NAME, FilterField.TOKEN)
+        self._obj.connect("changed", self._filter_changed)
 
     def get_model(self):
+        """Get the assocated model"""
         return self._model
 
     def text(self):
+        """Get the search text"""
         return self._text.upper()
 
     def set_search_fields(self, fields):
+        """Set the search fields and refilters the model"""
         self._fields = fields
         self._model.refilter()
 
     def refilter(self):
+        """Applies the filter to the model"""
         self._model.refilter()
 
     def change_filter(self, model, set_func=False):
+        """Changes the filter function"""
         self._model = model
         if set_func:
             model.set_visible_func(self.visible_cb)
 
-    def _filter_changed(self, obj):
+    def _filter_changed(self, _obj):
+        """Callback when the object emits 'changed'"""
         self._text = self._obj.get_text()
         self._model.refilter()
 
     def visible_cb(self, model, *obj):
+        """Determines if the current cell should be visible"""
         node = obj[0]
 
         if self._text == "":

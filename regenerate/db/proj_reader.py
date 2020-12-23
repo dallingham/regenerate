@@ -16,26 +16,35 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
 """
-RegProject is the container object for a regenerate project
+Manages the reading of the project file (.rprj)
 """
+
+try:
+    from CStringIO import StringIO
+except ImportError:
+    from io import BytesIO as StringIO
 
 import xml.parsers.expat
 from regenerate.db.group_data import GroupData
 from regenerate.db.group_inst_data import GroupInstData
 
 
-class ProjectReader(object):
+class ProjectReader:
     """
-    RegProject is the container object for a regenerate project. The project
-    consists of several different types. General project information (name,
-    company_name, etc.), the list of register sets, groupings of instances,
-    and exports (register set and entire project exports), and address maps.
+    Reads the project information from the project file.
     """
 
     def __init__(self, project):
         self._prj = project
         self._current_group = None
+        self._token_list = []
+        self._current = ""
+        self._current_map = ""
+        self._current_access = 0
+        self._current_map_group = None
+        self.path = ""
 
     def open(self, name):
         """Opens and reads an XML file"""
@@ -53,11 +62,6 @@ class ProjectReader(object):
         """Loads the data from a text string"""
         self.path = "<string>"
 
-        try:
-            from CStringIO import StringIO
-        except:
-            from io import BytesIO as StringIO
-
         ofile = StringIO(data)
 
         parser = xml.parsers.expat.ParserCreate()
@@ -71,7 +75,7 @@ class ProjectReader(object):
         """
         Called every time an XML element begins
         """
-        self.__token_list = []
+        self._token_list = []
         mname = "start_" + tag
         if hasattr(self, mname):
             method = getattr(self, mname)
@@ -81,7 +85,7 @@ class ProjectReader(object):
         """
         Called every time an XML element end
         """
-        text = "".join(self.__token_list)
+        text = "".join(self._token_list)
         mname = "end_" + tag
         if hasattr(self, mname):
             method = getattr(self, mname)
@@ -93,7 +97,7 @@ class ProjectReader(object):
         in how it is called, so we must collect the information for assembly
         later.
         """
-        self.__token_list.append(data)
+        self._token_list.append(data)
 
     def start_project(self, attrs):
         """Called when a project tag is found"""
@@ -122,10 +126,12 @@ class ProjectReader(object):
 
     def start_project_export(self, attrs):
         """Called when a project_export tag is found"""
+
         self._prj.append_to_project_export_list(attrs["option"], attrs["path"])
 
     def start_grouping(self, attrs):
         """Called when a grouping tag is found"""
+
         repeat_offset = int(attrs.get("repeat_offset", 0x10000))
         self._current_group = GroupData(
             attrs["name"],
@@ -138,6 +144,7 @@ class ProjectReader(object):
         self._prj.add_to_grouping_list(self._current_group)
 
     def start_map(self, attrs):
+
         """Called when a map tag is found"""
         sname = attrs["set"]
 
@@ -164,7 +171,7 @@ class ProjectReader(object):
         uvm = int(attrs.get("no_uvm", 0))
         self._prj.set_address_map(name, base, width, fixed, uvm)
         self._current_map = attrs["name"]
-        self.current_map_group = None
+        self._current_map_group = None
 
     def end_documentation(self, text):
         """
@@ -182,32 +189,44 @@ class ProjectReader(object):
             self._current_group.docs = text
 
     def start_map_group(self, attrs):
-        self.current_map_group = attrs.get("name")
-        self._prj.add_address_map_group(
-            self._current_map, self.current_map_group
-        )
-
-    def end_map_group(self, text):
         """
         Called when the map_group XML tag is encountered. Assigns the
         current text string to the current group's docs variable
         """
-        if self.current_map_group is None:
+
+        self._current_map_group = attrs.get("name")
+        self._prj.add_address_map_group(
+            self._current_map, self._current_map_group
+        )
+
+    def end_map_group(self, text):
+        """
+        Called when the map_group XML tag ended
+        """
+        if self._current_map_group is None:
             self._prj.add_address_map_group(self._current_map, text)
 
     def start_access(self, attrs):
-        self.current_access = int(attrs.get("type", "0"))
+        "Starts the access type"
+
+        self._current_access = int(attrs.get("type", "0"))
 
     def end_access(self, text):
+        "Ends the access type"
+
         self._prj.set_access(
             self._current_map,
-            self.current_map_group,
+            self._current_map_group,
             text,
-            self.current_access,
+            self._current_access,
         )
 
     def start_parameter(self, attrs):
+        "Starts a parameter"
+
         self._prj.add_parameter(attrs["name"], int(attrs["value"]))
 
     def end_parameters(self, attrs):
+        "Ends a parameter"
+
         pass

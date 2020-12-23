@@ -22,7 +22,7 @@ from regenerate.settings.paths import GLADE_PROP
 from columns import EditableColumn
 
 
-class Properties(object):
+class Properties:
     """
     Properties dialog interface.
     """
@@ -34,11 +34,10 @@ class Properties(object):
         self.__properties = self.__builder.get_object("properties")
 
         self.__builder.get_object("short_name").set_text(project.short_name)
-
         self.__builder.get_object("project_name").set_text(project.name)
-
-        self.__builder.get_object("company_name").set_text(project.company_name)
-
+        self.__builder.get_object("company_name").set_text(
+            project.company_name
+        )
         self.__builder.connect_signals(self)
 
         self.__tree = self.__builder.get_object("address_tree")
@@ -58,7 +57,9 @@ class Properties(object):
 
         self.__properties.show()
 
-    def map_name_changed(self, cell, path, new_text, col):
+    def map_name_changed(self, _cell, path, new_text, _col):
+        """Called when the map name changes"""
+
         node = self.__model.get_iter(path)
         name = self.__model.get_value(node, 0)
         value = self.__model.get_value(node, 2)
@@ -69,7 +70,9 @@ class Properties(object):
         self.__project.set_address_map(new_text, value)
         self.__model[path][0] = new_text
 
-    def map_address_changed(self, cell, path, new_text, col):
+    def map_address_changed(self, _cell, path, new_text, _col):
+        """Called with the address changes"""
+
         try:
             value = int(new_text, 16)
         except ValueError:
@@ -79,13 +82,17 @@ class Properties(object):
             self.__model[path][1] = "{0:x}".format(value)
             self.__model[path][2] = value
 
-    def on_remove_map_clicked(self, obj):
+    def on_remove_map_clicked(self, _obj):
+        """Remove the selected map"""
+
         (model, node) = self.__tree.get_selection().get_selected()
         name = model.get_value(node, 0)
         model.remove(node)
         self.__project.remove_address_map(name)
 
-    def on_add_map_clicked(self, obj):
+    def on_add_map_clicked(self, _obj):
+        """Add a new map"""
+
         self.__model.append(row=("<new name>", 0, 0))
         self.__project.set_address_map("<new name>", 0)
 
@@ -105,7 +112,9 @@ class Properties(object):
         """
         self.__project.company_name = obj.get_text()
 
-    def on_offset_insert_text(self, obj, new_text, pos, *extra):
+    def on_offset_insert_text(self, obj, new_text, _pos, *_extra):
+        """Called when text is inserted into the offset field"""
+
         try:
             int(new_text, 16)
         except ValueError:
@@ -121,7 +130,7 @@ class Properties(object):
         self.__project.short_name = obj.get_text().replace(" ", "").strip()
         obj.set_text(self.__project.short_name)
 
-    def on_close_button_clicked(self, obj):
+    def on_close_button_clicked(self, _obj):
         """
         Closes the window
         """

@@ -17,6 +17,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""
+Interface to control the group options
+"""
+
 from gi.repository import Gtk
 
 DEF_DIALOG_FLAGS = Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT
@@ -29,6 +33,8 @@ DEF_DIALOG_BUTTONS = (
 
 
 class GroupOptions(Gtk.Dialog):
+    """Group options dialog"""
+
     def __init__(self, instance, modified, parent, width=600, height=260):
 
         super().__init__(
@@ -67,18 +73,20 @@ class GroupOptions(Gtk.Dialog):
         self.destroy()
 
     def build_window(self, title):
+        """Create the window"""
 
         area = self.get_content_area()
         title_label = Gtk.Label()
         title_label.set_xalign(0.5)
-        title_label.set_markup("<b>%s</b>" % title)
+        title_label.set_markup(f"<b>{title}</b>")
 
         table = Gtk.Table(4, 5)
         table.set_row_spacings(6)
         table.set_col_spacings(6)
 
         self.uvm_exclude = Gtk.CheckButton(
-            "Exclude the instance from the UVM register package")
+            "Exclude the instance from the UVM register package"
+        )
         self.uvm_exclude.set_active(self.instance.no_uvm)
         self.val_no_uvm = self.instance.no_uvm
 
@@ -92,9 +100,7 @@ class GroupOptions(Gtk.Dialog):
             yoptions=Gtk.AttachOptions.FILL,
         )
 
-        self.decode_exclude = Gtk.CheckButton(
-            "Exclude from register decode"
-        )
+        self.decode_exclude = Gtk.CheckButton("Exclude from register decode")
         self.decode_exclude.set_active(self.instance.no_decode)
         self.val_no_decode = self.instance.no_decode
 
@@ -124,9 +130,7 @@ class GroupOptions(Gtk.Dialog):
             yoptions=Gtk.AttachOptions.FILL,
         )
 
-        self.single_decode = Gtk.CheckButton(
-            "Use a single decode for arrays"
-        )
+        self.single_decode = Gtk.CheckButton("Use a single decode for arrays")
         self.single_decode.set_active(self.instance.single_decode)
         self.val_single_decode = self.instance.single_decode
 

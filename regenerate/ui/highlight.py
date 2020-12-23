@@ -17,26 +17,31 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""
+Highlight the selected text in the buffer.
+"""
+
 try:
     from gi.repository import Pango
     from pygments.lexers import VerilogLexer
     from pygments.styles import get_style_by_name
 
     def highlight_text(text, buf):
+        """Highlight the text in the buffer"""
 
         styles = {}
-        STYLE = get_style_by_name("emacs")
+        emacs_style = get_style_by_name("emacs")
         for token, value in VerilogLexer().get_tokens(text):
-            while not STYLE.styles_token(token) and token.parent:
+            while not emacs_style.styles_token(token) and token.parent:
                 token = token.parent
             if token not in styles:
                 styles[token] = buf.create_tag()
             start = buf.get_end_iter()
             buf.insert_with_tags(start, value, styles[token])
 
-            for token in styles:
-                tag = styles[token]
-                style = STYLE.style_for_token(token)
+            for token0 in styles:
+                tag = styles[token0]
+                style = emacs_style.style_for_token(token0)
                 if style["bgcolor"]:
                     tag.set_property("background", "#" + style["bgcolor"])
                 if style["color"]:
@@ -52,4 +57,5 @@ try:
 except ImportError:
 
     def highlight_text(text, buf):
+        """Pass through the text if pygments not installed"""
         buf.set_text(text)

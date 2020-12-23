@@ -70,7 +70,7 @@ def cnv_str(attrs, key, default=""):
     return attrs.get(key, default)
 
 
-class RegParser(object):
+class RegParser:
     """
     Parses the XML file, loading up the register database.
     """
@@ -142,6 +142,8 @@ class RegParser(object):
         self.__db.descriptive_title = cnv_str(attrs, "title")
 
     def start_parameter(self, attrs):
+        """Start a parameter read"""
+
         self.__db.add_parameter(
             attrs["name"],
             int(attrs["value"]),
@@ -149,8 +151,10 @@ class RegParser(object):
             int(attrs["max"]),
         )
 
-    def end_parameters(self, attrs):
-        current_params = set([n[0] for n in self.__db.get_parameters()])
+    def end_parameters(self, _attrs):
+        """Called at the end of the parameter statement"""
+
+        current_params = set({n[0] for n in self.__db.get_parameters()})
         for name in self.found_parameters:
             if name not in current_params:
                 self.__db.add_parameter(name, "1", "0", "4096")
@@ -216,7 +220,7 @@ class RegParser(object):
         self.__reg.hide = cnv_bool(attrs, "hide")
         self.__reg.share = int(attrs.get("share", 0))
 
-    def start_ports(self, attrs):
+    def start_ports(self, _attrs):
         """Called when the ports tag is encountered."""
         self.__in_ports = True
 
@@ -273,15 +277,15 @@ class RegParser(object):
             except ValueError:
                 self.__reset_type = ResetType.NUMERIC
 
-    def end_register(self, text):
+    def end_register(self, _text):
         """Called when the register tag is terminated."""
         self.__reg = None
 
-    def end_ports(self, text):
+    def end_ports(self, _text):
         """Called when the ports tag is terminated."""
         self.__in_ports = False
 
-    def end_range(self, text):
+    def end_range(self, _text):
         """Called when the range tag is terminated."""
         self.__field = None
 

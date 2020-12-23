@@ -41,8 +41,10 @@ from regenerate.db import (
     LOGGER,
     TYPES,
     remove_default_handler,
+    ResetType,
+    ShareType,
+    BitType,
 )
-from regenerate.db.enums import ResetType, ShareType, BitType
 from regenerate.extras.regutils import (
     calculate_next_address,
     duplicate_register,
@@ -51,28 +53,29 @@ from regenerate.extras.remap import REMAP_NAME
 from regenerate.importers import IMPORTERS
 from regenerate.settings import ini
 from regenerate.settings.paths import GLADE_TOP, INSTALL_PATH
-from regenerate.ui.addrmap_list import AddrMapList
 from regenerate.ui.addr_edit import AddrMapEdit
-from regenerate.ui.parameter_list import ParameterList
-from regenerate.ui.prj_param_list import PrjParameterList
-from regenerate.ui.param_overrides import OverridesList
+from regenerate.ui.addrmap_list import AddrMapList
 from regenerate.ui.base_window import BaseWindow
-from regenerate.ui.bit_list import BitModel, BitList, reset_value
+from regenerate.ui.bit_list import BitModel, BitList
 from regenerate.ui.bitfield_editor import BitFieldEditor
 from regenerate.ui.build import Build
-from regenerate.ui.error_dialogs import ErrorMsg, WarnMsg, Question
 from regenerate.ui.enums import FilterField, BitCol, InstCol, PrjCol
+from regenerate.ui.error_dialogs import ErrorMsg, WarnMsg, Question
 from regenerate.ui.filter_mgr import FilterManager
 from regenerate.ui.group_doc import GroupDocEditor
 from regenerate.ui.group_options import GroupOptions
 from regenerate.ui.help_window import HelpWindow
 from regenerate.ui.instance_list import InstMdl, InstanceList
 from regenerate.ui.module_tab import ModuleTabs, ProjectTabs
+from regenerate.ui.param_overrides import OverridesList
+from regenerate.ui.parameter_list import ParameterList
 from regenerate.ui.preferences import Preferences
+from regenerate.ui.prj_param_list import PrjParameterList
 from regenerate.ui.project import ProjectModel, ProjectList
 from regenerate.ui.reg_description import RegisterDescription
 from regenerate.ui.register_list import RegisterModel, RegisterList
 from regenerate.ui.status_logger import StatusHandler
+from regenerate.ui.summary_window import SummaryWindow
 
 TYPE_ENB = {}
 for data_type in TYPES:
@@ -81,11 +84,8 @@ for data_type in TYPES:
 DEF_EXT = ".rprj"
 DEF_MIME = "*" + DEF_EXT
 
-# Regular expressions to check the validity of entered names. This should
-# probably be configurable, but has not been implemented yet.
 
-
-class DbaseStatus(object):
+class DbaseStatus:
     """
     Holds the state of a particular database. This includes the database model,
     the list models for the displays, the modified status, and the selected
@@ -94,20 +94,20 @@ class DbaseStatus(object):
 
     def __init__(
         self,
-        database,
-        filename,
+        dbase,
+        fname,
         name,
-        reg_model,
-        modelsort,
-        modelfilter,
-        bit_model,
+        rmodel,
+        mdlsort,
+        mdlfilter,
+        bmodel,
     ):
-        self.db = database
-        self.path = filename
-        self.reg_model = reg_model
-        self.modelfilter = modelfilter
-        self.modelsort = modelsort
-        self.bit_field_list = bit_model
+        self.db = dbase
+        self.path = fname
+        self.reg_model = rmodel
+        self.modelfilter = mdlfilter
+        self.modelsort = mdlsort
+        self.bit_field_list = bmodel
         self.name = name
         self.modified = False
         self.reg_select = None
@@ -134,6 +134,8 @@ class MainWindow(BaseWindow):
         self.instance_model = None
         self.prj = None
         self.dbmap = {}
+        self.register = None
+        self.prj_model = None
 
         self.use_preview = bool(int(ini.get("user", "use_preview", 0)))
 
@@ -215,13 +217,8 @@ class MainWindow(BaseWindow):
     def setup_recent_menu(self):
         """Setup the recent files management system"""
 
-        try:
-            self.recent_manager = Gtk.RecentManager.get_default()
-        except AttributeError:
-            self.recent_manager = Gtk.recent_manager_get_default()
-
+        self.recent_manager = Gtk.RecentManager.get_default()
         self.find_obj("file_menu").insert(self.create_recent_menu_item(), 2)
-
         self.find_obj("open_btn").set_menu(self.create_recent_menu())
 
     def find_obj(self, name):
@@ -231,7 +228,7 @@ class MainWindow(BaseWindow):
         self.set_modified()
         self.set_register_warn_flags(reg)
 
-    def on_instances_cursor_changed(self, obj):
+    def on_instances_cursor_changed(self, _obj):
         """Called when the row of the treeview changes."""
         self.find_obj("instance_edit_btn").set_sensitive(True)
 
@@ -245,7 +242,7 @@ class MainWindow(BaseWindow):
         else:
             btn.set_sensitive(False)
 
-    def on_group_doc_clicked(self, obj):
+    def on_group_doc_clicked(self, _obj):
 
         (mdl, node) = self.instance_obj.get_selected_instance()
         inst = mdl.get_value(node, InstCol.OBJ)
@@ -315,7 +312,7 @@ class MainWindow(BaseWindow):
             self.infobar_reveal(True)
         self.project_modified(False)
 
-    def on_edit_map_clicked(self, obj):
+    def on_edit_map_clicked(self, _obj):
         map_name = self.addr_map_list.get_selected()
         if map_name is None:
             return
@@ -340,32 +337,40 @@ class MainWindow(BaseWindow):
             self.addr_map_list.set_project(self.prj)
             self.set_project_modified()
 
-    def on_infobar_response(self, obj, obj2):
+    def on_infobar_response(self, obj, _obj2):
+        """Called to display the infobar"""
         try:
             obj.set_revealed(False)
         except AttributeError:
             obj.hide()
 
-    def on_addr_map_help_clicked(self, obj):
+    def on_addr_map_help_clicked(self, _obj):
+        "Display the address map help" ""
         HelpWindow(self.builder, "addr_map_help.rst")
 
-    def on_param_help_clicked(self, obj):
+    def on_param_help_clicked(self, _obj):
+        """Display the parameter help"""
         HelpWindow(self.builder, "parameter_help.rst")
 
-    def on_prj_param_help_clicked(self, obj):
+    def on_prj_param_help_clicked(self, _obj):
+        """Display the project parameter help"""
         HelpWindow(self.builder, "prj_parameter_help.rst")
 
-    def on_group_help_clicked(self, obj):
+    def on_group_help_clicked(self, _obj):
+        """Display the group help file"""
         HelpWindow(self.builder, "project_group_help.rst")
 
-    def on_remove_map_clicked(self, obj):
+    def on_remove_map_clicked(self, _obj):
+        """Remove the selected map with clicked"""
         self.project_modified(True)
         self.addr_map_list.remove_selected()
 
-    def on_add_map_clicked(self, obj):
+    def on_add_map_clicked(self, _obj):
+        """Add a new map when clicked"""
         self.addr_map_list.add_new_map()
 
-    def on_help_action_activate(self, obj):
+    def on_help_action_activate(self, _obj):
+        """Display the help window"""
         HelpWindow(self.builder, "regenerate_help.rst")
 
     def restore_position_and_size(self):
@@ -446,11 +451,11 @@ class MainWindow(BaseWindow):
         self.file_modified = self.build_group("file_modified", file_acn)
 
     def on_filter_icon_press(self, obj, icon, event):
-        if icon == Gtk.ENTRY_ICON_SECONDARY:
-            if event.type == Gdk.BUTTON_PRESS:
+        if icon == Gtk.EntryIconPosition.SECONDARY:
+            if event.type == Gdk.EventType.BUTTON_PRESS:
                 obj.set_text("")
-        elif icon == Gtk.ENTRY_ICON_PRIMARY:
-            if event.type == Gdk.BUTTON_PRESS:
+        elif icon == Gtk.EntryIconPositon.PRIMARY:
+            if event.type == Gdk.EventType.BUTTON_PRESS:
                 menu = self.find_obj("filter_menu")
                 menu.popup(
                     None, None, None, 1, 0, Gtk.get_current_event_time()
@@ -460,16 +465,16 @@ class MainWindow(BaseWindow):
         if obj.get_active():
             self.filter_manage.set_search_fields(values)
 
-    def on_add_param_clicked(self, obj):
+    def on_add_param_clicked(self, _obj):
         self.parameter_list.add_clicked()
 
-    def on_add_prj_param_clicked(self, obj):
+    def on_add_prj_param_clicked(self, _obj):
         self.prj_parameter_list.add_clicked()
 
-    def on_remove_param_clicked(self, obj):
+    def on_remove_param_clicked(self, _obj):
         self.parameter_list.remove_clicked()
 
-    def on_prj_remove_param_clicked(self, obj):
+    def on_prj_remove_param_clicked(self, _obj):
         self.prj_parameter_list.remove_clicked()
 
     def on_address_token_name_toggled(self, obj):
@@ -507,13 +512,11 @@ class MainWindow(BaseWindow):
         else:
             self.disable_preview()
 
-    def on_summary_action_activate(self, obj):
+    def on_summary_action_activate(self, _obj):
         """Displays the summary window"""
         reg = self.reglist_obj.get_selected_register()
 
         if reg:
-            from regenerate.ui.summary_window import SummaryWindow
-
             SummaryWindow(self.builder, reg, self.active.name, self.prj)
 
     def on_build_action_activate(self, obj):
@@ -527,7 +530,7 @@ class MainWindow(BaseWindow):
 
         Build(self.prj, dbmap, self.top_window)
 
-    def on_revert_action_activate(self, obj):
+    def on_revert_action_activate(self, _obj):
         (store, node) = self.prj_obj.get_selected()
         if node and store[node][PrjCol.MODIFIED]:
             filename = store[node][PrjCol.FILE]
@@ -541,10 +544,10 @@ class MainWindow(BaseWindow):
             self.set_busy_cursor(False)
             self.file_modified.set_sensitive(False)
 
-    def on_user_preferences_activate(self, obj):
+    def on_user_preferences_activate(self, _obj):
         Preferences(self.top_window)
 
-    def on_delete_instance_clicked(self, obj):
+    def on_delete_instance_clicked(self, _obj):
         """
         Called with the remove button is clicked
         """
@@ -556,7 +559,7 @@ class MainWindow(BaseWindow):
             if isinstance(grp, GroupData):
                 self.prj.remove_group_from_grouping_list(grp)
 
-    def on_add_instance_clicked(self, obj):
+    def on_add_instance_clicked(self, _obj):
         self.instance_obj.new_instance()
         self.project_modified(True)
 
@@ -584,10 +587,10 @@ class MainWindow(BaseWindow):
             text = ""
         self.find_obj("reg_count").set_text(text)
 
-    def on_main_notebook_switch_page(self, obj, page, page_num):
+    def on_main_notebook_switch_page(self, _obj, _page, _page_num):
         pass
 
-    def on_notebook_switch_page(self, obj, page, page_num):
+    def on_notebook_switch_page(self, _obj, _page, page_num):
         if page_num == 1:
             self.update_bit_count()
         if self.reglist_obj.get_selected_register():
@@ -595,11 +598,11 @@ class MainWindow(BaseWindow):
         else:
             self.reg_selected.set_sensitive(False)
 
-    def bit_changed(self, obj):
+    def bit_changed(self, _obj):
         active = len(self.bitfield_obj.get_selected_row())
         self.field_selected.set_sensitive(active)
 
-    def prj_selection_changed(self, obj):
+    def prj_selection_changed(self, _obj):
         data = self.prj_obj.get_selected()
         old_skip = self.skip_changes
         self.skip_changes = True
@@ -647,7 +650,7 @@ class MainWindow(BaseWindow):
             self.enable_registers(False)
         self.skip_changes = old_skip
 
-    def selected_reg_changed(self, obj):
+    def selected_reg_changed(self, _obj):
         """
         GTK callback that checks the selected objects, and then enables the
         appropriate buttons on the interface.
@@ -720,9 +723,9 @@ class MainWindow(BaseWindow):
         return cnt > 1
 
     def find_shared_address(self, reg):
-        for r in self.dbase.get_all_registers():
-            if r != reg and r.address == reg.address:
-                return r
+        for shared_reg in self.dbase.get_all_registers():
+            if shared_reg != reg and shared_reg.address == reg.address:
+                return shared_reg
         return None
 
     def on_no_sharing_toggled(self, obj):
@@ -772,7 +775,7 @@ class MainWindow(BaseWindow):
                 LOGGER.error("All bits in the register must be write only")
             self.bitfield_obj.set_mode(register.share)
 
-    def on_add_bit_action_activate(self, obj):
+    def on_add_bit_action_activate(self, _obj):
         register = self.reglist_obj.get_selected_register()
         next_pos = register.find_next_unused_bit()
 
@@ -795,7 +798,7 @@ class MainWindow(BaseWindow):
         self.set_modified()
         self.set_register_warn_flags(register)
 
-    def on_edit_field_clicked(self, obj):
+    def on_edit_field_clicked(self, _obj):
         register = self.reglist_obj.get_selected_register()
         field = self.bitfield_obj.select_field()
         if field:
@@ -814,7 +817,7 @@ class MainWindow(BaseWindow):
         self.set_bits_warn_flag()
         self.set_modified()
 
-    def on_remove_bit_action_activate(self, obj):
+    def on_remove_bit_action_activate(self, _obj):
         register = self.reglist_obj.get_selected_register()
         row = self.bitfield_obj.get_selected_row()
         field = self.bit_model.get_bitfield_at_path(row[0])
@@ -835,16 +838,16 @@ class MainWindow(BaseWindow):
         self.dbase.delete_register(register)
         register.address = new_addr
         register.ram_size = new_length
-        r = self.find_shared_address(register)
-        if r:
-            if r.share == ShareType.READ:
+        share_reg = self.find_shared_address(register)
+        if share_reg:
+            if share_reg.share == ShareType.READ:
                 register.share = ShareType.WRITE
             else:
                 register.share = ShareType.READ
             self.set_share(register)
         self.dbase.add_register(register)
 
-    def on_duplicate_register_action_activate(self, obj):
+    def on_duplicate_register_action_activate(self, _obj):
         """
         Makes a copy of the current register, modifying the address, and
         changing name and token
@@ -907,7 +910,7 @@ class MainWindow(BaseWindow):
             Gtk.STOCK_OPEN,
         )
 
-    def on_add_register_set_activate(self, obj):
+    def on_add_register_set_activate(self, _obj):
         """
         GTK callback that creates a file open selector using the
         create_selector method, then runs the dialog, and calls the
@@ -927,7 +930,7 @@ class MainWindow(BaseWindow):
             self.prj_model.load_icons()
         choose.destroy()
 
-    def on_remove_register_set_activate(self, obj):
+    def on_remove_register_set_activate(self, _obj):
         """
         GTK callback that creates a file open selector using the
         create_selector method, then runs the dialog, and calls the
@@ -970,7 +973,7 @@ class MainWindow(BaseWindow):
         choose.destroy()
         return name
 
-    def on_new_project_clicked(self, obj):
+    def on_new_project_clicked(self, _obj):
 
         choose = self.create_save_selector(
             "New Project", "Regenerate Project", DEF_MIME
@@ -1004,7 +1007,7 @@ class MainWindow(BaseWindow):
             self.load_project_tab()
         choose.destroy()
 
-    def on_open_action_activate(self, obj):
+    def on_open_action_activate(self, _obj):
 
         choose = self.create_open_selector(
             "Open Project", "Regenerate Project", DEF_MIME
@@ -1043,29 +1046,29 @@ class MainWindow(BaseWindow):
             self.initialize_project_address_maps()
         except xml.parsers.expat.ExpatError as msg:
             ErrorMsg(
-                "%s was not a valid project file" % filename,
+                f"{filename} was not a valid project file",
                 str(msg),
                 self.top_window,
             )
             return
         except IOError as msg:
-            ErrorMsg("Could not open %s" % filename, str(msg), self.top_window)
+            ErrorMsg(f"Could not open {filename}", str(msg), self.top_window)
             return
 
         self.prj_parameter_list.set_prj(self.prj)
 
         ini.set("user", "last_project", os.path.abspath(filename))
         idval = self.status_obj.get_context_id("mod")
-        self.status_obj.push(idval, "Loading %s ..." % filename)
+        self.status_obj.push(idval, f"Loading {filename} ...")
         self.set_busy_cursor(True)
 
-        for f in sorted(self.prj.get_register_set(), key=sort_regset):
+        for fname in sorted(self.prj.get_register_set(), key=sort_regset):
 
             try:
-                self.open_xml(f, False)
+                self.open_xml(fname, False)
             except xml.parsers.expat.ExpatError as msg:
                 ErrorMsg(
-                    "%s was not a valid register set file" % f,
+                    f"{fname} was not a valid register set file",
                     str(msg),
                     self.top_window,
                 )
@@ -1091,7 +1094,7 @@ class MainWindow(BaseWindow):
         self.instance_obj.set_model(self.instance_model)
         self.instance_obj.set_project(self.prj)
 
-    def on_new_register_set_activate(self, obj):
+    def on_new_register_set_activate(self, _obj):
         """
         Creates a new database, and initializes the interface.
         """
@@ -1217,12 +1220,12 @@ class MainWindow(BaseWindow):
             self.dbmap[self.dbase.set_name] = self.dbase
         except xml.parsers.expat.ExpatError as msg:
             ErrorMsg(
-                "%s is not a valid regenerate file" % filename,
+                f"{filename} is not a valid regenerate file",
                 str(msg),
                 self.top_window,
             )
 
-    def on_save_clicked(self, obj):
+    def on_save_clicked(self, _obj):
         """
         Called with the save button is clicked (gtk callback). Saves the
         database.
@@ -1243,7 +1246,7 @@ class MainWindow(BaseWindow):
                 except IOError as msg:
                     os.rename(new_path, old_path)
                     ErrorMsg(
-                        "Could not save %s, restoring original" % old_path,
+                        f"Could not save {old_path}, restoring original",
                         str(msg),
                         self.top_window,
                     )
@@ -1252,7 +1255,7 @@ class MainWindow(BaseWindow):
         self.instance_obj.get_groups()
 
         current_path = self.prj.path
-        backup_path = "%s.bak" % current_path
+        backup_path = f"{current_path}.bak"
 
         if os.path.isfile(backup_path):
             os.remove(backup_path)
@@ -1263,9 +1266,9 @@ class MainWindow(BaseWindow):
             self.prj.save()
             self.project_modified(False)
         except IOError as msg:
-            os.path.rename(new_path, old_path)
+            os.rename(new_path, old_path)
             ErrorMsg(
-                "Could not save %s, restoring original" % current_path,
+                f"Could not save {current_path}, restoring original",
                 str(msg),
                 self.top_window,
             )
@@ -1301,7 +1304,7 @@ class MainWindow(BaseWindow):
         self.filename = None
         self.on_save_clicked(obj)
 
-    def import_data(self, obj, data):
+    def import_data(self, _obj, data):
         """Imports the data using the specified data importer."""
         choose = self.create_open_selector(data[1][1], data[2], "*" + data[3])
 
@@ -1342,10 +1345,10 @@ class MainWindow(BaseWindow):
 
         self.set_description_warn_flag()
 
-    def on_regenerate_delete_event(self, obj, event):
+    def on_regenerate_delete_event(self, obj, _event):
         return self.on_quit_activate(obj)
 
-    def on_quit_activate(self, *obj):
+    def on_quit_activate(self, *_obj):
         """
         Called when the quit button is clicked.  Checks to see if the
         data needs to be saved first.
@@ -1371,11 +1374,10 @@ class MainWindow(BaseWindow):
                 return False
             dialog.destroy()
             return True
-        else:
-            self.exit()
+        self.exit()
         return True
 
-    def on_remove_register_action_activate(self, obj):
+    def on_remove_register_action_activate(self, _obj):
         """
         Deletes the selected object (either a register or a bit range)
         """
@@ -1417,7 +1419,7 @@ class MainWindow(BaseWindow):
     def on_hide_doc_toggled(self, obj):
         self.button_toggle("hide", obj)
 
-    def on_add_register_action_activate(self, obj):
+    def on_add_register_action_activate(self, _obj):
         """
         Adds a new register, seeding the address with the next available
         address
@@ -1468,7 +1470,7 @@ class MainWindow(BaseWindow):
         recent_menu.set_filter(filt)
         return recent_menu
 
-    def on_about_activate(self, obj):
+    def on_about_activate(self, _obj):
         """
         Displays the About box, describing the program
         """
@@ -1476,13 +1478,13 @@ class MainWindow(BaseWindow):
         box.set_name(PROGRAM_NAME)
         box.set_version(PROGRAM_VERSION)
         box.set_comments(
-            "%s allows you to manage your\n"
-            "registers for an ASIC or FPGA based design." % PROGRAM_NAME
+            f"{PROGRAM_NAME} allows you to manage your\n"
+            "registers for an ASIC or FPGA based design."
         )
         box.set_authors(["Donald N. Allingham"])
         try:
-            with open(os.path.join(INSTALL_PATH, "LICENSE.txt")) as f:
-                data = f.read()
+            with open(os.path.join(INSTALL_PATH, "LICENSE.txt")) as ifile:
+                data = ifile.read()
                 box.set_license(data)
         except IOError:
             pass
@@ -1506,21 +1508,15 @@ class MainWindow(BaseWindow):
         else:
             for field in reg.get_bit_fields():
                 if field.field_name.lower() in REMAP_NAME:
-                    txt = (
-                        "Field name (%s) is a SystemVerilog reserved word"
-                        % field.field_name
-                    )
+                    txt = f"Field name ({field.field_name}) is a SystemVerilog reserved word"
                     msg.append(txt)
                 if check_field(field):
-                    txt = (
-                        "Missing field description for '%s'" % field.field_name
-                    )
+                    txt = "Missing field description for '{field.field_name}'"
                     msg.append(txt)
                     warn_bit = True
                 if check_reset(field):
                     txt = (
-                        "Missing reset parameter name for '%s'"
-                        % field.field_name
+                        "Missing reset parameter name for '{field.field_name}'"
                     )
                     msg.append(txt)
                     warn_bit = True
@@ -1553,10 +1549,10 @@ class MainWindow(BaseWindow):
     def set_title(self, modified):
         if modified:
             self.top_window.set_title(
-                "%s (modified) - regenerate" % self.prj.name
+                "{self.prj.name} (modified) - regenerate"
             )
         else:
-            self.top_window.set_title("%s - regenerate" % self.prj.name)
+            self.top_window.set_title("{self.prj.name} - regenerate")
 
 
 def check_field(field):
@@ -1574,8 +1570,8 @@ def check_reset(field):
     return None
 
 
-def sort_regset(x):
-    return os.path.basename(x)
+def sort_regset(rset):
+    return os.path.basename(rset)
 
 
 def check_address_ranges(project, dbmap):
@@ -1584,25 +1580,25 @@ def check_address_ranges(project, dbmap):
 
     for group in project.get_grouping_list():
 
-        for d in group.register_sets:
-            space = 1 << dbmap[d.set].address_bus_width
-            if space > d.repeat_offset:
+        for rset in group.register_sets:
+            space = 1 << dbmap[rset.set].address_bus_width
+            if space > rset.repeat_offset:
                 LOGGER.warning(
                     "%s.%s - %d bits specified for register set (size %x) which is greater than the repeat offset of %x",
                     group.name,
-                    d.inst,
-                    dbmap[d.set].address_bus_width,
+                    rset.inst,
+                    dbmap[rset.set].address_bus_width,
                     space,
-                    d.repeat_offset,
+                    rset.repeat_offset,
                 )
                 return False
 
             glist.append(
                 (
-                    d.offset,
-                    d.offset + (d.repeat * d.repeat_offset) - 1,
-                    d.inst,
-                    1 << dbmap[d.set].address_bus_width,
+                    rset.offset,
+                    rset.offset + (rset.repeat * rset.repeat_offset) - 1,
+                    rset.inst,
+                    1 << dbmap[rset.set].address_bus_width,
                     group.name,
                 )
             )
@@ -1610,7 +1606,7 @@ def check_address_ranges(project, dbmap):
     prev_start = 0
     prev_stop = 0
     prev_name = ""
-    for (new_start, new_stop, new_name, db_width, new_group) in sorted(glist):
+    for (new_start, new_stop, new_name, _, new_group) in sorted(glist):
         if prev_stop > new_start:
             LOGGER.warning(
                 "%s.%s (%x:%x) overlaps with %s.%s (%x:%x)",

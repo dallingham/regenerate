@@ -17,8 +17,15 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""
+Contains the information for register set parameters and
+project parameters.
+"""
 
-class ParameterData(object):
+
+class ParameterData:
+    """Register set parameter data"""
+
     def __init__(self, name, value, min_val, max_val):
         self.name = name
         self.value = value
@@ -26,7 +33,9 @@ class ParameterData(object):
         self.max_val = max_val
 
 
-class PrjParameterData(object):
+class PrjParameterData:
+    """Project parameter data"""
+
     def __init__(self, name, value):
         self.name = name
         self.value = value

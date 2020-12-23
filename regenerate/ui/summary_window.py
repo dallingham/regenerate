@@ -17,13 +17,17 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""
+Provides the summary window
+"""
+
 import regenerate.extras
-from regenerate.db import LOGGER
 from regenerate.ui.base_window import BaseWindow
 from regenerate.ui.html_display import HtmlDisplay
 
 
 class SummaryWindow(BaseWindow):
+    """Provides the summary window"""
 
     window = None
     wkit = None
@@ -52,18 +56,18 @@ class SummaryWindow(BaseWindow):
             reg, regset_name, project, show_uvm=True
         )
         text = reg_info.html_css()
-        try:
-            SummaryWindow.wkit.load_html(text, "text/html")
-        except:
-            SummaryWindow.wkit.load_html_string(text, "text/html")
+        SummaryWindow.wkit.show_html(text)
 
-    def destroy(self, obj):
+    def destroy(self, _obj):
+        """Hide the window on the destroy event"""
         SummaryWindow.window.hide()
         return True
 
-    def delete(self, obj, event):
+    def delete(self, _obj, _event):
+        """Hide the window on the delete event"""
         SummaryWindow.window.hide()
         return True
 
-    def hide(self, obj):
+    def hide(self, _obj):
+        """Hide the window"""
         SummaryWindow.window.hide()
