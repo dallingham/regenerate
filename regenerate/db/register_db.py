@@ -47,6 +47,34 @@ class RegisterDb:
     Container database for a set of registers.
     """
 
+    __slots__ = (
+        "__ack",
+        "__addr",
+        "__be",
+        "__clock",
+        "__module",
+        "__parameters",
+        "__read_data",
+        "__read_strobe",
+        "__registers",
+        "__reset",
+        "__title",
+        "__write_data",
+        "__write_strobe",
+        "address_bus_width",
+        "array_is_reg",
+        "byte_strobe_active_level",
+        "coverage",
+        "data_bus_width",
+        "internal_only",
+        "organization",
+        "overview_text",
+        "owner",
+        "reset_active_level",
+        "set_name",
+        "use_interface",
+    )
+
     def __init__(self, filename=None):
         self.__clock = rules.get("rules", "clock_default", DEF_CLK_NAME)
         self.__reset = rules.get("rules", "reset_default", DEF_RST_NAME)

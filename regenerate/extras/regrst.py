@@ -211,6 +211,8 @@ span.symbolunder {
 
 
 def reg_addr(register, offset):
+    """Returns the register address range"""
+
     base = register.address + offset
     if register.ram_size > 32:
         return "%08x - %08x" % (base, base + register.ram_size)
@@ -218,12 +220,14 @@ def reg_addr(register, offset):
 
 
 def norm_name(text):
+    """Converts the name tolower case, and removes bad characters"""
+
     if text is not None:
         return text.lower().replace(" ", "-").replace("_", "-")
     return ""
 
 
-class RegisterRst(object):
+class RegisterRst:
     """
     Produces documentation from a register definition
     """
@@ -263,16 +267,12 @@ class RegisterRst(object):
             self.reglist = set()
         else:
             self.reglist = set(
-                [reg.register_name for reg in dbase.get_all_registers()]
+                {reg.register_name for reg in dbase.get_all_registers()}
             )
 
         if decode:
             try:
-                if decode is None:
-                    return None
-                elif isinstance(decode, int):
-                    decode = decode
-                else:
+                if not isinstance(decode, int):
                     decode = int(decode, 16)
             except ValueError:
                 decode = None
@@ -285,9 +285,6 @@ class RegisterRst(object):
         """
         return CSS + self.html(text)
 
-    def text(self, line):
-        return line.strip()
-
     def restructured_text(self, text=""):
         """
         Returns the definition of the register in RestructuredText format
@@ -298,10 +295,12 @@ class RegisterRst(object):
             if reg.register_name not in used:
                 used.add(reg.register_name)
                 if self._inst and self._group:
-                    url = "/".join((self._group, self._inst,
-                                    reg.token.lower()))
-                    ofile.write(".. _`{0}`: {1}\n\n".format(
-                        reg.register_name, url))
+                    url = "/".join(
+                        (self._group, self._inst, reg.token.lower())
+                    )
+                    ofile.write(
+                        ".. _`{0}`: {1}\n\n".format(reg.register_name, url)
+                    )
 
         ofile.write("\n\n")
         self.str_title(ofile)
@@ -319,6 +318,7 @@ class RegisterRst(object):
         return ofile.getvalue()
 
     def refname(self, reg_name):
+        """Create a cross reference name from the register"""
         return "%s-%s-%s" % (
             norm_name(self._inst),
             norm_name(self._group),
@@ -326,6 +326,7 @@ class RegisterRst(object):
         )
 
     def field_ref(self, name):
+        """Create a cross reference name from the field"""
         return "%s-%s-%s-%s" % (
             norm_name(self._inst),
             norm_name(self._group),
@@ -334,6 +335,8 @@ class RegisterRst(object):
         )
 
     def str_title(self, ofile=None):
+        """Create the title in RST format"""
+
         ret_str = False
 
         if ofile is None:
@@ -350,6 +353,8 @@ class RegisterRst(object):
         return ""
 
     def str_overview(self, ofile=None):
+        """Return the text overview in RST"""
+
         ret_str = False
 
         if ofile is None:
@@ -366,6 +371,7 @@ class RegisterRst(object):
         return ""
 
     def str_bit_fields(self, ofile=None):
+        """Create the bitfield table in RST"""
 
         ret_str = False
 
@@ -484,17 +490,19 @@ class RegisterRst(object):
         return ""
 
     def _write_bit_fields(self, ofile):
+        """Write the bitfield section"""
 
         ofile.write("Bit fields\n+++++++++++++++++++++++++++\n\n")
         self.str_bit_fields(ofile)
 
     def _write_defines(self, ofile, use_uvm=True, use_id=True):
+        """Write the addresses as defines"""
 
         ofile.write("\n\nAddresses\n+++++++++++++++++++++++\n\n")
         self.str_defines(ofile, use_uvm, use_id)
 
     def str_defines(self, ofile=None, use_uvm=True, use_id=True):
-
+        """Dump out the actual define values"""
         ret_str = False
 
         if ofile is None:
@@ -621,6 +629,7 @@ class RegisterRst(object):
         group_index,
         index,
     ):
+        """Write and address entry"""
 
         if inst.grpt == 1:
             u_grp_name = inst.group
@@ -671,6 +680,8 @@ class RegisterRst(object):
                 )
 
     def _display_uvm_entry(self, inst, index, ofile):
+        """Display the UVM name"""
+
         name = full_token(
             inst.group, self._reg.token, self._regset_name, index, inst.format
         )
@@ -709,6 +720,8 @@ class RegisterRst(object):
         ofile.write("\n\n")
 
     def html_from_text(self, text):
+        """Convert restructuredText to HTML"""
+
         if text is None:
             return "No data"
         if _HTML:

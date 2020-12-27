@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
 """
 RegProject is the container object for a regenerate project
 """
@@ -28,7 +29,7 @@ from regenerate.db.addrmap import AddrMapData
 
 
 def nested_dict(depth, dict_type):
-    """Builds a nexted dictionary"""
+    """Builds a nested dictionary"""
     if depth == 1:
         return defaultdict(dict_type)
     return defaultdict(lambda: nested_dict(depth - 1, dict_type))
@@ -47,13 +48,32 @@ class RegProject:
     and exports (register set and entire project exports), and address maps.
     """
 
+    __slots__ = (
+        "_parameters",
+        "_addr_map_grps",
+        "_addr_map_list",
+        "_exports",
+        "_filelist",
+        "_group_exports",
+        "_groupings",
+        "_modified",
+        "_project_exports",
+        "_token_list",
+        "access_map",
+        "company_name",
+        "documentation",
+        "name",
+        "path",
+        "short_name",
+    )
+
     def __init__(self, path=None):
         self.name = "unnamed"
         self.short_name = "unnamed"
         self.company_name = ""
         self.documentation = ""
         self.path = path
-        self._access_map = nested_dict(3, int)
+        self.access_map = nested_dict(3, int)
         self._filelist = []
         self._groupings = []
         self._addr_map_list = []
@@ -63,7 +83,7 @@ class RegProject:
         self._group_exports = {}
         self._token_list = []
         self._modified = False
-        self.__parameters = []
+        self._parameters = []
         if path:
             self.open(path)
 
@@ -359,21 +379,19 @@ class RegProject:
     def set_access(self, map_name, group_name, block_name, access):
         """Sets the access mode"""
 
-        self._access_map[map_name][group_name][block_name] = access
+        self.access_map[map_name][group_name][block_name] = access
 
     def get_access_items(self, map_name, group_name):
         """Gets the access items for the map/group"""
 
-        items = []
-        for key in self._access_map[map_name][group_name]:
-            items.append((key, self._access_map[map_name][group_name][key]))
-        return items
+        grp_map = self.access_map[map_name][group_name]
+        return [(key, grp_map[key]) for key in grp_map]
 
     def get_access(self, map_name, group_name, block_name):
         """Gets the access mode"""
 
         try:
-            return self._access_map[map_name][group_name][block_name]
+            return self.access_map[map_name][group_name][block_name]
         except KeyError:
             return 0
 
@@ -440,16 +458,16 @@ class RegProject:
         # delete the items we found.
 
         to_delete = []
-        for access_map in self._access_map:
-            for subsys in self._access_map[access_map]:
+        for access_map in self.access_map:
+            for subsys in self.access_map[access_map]:
                 if subsys == old:
                     to_delete.append((access_map, old, cur))
 
         for (access_map, nold, ncur) in to_delete:
-            self._access_map[access_map][ncur] = self._access_map[access_map][
+            self.access_map[access_map][ncur] = self.access_map[access_map][
                 nold
             ]
-            del self._access_map[access_map][nold]
+            del self.access_map[access_map][nold]
 
         # Search groups for items to rename. Just change the name
         for g_data in self._groupings:
@@ -473,16 +491,16 @@ class RegProject:
         # as we search it.
 
         to_delete = []
-        for access_map in self._access_map:
-            for obj in self._access_map[access_map][subsystem]:
+        for access_map in self.access_map:
+            for obj in self.access_map[access_map][subsystem]:
                 if obj == old:
                     to_delete.append((access_map, subsystem, cur, old))
 
         for (access_map, subsys, ncur, nold) in to_delete:
-            self._access_map[access_map][subsys][ncur] = self._access_map[
+            self.access_map[access_map][subsys][ncur] = self.access_map[
                 access_map
             ][subsys][nold]
-            del self._access_map[access_map][subsys][nold]
+            del self.access_map[access_map][subsys][nold]
 
         # Search groups for items to rename
         for g_data in self._groupings:
@@ -494,18 +512,18 @@ class RegProject:
 
     def get_parameters(self):
         """Returns the parameter list"""
-        return self.__parameters
+        return self._parameters
 
     def add_parameter(self, name, value):
         """Adds a parameter to the parameter list"""
-        self.__parameters.append((name, value))
+        self._parameters.append((name, value))
 
     def remove_parameter(self, name):
         """Removes a parameter from the parameter list"""
-        self.__parameters = [
-            param for param in self.__parameters if param[0] != name
+        self._parameters = [
+            param for param in self._parameters if param[0] != name
         ]
 
     def set_parameters(self, parameter_list):
         """Sets the parameter list"""
-        self.__parameters = parameter_list
+        self._parameters = parameter_list

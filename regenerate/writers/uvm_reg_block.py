@@ -50,30 +50,6 @@ class UVMRegBlockRegisters(WriterBase):
         super().__init__(project, None)
         self.dblist = dblist
 
-    def fix_name(self, field):
-        """
-        Creates a name from the field. If there are any spaces (which the
-        UI should prevent), the are converted to underscores. We then replace
-        name names that are reserved SystemVerilog words with alternatives.
-        """
-        name = "_".join(field.field_name.lower().split())
-
-        if name in REMAP_NAME:
-            return "%s_field" % name
-        return name
-
-    def fix_reg_name(self, reg):
-        """
-        Creates a name from the register. If there are any spaces (which the
-        UI should prevent), the are converted to underscores. We then replace
-        name names that are reserved SystemVerilog words with alternatives.
-        """
-        name = "_".join(reg.token.lower().split())
-
-        if name in REMAP_NAME:
-            return "%s_reg" % name
-        return name
-
     def uvm_address_maps(self):
         return [d for d in self._project.get_address_maps() if not d.uvm]
 
@@ -101,7 +77,7 @@ class UVMRegBlockRegisters(WriterBase):
         return group_maps
 
     def _used_maps(self):
-        return set([addr_map.name for addr_map in self.uvm_address_maps()])
+        return set({addr_map.name for addr_map in self.uvm_address_maps()})
 
     def write(self, filename):
         """
@@ -117,8 +93,8 @@ class UVMRegBlockRegisters(WriterBase):
             os.path.dirname(__file__), "templates", "uvm_reg_block.template"
         )
 
-        with open(template_file) as of:
-            template = env.from_string(of.read())
+        with open(template_file) as ofile:
+            template = env.from_string(ofile.read())
 
         used_dbs = self.get_used_databases()
 
@@ -132,8 +108,8 @@ class UVMRegBlockRegisters(WriterBase):
                     TYPE_TO_INPUT=TYPE_TO_INPUT,
                     db_grp_maps=self.get_db_groups(),
                     group_maps=self._build_group_maps(),
-                    fix_name=self.fix_name,
-                    fix_reg=self.fix_reg_name,
+                    fix_name=fix_name,
+                    fix_reg=fix_reg_name,
                     use_new=False,
                     used_maps=self._used_maps(),
                     map2grp=self.build_map_name_to_groups(),
@@ -167,7 +143,7 @@ class UVMRegBlockRegisters(WriterBase):
             if group.name in grp_set:
                 for reg_sets in group.register_sets:
                     used_sets.add(reg_sets.set)
-        return set([db for db in self.dblist if db.set_name in used_sets])
+        return set({db for db in self.dblist if db.set_name in used_sets})
 
 
 def is_readonly(field):
@@ -204,6 +180,34 @@ def individual_access(field, reg):
 
 def remove_no_uvm(slist):
     return [reg for reg in slist if reg.do_not_use_uvm is False]
+
+
+def fix_name(field):
+    """
+    Creates a name from the field. If there are any spaces (which the
+    UI should prevent), the are converted to underscores. We then replace
+    name names that are reserved SystemVerilog words with alternatives.
+    """
+
+    name = "_".join(field.field_name.lower().split())
+
+    if name in REMAP_NAME:
+        return f"{name}_field"
+    return name
+
+
+def fix_reg_name(reg):
+    """
+    Creates a name from the register. If there are any spaces (which the
+    UI should prevent), the are converted to underscores. We then replace
+    name names that are reserved SystemVerilog words with alternatives.
+    """
+
+    name = "_".join(reg.token.lower().split())
+
+    if name in REMAP_NAME:
+        return f"{name}_reg"
+    return name
 
 
 EXPORTERS = [

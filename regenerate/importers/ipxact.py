@@ -40,7 +40,7 @@ text2write = {
 }
 
 
-class IpXactParser(object):
+class IpXactParser:
     """
     Parses the XML file, loading up the register database.
     """
@@ -60,9 +60,8 @@ class IpXactParser(object):
         self._reg_reset = (False, 0)
 
     def import_data(self, input_file):
-        """
-        Parses the specified input file.
-        """
+        """Parses the specified input file."""
+
         tree = ET.parse(input_file)
         root = tree.getroot()
 
@@ -76,12 +75,12 @@ class IpXactParser(object):
                 "{http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009}description"
             )
 
-        # parser = xml.parsers.expat.ParserCreate()
-        # parser.StartElementHandler = self.start_element
-        # parser.EndElementHandler = self.end_element
-        # parser.CharacterDataHandler = self.characters
-        # with open(input_file) as f:
-        #     parser.ParseFile(f)
+        parser = xml.parsers.expat.ParserCreate()
+        parser.StartElementHandler = self.start_element
+        parser.EndElementHandler = self.end_element
+        parser.CharacterDataHandler = self.characters
+        with open(input_file) as ifile:
+            parser.ParseFile(ifile)
         # #crossreference(self._db)
 
     def start_element(self, tag, attrs):
@@ -92,11 +91,10 @@ class IpXactParser(object):
 
         fields = tag.split(":")
         if len(fields) == 1:
-            t = tag
+            mname = f"start_{tag}"
         else:
-            t = fields[1]
+            mname = f"start_{fields[1]}"
 
-        mname = "start_" + t
         if hasattr(self, mname):
             method = getattr(self, mname)
             method(attrs)
@@ -108,11 +106,10 @@ class IpXactParser(object):
         text = "".join(self._token_list)
         fields = tag.split(":")
         if len(fields) == 1:
-            t = tag
+            mname = f"end_{tag}"
         else:
-            t = fields[1]
+            mname = f"end_{fields[1]}"
 
-        mname = "end_" + t
         if hasattr(self, mname):
             method = getattr(self, mname)
             method(text)
@@ -125,23 +122,31 @@ class IpXactParser(object):
         """
         self._token_list.append(data)
 
-    def start_register(self, attrs):
+    def start_register(self, _attrs):
+        "Register opening tag encountered. Create a new register"
+
         self._reg = Register()
 
-    def end_register(self, text):
+    def end_register(self, _text):
+        "register ending tag encountered. Add the register to the database"
+
         self._db.add_register(self._reg)
         self._reg = None
         self._reg_reset = (False, 0)
 
     def end_addressOffset(self, text):
+        "Address offset end. Convert gathered text into an address"
+
         if self._reg:
             self._reg.address = int(text, 0) + self._block_offset
 
     def end_dim(self, text):
+        "Dim end. Convert text to the dimension of the register"
+
         if self._reg:
             self._reg.dimension = int(text, 0)
 
-    def end_addressBlock(self, text):
+    def end_addressBlock(self, _text):
         self._block_offset = self._block_list.pop()
 
     def end_baseAddress(self, text):
@@ -153,7 +158,7 @@ class IpXactParser(object):
         if self._reg:
             self._reg.width = size
 
-    def start_reset(self, attrs):
+    def start_reset(self, _attrs):
         if self._field:
             self._in_field_reset = True
         elif self._reg:
@@ -171,10 +176,10 @@ class IpXactParser(object):
         elif self._in_reg_reset:
             self._reg_reset = (True, int(text, 16))
 
-    def start_field(self, attrs):
+    def start_field(self, __attrs):
         self._field = BitField()
 
-    def end_field(self, text):
+    def end_field(self, _text):
         if not self._field.field_name.startswith("RESERVED"):
             self._field.start_position = self._fld_start
             self._field.stop_position = self._fld_start + self._fld_width - 1
@@ -224,23 +229,23 @@ class IpXactParser(object):
     def end_bitWidth(self, text):
         self._fld_width = int(text, 0)
 
-    def start_memoryMaps(self, attrs):
+    def start_memoryMaps(self, _attrs):
         self._in_maps = True
 
-    def end_memoryMaps(self, text):
+    def end_memoryMaps(self, _text):
         self._in_maps = False
 
 
-def crossreference(db):
+def crossreference(dbase):
     names = sorted(
-        [reg.register_name for reg in db.get_all_registers()],
+        [reg.register_name for reg in dbase.get_all_registers()],
         key=len,
         reverse=True,
     )
 
     re_list = [r"([^`])({0}) ((R|r)egister)".format(name) for name in names]
 
-    for reg in db.get_all_registers():
+    for reg in dbase.get_all_registers():
         for regex in re_list:
             reg.description = re.sub(regex, r"\1`\2`_ \3", reg.description)
         for field in reg.get_bit_fields():

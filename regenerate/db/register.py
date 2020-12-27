@@ -29,6 +29,25 @@ from regenerate.db.enums import ResetType, ShareType
 class Register:
     """Defines a hardware register."""
 
+    __slots__ = (
+        "_bit_fields",
+        "_dimension",
+        "_do_not_cover",
+        "_do_not_generate_code",
+        "_do_not_test",
+        "_do_not_use_uvm",
+        "_hide",
+        "_id",
+        "_name",
+        "_plist",
+        "_token",
+        "address",
+        "description",
+        "ram_size",
+        "share",
+        "width",
+    )
+
     full_compare = (
         "address",
         "ram_size",

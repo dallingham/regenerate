@@ -215,7 +215,7 @@ class RegParser:
         self.__reg = Register()
         self.__reg.do_not_generate_code = cnv_bool(attrs, "nocode")
         self.__reg.do_not_test = cnv_bool(attrs, "dont_test")
-        self.__reg.do_cover = cnv_bool(attrs, "dont_cover")
+        self.__reg.do_not_cover = cnv_bool(attrs, "dont_cover")
         self.__reg.do_not_use_uvm = cnv_bool(attrs, "dont_use_uvm")
         self.__reg.hide = cnv_bool(attrs, "hide")
         self.__reg.share = int(attrs.get("share", 0))
@@ -252,7 +252,7 @@ class RegParser:
 
           active
         """
-        self.__db.be_level = cnv_int(attrs, "active")
+        self.__db.byte_strobe_active_level = cnv_int(attrs, "active")
 
     def start_reset(self, attrs):
         """

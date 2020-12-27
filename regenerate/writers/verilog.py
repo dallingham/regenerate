@@ -22,6 +22,7 @@ Actual program. Parses the arguments, and initiates the main window
 
 import os
 import re
+import copy
 from collections import namedtuple, defaultdict
 from jinja2 import FileSystemLoader, Environment
 from regenerate.db import TYPES, TYPE_TO_OUTPUT
@@ -210,7 +211,6 @@ class Verilog(WriterBase):
         a block of register definitions for each register and the associated
         container blocks.
         """
-        import copy
 
         dirpath = os.path.dirname(__file__)
 
@@ -335,9 +335,7 @@ class Verilog(WriterBase):
             ofile.write("\n */\n")
 
     def write_register_modules(self, ofile):
-        """
-        Writes the used register module types to the file.
-        """
+        """Writes the used register module types to the file."""
 
         if self._dbase.reset_active_level and not self._dbase.use_interface:
             edge = "posedge"
@@ -377,6 +375,8 @@ class Verilog(WriterBase):
 
 
 class SystemVerilog(Verilog):
+    """Provides the SystemVerilog version"""
+
     def __init__(self, project, dbase):
         super().__init__(project, dbase)
         self.input_logic = "input logic "
@@ -395,13 +395,13 @@ def drop_write_share(list_in):
     return list_out
 
 
-def build_port_widths(db):
+def build_port_widths(dbase):
     return {
-        "byte_strobe": "[{}:0]".format(db.data_bus_width // 8 - 1),
-        "addr": "[{}:0]".format(
-            db.address_bus_width - 1, LOWER_BIT[db.data_bus_width]
+        "byte_strobe": "[{}:0]".format(dbase.data_bus_width // 8 - 1),
+        "addr": "[{}:{}]".format(
+            dbase.address_bus_width - 1, LOWER_BIT[dbase.data_bus_width]
         ),
-        "write_data": "[{}:0]".format(db.data_bus_width - 1),
+        "write_data": "[{}:0]".format(dbase.data_bus_width - 1),
     }
 
 
@@ -414,85 +414,60 @@ def reg_field_name(reg, field):
     )
 
 
-def build_write_address_selects(db, word_fields, cell_info):
+def build_write_address_selects(dbase, word_fields, _cell_info):
 
     assigns = []
 
     for addr in word_fields:
-        rval = addr >> LOWER_BIT[db.data_bus_width]
+        rval = addr >> LOWER_BIT[dbase.data_bus_width]
 
         assigns.append(
             (
                 "write_r%02x" % addr,
                 "%d'h%x"
-                % (db.address_bus_width - LOWER_BIT[db.data_bus_width], rval),
+                % (
+                    dbase.address_bus_width - LOWER_BIT[dbase.data_bus_width],
+                    rval,
+                ),
                 word_fields[addr][0][-1],
             )
         )
     return assigns
 
 
-def build_read_address_selects(db, word_fields, cell_info):
+def build_read_address_selects(dbase, word_fields, cell_info):
     assigns = []
     for addr in word_fields:
         val = word_fields[addr]
 
-        for (
-            field,
-            start_offset,
-            stop_offset,
-            start_pos,
-            stop_pos,
-            faddr,
-            reg,
-        ) in val:
+        for (field, *_) in val:
             if not cell_info[field.field_type].has_rd:
                 continue
-            lower_bit = LOWER_BIT[db.data_bus_width]
+            lower_bit = LOWER_BIT[dbase.data_bus_width]
             assigns.append(
                 (
                     "read_r%02x" % addr,
                     "%d'h%x"
-                    % (db.address_bus_width - lower_bit, addr >> lower_bit),
+                    % (dbase.address_bus_width - lower_bit, addr >> lower_bit),
                     word_fields[addr][0][-1],
                 )
             )
     return assigns
 
 
-def build_output_signals(db, cell_info):
+def build_output_signals(dbase, cell_info):
 
     scalar_ports = []
     array_ports = defaultdict(list)
     dim = {}
     signals = []
-    for reg in db.get_all_registers():
+
+    for reg in dbase.get_all_registers():
         if reg.do_not_generate_code:
             continue
         for field in reg.get_bit_fields():
             if cell_info[field.field_type].has_oneshot:
-                if reg.dimension_is_param():
-                    signals.append(
-                        (
-                            "{}_1S[{}]".format(
-                                field.output_signal, reg.dimension_str
-                            ),
-                            "        ",
-                        )
-                    )
-                elif reg.dimension > 1:
-                    signals.append(
-                        (
-                            "{}_1S[{}]".format(
-                                field.output_signal, reg.dimension
-                            ),
-                            "        ",
-                        )
-                    )
-                else:
-                    signals.append(
-                        ("{}_1S".format(field.output_signal), "        ")
-                    )
+                signals.append(make_one_shot(field.output_signal, reg))
 
             if TYPE_TO_OUTPUT[field.field_type] and field.use_output_enable:
                 sig = field.output_signal
@@ -528,41 +503,38 @@ def build_output_signals(db, cell_info):
         msb = max(array_ports[key])
         lsb = min(array_ports[key])
         if msb == lsb:
-            scalar_ports.append((key, "[%d]" % lsb, dim[key]))
+            scalar_ports.append((key, f"[{lsb}]", dim[key]))
         else:
-            scalar_ports.append((key, "[%d:%d]" % (msb, lsb), dim[key]))
+            scalar_ports.append((key, f"[{msb}:{lsb}]", dim[key]))
 
     for (name, vect, dim) in scalar_ports:
-        vect = vect + "         "
-        if type(dim) == str or dim > 1:
-            try:
-                val = int(dim)
-                if val > 1:
-                    signals.append(("{}[{}]".format(name, dim), vect[0:8]))
-                else:
-                    signals.append(("{}".format(name), vect[0:8]))
-            except:
-                signals.append(("{}[{}]".format(name, dim), vect[0:8]))
-        else:
-            signals.append((name, vect[0:8]))
+        signals.append(make_scalar(name, vect, dim))
 
     return sorted(signals)
 
 
-def build_logic_list(db, word_fields, cell_info):
+def make_scalar(name, vect, dim):
+    """Converts the name, vect, and dim into a signal"""
+
+    vect = vect + "         "
+    if isinstance(dim, str) or dim > 1:
+        try:
+            val = int(dim)
+            if val > 1:
+                return (f"{name}[{dim}]", vect[0:8])
+            return (name, vect[0:8])
+        except ValueError:
+            return (f"{name}[{dim}]", vect[0:8])
+    else:
+        return (name, vect[0:8])
+
+
+def build_logic_list(_dbase, word_fields, cell_info):
     reg_list = []
 
     for addr in word_fields:
         val = word_fields[addr]
-        for (
-            field,
-            start_offset,
-            stop_offset,
-            start_pos,
-            stop_pos,
-            faddr,
-            reg,
-        ) in val:
+        for (field, _, _, start_pos, stop_pos, _, reg) in val:
             if field.msb == field.lsb:
                 if reg.dimension_is_param():
                     reg_list.append(
@@ -575,7 +547,7 @@ def build_logic_list(db, word_fields, cell_info):
                 else:
                     reg_list.append((reg_field_name(reg, field), "        "))
             else:
-                vect = "[{}:{}]      ".format(stop_pos, start_pos)
+                vect = f"[{stop_pos}:{start_pos}]      "
                 if reg.dimension_is_param():
                     reg_list.append(
                         (
@@ -587,14 +559,14 @@ def build_logic_list(db, word_fields, cell_info):
                 else:
                     reg_list.append((reg_field_name(reg, field), vect[0:8]))
             if cell_info[field.field_type].has_oneshot:
-                for b in break_into_bytes(start_pos, stop_pos):
+                for byte in break_into_bytes(start_pos, stop_pos):
                     if reg.dimension_is_param():
                         reg_list.append(
                             (
                                 (
                                     "{}_{}_1S[{}]".format(
                                         reg_field_name(reg, field),
-                                        b[0],
+                                        byte[0],
                                         reg.dimension_str,
                                     )
                                 ),
@@ -606,7 +578,7 @@ def build_logic_list(db, word_fields, cell_info):
                             (
                                 (
                                     "{}_{}_1S".format(
-                                        reg_field_name(reg, field), b[0]
+                                        reg_field_name(reg, field), byte[0]
                                     )
                                 ),
                                 "        ",
@@ -615,12 +587,12 @@ def build_logic_list(db, word_fields, cell_info):
     return reg_list
 
 
-def build_input_signals(db, cell_info):
+def build_input_signals(dbase, cell_info):
     signals = set()
-    for reg in db.get_all_registers():
+    for reg in dbase.get_all_registers():
         for field in reg.get_bit_fields():
-            ci = cell_info[field.field_type]
-            if ci.has_control:
+            cinfo = cell_info[field.field_type]
+            if cinfo.has_control:
                 if reg.dimension_is_param():
                     name = "{}[{}]".format(
                         field.control_signal, reg.dimension_str
@@ -632,7 +604,7 @@ def build_input_signals(db, cell_info):
                 else:
                     signals.add((field.control_signal, "        "))
             if (
-                ci.has_input
+                cinfo.has_input
                 and field.input_signal
                 and field.input_signal not in signals
             ):
@@ -667,26 +639,18 @@ def build_oneshot_assignments(word_fields, cell_info):
 
     for addr in word_fields:
         val = word_fields[addr]
-        for (
-            f,
-            start_offset,
-            stop_offset,
-            start_pos,
-            stop_pos,
-            faddr,
-            reg,
-        ) in val:
-            if cell_info[f.field_type][3]:
+        for (fld, _, _, _, _, _, reg) in val:
+            if cell_info[fld.field_type][3]:
 
                 if reg.dimension > 1:
-                    name = "{}_1S[{}]".format(f.output_signal, reg.dimension)
+                    name = f"{fld.output_signal}_1S[{reg.dimension}]"
                 else:
-                    name = "{}_1S".format(f.output_signal)
+                    name = f"{fld.output_signal}_1S"
                 or_list = []
-                for b in break_into_bytes(f.lsb, f.msb):
+                for byte in break_into_bytes(fld.lsb, fld.msb):
                     or_list.append(
                         "r{:x}_{}_{}_1S".format(
-                            reg.address, f.field_name.lower(), b[0]
+                            reg.address, fld.field_name.lower(), byte[0]
                         )
                     )
                 assign_list.append((name, " | ".join(or_list)))
@@ -699,80 +663,69 @@ def build_assignments(word_fields):
 
     for addr in word_fields:
         val = word_fields[addr]
-        for (
-            f,
-            start_offset,
-            stop_offset,
-            start_pos,
-            stop_pos,
-            faddr,
-            reg,
-        ) in val:
+        for (fld, _, _, _, _, _, reg) in val:
             if reg.share == 0:
                 mode = "_"
             elif reg.share == 1:
                 mode = "_r_"
             else:
                 mode = "_w_"
-            if f.use_output_enable and f.output_signal != "":
+            if fld.use_output_enable and fld.output_signal != "":
                 if reg.dimension_is_param():
                     assign_list.append(
                         (
-                            "{}".format(f.output_signal),
+                            fld.output_signal,
                             "r%02x%s%s"
-                            % (reg.address, mode, f.field_name.lower()),
+                            % (reg.address, mode, fld.field_name.lower()),
                             reg.dimension_str,
                         )
                     )
                 elif reg.dimension != -1:
                     assign_list.append(
                         (
-                            "{}[{}]".format(f.output_signal, reg.dimension),
+                            f"{fld.output_signal}[{reg.dimension}]",
                             "r%02x%s%s"
-                            % (reg.address, mode, f.field_name.lower()),
+                            % (reg.address, mode, fld.field_name.lower()),
                             "",
                         )
                     )
                 else:
                     assign_list.append(
                         (
-                            f.resolved_output_signal(),
+                            fld.resolved_output_signal(),
                             "r%02x%s%s"
-                            % (reg.address, mode, f.field_name.lower()),
+                            % (reg.address, mode, fld.field_name.lower()),
                             "",
                         )
                     )
     return assign_list
 
 
-def register_output_definitions(db, word_fields):
+def register_output_definitions(dbase, word_fields):
 
     full_list = []
 
     for addr in word_fields:
         val = word_fields[addr]
 
-        last = db.data_bus_width - 1
+        last = dbase.data_bus_width - 1
         reg = val[0][-1]
         if reg.dimension_is_param():
             wire_name = (
                 "r%02x[%s]" % (addr, reg.dimension_str),
-                "[%d:0]" % (db.data_bus_width - 1,),
+                "[%d:0]" % (dbase.data_bus_width - 1,),
             )
         else:
-            wire_name = ("r%02x" % addr, "[%d:0]" % (db.data_bus_width - 1,))
+            wire_name = (
+                "r%02x" % addr,
+                "[%d:0]" % (dbase.data_bus_width - 1,),
+            )
         clist = []
 
         val = reversed(val)
-        for (
-            field,
-            start_offset,
-            stop_offset,
-            start_pos,
-            stop_pos,
-            faddr,
-            reg,
-        ) in val:
+        last_offset = 63
+
+        for (field, start_offset, _, start_pos, stop_pos, _, reg) in val:
 
             width = stop_pos - start_pos + 1
             if reg.share == 0:
@@ -800,15 +753,16 @@ def register_output_definitions(db, word_fields):
                     )
                 )
             last = start_offset - 1
+            last_offset = start_offset
 
-        if start_offset != 0:
-            clist.append("%d'b0" % start_offset)
+        if last_offset != 0:
+            clist.append("%d'b0" % last_offset)
         full_list.append((wire_name, clist))
     return full_list
 
 
-def build_standard_ports(db):
-    if db.use_interface:
+def build_standard_ports(dbase):
+    if dbase.use_interface:
         return {
             "clk": "MGMT.CLK",
             "reset": "MGMT.RSTn",
@@ -818,19 +772,31 @@ def build_standard_ports(db):
             "write_data": "MGMT.WDATA",
             "read_data": "MGMT.RDATA",
             "ack": "MGMT.ACK",
-            "addr": "MGMT.ADDR[%d:3]" % (db.address_bus_width - 1,),
+            "addr": "MGMT.ADDR[%d:3]" % (dbase.address_bus_width - 1,),
         }
     return {
-        "clk": db.clock_name,
-        "reset": db.reset_name,
-        "write_strobe": db.write_strobe_name,
-        "read_strobe": db.read_strobe_name,
-        "byte_strobe": db.byte_strobe_name,
-        "write_data": db.write_data_name,
-        "read_data": db.read_data_name,
-        "ack": db.acknowledge_name,
-        "addr": db.address_bus_name,
+        "clk": dbase.clock_name,
+        "reset": dbase.reset_name,
+        "write_strobe": dbase.write_strobe_name,
+        "read_strobe": dbase.read_strobe_name,
+        "byte_strobe": dbase.byte_strobe_name,
+        "write_data": dbase.write_data_name,
+        "read_data": dbase.read_data_name,
+        "ack": dbase.acknowledge_name,
+        "addr": dbase.address_bus_name,
     }
+
+
+def make_one_shot(reg, name):
+    """Builds the one shot signal from the name and dimenstion"""
+
+    if reg.dimension_is_param():
+        signal = (f"{name}_1S[{reg.dimension_str}]", "        ")
+    elif reg.dimension > 1:
+        signal = (f"{name}_1S[{reg.dimension}]", "        ")
+    else:
+        signal = (f"{name}_1S", "        ")
+    return signal
 
 
 EXPORTERS = [

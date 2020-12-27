@@ -17,12 +17,16 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""
+Register utilities
+"""
+
 import copy
 import re
 from regenerate.ui.register_list import build_define
 
 
-REGNAME = re.compile("^(.*)(\d+)(.*)$")
+REGNAME = re.compile(r"^(.*)(\d+)(.*)$")
 
 
 def duplicate_register(dbase, reg):
@@ -32,8 +36,9 @@ def duplicate_register(dbase, reg):
     register.
     """
     reglist = set(
-        [dbase.get_register(key).register_name for key in dbase.get_keys()])
-    deflist = set([dbase.get_register(key).token for key in dbase.get_keys()])
+        {dbase.get_register(key).register_name for key in dbase.get_keys()}
+    )
+    deflist = set({dbase.get_register(key).token for key in dbase.get_keys()})
     signals = build_signal_set(dbase)
 
     new_name = build_new_name(reg.register_name, reglist)
@@ -106,13 +111,14 @@ def signal_from_source(source_name, existing_list):
         signal = build_new_name(source_name, existing_list)
         if signal:
             return signal
-        else:
-            return source_name + "_COPY"
-    else:
-        return ""
+        return source_name + "_COPY"
+    return ""
 
 
 def build_new_name(name, reglist):
+    """Build a new name from a existing name, making sure it is
+    similar, but unique"""
+
     match = REGNAME.match(name)
     if match:
         groups = match.groups()
@@ -120,8 +126,7 @@ def build_new_name(name, reglist):
         while "".join([groups[0], str(index), groups[2]]) in reglist:
             index += 1
         return "".join([groups[0], str(index), groups[2]])
-    else:
-        index = 2
-        while "%s %d" % (name, index) in reglist:
-            index += 1
-        return "%s %d" % (name, index)
+    index = 2
+    while "%s %d" % (name, index) in reglist:
+        index += 1
+    return "%s %d" % (name, index)

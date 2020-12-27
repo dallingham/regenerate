@@ -48,9 +48,10 @@ else:
         return pwd.getpwnam(os.environ["USER"])[4].split(",")[0]
 
 
-class WriterBase(object):  # IGNORE:R0921 - we know this is a abstract class
+class WriterBase:
     """
-    Writes the register information to the output file determined    by the derived class.
+    Writes the register information to the output file determined
+    by the derived class.
     """
 
     (TYPE_BLOCK, TYPE_GROUP, TYPE_PROJECT) = range(3)
@@ -66,7 +67,7 @@ class WriterBase(object):  # IGNORE:R0921 - we know this is a abstract class
         self._project = obj
         self._project_name = obj.short_name
 
-    def _set_values_init(self, dbase, instance_name=None):
+    def _set_values_init(self, dbase, _instance_name=None):
         self._comments = dbase.overview_text
         self._module = dbase.module_name
         self._clock = dbase.clock_name
@@ -96,15 +97,18 @@ class WriterBase(object):  # IGNORE:R0921 - we know this is a abstract class
         """
         try:
             cfile = os.path.join(self._data_path, default_path)
-            data = "".join(file(cfile).readlines())
+            with open(cfile) as ifile:
+                data = "".join(ifile.readlines())
         except IOError:
             try:
                 cfile = os.path.join(self._data_path, "site_comment.txt")
-                data = comment_char.join(file(cfile).readlines())
+                with open(cfile) as ifile:
+                    data = comment_char.join(ifile.readlines())
             except IOError:
                 try:
                     cfile = os.path.join(INSTALL_PATH, "comment.txt")
-                    data = comment_char.join(file(cfile).readlines())
+                    with open(cfile) as ifile:
+                        data = comment_char.join(ifile.readlines())
                 except IOError:
                     data = "\n"
             data = comment_char + data

@@ -38,7 +38,7 @@ class Sdc(WriterBase):
         """
         Writes the output file
         """
-        of = open(filename, "w")
+        ofile = open(filename, "w")
 
         # Write register blocks
         for dbase in self.dblist:
@@ -60,15 +60,15 @@ class Sdc(WriterBase):
                                         group.hdl, j, grp.hdl, i
                                     )
                                     signal_name = "%s/%s" % (path, base)
-                                    of.write(
+                                    ofile.write(
                                         "set_multicycle -from [get_cells{%s}] -setup 4\n"
                                         % signal_name
                                     )
-                                    of.write(
+                                    ofile.write(
                                         "set_false_path -from [get_cells{%s}] -hold\n"
                                         % signal_name
                                     )
-        of.close()
+        ofile.close()
 
 
 def build_format(top_hdl, top_count, lower_hdl, lower_count):
@@ -78,24 +78,28 @@ def build_format(top_hdl, top_count, lower_hdl, lower_count):
         lower_hdl = lower_hdl.replace("%0d", "%(d)d")
         lower_hdl = lower_hdl.replace(".", "/")
         lower_hdl = lower_hdl % {"d": lower_count}
-        return "%s/%s" % (top_hdl, lower_hdl)
+        return f"{top_hdl}/{lower_hdl}"
     elif lower_hdl:
         lower_hdl = lower_hdl.replace("%0d", "%(d)d")
         lower_hdl = lower_hdl.replace(".", "/") % {"d": lower_count}
-    else:
-        return ""
+        return lower_hdl
+    return ""
 
 
 def all_fields(dbase):
-    f = []
+    """Return a list of all the fields"""
+
+    fld_list = []
     for reg in dbase.get_all_registers():
         for field in reg.get_bit_fields():
             if has_static_output(field):
-                f.append((reg, field))
-    return f
+                fld_list.append((reg, field))
+    return fld_list
 
 
 def has_static_output(field):
+    """Return true if the output field is static"""
+
     return (
         field.use_output_enable
         and field.output_signal
