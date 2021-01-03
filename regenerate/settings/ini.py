@@ -21,10 +21,7 @@ Provides the interface to the users .ini file. This is a standard ConfigParser
 module that is used to remember paths for exporters.
 """
 
-try:
-    from configparser import ConfigParser, NoSectionError, NoOptionError
-except:
-    from ConfigParser import ConfigParser, NoSectionError, NoOptionError
+from configparser import ConfigParser, NoSectionError, NoOptionError
 
 import os
 

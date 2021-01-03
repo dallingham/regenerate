@@ -32,6 +32,8 @@ from ..db.reg_project import RegProject
 from ..db.register_db import RegisterDb
 from ..db.bitfield import BitField
 from ..db.register import Register
+from ..db.addrmap import AddrMapData
+from ..db.group_data import GroupData
 
 ACCESS_MAP = {}
 for i in TYPES:
@@ -54,7 +56,7 @@ class UVMRegBlockRegisters(WriterBase):
         super().__init__(project, None)
         self.dblist = dblist
 
-    def uvm_address_maps(self):
+    def uvm_address_maps(self) -> List[AddrMapData]:
         return [d for d in self._project.get_address_maps() if not d.uvm]
 
     def build_map_name_to_groups(self):
@@ -142,7 +144,7 @@ class UVMRegBlockRegisters(WriterBase):
             if maps[key]:
                 grp_set.add(key.name)
 
-        used_sets = set()
+        used_sets: Set[GroupData] = set()
         for group in self._project.get_grouping_list():
             if group.name in grp_set:
                 for reg_sets in group.register_sets:

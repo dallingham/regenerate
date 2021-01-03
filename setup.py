@@ -4,15 +4,16 @@ except ImportError:
     from distutils.core import setup
 
 setup(
-    name='regenerate',
-    version='1.1.0',
-    license='License.txt',
-    author='Donald N. Allingham',
-    author_email='dallingham@gmail.com',
-    description='Register editor for ASIC/FPGA designs',
-    long_description='Allows users to manange registers for '
-    'ASIC and FPGA designs. Capable of generating Verilog '
-    'RTL, test code, C and assembler header files, and documentation.',
+    name="regenerate",
+    version="1.9.9",
+    license="License.txt",
+    author="Donald N. Allingham",
+    author_email="dallingham@gmail.com",
+    description="Register editor for ASIC/FPGA designs",
+    long_description="Allows users to manange registers for "
+    "ASIC and FPGA designs. Capable of generating Verilog/SystemVerilog "
+    "RTL, UVM register code, test code, C and assembler header files, "
+    "and documentation.",
     packages=[
         "regenerate",
         "regenerate.db",
@@ -20,17 +21,17 @@ setup(
         "regenerate.extras",
         "regenerate.settings",
         "regenerate.ui",
-        "regenerate.writers"
+        "regenerate.writers",
     ],
     package_data={
-        'regenerate': [
-            'data/ui/*.ui',
-            'data/media/*.svg',
-            'data/help/*.rst',
-            'data/media/*.png',
-            'data/extra/*.odt',
-            'data/*.*',
-            'writers/templates/*'
+        "regenerate": [
+            "data/ui/*.ui",
+            "data/media/*.svg",
+            "data/help/*.rst",
+            "data/media/*.png",
+            "data/extra/*.odt",
+            "data/*.*",
+            "writers/templates/*",
         ]
     },
     url="https://github.com/dallingham/regenerate",
@@ -40,12 +41,12 @@ setup(
         "bin/regupdate",
         "bin/regxref",
         "bin/regdiff",
-        "bin/ipxact2reg"
+        "bin/ipxact2reg",
     ],
     classifiers=[
-        'Operating System :: POSIX',
-        'Programming Language :: Python :: 2.7',
-        'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
-        'Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)'
+        "Operating System :: POSIX",
+        "Programming Language :: Python :: 3.6",
+        "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
+        "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
     ],
 )

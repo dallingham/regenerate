@@ -22,7 +22,7 @@ Sdc - Writes out synthesis constraints
 """
 
 import datetime
-from regenerate.writers.writer_base import WriterBase, ExportInfo
+from .writer_base import WriterBase, ExportInfo
 
 
 class Xdc(WriterBase):

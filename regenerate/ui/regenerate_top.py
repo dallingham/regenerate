@@ -262,24 +262,20 @@ class MainWindow(BaseWindow):
         self.prj_model = ProjectModel()
         self.prj_obj.set_model(self.prj_model)
 
-        self.addr_map_obj = self.find_obj("address_tree")
         self.addr_map_list = AddrMapList(
-            self.addr_map_obj, self.set_project_modified
+            self.find_obj("address_tree"), self.set_project_modified
         )
 
-        self.parameter_list_obj = self.find_obj("parameter_list")
         self.parameter_list = ParameterList(
-            self.parameter_list_obj, self.set_parameters_modified
+            self.find_obj("parameter_list"), self.set_parameters_modified
         )
 
-        self.prj_parameter_list_obj = self.find_obj("prj_param_list")
         self.prj_parameter_list = PrjParameterList(
-            self.prj_parameter_list_obj, self.set_parameters_modified
+            self.find_obj("prj_param_list"), self.set_parameters_modified
         )
 
-        self.overrides_obj = self.find_obj("prj_subparam_list")
         self.overrides_list = OverridesList(
-            self.overrides_obj, self.set_parameters_modified
+            self.find_obj("prj_subparam_list"), self.set_parameters_modified
         )
 
     def set_parameters_modified(self):
@@ -1369,7 +1365,7 @@ class MainWindow(BaseWindow):
             if status == Question.DISCARD:
                 self.exit()
                 return False
-            elif status == Question.SAVE:
+            if status == Question.SAVE:
                 self.save_and_quit()
                 return False
             dialog.destroy()
@@ -1549,10 +1545,10 @@ class MainWindow(BaseWindow):
     def set_title(self, modified):
         if modified:
             self.top_window.set_title(
-                "{self.prj.name} (modified) - regenerate"
+                f"{self.prj.name} (modified) - regenerate"
             )
         else:
-            self.top_window.set_title("{self.prj.name} - regenerate")
+            self.top_window.set_title(f"{self.prj.name} - regenerate")
 
 
 def check_field(field):

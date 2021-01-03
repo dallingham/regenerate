@@ -24,24 +24,24 @@ import os
 import re
 import copy
 from collections import namedtuple, defaultdict
+from typing import List, Tuple, TextIO, Set, Dict
+
 from jinja2 import FileSystemLoader, Environment
-from regenerate.db import TYPES, TYPE_TO_OUTPUT, Register
+from regenerate.db import (
+    TYPES,
+    TYPE_TO_OUTPUT,
+    Register,
+    BitField,
+    BitType,
+    RegisterDb,
+    RegProject,
+)
 from regenerate.writers.writer_base import WriterBase, ExportInfo
 from regenerate.writers.verilog_reg_def import REG
 from regenerate.db.enums import ShareType, ResetType
 
 LOWER_BIT = {128: 4, 64: 3, 32: 2, 16: 1, 8: 0}
 
-
-(
-    F_FIELD,
-    F_START_OFF,
-    F_STOP_OFF,
-    F_START,
-    F_STOP,
-    F_ADDRESS,
-    F_REGISTER,
-) = range(7)
 
 BIT_SLICE = re.compile(r"(.*)\[(\d+)\]")
 BUS_SLICE = re.compile(r"(.*)\[(\d+):(\d+)\]")
@@ -74,17 +74,17 @@ ByteInfo = namedtuple(
 )
 
 
-def full_reset_value(field):
+def full_reset_value(field: BitField) -> str:
     """returns the full reset value for the entire field"""
 
     if field.reset_type == ResetType.NUMERIC:
         return "{0}'h{1:0x}".format(field.width, field.reset_value)
-    elif field.reset_type == ResetType.INPUT:
+    if field.reset_type == ResetType.INPUT:
         return field.reset_input
     return field.reset_parameter
 
 
-def reset_value(field, start, stop):
+def reset_value(field: BitField, start: int, stop: int) -> str:
     """returns the full reset value for the field up to a byte"""
 
     if field.reset_type == ResetType.NUMERIC:
@@ -93,7 +93,7 @@ def reset_value(field, start, stop):
         return "{0}'h{1:x}".format(
             field_width, reset & int((2 ** field_width) - 1)
         )
-    elif field.reset_type == ResetType.INPUT:
+    if field.reset_type == ResetType.INPUT:
         if stop == start:
             return field.reset_input
         return "{0}[{1}:{2}]".format(field.reset_input, stop, start)
@@ -102,7 +102,7 @@ def reset_value(field, start, stop):
     return "{0}[{1}:{2}]".format(field.reset_parameter, stop, start)
 
 
-def break_into_bytes(start, stop):
+def break_into_bytes(start: int, stop: int) -> List[Tuple[int, int]]:
     """
     Return a list of byte boundaries from the start and stop values
     """
@@ -116,7 +116,9 @@ def break_into_bytes(start, stop):
     return data
 
 
-def in_range(lower, upper, lower_limit, upper_limit):
+def in_range(
+    lower: int, upper: int, lower_limit: int, upper_limit: int
+) -> bool:
     """
     Checks to see if the range is within the specified range
     """
@@ -127,7 +129,8 @@ def in_range(lower, upper, lower_limit, upper_limit):
     )
 
 
-def rshift(val, shift):
+def rshift(val: int, shift: int) -> int:
+    """"Right shift the value by the specified number of bits"""
     return int(val) >> int(shift)
 
 
@@ -137,7 +140,7 @@ class Verilog(WriterBase):
     the UVM format.
     """
 
-    def __init__(self, project, dbase):
+    def __init__(self, project: RegProject, dbase: RegisterDb):
         super().__init__(project, dbase)
 
         self.input_logic = "input       "
@@ -163,9 +166,16 @@ class Verilog(WriterBase):
             for reg in dbase.get_all_registers()
             if not (reg.do_not_generate_code or reg.ram_size > 0)
         ]
-        self._used_types = set()
+        self._used_types: Set[BitType] = set()
 
-    def _byte_info(self, field, register, lower, size, offset):
+    def _byte_info(
+        self,
+        field: BitField,
+        register: Register,
+        lower: int,
+        size: int,
+        offset: int,
+    ) -> ByteInfo:
         """
         Returns the basic information from a field, broken out into byte
         quantities
@@ -187,11 +197,12 @@ class Verilog(WriterBase):
             register,
         )
 
-    def __generate_group_list(self, reglist, size):
+    def __generate_group_list(self, reglist: List[Register], size: int):
         """
         Breaks a set of bit fields along the specified boundary
         """
-        item_list = {}
+        item_list: Dict[int, List[ByteInfo]] = {}
+
         for register in reglist:
             for field in register.get_bit_fields():
                 self._used_types.add(field.field_type)
@@ -205,12 +216,14 @@ class Verilog(WriterBase):
                         offset += size // 8
         return item_list
 
-    def write(self, filename):
+    def write(self, filename: str):
         """
         Write the data to the file as a SystemVerilog package. This includes
         a block of register definitions for each register and the associated
         container blocks.
         """
+
+        assert self._dbase is not None
 
         dirpath = os.path.dirname(__file__)
 
@@ -274,7 +287,7 @@ class Verilog(WriterBase):
         assign_list = build_assignments(word_fields)
 
         write_address_selects = build_write_address_selects(
-            self._dbase, word_fields, self._cell_info
+            self._dbase, word_fields
         )
         read_address_selects = build_read_address_selects(
             self._dbase, word_fields, self._cell_info
@@ -317,7 +330,9 @@ class Verilog(WriterBase):
             )
             self.write_register_modules(ofile)
 
-    def comment(self, ofile, text_list, border=None, precede_blank=0):
+    def comment(
+        self, ofile: TextIO, text_list: List[str], border=None, precede_blank=0
+    ):
         """
         Creates a comment from the list of text strings
         """
@@ -395,7 +410,7 @@ def drop_write_share(list_in):
     return list_out
 
 
-def build_port_widths(dbase):
+def build_port_widths(dbase: RegisterDb):
     return {
         "byte_strobe": "[{}:0]".format(dbase.data_bus_width // 8 - 1),
         "addr": "[{}:{}]".format(
@@ -405,7 +420,7 @@ def build_port_widths(dbase):
     }
 
 
-def reg_field_name(reg, field):
+def reg_field_name(reg: Register, field: BitField):
     mode = ["_", "_r_", "_w"]
     return "r%02x%s%s" % (
         reg.address,
@@ -414,7 +429,9 @@ def reg_field_name(reg, field):
     )
 
 
-def build_write_address_selects(dbase, word_fields, _cell_info):
+def build_write_address_selects(
+    dbase: RegisterDb, word_fields: Dict[int, List[ByteInfo]]
+):
 
     assigns = []
 

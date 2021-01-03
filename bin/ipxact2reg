@@ -20,43 +20,38 @@
 Import IPXACT data into regenerate
 """
 
-#
-# TODO:
-#
-#
-
 import os
 import sys
-
-if os.path.dirname(sys.argv[0]) != ".":
-    if sys.argv[0][0] == "/":
-        fullPath = os.path.dirname(sys.argv[0])
-    else:
-        fullPath = os.path.join(os.getcwd(), os.path.dirname(sys.argv[0]))
-else:
-    fullPath = os.getcwd()
-sys.path.insert(0, os.path.dirname(fullPath))
-
 import xml.etree.ElementTree as ET
-from regenerate.db import Register, BitField, LOGGER, RegisterDb
-from regenerate.db.enums import BitType
 from collections import defaultdict, Counter
 import re
-import string
 import argparse
 import math
 import sre_constants
 
-ARRAY_ELEMENT = re.compile("^(.*[^d])(\d+)(_reg)?\s*$", re.I)
+if os.path.dirname(sys.argv[0]) != ".":
+    if sys.argv[0][0] == "/":
+        FULLPATH = os.path.dirname(sys.argv[0])
+    else:
+        FULLPATH = os.path.join(os.getcwd(), os.path.dirname(sys.argv[0]))
+else:
+    FULLPATH = os.getcwd()
+sys.path.insert(0, os.path.dirname(FULLPATH))
 
-text2field = {
+
+from regenerate.db import Register, BitField, LOGGER, RegisterDb
+from regenerate.db.enums import BitType
+
+ARRAY_ELEMENT = re.compile(r"^(.*[^d])(\d+)(_reg)?\s*$", re.I)
+
+TEXT2FIELD = {
     "read-only": BitType.READ_ONLY,
     "read-write": BitType.READ_WRITE,
     "write-only": BitType.WRITE_ONLY,
-    "writeOnce": BitType.WRITE_ONLY
+    "writeOnce": BitType.WRITE_ONLY,
 }
 
-text2write = {
+TEXT2WRITE = {
     "oneToClear": BitType.WRITE_1_TO_CLEAR_SET,
     "oneToSet": BitType.WRITE_1_TO_SET,
 }
@@ -69,8 +64,7 @@ RESERVED = [
 ]
 
 
-class RegGroup(object):
-
+class RegGroup:
     def __init__(self):
         self.addr = 0
         self.regs = []
@@ -89,7 +83,7 @@ class RegGroup(object):
         return self.regs
 
 
-class IpXactParser(object):
+class IpXactParser:
     """
     Parses the XML file, loading up the register database.
     """
@@ -112,7 +106,7 @@ class IpXactParser(object):
         self._ignore_count = 0
         self.reglist = []
         self._grp = False
-        self.vendor = ''
+        self.vendor = ""
         self._keep_reserved = keep_reserved
 
     def import_data(self, input_file):
@@ -152,7 +146,8 @@ class IpXactParser(object):
                         self._reg.register_name = disp_tag.text
                     else:
                         self._reg.register_name = name_tag.text.replace(
-                            "_", " ")
+                            "_", " "
+                        )
 
                     if descr_tag is not None:
                         self._reg.description = descr_tag.text
@@ -167,17 +162,27 @@ class IpXactParser(object):
                     for field in register.findall(scope + "field"):
                         self.start_field()
                         self._field.field_name = field.find(
-                            scope + "name").text.upper()
+                            scope + "name"
+                        ).text.upper()
                         self._field.description = field.find(
-                            scope + "description").text
+                            scope + "description"
+                        ).text
                         self._field.start_position = int(
-                            field.find(scope + "bitOffset").text)
-                        self._field.stop_position = self._field.start_position + \
-                            int(field.find(scope + "bitWidth").text) - 1
-                        if self._field.field_type not in (BitType.WRITE_1_TO_SET,
-                                                          BitType.WRITE_1_TO_CLEAR_SET):
-                            self._field.field_type = text2field.get(field.find(scope + "access").text,
-                                                                    BitType.READ_ONLY)
+                            field.find(scope + "bitOffset").text
+                        )
+                        self._field.stop_position = (
+                            self._field.start_position
+                            + int(field.find(scope + "bitWidth").text)
+                            - 1
+                        )
+                        if self._field.field_type not in (
+                            BitType.WRITE_1_TO_SET,
+                            BitType.WRITE_1_TO_CLEAR_SET,
+                        ):
+                            self._field.field_type = text2field.get(
+                                field.find(scope + "access").text,
+                                BitType.READ_ONLY,
+                            )
                         self.end_field()
 
                     self.end_register()
@@ -186,7 +191,9 @@ class IpXactParser(object):
         # crossreference(self._db)
         if self._ignore_count:
             LOGGER.info(
-                "Ignored %0d registers that contained no useful fields" % self._ignore_count)
+                "Ignored %0d registers that contained no useful fields"
+                % self._ignore_count
+            )
 
     def start_element(self, tag, attrs):
         """
@@ -200,26 +207,26 @@ class IpXactParser(object):
         else:
             t = fields[1]
 
-        mname = 'start_' + t
+        mname = "start_" + t
         if hasattr(self, mname):
             method = getattr(self, mname)
             method(attrs)
 
     def end_vendor(self, tag):
-        self.vendor = ''.join(self._token_list)
+        self.vendor = "".join(self._token_list)
 
     def end_element(self, tag):
         """
         Called every time an XML element end
         """
-        text = ''.join(self._token_list)
+        text = "".join(self._token_list)
         fields = tag.split(":")
         if len(fields) == 1:
             t = tag
         else:
             t = fields[1]
 
-        mname = 'end_' + t
+        mname = "end_" + t
         if hasattr(self, mname):
             method = getattr(self, mname)
             method(text)
@@ -246,8 +253,12 @@ class IpXactParser(object):
             new_token = self._reg.token
             index = -1
 
-        if (index >= 1 and self._last_index + 1 == index and
-                self._last_reg and self._reg.array_cmp(self._last_reg)):
+        if (
+            index >= 1
+            and self._last_index + 1 == index
+            and self._last_reg
+            and self._reg.array_cmp(self._last_reg)
+        ):
             self._last_reg.dimension += 1
             self._last_reg.token = new_token
             self._last_reg.register_name = new_name
@@ -310,23 +321,27 @@ class IpXactParser(object):
             self._reg.add_bit_field(self._field)
             if self._reg_reset[0]:
                 self._field.reset_value = (
-                    self._reg_reset[1] >> self._field.start_position) & (
-                        (1 << self._field.width) - 1)
+                    self._reg_reset[1] >> self._field.start_position
+                ) & ((1 << self._field.width) - 1)
                 self._field.reset_type = BitField.RESET_NUMERIC
 
         self._field = None
 
     def end_access(self, text):
         if self._field:
-            if self._field.field_type not in (BitType.WRITE_1_TO_SET,
-                                              BitType.WRITE_1_TO_CLEAR_SET):
-                self._field.field_type = text2field.get(text,
-                                                        BitType.READ_ONLY)
+            if self._field.field_type not in (
+                BitType.WRITE_1_TO_SET,
+                BitType.WRITE_1_TO_CLEAR_SET,
+            ):
+                self._field.field_type = TEXT2FIELD.get(
+                    text, BitType.READ_ONLY
+                )
 
     def end_modifiedWriteValue(self, text):
         if self._field:
-            self._field.field_type = text2write.get(text,
-                                                    BitType.WRITE_1_TO_CLEAR_SET)
+            self._field.field_type = TEXT2WRITE.get(
+                text, BitType.WRITE_1_TO_CLEAR_SET
+            )
 
     def end_name(self, text):
         if self._field:
@@ -422,21 +437,24 @@ class Groupings:
 
 
 def crossreference(db):
-    names = sorted([reg.register_name for reg in db.get_all_registers()],
-                   key=len,
-                   reverse=True)
+    names = sorted(
+        [reg.register_name for reg in db.get_all_registers()],
+        key=len,
+        reverse=True,
+    )
 
-    re_list = [r'([^`])({0}) ((R|r)egister)'.format(name) for name in names]
+    re_list = [r"([^`])({0}) ((R|r)egister)".format(name) for name in names]
 
-    print "Cross Referencing..."
+    print("Cross Referencing...")
 
     for reg in db.get_all_registers():
         for regex in re_list:
-            reg.description = re.sub(regex, r'\1`\2`_ \3', reg.description)
+            reg.description = re.sub(regex, r"\1`\2`_ \3", reg.description)
         for field in reg.get_bit_fields():
             for regex in re_list:
-                field.description = re.sub(regex, r'\1`\2`_ \3',
-                                           field.description)
+                field.description = re.sub(
+                    regex, r"\1`\2`_ \3", field.description
+                )
 
 
 def name_from_token(name):
@@ -465,8 +483,7 @@ def copy_from_db(db1, db2):
 
 def ignore_by_field_name(field):
 
-    if (field.field_type != BitType.READ_ONLY or
-            field.reset_value != 0):
+    if field.field_type != BitType.READ_ONLY or field.reset_value != 0:
         return False
 
     for pattern in RESERVED:
@@ -481,25 +498,56 @@ def ignore_by_field_name(field):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
-        description="Convert IPXACT files to regenerate files")
-    parser.add_argument("input_file",
-                        help="IPXACT XML input file")
-    parser.add_argument("--output", dest="root", default="reg",
-                        help="Base filename (no extension) of the output files")
-    parser.add_argument("--xref", dest="xref", action="store_true", default=False,
-                        help="Generate crossreferences in the comments if possible")
-    parser.add_argument("--update", dest="update", action="store_true", default=False,
-                        help="Update data from previous file if available")
-    parser.add_argument("--boundary", dest="boundary", default=0xffffff, type=int,
-                        choices=[16, 32, 64, 128, 256, 512, 1024, 2048, 4096],
-                        help="Address boundary used to look for repeating groups")
-    parser.add_argument("--keep-reserved", dest="keep_reserved", default=False,
-                        action="store_true",
-                        help="Does not removed read only fields with names matched reserved keyword")
-    parser.add_argument("--xlate", dest="xlate", nargs="*",
-                        help="Regular expressions (python) to use to alter names in repeated groups")
-    parser.add_argument("--reserved-regex", dest="regex", nargs="*",
-                        help="Regular expressions (python) to use to identify reserved fields")
+        description="Convert IPXACT files to regenerate files"
+    )
+    parser.add_argument("input_file", help="IPXACT XML input file")
+    parser.add_argument(
+        "--output",
+        dest="root",
+        default="reg",
+        help="Base filename (no extension) of the output files",
+    )
+    parser.add_argument(
+        "--xref",
+        dest="xref",
+        action="store_true",
+        default=False,
+        help="Generate crossreferences in the comments if possible",
+    )
+    parser.add_argument(
+        "--update",
+        dest="update",
+        action="store_true",
+        default=False,
+        help="Update data from previous file if available",
+    )
+    parser.add_argument(
+        "--boundary",
+        dest="boundary",
+        default=0xFFFFFF,
+        type=int,
+        choices=[16, 32, 64, 128, 256, 512, 1024, 2048, 4096],
+        help="Address boundary used to look for repeating groups",
+    )
+    parser.add_argument(
+        "--keep-reserved",
+        dest="keep_reserved",
+        default=False,
+        action="store_true",
+        help="Does not removed read only fields with names matched reserved keyword",
+    )
+    parser.add_argument(
+        "--xlate",
+        dest="xlate",
+        nargs="*",
+        help="Regular expressions (python) to use to alter names in repeated groups",
+    )
+    parser.add_argument(
+        "--reserved-regex",
+        dest="regex",
+        nargs="*",
+        help="Regular expressions (python) to use to identify reserved fields",
+    )
 
     args = parser.parse_args()
 
@@ -510,7 +558,8 @@ if __name__ == "__main__":
                 RESERVED.append(pattern)
             except sre_constants.error as msg:
                 sys.stderr.write(
-                    "Could not compile \"%s\" as a regular expression" % r)
+                    'Could not compile "%s" as a regular expression' % r
+                )
                 sys.stderr.write(" - %s\n" % str(msg))
                 sys.exit(1)
 
@@ -558,7 +607,9 @@ if __name__ == "__main__":
             db.organization = ip.vendor
             db.descriptive_title = title
             db.module_name = title.lower()
-            db.overview_text = "Imported from IPXACT data provided by %s." % ip.vendor
+            db.overview_text = (
+                "Imported from IPXACT data provided by %s." % ip.vendor
+            )
 
         max_addr = 0
         for r in rgrp.get_regs():
@@ -566,7 +617,8 @@ if __name__ == "__main__":
                 for i, s in enumerate(src):
                     r.token = re.sub(s, dest[i], r.token, flags=re.I)
                     r.register_name = re.sub(
-                        s, dest[i], r.register_name, flags=re.I)
+                        s, dest[i], r.register_name, flags=re.I
+                    )
             if db2 is not None:
                 old_reg = db2.find_register_by_token(r.token)
                 if old_reg:
@@ -587,7 +639,7 @@ if __name__ == "__main__":
         db.save_xml(filename)
 
     if len(data) > 1:
-        print "%-20s %-8s Repeat" % ("Register Set", "Address")
-        print "%-20s %-8s %s" % ("-" * 20, "-" * 8, "-" * 6)
+        print("%-20s %-8s Repeat" % ("Register Set", "Address"))
+        print("%-20s %-8s %s" % ("-" * 20, "-" * 8, "-" * 6))
         for index, rgrp in enumerate(sorted(data)):
-            print "%-20s %08x %d" % (filename, rgrp.addr, rgrp.repeat)
+            print("%-20s %08x %d" % (filename, rgrp.addr, rgrp.repeat))
