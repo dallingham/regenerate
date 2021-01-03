@@ -25,7 +25,7 @@ import re
 import copy
 from collections import namedtuple, defaultdict
 from jinja2 import FileSystemLoader, Environment
-from regenerate.db import TYPES, TYPE_TO_OUTPUT
+from regenerate.db import TYPES, TYPE_TO_OUTPUT, Register
 from regenerate.writers.writer_base import WriterBase, ExportInfo
 from regenerate.writers.verilog_reg_def import REG
 from regenerate.db.enums import ShareType, ResetType
@@ -787,7 +787,7 @@ def build_standard_ports(dbase):
     }
 
 
-def make_one_shot(reg, name):
+def make_one_shot(name: str, reg: Register):
     """Builds the one shot signal from the name and dimenstion"""
 
     if reg.dimension_is_param():
