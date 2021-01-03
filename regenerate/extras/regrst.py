@@ -35,10 +35,7 @@ try:
 except ImportError:
     _HTML = False
 
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from io import StringIO
+from io import StringIO
 
 
 if sys.version_info[0] == 3:

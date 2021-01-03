@@ -23,9 +23,9 @@ descriptions
 
 import os
 import re
-from regenerate.writers.writer_base import WriterBase, ExportInfo
-from regenerate.db import RegisterDb
-from regenerate.extras import RegisterRst
+from .writer_base import WriterBase, ExportInfo
+from ..db import RegisterDb
+from ..extras import RegisterRst
 
 
 def norm_name(text):

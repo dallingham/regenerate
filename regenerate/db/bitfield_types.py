@@ -21,7 +21,7 @@ Provides a description of the various different bit types
 """
 
 from collections import namedtuple
-from regenerate.db.enums import BitType
+from .enums import BitType
 
 BitFieldInfo = namedtuple(
     "BitFieldInfo",
@@ -181,7 +181,8 @@ TYPES = (
         True,
         False,
         False,
-        "Read/Write, value loaded on control signal, " "one shot on write of 1",
+        "Read/Write, value loaded on control signal, "
+        "one shot on write of 1",
         "RW",
     ),
     BitFieldInfo(
@@ -298,7 +299,8 @@ TYPES = (
         True,
         False,
         False,
-        "Write 1 to Clear, bits set on input signal, " "one shot on write of 1",
+        "Write 1 to Clear, bits set on input signal, "
+        "one shot on write of 1",
         "W1C",
     ),
     BitFieldInfo(
@@ -324,7 +326,8 @@ TYPES = (
         True,
         False,
         False,
-        "Write 1 to Clear, value loaded on control signal, " "one shot on any write",
+        "Write 1 to Clear, value loaded on control signal, "
+        "one shot on any write",
         "W1C",
     ),
     BitFieldInfo(
@@ -337,7 +340,8 @@ TYPES = (
         True,
         False,
         False,
-        "Write 1 to Clear, value loaded on control signal, " "one shot on write of 1",
+        "Write 1 to Clear, value loaded on control signal, "
+        "one shot on write of 1",
         "W1C",
     ),
     BitFieldInfo(
@@ -428,7 +432,8 @@ TYPES = (
         True,
         False,
         False,
-        "Read/Write, Read only on control signal, " "one shot on any valid write",
+        "Read/Write, Read only on control signal, "
+        "one shot on any valid write",
         "RW",
     ),
     BitFieldInfo(

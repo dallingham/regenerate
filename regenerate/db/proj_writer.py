@@ -21,7 +21,7 @@ RegProject is the container object for a regenerate project
 """
 
 from xml.sax.saxutils import escape
-from regenerate.db.textutils import clean_text
+from .textutils import clean_text
 
 
 class ProjectWriter:
@@ -86,8 +86,8 @@ class ProjectWriter:
             ofile.write("  <parameters>\n")
             for (name, value) in plist:
                 ofile.write(
-                    '    <parameter name="{}" value="{:d}"/>\n'.format(
-                        name, int(value, 0)
+                    '    <parameter name="{}" value="{}"/>\n'.format(
+                        name, value
                     )
                 )
             ofile.write("  </parameters>\n")

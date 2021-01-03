@@ -22,6 +22,9 @@ Holds the infomration for a group. This includes the name, base address,
 HDL path, the repeat count, repeat offset, and the title.
 """
 
+from typing import List
+from .register_db import RegisterDb
+
 
 class GroupData:
     """Basic group information."""
@@ -34,14 +37,14 @@ class GroupData:
         repeat=1,
         repeat_offset=0x10000,
         title="",
-    ):
+    ) -> None:
         """Initialize the group data item."""
         self.name = name
         self.base = base
         self.hdl = hdl
         self.repeat = repeat
         self.repeat_offset = repeat_offset
-        self.register_sets = []
+        self.register_sets = []  # type: List[RegisterDb]
         self.title = title
         self.docs = ""
 
@@ -50,11 +53,11 @@ class GroupData:
 
         return id(self)
 
-    def __ne__(self, other):
+    def __ne__(self, other) -> bool:
         """Compare for inequality."""
         return not self.__eq__(other)
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Compare for equality."""
         if (
             other is None

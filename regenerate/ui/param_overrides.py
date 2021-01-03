@@ -61,7 +61,7 @@ class OverridesListMdl(Gtk.ListStore):
                 val_list.append((val[0], val[1], def_val))
 
 
-class OverridesList(object):
+class OverridesList:
     """
     Container for the Parameter List control logic.
     """
@@ -75,12 +75,12 @@ class OverridesList(object):
         self._obj.set_sensitive(True)
         self._callback = callback
 
-    def set_db(self, db):
+    def set_db(self, dbase):
         """
         Sets the database for the paramter list, and repopulates the list
         from the database.
         """
-        self._db = db
+        self._db = dbase
         self._obj.set_sensitive(True)
         self.populate()
 
@@ -100,18 +100,18 @@ class OverridesList(object):
         self._callback()
 
     def add_clicked(self):
-        current = set([p[0] for p in self._db.get_parameters()])
+        current = set({p[0] for p in self._db.get_parameters()})
 
         name = find_next_free("pParameter", current)
         self._model.new_instance(name, hex(1))
         self._db.add_parameter(name, hex(1))
         self._callback()
 
-    def _name_changed(self, cell, path, new_text, col):
+    def _name_changed(self, _cell, path, new_text, _col):
         """
         Called when the name field is changed.
         """
-        current = set([p[0] for p in self._db.get_parameters()])
+        current = set({p[0] for p in self._db.get_parameters()})
 
         name = self._model[path][PrjParameterCol.NAME]
         if name != new_text and new_text not in current:
@@ -122,7 +122,7 @@ class OverridesList(object):
             )
             self._callback()
 
-    def _value_changed(self, cell, path, new_text, col):
+    def _value_changed(self, _cell, path, new_text, _col):
         """Called when the base address field is changed."""
         if check_hex(new_text) is False:
             return
@@ -172,7 +172,7 @@ class OverridesList(object):
         """
         Add the data to the list.
         """
-        obj = ParameterData(name, value)
+        obj = ParameterData(name, value, min_val, max_val)
         self._model.append(row=get_row_data(obj))
 
     def get_selected(self):
@@ -201,7 +201,7 @@ class OverridesList(object):
             # remove group from address map
             pass
         else:
-            name = model.get_value(node, PrjParameterCol.NAME)
+            _ = model.get_value(node, PrjParameterCol.NAME)
             model.remove(node)
             self._callback()
 

@@ -20,7 +20,10 @@
 EquWriter - Writes out Assembler defines (based off the GNU assembler)
 """
 
-from regenerate.writers.writer_base import WriterBase, ExportInfo
+from typing import Union, Optional, TextIO
+
+from .writer_base import WriterBase, ExportInfo
+from ..db import RegisterDb, Register
 
 
 class AsmEqu(WriterBase):
@@ -29,26 +32,31 @@ class AsmEqu(WriterBase):
     the token for the registers addresses.
     """
 
-    def __init__(self, dbase):
+    def __init__(self, dbase: Union[None, RegisterDb]) -> None:
         super().__init__(dbase)
         self._offset = 0
-        self._ofile = None
+        self._ofile: Optional[TextIO] = None
 
-    def write_def(self, reg, prefix, offset):
+    def write_def(self, reg: Register, prefix: str, offset: int) -> None:
         """
         Writes the definition in the format of:
 
              .equ   register,  address
         """
+        assert self._ofile is not None
+
         address = reg.address
         base = reg.token
         name = "%s%s, " % (prefix, base)
         self._ofile.write("\t.equ %-30s 0x%s\n" % (name, address + offset))
 
-    def write(self, filename):
+    def write(self, filename: str) -> None:
         """
         Writes the output file
         """
+        assert self._ofile is not None
+        assert self._dbase is not None
+
         with open(filename, "w") as self._ofile:
             self._write_header_comment(
                 self._ofile, "site_asm.inc", comment_char=";; "

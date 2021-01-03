@@ -21,14 +21,10 @@
 Manages the reading of the project file (.rprj)
 """
 
-try:
-    from CStringIO import StringIO
-except ImportError:
-    from io import BytesIO as StringIO
-
+from io import BytesIO as StringIO
 import xml.parsers.expat
-from regenerate.db.group_data import GroupData
-from regenerate.db.group_inst_data import GroupInstData
+from .group_data import GroupData
+from .group_inst_data import GroupInstData
 
 
 class ProjectReader:

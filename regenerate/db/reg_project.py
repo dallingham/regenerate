@@ -23,9 +23,15 @@ RegProject is the container object for a regenerate project
 
 from collections import defaultdict
 import os.path
+from typing import List
 import xml.sax.saxutils
-import regenerate.db
-from regenerate.db.addrmap import AddrMapData
+
+from .proj_writer import ProjectWriter
+from .proj_reader import ProjectReader
+from .addrmap import AddrMapData
+from .group_data import GroupData
+from .textutils import clean_text
+from .logger import LOGGER
 
 
 def nested_dict(depth, dict_type):
@@ -35,9 +41,9 @@ def nested_dict(depth, dict_type):
     return defaultdict(lambda: nested_dict(depth - 1, dict_type))
 
 
-def cleanup(data):
+def cleanup(data: str) -> str:
     "Convert some unicode characters to standard ASCII"
-    return xml.sax.saxutils.escape(regenerate.db.textutils.clean_text(data))
+    return xml.sax.saxutils.escape(clean_text(data))
 
 
 class RegProject:
@@ -68,44 +74,44 @@ class RegProject:
     )
 
     def __init__(self, path=None):
-        self.name = "unnamed"
-        self.short_name = "unnamed"
-        self.company_name = ""
-        self.documentation = ""
-        self.path = path
-        self.access_map = nested_dict(3, int)
-        self._filelist = []
-        self._groupings = []
-        self._addr_map_list = []
         self._addr_map_grps = {}
+        self._addr_map_list = []
         self._exports = {}
-        self._project_exports = []
+        self._filelist = []
         self._group_exports = {}
-        self._token_list = []
+        self._groupings = []  # type: List[GroupData]
         self._modified = False
         self._parameters = []
+        self._project_exports = []
+        self._token_list = []
+        self.access_map = nested_dict(3, int)
+        self.company_name = ""
+        self.documentation = ""
+        self.name = "unnamed"
+        self.path = path
+        self.short_name = "unnamed"
         if path:
             self.open(path)
 
-    def save(self):
+    def save(self) -> None:
         """Saves the project to the XML file"""
-        writer = regenerate.db.ProjectWriter(self)
+        writer = ProjectWriter(self)
         writer.save(self.path)
 
-    def open(self, name):
+    def open(self, name: str) -> None:
         """Opens and reads an XML file"""
 
-        reader = regenerate.db.ProjectReader(self)
+        reader = ProjectReader(self)
         self.path = name
         reader.open(name)
 
-    def loads(self, data):
+    def loads(self, data: str) -> None:
         """Reads XML from a string"""
 
-        reader = regenerate.db.ProjectReader(self)
+        reader = ProjectReader(self)
         reader.loads(data)
 
-    def set_new_order(self, new_order):
+    def set_new_order(self, new_order: List[int]) -> None:
         """Alters the order of the items in the files in the list."""
         self._modified = True
         htbl = {}
@@ -113,14 +119,14 @@ class RegProject:
             htbl[os.path.splitext(os.path.basename(i))[0]] = i
         self._filelist = [htbl[i] for i in new_order]
 
-    def append_register_set_to_list(self, name):
+    def append_register_set_to_list(self, name: str):
         """Adds a register set"""
 
         self._modified = True
         self._filelist.append(name)
         self._exports[name] = []
 
-    def add_register_set(self, path, _alter_path=True):
+    def add_register_set(self, path: str, _alter_path: bool = True) -> None:
         """
         Adds a new register set to the project. Note that this only records
         the filename, and does not actually keep a reference to the RegisterDb.
@@ -129,16 +135,16 @@ class RegProject:
         path = os.path.relpath(path, os.path.dirname(self.path))
         self.append_register_set_to_list(path)
 
-    def remove_register_set(self, path):
+    def remove_register_set(self, path: str) -> None:
         """Removes the specified register set from the project."""
         self._modified = True
         try:
             path2remove = os.path.relpath(path, os.path.dirname(self.path))
             self._filelist.remove(path2remove)
         except ValueError as msg:
-            regenerate.db.LOGGER.error(str(msg))
+            LOGGER.error(str(msg))
 
-    def get_exports(self, path):
+    def get_exports(self, path: str):
         """
         Converts the exports to be relative to the passed path. Returns a
         read-only tuple
@@ -149,11 +155,11 @@ class RegProject:
         """Returns the export project list, returns a read-only tuple"""
         return tuple(self._project_exports)
 
-    def get_group_exports(self, name):
+    def get_group_exports(self, name: str):
         """Returns the export group list, returns a read-only tuple"""
         return tuple(self._group_exports.get(name, []))
 
-    def append_to_export_list(self, path, option, dest):
+    def append_to_export_list(self, path: str, option: str, dest: str) -> None:
         """
         For internal use only.
 
@@ -167,7 +173,7 @@ class RegProject:
         self._modified = True
         self._exports[dest].append((option, path))
 
-    def add_to_export_list(self, path, option, dest):
+    def add_to_export_list(self, path: str, option: str, dest: str) -> None:
         """
         Adds an export to the export list. The exporter will only operation
         on the specified register database (XML file).
@@ -181,7 +187,7 @@ class RegProject:
         dest = os.path.relpath(dest, os.path.dirname(self.path))
         self._exports[path].append((option, dest))
 
-    def append_to_project_export_list(self, option, dest):
+    def append_to_project_export_list(self, option: str, dest: str) -> None:
         """
         Adds a export to the project export list. Project exporters operation
         on the entire project, not just a specific register database (XML file)
@@ -193,7 +199,9 @@ class RegProject:
         self._modified = True
         self._project_exports.append((option, dest))
 
-    def append_to_group_export_list(self, group, option, dest):
+    def append_to_group_export_list(
+        self, group: str, option: str, dest: str
+    ) -> None:
         """
         Adds a export to the group export list. Group exporters operation
         on the entire group, not just a specific register database (XML file)
@@ -205,7 +213,7 @@ class RegProject:
         self._modified = True
         self._group_exports[group].append((option, dest))
 
-    def add_to_project_export_list(self, option, dest):
+    def add_to_project_export_list(self, option: str, dest: str) -> None:
         """
         Adds a export to the project export list. Project exporters operation
         on the entire project, not just a specific register database (XML file)
@@ -218,7 +226,9 @@ class RegProject:
         dest = os.path.relpath(dest, os.path.dirname(self.path))
         self._project_exports.append((option, dest))
 
-    def add_to_group_export_list(self, group, option, dest):
+    def add_to_group_export_list(
+        self, group: str, option: str, dest: str
+    ) -> None:
         """
         Adds a export to the group export list. Group exporters operation
         on the entire group, not just a specific register database (XML file)
@@ -231,23 +241,27 @@ class RegProject:
         dest = os.path.relpath(dest, os.path.dirname(self.path))
         self._group_exports[group].append((option, dest))
 
-    def remove_from_export_list(self, path, option, dest):
+    def remove_from_export_list(
+        self, path: str, option: str, dest: str
+    ) -> None:
         """Removes the export from the export list"""
         self._modified = True
         path = os.path.relpath(path, os.path.dirname(self.path))
         self._exports[path].remove((option, dest))
 
-    def remove_from_project_export_list(self, option, dest):
+    def remove_from_project_export_list(self, option: str, dest: str) -> None:
         """Removes the export from the project export list"""
         self._modified = True
         self._project_exports.remove((option, dest))
 
-    def remove_from_group_export_list(self, group, option, dest):
+    def remove_from_group_export_list(
+        self, group: str, option: str, dest: str
+    ) -> None:
         """Removes the export from the group export list"""
         self._modified = True
         self._group_exports[group].remove((option, dest))
 
-    def get_register_set(self):
+    def get_register_set(self) -> List[str]:
         """
         Returns the register databases (XML files) referenced by the project
         file.
@@ -259,7 +273,7 @@ class RegProject:
             os.path.normpath(os.path.join(base, i)) for i in self._filelist
         ]
 
-    def get_grouping_list(self):
+    def get_grouping_list(self) -> List[GroupData]:
         """
         Returns a list of named tuples (GroupData) that defines the groups.
         The group contents are found by indexing using the Group name
@@ -267,18 +281,26 @@ class RegProject:
         """
         return self._groupings
 
-    def set_grouping_list(self, glist):
+    def set_grouping_list(self, glist: List[GroupData]) -> None:
         """Sets the grouping list"""
         self._groupings = glist
 
-    def set_grouping(self, index, name, start, hdl, repeat, repeat_offset):
+    def set_grouping(
+        self,
+        index: int,
+        name: str,
+        start: int,
+        hdl: str,
+        repeat: int,
+        repeat_offset: int,
+    ) -> None:
         """Modifies an existing grouping."""
         self._modified = True
-        self._groupings[index] = regenerate.db.GroupData(
+        self._groupings[index] = GroupData(
             name, start, hdl, repeat, repeat_offset
         )
 
-    def add_to_grouping_list(self, group_data):
+    def add_to_grouping_list(self, group_data: GroupData) -> None:
         """Adds a new grouping to the grouping list"""
         self._modified = True
         self._group_exports[group_data.name] = []
@@ -288,7 +310,7 @@ class RegProject:
         """Adds a new grouping to the grouping list"""
         self._modified = True
         self._groupings.append(
-            regenerate.db.GroupData(name, start, hdl, repeat, repeat_offset)
+            GroupData(name, start, hdl, repeat, repeat_offset)
         )
 
     def remove_group_from_grouping_list(self, grp):
@@ -300,11 +322,11 @@ class RegProject:
         """Returns a tuple of the existing address maps"""
         return tuple(self._addr_map_list)
 
-    def get_address_map_groups(self, name):
+    def get_address_map_groups(self, name: str):
         """Returns the address maps associated with the specified group."""
         return tuple(self._addr_map_grps.get(name, []))
 
-    def get_address_maps_used_by_group(self, name):
+    def get_address_maps_used_by_group(self, name: str):
         """Returns the address maps associated with the specified group."""
         used_in_uvm = set({m.name for m in self._addr_map_list if m.uvm == 0})
 
@@ -314,7 +336,7 @@ class RegProject:
             if key in used_in_uvm and name in self._addr_map_grps[key]
         ]
 
-    def change_address_map_name(self, old_name, new_name):
+    def change_address_map_name(self, old_name: str, new_name: str) -> None:
         """Changes the name of an address map"""
         for (i, addrmap) in enumerate(self._addr_map_list):
             if addrmap.name != old_name:
@@ -331,54 +353,58 @@ class RegProject:
             del self._addr_map_grps[old_name]
             self._modified = True
             return
+        return
 
-    def add_address_map_group(self, name, group_name):
+    def add_address_map_group(self, name: str, group_name: str) -> bool:
         """Adds an address map to a group if it does not already exist"""
         if group_name not in self._addr_map_grps[name]:
             self._addr_map_grps[name].append(group_name)
             return True
         return False
 
-    def set_address_map_group_list(self, name, group_list):
+    def set_address_map_group_list(self, name: str, group_list) -> None:
         """Adds an address map to a group if it does not already exist"""
         self._addr_map_grps[name] = group_list
 
-    def remove_address_map_group(self, name, group_name):
+    def remove_address_map_group(self, name: str, _group_name: str) -> None:
         """Removes an address map from a group"""
         for (i, gname) in self._addr_map_grps[name]:
             if gname == name:
                 del self._addr_map_grps[name][i]
                 return
+        return
 
-    def get_address_base(self, name):
+    def get_address_base(self, name: str):
         """Returns the base address  of the address map"""
         return next(
             (d.base for d in self._addr_map_list if name == d.name), None
         )
 
-    def get_address_fixed(self, name):
+    def get_address_fixed(self, name: str):
         """Indicates if the specified address map is at a fixed location"""
         return next(
             (d.fixed for d in self._addr_map_list if name == d.name), None
         )
 
-    def get_address_uvm(self, name):
+    def get_address_uvm(self, name: str):
         """Indicates if the specified address map is at a fixed location"""
         return next(
             (d.uvm for d in self._addr_map_list if name == d.name), None
         )
 
-    def get_address_width(self, name):
+    def get_address_width(self, name: str):
         """Returns the width of the address group"""
         for data in self._addr_map_list:
             if name == data.name:
                 return data.width
-        regenerate.db.LOGGER.error("Address map not found (%s)", name)
+        LOGGER.error("Address map not found (%s)", name)
         return None
 
-    def set_access(self, map_name, group_name, block_name, access):
+    def set_access(
+        self, map_name: str, group_name: str, block_name: str, access
+    ):
         """Sets the access mode"""
-
+        print("Access", access)
         self.access_map[map_name][group_name][block_name] = access
 
     def get_access_items(self, map_name, group_name):

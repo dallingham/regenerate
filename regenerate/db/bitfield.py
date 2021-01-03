@@ -20,10 +20,11 @@
 """Provides the definition of a Bit Field."""
 
 import uuid
-from regenerate.db.enums import BitType, ResetType
+from .enums import BitType, ResetType
+from typing import List, Tuple
 
 
-def clean_signal(name):
+def clean_signal(name: str) -> str:
     """Remove white space from a string, replacing them with underscores."""
     return "_".join(name.strip().split())
 
@@ -31,7 +32,7 @@ def clean_signal(name):
 class BitField:
     """Holds all the data of a bit field (one or more bits of a register)."""
 
-    PARAMETERS = {}
+    PARAMETERS = {}  # type: ignore
 
     read_only_types = (
         BitType.READ_ONLY,
@@ -104,151 +105,141 @@ class BitField:
         "volatile",
     )
 
-    def __init__(self, stop=0, start=0):
+    def __init__(self, stop: int = 0, start: int = 0):
         """Initialize the bitfield."""
-        self.modified = False
-        self._output_signal = ""
-        self._input_signal = ""
-        self._id = ""
-        self.lsb = start
-        self.msb = stop
         self._field_name = ""
-        self.use_output_enable = False
-        self.field_type = BitType.READ_ONLY
-        self.volatile = False
-        self.is_error_field = False
+        self._id = ""
+        self._input_signal = ""
+        self._output_signal = ""
         self._reset_value = 0
-        self.reset_input = ""
-        self.reset_type = ResetType.NUMERIC
-        self.reset_parameter = ""
-        self.description = ""
         self.can_randomize = False
         self.control_signal = ""
-        self.output_is_static = False
+        self.description = ""
+        self.field_type = BitType.READ_ONLY
+        self.is_error_field = False
+        self.lsb = start
+        self.modified = False
+        self.msb = stop
         self.output_has_side_effect = False
-        self.values = []
+        self.output_is_static = False
+        self.reset_input = ""
+        self.reset_parameter = ""
+        self.reset_type = ResetType.NUMERIC
+        self.use_output_enable = False
+        self.values = []  # type: List[Tuple[str, str, str]]
+        self.volatile = False
 
     @staticmethod
-    def set_parameters(values):
+    def set_parameters(values) -> None:
         """Set the parameter value list."""
         BitField.PARAMETERS = values
 
     def __eq__(self, other):
         """Compare for equality between two bitfieids."""
         return all(
-            self.__dict__[i] == other.__dict__[i] for i in self.full_compare
+            getattr(self, i) == getattr(other, i) for i in self.full_compare
         )
 
-    def __ne__(self, other):
+    def __ne__(self, other) -> bool:
         """Compare for inequality between two bitfields."""
         return not self.__eq__(other)
 
-    def __lt__(self, other):
+    def __lt__(self, other) -> bool:
         return self.lsb < other.lsb
 
-    def __gt__(self, other):
+    def __gt__(self, other) -> bool:
         return self.lsb > other.lsb
 
-    def is_constant(self):
+    def is_constant(self) -> bool:
         """Indicate if the value is a constant value."""
         return self.field_type == BitType.READ_ONLY
 
-    def is_read_only(self):
+    def is_read_only(self) -> bool:
         """Indicate if the value is a read only type."""
         return self.field_type in BitField.read_only_types
 
-    def is_write_only(self):
+    def is_write_only(self) -> bool:
         """Indicate if the value is a write only type."""
         return self.field_type in BitField.write_only_types
 
-    def full_field_name(self):
+    def full_field_name(self) -> str:
         """Build the name of the field, including bit positions if needed."""
         if self.width == 1:
             return self._field_name
         return "%s[%d:%d]" % (self._field_name, self.msb, self.lsb)
 
-    def bit_range(self):
+    def bit_range(self) -> str:
         """Return the bit range of the field."""
         if self.width == 1:
             return str(self.lsb)
         return "[%d:%d]" % (self.msb, self.lsb)
 
     @property
-    def reset_value(self):
+    def reset_value(self) -> int:
         """Return the reset value."""
         if self.reset_type == ResetType.PARAMETER:
             return BitField.PARAMETERS.get(self.reset_parameter, 0)
         return self._reset_value
 
     @reset_value.setter
-    def reset_value(self, value):
+    def reset_value(self, value: int) -> None:
         """Set the reset value."""
         self._reset_value = value
 
-    def reset_value_bit(self, bit):
+    def reset_value_bit(self, bit: int) -> int:
         """Check for a bit to be set."""
         if self._reset_value & (1 << bit):
             return 1
         return 0
 
     @property
-    def uuid(self):
+    def uuid(self) -> str:
         """Return the UUID for the bitfield."""
         if not self._id:
             self._id = uuid.uuid4().hex
         return self._id
 
     @uuid.setter
-    def uuid(self, value):
+    def uuid(self, value: str) -> None:
         """Set the UUID for the bitfield."""
         self._id = value
 
     @property
-    def stop_position(self):
+    def stop_position(self) -> int:
         """Return the most significant bit of the field."""
         return self.msb
 
     @stop_position.setter
-    def stop_position(self, value):
+    def stop_position(self, value: int):
         """Set the most significant bit of the field."""
         self.msb = value
 
     @property
-    def start_position(self):
+    def start_position(self) -> int:
         """Return the least significant bit of the field."""
         return self.lsb
 
     @start_position.setter
-    def start_position(self, value):
+    def start_position(self, value: int):
         """Set the least significant bit of the field."""
         self.lsb = value
 
     @property
-    def width(self):
+    def width(self) -> int:
         """Return the width in bits of the bit field."""
         return self.msb - self.lsb + 1
 
     @property
-    def field_name(self):
+    def field_name(self) -> str:
         """Return the name of the fieid."""
         return self._field_name
 
     @field_name.setter
-    def field_name(self, value):
+    def field_name(self, value: str) -> None:
         """Set the name of the fieid."""
         self._field_name = value.strip()
 
-    @property
-    def output_signal(self):
-        """
-        Get the output signal associated with the bit range.
-
-        If the user has not specified the name, assume that it is the same as
-        the name of the bit field.
-        """
-        return self._output_signal
-
-    def resolved_output_signal(self):
+    def resolved_output_signal(self) -> str:
         """
         Get the output signal associated with the bit range.
 
@@ -264,17 +255,27 @@ class BitField:
             index = "%d:%d" % (self.msb, self.lsb)
         return "%s%s%s" % (nlist[0], index, nlist[1])
 
+    @property
+    def output_signal(self) -> str:
+        """
+        Get the output signal associated with the bit range.
+
+        If the user has not specified the name, assume that it is the same as
+        the name of the bit field.
+        """
+        return self._output_signal
+
     @output_signal.setter
-    def output_signal(self, output):
+    def output_signal(self, output: str) -> None:
         """Set the output signal associated with the bit range."""
         self._output_signal = clean_signal(output)
 
     @property
-    def input_signal(self):
+    def input_signal(self) -> str:
         """Get the name of the input signal, if it exists."""
         return self._input_signal
 
     @input_signal.setter
-    def input_signal(self, input_signal):
+    def input_signal(self, signal: str) -> None:
         """Set the name of the input signal."""
-        self._input_signal = clean_signal(input_signal)
+        self._input_signal = clean_signal(signal)

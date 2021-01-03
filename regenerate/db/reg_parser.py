@@ -23,8 +23,10 @@ Parses the register database, loading the database.
 import xml.parsers.expat
 import uuid
 
-from regenerate.db import Register, BitField, ID_TO_TYPE
-from regenerate.db.enums import ResetType
+from .register import Register
+from .bitfield import BitField
+from .bitfield_types import ID_TO_TYPE
+from .enums import ResetType
 
 
 def cnv_hex(attrs, key, default=0):
@@ -146,9 +148,9 @@ class RegParser:
 
         self.__db.add_parameter(
             attrs["name"],
-            int(attrs["value"]),
-            int(attrs["min"]),
-            int(attrs["max"]),
+            int(attrs["value"], 0),
+            int(attrs["min"], 0),
+            int(attrs["max"], 0),
         )
 
     def end_parameters(self, _attrs):

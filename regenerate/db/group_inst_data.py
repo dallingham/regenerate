@@ -27,17 +27,17 @@ class GroupInstData:
 
     def __init__(
         self,
-        rset,
-        inst,
-        offset,
-        repeat,
-        repeat_offset,
-        hdl,
-        no_uvm,
-        no_decode,
-        array,
-        single_decode,
-    ):
+        rset: str,
+        inst: str,
+        offset: int,
+        repeat: int,
+        repeat_offset: int,
+        hdl: str,
+        no_uvm: bool,
+        no_decode: bool,
+        array: bool,
+        single_decode: bool,
+    ) -> None:
         self.set = rset
         self.inst = inst
         self.offset = offset
@@ -49,7 +49,7 @@ class GroupInstData:
         self.array = array
         self.single_decode = single_decode
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return (
             self.set == other.set
             and self.inst == other.inst

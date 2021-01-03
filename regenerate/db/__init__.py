@@ -20,9 +20,6 @@
 Includes the base instances in the module
 """
 
-import logging
-import os
-
 from .bitfield import BitField
 from .bitfield_types import *
 from .group_data import GroupData
@@ -37,23 +34,4 @@ from .proj_writer import ProjectWriter
 from .addrmap import AddrMapData
 from .parammap import ParameterData, PrjParameterData
 from .enums import *
-
-LOGGER = logging.getLogger("regenerate")
-
-if os.name == "nt":
-    LOGGER.setLevel(40)
-
-# create console handler and set level to debug
-__CH = logging.StreamHandler()
-__FORMATTER = logging.Formatter(
-    "%(asctime)s - %(name)s - " "%(levelname)s - %(message)s"
-)
-# add formatter to ch
-__CH.setFormatter(__FORMATTER)
-# add ch to logger
-LOGGER.addHandler(__CH)
-
-
-def remove_default_handler():
-    """Removes the default log handler"""
-    LOGGER.removeHandler(__CH)
+from .logger import *

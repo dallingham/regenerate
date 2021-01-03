@@ -23,11 +23,15 @@ Actual program. Parses the arguments, and initiates the main window
 
 import time
 import os
+from typing import List, Set
 from jinja2 import Environment
-from regenerate.db import TYPES
-from regenerate.extras.remap import REMAP_NAME
-from regenerate.writers.writer_base import WriterBase, ExportInfo
-
+from ..db import TYPES
+from ..extras.remap import REMAP_NAME
+from .writer_base import WriterBase, ExportInfo
+from ..db.reg_project import RegProject
+from ..db.register_db import RegisterDb
+from ..db.bitfield import BitField
+from ..db.register import Register
 
 ACCESS_MAP = {}
 for i in TYPES:
@@ -42,7 +46,7 @@ class UVMRegBlockRegisters(WriterBase):
     the UVM format.
     """
 
-    def __init__(self, project, dblist):
+    def __init__(self, project: RegProject, dblist: List[RegisterDb]) -> None:
         """
         Initialize the object. At the current time, only little endian is
         supported by the package
@@ -79,7 +83,7 @@ class UVMRegBlockRegisters(WriterBase):
     def _used_maps(self):
         return set({addr_map.name for addr_map in self.uvm_address_maps()})
 
-    def write(self, filename):
+    def write(self, filename: str) -> None:
         """
         Write the data to the file as a SystemVerilog package. This includes
         a block of register definitions for each register and the associated
@@ -130,7 +134,7 @@ class UVMRegBlockRegisters(WriterBase):
                             data_set.append((dbase, group, group_maps[group]))
         return data_set
 
-    def get_used_databases(self):
+    def get_used_databases(self) -> Set[RegisterDb]:
 
         grp_set = set()
         maps = self._build_group_maps()
@@ -138,7 +142,7 @@ class UVMRegBlockRegisters(WriterBase):
             if maps[key]:
                 grp_set.add(key.name)
 
-        used_sets = set([])
+        used_sets = set()
         for group in self._project.get_grouping_list():
             if group.name in grp_set:
                 for reg_sets in group.register_sets:
@@ -146,11 +150,11 @@ class UVMRegBlockRegisters(WriterBase):
         return set({db for db in self.dblist if db.set_name in used_sets})
 
 
-def is_readonly(field):
+def is_readonly(field: BitField):
     return TYPES[field.field_type].readonly
 
 
-def individual_access(field, reg):
+def individual_access(field: BitField, reg: Register) -> int:
     """
     Make sure that the bits in the field are not in the same byte as any
     other field that is writable.
@@ -178,11 +182,11 @@ def individual_access(field, reg):
     return 1
 
 
-def remove_no_uvm(slist):
+def remove_no_uvm(slist: List[Register]) -> List[Register]:
     return [reg for reg in slist if reg.do_not_use_uvm is False]
 
 
-def fix_name(field):
+def fix_name(field: BitField) -> str:
     """
     Creates a name from the field. If there are any spaces (which the
     UI should prevent), the are converted to underscores. We then replace
@@ -196,7 +200,7 @@ def fix_name(field):
     return name
 
 
-def fix_reg_name(reg):
+def fix_reg_name(reg: Register) -> str:
     """
     Creates a name from the register. If there are any spaces (which the
     UI should prevent), the are converted to underscores. We then replace

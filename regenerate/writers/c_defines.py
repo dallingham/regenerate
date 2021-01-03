@@ -20,9 +20,16 @@
 CWriter - Writes out C defines representing the register addresses
 """
 
-from .writer_base import WriterBase, ExportInfo
-from regenerate.extras import full_token, in_groups
 import os
+
+from typing import Optional, TextIO
+
+from .writer_base import WriterBase, ExportInfo
+from ..extras import full_token, in_groups
+from ..extras.token import InstData
+from ..db.reg_project import RegProject
+from ..db.register_db import RegisterDb
+from ..db.register import Register
 
 HEADER = [
     "/*------------------------------------------------------------------\n",
@@ -55,16 +62,19 @@ class CDefines(WriterBase):
     Writes out C defines representing the register addresses
     """
 
-    def __init__(self, project, dbase):
+    def __init__(self, project: RegProject, dbase: RegisterDb) -> None:
         super().__init__(project, dbase)
-        self._ofile = None
+        self._ofile = Optional[TextIO]
+        self._filename = ""
 
-    def write_def(self, reg, data, base):
+    def write_def(self, reg: Register, data: InstData, base: int) -> None:
         """
         Writes the definition in the format of:
 
         #define register (address)
         """
+        assert self._ofile is not None
+        assert self._dbase is not None
 
         address = reg.address + base + data.base
         if data.repeat > 1:
@@ -90,10 +100,13 @@ class CDefines(WriterBase):
                 % (name, REG_TYPE[reg.width], address)
             )
 
-    def write(self, filename):
+    def write(self, filename: str) -> None:
         """
         Writes the output file
         """
+        assert self._ofile is not None
+        assert self._dbase is not None
+
         self._filename = os.path.basename(filename)
 
         with open(filename, "w") as self._ofile:

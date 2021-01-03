@@ -18,25 +18,28 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
-Provides a function to clean special characters, replacing them with
-simple ASCII characters.
+Logging functionality
 """
 
-__CONVERT = [
-    (u"\u2013", "-"),
-    (u"\u2018", "'"),
-    (u"\u2019", "'"),
-    (u"\u201c", '"'),
-    (u"\u201d", '"'),
-    (u"\u201f", '"'),
-    (u"\u2022", "*"),
-    (u"\ue280a2", "*"),
-]
+import logging
+import os
+
+LOGGER = logging.getLogger("regenerate")
+
+if os.name == "nt":
+    LOGGER.setLevel(40)
+
+# create console handler and set level to debug
+__CH = logging.StreamHandler()
+__FORMATTER = logging.Formatter(
+    "%(asctime)s - %(name)s - " "%(levelname)s - %(message)s"
+)
+# add formatter to ch
+__CH.setFormatter(__FORMATTER)
+# add ch to logger
+LOGGER.addHandler(__CH)
 
 
-def clean_text(text: str) -> str:
-    """Remove common cut-n-paste characters"""
-
-    for (original, replacement) in __CONVERT:
-        text = text.replace(original, replacement)
-    return text.encode("ascii", "replace").decode()
+def remove_default_handler():
+    """Removes the default log handler"""
+    LOGGER.removeHandler(__CH)

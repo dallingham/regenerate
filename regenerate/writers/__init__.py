@@ -101,12 +101,12 @@ for module in MODULES:
                 else:
                     PRJ_EXPORTERS.append(info)
             break
-        except ImportError as msg:
+        except ImportError:
             continue
-        except AttributeError as msg:
+        except AttributeError:
             continue
         except SyntaxError as msg:
             sys.stdout.write("%s\n" % str(msg))
             continue
     else:
-        LOGGER.warning('Could not import the "{0}" module'.format(module[0]))
+        LOGGER.warning('Could not import the "%s" module', module[0])

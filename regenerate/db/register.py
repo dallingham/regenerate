@@ -23,7 +23,9 @@ register, including the list of bit fields.
 """
 
 import uuid
-from regenerate.db.enums import ResetType, ShareType
+from typing import List, Dict, Tuple, Optional
+from .enums import ResetType, ShareType
+from .bitfield import BitField
 
 
 class Register:
@@ -87,7 +89,9 @@ class Register:
         "_dimension",
     )
 
-    def __init__(self, address=0, width=32, name=""):
+    def __init__(
+        self, address: int = 0, width: int = 32, name: str = ""
+    ) -> None:
         self._dimension = "1"
         self._id = ""
         self._token = ""
@@ -97,8 +101,8 @@ class Register:
         self._do_not_generate_code = False
         self._name = name
         self._hide = False
-        self._bit_fields = {}
-        self._plist = []
+        self._bit_fields = {}  # type: Dict[int, BitField]
+        self._plist = []  # type: List[Tuple[str, int, int, int]]
 
         self.address = address
         self.ram_size = 0
@@ -107,16 +111,16 @@ class Register:
 
         self.share = ShareType.NONE
 
-    def __ne__(self, other):
+    def __ne__(self, other) -> bool:
         """Provides the not equal function"""
 
         return not self.__eq__(other)
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Provides the equal function"""
 
         if not all(
-            self.__dict__[i] == other.__dict__[i] for i in self.full_compare
+            getattr(self, i) == getattr(other, i) for i in self.full_compare
         ):
             return False
         return self.get_bit_fields() == other.get_bit_fields()
@@ -126,49 +130,50 @@ class Register:
 
         return id(self)
 
-    def array_cmp(self, other):
+    def array_cmp(self, other) -> bool:
         """Array compare"""
 
         if other is None:
             return False
         if not all(
-            self.__dict__[i] == other.__dict__[i] for i in self.array_compare
+            getattr(self, i) == getattr(other, i) for i in self.array_compare
         ):
             return False
         if other.address + (other.width / 8) != self.address:
             return False
         return self.get_bit_fields() == other.get_bit_fields()
 
-    def group_cmp(self, other):
+    def group_cmp(self, other) -> bool:
         "Group compare"
 
         if not all(
-            self.__dict__[i] == other.__dict__[i] for i in self.array_compare
+            getattr(self, i) == getattr(other, i) for i in self.array_compare
         ):
             return False
         return self.get_bit_fields() == other.get_bit_fields()
 
-    def find_first_unused_bit(self):
+    def find_first_unused_bit(self) -> int:
         """Finds the first unused bit in a the register."""
 
-        bit = [0] * self.width
+        bit_list = [0] * self.width
         for field in self._bit_fields.values():
             for val in range(field.lsb, field.msb + 1):
-                bit[val] = 1
+                bit_list[val] = 1
         for pos in range(0, self.width):
-            if bit[pos] == 0:
+            if bit_list[pos] == 0:
                 return pos
-        bit = set([])
+
+        bit_set = set()
         for field in self._bit_fields.values():
             for val in range(field.lsb, field.msb + 1):
-                bit.add(val)
+                bit_set.add(val)
         all_bits = set(range(0, self.width))
-        sorted_bits = sorted(list(bit.difference(all_bits)))
+        sorted_bits = sorted(list(bit_set.difference(all_bits)))
         if sorted_bits:
             return sorted_bits[0]
         return -1
 
-    def find_next_unused_bit(self):
+    def find_next_unused_bit(self) -> int:
         """Finds the first unused bit in a the register."""
 
         bit = set([])
@@ -183,7 +188,7 @@ class Register:
             return lbits[-1] + 1
         return 0
 
-    def dimension_is_param(self):
+    def dimension_is_param(self) -> bool:
         """Determines if the dimension is an int or parameter"""
 
         try:
@@ -193,7 +198,7 @@ class Register:
             return True
 
     @property
-    def dimension(self):
+    def dimension(self) -> int:
         """
         Returns the dimension as an integer, resolving the parameter
         value if it exists.
@@ -209,17 +214,17 @@ class Register:
             return 1
 
     @dimension.setter
-    def dimension(self, value):
+    def dimension(self, value) -> None:
         """Sets the dimension as a string"""
         self._dimension = str(value)
 
     @property
-    def dimension_str(self):
+    def dimension_str(self) -> str:
         """Returns the dimension as a string, not resolving parameters"""
         return self._dimension
 
     @property
-    def uuid(self):
+    def uuid(self) -> str:
         """Returns the UUID or creates a new unique one if one doesn't exist"""
 
         if not self._id:
@@ -227,13 +232,13 @@ class Register:
         return self._id
 
     @uuid.setter
-    def uuid(self, value):
+    def uuid(self, value: str) -> None:
         """Sets the UUID"""
 
         self._id = value
 
     @property
-    def do_not_generate_code(self):
+    def do_not_generate_code(self) -> bool:
         """
         Returns the value of the _do_not_generate_code flag. This cannot
         be accessed directly, but only via the property 'do_not_generate_code'
@@ -241,7 +246,7 @@ class Register:
         return self._do_not_generate_code
 
     @do_not_generate_code.setter
-    def do_not_generate_code(self, val):
+    def do_not_generate_code(self, val: bool) -> None:
         """
         Sets the __do_not_generate_code flag. This cannot be accessed
         directly, but only via the property 'do_not_generate_code'
@@ -249,7 +254,7 @@ class Register:
         self._do_not_generate_code = bool(val)
 
     @property
-    def do_not_use_uvm(self):
+    def do_not_use_uvm(self) -> bool:
         """
         Returns the value of the _do_not_use_uvm flag. This cannot
         be accessed directly, but only via the property 'do_not_use_uvm'
@@ -257,7 +262,7 @@ class Register:
         return self._do_not_use_uvm
 
     @do_not_use_uvm.setter
-    def do_not_use_uvm(self, val):
+    def do_not_use_uvm(self, val: bool) -> None:
         """
         Sets the __do_not_use_uvm flag. This cannot be accessed
         directly, but only via the property 'do_not_use_uvm'
@@ -265,7 +270,7 @@ class Register:
         self._do_not_use_uvm = bool(val)
 
     @property
-    def do_not_test(self):
+    def do_not_test(self) -> bool:
         """
         Returns the value of the _do_not_generate_code flag. This
         cannot be accessed directly, but only via the property 'do_not_test'
@@ -273,7 +278,7 @@ class Register:
         return self._do_not_test
 
     @do_not_test.setter
-    def do_not_test(self, val):
+    def do_not_test(self, val: bool) -> None:
         """
         Sets the __do_not_generate_code flag. This cannot be accessed
         directly, but only via the property 'do_not_test'
@@ -281,7 +286,7 @@ class Register:
         self._do_not_test = bool(val)
 
     @property
-    def do_not_cover(self):
+    def do_not_cover(self) -> bool:
         """
         Returns the value of the _do_not_cover flag. This
         cannot be accessed directly, but only via the property 'do_not_cover'
@@ -289,7 +294,7 @@ class Register:
         return self._do_not_cover
 
     @do_not_cover.setter
-    def do_not_cover(self, val):
+    def do_not_cover(self, val: bool) -> None:
         """
         Sets the __do_not_cover flag. This cannot be accessed
         directly, but only via the property 'do_not_cover'
@@ -297,7 +302,7 @@ class Register:
         self._do_not_cover = bool(val)
 
     @property
-    def hide(self):
+    def hide(self) -> bool:
         """
         Returns the value of the _hide flag. This cannot be accessed
         directly, but only via the property 'hide'
@@ -305,7 +310,7 @@ class Register:
         return self._hide
 
     @hide.setter
-    def hide(self, val):
+    def hide(self, val: bool) -> None:
         """
         Sets the __hide flag. This cannot be accessed directly, but only
         via the property 'hide'
@@ -313,7 +318,7 @@ class Register:
         self._hide = bool(val)
 
     @property
-    def token(self):
+    def token(self) -> str:
         """
         Returns the value of the _token flag. This cannot be accessed
         directly, but only via the property 'token'
@@ -321,7 +326,7 @@ class Register:
         return self._token
 
     @token.setter
-    def token(self, val):
+    def token(self, val: str) -> None:
         """
         Sets the __token flag. This cannot be accessed directly, but only
         via the property 'token'
@@ -329,7 +334,7 @@ class Register:
         self._token = val.strip().upper()
 
     @property
-    def register_name(self):
+    def register_name(self) -> str:
         """
         Returns the value of the _name flag. This cannot be accessed
         directly, but only via the property 'register_name'
@@ -337,21 +342,21 @@ class Register:
         return self._name
 
     @register_name.setter
-    def register_name(self, name):
+    def register_name(self, name: str) -> None:
         """
         Sets the __name flag. This cannot be accessed directly, but only
         via the property 'register_name'
         """
         self._name = name.strip()
 
-    def get_bit_fields(self):
+    def get_bit_fields(self) -> List[BitField]:
         """
         Returns a dictionary of bit fields. The key is msb of the
         bit field.
         """
         return sorted(self._bit_fields.values(), key=lambda x: x.lsb)
 
-    def get_bit_fields_with_values(self):
+    def get_bit_fields_with_values(self) -> List[BitField]:
         """
         Returns a dictionary of bit fields. The key is msb of the
         bit field.
@@ -361,19 +366,19 @@ class Register:
             key=lambda x: x.lsb,
         )
 
-    def get_bit_field(self, key):
+    def get_bit_field(self, key: int) -> Optional[BitField]:
         """Returns the bit field associated with the specified key."""
         return self._bit_fields.get(key)
 
-    def get_bit_field_keys(self):
+    def get_bit_field_keys(self) -> List[int]:
         """Returns the list of keys associated with the bit fields"""
         return sorted(self._bit_fields.keys())
 
-    def add_bit_field(self, field):
+    def add_bit_field(self, field: BitField) -> None:
         """Adds a bit field to the set of bit fields."""
         self._bit_fields[field.lsb] = field
 
-    def change_bit_field(self, field):
+    def change_bit_field(self, field: BitField) -> None:
         """Adds a bit field to the set of bit fields."""
         remove_val = None
         for current_field in self._bit_fields:
@@ -384,7 +389,7 @@ class Register:
             del self._bit_fields[remove_val]
         self._bit_fields[field.lsb] = field
 
-    def delete_bit_field(self, field):
+    def delete_bit_field(self, field: BitField) -> None:
         """
         Removes the specified bit field from the dictionary. We cannot
         use the msb, since it may have changed.
@@ -395,7 +400,7 @@ class Register:
         for key in delete_keys:
             del self._bit_fields[key]
 
-    def is_completely_read_only(self):
+    def is_completely_read_only(self) -> bool:
         """Returns True if all bitfields are read only"""
 
         for key in self._bit_fields:
@@ -403,7 +408,7 @@ class Register:
                 return False
         return True
 
-    def is_completely_write_only(self):
+    def is_completely_write_only(self) -> bool:
         """Returns True if all bitfields are write only"""
 
         for key in self._bit_fields:
@@ -411,7 +416,7 @@ class Register:
                 return False
         return True
 
-    def no_reset_test(self):
+    def no_reset_test(self) -> bool:
         """
         Indicates if no reset test should be done on the register.
         If any field is a don't test, then we won't test the register
@@ -423,7 +428,7 @@ class Register:
                 return True
         return False
 
-    def strict_volatile(self):
+    def strict_volatile(self) -> bool:
         """
         Returns True if a field is marked as volatile or if there
         is an input signal specified
@@ -435,7 +440,7 @@ class Register:
                 return True
         return False
 
-    def loose_volatile(self):
+    def loose_volatile(self) -> bool:
         """
         Returns True if a field is marked volatile, and disregards
         if there is an input signal
@@ -446,7 +451,7 @@ class Register:
                 return True
         return False
 
-    def reset_value(self):
+    def reset_value(self) -> int:
         """
         Returns the reset value for the register from the reset values
         in the bit fields.
@@ -457,7 +462,7 @@ class Register:
             val |= field.reset_value << field.lsb
         return val
 
-    def reset_mask(self):
+    def reset_mask(self) -> int:
         """Returns a mask of the active fields (not reserved fields)"""
         val = 0
         for key in self._bit_fields:
@@ -466,7 +471,6 @@ class Register:
                 val |= 1 << i
         return val
 
-    def set_parameters(self, plist):
+    def set_parameters(self, plist: List[Tuple[str, int, int, int]]) -> None:
         """Sets the parameter list"""
-
         self._plist = plist

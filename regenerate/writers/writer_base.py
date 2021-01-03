@@ -23,9 +23,10 @@ WriterBase - base class for objects that product output from the
 
 import os
 import time
+from typing import Optional, Union
 from collections import namedtuple
-from regenerate.settings.paths import INSTALL_PATH
-
+from ..settings.paths import INSTALL_PATH
+from ..db import RegisterDb, RegProject
 
 ExportInfo = namedtuple(
     "ExportInfo", ["obj_class", "type", "description", "extension", "id"]
@@ -56,18 +57,20 @@ class WriterBase:
 
     (TYPE_BLOCK, TYPE_GROUP, TYPE_PROJECT) = range(3)
 
-    def __init__(self, project, dbase):
+    def __init__(
+        self, project: RegProject, dbase: Optional[RegisterDb]
+    ) -> None:
         self._dbase = dbase
         self._project = project
         self._project_name = ""
         if dbase:
             self._set_values_init(dbase)
 
-    def set_project(self, obj):
+    def set_project(self, obj: RegProject) -> None:
         self._project = obj
         self._project_name = obj.short_name
 
-    def _set_values_init(self, dbase, _instance_name=None):
+    def _set_values_init(self, dbase: RegisterDb, _instance_name=None) -> None:
         self._comments = dbase.overview_text
         self._module = dbase.module_name
         self._clock = dbase.clock_name

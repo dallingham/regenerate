@@ -25,11 +25,7 @@ This allows the end user to customize their installation without the fear of
 the next update overwriting their modifications.
 """
 
-try:
-    from configparser import SafeConfigParser, NoSectionError, NoOptionError
-except ImportError:
-    from ConfigParser import SafeConfigParser, NoSectionError, NoOptionError
-    
+from configparser import SafeConfigParser, NoSectionError, NoOptionError
 import os
 from regenerate.settings.paths import INSTALL_PATH
 

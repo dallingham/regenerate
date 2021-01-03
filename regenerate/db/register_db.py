@@ -20,15 +20,12 @@
 Provides the container database for a set of registers.
 """
 
-try:
-    from CStringIO import StringIO
-except ImportError:
-    from io import BytesIO as StringIO
-
+from io import BytesIO as StringIO
 import os
 import re
-import regenerate.db
-from regenerate.settings import rules
+from .reg_parser import RegParser
+from .reg_writer import RegWriter
+from ..settings import rules
 
 
 DEF_CLK_NAME = "CLK"
@@ -154,7 +151,7 @@ class RegisterDb:
         """Reads the XML file, loading the databsae."""
         with open(filename, "rb") as ifile:
             self.set_name = os.path.splitext(os.path.basename(filename))[0]
-            parser = regenerate.db.RegParser(self)
+            parser = RegParser(self)
             parser.parse(ifile)
         return self
 
@@ -163,13 +160,13 @@ class RegisterDb:
 
         self.set_name = os.path.splitext(os.path.basename(filename))[0]
         ifile = StringIO(data)
-        parser = regenerate.db.RegParser(self)
+        parser = RegParser(self)
         parser.parse(ifile)
         return self
 
     def save_xml(self, filename):
         """Saves the database to the specified XML file"""
-        writer = regenerate.db.RegWriter(self)
+        writer = RegWriter(self)
         writer.save(filename)
 
     @property

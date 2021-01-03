@@ -22,9 +22,9 @@ Writes the XML file containing all the information in the register database
 
 import os
 import xml.sax.saxutils
-from regenerate.db import TYPE_TO_ID
-from regenerate.db.textutils import clean_text
-from regenerate.db.enums import ResetType
+from .bitfield_types import TYPE_TO_ID
+from .textutils import clean_text
+from .enums import ResetType
 
 
 def create_backup_file(filename):
@@ -126,7 +126,7 @@ class RegWriter:
             ofile.write("  <parameters>\n")
             for (name, value, min_val, max_val) in plist:
                 ofile.write(
-                    '    <parameter name="{}" value="{:d}" min="{:d}" max="{:d}"/>\n'.format(
+                    '    <parameter name="{}" value="{}" min="{}" max="{}"/>\n'.format(
                         name, value, min_val, max_val
                     )
                 )
