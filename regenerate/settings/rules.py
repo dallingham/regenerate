@@ -27,7 +27,7 @@ the next update overwriting their modifications.
 
 from configparser import SafeConfigParser, NoSectionError, NoOptionError
 import os
-from regenerate.settings.paths import INSTALL_PATH
+from .paths import INSTALL_PATH
 
 __Rules = SafeConfigParser()
 

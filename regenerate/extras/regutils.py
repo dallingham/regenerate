@@ -23,10 +23,32 @@ Register utilities
 
 import copy
 import re
-from regenerate.ui.register_list import build_define
-
+from .remap import REMAP_NAME
 
 REGNAME = re.compile(r"^(.*)(\d+)(.*)$")
+
+
+def _make_transtable():
+    import string
+
+    return "".maketrans(
+        string.ascii_lowercase + " ",
+        string.ascii_uppercase + "_",
+        r"/-@!#$%^&*()+=|{}[]:\"';\\,.?",
+    )
+
+
+_TRANSTABLE = _make_transtable()
+
+
+def build_define(text: str):
+    """
+    Converts a register name into a define token
+    """
+    text = text.translate(_TRANSTABLE)
+    if text in REMAP_NAME:
+        text = f"{text}_REG"
+    return text
 
 
 def duplicate_register(dbase, reg):

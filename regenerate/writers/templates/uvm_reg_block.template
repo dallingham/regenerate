@@ -214,11 +214,7 @@ package {{project.short_name|lower}}_reg_pkg;
 
       virtual function void build();
      {% for field in register.get_bit_fields() %}
-       {% if use_new %}
-         {{fix_name(field)}} = new("{{fix_name(field)}}");
-       {% else %}
          {{fix_name(field)}} = uvm_reg_field::type_id::create("{{fix_name(field)}}");
-       {% endif %}
      {% endfor %}
      {%- for field in register.get_bit_fields() -%}
         {%- if field.volatile %}
@@ -356,11 +352,7 @@ package {{project.short_name|lower}}_reg_pkg;
 
 {% if db.coverage %}
       if (has_coverage(UVM_CVR_ADDR_MAP)) begin
-  {% if use_new %}
-        {{db.set_name|lower}}_access_cg = new("{{db.set_name|lower}}_access_cg");
-  {% else %}
         {{db.set_name|lower}}_access_cg = {{db.set_name|lower}}_reg_access_wrapper::type_id::create("{{db.set_name|lower}}_access_cg");
-  {% endif %}
       end
 {% endif %}
 
@@ -373,20 +365,12 @@ package {{project.short_name|lower}}_reg_pkg;
 {%     set mode = "_w_" %}
 {%   endif %}
 {%   if register.ram_size %}
-{%     if use_new %}
-      {{fix_reg(register)}} = new("{{fix_reg(register)}}");
-{%     else %}
       {{fix_reg(register)}} = mem_{{db.set_name|lower}}_{{fix_reg(register)}}::type_id::create("{{fix_reg(register)}}");
-{%     endif %}
       {{fix_reg(register)}}.configure(this);
 {%   else %}
 {%     if register.dimension > 1 %}
       foreach ({{fix_reg(register)}}[i]) begin
-{%       if use_new %}
-         {{fix_reg(register)}} = new("{{fix_reg(register)}}");
-{%       else %}
          {{fix_reg(register)}}[i] = reg_{{db.set_name|lower}}_{{fix_reg(register)}}::type_id::create("{{fix_reg(register)}}");
-{%       endif %}
          {{fix_reg(register)}}[i].configure(this);
          {{fix_reg(register)}}[i].build();
 {%       for field in register.get_bit_fields() %}
@@ -394,11 +378,7 @@ package {{project.short_name|lower}}_reg_pkg;
 {%       endfor %}
       end
 {%     else %}
-{%       if use_new %}
-      {{fix_reg(register)}} = new("{{fix_reg(register)}}");
-{%       else %}
       {{fix_reg(register)}} = reg_{{db.set_name|lower}}_{{fix_reg(register)}}::type_id::create("{{fix_reg(register)}}");
-{%       endif %}
       {{fix_reg(register)}}.configure(this);
       {{fix_reg(register)}}.build();
 {%       for field in register.get_bit_fields() %}
@@ -473,11 +453,7 @@ package {{project.short_name|lower}}_reg_pkg;
   {% for group_entry in group.register_sets %}
    {% if group_entry.repeat > 1 or group_entry.array %}
         for (int i = 0; i < {{group_entry.repeat}}; i++) begin
-           {% if use_new %}
-           {{group_entry.inst|lower}}[i] = new($sformatf("{{group_entry.inst|lower}}[%0d]", i));
-           {% else %}
            {{group_entry.inst|lower}}[i] = {{group.name|lower}}_{{group_entry.set|lower}}_reg_blk::type_id::create($sformatf("{{group_entry.inst|lower}}[%0d]", i));
-           {% endif %}
       {% if group_entry.hdl: %}
            {{group_entry.inst|lower}}[i].configure(this, $sformatf("{{group_entry.hdl}}", i));
       {% else %}
@@ -503,11 +479,7 @@ package {{project.short_name|lower}}_reg_pkg;
       {% endfor %}
         end
     {% else %}
-        {% if use_new %}
-        {{group_entry.inst|lower}} = new("{{group_entry.inst|lower}}");
-        {% else %}
         {{group_entry.inst|lower}} = {{group.name|lower}}_{{group_entry.set|lower}}_reg_blk::type_id::create("{{group_entry.inst|lower}}");
-        {% endif %}
         {{group_entry.inst|lower}}.configure(this, "{{group_entry.hdl}}");
 	
       {% for item in group_maps[group] %}
@@ -570,11 +542,7 @@ package {{project.short_name|lower}}_reg_pkg;
 
 {% for group in group_maps %}
   {% if group.repeat <= 1 %}
-    {% if use_new %}
-        {{group.name|lower}} = new("{{group.name|lower}}");
-    {% else %}
         {{group.name|lower}} = {{group.name|lower}}_grp_reg_blk::type_id::create("{{group.name|lower}}");
-    {% endif %}
     {% if group.hdl != "" %}
         {{group.name|lower}}.configure(this, "{{group.hdl}}");
     {% else %}
@@ -600,11 +568,7 @@ package {{project.short_name|lower}}_reg_pkg;
   {% else %}
 
         foreach ({{group.name|lower}}[i]) begin
-    {% if use_new %}
-           {{group.name|lower}}[i] = new($sformatf("{{group.name|lower}}[%0d]", i));
-    {% else  %}
            {{group.name|lower}}[i] = {{group.name|lower}}_grp_reg_blk::type_id::create($sformatf("{{group.name|lower}}[%0d]", i));
-    {% endif %}
     {% if group.hdl != "" %}
            {{group.name|lower}}[i].configure(this, $sformatf("{{group.hdl}}", i));
     {% else %}

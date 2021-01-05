@@ -30,7 +30,7 @@ from regenerate.ui.columns import (
 from regenerate.ui.error_dialogs import ErrorMsg
 from regenerate.db import LOGGER
 from regenerate.db.enums import ShareType
-from regenerate.extras.remap import REMAP_NAME
+from regenerate.extras.regutils import build_define
 from regenerate.ui.enums import RegCol, RegColType
 
 BAD_TOKENS = " /-@!#$%^&*()+=|{}[]:\"';\\,.?"
@@ -638,21 +638,3 @@ class RegisterList:
             self._model[path][col] = model.get_value(node, 0)
             register.width = new_width
             self._set_modified()
-
-
-def build_define(text):
-    """
-    Converts a register name into a define token
-    """
-    for i in BAD_TOKENS:
-        text = text.replace(i, "_")
-    if text in REMAP_NAME:
-        text = f"{text}_REG"
-
-    return "_".join(
-        [
-            REPLACE.get(i.upper(), i.upper())
-            for i in text.split("_")
-            if REPLACE.get(i.upper(), i.upper()) != ""
-        ]
-    )

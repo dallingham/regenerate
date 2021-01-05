@@ -313,18 +313,18 @@ class RegProject:
             GroupData(name, start, hdl, repeat, repeat_offset)
         )
 
-    def remove_group_from_grouping_list(self, grp):
+    def remove_group_from_grouping_list(self, grp) -> None:
         """Removes a grouping from the grouping list"""
         self._modified = True
         self._groupings.remove(grp)
 
-    def get_address_maps(self):
-        """Returns a tuple of the existing address maps"""
-        return tuple(self._addr_map_list)
+    def get_address_maps(self) -> List[AddrMapData]:
+        """Returns a list of the existing address maps"""
+        return self._addr_map_list
 
-    def get_address_map_groups(self, name: str):
+    def get_address_map_groups(self, name: str) -> List[AddrMapData]:
         """Returns the address maps associated with the specified group."""
-        return tuple(self._addr_map_grps.get(name, []))
+        return self._addr_map_grps.get(name, [])
 
     def get_address_maps_used_by_group(self, name: str):
         """Returns the address maps associated with the specified group."""

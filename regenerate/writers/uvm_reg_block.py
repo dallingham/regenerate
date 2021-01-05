@@ -23,7 +23,7 @@ Actual program. Parses the arguments, and initiates the main window
 
 import time
 import os
-from typing import List, Set
+from typing import List, Set, Dict
 from jinja2 import Environment
 from ..db import TYPES
 from ..extras.remap import REMAP_NAME
@@ -57,20 +57,11 @@ class UVMRegBlockRegisters(WriterBase):
         self.dblist = dblist
 
     def uvm_address_maps(self) -> List[AddrMapData]:
+        "Return a list of all the address maps that are not excluded from UVM"
+
         return [d for d in self._project.get_address_maps() if not d.uvm]
 
-    def build_map_name_to_groups(self):
-        map2grp = {}
-        all_groups = [grp.name for grp in self._project.get_grouping_list()]
-
-        for data in self.uvm_address_maps():
-            name = data.name
-            map2grp[name] = self._project.get_address_map_groups(name)
-            if not map2grp[name]:
-                map2grp[name] = all_groups
-        return map2grp
-
-    def _build_group_maps(self):
+    def _build_group_maps(self) -> Dict[GroupData, Set[str]]:
         group_maps = {}
         for group in self._project.get_grouping_list():
             in_maps = set()
@@ -82,7 +73,7 @@ class UVMRegBlockRegisters(WriterBase):
                 group_maps[group] = in_maps
         return group_maps
 
-    def _used_maps(self):
+    def _used_maps(self) -> Set[str]:
         return set({addr_map.name for addr_map in self.uvm_address_maps()})
 
     def write(self, filename: str) -> None:
@@ -116,9 +107,7 @@ class UVMRegBlockRegisters(WriterBase):
                     group_maps=self._build_group_maps(),
                     fix_name=fix_name,
                     fix_reg=fix_reg_name,
-                    use_new=False,
                     used_maps=self._used_maps(),
-                    map2grp=self.build_map_name_to_groups(),
                     current_date=time.strftime("%B %d, %Y"),
                 )
             )
