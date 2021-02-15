@@ -93,7 +93,7 @@ class ExportAssistant(Gtk.Assistant):
     def selected_register_set(self):
         return self.register_combo.get_active_text()
 
-    def prepare(self, obj, page):
+    def prepare(self, _obj, page):
         self.set_page_complete(page, True)
         if page == self.sum:
             self.populate_summary()
@@ -114,16 +114,14 @@ class ExportAssistant(Gtk.Assistant):
         if current_page == 0:
             if self.selected_export_is_project():
                 return ExportPages.FILE_SELECT
-            elif self.selected_export_is_group():
+            if self.selected_export_is_group():
                 return ExportPages.GROUP_SELECT
-            else:
-                return ExportPages.REGSET_SELECT
-        elif current_page == ExportPages.REGSET_SELECT:
+            return ExportPages.REGSET_SELECT
+        if current_page == ExportPages.REGSET_SELECT:
             return ExportPages.GROUP_SELECT
-        elif current_page == ExportPages.GROUP_SELECT:
+        if current_page == ExportPages.GROUP_SELECT:
             return ExportPages.FILE_SELECT
-        else:
-            return current_page + 1
+        return current_page + 1
 
     def cb_on_delete(self, widget, event):
         self.destroy()

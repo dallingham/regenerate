@@ -90,9 +90,9 @@ class ModuleWidth:
 
         if value == 8:
             return 0
-        elif value == 16:
+        if value == 16:
             return 1
-        elif value == 32:
+        if value == 32:
             return 2
         return 3
 

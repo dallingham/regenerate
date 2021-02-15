@@ -225,7 +225,7 @@ class BitList:
         path = self.__model.append_field(field)
         self.__obj.set_cursor(path, self.__col, start_editing=True)
 
-    def field_name_edit(self, cell, path, new_text, col):
+    def field_name_edit(self, _cell, path, new_text, _col):
         """
         Primary callback when a text field is edited in the BitList. Based off
         the column, we pass it to a function to handle the data.
@@ -252,11 +252,11 @@ class BitList:
                     '"%s" has already been used as a field name' % new_text
                 )
 
-    def reset_text_edit(self, cell, path, new_val, col):
+    def reset_text_edit(self, _cell, path, new_val, col):
         field = self.__model.get_bitfield_at_path(path)
 
         if re.match(r"^(0x)?[a-fA-F0-9]+$", new_val):
-            if self.check_reset(field, int(new_val, 16)) == False:
+            if self.check_reset(field, int(new_val, 16)) is False:
                 return
             field.reset_value = int(new_val, 16)
             field.reset_type = ResetType.NUMERIC
@@ -274,7 +274,7 @@ class BitList:
                 f'"{new_val}" is not a valid constant, parameter, or signal name'
             )
 
-    def reset_menu_edit(self, cell, path, node, col):
+    def reset_menu_edit(self, cell, path, node, _col):
         model = cell.get_property("model")
         new_val = model.get_value(node, 0)
         field = self.__model.get_bitfield_at_path(path)
@@ -297,7 +297,7 @@ class BitList:
         self.update_type_info(field, model, path, node)
         self.__modified()
 
-    def update_type_info(self, field, model, path, node):
+    def update_type_info(self, field, model, _path, node):
         field.field_type = model.get_value(node, 1)
 
         if not field.output_signal:
@@ -318,7 +318,7 @@ class BitList:
                 field.field_name,
             )
 
-    def update_bits(self, cell, path, new_text, col):
+    def update_bits(self, _cell, path, new_text, _col):
         """
         Called when the bits column of the BitList is edited. If the new text
         does not match a valid bit combination (determined by the VALID_BITS
@@ -338,10 +338,10 @@ class BitList:
             if groups[2]:
                 start = int(groups[2])
 
-            if self.check_for_overlaps(field, start, stop) == False:
+            if self.check_for_overlaps(field, start, stop) is False:
                 return
 
-            if self.check_for_width(start, stop) == False:
+            if self.check_for_width(start, stop) is False:
                 return
 
             if stop != field.msb or start != field.lsb:
@@ -364,7 +364,7 @@ class BitList:
     def clear_msg(self):
         pass
 
-    def check_for_width(self, start, stop):
+    def check_for_width(self, _start, stop):
         register = self.__model.register
         if stop >= register.width:
             self.show_msg(
@@ -387,9 +387,9 @@ class BitList:
         register = self.__model.register
 
         used = set()
-        for f in register.get_bit_fields():
-            if f != field:
-                for bit in range(f.lsb, f.msb + 1):
+        for fld in register.get_bit_fields():
+            if fld != field:
+                for bit in range(fld.lsb, fld.msb + 1):
                     used.add(bit)
 
         for bit in range(start, stop + 1):

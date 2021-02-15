@@ -40,7 +40,7 @@ class InstMdl(Gtk.TreeStore):
             str, str, str, GObject.TYPE_UINT64, str, str, str, object
         )
 
-        self.callback = self.__null_callback()
+        self.callback = self.__null_callback
         self.project = project
 
     def __null_callback(self):
