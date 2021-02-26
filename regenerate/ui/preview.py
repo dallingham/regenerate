@@ -19,11 +19,13 @@
 """
 Provides a function to convert restructuredText to HTML
 """
+from regenerate.db import LOGGER
 
 try:
     from docutils.core import publish_string
+    from docutils import io
+
 except ImportError:
-    from regenerate.db import LOGGER
 
     LOGGER.warning(
         "docutils is not installed, preview of formatted "
@@ -36,14 +38,6 @@ except ImportError:
         not available. Simply returns the text.
         """
         return text
-
-
-import sys
-
-if sys.version_info[0] == 3:
-    REPORT_LEVEL = 4
-else:
-    REPORT_LEVEL = "quiet"
 
 
 __CSS = """
@@ -78,12 +72,21 @@ def html_string(text):
     Converts the strng from restructuredText to HTML and prepends
     the CSS string.
     """
+    from docutils.utils import SystemMessage
 
-    overrides = {"output_encoding": "unicode", "report_level": REPORT_LEVEL}
+    overrides = {
+        "output_encoding": "unicode",
+        "report_level": 4,
+        "warning_stream": io.NullOutput(),
+    }
+
+    html = ""
 
     try:
-        return __CSS + publish_string(
+        html = publish_string(
             text, writer_name="html", settings_overrides=overrides
         )
-    except TypeError:
-        return __CSS + publish_string(text, writer_name="html")
+    except SystemMessage as msg:
+        LOGGER.error(str(msg))
+
+    return html
