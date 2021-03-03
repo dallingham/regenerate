@@ -164,14 +164,14 @@ class RDLParser:
         for (reg_name, addr_txt, width, field_list) in reg_list:
             register = Register()
             register.address = int(addr_txt, 16)
-            register.register_name = reg_name
+            register.name = reg_name
             register.width = width
             register.token = reg_name
             self.dbase.add_register(register)
 
             for item in field_list:
                 field = BitField()
-                field.field_name = item.name
+                field.name = item.name
                 try:
                     field.field_type = lookup[item.software_access]
                 except IndexError:

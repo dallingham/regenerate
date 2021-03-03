@@ -188,11 +188,11 @@ class RegParser:
                 attrs, "side_effect"
             )
         if "volatile" in attrs:
-            self.__field.volatile = cnv_bool(attrs, "volatile")
+            self.__field.flags.volatile = cnv_bool(attrs, "volatile")
         if "random" in attrs:
-            self.__field.can_randomize = cnv_bool(attrs, "random")
+            self.__field.flags.can_randomize = cnv_bool(attrs, "random")
         if "error_field" in attrs:
-            self.__field.is_error_field = cnv_bool(attrs, "error_field")
+            self.__field.flags.is_error_field = cnv_bool(attrs, "error_field")
         ftype = attrs.get("field_type")
         if ftype:
             self.__field.field_type = ID_TO_TYPE[ftype]
@@ -215,11 +215,11 @@ class RegParser:
           hide
         """
         self.__reg = Register()
-        self.__reg.do_not_generate_code = cnv_bool(attrs, "nocode")
-        self.__reg.do_not_test = cnv_bool(attrs, "dont_test")
-        self.__reg.do_not_cover = cnv_bool(attrs, "dont_cover")
-        self.__reg.do_not_use_uvm = cnv_bool(attrs, "dont_use_uvm")
-        self.__reg.hide = cnv_bool(attrs, "hide")
+        self.__reg.flags.do_not_generate_code = cnv_bool(attrs, "nocode")
+        self.__reg.flags.do_not_test = cnv_bool(attrs, "dont_test")
+        self.__reg.flags.do_not_cover = cnv_bool(attrs, "dont_cover")
+        self.__reg.flags.do_not_use_uvm = cnv_bool(attrs, "dont_use_uvm")
+        self.__reg.flags.hide = cnv_bool(attrs, "hide")
         self.__reg.share = int(attrs.get("share", 0))
 
     def start_ports(self, _attrs):
@@ -297,15 +297,15 @@ class RegParser:
 
     def end_random(self, text):
         """Called when the range tag is terminated."""
-        self.__field.can_randomize = bool(int(text))
+        self.__field.flags.can_randomize = bool(int(text))
 
     def end_volatile(self, text):
         """Called when the range tag is terminated."""
-        self.__field.volatile = bool(int(text))
+        self.__field.flags.volatile = bool(int(text))
 
     def end_error_field(self, text):
         """Called when the range tag is terminated."""
-        self.__field.is_error_field = bool(int(text))
+        self.__field.flags.is_error_field = bool(int(text))
 
     def end_side_effect(self, text):
         """Called when the range tag is terminated."""
@@ -313,23 +313,23 @@ class RegParser:
 
     def end_nocode(self, text):
         """Called when the range tag is terminated."""
-        self.__reg.do_not_generate_code = bool(int(text))
+        self.__reg.flags.do_not_generate_code = bool(int(text))
 
     def end_dont_test(self, text):
         """Called when the range tag is terminated."""
-        self.__reg.do_not_test = bool(int(text))
+        self.__reg.flags.do_not_test = bool(int(text))
 
     def end_dont_cover(self, text):
         """Called when the range tag is terminated."""
-        self.__reg.do_not_cover = bool(int(text))
+        self.__reg.flags.do_not_cover = bool(int(text))
 
     def end_hide(self, text):
         """Called when the range tag is terminated."""
-        self.__reg.hide = bool(int(text))
+        self.__reg.flags.hide = bool(int(text))
 
     def end_dont_use_uvm(self, text):
         """Called when the range tag is terminated."""
-        self.__reg.do_not_use_uvm = bool(int(text))
+        self.__reg.flags.do_not_use_uvm = bool(int(text))
 
     def end_share(self, text):
         """Called when the range tag is terminated."""
@@ -447,9 +447,9 @@ class RegParser:
         the register.
         """
         if self.__field:
-            self.__field.field_name = text
+            self.__field.name = text
         else:
-            self.__reg.register_name = text
+            self.__reg.name = text
 
     def end_description(self, text):
         """

@@ -31,7 +31,7 @@ if os.path.dirname(sys.argv[0]) != ".":
     if sys.argv[0][0] == "/":
         fullPath = os.path.dirname(sys.argv[0])
     else:
-        fullPath = os.path.join(os.getcwd(),os.path.dirname(sys.argv[0]))
+        fullPath = os.path.join(os.getcwd(), os.path.dirname(sys.argv[0]))
 else:
     fullPath = os.getcwd()
 sys.path.insert(0, os.path.dirname(fullPath))
@@ -41,12 +41,12 @@ import re
 
 
 def crossreference(db):
-    names = sorted([reg.register_name
-                    for reg in db.get_all_registers()],
-                   key=len, reverse=True)
-    
-    re_list = [r'([^`])({0}) ((R|r)egister)'.format(name) for name in names]
-     
+    names = sorted(
+        [reg.name for reg in db.get_all_registers()], key=len, reverse=True
+    )
+
+    re_list = [r"([^`])({0}) ((R|r)egister)".format(name) for name in names]
+
     rcount = 0
     fcount = 0
     count = 0
@@ -55,22 +55,23 @@ def crossreference(db):
         match = re.search(regex, db.overview_text)
         if match:
             print match
-            db.overview_text = re.sub(regex, r'\1`\2`_ \3', db.overview_text)
+            db.overview_text = re.sub(regex, r"\1`\2`_ \3", db.overview_text)
             count += 1
 
     for reg in db.get_all_registers():
-        print "Checking %s" % reg.register_name
+        print "Checking %s" % reg.name
         for regex in re_list:
             match = re.search(regex, reg.description)
             if match:
-                reg.description = re.sub(regex, r'\1`\2`_ \3', reg.description)
+                reg.description = re.sub(regex, r"\1`\2`_ \3", reg.description)
                 rcount += 1
         for field in reg.get_bit_fields():
             for regex in re_list:
                 match = re.search(regex, field.description)
                 if match:
-                    field.description = re.sub(regex, r'\1`\2`_ \3',
-                                               field.description)
+                    field.description = re.sub(
+                        regex, r"\1`\2`_ \3", field.description
+                    )
                     fcount += 1
 
     print "---------------------------------"
@@ -79,6 +80,7 @@ def crossreference(db):
     print "Field xrefs        : {0}".format(fcount)
 
     return count + rcount + fcount
+
 
 def run():
     """
@@ -93,8 +95,8 @@ def run():
         usage="%prog [xml file]",
         description="Opens and saves a register set, making crossreferences in the text",
         prog="regxref",
-        version=PROGRAM_VERSION
-        )
+        version=PROGRAM_VERSION,
+    )
 
     (options, args) = parser.parse_args()
 
@@ -114,4 +116,3 @@ if __name__ == "__main__":
     except IOError, msg:
         sys.stderr.write(str(msg) + "\n")
         sys.exit(1)
-

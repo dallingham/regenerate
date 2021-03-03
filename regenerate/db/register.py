@@ -22,94 +22,171 @@ Provides the register description. Contains the general information about the
 register, including the list of bit fields.
 """
 
-import uuid
 from typing import List, Dict, Tuple, Optional
+from .name_base import NameBase
 from .enums import ResetType, ShareType
 from .bitfield import BitField
 
 
-class Register:
+class RegisterFlags:
+    """
+    Contains the flags that control file and documentation generation
+    """
+
+    __slots__ = (
+        "_do_not_use_uvm",
+        "_do_not_generate_code",
+        "_do_not_cover",
+        "_do_not_test",
+        "_hide",
+    )
+
+    def __init__(self):
+        self._do_not_use_uvm = False
+        self._do_not_generate_code = False
+        self._do_not_cover = False
+        self._do_not_test = False
+        self._hide = False
+
+    @property
+    def hide(self) -> bool:
+        """
+        Returns the value of the _hide flag. This cannot be accessed
+        directly, but only via the property 'hide'
+        """
+        return self._hide
+
+    @hide.setter
+    def hide(self, val: bool) -> None:
+        """
+        Sets the __hide flag. This cannot be accessed directly, but only
+        via the property 'hide'
+        """
+        self._hide = bool(val)
+
+    @property
+    def do_not_generate_code(self) -> bool:
+        """
+        Returns the value of the _do_not_generate_code flag. This cannot
+        be accessed directly, but only via the property 'do_not_generate_code'
+        """
+        return self._do_not_generate_code
+
+    @do_not_generate_code.setter
+    def do_not_generate_code(self, val: bool) -> None:
+        """
+        Sets the __do_not_generate_code flag. This cannot be accessed
+        directly, but only via the property 'do_not_generate_code'
+        """
+        self._do_not_generate_code = bool(val)
+
+    @property
+    def do_not_use_uvm(self) -> bool:
+        """
+        Returns the value of the _do_not_use_uvm flag. This cannot
+        be accessed directly, but only via the property 'do_not_use_uvm'
+        """
+        return self._do_not_use_uvm
+
+    @do_not_use_uvm.setter
+    def do_not_use_uvm(self, val: bool) -> None:
+        """
+        Sets the __do_not_use_uvm flag. This cannot be accessed
+        directly, but only via the property 'do_not_use_uvm'
+        """
+        self._do_not_use_uvm = bool(val)
+
+    @property
+    def do_not_test(self) -> bool:
+        """
+        Returns the value of the _do_not_test flag. This
+        cannot be accessed directly, but only via the property 'do_not_test'
+        """
+        return self._do_not_test
+
+    @do_not_test.setter
+    def do_not_test(self, val: bool) -> None:
+        """
+        Sets the __do_not_test flag. This cannot be accessed
+        directly, but only via the property 'do_not_test'
+        """
+        self._do_not_test = bool(val)
+
+    @property
+    def do_not_cover(self) -> bool:
+        """
+        Returns the value of the _do_not_cover flag. This
+        cannot be accessed directly, but only via the property 'do_not_cover'
+        """
+        return self._do_not_cover
+
+    @do_not_cover.setter
+    def do_not_cover(self, val: bool) -> None:
+        """
+        Sets the __do_not_cover flag. This cannot be accessed
+        directly, but only via the property 'do_not_cover'
+        """
+        self._do_not_cover = bool(val)
+
+
+class Register(NameBase):
     """Defines a hardware register."""
 
     __slots__ = (
         "_bit_fields",
         "_dimension",
-        "_do_not_cover",
-        "_do_not_generate_code",
-        "_do_not_test",
-        "_do_not_use_uvm",
-        "_hide",
-        "_id",
-        "_name",
         "_plist",
         "_token",
         "address",
-        "description",
+        "flags",
         "ram_size",
         "share",
         "width",
     )
 
-    full_compare = (
+    _full_compare = (
         "address",
         "ram_size",
-        "description",
         "width",
-        "_id",
         "_token",
-        "_do_not_test",
-        "_name",
-        "_hide",
+        "flags",
         "_dimension",
-        "_do_not_generate_code",
-        "_do_not_cover",
-        "_do_not_use_uvm",
     )
 
-    array_compare = (
+    _array_compare = (
         "ram_size",
         "width",
-        "_do_not_test",
-        "_hide",
-        "_do_not_generate_code",
-        "_do_not_cover",
-        "_do_not_use_uvm",
         "share",
     )
 
-    doc_compare = (
+    _doc_compare = (
         "address",
         "ram_size",
-        "description",
         "width",
-        "_id",
         "_token",
-        "_name",
-        "_hide",
         "_dimension",
     )
 
-    def __init__(
-        self, address: int = 0, width: int = 32, name: str = ""
-    ) -> None:
+    def __init__(self, address: int = 0, width: int = 32, name: str = ""):
+
+        super().__init__(name, "")
+
         self._dimension = "1"
-        self._id = ""
         self._token = ""
-        self._do_not_test = False
-        self._do_not_cover = False
-        self._do_not_use_uvm = False
-        self._do_not_generate_code = False
-        self._name = name
-        self._hide = False
         self._bit_fields = {}  # type: Dict[int, BitField]
         self._plist = []  # type: List[Tuple[str, int, int, int]]
 
+        self.flags = RegisterFlags()
         self.address = address
         self.ram_size = 0
-        self.description = ""
         self.width = width
 
         self.share = ShareType.NONE
+
+    def __hash__(self):
+        """Provides the hash function so that the object can be hashed"""
+
+        return hash(self.uuid)
 
     def __ne__(self, other) -> bool:
         """Provides the not equal function"""
@@ -120,15 +197,10 @@ class Register:
         """Provides the equal function"""
 
         if not all(
-            getattr(self, i) == getattr(other, i) for i in self.full_compare
+            getattr(self, i) == getattr(other, i) for i in self._full_compare
         ):
             return False
         return self.get_bit_fields() == other.get_bit_fields()
-
-    def __hash__(self):
-        """Provides the hash function so that registers can be hashed"""
-
-        return id(self)
 
     def array_cmp(self, other) -> bool:
         """Array compare"""
@@ -136,10 +208,10 @@ class Register:
         if other is None:
             return False
         if not all(
-            getattr(self, i) == getattr(other, i) for i in self.array_compare
+            getattr(self, i) == getattr(other, i) for i in self._array_compare
         ):
             return False
-        if other.address + (other.width / 8) != self.address:
+        if other.address + (other.width // 8) != self.address:
             return False
         return self.get_bit_fields() == other.get_bit_fields()
 
@@ -147,7 +219,7 @@ class Register:
         "Group compare"
 
         if not all(
-            getattr(self, i) == getattr(other, i) for i in self.array_compare
+            getattr(self, i) == getattr(other, i) for i in self._array_compare
         ):
             return False
         return self.get_bit_fields() == other.get_bit_fields()
@@ -176,7 +248,7 @@ class Register:
     def find_next_unused_bit(self) -> int:
         """Finds the first unused bit in a the register."""
 
-        bit = set([])
+        bit = set()
         for field in self._bit_fields.values():
             for val in range(field.lsb, field.msb + 1):
                 bit.add(val)
@@ -224,100 +296,6 @@ class Register:
         return self._dimension
 
     @property
-    def uuid(self) -> str:
-        """Returns the UUID or creates a new unique one if one doesn't exist"""
-
-        if not self._id:
-            self._id = uuid.uuid4().hex
-        return self._id
-
-    @uuid.setter
-    def uuid(self, value: str) -> None:
-        """Sets the UUID"""
-
-        self._id = value
-
-    @property
-    def do_not_generate_code(self) -> bool:
-        """
-        Returns the value of the _do_not_generate_code flag. This cannot
-        be accessed directly, but only via the property 'do_not_generate_code'
-        """
-        return self._do_not_generate_code
-
-    @do_not_generate_code.setter
-    def do_not_generate_code(self, val: bool) -> None:
-        """
-        Sets the __do_not_generate_code flag. This cannot be accessed
-        directly, but only via the property 'do_not_generate_code'
-        """
-        self._do_not_generate_code = bool(val)
-
-    @property
-    def do_not_use_uvm(self) -> bool:
-        """
-        Returns the value of the _do_not_use_uvm flag. This cannot
-        be accessed directly, but only via the property 'do_not_use_uvm'
-        """
-        return self._do_not_use_uvm
-
-    @do_not_use_uvm.setter
-    def do_not_use_uvm(self, val: bool) -> None:
-        """
-        Sets the __do_not_use_uvm flag. This cannot be accessed
-        directly, but only via the property 'do_not_use_uvm'
-        """
-        self._do_not_use_uvm = bool(val)
-
-    @property
-    def do_not_test(self) -> bool:
-        """
-        Returns the value of the _do_not_generate_code flag. This
-        cannot be accessed directly, but only via the property 'do_not_test'
-        """
-        return self._do_not_test
-
-    @do_not_test.setter
-    def do_not_test(self, val: bool) -> None:
-        """
-        Sets the __do_not_generate_code flag. This cannot be accessed
-        directly, but only via the property 'do_not_test'
-        """
-        self._do_not_test = bool(val)
-
-    @property
-    def do_not_cover(self) -> bool:
-        """
-        Returns the value of the _do_not_cover flag. This
-        cannot be accessed directly, but only via the property 'do_not_cover'
-        """
-        return self._do_not_cover
-
-    @do_not_cover.setter
-    def do_not_cover(self, val: bool) -> None:
-        """
-        Sets the __do_not_cover flag. This cannot be accessed
-        directly, but only via the property 'do_not_cover'
-        """
-        self._do_not_cover = bool(val)
-
-    @property
-    def hide(self) -> bool:
-        """
-        Returns the value of the _hide flag. This cannot be accessed
-        directly, but only via the property 'hide'
-        """
-        return self._hide
-
-    @hide.setter
-    def hide(self, val: bool) -> None:
-        """
-        Sets the __hide flag. This cannot be accessed directly, but only
-        via the property 'hide'
-        """
-        self._hide = bool(val)
-
-    @property
     def token(self) -> str:
         """
         Returns the value of the _token flag. This cannot be accessed
@@ -332,22 +310,6 @@ class Register:
         via the property 'token'
         """
         self._token = val.strip().upper()
-
-    @property
-    def register_name(self) -> str:
-        """
-        Returns the value of the _name flag. This cannot be accessed
-        directly, but only via the property 'register_name'
-        """
-        return self._name
-
-    @register_name.setter
-    def register_name(self, name: str) -> None:
-        """
-        Sets the __name flag. This cannot be accessed directly, but only
-        via the property 'register_name'
-        """
-        self._name = name.strip()
 
     def get_bit_fields(self) -> List[BitField]:
         """
@@ -421,7 +383,7 @@ class Register:
         Indicates if no reset test should be done on the register.
         If any field is a don't test, then we won't test the register
         """
-        if self._do_not_test:
+        if self.flags.do_not_test:
             return True
         for key in self._bit_fields:
             if self._bit_fields[key].reset_type != ResetType.NUMERIC:

@@ -222,7 +222,6 @@ class ProjectReader:
 
         self._prj.add_parameter(attrs["name"], int(attrs["value"]))
 
-    def end_parameters(self, attrs):
+    def end_parameters(self, _attrs):
         "Ends a parameter"
-
-        pass
+        ...

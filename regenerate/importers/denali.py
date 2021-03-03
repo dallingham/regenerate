@@ -256,12 +256,12 @@ class DenaliRDLParser:
         duplicates = set([key for key in name_count if name_count[key] > 1])
         current_duplicates = {}
 
-        offset = self.dbase.data_bus_width / 8
+        offset = self.dbase.data_bus_width // 8
 
         for reg in reg_list:
             register = Register()
             register.address = reg.address
-            register.register_name = reg.reg_name
+            register.name = reg.reg_name
             register.token = reg.token
             if not reg.description:
                 register.description = reg.description
@@ -286,14 +286,14 @@ class DenaliRDLParser:
                     name = item.name
 
                 field = BitField()
-                field.field_name = name
+                field.name = name
                 field.field_type = lookup.get(
                     item.software_access, BitField.READ_ONLY
                 )
                 field.start_position = item.start - delta
                 field.stop_position = item.stop - delta
                 field.reset_value = item.reset
-                field.volatile = item.volatile
+                field.flags = item.flags
                 field.description = item.description
                 register.add_bit_field(field)
             self.dbase.add_register(register)

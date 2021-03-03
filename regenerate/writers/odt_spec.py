@@ -267,7 +267,7 @@ class OdtSpec(WriterBase):
         Writes the text above a register table. This includes the name, address
         mnemonic name, and description
         """
-        self.write_paragraph(HEADING3, reg.register_name, 3, new_id)
+        self.write_paragraph(HEADING3, reg.name, 3, new_id)
 
         offset_addr = reg.address + self._offset
         name = "%s%s" % (self._prefix, reg.token)
@@ -345,7 +345,7 @@ class OdtSpec(WriterBase):
         Writes the description for a registers, including the header and the
         table.
         """
-        new_id = reg.register_name
+        new_id = reg.name
         if self.already_defined.has_key((self._dbase, reg.address)):
             self.__write_register_header(reg)
             self._write_register_reference(reg, new_id)
@@ -367,7 +367,7 @@ class OdtSpec(WriterBase):
         self.cnt.write(
             'text:ref-name="__RefHeading__%s">1.1</text:bookmark-ref>' % hashid
         )
-        self.cnt.write(" (%s) on page " % reg.register_name)
+        self.cnt.write(" (%s) on page " % reg.name)
         self.cnt.write('<text:bookmark-ref text:reference-format="page" ')
         self.cnt.write(
             'text:ref-name="__RefHeading__%s">1</text:bookmark-ref>' % hashid
@@ -406,14 +406,14 @@ class OdtSpec(WriterBase):
                 cols = [
                     TYPE_MAP[bit_range.field_type],
                     rst_val(bit_range.reset_value),
-                    bit_range.field_name,
+                    bit_range.name,
                 ]
                 description = bit_range.description
             else:
                 cols = [
                     TYPE_MAP[bit_range.field_type],
                     "-",
-                    bit_range.field_name,
+                    bit_range.name,
                 ]
                 description = (
                     '%s\n\nReset value is loaded from the input "%s"'

@@ -228,7 +228,7 @@ class CTest(WriterBase):
 
         for index, register in enumerate(dbase.get_all_registers()):
 
-            if register.do_not_test:
+            if register.flags.do_not_test:
                 continue
 
             default = self.calc_default_value(register)
@@ -346,7 +346,7 @@ class CTest(WriterBase):
             use = {8: False, 16: False, 32: False, 64: False}
 
             for temp_reg in self._dbase.get_all_registers():
-                if not temp_reg.do_not_test:
+                if not temp_reg.flags.do_not_test:
                     use[temp_reg.width] = True
             if use[64]:
                 use[32] = True

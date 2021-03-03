@@ -137,7 +137,7 @@ class RegisterModel(Gtk.ListStore):
         data = (
             None,
             addr,
-            register.register_name,
+            register.name,
             register.token,
             register.dimension_str,
             self.STR2BIT[register.width],
@@ -446,13 +446,13 @@ class RegisterList:
         Updates the name associated with the register. Called after the text
         has been edited
         """
-        if text != reg.register_name:
-            reg.register_name = text
+        if text != reg.name:
+            reg.name = text
             self._set_modified()
-        self._model[path][RegCol.NAME] = reg.register_name
+        self._model[path][RegCol.NAME] = reg.name
 
         if reg.token == "":
-            value = build_define(reg.register_name)
+            value = build_define(reg.name)
             self._model[path][RegCol.DEFINE] = value
             reg.token = value
             self._set_modified()

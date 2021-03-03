@@ -22,6 +22,7 @@ RegProject is the container object for a regenerate project
 """
 
 from collections import defaultdict
+from pathlib import Path
 import os.path
 from typing import List
 import xml.sax.saxutils
@@ -88,10 +89,12 @@ class RegProject:
         self.company_name = ""
         self.documentation = ""
         self.name = "unnamed"
-        self.path = path
         self.short_name = "unnamed"
         if path:
-            self.open(path)
+            self.path = Path(path)
+            self.open(self.path)
+        else:
+            self.path = None
 
     def save(self) -> None:
         """Saves the project to the XML file"""
@@ -102,7 +105,7 @@ class RegProject:
         """Opens and reads an XML file"""
 
         reader = ProjectReader(self)
-        self.path = name
+        self.path = Path(name)
         reader.open(name)
 
     def loads(self, data: str) -> None:
@@ -126,20 +129,20 @@ class RegProject:
         self._filelist.append(name)
         self._exports[name] = []
 
-    def add_register_set(self, path: str, _alter_path: bool = True) -> None:
+    def add_register_set(self, path: str) -> None:
         """
         Adds a new register set to the project. Note that this only records
         the filename, and does not actually keep a reference to the RegisterDb.
         """
         self._modified = True
-        path = os.path.relpath(path, os.path.dirname(self.path))
+        path = os.path.relpath(path, self.path.parent)
         self.append_register_set_to_list(path)
 
     def remove_register_set(self, path: str) -> None:
         """Removes the specified register set from the project."""
         self._modified = True
         try:
-            path2remove = os.path.relpath(path, os.path.dirname(self.path))
+            path2remove = os.path.relpath(path, self.path.parent)
             self._filelist.remove(path2remove)
         except ValueError as msg:
             LOGGER.error(str(msg))
@@ -183,8 +186,8 @@ class RegProject:
         dest - destination output name
         """
         self._modified = True
-        path = os.path.relpath(path, os.path.dirname(self.path))
-        dest = os.path.relpath(dest, os.path.dirname(self.path))
+        path = os.path.relpath(path, self.path.parent)
+        dest = os.path.relpath(dest, self.path.parent)
         self._exports[path].append((option, dest))
 
     def append_to_project_export_list(self, option: str, dest: str) -> None:
@@ -223,7 +226,7 @@ class RegProject:
         dest - destination output name
         """
         self._modified = True
-        dest = os.path.relpath(dest, os.path.dirname(self.path))
+        dest = os.path.relpath(dest, self.path.parent)
         self._project_exports.append((option, dest))
 
     def add_to_group_export_list(
@@ -238,7 +241,7 @@ class RegProject:
         dest - destination output name
         """
         self._modified = True
-        dest = os.path.relpath(dest, os.path.dirname(self.path))
+        dest = os.path.relpath(dest, self.path.parent)
         self._group_exports[group].append((option, dest))
 
     def remove_from_export_list(
@@ -246,7 +249,7 @@ class RegProject:
     ) -> None:
         """Removes the export from the export list"""
         self._modified = True
-        path = os.path.relpath(path, os.path.dirname(self.path))
+        path = os.path.relpath(path, self.path.parent)
         self._exports[path].remove((option, dest))
 
     def remove_from_project_export_list(self, option: str, dest: str) -> None:
@@ -268,10 +271,8 @@ class RegProject:
         """
         if self.path is None:
             return self._filelist
-        base = os.path.dirname(self.path)
-        return [
-            os.path.normpath(os.path.join(base, i)) for i in self._filelist
-        ]
+        base = self.path.parent
+        return [os.path.normpath(base / i) for i in self._filelist]
 
     def get_grouping_list(self) -> List[GroupData]:
         """

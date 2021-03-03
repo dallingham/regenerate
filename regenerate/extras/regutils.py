@@ -57,13 +57,11 @@ def duplicate_register(dbase, reg):
     changing the register description, signals, and token based on the original
     register.
     """
-    reglist = set(
-        {dbase.get_register(key).register_name for key in dbase.get_keys()}
-    )
+    reglist = set({dbase.get_register(key).name for key in dbase.get_keys()})
     deflist = set({dbase.get_register(key).token for key in dbase.get_keys()})
     signals = build_signal_set(dbase)
 
-    new_name = build_new_name(reg.register_name, reglist)
+    new_name = build_new_name(reg.name, reglist)
 
     def_name = build_new_name(reg.token, deflist)
     if not def_name:
@@ -81,7 +79,7 @@ def duplicate_register(dbase, reg):
         nfld.control_signal = signal_from_source(fld.control_signal, signals)
 
     new_reg.address = calculate_next_address(dbase, reg.width)
-    new_reg.register_name = new_name
+    new_reg.name = new_name
     new_reg.token = def_name
     return new_reg
 

@@ -69,7 +69,7 @@ class BitFieldEditor(BaseWindow):
         self._builder.add_from_file(GLADE_BIT)
         self._top_builder = top_builder
         self._control_obj = self._builder.get_object("control")
-        self._register_obj = self._builder.get_object("register_name")
+        self._register_obj = self._builder.get_object("name")
         self._output_obj = self._builder.get_object("output")
         self._output_enable_obj = self._builder.get_object("outen")
         self._input_obj = self._builder.get_object("input")
@@ -118,7 +118,7 @@ class BitFieldEditor(BaseWindow):
         self._top_window.set_transient_for(parent)
         self._top_window.set_title(
             "Edit Bit Field - [{0:02x}] {1}".format(
-                register.address, register.register_name
+                register.address, register.name
             )
         )
         self.configure(self._top_window)
@@ -145,7 +145,7 @@ class BitFieldEditor(BaseWindow):
     def _initialize_from_data(self, bit_field):
         """Initializes the dialog's data fields from the object"""
 
-        self._register_obj.set_text(f"<b>{self._register.register_name}</b>")
+        self._register_obj.set_text(f"<b>{self._register.name}</b>")
         self._register_obj.set_use_markup(True)
 
         self._set_text("field_name", bit_field.full_field_name())
@@ -160,17 +160,17 @@ class BitFieldEditor(BaseWindow):
 
         (input_enb, control_enb) = TYPE_TO_ENABLE[bit_field.field_type]
         if input_enb and not bit_field.input_signal:
-            bit_field.input_signal = f"{bit_field.field_name}_DATA_IN"
+            bit_field.input_signal = f"{bit_field.name}_DATA_IN"
 
         if control_enb and not bit_field.control_signal:
-            bit_field.control_signal = f"{bit_field.field_name}_LOAD"
+            bit_field.control_signal = f"{bit_field.name}_LOAD"
 
         self._output_obj.set_text(bit_field.output_signal)
         self._input_obj.set_text(bit_field.input_signal)
 
-        self._set_active("volatile", bit_field.volatile)
-        self._set_active("random", bit_field.can_randomize)
-        self._set_active("error_bit", bit_field.is_error_field)
+        self._set_active("volatile", bit_field.flags.volatile)
+        self._set_active("random", bit_field.flags.can_randomize)
+        self._set_active("error_bit", bit_field.flags.is_error_field)
         self._set_active("static", bit_field.output_is_static)
         self._set_active("side_effect", bit_field.output_has_side_effect)
         self._set_active("outen", bit_field.use_output_enable)
@@ -197,6 +197,10 @@ class BitFieldEditor(BaseWindow):
         """Sets the field value"""
         setattr(self._bit_field, val, obj.get_active())
 
+    def _set_flag_value(self, val, obj):
+        """Sets the field value"""
+        setattr(self._bit_field.flag, val, obj.get_active())
+
     @modified
     def on_output_changed(self, obj):
         """Called with the output signal changed"""
@@ -212,17 +216,17 @@ class BitFieldEditor(BaseWindow):
     @modified
     def on_volatile_changed(self, obj):
         """Called with the volatile flag changed"""
-        self._set_field_value("volatile", obj)
+        self._set_flag_value("volatile", obj)
 
     @modified
     def on_random_toggled(self, obj):
         """Called with the random flag changed"""
-        self._set_field_value("can_randomize", obj)
+        self._set_flag_value("can_randomize", obj)
 
     @modified
     def on_error_bit_toggled(self, obj):
         """Called with the error field flag changed"""
-        self._set_field_value("is_error_field", obj)
+        self._set_flag_value("is_error_field", obj)
 
     @modified
     def on_static_toggled(self, obj):

@@ -63,6 +63,7 @@ class UVMRegBlockRegisters(WriterBase):
 
     def _build_group_maps(self) -> Dict[GroupData, Set[str]]:
         group_maps = {}
+
         for group in self._project.get_grouping_list():
             in_maps = set()
             for addr_map in self.uvm_address_maps():
@@ -163,18 +164,18 @@ def individual_access(field: BitField, reg: Register) -> int:
         fld for fld in flds if fld != field and not is_readonly(fld)
     ]:
         for pos in range(x_field.lsb, x_field.msb + 1):
-            used_bytes.add(pos / 8)
+            used_bytes.add(pos // 8)
 
     # loop through the bytes used by the current field, and make sure they
     # do match any of the bytes used by other fields
     for pos in range(field.lsb, field.msb + 1):
-        if pos / 8 in used_bytes:
+        if pos // 8 in used_bytes:
             return 0
     return 1
 
 
 def remove_no_uvm(slist: List[Register]) -> List[Register]:
-    return [reg for reg in slist if reg.do_not_use_uvm is False]
+    return [reg for reg in slist if reg.flags.do_not_use_uvm is False]
 
 
 def fix_name(field: BitField) -> str:
@@ -184,7 +185,7 @@ def fix_name(field: BitField) -> str:
     name names that are reserved SystemVerilog words with alternatives.
     """
 
-    name = "_".join(field.field_name.lower().split())
+    name = "_".join(field.name.lower().split())
 
     if name in REMAP_NAME:
         return f"{name}_field"

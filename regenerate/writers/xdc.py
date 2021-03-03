@@ -118,7 +118,7 @@ class Xdc(WriterBase):
                     for (addr, field) in ports:
                         if field.is_constant():
                             continue
-                        signal_name = field.field_name
+                        signal_name = field.name
                         if group_inst.repeat > 1:
                             for i in range(0, group_inst.repeat):
                                 hdl = ""

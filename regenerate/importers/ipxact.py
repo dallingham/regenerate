@@ -180,7 +180,7 @@ class IpXactParser:
         self._field = BitField()
 
     def end_field(self, _text):
-        if not self._field.field_name.startswith("RESERVED"):
+        if not self._field.name.startswith("RESERVED"):
             self._field.start_position = self._fld_start
             self._field.stop_position = self._fld_start + self._fld_width - 1
             self._reg.add_bit_field(self._field)
@@ -210,9 +210,9 @@ class IpXactParser:
 
     def end_name(self, text):
         if self._field:
-            self._field.field_name = text.upper()
+            self._field.name = text.upper()
         elif self._reg:
-            self._reg.register_name = text.replace("_", " ")
+            self._reg.name = text.replace("_", " ")
             self._reg.token = text.upper()
         elif not self._in_maps and not self._db.descriptive_title:
             self._db.descriptive_title = text.strip()
@@ -238,7 +238,7 @@ class IpXactParser:
 
 def crossreference(dbase):
     names = sorted(
-        [reg.register_name for reg in dbase.get_all_registers()],
+        [reg.name for reg in dbase.get_all_registers()],
         key=len,
         reverse=True,
     )

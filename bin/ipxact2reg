@@ -143,11 +143,9 @@ class IpXactParser:
                     addr_tag = register.find(scope + "addressOffset")
 
                     if disp_tag is not None:
-                        self._reg.register_name = disp_tag.text
+                        self._reg.name = disp_tag.text
                     else:
-                        self._reg.register_name = name_tag.text.replace(
-                            "_", " "
-                        )
+                        self._reg.name = name_tag.text.replace("_", " ")
 
                     if descr_tag is not None:
                         self._reg.description = descr_tag.text
@@ -249,7 +247,7 @@ class IpXactParser:
                 new_token = new_token[:-1]
             index = int(name_match.groups()[1])
         else:
-            new_name = self._reg.register_name
+            new_name = self._reg.name
             new_token = self._reg.token
             index = -1
 
@@ -261,7 +259,7 @@ class IpXactParser:
         ):
             self._last_reg.dimension += 1
             self._last_reg.token = new_token
-            self._last_reg.register_name = new_name
+            self._last_reg.name = new_name
         else:
             if self._reg.get_bit_fields():
                 self.reglist.append(self._reg)
@@ -348,7 +346,7 @@ class IpXactParser:
             self._field.field_name = text.upper()
         elif self._reg:
             self._reg.token = text.upper()
-            self._reg.register_name = name_from_token(text.upper())
+            self._reg.name = name_from_token(text.upper())
         elif not self._in_maps and not self.db_title:
             self.db_title = text.strip()
 
@@ -438,7 +436,7 @@ class Groupings:
 
 def crossreference(db):
     names = sorted(
-        [reg.register_name for reg in db.get_all_registers()],
+        [reg.name for reg in db.get_all_registers()],
         key=len,
         reverse=True,
     )
@@ -616,13 +614,11 @@ if __name__ == "__main__":
             if args.xlate:
                 for i, s in enumerate(src):
                     r.token = re.sub(s, dest[i], r.token, flags=re.I)
-                    r.register_name = re.sub(
-                        s, dest[i], r.register_name, flags=re.I
-                    )
+                    r.name = re.sub(s, dest[i], r.name, flags=re.I)
             if db2 is not None:
                 old_reg = db2.find_register_by_token(r.token)
                 if old_reg:
-                    r.register_name = old_reg.register_name
+                    r.name = old_reg.register_name
 
             max_addr = max(r.address, max_addr)
 

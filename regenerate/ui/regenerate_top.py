@@ -663,11 +663,11 @@ class MainWindow(BaseWindow):
                 field = reg.get_bit_field(key)
                 self.bit_model.append_field(field)
 
-            self.find_obj("no_rtl").set_active(reg.do_not_generate_code)
-            self.find_obj("no_uvm").set_active(reg.do_not_use_uvm)
-            self.find_obj("no_test").set_active(reg.do_not_test)
-            self.find_obj("no_cover").set_active(reg.do_not_cover)
-            self.find_obj("hide_doc").set_active(reg.hide)
+            self.find_obj("no_rtl").set_active(reg.flags.do_not_generate_code)
+            self.find_obj("no_uvm").set_active(reg.flags.do_not_use_uvm)
+            self.find_obj("no_test").set_active(reg.flags.do_not_test)
+            self.find_obj("no_cover").set_active(reg.flags.do_not_cover)
+            self.find_obj("hide_doc").set_active(reg.flags.hide)
 
             self.reg_notebook.set_sensitive(True)
             self.reg_selected.set_sensitive(True)
@@ -783,7 +783,7 @@ class MainWindow(BaseWindow):
         field.lsb = next_pos
 
         field.msb = field.lsb
-        field.field_name = "BIT%d" % field.lsb
+        field.name = "BIT%d" % field.lsb
         field.output_signal = ""
         if register.share == ShareType.WRITE:
             field.field_type = BitType.WRITE_ONLY
@@ -1397,7 +1397,7 @@ class MainWindow(BaseWindow):
     def button_toggle(self, attr, obj):
         reg = self.reglist_obj.get_selected_register()
         if reg:
-            setattr(reg, attr, obj.get_active())
+            setattr(reg.flags, attr, obj.get_active())
             self.set_modified()
 
     def on_no_rtl_toggled(self, obj):
@@ -1503,17 +1503,15 @@ class MainWindow(BaseWindow):
             msg.append("No bit fields exist for the register")
         else:
             for field in reg.get_bit_fields():
-                if field.field_name.lower() in REMAP_NAME:
-                    txt = f"Field name ({field.field_name}) is a SystemVerilog reserved word"
+                if field.name.lower() in REMAP_NAME:
+                    txt = f"Field name ({field.name}) is a SystemVerilog reserved word"
                     msg.append(txt)
                 if check_field(field):
-                    txt = "Missing field description for '{field.field_name}'"
+                    txt = "Missing field description for '{field.name}'"
                     msg.append(txt)
                     warn_bit = True
                 if check_reset(field):
-                    txt = (
-                        "Missing reset parameter name for '{field.field_name}'"
-                    )
+                    txt = "Missing reset parameter name for '{field.name}'"
                     msg.append(txt)
                     warn_bit = True
         if mark and not self.loading_project:

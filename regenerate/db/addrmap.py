@@ -25,9 +25,9 @@ Contains the data in the address map
 class AddrMapData:
     """Address map data"""
 
-    def __init__(self, name, base, width, fixed, uvm):
-        self.name = name
-        self.base = base
-        self.width = width
-        self.fixed = fixed
-        self.uvm = uvm
+    def __init__(self, name: str, base: int, width: int, fixed: int, uvm: int):
+        self.name: str = name
+        self.base: int = base
+        self.width: int = width
+        self.fixed: int = fixed
+        self.uvm: int = uvm

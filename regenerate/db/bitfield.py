@@ -19,9 +19,9 @@
 
 """Provides the definition of a Bit Field."""
 
-import uuid
-from .enums import BitType, ResetType
 from typing import List, Tuple
+from .name_base import NameBase
+from .enums import BitType, ResetType
 
 
 def clean_signal(name: str) -> str:
@@ -29,7 +29,25 @@ def clean_signal(name: str) -> str:
     return "_".join(name.strip().split())
 
 
-class BitField:
+class BitFieldFlags:
+    """
+    Flags for the bit field
+    """
+
+    def __init__(self):
+        self.is_error_field: bool = False
+        self.can_randomize: bool = False
+        self.volatile: bool = False
+
+    def __eq__(self, other):
+        return (
+            self.is_error_field == other.is_error_field
+            and self.can_randomize == other.can_randomize
+            and self.volatile == other.volatile
+        )
+
+
+class BitField(NameBase):
     """Holds all the data of a bit field (one or more bits of a register)."""
 
     PARAMETERS = {}  # type: ignore
@@ -44,14 +62,11 @@ class BitField:
 
     write_only_types = (BitType.WRITE_ONLY,)
 
-    full_compare = (
-        "_field_name",
-        "_id",
+    _full_compare = (
         "_input_signal",
         "_output_signal",
         "_reset_value",
         "control_signal",
-        "description",
         "field_type",
         "is_error_field",
         "lsb",
@@ -66,11 +81,8 @@ class BitField:
         "volatile",
     )
 
-    doc_compare = (
-        "_field_name",
-        "_id",
+    _doc_compare = (
         "_reset_value",
-        "description",
         "field_type",
         "is_error_field",
         "lsb",
@@ -82,16 +94,11 @@ class BitField:
     )
 
     __slots__ = (
-        "_field_name",
-        "_id",
         "_input_signal",
         "_output_signal",
         "_reset_value",
-        "can_randomize",
         "control_signal",
-        "description",
         "field_type",
-        "is_error_field",
         "lsb",
         "modified",
         "msb",
@@ -102,32 +109,39 @@ class BitField:
         "reset_type",
         "use_output_enable",
         "values",
-        "volatile",
     )
 
     def __init__(self, stop: int = 0, start: int = 0):
         """Initialize the bitfield."""
-        self._field_name = ""
-        self._id = ""
-        self._input_signal = ""
-        self._output_signal = ""
-        self._reset_value = 0
-        self.can_randomize = False
-        self.control_signal = ""
-        self.description = ""
-        self.field_type = BitType.READ_ONLY
-        self.is_error_field = False
-        self.lsb = start
+        super().__init__("", "")
         self.modified = False
+
+        self._input_signal = ""
+        self.control_signal = ""
+
+        self.field_type = BitType.READ_ONLY
+
+        self.flags = BitFieldFlags()
+
+        self.lsb = start
         self.msb = stop
+
+        self._output_signal = ""
         self.output_has_side_effect = False
         self.output_is_static = False
+        self.use_output_enable = False
+
+        self._reset_value = 0
         self.reset_input = ""
         self.reset_parameter = ""
         self.reset_type = ResetType.NUMERIC
-        self.use_output_enable = False
-        self.values = []  # type: List[Tuple[str, str, str]]
-        self.volatile = False
+
+        self.values: List[Tuple[str, str, str]] = []
+
+    def __hash__(self):
+        """Provides the hash function so that the object can be hashed"""
+
+        return hash(self.uuid)
 
     @staticmethod
     def set_parameters(values) -> None:
@@ -136,8 +150,12 @@ class BitField:
 
     def __eq__(self, other):
         """Compare for equality between two bitfieids."""
-        return all(
-            getattr(self, i) == getattr(other, i) for i in self.full_compare
+        return (
+            all(
+                getattr(self, i) == getattr(other, i)
+                for i in self._full_compare
+            )
+            and self.flags == other.flags
         )
 
     def __ne__(self, other) -> bool:
@@ -165,14 +183,14 @@ class BitField:
     def full_field_name(self) -> str:
         """Build the name of the field, including bit positions if needed."""
         if self.width == 1:
-            return self._field_name
-        return "%s[%d:%d]" % (self._field_name, self.msb, self.lsb)
+            return self.name
+        return f"{self.name}[{self.msb}:{self.lsb}]"
 
     def bit_range(self) -> str:
         """Return the bit range of the field."""
         if self.width == 1:
             return str(self.lsb)
-        return "[%d:%d]" % (self.msb, self.lsb)
+        return f"[{self.msb}:{self.lsb}]"
 
     @property
     def reset_value(self) -> int:
@@ -191,18 +209,6 @@ class BitField:
         if self._reset_value & (1 << bit):
             return 1
         return 0
-
-    @property
-    def uuid(self) -> str:
-        """Return the UUID for the bitfield."""
-        if not self._id:
-            self._id = uuid.uuid4().hex
-        return self._id
-
-    @uuid.setter
-    def uuid(self, value: str) -> None:
-        """Set the UUID for the bitfield."""
-        self._id = value
 
     @property
     def stop_position(self) -> int:
@@ -229,16 +235,6 @@ class BitField:
         """Return the width in bits of the bit field."""
         return self.msb - self.lsb + 1
 
-    @property
-    def field_name(self) -> str:
-        """Return the name of the fieid."""
-        return self._field_name
-
-    @field_name.setter
-    def field_name(self, value: str) -> None:
-        """Set the name of the fieid."""
-        self._field_name = value.strip()
-
     def resolved_output_signal(self) -> str:
         """
         Get the output signal associated with the bit range.
@@ -250,9 +246,9 @@ class BitField:
         if len(nlist) == 1:
             return self._output_signal
         if self.msb == self.lsb:
-            index = "%d" % self.lsb
+            index = f"{self.lsb}"
         else:
-            index = "%d:%d" % (self.msb, self.lsb)
+            index = f"{self.msb}:{self.lsb}"
         return "%s%s%s" % (nlist[0], index, nlist[1])
 
     @property

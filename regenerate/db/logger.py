@@ -22,12 +22,8 @@ Logging functionality
 """
 
 import logging
-import os
 
 LOGGER = logging.getLogger("regenerate")
-
-if os.name == "nt":
-    LOGGER.setLevel(40)
 
 # create console handler and set level to debug
 __CH = logging.StreamHandler()

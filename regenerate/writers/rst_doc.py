@@ -134,7 +134,7 @@ class RstDoc(WriterBase):
                         continue
 
                     self.reglist = set(
-                        [reg.register_name for reg in db.get_all_registers()]
+                        [reg.name for reg in db.get_all_registers()]
                     )
 
                     if db.descriptive_title:

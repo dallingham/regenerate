@@ -122,14 +122,14 @@ module {{db.module_name}}
 {%   for (field, start_offset, stop_offset, start_pos, stop_pos, faddr, reg) in val %}
 {%     set ci = cell_info[field.field_type] %}
 /*------------------------------------------------------------------------------
- * Field       : {{field.field_name}}
+ * Field       : {{field.name}}
  * Type        : {{ci.type_descr}}
 {%     if stop_pos == start_pos %}
  * Bit         : {{start_pos}}
 {% else %}
  * Bits        : {{stop_pos}}:{{start_pos}}
 {% endif %}
- * Register    : {{reg.register_name}}
+ * Register    : {{reg.name}}
  * Address     : {{"%08x"|format(reg.address)}}
 {%     if field.reset_type == 0 %}
  * Reset Value : {{field.width}}'h{{"%x"|format(field.reset_value)}}

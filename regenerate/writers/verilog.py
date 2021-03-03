@@ -164,7 +164,7 @@ class Verilog(WriterBase):
         self.__sorted_regs = [
             reg
             for reg in dbase.get_all_registers()
-            if not (reg.do_not_generate_code or reg.ram_size > 0)
+            if not (reg.flags.do_not_generate_code or reg.ram_size > 0)
         ]
         self._used_types: Set[BitType] = set()
 
@@ -240,7 +240,7 @@ class Verilog(WriterBase):
         for reg in [
             r
             for r in self._dbase.get_all_registers()
-            if not r.do_not_generate_code
+            if not r.flags.do_not_generate_code
         ]:
             if reg.dimension_is_param():
                 new_reg = copy.copy(reg)
@@ -425,7 +425,7 @@ def reg_field_name(reg: Register, field: BitField):
     return "r%02x%s%s" % (
         reg.address,
         mode[reg.share],
-        field.field_name.lower(),
+        field.name.lower(),
     )
 
 
@@ -480,7 +480,7 @@ def build_output_signals(dbase, cell_info):
     signals = []
 
     for reg in dbase.get_all_registers():
-        if reg.do_not_generate_code:
+        if reg.flags.do_not_generate_code:
             continue
         for field in reg.get_bit_fields():
             if cell_info[field.field_type].has_oneshot:
@@ -667,7 +667,7 @@ def build_oneshot_assignments(word_fields, cell_info):
                 for byte in break_into_bytes(fld.lsb, fld.msb):
                     or_list.append(
                         "r{:x}_{}_{}_1S".format(
-                            reg.address, fld.field_name.lower(), byte[0]
+                            reg.address, fld.name.lower(), byte[0]
                         )
                     )
                 assign_list.append((name, " | ".join(or_list)))
@@ -693,7 +693,7 @@ def build_assignments(word_fields):
                         (
                             fld.output_signal,
                             "r%02x%s%s"
-                            % (reg.address, mode, fld.field_name.lower()),
+                            % (reg.address, mode, fld.name.lower()),
                             reg.dimension_str,
                         )
                     )
@@ -702,7 +702,7 @@ def build_assignments(word_fields):
                         (
                             f"{fld.output_signal}[{reg.dimension}]",
                             "r%02x%s%s"
-                            % (reg.address, mode, fld.field_name.lower()),
+                            % (reg.address, mode, fld.name.lower()),
                             "",
                         )
                     )
@@ -711,7 +711,7 @@ def build_assignments(word_fields):
                         (
                             fld.resolved_output_signal(),
                             "r%02x%s%s"
-                            % (reg.address, mode, fld.field_name.lower()),
+                            % (reg.address, mode, fld.name.lower()),
                             "",
                         )
                     )
@@ -756,7 +756,7 @@ def register_output_definitions(dbase, word_fields):
                 clist.append("%d'b0" % (last - (start_offset + width) + 1,))
             if start_pos == stop_pos:
                 clist.append(
-                    "r%02x%s%s" % (reg.address, mode, field.field_name.lower())
+                    "r%02x%s%s" % (reg.address, mode, field.name.lower())
                 )
             else:
                 clist.append(
@@ -764,7 +764,7 @@ def register_output_definitions(dbase, word_fields):
                     % (
                         reg.address,
                         mode,
-                        field.field_name.lower(),
+                        field.name.lower(),
                         stop_pos,
                         start_pos,
                     )

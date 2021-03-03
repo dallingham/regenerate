@@ -153,7 +153,7 @@ def get_base_signal(address, field):
     """
     Returns the base signal derived from the address and the output field
     """
-    return "r{0:02x}_{1}".format(address, field.field_name.lower())
+    return "r{0:02x}_{1}".format(address, field.name.lower())
 
 
 EXPORTERS = [

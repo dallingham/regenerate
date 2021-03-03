@@ -202,7 +202,7 @@ class OdtDoc(WriterBase):
         Writes the text above a register table. This includes the name, address
         mnemonic name, and description
         """
-        self.write_paragraph(HEADING2, reg.register_name, 2)
+        self.write_paragraph(HEADING2, reg.name, 2)
 
         caddr = reg.address + self._offset
         self.write_paragraph(REGADDR, "<b>Address</b>:\t0x%08x" % caddr)
@@ -280,14 +280,14 @@ class OdtDoc(WriterBase):
                 cols = [
                     TYPE_MAP[bit_range.field_type],
                     rst_val(bit_range.reset_value),
-                    bit_range.field_name,
+                    bit_range.name,
                 ]
                 description = bit_range.description
             else:
                 cols = [
                     TYPE_MAP[bit_range.field_type],
                     "-",
-                    bit_range.field_name,
+                    bit_range.name,
                 ]
                 description = (
                     '%s\n\nReset value is loaded from the input "%s"'

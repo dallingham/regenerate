@@ -48,7 +48,7 @@ class CStruct(WriterBase):
         UI should prevent), the are converted to underscores. We then replace
         name names that are reserved SystemVerilog words with alternatives.
         """
-        name = "_".join(field.field_name.lower().split())
+        name = "_".join(field.name.lower().split())
 
         if name in REMAP_NAME:
             return "%s_field" % name

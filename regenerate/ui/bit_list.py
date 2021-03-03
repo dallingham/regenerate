@@ -78,7 +78,7 @@ class BitModel(Gtk.ListStore):
             row=[
                 None,
                 bits(field),
-                field.field_name,
+                field.name,
                 TYPE2STR[field.field_type][0],
                 get_field_reset_data(field),
                 self.RESET2STR[field.reset_type],
@@ -232,19 +232,19 @@ class BitList:
         """
 
         field = self.__model.get_bitfield_at_path(path)
-        if new_text != field.field_name:
+        if new_text != field.name:
             new_text = new_text.upper().replace(" ", "_")
             new_text = new_text.replace("/", "_").replace("-", "_")
 
             register = self.__model.register
 
             current_names = [
-                f.field_name for f in register.get_bit_fields() if f != field
+                f.name for f in register.get_bit_fields() if f != field
             ]
 
             if new_text not in current_names:
                 self.__model[path][BitCol.NAME] = new_text
-                field.field_name = new_text
+                field.name = new_text
                 self.__modified()
                 self.clear_msg()
             else:
@@ -303,19 +303,19 @@ class BitList:
         if not field.output_signal:
             field.output_signal = "%s_%s_OUT" % (
                 self.__model.register.token,
-                field.field_name,
+                field.name,
             )
 
         if TYPE_ENB[field.field_type][0] and not field.input_signal:
             field.input_signal = "%s_%s_IN" % (
                 self.__model.register.token,
-                field.field_name,
+                field.name,
             )
 
         if TYPE_ENB[field.field_type][1] and not field.control_signal:
             field.control_signal = "%s_%s_LD" % (
                 self.__model.register.token,
-                field.field_name,
+                field.name,
             )
 
     def update_bits(self, _cell, path, new_text, _col):

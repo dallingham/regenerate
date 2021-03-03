@@ -263,9 +263,7 @@ class RegisterRst:
         if dbase is None:
             self.reglist = set()
         else:
-            self.reglist = set(
-                {reg.register_name for reg in dbase.get_all_registers()}
-            )
+            self.reglist = set({reg.name for reg in dbase.get_all_registers()})
 
         if decode:
             try:
@@ -289,15 +287,13 @@ class RegisterRst:
         ofile = StringIO()
         used = set()
         for reg in self.reglist:
-            if reg.register_name not in used:
-                used.add(reg.register_name)
+            if reg.name not in used:
+                used.add(reg.name)
                 if self._inst and self._group:
                     url = "/".join(
                         (self._group, self._inst, reg.token.lower())
                     )
-                    ofile.write(
-                        ".. _`{0}`: {1}\n\n".format(reg.register_name, url)
-                    )
+                    ofile.write(".. _`{0}`: {1}\n\n".format(reg.name, url))
 
         ofile.write("\n\n")
         self.str_title(ofile)
@@ -327,7 +323,7 @@ class RegisterRst:
         return "%s-%s-%s-%s" % (
             norm_name(self._inst),
             norm_name(self._group),
-            norm_name(self._reg.register_name),
+            norm_name(self._reg.name),
             norm_name(name),
         )
 
@@ -340,9 +336,9 @@ class RegisterRst:
             ofile = StringIO()
             ret_str = True
 
-        rlen = len(self._reg.register_name) + 2
-        ofile.write(".. _%s:\n\n" % self.refname(self._reg.register_name))
-        ofile.write(self._reg.register_name)
+        rlen = len(self._reg.name) + 2
+        ofile.write(".. _%s:\n\n" % self.refname(self._reg.name))
+        ofile.write(self._reg.name)
         ofile.write("\n%s\n\n" % ("_" * rlen))
 
         if ret_str:
@@ -420,7 +416,7 @@ class RegisterRst:
                 ofile.write("     - ``0x%x``\n" % field.reset_value)
 
             ofile.write("     - %s\n" % TYPE_TO_SIMPLE_TYPE[field.field_type])
-            ofile.write("     - %s\n" % field.field_name)
+            ofile.write("     - %s\n" % field.name)
             descr = field.description.strip()
             marked_descr = "\n       ".join(descr.split("\n"))
             encoded_descr = (
@@ -432,12 +428,12 @@ class RegisterRst:
             if len(lines) > self._maxlines:
                 ofile.write(
                     "     - See :ref:`Description for %s <%s>`\n"
-                    % (field.field_name, self.field_ref(field.field_name))
+                    % (field.name, self.field_ref(field.name))
                 )
                 extra_text.append(
                     (
-                        self.field_ref(field.field_name),
-                        field.field_name,
+                        self.field_ref(field.name),
+                        field.name,
                         encoded_descr,
                     )
                 )

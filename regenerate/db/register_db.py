@@ -21,11 +21,12 @@ Provides the container database for a set of registers.
 """
 
 from io import BytesIO as StringIO
-import os
+from pathlib import Path
 import re
+
+from regenerate.settings import rules
 from .reg_parser import RegParser
 from .reg_writer import RegWriter
-from ..settings import rules
 
 
 DEF_CLK_NAME = "CLK"
@@ -149,8 +150,11 @@ class RegisterDb:
 
     def read_xml(self, filename):
         """Reads the XML file, loading the databsae."""
-        with open(filename, "rb") as ifile:
-            self.set_name = os.path.splitext(os.path.basename(filename))[0]
+
+        filename = Path(filename)
+
+        with filename.open("rb") as ifile:
+            self.set_name = filename.stem
             parser = RegParser(self)
             parser.parse(ifile)
         return self
@@ -158,7 +162,9 @@ class RegisterDb:
     def loads(self, data, filename):
         """Reads the XML file, loading the databsae."""
 
-        self.set_name = os.path.splitext(os.path.basename(filename))[0]
+        filename = Path(filename)
+
+        self.set_name = filename.stem
         ifile = StringIO(data)
         parser = RegParser(self)
         parser.parse(ifile)
@@ -330,7 +336,7 @@ class RegisterDb:
     def find_register_by_name(self, name):
         """Finds a register with the given name, or None if not found"""
         for i in self.__registers:
-            if self.__registers[i].register_name == name:
+            if self.__registers[i].name == name:
                 return self.__registers[i]
         return None
 
@@ -347,7 +353,7 @@ class RegisterDb:
         return [
             self.__registers[i]
             for i in self.__registers
-            if regexp.match(self.__registers[i].register_name)
+            if regexp.match(self.__registers[i].name)
         ]
 
     def find_registers_by_token_regexp(self, name):
