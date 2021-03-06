@@ -90,8 +90,8 @@ class PrjParameterList:
         """
         if self._prj is not None:
             self._model.clear()
-        for (name, value) in self._prj.get_parameters():
-            self.append(name, value)
+        for param in self._prj.get_parameters():
+            self.append(param.name, param.value)
 
     def remove_clicked(self):
         """Remove parameter"""

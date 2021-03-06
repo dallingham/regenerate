@@ -21,13 +21,29 @@
 Contains the data in the address map
 """
 
+from .json_base import JSONEncodable
 
-class AddrMapData:
+
+class AddrMapData(JSONEncodable):
     """Address map data"""
 
-    def __init__(self, name: str, base: int, width: int, fixed: int, uvm: int):
+    def __init__(
+        self,
+        name: str = "",
+        base: int = 0,
+        width: int = 0,
+        fixed: int = 0,
+        uvm: int = 0,
+    ):
         self.name: str = name
         self.base: int = base
         self.width: int = width
         self.fixed: int = fixed
         self.uvm: int = uvm
+
+    def json_decode(self, data):
+        self.name = data["name"]
+        self.base = data["base"]
+        self.width = data["width"]
+        self.fixed = data["fixed"]
+        self.uvm = data["uvm"]

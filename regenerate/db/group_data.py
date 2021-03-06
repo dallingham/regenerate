@@ -24,9 +24,11 @@ HDL path, the repeat count, repeat offset, and the title.
 
 from typing import List
 from .register_db import RegisterDb
+from .group_inst_data import GroupInstData
+from .json_base import JSONEncodable
 
 
-class GroupData:
+class GroupData(JSONEncodable):
     """Basic group information."""
 
     def __init__(
@@ -44,7 +46,7 @@ class GroupData:
         self.hdl = hdl
         self.repeat = repeat
         self.repeat_offset = repeat_offset
-        self.register_sets = []  # type: List[RegisterDb]
+        self.register_sets: List[GroupInstData] = []
         self.title = title
         self.docs = ""
 
@@ -72,3 +74,19 @@ class GroupData:
         ):
             return False
         return True
+
+    def json_decode(self, data) -> None:
+        """Compare for equality."""
+        self.name = data["name"]
+        self.base = data["base"]
+        self.hdl = data["hdl"]
+        self.title = data["title"]
+        self.repeat = data["repeat"]
+        self.repeat_offset = data["repeat_offset"]
+        self.docs = data["docs"]
+
+        self.register_sets = []
+        for rset in data["register_sets"]:
+            ginst = GroupInstData()
+            ginst.json_decode(rset)
+            self.register_sets.append(ginst)

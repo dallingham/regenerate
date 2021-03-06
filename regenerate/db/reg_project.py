@@ -29,10 +29,14 @@ import xml.sax.saxutils
 
 from .proj_writer import ProjectWriter
 from .proj_reader import ProjectReader
+from .proj_writer_json import ProjectWriterJSON
+from .proj_reader_json import ProjectReaderJSON
 from .addrmap import AddrMapData
 from .group_data import GroupData
 from .textutils import clean_text
 from .logger import LOGGER
+from .parammap import PrjParameterData
+from .export import ExportData
 
 
 def nested_dict(depth, dict_type):
@@ -55,58 +59,57 @@ class RegProject:
     and exports (register set and entire project exports), and address maps.
     """
 
-    __slots__ = (
-        "_parameters",
-        "_addr_map_grps",
-        "_addr_map_list",
-        "_exports",
-        "_filelist",
-        "_group_exports",
-        "_groupings",
-        "_modified",
-        "_project_exports",
-        "_token_list",
-        "access_map",
-        "company_name",
-        "documentation",
-        "name",
-        "path",
-        "short_name",
-    )
-
     def __init__(self, path=None):
+
+        self.short_name = "unnamed"
+        self.name = "unnamed"
+        self.documentation = ""
+        self.company_name = ""
+        self.access_map = nested_dict(3, int)
+        self._filelist = []
+        self._parameters = []
         self._addr_map_grps = {}
         self._addr_map_list = []
-        self._exports = {}
-        self._filelist = []
-        self._group_exports = {}
+
         self._groupings = []  # type: List[GroupData]
-        self._modified = False
-        self._parameters = []
+
+        self._exports = {}
+        self._group_exports = {}
         self._project_exports = []
-        self._token_list = []
-        self.access_map = nested_dict(3, int)
-        self.company_name = ""
-        self.documentation = ""
-        self.name = "unnamed"
-        self.short_name = "unnamed"
+
+        self._modified = False
+
         if path:
             self.path = Path(path)
             self.open(self.path)
         else:
             self.path = None
 
+    def json(self):
+        return {
+            key: value
+            for (key, value) in self.__dict__.items()
+            if key != "path"
+        }
+
     def save(self) -> None:
         """Saves the project to the XML file"""
-        writer = ProjectWriter(self)
-        writer.save(self.path)
+        #        writer = ProjectWriter(self)
+        #        writer.save(self.path)
+        writer = ProjectWriterJSON(self)
+        writer.save(self.path.with_suffix(".json"))
 
     def open(self, name: str) -> None:
         """Opens and reads an XML file"""
 
-        reader = ProjectReader(self)
+        # reader = ProjectReader(self)
         self.path = Path(name)
-        reader.open(name)
+        if self.path.suffix == ".rprj":
+            reader = ProjectReader(self)
+            reader.open(name)
+        else:
+            reader = ProjectReaderJSON(self)
+            reader.open(name)
 
     def loads(self, data: str) -> None:
         """Reads XML from a string"""
@@ -405,7 +408,6 @@ class RegProject:
         self, map_name: str, group_name: str, block_name: str, access
     ):
         """Sets the access mode"""
-        print("Access", access)
         self.access_map[map_name][group_name][block_name] = access
 
     def get_access_items(self, map_name, group_name):
@@ -543,14 +545,69 @@ class RegProject:
 
     def add_parameter(self, name, value):
         """Adds a parameter to the parameter list"""
-        self._parameters.append((name, value))
+        parameter = PrjParameterData(name, value)
+        self._parameters.append(parameter)
 
     def remove_parameter(self, name):
         """Removes a parameter from the parameter list"""
         self._parameters = [
-            param for param in self._parameters if param[0] != name
+            param for param in self._parameters if param.name != name
         ]
 
     def set_parameters(self, parameter_list):
         """Sets the parameter list"""
         self._parameters = parameter_list
+
+    def json(self):
+
+        json_keys = (
+            "short_name",
+            "name",
+            "documentation",
+            "company_name",
+            "access_map",
+            "_filelist",
+            "_parameters",
+            "_addr_map_grps",
+            "_addr_map_list",
+            "_groupings",
+            "_exports",
+            "_group_exports",
+            "_project_exports",
+        )
+
+        data = {}
+        for key in json_keys:
+            data[key] = self.__getattribute__(key)
+        return data
+
+    def json_decode(self, data):
+
+        self.short_name = data["short_name"]
+        self.name = data["name"]
+        self.documentation = data["documentation"]
+        self.company_name = data["company_name"]
+        self.access_map = data["access_map"]
+        self._filelist = data["_filelist"]
+        self._addr_map_grps = data["_addr_map_grps"]
+
+        self._addr_map_list = []
+        for addr_data_json in data["_addr_map_list"]:
+            addr_data = AddrMapData()
+            addr_data.json_decode(addr_data_json)
+            self._addr_map_list.append(addr_data)
+
+        self._parameters = []
+        for param_json in data["_parameters"]:
+            param = PrjParameterData(param_json["name"], param_json["value"])
+            self._parameters.append(param)
+
+        self._groupings = []
+        for grp in data["_groupings"]:
+            grp_data = GroupData()
+            grp_data.json_decode(grp)
+            self._groupings.append(grp_data)
+
+        self._exports = data["_exports"]
+        self._group_exports = data["_group_exports"]
+        self._project_exports = data["_project_exports"]

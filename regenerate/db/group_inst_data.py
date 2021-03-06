@@ -21,22 +21,24 @@
 Manages the instance of a register within a group.
 """
 
+from .json_base import JSONEncodable
 
-class GroupInstData:
+
+class GroupInstData(JSONEncodable):
     """Instance information when contained in a group"""
 
     def __init__(
         self,
-        rset: str,
-        inst: str,
-        offset: int,
-        repeat: int,
-        repeat_offset: int,
-        hdl: str,
-        no_uvm: bool,
-        no_decode: bool,
-        array: bool,
-        single_decode: bool,
+        rset: str = "",
+        inst: str = "",
+        offset: int = 0,
+        repeat: int = 0,
+        repeat_offset: int = 0,
+        hdl: str = "",
+        no_uvm: bool = False,
+        no_decode: bool = False,
+        array: bool = False,
+        single_decode: bool = False,
     ) -> None:
         self.set = rset
         self.inst = inst
@@ -61,3 +63,14 @@ class GroupInstData:
             and self.array == other.array
             and self.single_decode == other.single_decode
         )
+
+    def json_decode(self, data) -> None:
+        self.set = data["set"]
+        self.inst = data["inst"]
+        self.offset = data["offset"]
+        self.repeat = data["repeat"]
+        self.hdl = data["hdl"]
+        self.no_uvm = data["no_uvm"]
+        self.no_decode = data["no_decode"]
+        self.array = data["array"]
+        self.single_decode = data["single_decode"]

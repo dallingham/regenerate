@@ -16,28 +16,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """
-Contains the information for register set parameters and
-project parameters.
+RegProject is the container object for a regenerate project
 """
 
-from .json_base import JSONEncodable
+import json
+from operator import methodcaller
 
 
-class ParameterData(JSONEncodable):
-    """Register set parameter data"""
+class ProjectWriterJSON:
+    """
+    ProjectWriter writes the data in the project to the XML file.
+    """
 
-    def __init__(self, name, value, min_val, max_val):
-        self.name = name
-        self.value = value
-        self.min_val = min_val
-        self.max_val = max_val
+    def __init__(self, project):
+        self._prj = project
 
+    def save(self, path):
 
-class PrjParameterData(JSONEncodable):
-    """Project parameter data"""
-
-    def __init__(self, name, value):
-        self.name = name
-        self.value = value
+        with open(path, "w") as ofile:
+            ofile.write(
+                json.dumps(self._prj, default=methodcaller("json"), indent=4)
+            )

@@ -18,26 +18,24 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
-Contains the information for register set parameters and
-project parameters.
+Manages the reading of the project file (.rprj)
 """
-
-from .json_base import JSONEncodable
-
-
-class ParameterData(JSONEncodable):
-    """Register set parameter data"""
-
-    def __init__(self, name, value, min_val, max_val):
-        self.name = name
-        self.value = value
-        self.min_val = min_val
-        self.max_val = max_val
+import json
+from .group_data import GroupData
+from .group_inst_data import GroupInstData
 
 
-class PrjParameterData(JSONEncodable):
-    """Project parameter data"""
+class ProjectReaderJSON:
+    """
+    Reads the project information from the project file.
+    """
 
-    def __init__(self, name, value):
-        self.name = name
-        self.value = value
+    def __init__(self, project):
+        self._prj = project
+
+    def open(self, name):
+        with open(name) as ofile:
+            data = ofile.read()
+
+        json_data = json.loads(data)
+        self._prj.json_decode(json_data)
