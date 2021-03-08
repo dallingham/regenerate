@@ -12,6 +12,7 @@
     <property name="label">_Add Register</property>
     <property name="short_label">_Add</property>
     <property name="stock_id">gtk-add</property>
+    <property name="icon_name">list-add</property>
     <signal name="activate" handler="on_add_register_action_activate" swapped="no"/>
   </object>
   <object class="GtkAction" id="add_set_action">
@@ -438,6 +439,7 @@
     <property name="label">_Remove Register</property>
     <property name="short_label">_Remove</property>
     <property name="stock_id">gtk-remove</property>
+    <property name="icon_name">list-remove</property>
     <signal name="activate" handler="on_remove_register_action_activate" swapped="no"/>
   </object>
   <object class="GtkAction" id="remove_set_action">
@@ -1137,10 +1139,9 @@
                             <property name="position">250</property>
                             <property name="position_set">True</property>
                             <child>
-                              <object class="GtkBox" id="regbox">
+                              <object class="GtkGrid">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
-                                <property name="orientation">vertical</property>
                                 <child>
                                   <object class="GtkScrolledWindow" id="scrolledwindow1">
                                     <property name="visible">True</property>
@@ -1150,25 +1151,27 @@
                                       <object class="GtkTreeView" id="register_list">
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
+                                        <property name="hexpand">True</property>
+                                        <property name="vexpand">True</property>
                                         <child internal-child="selection">
-                                          <object class="GtkTreeSelection" id="register_list_selection"/>
+                                          <object class="GtkTreeSelection"/>
                                         </child>
                                       </object>
                                     </child>
                                   </object>
                                   <packing>
-                                    <property name="expand">True</property>
-                                    <property name="fill">True</property>
-                                    <property name="position">0</property>
+                                    <property name="left_attach">0</property>
+                                    <property name="top_attach">0</property>
                                   </packing>
                                 </child>
                                 <child>
                                   <object class="GtkInfoBar" id="reg_infobar">
                                     <property name="can_focus">False</property>
+                                    <property name="hexpand">True</property>
                                     <property name="message_type">error</property>
                                     <property name="revealed">False</property>
                                     <child internal-child="action_area">
-                                      <object class="GtkButtonBox" id="reg_infobar_btnbox">
+                                      <object class="GtkButtonBox">
                                         <property name="can_focus">False</property>
                                         <property name="spacing">6</property>
                                         <property name="layout_style">end</property>
@@ -1183,7 +1186,7 @@
                                       </packing>
                                     </child>
                                     <child internal-child="content_area">
-                                      <object class="GtkBox" id="reg_info_bar_gtkbox">
+                                      <object class="GtkBox">
                                         <property name="can_focus">False</property>
                                         <property name="spacing">16</property>
                                         <child>
@@ -1205,12 +1208,73 @@
                                         <property name="position">0</property>
                                       </packing>
                                     </child>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
                                   </object>
                                   <packing>
-                                    <property name="expand">False</property>
-                                    <property name="fill">True</property>
-                                    <property name="position">1</property>
+                                    <property name="left_attach">0</property>
+                                    <property name="top_attach">1</property>
                                   </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkButtonBox">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="margin_left">6</property>
+                                    <property name="margin_right">6</property>
+                                    <property name="margin_top">6</property>
+                                    <property name="margin_bottom">6</property>
+                                    <property name="orientation">vertical</property>
+                                    <property name="layout_style">start</property>
+                                    <child>
+                                      <object class="GtkButton">
+                                        <property name="related_action">add_register_action</property>
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="receives_default">True</property>
+                                        <child>
+                                          <object class="GtkImage">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">False</property>
+                                            <property name="stock">gtk-add</property>
+                                          </object>
+                                        </child>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">True</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkButton">
+                                        <property name="related_action">remove_register_action</property>
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="receives_default">True</property>
+                                        <child>
+                                          <object class="GtkImage">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">False</property>
+                                            <property name="stock">gtk-remove</property>
+                                          </object>
+                                        </child>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">True</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="left_attach">1</property>
+                                    <property name="top_attach">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <placeholder/>
                                 </child>
                               </object>
                               <packing>
@@ -3112,12 +3176,36 @@
                   <object class="GtkLabel" id="label1">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="ypad">6</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Register Set&lt;/b&gt;</property>
+                    <property name="ypad">12</property>
+                    <property name="label" translatable="yes">&lt;b&gt;Registers&lt;/b&gt;</property>
                     <property name="use_markup">True</property>
                     <property name="angle">90</property>
                   </object>
                   <packing>
+                    <property name="tab_fill">False</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">To Be Added Later</property>
+                  </object>
+                  <packing>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+                <child type="tab">
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="ypad">12</property>
+                    <property name="label" translatable="yes">&lt;b&gt;Blocks&lt;/b&gt;</property>
+                    <property name="use_markup">True</property>
+                    <property name="angle">90</property>
+                  </object>
+                  <packing>
+                    <property name="position">1</property>
                     <property name="tab_fill">False</property>
                   </packing>
                 </child>
@@ -4151,20 +4239,20 @@
                     </child>
                   </object>
                   <packing>
-                    <property name="position">1</property>
+                    <property name="position">2</property>
                   </packing>
                 </child>
                 <child type="tab">
                   <object class="GtkLabel" id="label2">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="ypad">6</property>
+                    <property name="ypad">12</property>
                     <property name="label" translatable="yes">&lt;b&gt;Project&lt;/b&gt;</property>
                     <property name="use_markup">True</property>
                     <property name="angle">90</property>
                   </object>
                   <packing>
-                    <property name="position">1</property>
+                    <property name="position">2</property>
                     <property name="tab_fill">False</property>
                   </packing>
                 </child>
