@@ -23,7 +23,6 @@ HDL path, the repeat count, repeat offset, and the title.
 """
 
 from typing import List
-from .register_db import RegisterDb
 from .group_inst_data import GroupInstData
 from .json_base import JSONEncodable
 

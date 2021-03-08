@@ -78,7 +78,7 @@ class ProjectWriter:
                 )
 
             ofile.write("</project>\n")
-            self._prj.modified = False
+            self._prj.modified = True
 
     def _print_parameter_list(self, ofile):
         plist = self._prj.get_parameters()

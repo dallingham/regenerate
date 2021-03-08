@@ -258,7 +258,10 @@ class Verilog(WriterBase):
 
         word_fields = self.__generate_group_list(reglist, self._data_width)
 
-        if self._dbase.reset_active_level and not self._dbase.use_interface:
+        if (
+            self._dbase.ports.reset_active_level
+            and not self._dbase.use_interface
+        ):
             reset_edge = "posedge"
         else:
             reset_edge = "negedge"
@@ -266,7 +269,7 @@ class Verilog(WriterBase):
         reset_op = (
             ""
             if (
-                self._dbase.reset_active_level
+                self._dbase.ports.reset_active_level
                 and not self._dbase.use_interface
             )
             else "~"
@@ -325,7 +328,7 @@ class Verilog(WriterBase):
                     reset_edge=reset_edge,
                     reset_op=reset_op,
                     reg_type=self.reg_type,
-                    low_bit=LOWER_BIT[self._dbase.data_bus_width],
+                    low_bit=LOWER_BIT[self._dbase.ports.data_bus_width],
                 )
             )
             self.write_register_modules(ofile)
@@ -352,17 +355,26 @@ class Verilog(WriterBase):
     def write_register_modules(self, ofile):
         """Writes the used register module types to the file."""
 
-        if self._dbase.reset_active_level and not self._dbase.use_interface:
+        if (
+            self._dbase.ports.reset_active_level
+            and not self._dbase.use_interface
+        ):
             edge = "posedge"
         else:
             edge = "negedge"
 
-        if self._dbase.reset_active_level and not self._dbase.use_interface:
+        if (
+            self._dbase.ports.reset_active_level
+            and not self._dbase.use_interface
+        ):
             condition = ""
         else:
             condition = "~"
 
-        if self._dbase.byte_strobe_active_level or self._dbase.use_interface:
+        if (
+            self._dbase.ports.byte_strobe_active_level
+            or self._dbase.use_interface
+        ):
             be_level = ""
         else:
             be_level = "~"
@@ -412,11 +424,12 @@ def drop_write_share(list_in):
 
 def build_port_widths(dbase: RegisterDb):
     return {
-        "byte_strobe": "[{}:0]".format(dbase.data_bus_width // 8 - 1),
+        "byte_strobe": "[{}:0]".format(dbase.ports.data_bus_width // 8 - 1),
         "addr": "[{}:{}]".format(
-            dbase.address_bus_width - 1, LOWER_BIT[dbase.data_bus_width]
+            dbase.ports.address_bus_width - 1,
+            LOWER_BIT[dbase.ports.data_bus_width],
         ),
-        "write_data": "[{}:0]".format(dbase.data_bus_width - 1),
+        "write_data": "[{}:0]".format(dbase.ports.data_bus_width - 1),
     }
 
 
@@ -436,14 +449,15 @@ def build_write_address_selects(
     assigns = []
 
     for addr in word_fields:
-        rval = addr >> LOWER_BIT[dbase.data_bus_width]
+        rval = addr >> LOWER_BIT[dbase.ports.data_bus_width]
 
         assigns.append(
             (
                 "write_r%02x" % addr,
                 "%d'h%x"
                 % (
-                    dbase.address_bus_width - LOWER_BIT[dbase.data_bus_width],
+                    dbase.ports.address_bus_width
+                    - LOWER_BIT[dbase.ports.data_bus_width],
                     rval,
                 ),
                 word_fields[addr][0][-1],
@@ -460,12 +474,15 @@ def build_read_address_selects(dbase, word_fields, cell_info):
         for (field, *_) in val:
             if not cell_info[field.field_type].has_rd:
                 continue
-            lower_bit = LOWER_BIT[dbase.data_bus_width]
+            lower_bit = LOWER_BIT[dbase.ports.data_bus_width]
             assigns.append(
                 (
                     "read_r%02x" % addr,
                     "%d'h%x"
-                    % (dbase.address_bus_width - lower_bit, addr >> lower_bit),
+                    % (
+                        dbase.ports.address_bus_width - lower_bit,
+                        addr >> lower_bit,
+                    ),
                     word_fields[addr][0][-1],
                 )
             )
@@ -725,17 +742,17 @@ def register_output_definitions(dbase, word_fields):
     for addr in word_fields:
         val = word_fields[addr]
 
-        last = dbase.data_bus_width - 1
+        last = dbase.ports.data_bus_width - 1
         reg = val[0][-1]
         if reg.dimension_is_param():
             wire_name = (
                 "r%02x[%s]" % (addr, reg.dimension_str),
-                "[%d:0]" % (dbase.data_bus_width - 1,),
+                "[%d:0]" % (dbase.ports.data_bus_width - 1,),
             )
         else:
             wire_name = (
                 "r%02x" % addr,
-                "[%d:0]" % (dbase.data_bus_width - 1,),
+                "[%d:0]" % (dbase.ports.data_bus_width - 1,),
             )
         clist = []
 
@@ -789,18 +806,18 @@ def build_standard_ports(dbase):
             "write_data": "MGMT.WDATA",
             "read_data": "MGMT.RDATA",
             "ack": "MGMT.ACK",
-            "addr": "MGMT.ADDR[%d:3]" % (dbase.address_bus_width - 1,),
+            "addr": "MGMT.ADDR[%d:3]" % (dbase.ports.address_bus_width - 1,),
         }
     return {
-        "clk": dbase.clock_name,
-        "reset": dbase.reset_name,
-        "write_strobe": dbase.write_strobe_name,
-        "read_strobe": dbase.read_strobe_name,
-        "byte_strobe": dbase.byte_strobe_name,
-        "write_data": dbase.write_data_name,
-        "read_data": dbase.read_data_name,
-        "ack": dbase.acknowledge_name,
-        "addr": dbase.address_bus_name,
+        "clk": dbase.ports.clock_name,
+        "reset": dbase.ports.reset_name,
+        "write_strobe": dbase.ports.write_strobe_name,
+        "read_strobe": dbase.ports.read_strobe_name,
+        "byte_strobe": dbase.ports.byte_strobe_name,
+        "write_data": dbase.ports.write_data_name,
+        "read_data": dbase.ports.read_data_name,
+        "ack": dbase.ports.acknowledge_name,
+        "addr": dbase.ports.address_bus_name,
     }
 
 

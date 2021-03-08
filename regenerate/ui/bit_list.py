@@ -139,7 +139,7 @@ class BitList:
         self.selection_changed(obj)
 
     def set_parameters(self, parameters):
-        my_parameters = sorted([(p[0], p[0]) for p in parameters])
+        my_parameters = sorted([(p.name, p.name) for p in parameters])
         self.reset_column.update_menu(my_parameters)
 
     def set_model(self, model):

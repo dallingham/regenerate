@@ -28,10 +28,12 @@ regenerate
 import xml
 import os
 import sys
+from pathlib import Path
+
 from gi.repository import Gtk, GdkPixbuf, Gdk, Pango
 from regenerate import PROGRAM_VERSION, PROGRAM_NAME
 from regenerate.db import (
-    RegWriter,
+    RegWriterJSON,
     RegisterDb,
     Register,
     GroupInstData,
@@ -44,6 +46,7 @@ from regenerate.db import (
     ResetType,
     ShareType,
     BitType,
+    REG_EXT,
 )
 from regenerate.extras.regutils import (
     calculate_next_address,
@@ -76,13 +79,13 @@ from regenerate.ui.reg_description import RegisterDescription
 from regenerate.ui.register_list import RegisterModel, RegisterList
 from regenerate.ui.status_logger import StatusHandler
 from regenerate.ui.summary_window import SummaryWindow
+from regenerate.db.reg_project import PRJ_EXT, OLD_EXT
 
 TYPE_ENB = {}
 for data_type in TYPES:
     TYPE_ENB[data_type.type] = (data_type.input, data_type.control)
 
-DEF_EXT = ".rprj"
-DEF_MIME = "*" + DEF_EXT
+DEF_MIME = "*" + PRJ_EXT
 
 
 class DbaseStatus:
@@ -979,8 +982,8 @@ class MainWindow(BaseWindow):
         if response == Gtk.ResponseType.OK:
             filename = choose.get_filename()
             ext = os.path.splitext(filename)
-            if ext[1] != DEF_EXT:
-                filename = filename + DEF_EXT
+            if ext[1] != PRJ_EXT:
+                filename = filename + PRJ_EXT
 
             self.prj = RegProject()
             self.prj.path = filename
@@ -1038,7 +1041,7 @@ class MainWindow(BaseWindow):
 
         try:
             self.prj = RegProject(filename)
-            self.project_tabs.change_db(self.prj)
+            #            self.project_tabs.change_db(self.prj)
             self.initialize_project_address_maps()
         except xml.parsers.expat.ExpatError as msg:
             ErrorMsg(
@@ -1053,13 +1056,19 @@ class MainWindow(BaseWindow):
 
         self.prj_parameter_list.set_prj(self.prj)
 
-        ini.set("user", "last_project", os.path.abspath(filename))
-        idval = self.status_obj.get_context_id("mod")
-        self.status_obj.push(idval, f"Loading {filename} ...")
-        self.set_busy_cursor(True)
+        filepath = Path(filename)
+        if filepath.suffix != PRJ_EXT:
+            filepath = filepath.with_suffix(PRJ_EXT)
+            LOGGER.warning(
+                "Converted the database to the new format - "
+                f" the new file name is {filepath}"
+            )
+        else:
+            LOGGER.warning("Loaded %s", filepath)
+
+        ini.set("user", "last_project", str(filepath.resolve()))
 
         for fname in sorted(self.prj.get_register_set(), key=sort_regset):
-
             try:
                 self.open_xml(fname, False)
             except xml.parsers.expat.ExpatError as msg:
@@ -1075,11 +1084,9 @@ class MainWindow(BaseWindow):
         if self.recent_manager and uri:
             self.recent_manager.add_item(uri)
         self.find_obj("save_btn").set_sensitive(True)
-        self.set_busy_cursor(False)
 
         self.set_title(False)
 
-        self.status_obj.pop(idval)
         self.load_project_tab()
         self.prj_loaded.set_sensitive(True)
         self.loading_project = False
@@ -1138,7 +1145,12 @@ class MainWindow(BaseWindow):
 
     def input_xml(self, name, load=True):
         old_skip = self.skip_changes
-        self.skip_changes = True
+
+        name_path = Path(name)
+        if name_path.suffix == REG_EXT:
+            self.skip_changes = True
+        else:
+            self.skip_changes = False
         self.dbase = RegisterDb()
         self.dbmap[self.dbase.set_name] = self.dbase
         self.load_database(name)
@@ -1161,7 +1173,8 @@ class MainWindow(BaseWindow):
             self.bitfield_obj.set_model(self.bit_model)
 
         self.update_display()
-        self.clear_modified()
+        if name_path.suffix == REG_EXT:
+            self.clear_modified()
         self.skip_changes = old_skip
 
     def update_display(self):
@@ -1181,6 +1194,9 @@ class MainWindow(BaseWindow):
         Opens the specified XML file, parsing the data and building the
         internal RegisterDb data structure.
         """
+        path = Path(name)
+        converted = path.suffix == ".xml"
+
         if name:
             try:
                 self.input_xml(name, load)
@@ -1201,43 +1217,42 @@ class MainWindow(BaseWindow):
                 self.bit_model,
             )
 
-            self.active.node = self.prj_model.add_dbase(name, self.active)
+            self.active.node = self.prj_model.add_dbase(
+                name, self.active, converted
+            )
             if load:
                 self.prj_obj.select(self.active.node)
                 self.module_notebook.set_sensitive(True)
+        self.project_modified(True)
 
     def load_database(self, filename):
         """
         Reads the specified XML file, and redraws the screen.
         """
-        try:
-            self.dbase.read_xml(filename)
-            self.filename = filename
-            self.dbmap[self.dbase.set_name] = self.dbase
-        except xml.parsers.expat.ExpatError as msg:
-            ErrorMsg(
-                f"{filename} is not a valid regenerate file",
-                str(msg),
-                self.top_window,
-            )
+        self.filename = Path(filename)
+        self.dbase.read_db(filename)
+        self.dbmap[self.dbase.set_name] = self.dbase
 
     def on_save_clicked(self, _obj):
         """
         Called with the save button is clicked (gtk callback). Saves the
         database.
         """
+        change_suffix = False
+
         for item in self.prj_model:
             if item[PrjCol.MODIFIED]:
                 try:
-                    old_path = item[PrjCol.OBJ].path
-                    new_path = "%s.bak" % old_path
-                    if os.path.isfile(new_path):
-                        os.remove(new_path)
-                    if os.path.isfile(old_path):
-                        os.rename(old_path, new_path)
+                    old_path = Path(item[PrjCol.OBJ].path)
+                    if old_path.suffix != ".xml":
+                        new_path = Path("%s.bak" % old_path)
+                        if new_path.is_file():
+                            new_path.unlink()
+                        if old_path.is_file():
+                            old_path.rename(new_path)
 
-                    writer = RegWriter(item[PrjCol.OBJ].db)
-                    writer.save(old_path)
+                    writer = RegWriterJSON(item[PrjCol.OBJ].db)
+                    writer.save(str(old_path.with_suffix(REG_EXT)))
                     self.clear_modified(item[PrjCol.OBJ])
                 except IOError as msg:
                     os.rename(new_path, old_path)
@@ -1250,13 +1265,13 @@ class MainWindow(BaseWindow):
         self.prj.set_new_order([item[0] for item in self.prj_model])
         self.instance_obj.get_groups()
 
-        current_path = self.prj.path
-        backup_path = f"{current_path}.bak"
+        current_path = Path(self.prj.path)
+        backup_path = Path(f"{current_path}.bak")
 
-        if os.path.isfile(backup_path):
-            os.remove(backup_path)
-        if os.path.isfile(current_path):
-            os.rename(current_path, backup_path)
+        if current_path.suffix != OLD_EXT:
+            if backup_path.is_file():
+                backup_path.unlink()
+            current_path.rename(backup_path)
 
         try:
             self.prj.save()

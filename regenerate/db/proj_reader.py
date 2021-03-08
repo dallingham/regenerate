@@ -174,7 +174,7 @@ class ProjectReader:
         Called when the documentation XML tag is encountered. Assigns the
         current text string to the documentation variable
         """
-        self._prj.documentation = text
+        self._prj.doc_pages.update_page("Overview", text)
 
     def end_overview(self, text):
         """

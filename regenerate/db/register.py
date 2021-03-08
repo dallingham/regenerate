@@ -26,6 +26,7 @@ from typing import List, Dict, Tuple, Optional
 from .name_base import NameBase
 from .enums import ResetType, ShareType
 from .bitfield import BitField
+from .parammap import ParameterData
 
 
 class RegisterFlags:
@@ -128,6 +129,22 @@ class RegisterFlags:
         """
         self._do_not_cover = bool(val)
 
+    def json(self):
+        return {
+            "do_not_use_uvm": self._do_not_use_uvm,
+            "do_not_generate_code": self._do_not_generate_code,
+            "do_not_cover": self._do_not_cover,
+            "do_not_test": self._do_not_test,
+            "hide": self._hide,
+        }
+
+    def json_decode(self, data):
+        self._do_not_use_uvm = data["do_not_use_uvm"]
+        self._do_not_generate_code = data["do_not_generate_code"]
+        self._do_not_cover = data["do_not_cover"]
+        self._do_not_test = data["do_not_test"]
+        self._hide = data["hide"]
+
 
 class Register(NameBase):
     """Defines a hardware register."""
@@ -135,7 +152,7 @@ class Register(NameBase):
     __slots__ = (
         "_bit_fields",
         "_dimension",
-        "_plist",
+        "_parameter_list",
         "_token",
         "address",
         "flags",
@@ -173,8 +190,8 @@ class Register(NameBase):
 
         self._dimension = "1"
         self._token = ""
-        self._bit_fields = {}  # type: Dict[int, BitField]
-        self._plist = []  # type: List[Tuple[str, int, int, int]]
+        self._bit_fields: Dict[int, BitField] = {}
+        self._parameter_list: List[ParameterData] = []
 
         self.flags = RegisterFlags()
         self.address = address
@@ -279,10 +296,10 @@ class Register(NameBase):
         try:
             return int(self._dimension)
         except ValueError:
-            if self._plist:
-                for (name, value, _, _) in self._plist:
-                    if name == self._dimension:
-                        return value
+            if self._parameter_list:
+                for param in self._parameter_list:
+                    if param.name == self._dimension:
+                        return param.value
             return 1
 
     @dimension.setter
@@ -433,6 +450,48 @@ class Register(NameBase):
                 val |= 1 << i
         return val
 
-    def set_parameters(self, plist: List[Tuple[str, int, int, int]]) -> None:
+    def set_parameters(self, parameter_list: List[ParameterData]) -> None:
         """Sets the parameter list"""
-        self._plist = plist
+        self._parameter_list = parameter_list
+
+    def json(self):
+        return {
+            "name": self.name,
+            "id": self._id,
+            "description": self.description,
+            "dimension": self.dimension,
+            "parameters": self._parameter_list,
+            "token": self._token,
+            "address": self.address,
+            "flags": self.flags,
+            "ram_size": self.ram_size,
+            "share": self.share,
+            "width": self.width,
+            "bitfields": [field for index, field in self._bit_fields.items()],
+        }
+
+    def json_decode(self, data):
+        self.name = data["name"]
+        self._id = data["id"]
+        self.description = data["description"]
+        self.dimension = data["dimension"]
+
+        self._parameter_list = []
+        for param_json in data["parameters"]:
+            self._parameter_list.append(ParameterData[param_json])
+
+        self._token = data["token"]
+        self.address = data["address"]
+
+        self.flags = RegisterFlags()
+        self.flags.json_decode(data["flags"])
+
+        self.ram_size = data["ram_size"]
+        self.share = data["share"]
+        self.width = data["width"]
+
+        self._bit_fields = {}
+        for field_json in data["bitfields"]:
+            field = BitField()
+            field.json_decode(field_json)
+            self._bit_fields[field.lsb] = field

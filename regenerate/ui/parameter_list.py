@@ -98,8 +98,8 @@ class ParameterList:
         """
         if self._db is not None:
             self._model.clear()
-        for (name, value, min_val, max_val) in self._db.get_parameters():
-            self.append(name, value, min_val, max_val)
+        for param in self._db.get_parameters():
+            self.append(param.name, param.value, param.min_val, param.max_val)
 
     def remove_clicked(self):
         """Remove the entry"""
@@ -110,7 +110,7 @@ class ParameterList:
 
     def add_clicked(self):
         """Add a new entry, after picking a new name"""
-        current = set({p[0] for p in self._db.get_parameters()})
+        current = set({p.name for p in self._db.get_parameters()})
         base = "pParameter"
         index = 0
 
@@ -128,17 +128,19 @@ class ParameterList:
         Called when the name field is changed.
         """
 
-        current = set({p[0] for p in self._db.get_parameters()})
+        current = set({p.name for p in self._db.get_parameters()})
 
         name = self._model[path][ParameterCol.NAME]
         if name != new_text and new_text not in current:
             self._model[path][ParameterCol.NAME] = new_text
             self._db.remove_parameter(name)
             self._db.add_parameter(
-                new_text,
-                int(self._model[path][ParameterCol.VALUE], 16),
-                int(self._model[path][ParameterCol.MIN], 16),
-                int(self._model[path][ParameterCol.MAX], 16),
+                ParameterData(
+                    new_text,
+                    int(self._model[path][ParameterCol.VALUE], 16),
+                    int(self._model[path][ParameterCol.MIN], 16),
+                    int(self._model[path][ParameterCol.MAX], 16),
+                )
             )
             self._callback()
 
@@ -164,7 +166,8 @@ class ParameterList:
         else:
             self._model[path][ParameterCol.VALUE] = new_text
             self._db.remove_parameter(name)
-            self._db.add_parameter(name, value, min_val, max_val)
+            param = ParameterData(name, value, min_val, max_val)
+            self._db.add_parameter(param)
             self._callback()
 
     def _min_changed(self, _cell, path, new_text, _col):
@@ -187,7 +190,8 @@ class ParameterList:
         else:
             self._model[path][ParameterCol.MIN] = new_text
             self._db.remove_parameter(name)
-            self._db.add_parameter(name, value, min_val, max_val)
+            param = ParameterData(name, value, min_val, max_val)
+            self._db.add_parameter(param)
             self._callback()
 
     def _max_changed(self, _cell, path, new_text, _col):
@@ -210,7 +214,9 @@ class ParameterList:
         else:
             self._model[path][ParameterCol.MAX] = new_text
             self._db.remove_parameter(name)
-            self._db.add_parameter(name, value, min_val, max_val)
+            self._db.add_parameter(
+                ParameterData(name, value, min_val, max_val)
+            )
             self._callback()
 
     def _build_instance_table(self):

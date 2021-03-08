@@ -35,11 +35,8 @@ from regenerate.ui.base_window import BaseWindow
 from regenerate.ui.spell import Spell
 from regenerate.ui.utils import clean_format_if_needed
 from regenerate.writers.verilog_reg_def import REG
-
-
-# Imports that might fail, and we can recover from
-
 from regenerate.ui.highlight import highlight_text
+from regenerate.db.bit_values import BitValues
 
 
 def modified(func):
@@ -67,9 +64,10 @@ class BitFieldEditor(BaseWindow):
         self._bit_field = bit_field
         self._builder = Gtk.Builder()
         self._builder.add_from_file(GLADE_BIT)
+
         self._top_builder = top_builder
         self._control_obj = self._builder.get_object("control")
-        self._register_obj = self._builder.get_object("name")
+        #        self._register_obj = self._builder.get_object("name")
         self._output_obj = self._builder.get_object("output")
         self._output_enable_obj = self._builder.get_object("outen")
         self._input_obj = self._builder.get_object("input")
@@ -127,9 +125,11 @@ class BitFieldEditor(BaseWindow):
     def build_register_text(self, bit_field):
         """Returns the type of the verilog instantiation of the type"""
         try:
-            edge = "posedge" if self._db.reset_active_level else "negedge"
-            condition = "" if self._db.reset_active_level else "~"
-            be_level = "" if self._db.byte_strobe_active_level else "~"
+            edge = (
+                "posedge" if self._db.ports.reset_active_level else "negedge"
+            )
+            condition = "" if self._db.ports.reset_active_level else "~"
+            be_level = "" if self._db.ports.byte_strobe_active_level else "~"
 
             name_map = {
                 "MODULE": self._db.module_name,
@@ -145,8 +145,8 @@ class BitFieldEditor(BaseWindow):
     def _initialize_from_data(self, bit_field):
         """Initializes the dialog's data fields from the object"""
 
-        self._register_obj.set_text(f"<b>{self._register.name}</b>")
-        self._register_obj.set_use_markup(True)
+        #        self._register_obj.set_text(f"<b>{self._register.name}</b>")
+        #        self._register_obj.set_use_markup(True)
 
         self._set_text("field_name", bit_field.full_field_name())
         self._set_text("type", TYPE_TO_DESCR[bit_field.field_type])
@@ -293,6 +293,13 @@ class BitFieldEditor(BaseWindow):
         self._bit_field.values = [
             (val[0], val[1], val[2]) for val in self._value_model
         ]
+        self._bit_field.values = []
+        for val in self._value_model:
+            bfval = BitValues()
+            bfval.value = int(val[0])
+            bfval.token = val[1]
+            bfval.description = val[2]
+            self._bit_field.values.append(bfval)
 
     @modified
     def on_output_enable_toggled(self, obj):
@@ -382,8 +389,10 @@ class BitFieldEditor(BaseWindow):
 
         self._used_tokens = set()
         for value in self._bit_field.values:
-            self._used_tokens.add(value[1])
-            self._value_model.append(row=value)
+            self._used_tokens.add(value.token)
+            self._value_model.append(
+                row=(str(value.value), value.token, value.description)
+            )
 
     def _change_text(self, _text, path, new_text):
         """

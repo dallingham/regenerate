@@ -20,8 +20,8 @@
 RegProject is the container object for a regenerate project
 """
 
-import json
 from operator import methodcaller
+import json
 
 
 class ProjectWriterJSON:
@@ -32,9 +32,11 @@ class ProjectWriterJSON:
     def __init__(self, project):
         self._prj = project
 
-    def save(self, path):
+    def save(self, path: str):
+        """Save the JSON data to the specified file"""
 
         with open(path, "w") as ofile:
             ofile.write(
                 json.dumps(self._prj, default=methodcaller("json"), indent=4)
             )
+        self._prj.modified = False

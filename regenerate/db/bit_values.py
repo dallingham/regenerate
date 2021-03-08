@@ -16,23 +16,32 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
 """
-Includes the base instances in the module
+Provides the bit values for a bit field
 """
 
-from .bitfield import BitField
-from .bitfield_types import *
-from .group_data import GroupData
-from .register import Register
-from .reg_parser import RegParser
-from .reg_project import RegProject, OLD_EXT, PRJ_EXT, REG_EXT, BLK_EXT
-from .group_inst_data import GroupInstData
-from .reg_writer import RegWriter
-from .reg_writer_json import RegWriterJSON
-from .register_db import RegisterDb
-from .proj_reader import ProjectReader
-from .proj_writer import ProjectWriter
-from .addrmap import AddrMapData
-from .parammap import ParameterData, PrjParameterData
-from .enums import *
-from .logger import *
+from .json_base import JSONEncodable
+
+
+class BitValues(JSONEncodable):
+    """
+    Provides the bit values for a field - roughly the equivalent
+    to and enumerated type. This BitValue consists of:
+
+    value - numerical value
+    token - a symbolic name
+    description - a description of the value
+    """
+
+    def __init__(self):
+        self.value: int = 0
+        self.token: str = ""
+        self.description: str = ""
+
+    def json_decode(self, data):
+        """Converts the json data into a BitValue"""
+
+        self.value = data["value"]
+        self.token = data["token"]
+        self.description = data["description"]

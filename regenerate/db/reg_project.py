@@ -24,10 +24,9 @@ RegProject is the container object for a regenerate project
 from collections import defaultdict
 from pathlib import Path
 import os.path
-from typing import List
+from typing import List, Dict
 import xml.sax.saxutils
 
-from .proj_writer import ProjectWriter
 from .proj_reader import ProjectReader
 from .proj_writer_json import ProjectWriterJSON
 from .proj_reader_json import ProjectReaderJSON
@@ -37,6 +36,13 @@ from .textutils import clean_text
 from .logger import LOGGER
 from .parammap import PrjParameterData
 from .export import ExportData
+from .doc_pages import DocPages
+
+
+OLD_EXT = ".rprj"
+PRJ_EXT = ".regp"
+REG_EXT = ".regr"
+BLK_EXT = ".regb"
 
 
 def nested_dict(depth, dict_type):
@@ -63,15 +69,15 @@ class RegProject:
 
         self.short_name = "unnamed"
         self.name = "unnamed"
-        self.documentation = ""
+        self.doc_pages = DocPages()
         self.company_name = ""
         self.access_map = nested_dict(3, int)
-        self._filelist = []
-        self._parameters = []
+        self._filelist: List[Path] = []
+        self._parameters: List[PrjParameterData] = []
         self._addr_map_grps = {}
         self._addr_map_list = []
 
-        self._groupings = []  # type: List[GroupData]
+        self._groupings: List[GroupData] = []
 
         self._exports = {}
         self._group_exports = {}
@@ -85,31 +91,24 @@ class RegProject:
         else:
             self.path = None
 
-    def json(self):
-        return {
-            key: value
-            for (key, value) in self.__dict__.items()
-            if key != "path"
-        }
-
     def save(self) -> None:
-        """Saves the project to the XML file"""
-        #        writer = ProjectWriter(self)
-        #        writer.save(self.path)
+        """Saves the project to the JSON file"""
+
         writer = ProjectWriterJSON(self)
-        writer.save(self.path.with_suffix(".json"))
+        writer.save(self.path.with_suffix(PRJ_EXT))
 
     def open(self, name: str) -> None:
-        """Opens and reads an XML file"""
+        """Opens and reads a project file. The project could be in either
+        the legacy XML format or the current JSON format"""
 
-        # reader = ProjectReader(self)
         self.path = Path(name)
-        if self.path.suffix == ".rprj":
-            reader = ProjectReader(self)
-            reader.open(name)
+
+        if self.path.suffix == OLD_EXT:
+            xml_reader = ProjectReader(self)
+            xml_reader.open(name)
         else:
-            reader = ProjectReaderJSON(self)
-            reader.open(name)
+            json_reader = ProjectReaderJSON(self)
+            json_reader.open(name)
 
     def loads(self, data: str) -> None:
         """Reads XML from a string"""
@@ -122,14 +121,15 @@ class RegProject:
         self._modified = True
         htbl = {}
         for i in self._filelist:
-            htbl[os.path.splitext(os.path.basename(i))[0]] = i
+            htbl[i.stem] = i
         self._filelist = [htbl[i] for i in new_order]
 
     def append_register_set_to_list(self, name: str):
         """Adds a register set"""
 
         self._modified = True
-        self._filelist.append(name)
+        new_file = Path(name)
+        self._filelist.append(new_file)
         self._exports[name] = []
 
     def add_register_set(self, path: str) -> None:
@@ -177,7 +177,8 @@ class RegProject:
         dest - destination output name
         """
         self._modified = True
-        self._exports[dest].append((option, path))
+        exp = ExportData(option, path)
+        self._exports[dest].append(exp)
 
     def add_to_export_list(self, path: str, option: str, dest: str) -> None:
         """
@@ -191,7 +192,8 @@ class RegProject:
         self._modified = True
         path = os.path.relpath(path, self.path.parent)
         dest = os.path.relpath(dest, self.path.parent)
-        self._exports[path].append((option, dest))
+        exp = ExportData(option, dest)
+        self._exports[path].append(exp)
 
     def append_to_project_export_list(self, option: str, dest: str) -> None:
         """
@@ -203,7 +205,8 @@ class RegProject:
         dest - destination output name
         """
         self._modified = True
-        self._project_exports.append((option, dest))
+        exp = ExportData(option, dest)
+        self._project_exports.append(exp)
 
     def append_to_group_export_list(
         self, group: str, option: str, dest: str
@@ -217,7 +220,8 @@ class RegProject:
         dest - destination output name
         """
         self._modified = True
-        self._group_exports[group].append((option, dest))
+        exp = ExportData(option, dest)
+        self._group_exports[group].append(exp)
 
     def add_to_project_export_list(self, option: str, dest: str) -> None:
         """
@@ -230,7 +234,7 @@ class RegProject:
         """
         self._modified = True
         dest = os.path.relpath(dest, self.path.parent)
-        self._project_exports.append((option, dest))
+        self._project_exports.append(ExportData(option, dest))
 
     def add_to_group_export_list(
         self, group: str, option: str, dest: str
@@ -245,7 +249,8 @@ class RegProject:
         """
         self._modified = True
         dest = os.path.relpath(dest, self.path.parent)
-        self._group_exports[group].append((option, dest))
+        exp = ExportData(option, dest)
+        self._group_exports[group].append(exp)
 
     def remove_from_export_list(
         self, path: str, option: str, dest: str
@@ -253,19 +258,31 @@ class RegProject:
         """Removes the export from the export list"""
         self._modified = True
         path = os.path.relpath(path, self.path.parent)
-        self._exports[path].remove((option, dest))
+        self._exports[path] = [
+            exp
+            for exp in self._exports[path]
+            if not (exp.option == option and exp.dest == dest)
+        ]
 
     def remove_from_project_export_list(self, option: str, dest: str) -> None:
         """Removes the export from the project export list"""
         self._modified = True
-        self._project_exports.remove((option, dest))
+        self._project_exports = [
+            exp
+            for exp in self._project_exports
+            if not (exp.option == option and exp.dest == dest)
+        ]
 
     def remove_from_group_export_list(
         self, group: str, option: str, dest: str
     ) -> None:
         """Removes the export from the group export list"""
         self._modified = True
-        self._group_exports[group].remove((option, dest))
+        self._group_exports[group] = [
+            exp
+            for exp in self._group_exports[group]
+            if not (exp.option == option and exp.dest == dest)
+        ]
 
     def get_register_set(self) -> List[str]:
         """
@@ -468,7 +485,7 @@ class RegProject:
         return self._modified
 
     @modified.setter
-    def modified(self, value):
+    def modified(self, value: bool):
         """Clears the modified flag"""
         self._modified = bool(value)
 
@@ -548,7 +565,7 @@ class RegProject:
         parameter = PrjParameterData(name, value)
         self._parameters.append(parameter)
 
-    def remove_parameter(self, name):
+    def remove_parameter(self, name: str):
         """Removes a parameter from the parameter list"""
         self._parameters = [
             param for param in self._parameters if param.name != name
@@ -559,14 +576,14 @@ class RegProject:
         self._parameters = parameter_list
 
     def json(self):
+        """Convert the data into a JSON compatible dict"""
 
         json_keys = (
             "short_name",
             "name",
-            "documentation",
+            "doc_pages",
             "company_name",
             "access_map",
-            "_filelist",
             "_parameters",
             "_addr_map_grps",
             "_addr_map_list",
@@ -578,36 +595,79 @@ class RegProject:
 
         data = {}
         for key in json_keys:
-            data[key] = self.__getattribute__(key)
+            if key[0] == "_":
+                token = key[1:]
+            else:
+                token = key
+            data[token] = self.__getattribute__(key)
+
+        data["filelist"] = [
+            str(fname.with_suffix(REG_EXT)) for fname in self._filelist
+        ]
+
         return data
 
+    def change_file_suffix(self, original: str, new: str):
+        """Changes the suffix of the files in the file list"""
+
+        new_list = []
+        for name in self._filelist:
+            new_name = Path(name)
+            if new_name.suffix == original:
+                new_name = new_name.with_suffix(new)
+            new_list.append(new_name)
+        self._filelist = new_list
+
     def json_decode(self, data):
+        """Convert the JSON data back classes"""
 
         self.short_name = data["short_name"]
         self.name = data["name"]
-        self.documentation = data["documentation"]
+        doc_pages = DocPages()
+        doc_pages.json_decode(data["doc_pages"])
+        self.doc_pages = doc_pages
         self.company_name = data["company_name"]
         self.access_map = data["access_map"]
-        self._filelist = data["_filelist"]
-        self._addr_map_grps = data["_addr_map_grps"]
+        self._filelist = []
+        for path in data["filelist"]:
+            self._filelist.append(Path(path))
+        self._addr_map_grps = data["addr_map_grps"]
 
         self._addr_map_list = []
-        for addr_data_json in data["_addr_map_list"]:
+        for addr_data_json in data["addr_map_list"]:
             addr_data = AddrMapData()
             addr_data.json_decode(addr_data_json)
             self._addr_map_list.append(addr_data)
 
         self._parameters = []
-        for param_json in data["_parameters"]:
+        for param_json in data["parameters"]:
             param = PrjParameterData(param_json["name"], param_json["value"])
             self._parameters.append(param)
 
         self._groupings = []
-        for grp in data["_groupings"]:
+        for grp in data["groupings"]:
             grp_data = GroupData()
             grp_data.json_decode(grp)
             self._groupings.append(grp_data)
 
-        self._exports = data["_exports"]
-        self._group_exports = data["_group_exports"]
-        self._project_exports = data["_project_exports"]
+        self._exports = {}
+        for key in data["exports"]:
+            self._exports[key] = []
+            for item in data["exports"][key]:
+                self._exports[key].append(
+                    ExportData(item["option"], item["path"])
+                )
+
+        self._group_exports = {}
+        for key in data["group_exports"]:
+            self._group_exports[key] = []
+            for item in data["group_exports"][key]:
+                self._group_exports[key].append(
+                    ExportData(item["option"], item["path"])
+                )
+
+        self._project_exports = []
+        for key in data["project_exports"]:
+            self._project_exports.append(
+                ExportData(key["option"], key["path"])
+            )

@@ -282,7 +282,7 @@ class RegisterList:
         self._parameter_names = set()
 
     def set_parameters(self, parameters):
-        self._parameter_names = set({(p[0], p[0]) for p in parameters})
+        self._parameter_names = set({(p.name, p.name) for p in parameters})
         self.dim_column.update_menu(sorted(list(self._parameter_names)))
 
     def get_selected_row(self):

@@ -25,8 +25,10 @@ import uuid
 
 from .register import Register
 from .bitfield import BitField
+from .bit_values import BitValues
 from .bitfield_types import ID_TO_TYPE
 from .enums import ResetType
+from .parammap import ParameterData
 
 
 def cnv_hex(attrs, key, default=0):
@@ -100,6 +102,7 @@ class RegParser:
         parser.EndElementHandler = self.end_element
         parser.CharacterDataHandler = self.characters
         parser.ParseFile(input_file)
+        self.__db.modified = True
 
     def start_element(self, tag, attrs):
         """Called every time an XML element begins"""
@@ -147,19 +150,21 @@ class RegParser:
         """Start a parameter read"""
 
         self.__db.add_parameter(
-            attrs["name"],
-            int(attrs["value"], 0),
-            int(attrs["min"], 0),
-            int(attrs["max"], 0),
+            ParameterData(
+                attrs["name"],
+                int(attrs["value"], 0),
+                int(attrs["min"], 0),
+                int(attrs["max"], 0),
+            )
         )
 
     def end_parameters(self, _attrs):
         """Called at the end of the parameter statement"""
 
-        current_params = set({n[0] for n in self.__db.get_parameters()})
+        current_params = set({n.name for n in self.__db.get_parameters()})
         for name in self.found_parameters:
             if name not in current_params:
-                self.__db.add_parameter(name, "1", "0", "4096")
+                self.__db.add_parameter(ParameterData(name, "1", "0", "4096"))
 
     def start_base(self, attrs):
         """
@@ -169,8 +174,8 @@ class RegParser:
            addr_width
            data_width
         """
-        self.__db.address_bus_width = cnv_int(attrs, "addr_width", 32)
-        self.__db.data_bus_width = cnv_int(attrs, "data_width", 32)
+        self.__db.ports.address_bus_width = cnv_int(attrs, "addr_width", 32)
+        self.__db.ports.data_bus_width = cnv_int(attrs, "data_width", 32)
 
     def start_signal(self, attrs):
         """
@@ -254,7 +259,7 @@ class RegParser:
 
           active
         """
-        self.__db.byte_strobe_active_level = cnv_int(attrs, "active")
+        self.__db.ports.byte_strobe_active_level = cnv_int(attrs, "active")
 
     def start_reset(self, attrs):
         """
@@ -271,7 +276,7 @@ class RegParser:
         if type is not specified, the it is assumed to be RESET_NUMERIC
         """
         if self.__in_ports:
-            self.__db.reset_active_level = cnv_int(attrs, "active")
+            self.__db.ports.reset_active_level = cnv_int(attrs, "active")
         else:
             try:
                 self.__reset_type = int(attrs.get("type", "0"))
@@ -341,7 +346,7 @@ class RegParser:
         definition, then the text contains the reset signal name.
         """
         if self.__in_ports:
-            self.__db.reset_name = text
+            self.__db.ports.reset_name = text
         elif self.__reset_type == 1:
             self.__field.reset_input = text.strip()
             self.__field.reset_type = ResetType.INPUT
@@ -422,9 +427,11 @@ class RegParser:
         Called when the value tag is terminated. The value, token and text
         value are added to the field's value list.
         """
-        self.__field.values.append(
-            (self.__current_val, self.__current_token, text)
-        )
+        bfval = BitValues()
+        bfval.value = int(self.__current_val)
+        bfval.token = self.__current_token
+        bfval.description = text
+        self.__field.values.append(bfval)
 
     def end_input(self, text):
         """
@@ -502,28 +509,28 @@ class RegParser:
         Called when the addr tag is terminated. The text value is assigned
         to the database's address_bus_name
         """
-        self.__db.address_bus_name = text
+        self.__db.ports.address_bus_name = text
 
     def end_data_in(self, text):
         """
         Called when the data_in tag is terminated. The text value is assigned
         to the database's write_data_name
         """
-        self.__db.write_data_name = text
+        self.__db.ports.write_data_name = text
 
     def end_data_out(self, text):
         """
         Called when the data_out tag is terminated. The text value is assigned
         to the database's read_data_name
         """
-        self.__db.read_data_name = text
+        self.__db.ports.read_data_name = text
 
     def end_be(self, text):
         """
         Called when the be tag is terminated. The text value is assigned
         to the database's byte_strobe_name
         """
-        self.__db.byte_strobe_name = text
+        self.__db.ports.byte_strobe_name = text
 
     def end_interface(self, text):
         """
@@ -537,25 +544,25 @@ class RegParser:
         Called when the wr tag is terminated. The text value is assigned
         to the database's write_strobe_name
         """
-        self.__db.write_strobe_name = text
+        self.__db.ports.write_strobe_name = text
 
     def end_ack(self, text):
         """
         Called when the ack tag is terminated. The text value is assigned
         to the database's acknowledge_name
         """
-        self.__db.acknowledge_name = text
+        self.__db.ports.acknowledge_name = text
 
     def end_rd(self, text):
         """
         Called when the rd tag is terminated. The text value is assigned
         to the database's read_strobe_name
         """
-        self.__db.read_strobe_name = text
+        self.__db.ports.read_strobe_name = text
 
     def end_clk(self, text):
         """
         Called when the clk tag is terminated. The text value is assigned
         to the database's clock_name
         """
-        self.__db.clock_name = text
+        self.__db.ports.clock_name = text

@@ -24,20 +24,11 @@ from io import BytesIO as StringIO
 from pathlib import Path
 import re
 
-from regenerate.settings import rules
+from .register import Register
 from .reg_parser import RegParser
+from .reg_parser_json import RegParserJSON
 from .reg_writer import RegWriter
-
-
-DEF_CLK_NAME = "CLK"
-DEF_RST_NAME = "RSTn"
-DEF_WDATA_NAME = "WDATA"
-DEF_RDATA_NAME = "RDATA"
-DEF_WR_NAME = "WR"
-DEF_RD_NAME = "RD"
-DEF_ADDR_NAME = "ADDR"
-DEF_BE_NAME = "BE"
-DEF_ACK_NAME = "ACK"
+from .signals import Signals
 
 
 class RegisterDb:
@@ -45,78 +36,32 @@ class RegisterDb:
     Container database for a set of registers.
     """
 
-    __slots__ = (
-        "__ack",
-        "__addr",
-        "__be",
-        "__clock",
-        "__module",
-        "__parameters",
-        "__read_data",
-        "__read_strobe",
-        "__registers",
-        "__reset",
-        "__title",
-        "__write_data",
-        "__write_strobe",
-        "address_bus_width",
-        "array_is_reg",
-        "byte_strobe_active_level",
-        "coverage",
-        "data_bus_width",
-        "internal_only",
-        "organization",
-        "overview_text",
-        "owner",
-        "reset_active_level",
-        "set_name",
-        "use_interface",
-    )
-
     def __init__(self, filename=None):
-        self.__clock = rules.get("rules", "clock_default", DEF_CLK_NAME)
-        self.__reset = rules.get("rules", "reset_default", DEF_RST_NAME)
-        self.__write_data = rules.get(
-            "rules", "write_data_default", DEF_WDATA_NAME
-        )
-        self.__read_data = rules.get(
-            "rules", "read_data_default", DEF_RDATA_NAME
-        )
-        self.__write_strobe = rules.get(
-            "rules", "write_strobe_default", DEF_WR_NAME
-        )
-        self.__read_strobe = rules.get(
-            "rules", "read_strobe_default", DEF_RD_NAME
-        )
-        self.__addr = rules.get("rules", "address_default", DEF_ADDR_NAME)
-        self.__be = rules.get("rules", "byte_strobe_default", DEF_BE_NAME)
-        self.__ack = rules.get("rule", "ack_default", DEF_ACK_NAME)
-        self.__module = "unnamed_regs"
-        self.__title = ""
-        self.__registers = {}
-        self.__parameters = []
+
+        self._module = "unnamed_regs"
+        self._title = ""
+        self._registers = {}
+        self._parameters = []
+
+        self.ports = Signals()
 
         self.array_is_reg = False
         self.internal_only = False
-        self.reset_active_level = 0
-        self.data_bus_width = 32
-        self.address_bus_width = 12
         self.owner = ""
         self.organization = ""
-        self.byte_strobe_active_level = 1
         self.use_interface = False
         self.overview_text = ""
         self.coverage = True
         self.set_name = ""
 
         if filename is not None:
-            self.read_xml(filename)
+            self.read_db(filename)
 
     def total_bits(self):
         """Returns bits in register"""
         bits = 0
-        for key in self.__registers:
-            reg = self.__registers[key]
+        for key in self._registers:
+            reg = self._registers[key]
             for field in reg.get_bit_fields():
                 bits += field.width
         return bits
@@ -125,37 +70,54 @@ class RegisterDb:
         """Returns the register keys, which is the address of the register"""
         return [
             a.uuid
-            for a in sorted(self.__registers.values(), key=lambda a: a.address)
+            for a in sorted(self._registers.values(), key=lambda a: a.address)
         ]
 
     def get_all_registers(self):
         """Returns the register keys, which is the address of the register"""
-        return iter(sorted(self.__registers.values(), key=lambda a: a.address))
+        return iter(sorted(self._registers.values(), key=lambda a: a.address))
 
     def get_register(self, key):
         """
         Returns the register from the specified key, which should be the
         address.
         """
-        return self.__registers.get(key)
+        return self._registers.get(key)
 
     def add_register(self, reg):
         """Adds the register to the database."""
-        self.__registers[reg.uuid] = reg
-        reg.set_parameters(self.__parameters)
+        self._registers[reg.uuid] = reg
+        reg.set_parameters(self._parameters)
 
     def delete_register(self, reg):
         """Removes the register to the database."""
-        del self.__registers[reg.uuid]
+        del self._registers[reg.uuid]
+
+    def read_db(self, filename):
+
+        filename = Path(filename)
+        if filename.suffix == ".xml":
+            self.read_xml(filename)
+        else:
+            self.read_json(filename)
 
     def read_xml(self, filename):
         """Reads the XML file, loading the databsae."""
 
-        filename = Path(filename)
-
         with filename.open("rb") as ifile:
             self.set_name = filename.stem
             parser = RegParser(self)
+            parser.parse(ifile)
+        return self
+
+    def read_json(self, filename):
+        """Reads the XML file, loading the databsae."""
+
+        filename = filename.with_suffix(".regr")
+
+        with filename.open("r") as ifile:
+            self.set_name = filename.stem
+            parser = RegParserJSON(self)
             parser.parse(ifile)
         return self
 
@@ -176,211 +138,118 @@ class RegisterDb:
         writer.save(filename)
 
     @property
-    def write_data_name(self):
-        """
-        Gets __write_data, which is accessed via the write_data_name property
-        """
-        return self.__write_data
-
-    @write_data_name.setter
-    def write_data_name(self, name):
-        """
-        Sets __write_data, which is accessed via the write_data_name property
-        """
-        self.__write_data = name.strip()
-
-    @property
-    def read_data_name(self):
-        """
-        Gets __read_data, which is accessed via the read_data_name property
-        """
-        return self.__read_data
-
-    @read_data_name.setter
-    def read_data_name(self, name):
-        """
-        Sets __read_data, which is accessed via the read_data_name property
-        """
-        self.__read_data = name.strip()
-
-    @property
-    def write_strobe_name(self):
-        """
-        Gets __write_strobe, which is accessed via the write_strobe_name
-        property
-        """
-        return self.__write_strobe
-
-    @write_strobe_name.setter
-    def write_strobe_name(self, name):
-        """
-        Sets __write_strobe, which is accessed via the write_strobe_name
-        property
-        """
-        self.__write_strobe = name.strip()
-
-    @property
-    def acknowledge_name(self):
-        """
-        Gets __ack, which is accessed via the acknowledge_name property
-        """
-        return self.__ack
-
-    @acknowledge_name.setter
-    def acknowledge_name(self, name):
-        """
-        Sets __ack, which is accessed via the acknowledge_name property
-        """
-        self.__ack = name.strip()
-
-    @property
-    def read_strobe_name(self):
-        """
-        Gets __read_strobe, which is accessed via the read_strobe_name
-        property
-        """
-        return self.__read_strobe
-
-    @read_strobe_name.setter
-    def read_strobe_name(self, name):
-        """
-        Sets __read_strobe, which is accessed via the read_strobe_name
-        property
-        """
-        self.__read_strobe = name.strip()
-
-    @property
-    def address_bus_name(self):
-        """
-        Gets __addr, which is accessed via the address_bus_name property
-        """
-        return self.__addr
-
-    @address_bus_name.setter
-    def address_bus_name(self, name):
-        """
-        Sets __addr, which is accessed via the address_bus_name property
-        """
-        self.__addr = name.strip()
-
-    @property
-    def byte_strobe_name(self):
-        """
-        Gets __be, which is accessed via the byte_strobe_name property
-        """
-        return self.__be
-
-    @byte_strobe_name.setter
-    def byte_strobe_name(self, name):
-        """
-        Sets __be, which is accessed via the byte_strobe_named property
-        """
-        self.__be = name.strip()
-
-    @property
     def module_name(self):
         """
-        Gets __module, which is accessed via the module_name property
+        Gets _module, which is accessed via the module_name property
         """
-        return self.__module
+        return self._module
 
     @module_name.setter
     def module_name(self, name):
         """
-        Sets __module, which is accessed via the module_name property
+        Sets _module, which is accessed via the module_name property
         """
-        self.__module = name.replace(" ", "_")
-
-    @property
-    def clock_name(self):
-        """
-        Gets __clock, which is accessed via the clock_name property
-        """
-        return self.__clock
-
-    @clock_name.setter
-    def clock_name(self, name):
-        """
-        Sets __clock, which is accessed via the clock_name property
-        """
-        self.__clock = name.strip()
-
-    @property
-    def reset_name(self):
-        """
-        Gets __reset, which is accessed via the reset_name property
-        """
-        return self.__reset
-
-    @reset_name.setter
-    def reset_name(self, name):
-        """
-        Sets __reset, which is accessed via the reset_name property
-        """
-        self.__reset = name.strip()
+        self._module = name.replace(" ", "_")
 
     @property
     def descriptive_title(self):
         """
-        Gets __title, which is accessed via the descriptive_title property
+        Gets _title, which is accessed via the descriptive_title property
         """
-        return self.__title
+        return self._title
 
     @descriptive_title.setter
     def descriptive_title(self, name):
         """
-        Sets __title, which is accessed via the descriptive_title property
+        Sets _title, which is accessed via the descriptive_title property
         """
-        self.__title = name.strip()
+        self._title = name.strip()
 
     def find_register_by_name(self, name):
         """Finds a register with the given name, or None if not found"""
-        for i in self.__registers:
-            if self.__registers[i].name == name:
-                return self.__registers[i]
+        for i in self._registers:
+            if self._registers[i].name == name:
+                return self._registers[i]
         return None
 
     def find_register_by_token(self, name):
         """Finds a register with the given token name, or None if not found"""
-        for i in self.__registers:
-            if self.__registers[i].token == name:
-                return self.__registers[i]
+        for i in self._registers:
+            if self._registers[i].token == name:
+                return self._registers[i]
         return None
 
     def find_registers_by_name_regexp(self, name):
         """Finds a register with the given name, or None if not found"""
         regexp = re.compile(name)
         return [
-            self.__registers[i]
-            for i in self.__registers
-            if regexp.match(self.__registers[i].name)
+            self._registers[i]
+            for i in self._registers
+            if regexp.match(self._registers[i].name)
         ]
 
     def find_registers_by_token_regexp(self, name):
         """Finds a register with the given name, or None if not found"""
         regexp = re.compile(name)
         return [
-            self.__registers[i]
-            for i in self.__registers
-            if regexp.match(self.__registers[i].token)
+            self._registers[i]
+            for i in self._registers
+            if regexp.match(self._registers[i].token)
         ]
-
-    def address_size_in_bytes(self):
-        """Returns the address size in bytes"""
-        return 1 << self.address_bus_width
 
     def get_parameters(self):
         """Returns the parameter list"""
-        return self.__parameters
+        return self._parameters
 
-    def add_parameter(self, name, value, min_val, max_val):
+    def add_parameter(self, parameter):
         """Adds a parameter to the list"""
-        self.__parameters.append((name, value, min_val, max_val))
+
+        self._parameters.append(parameter)
 
     def remove_parameter(self, name):
         """Removes a parameter from the list if it exists"""
-        self.__parameters = [p for p in self.__parameters if p[0] != name]
+        self._parameters = [p for p in self._parameters if p.name != name]
 
     def set_parameters(self, parameter_list):
         """Sets the parameter list"""
-        self.__parameters = parameter_list
+        self._parameters = parameter_list
+
+    def json(self):
+        return {
+            "module": self._module,
+            "parameters": self._parameters,
+            "title": self._title,
+            "ports": self.ports,
+            "set_name": self.set_name,
+            "array_is_reg": self.array_is_reg,
+            "coverage": self.coverage,
+            "internal_only": self.internal_only,
+            "organization": self.organization,
+            "overview_text": self.overview_text,
+            "owner": self.owner,
+            "use_interface": self.use_interface,
+            "registers": [reg for index, reg in self._registers.items()],
+        }
+
+    def json_decode(self, data):
+        self._module = data["module"]
+        self._parameters = data["parameters"]
+        self._title = data["title"]
+
+        ports = Signals()
+        ports.json_decode(data["ports"])
+        self.ports = ports
+
+        self.set_name = data["set_name"]
+        self.array_is_reg = data["array_is_reg"]
+        self.coverage = data["coverage"]
+        self.internal_only = data["internal_only"]
+        self.organization = data["organization"]
+        self.overview_text = data["overview_text"]
+        self.owner = data["owner"]
+        self.use_interface = data["use_interface"]
+
+        for reg_json in data["registers"]:
+            reg = Register()
+            reg.json_decode(reg_json)
+            self._registers[reg.uuid] = reg

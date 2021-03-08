@@ -62,11 +62,16 @@ class ProjectModel(Gtk.ListStore):
         self.paths = set()
         self.file_list = {}
 
-    def add_dbase(self, filename, dbase):
+    def add_dbase(self, filename, dbase, modified=False):
         """Add the the database to the model"""
 
         base = os.path.splitext(os.path.basename(filename))[0]
-        node = self.append(row=[base, "", filename, False, False, dbase])
+        if modified:
+            node = self.append(
+                row=[base, Gtk.STOCK_EDIT, filename, True, False, dbase]
+            )
+        else:
+            node = self.append(row=[base, "", filename, False, False, dbase])
         self.file_list[filename] = node
         self.paths.add(os.path.dirname(filename))
         return node

@@ -22,9 +22,10 @@ Provides the base cass for the register and bitfield
 """
 
 import uuid
+from .json_base import JSONEncodable
 
 
-class NameBase:
+class NameBase(JSONEncodable):
     """
     Provides the command items between a Register and a BitField
     """

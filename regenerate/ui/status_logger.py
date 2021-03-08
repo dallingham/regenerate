@@ -51,14 +51,14 @@ class StatusHandler(logging.Handler):
             self.status_obj.override_color(
                 Gtk.StateFlags.NORMAL, self.error_color
             )
+            msg = record.getMessage()
         else:
             self.status_obj.override_color(
-                Gtk.StateFlags.NORMAL, self.normal_color
+                Gtk.StateFlags.NORMAL, self.error_color
             )
+            msg = f"ERROR: {record.getMessage()}"
 
-        idval = self.status_obj.push(
-            self.status_id, "ERROR: {}".format(record.getMessage())
-        )
+        idval = self.status_obj.push(self.status_id, msg)
         GObject.timeout_add(self.SECONDS * 1000, self._clear, idval)
 
     def _clear(self, idval):

@@ -163,23 +163,27 @@ class Build(BaseWindow):
         """
         for item in self.__prj.get_register_set():
             path = os.path.relpath(item, os.path.dirname(self.__prj.path))
-            for (option, dest) in self.__prj.get_exports(path):
+            for export_data in self.__prj.get_exports(path):
                 try:
-                    self.__add_dbase_item_to_list(path, option, dest)
+                    self.__add_dbase_item_to_list(
+                        path, export_data.option, export_data.path
+                    )
                 except KeyError:
                     pass
 
         for group_data in self.__prj.get_grouping_list():
-            for grp_type, grp_dest in self.__prj.get_group_exports(
-                group_data.name
-            ):
+            for export_data in self.__prj.get_group_exports(group_data.name):
                 self.__add_group_item_to_list(
-                    "%s (group)" % group_data.name, grp_type, grp_dest
+                    "%s (group)" % group_data.name,
+                    export_data.option,
+                    export_data.path,
                 )
 
-        for (option, dest) in self.__prj.get_project_exports():
+        for export_data in self.__prj.get_project_exports():
             try:
-                self.__add_prj_item_to_list(option, dest)
+                self.__add_prj_item_to_list(
+                    export_data.option, export_data.path
+                )
             except KeyError:
                 pass
 
@@ -353,7 +357,7 @@ class Build(BaseWindow):
             self.__add_item_to_list(register_path, option, filename)
         elif self.__mapopt[export_format][MapOpt.REGISTER_SET] == Level.GROUP:
             self.__prj.add_to_group_export_list(group, option, filename)
-            register_path = "%s (group)" % group
+            register_path = f"{group} (group)"
             self.__add_item_to_list(register_path, option, filename)
         else:
             register_path = "<project>"

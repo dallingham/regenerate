@@ -43,6 +43,7 @@ class PreviewEditor:
         self.__adjust = self.__container.get_vadjustment()
         self.__active_db = None
         self.__use_reg = use_reg
+        self.enable()
 
     def __update_text(self):
         """

@@ -37,7 +37,6 @@ except ValueError:
         gi.require_version("WebKit", "3.0")
         from gi.repository import WebKit as webkit
 
-        print("3.0")
         WEBKIT = True
 
     except ImportError:

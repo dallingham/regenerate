@@ -29,6 +29,13 @@ from regenerate.ui.utils import clean_format_if_needed
 from regenerate.ui.preview_editor import PreviewEditor
 
 
+class PageInfo:
+    def __init__(self, handler, textbuf, name):
+        self.handler = handler
+        self.textbuf = textbuf
+        self.name = name
+
+
 class ModuleWidth:
     """Connects a database value to a selector."""
 
@@ -317,9 +324,12 @@ class ModuleDoc:
 class ModuleTabs:
     def __init__(self, builder, modified):
 
-        item_list = [
+        port_list = [
             ("clock_signal", "clock_name", ModuleWord, "Missing clock name"),
             ("reset_signal", "reset_name", ModuleWord, "Missing reset name"),
+            ("reset_level", "reset_active_level", ModuleBool, None),
+            ("byte_en_level", "byte_strobe_active_level", ModuleBool, None),
+            ("data_width", "data_bus_width", ModuleWidth, None),
             (
                 "write_data_bus",
                 "write_data_name",
@@ -368,6 +378,9 @@ class ModuleTabs:
                 ModuleInt,
                 "Missing address bus width",
             ),
+        ]
+
+        item_list = [
             ("module", "module_name", ModuleWord, "Missing module name"),
             (
                 "owner",
@@ -387,19 +400,17 @@ class ModuleTabs:
                 ModuleText,
                 "Missing description of the module",
             ),
-            ("reset_level", "reset_active_level", ModuleBool, None),
-            ("interface", "use_interface", ModuleBool, None),
-            ("byte_en_level", "byte_strobe_active_level", ModuleBool, None),
             ("internal_only", "internal_only", ModuleBool, None),
             ("coverage", "coverage", ModuleBool, None),
-            ("data_width", "data_bus_width", ModuleWidth, None),
+            ("interface", "use_interface", ModuleBool, None),
         ]
 
-        self.object_list = []
+        self.port_object_list = []
+        self.top_object_list = []
 
-        for (widget_name, db_name, class_type, placeholder) in item_list:
+        for (widget_name, db_name, class_type, placeholder) in port_list:
             if placeholder is not None:
-                self.object_list.append(
+                self.port_object_list.append(
                     class_type(
                         builder.get_object(widget_name),
                         db_name,
@@ -408,13 +419,30 @@ class ModuleTabs:
                     )
                 )
             else:
-                self.object_list.append(
+                self.port_object_list.append(
                     class_type(
                         builder.get_object(widget_name),
                         db_name,
                         self.after_modified,
                     )
                 )
+
+        for (widget_name, db_name, class_type, placeholder) in item_list:
+            if placeholder is not None:
+                obj = class_type(
+                    builder.get_object(widget_name),
+                    db_name,
+                    self.after_modified,
+                    placeholder=placeholder,
+                )
+                self.top_object_list.append(obj)
+            else:
+                obj = class_type(
+                    builder.get_object(widget_name),
+                    db_name,
+                    self.after_modified,
+                )
+                self.top_object_list.append(obj)
 
         self.preview = ModuleDoc(
             builder.get_object("overview"),
@@ -430,7 +458,9 @@ class ModuleTabs:
 
     def change_db(self, dbase):
         self.dbase = dbase
-        for obj in self.object_list:
+        for obj in self.port_object_list:
+            obj.change_db(dbase.ports)
+        for obj in self.top_object_list:
             obj.change_db(dbase)
         self.preview.change_db(dbase)
 
@@ -457,6 +487,104 @@ class ModuleTabs:
     def preview_disable(self):
         """Disables the preview window"""
         self.preview.preview_disable()
+
+
+class ProjectDoc:
+    """
+    Handles the Project documentation. Sets the font to a monospace font,
+    sets up the changed handler, sets up the spell checker, and makes
+    the link to the preview editor.
+
+    Requires a callback functions from the main window to mark the
+    the system as modified.
+    """
+
+    def __init__(self, notebook, db_field, modified):
+        self.pango_font = Pango.FontDescription("monospace")
+
+        self.notebook = notebook
+        self.db_field = db_field
+        self.dbase = None
+        self.current_page = 0
+
+        self.remove_pages()
+        self.name_2_textview = {}
+        self.callback = modified
+
+    def remove_pages(self):
+        page_count = self.notebook.get_n_pages()
+        for page in range(0, page_count):
+            self.notebook.remove_page(page)
+
+    def preview_enable(self):
+        """Enables the preview window"""
+        pass
+
+    #   self.preview.enable()
+
+    def preview_disable(self):
+        """Disables the preview window"""
+
+        # self.preview.disable()
+        pass
+
+    def add_page(self, name, data):
+        paned = Gtk.VPaned()
+
+        scrolled_window = Gtk.ScrolledWindow()
+        paned.add1(scrolled_window)
+
+        scrolled_window2 = Gtk.ScrolledWindow()
+        paned.add2(scrolled_window2)
+        paned.set_position(300)
+
+        text = Gtk.TextView()
+        buf = text.get_buffer()
+        scrolled_window.add(text)
+
+        self.preview = PreviewEditor(buf, scrolled_window2, False)
+        paned.show_all()
+
+        page = self.notebook.append_page(paned, Gtk.Label(name))
+
+        text.modify_font(self.pango_font)
+        text.set_margin_left(10)
+        text.set_margin_right(10)
+        text.set_margin_top(10)
+        text.set_margin_bottom(10)
+
+        handler = buf.connect("changed", self.on_changed)
+
+        self.name_2_textview[page] = PageInfo(handler, buf, name)
+
+        Spell(buf)
+        buf.set_text(data)
+
+    def change_db(self, dbase):
+        """Change the database so the preview window can resolve references"""
+        self.remove_pages()
+        self.dbase = dbase.doc_pages
+
+        for page in self.dbase.get_page_names():
+            self.add_page(page, self.dbase.get_page(page))
+
+    def on_changed(self, obj):
+        """A change to the text occurred"""
+        new_text = obj.get_text(
+            obj.get_start_iter(), obj.get_end_iter(), False
+        )
+        info = self.name_2_textview[self.notebook.get_current_page()]
+
+        self.dbase.update_page(info.name, new_text)
+        self.callback()
+
+    def on_key_press_event(self, obj, event):
+        """Look for the F12 key"""
+        if event.keyval == Gdk.KEY_F12:
+            if clean_format_if_needed(obj):
+                self.callback()
+            return True
+        return False
 
 
 class ProjectTabs:
@@ -496,12 +624,10 @@ class ProjectTabs:
                     )
                 )
 
-        self.preview = ModuleDoc(
-            builder.get_object("project_doc"),
-            builder.get_object("project_webkit"),
-            "documentation",
+        self.preview = ProjectDoc(
+            builder.get_object("prj_doc_notebook"),
+            "doc_pages",
             self.after_modified,
-            False,
         )
 
         self.dbase = None

@@ -22,6 +22,8 @@
 from typing import List, Tuple
 from .name_base import NameBase
 from .enums import BitType, ResetType
+from .bit_values import BitValues
+from .json_base import JSONEncodable
 
 
 def clean_signal(name: str) -> str:
@@ -29,7 +31,7 @@ def clean_signal(name: str) -> str:
     return "_".join(name.strip().split())
 
 
-class BitFieldFlags:
+class BitFieldFlags(JSONEncodable):
     """
     Flags for the bit field
     """
@@ -68,7 +70,6 @@ class BitField(NameBase):
         "_reset_value",
         "control_signal",
         "field_type",
-        "is_error_field",
         "lsb",
         "msb",
         "output_has_side_effect",
@@ -78,13 +79,11 @@ class BitField(NameBase):
         "reset_type",
         "use_output_enable",
         "values",
-        "volatile",
     )
 
     _doc_compare = (
         "_reset_value",
         "field_type",
-        "is_error_field",
         "lsb",
         "msb",
         "reset_input",
@@ -275,3 +274,51 @@ class BitField(NameBase):
     def input_signal(self, signal: str) -> None:
         """Set the name of the input signal."""
         self._input_signal = clean_signal(signal)
+
+    def json(self):
+        return {
+            "name": self.name,
+            "id": self._id,
+            "description": self.description,
+            "input_signal": self._input_signal,
+            "output_signal": self._output_signal,
+            "reset_value": self._reset_value,
+            "control_signal": self.control_signal,
+            "field_type": self.field_type,
+            "lsb": self.lsb,
+            "msb": self.msb,
+            "output_has_side_effect": self.output_has_side_effect,
+            "output_is_static": self.output_is_static,
+            "reset_input": self.reset_input,
+            "reset_parameter": self.reset_parameter,
+            "reset_type": self.reset_type,
+            "use_output_enable": self.use_output_enable,
+            "values": self.values,
+        }
+
+    def json_decode(self, data):
+        self.name = data["name"]
+        self._id = data["id"]
+        self.description = data["description"]
+
+        self._input_signal = data["input_signal"]
+        self.control_signal = data["control_signal"]
+
+        self._output_signal = data["output_signal"]
+        self.use_output_enable = data["use_output_enable"]
+        self.field_type = data["field_type"]
+        self.lsb = data["lsb"]
+        self.msb = data["msb"]
+        self.output_has_side_effect = data["output_has_side_effect"]
+        self.output_is_static = data["output_is_static"]
+
+        self._reset_value = data["reset_value"]
+        self.reset_input = data["reset_input"]
+        self.reset_parameter = data["reset_parameter"]
+        self.reset_type = data["reset_type"]
+
+        self.values = []
+        for value_json in data["values"]:
+            bitval = BitValues()
+            bitval.json_decode(value_json)
+            self.values.append(bitval)

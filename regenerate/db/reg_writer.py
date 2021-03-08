@@ -35,8 +35,8 @@ def create_backup_file(filename: Path):
     removing the original backup if it exists.
     """
 
-    if filename.is_file():
-        backup = filename.with_suffix(".xml.bak")
+    if filename.is_file() and filename.suffix == ".rpr":
+        backup = filename.with_suffix(".rpr.bak")
         if backup.is_file():
             backup.unlink()
         filename.rename(backup)
@@ -210,7 +210,7 @@ def write_signal_info(ofile, field):
         f'      <signal enb="{int(field.use_output_enable)}" '
         f'static="{int(field.output_is_static)}">'
     )
-    ofile.write("{field.output_signal}</signal>\n")
+    ofile.write(f"{field.output_signal}</signal>\n")
 
 
 def write_reset_type(ofile, field):

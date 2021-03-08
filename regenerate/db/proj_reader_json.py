@@ -21,8 +21,6 @@
 Manages the reading of the project file (.rprj)
 """
 import json
-from .group_data import GroupData
-from .group_inst_data import GroupInstData
 
 
 class ProjectReaderJSON:
