@@ -427,7 +427,7 @@ class InstanceList:
         """Build the table, adding the columns"""
 
         column = EditableColumn(
-            "Instance", self.instance_inst_changed, InstCol.INST
+            "Block Instance", self.instance_inst_changed, InstCol.INST
         )
         column.set_sort_column_id(InstCol.INST)
         column.set_min_width(200)
@@ -436,7 +436,7 @@ class InstanceList:
         self.__col = column
 
         column = EditableColumn(
-            "Subsystem",
+            "Block Name",
             self.instance_id_changed,
             InstCol.ID,
             visible_callback=self.visible_callback,

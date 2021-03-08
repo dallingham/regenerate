@@ -980,16 +980,15 @@ class MainWindow(BaseWindow):
 
         response = choose.run()
         if response == Gtk.ResponseType.OK:
-            filename = choose.get_filename()
-            ext = os.path.splitext(filename)
-            if ext[1] != PRJ_EXT:
-                filename = filename + PRJ_EXT
+            filename = Path(choose.get_filename())
+
+            if filename.suffix != PRJ_EXT:
+                filename = filename.with_suffix(PRJ_EXT)
 
             self.prj = RegProject()
             self.prj.path = filename
             self.initialize_project_address_maps()
-            base_name = os.path.basename(filename)
-            self.prj.name = os.path.splitext(base_name)[0]
+            self.prj.name = filename.stem
             self.prj_model = ProjectModel()
             self.prj_obj.set_model(self.prj_model)
             self.prj.save()
@@ -1000,7 +999,7 @@ class MainWindow(BaseWindow):
             self.project_modified(False)
             if self.recent_manager:
                 sys.stdout.write("Add %s=n" % filename)
-                self.recent_manager.add_item("file:///" + filename)
+                self.recent_manager.add_item("file:///" + str(filename))
             self.find_obj("save_btn").set_sensitive(True)
             self.prj_loaded.set_sensitive(True)
             self.load_project_tab()
@@ -1104,13 +1103,14 @@ class MainWindow(BaseWindow):
         name = self.get_new_filename()
         if not name:
             return
-
-        (base, ext) = os.path.splitext(os.path.basename(name))
-        if ext != ".xml":
-            name = name + ".xml"
-
+        name = Path(name)
+        
+        name = name.with_suffix(REG_EXT)
+            
         self.dbase = RegisterDb()
-        self.dbase.module_name = base
+        self.dbase.module_name = name.stem
+        self.dbase.set_name = name.stem
+        
         self.reg_model = RegisterModel()
         mdl = self.reg_model.filter_new()
         self.filter_manage.change_filter(mdl, True)
@@ -1124,8 +1124,8 @@ class MainWindow(BaseWindow):
 
         self.active = DbaseStatus(
             self.dbase,
-            name,
-            base,
+            str(name),
+            name.stem,
             self.reg_model,
             self.modelsort,
             self.filter_manage.get_model(),
@@ -1210,7 +1210,7 @@ class MainWindow(BaseWindow):
             self.active = DbaseStatus(
                 self.dbase,
                 name,
-                os.path.splitext(os.path.basename(name))[0],
+                str(path.stem),
                 self.reg_model,
                 self.modelsort,
                 self.filter_manage.get_model(),
@@ -1436,7 +1436,7 @@ class MainWindow(BaseWindow):
         address
         """
         register = Register()
-        register.width = self.dbase.data_bus_width
+        register.width = self.dbase.ports.data_bus_width
         register.address = calculate_next_address(self.dbase, register.width)
         self.insert_new_register(register)
 

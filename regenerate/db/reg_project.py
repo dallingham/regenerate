@@ -70,6 +70,11 @@ class RegProject:
         self.short_name = "unnamed"
         self.name = "unnamed"
         self.doc_pages = DocPages()
+        self.doc_pages.update_page("Overview", "")
+        self.doc_pages.update_page("Architecture", "")
+        self.doc_pages.update_page("Programming Model", "")
+        self.doc_pages.update_page("Implementation", "")
+        self.doc_pages.update_page("Additional", "")
         self.company_name = ""
         self.access_map = nested_dict(3, int)
         self._filelist: List[Path] = []
@@ -95,6 +100,7 @@ class RegProject:
         """Saves the project to the JSON file"""
 
         writer = ProjectWriterJSON(self)
+        print(self.path, type(self.path))
         writer.save(self.path.with_suffix(PRJ_EXT))
 
     def open(self, name: str) -> None:
@@ -146,7 +152,7 @@ class RegProject:
         self._modified = True
         try:
             path2remove = os.path.relpath(path, self.path.parent)
-            self._filelist.remove(path2remove)
+            self._filelist.remove(Path(path2remove))
         except ValueError as msg:
             LOGGER.error(str(msg))
 

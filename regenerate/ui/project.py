@@ -22,10 +22,12 @@ Project model and list
 """
 
 import os
+from pathlib import Path
+
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango
 from regenerate.settings.paths import INSTALL_PATH
 from regenerate.ui.enums import PrjCol
-
+from regenerate.db import RegisterDb
 
 class ProjectModel(Gtk.ListStore):
     """
@@ -62,18 +64,20 @@ class ProjectModel(Gtk.ListStore):
         self.paths = set()
         self.file_list = {}
 
-    def add_dbase(self, filename, dbase, modified=False):
+    def add_dbase(self, filename: Path, dbase: RegisterDb, modified=False):
         """Add the the database to the model"""
 
-        base = os.path.splitext(os.path.basename(filename))[0]
+        filename = Path(filename)
+        
+        base = filename.stem
         if modified:
             node = self.append(
-                row=[base, Gtk.STOCK_EDIT, filename, True, False, dbase]
+                row=[base, Gtk.STOCK_EDIT, str(filename), True, False, dbase]
             )
         else:
-            node = self.append(row=[base, "", filename, False, False, dbase])
-        self.file_list[filename] = node
-        self.paths.add(os.path.dirname(filename))
+            node = self.append(row=[base, "", str(filename), False, False, dbase])
+        self.file_list[str(filename)] = node
+        self.paths.add(filename.parent)
         return node
 
 
