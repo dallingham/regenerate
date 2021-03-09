@@ -24,7 +24,7 @@ Instance List and Model
 import re
 from gi.repository import Gtk, Gdk, GObject
 from regenerate.ui.columns import EditableColumn
-from regenerate.db import GroupInstData, GroupData, LOGGER
+from regenerate.db import RegisterInstance, GroupData, LOGGER
 from regenerate.ui.enums import InstCol
 
 
@@ -259,7 +259,7 @@ class InstanceList:
             while child:
                 cobj = self.col_value(child, InstCol.OBJ)
                 current_group.register_sets.append(
-                    GroupInstData(
+                    RegisterInstance(
                         self.col_value(child, InstCol.ID),
                         self.col_value(child, InstCol.INST),
                         self.col_value(child, InstCol.SORT),
@@ -320,7 +320,7 @@ class InstanceList:
         drop_info = treeview.get_dest_row_at_pos(xpos, ypos)
         (name, width) = data.split(":")
 
-        inst = GroupInstData(
+        inst = RegisterInstance(
             name, name, 0, 1, int(width, 16), "", False, False, False, False
         )
 
@@ -372,7 +372,7 @@ class InstanceList:
                     item.base,
                     item.repeat,
                     item.repeat_offset,
-                    item.hdl,
+                    "",
                     item,
                 ),
             )

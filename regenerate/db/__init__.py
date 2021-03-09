@@ -26,7 +26,7 @@ from .group_data import GroupData
 from .register import Register
 from .reg_parser import RegParser
 from .reg_project import RegProject, OLD_EXT, PRJ_EXT, REG_EXT, BLK_EXT
-from .group_inst_data import GroupInstData
+from .register_inst import RegisterInstance
 from .reg_writer import RegWriter
 from .reg_writer_json import RegWriterJSON
 from .register_db import RegisterDb

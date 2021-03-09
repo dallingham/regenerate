@@ -24,7 +24,7 @@ Manages the reading of the project file (.rprj)
 from io import BytesIO as StringIO
 import xml.parsers.expat
 from .group_data import GroupData
-from .group_inst_data import GroupInstData
+from .register_inst import RegisterInstance
 
 
 class ProjectReader:
@@ -144,7 +144,7 @@ class ProjectReader:
         """Called when a map tag is found"""
         sname = attrs["set"]
 
-        data = GroupInstData(
+        data = RegisterInstance(
             sname,
             attrs.get("inst", sname),
             int(attrs["offset"], 16),

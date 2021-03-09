@@ -415,7 +415,7 @@ class Register(NameBase):
 
         for key in self._bit_fields:
             field = self._bit_fields[key]
-            if field.volatile or field.input_signal != "":
+            if field.flags.volatile or field.input_signal != "":
                 return True
         return False
 
@@ -426,7 +426,7 @@ class Register(NameBase):
         """
 
         for key in self._bit_fields:
-            if self._bit_fields[key].volatile:
+            if self._bit_fields[key].flags.volatile:
                 return True
         return False
 

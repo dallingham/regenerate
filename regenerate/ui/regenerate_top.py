@@ -36,7 +36,7 @@ from regenerate.db import (
     RegWriterJSON,
     RegisterDb,
     Register,
-    GroupInstData,
+    RegisterInstance,
     GroupData,
     BitField,
     RegProject,
@@ -249,7 +249,7 @@ class MainWindow(BaseWindow):
 
         (mdl, node) = self.instance_obj.get_selected_instance()
         inst = mdl.get_value(node, InstCol.OBJ)
-        if isinstance(inst, GroupInstData):
+        if isinstance(inst, RegisterInstance):
             GroupOptions(inst, self.project_modified, self.top_window)
         else:
             GroupDocEditor(inst, self.project_modified, self.top_window)
@@ -1104,13 +1104,13 @@ class MainWindow(BaseWindow):
         if not name:
             return
         name = Path(name)
-        
+
         name = name.with_suffix(REG_EXT)
-            
+
         self.dbase = RegisterDb()
         self.dbase.module_name = name.stem
         self.dbase.set_name = name.stem
-        
+
         self.reg_model = RegisterModel()
         mdl = self.reg_model.filter_new()
         self.filter_manage.change_filter(mdl, True)

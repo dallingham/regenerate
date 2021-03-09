@@ -24,7 +24,7 @@ Manages the instance of a register within a group.
 from .json_base import JSONEncodable
 
 
-class GroupInstData(JSONEncodable):
+class RegisterInstance(JSONEncodable):
     """Instance information when contained in a group"""
 
     def __init__(

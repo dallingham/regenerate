@@ -296,10 +296,10 @@ package {{project.short_name|lower}}_reg_pkg;
                                                              int force_mode);
        uvm_reg_map rmap;
 
-       if ({{db.data_bus_width}} > width) begin
+       if ({{db.ports.data_bus_width}} > width) begin
           rmap = create_map(map_name, 'h0, width/8, UVM_LITTLE_ENDIAN);
        end else begin
-          rmap = create_map(map_name, 'h0, {{(db.data_bus_width/8)|int}}, UVM_LITTLE_ENDIAN);
+          rmap = create_map(map_name, 'h0, {{(db.ports.data_bus_width/8)|int}}, UVM_LITTLE_ENDIAN);
        end
 
        if (force_mode != 3) begin

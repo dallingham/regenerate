@@ -25,29 +25,25 @@ HDL path, the repeat count, repeat offset, and the title.
 from typing import List
 from .register_inst import RegisterInstance
 from .json_base import JSONEncodable
+from .doc_pages import DocPages
 
 
-class GroupData(JSONEncodable):
+class Block(JSONEncodable):
     """Basic group information."""
 
     def __init__(
         self,
         name="",
-        base=0,
-        hdl="",
-        repeat=1,
-        repeat_offset=0x10000,
+        address_size=0x10000,
         title="",
     ) -> None:
         """Initialize the group data item."""
         self.name = name
-        self.base = base
-        self.hdl = hdl
-        self.repeat = repeat
-        self.repeat_offset = repeat_offset
+        self.address_size = address_size
         self.register_sets: List[RegisterInstance] = []
         self.title = title
-        self.docs = ""
+        self.doc_pages = DocPages()
+        self.doc_pages.update_page("Overview", "")
 
     def __hash__(self):
         "Return the ID as the hash for the instance"
@@ -63,12 +59,9 @@ class GroupData(JSONEncodable):
         if (
             other is None
             or self.name != other.name
-            or self.base != other.base
-            or self.hdl != other.hdl
             or self.title != other.title
-            or self.repeat != other.repeat
-            or self.repeat_offset != other.repeat_offset
-            or self.docs != other.docs
+            or self.address_size != other.address_size
+            or self.docs_pages != other.doc_pages
             or self.register_sets != other.register_sets
         ):
             return False
@@ -76,13 +69,12 @@ class GroupData(JSONEncodable):
 
     def json_decode(self, data) -> None:
         """Compare for equality."""
+
         self.name = data["name"]
-        self.base = data["base"]
-        self.hdl = data["hdl"]
         self.title = data["title"]
-        self.repeat = data["repeat"]
-        self.repeat_offset = data["repeat_offset"]
-        self.docs = data["docs"]
+        self.address_size = data["address_size"]
+        self.doc_pages = DocPages()
+        self.doc_pages.json_decode(data["doc_pages"])
 
         self.register_sets = []
         for rset in data["register_sets"]:
