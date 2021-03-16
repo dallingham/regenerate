@@ -24,7 +24,7 @@ Instance List and Model
 import re
 from gi.repository import Gtk, Gdk, GObject
 from regenerate.ui.columns import EditableColumn
-from regenerate.db import RegisterInstance, GroupData, LOGGER
+from regenerate.db import RegisterInst, GroupData, LOGGER
 from regenerate.ui.enums import InstCol
 
 
@@ -219,10 +219,8 @@ class InstMdl(Gtk.TreeStore):
 class InstanceList:
     """Instance list"""
 
-    def __init__(self, obj, infobar, infolabel, callback):
+    def __init__(self, obj, callback):
         self.__obj = obj
-        self.__infobar = infobar
-        self.__infolabel = infolabel
         self.__col = None
         self.__project = None
         self.__model = None
@@ -259,7 +257,7 @@ class InstanceList:
             while child:
                 cobj = self.col_value(child, InstCol.OBJ)
                 current_group.register_sets.append(
-                    RegisterInstance(
+                    RegisterInst(
                         self.col_value(child, InstCol.ID),
                         self.col_value(child, InstCol.INST),
                         self.col_value(child, InstCol.SORT),
@@ -287,7 +285,6 @@ class InstanceList:
         self.__project.get_grouping_list().append(grp)
         self.__obj.set_cursor(pos, self.__col, start_editing=True)
         self.need_subsystem = False
-        self.infobar_update()
 
     def get_selected_instance(self):
         """Get the selected instance"""
@@ -320,12 +317,12 @@ class InstanceList:
         drop_info = treeview.get_dest_row_at_pos(xpos, ypos)
         (name, width) = data.split(":")
 
-        inst = RegisterInstance(
+        inst = RegisterInst(
             name, name, 0, 1, int(width, 16), "", False, False, False, False
         )
 
         row_data = build_row_data(
-            inst.set,
+            inst.set_name,
             inst.inst,
             inst.offset,
             inst.repeat,
@@ -350,7 +347,6 @@ class InstanceList:
                 else:
                     model.insert_after(parent, node, row_data)
         self.need_regset = False
-        self.infobar_update()
 
     def __populate(self):
         """Fill the list from the project"""
@@ -376,52 +372,6 @@ class InstanceList:
                     item,
                 ),
             )
-
-            item_sets = item.register_sets
-            for entry in sorted(item_sets, key=lambda x: x.offset):
-                self.need_regset = False
-                self.__model.append(
-                    node,
-                    row=build_row_data(
-                        entry.inst,
-                        entry.set,
-                        entry.offset,
-                        entry.repeat,
-                        entry.repeat_offset,
-                        entry.hdl,
-                        entry,
-                    ),
-                )
-        self.infobar_update()
-
-    def _infobar_reveal(self, prop):
-        """Show the info bar"""
-
-        try:
-            self.__infobar.set_revealed(prop)
-        except AttributeError:
-            if prop:
-                self.__infobar.show()
-            else:
-                self.__infobar.hide()
-
-    def infobar_update(self):
-        """Update in info bar"""
-
-        if self.need_subsystem:
-            self.__infolabel.set_text(
-                "Add a subsystem instance by clicking on the Add button next "
-                "to the subsystem table."
-            )
-            self._infobar_reveal(True)
-        elif self.need_regset:
-            self.__infolabel.set_text(
-                "Add a register set to a subsystem by dragging it from the "
-                "sidebar and dropping it on the instance in the subsystem table."
-            )
-            self._infobar_reveal(True)
-        else:
-            self._infobar_reveal(False)
 
     def __build_instance_table(self):
         """Build the table, adding the columns"""

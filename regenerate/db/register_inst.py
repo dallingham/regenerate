@@ -24,7 +24,7 @@ Manages the instance of a register within a group.
 from .json_base import JSONEncodable
 
 
-class RegisterInstance(JSONEncodable):
+class RegisterInst(JSONEncodable):
     """Instance information when contained in a group"""
 
     def __init__(
@@ -32,7 +32,7 @@ class RegisterInstance(JSONEncodable):
         rset: str = "",
         inst: str = "",
         offset: int = 0,
-        repeat: int = 0,
+        repeat: int = 1,
         repeat_offset: int = 0,
         hdl: str = "",
         no_uvm: bool = False,
@@ -40,7 +40,7 @@ class RegisterInstance(JSONEncodable):
         array: bool = False,
         single_decode: bool = False,
     ) -> None:
-        self.set = rset
+        self.set_name = rset
         self.inst = inst
         self.offset = offset
         self.repeat = repeat
@@ -53,7 +53,7 @@ class RegisterInstance(JSONEncodable):
 
     def __eq__(self, other) -> bool:
         return (
-            self.set == other.set
+            self.set_name == other.set_name
             and self.inst == other.inst
             and self.offset == other.offset
             and self.repeat == other.repeat
@@ -65,7 +65,7 @@ class RegisterInstance(JSONEncodable):
         )
 
     def json_decode(self, data) -> None:
-        self.set = data["set"]
+        self.set_name = data["set_name"]
         self.inst = data["inst"]
         self.offset = data["offset"]
         self.repeat = data["repeat"]

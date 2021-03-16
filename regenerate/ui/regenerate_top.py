@@ -36,7 +36,6 @@ from regenerate.db import (
     RegWriterJSON,
     RegisterDb,
     Register,
-    RegisterInstance,
     GroupData,
     BitField,
     RegProject,
@@ -47,6 +46,8 @@ from regenerate.db import (
     ShareType,
     BitType,
     REG_EXT,
+    PRJ_EXT,
+    OLD_PRJ_EXT,
 )
 from regenerate.extras.regutils import (
     calculate_next_address,
@@ -65,8 +66,6 @@ from regenerate.ui.build import Build
 from regenerate.ui.enums import FilterField, BitCol, InstCol, PrjCol
 from regenerate.ui.error_dialogs import ErrorMsg, WarnMsg, Question
 from regenerate.ui.filter_mgr import FilterManager
-from regenerate.ui.group_doc import GroupDocEditor
-from regenerate.ui.group_options import GroupOptions
 from regenerate.ui.help_window import HelpWindow
 from regenerate.ui.instance_list import InstMdl, InstanceList
 from regenerate.ui.module_tab import ModuleTabs, ProjectTabs
@@ -75,11 +74,11 @@ from regenerate.ui.parameter_list import ParameterList
 from regenerate.ui.preferences import Preferences
 from regenerate.ui.prj_param_list import PrjParameterList
 from regenerate.ui.project import ProjectModel, ProjectList
+from regenerate.ui.block import BlockTab
 from regenerate.ui.reg_description import RegisterDescription
 from regenerate.ui.register_list import RegisterModel, RegisterList
 from regenerate.ui.status_logger import StatusHandler
 from regenerate.ui.summary_window import SummaryWindow
-from regenerate.db.reg_project import PRJ_EXT, OLD_EXT
 
 TYPE_ENB = {}
 for data_type in TYPES:
@@ -140,8 +139,6 @@ class MainWindow(BaseWindow):
         self.register = None
         self.prj_model = None
 
-        self.use_preview = bool(int(ini.get("user", "use_preview", 0)))
-
         self.builder = Gtk.Builder()
         self.builder.add_from_file(GLADE_TOP)
 
@@ -151,6 +148,7 @@ class MainWindow(BaseWindow):
         self.selected_dbase = self.find_obj("selected_dbase")
         self.reg_notebook = self.find_obj("reg_notebook")
         self.top_notebook = self.find_obj("main_notebook")
+        self.top_notebook.set_current_page(2)
         self.module_notebook = self.find_obj("module_notebook")
         self.prj_infobar = self.find_obj("register_infobar")
         self.prj_infobar_label = self.find_obj("register_infobar_label")
@@ -184,15 +182,10 @@ class MainWindow(BaseWindow):
 
         self.instance_obj = InstanceList(
             self.find_obj("instances"),
-            self.find_obj("infobar"),
-            self.find_obj("infobar_label"),
             self.check_subsystem_addresses,
         )
 
         self.restore_position_and_size()
-        self.find_obj("preview").set_active(self.use_preview)
-        if self.use_preview:
-            self.enable_preview()
         self.top_window.show()
         self.builder.connect_signals(self)
         self.build_import_menu()
@@ -245,15 +238,6 @@ class MainWindow(BaseWindow):
         else:
             btn.set_sensitive(False)
 
-    def on_group_doc_clicked(self, _obj):
-
-        (mdl, node) = self.instance_obj.get_selected_instance()
-        inst = mdl.get_value(node, InstCol.OBJ)
-        if isinstance(inst, RegisterInstance):
-            GroupOptions(inst, self.project_modified, self.top_window)
-        else:
-            GroupDocEditor(inst, self.project_modified, self.top_window)
-
     def setup_project(self):
         self.project_tabs = ProjectTabs(
             self.builder, self.set_project_modified
@@ -264,6 +248,17 @@ class MainWindow(BaseWindow):
         )
         self.prj_model = ProjectModel()
         self.prj_obj.set_model(self.prj_model)
+
+        self.block_tab = BlockTab(
+            self.find_obj("block_name"),
+            self.find_obj("block_description"),
+            self.find_obj("block_size"),
+            self.find_obj("block_regsets"),
+            self.find_obj("block_reg_add"),
+            self.find_obj("block_reg_remove"),
+            self.find_obj("block_doc_pages"),
+            self.find_obj("block_select_list"),
+        )
 
         self.addr_map_list = AddrMapList(
             self.find_obj("address_tree"), self.set_project_modified
@@ -303,6 +298,7 @@ class MainWindow(BaseWindow):
                 self.prj_infobar.hide()
 
     def load_project_tab(self):
+        self.block_tab.set_project(self.prj)
         self.project_tabs.change_db(self.prj)
         self.addr_map_list.set_project(self.prj)
         if len(self.prj.files) > 0:
@@ -355,10 +351,6 @@ class MainWindow(BaseWindow):
         """Display the project parameter help"""
         HelpWindow(self.builder, "prj_parameter_help.rst")
 
-    def on_group_help_clicked(self, _obj):
-        """Display the group help file"""
-        HelpWindow(self.builder, "project_group_help.rst")
-
     def on_remove_map_clicked(self, _obj):
         """Remove the selected map with clicked"""
         self.project_modified(True)
@@ -379,12 +371,15 @@ class MainWindow(BaseWindow):
         width = int(ini.get("user", "width", 0))
         vpos = int(ini.get("user", "vpos", 0))
         hpos = int(ini.get("user", "hpos", 0))
+        block_hpos = int(ini.get("user", "block_hpos", 0))
         if height and width:
             self.top_window.resize(width, height)
         if vpos:
             self.find_obj("vpaned").set_position(vpos)
         if hpos:
             self.find_obj("hpaned").set_position(hpos)
+        if block_hpos:
+            self.find_obj("bpaned").set_position(block_hpos)
 
     def enable_registers(self, value):
         """
@@ -493,24 +488,6 @@ class MainWindow(BaseWindow):
     def on_name_toggled(self, obj):
         self.set_search((FilterField.NAME,), obj)
 
-    def enable_preview(self):
-        self.project_tabs.preview_enable()
-        self.module_tabs.preview_enable()
-        self.reg_description.preview_enable()
-        self.use_preview = True
-
-    def disable_preview(self):
-        self.project_tabs.preview_disable()
-        self.module_tabs.preview_disable()
-        self.reg_description.preview_disable()
-        self.use_preview = False
-
-    def on_preview_toggled(self, obj):
-        if obj.get_active():
-            self.enable_preview()
-        else:
-            self.disable_preview()
-
     def on_summary_action_activate(self, _obj):
         """Displays the summary window"""
         reg = self.reglist_obj.get_selected_register()
@@ -600,6 +577,12 @@ class MainWindow(BaseWindow):
     def bit_changed(self, _obj):
         active = len(self.bitfield_obj.get_selected_row())
         self.field_selected.set_sensitive(active)
+
+    def blk_selection_changed(self, obj):
+        model, node = obj.get_selected()
+        if node:
+            block_name = model[node][1]
+            self.block_tab.select_group(block_name)
 
     def prj_selection_changed(self, _obj):
         data = self.prj_obj.get_selected()
@@ -992,9 +975,17 @@ class MainWindow(BaseWindow):
             self.prj_model = ProjectModel()
             self.prj_obj.set_model(self.prj_model)
             self.prj.save()
+
+            self.block_tab.clear_flags()
+
+            #            self.block_obj.set_project(self.prj)
+            #            self.block_model = BlockModel()
+            #            self.block_obj.set_model(self.block_model)
+
             self.prj_infobar_label.set_text(
                 "Add a register set to the project by selecting from the File menu"
             )
+
             self.infobar_reveal(True)
             self.project_modified(False)
             if self.recent_manager:
@@ -1038,9 +1029,10 @@ class MainWindow(BaseWindow):
         self.prj_model = ProjectModel()
         self.prj_obj.set_model(self.prj_model)
 
+        print("OPEN PROJECT")
         try:
             self.prj = RegProject(filename)
-            #            self.project_tabs.change_db(self.prj)
+            self.project_tabs.change_db(self.prj)
             self.initialize_project_address_maps()
         except xml.parsers.expat.ExpatError as msg:
             ErrorMsg(
@@ -1052,6 +1044,7 @@ class MainWindow(BaseWindow):
         except IOError as msg:
             ErrorMsg(f"Could not open {filename}", str(msg), self.top_window)
             return
+        print("PROJECT OPEN")
 
         self.prj_parameter_list.set_prj(self.prj)
 
@@ -1067,16 +1060,30 @@ class MainWindow(BaseWindow):
 
         ini.set("user", "last_project", str(filepath.resolve()))
 
-        for fname in sorted(self.prj.get_register_set(), key=sort_regset):
-            try:
-                self.open_xml(fname, False)
-            except xml.parsers.expat.ExpatError as msg:
-                ErrorMsg(
-                    f"{fname} was not a valid register set file",
-                    str(msg),
-                    self.top_window,
-                )
-                continue
+        print(">>>", self.prj.regsets)
+        for container_name in self.prj.regsets:
+            print(container_name)
+            icon = (
+                Gtk.STOCK_EDIT
+                if self.prj.regsets[container_name].modified
+                else ""
+            )
+
+            self.prj_model.add_dbase(
+                icon,
+                self.prj.regsets[container_name],
+            )
+
+        # for fname in sorted(self.prj.get_register_set(), key=sort_regset):
+        #     try:
+        #         self.open_xml(fname, False)
+        #     except xml.parsers.expat.ExpatError as msg:
+        #         ErrorMsg(
+        #             f"{fname} was not a valid register set file",
+        #             str(msg),
+        #             self.top_window,
+        #         )
+        #         continue
 
         self.prj_obj.select_path(0)
         self.prj_model.load_icons()
@@ -1138,6 +1145,8 @@ class MainWindow(BaseWindow):
 
         self.prj_model.load_icons()
         self.prj.add_register_set(name)
+
+        self.block_obj.set_project(self.prj)
 
         self.module_notebook.set_sensitive(True)
         self.set_project_modified()
@@ -1240,27 +1249,29 @@ class MainWindow(BaseWindow):
         """
         change_suffix = False
 
-        for item in self.prj_model:
-            if item[PrjCol.MODIFIED]:
-                try:
-                    old_path = Path(item[PrjCol.OBJ].path)
-                    if old_path.suffix != ".xml":
-                        new_path = Path("%s.bak" % old_path)
-                        if new_path.is_file():
-                            new_path.unlink()
-                        if old_path.is_file():
-                            old_path.rename(new_path)
+        # self.prj.save()
 
-                    writer = RegWriterJSON(item[PrjCol.OBJ].db)
-                    writer.save(str(old_path.with_suffix(REG_EXT)))
-                    self.clear_modified(item[PrjCol.OBJ])
-                except IOError as msg:
-                    os.rename(new_path, old_path)
-                    ErrorMsg(
-                        f"Could not save {old_path}, restoring original",
-                        str(msg),
-                        self.top_window,
-                    )
+        # for item in self.prj_model:
+        #     if item[PrjCol.MODIFIED]:
+        #         try:
+        #             old_path = Path(item[PrjCol.OBJ].path)
+        #             if old_path.suffix != ".xml":
+        #                 new_path = Path("%s.bak" % old_path)
+        #                 if new_path.is_file():
+        #                     new_path.unlink()
+        #                 if old_path.is_file():
+        #                     old_path.rename(new_path)
+
+        #             writer = RegWriterJSON(item[PrjCol.OBJ].db)
+        #             writer.save(str(old_path.with_suffix(REG_EXT)))
+        #             self.clear_modified(item[PrjCol.OBJ])
+        #         except IOError as msg:
+        #             os.rename(new_path, old_path)
+        #             ErrorMsg(
+        #                 f"Could not save {old_path}, restoring original",
+        #                 str(msg),
+        #                 self.top_window,
+        #             )
 
         self.prj.set_new_order([item[0] for item in self.prj_model])
         self.instance_obj.get_groups()
@@ -1268,7 +1279,7 @@ class MainWindow(BaseWindow):
         current_path = Path(self.prj.path)
         backup_path = Path(f"{current_path}.bak")
 
-        if current_path.suffix != OLD_EXT:
+        if current_path.suffix != OLD_PRJ_EXT:
             if backup_path.is_file():
                 backup_path.unlink()
             current_path.rename(backup_path)
@@ -1276,6 +1287,7 @@ class MainWindow(BaseWindow):
         try:
             self.prj.save()
             self.project_modified(False)
+            self.block_tab.clear_flags()
         except IOError as msg:
             os.rename(new_path, old_path)
             ErrorMsg(
@@ -1292,11 +1304,11 @@ class MainWindow(BaseWindow):
         then exit.
         """
         (width, height) = self.top_window.get_size()
-        ini.set("user", "use_preview", int(self.use_preview))
         ini.set("user", "width", width)
         ini.set("user", "height", height)
         ini.set("user", "vpos", self.find_obj("vpaned").get_position())
         ini.set("user", "hpos", self.find_obj("hpaned").get_position())
+        ini.set("user", "block_hpos", self.find_obj("bpaned").get_position())
         Gtk.main_quit()
 
     def save_and_quit(self):
@@ -1590,7 +1602,7 @@ def check_address_ranges(project, dbmap):
     for group in project.get_grouping_list():
 
         for rset in group.register_sets:
-            space = 1 << dbmap[rset.set].address_bus_width
+            space = 1 << dbmap[rset.set].ports.address_bus_width
             if space > rset.repeat_offset:
                 LOGGER.warning(
                     "%s.%s - %d bits specified for register set (size %x) which is greater than the repeat offset of %x",

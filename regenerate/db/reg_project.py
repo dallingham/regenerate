@@ -37,12 +37,10 @@ from .logger import LOGGER
 from .parammap import PrjParameterData
 from .export import ExportData
 from .doc_pages import DocPages
-
-
-OLD_EXT = ".rprj"
-PRJ_EXT = ".regp"
-REG_EXT = ".regr"
-BLK_EXT = ".regb"
+from .register_db import RegisterDb
+from .block import Block
+from .containers import BlockContainer, RegSetContainer
+from .const import REG_EXT, PRJ_EXT, OLD_PRJ_EXT
 
 
 def nested_dict(depth, dict_type):
@@ -71,18 +69,21 @@ class RegProject:
         self.name = "unnamed"
         self.doc_pages = DocPages()
         self.doc_pages.update_page("Overview", "")
-        self.doc_pages.update_page("Architecture", "")
-        self.doc_pages.update_page("Programming Model", "")
         self.doc_pages.update_page("Implementation", "")
         self.doc_pages.update_page("Additional", "")
         self.company_name = ""
         self.access_map = nested_dict(3, int)
+
         self._filelist: List[Path] = []
+
         self._parameters: List[PrjParameterData] = []
         self._addr_map_grps = {}
         self._addr_map_list = []
 
         self._groupings: List[GroupData] = []
+
+        self.blocks: Dict[str, BlockContainer] = {}
+        self.regsets: Dict[str, RegSetContainer] = {}
 
         self._exports = {}
         self._group_exports = {}
@@ -100,8 +101,21 @@ class RegProject:
         """Saves the project to the JSON file"""
 
         writer = ProjectWriterJSON(self)
-        print(self.path, type(self.path))
         writer.save(self.path.with_suffix(PRJ_EXT))
+
+        for container_name in self.blocks:
+            container = self.blocks[container_name]
+            if container.modified:
+                print(f"Saving {container_name} {str(container.filename)}")
+                container.save()
+                container.modified = False
+
+        for container_name in self.regsets:
+            container = self.regsets[container_name]
+            if container.modified:
+                print(f"Saving {container_name} {str(container.filename)}")
+                container.save()
+                container.modified = False
 
     def open(self, name: str) -> None:
         """Opens and reads a project file. The project could be in either
@@ -109,7 +123,7 @@ class RegProject:
 
         self.path = Path(name)
 
-        if self.path.suffix == OLD_EXT:
+        if self.path.suffix == OLD_PRJ_EXT:
             xml_reader = ProjectReader(self)
             xml_reader.open(name)
         else:
@@ -135,6 +149,13 @@ class RegProject:
 
         self._modified = True
         new_file = Path(name)
+
+        regset = RegSetContainer()
+        regset.filename = new_file
+        regset.modified = True
+        regset.regset = RegisterDb()
+        regset.regset.read_db(self.path.parent / new_file)
+        self.regsets[regset.regset.set_name] = regset
         self._filelist.append(new_file)
         self._exports[name] = []
 
@@ -143,8 +164,6 @@ class RegProject:
         Adds a new register set to the project. Note that this only records
         the filename, and does not actually keep a reference to the RegisterDb.
         """
-        self._modified = True
-        path = os.path.relpath(path, self.path.parent)
         self.append_register_set_to_list(path)
 
     def remove_register_set(self, path: str) -> None:
@@ -184,7 +203,10 @@ class RegProject:
         """
         self._modified = True
         exp = ExportData(option, path)
-        self._exports[dest].append(exp)
+        if dest in self._exports:
+            self._exports[dest].append(exp)
+        else:
+            self._exports[dest] = [exp]
 
     def add_to_export_list(self, path: str, option: str, dest: str) -> None:
         """
@@ -290,7 +312,7 @@ class RegProject:
             if not (exp.option == option and exp.dest == dest)
         ]
 
-    def get_register_set(self) -> List[str]:
+    def get_register_set(self) -> List[Path]:
         """
         Returns the register databases (XML files) referenced by the project
         file.

@@ -112,6 +112,12 @@ class FilterField(IntEnum):
     TOKEN = 3
 
 
+class BlockCol(IntEnum):
+
+    ICON = 0
+    NAME = 1
+
+
 class PrjCol(IntEnum):
     """Column numbers for the Project List"""
 

@@ -26,8 +26,10 @@ from pathlib import Path
 
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango
 from regenerate.settings.paths import INSTALL_PATH
-from regenerate.ui.enums import PrjCol
+from regenerate.ui.enums import PrjCol, BlockCol
 from regenerate.db import RegisterDb
+from regenerate.db.containers import RegSetContainer
+
 
 class ProjectModel(Gtk.ListStore):
     """
@@ -35,7 +37,7 @@ class ProjectModel(Gtk.ListStore):
     """
 
     def __init__(self):
-        super().__init__(str, str, str, bool, bool, object)
+        super().__init__(str, str)
 
         Gdk.threads_init()
         self.file_list = {}
@@ -48,14 +50,14 @@ class ProjectModel(Gtk.ListStore):
             icon = Gtk.STOCK_EDIT
         else:
             icon = None
-        self.set_value(node, PrjCol.ICON, icon)
-        self.set_value(node, PrjCol.MODIFIED, modified)
+        self.set_value(node, BlockCol.ICON, icon)
+        self.set_value(node, BlockCol.MODIFIED, modified)
 
     def is_not_saved(self):
         """True if the project is not saved"""
 
         for item in self:
-            if item[PrjCol.MODIFIED]:
+            if item[BlockCol.ICON] != "":
                 return True
         return False
 
@@ -64,20 +66,16 @@ class ProjectModel(Gtk.ListStore):
         self.paths = set()
         self.file_list = {}
 
-    def add_dbase(self, filename: Path, dbase: RegisterDb, modified=False):
+    def add_dbase(self, regset: RegSetContainer, modified=False):
         """Add the the database to the model"""
 
-        filename = Path(filename)
-        
-        base = filename.stem
+        base = regset.filename.stem
         if modified:
-            node = self.append(
-                row=[base, Gtk.STOCK_EDIT, str(filename), True, False, dbase]
-            )
+            node = self.append(row=[Gtk.STOCK_EDIT, base])
         else:
-            node = self.append(row=[base, "", str(filename), False, False, dbase])
-        self.file_list[str(filename)] = node
-        self.paths.add(filename.parent)
+            node = self.append(row=["", base])
+        self.file_list[str(regset.filename)] = node
+        self.paths.add(regset.filename.parent)
         return node
 
 

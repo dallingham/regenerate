@@ -29,6 +29,7 @@ from .reg_parser import RegParser
 from .reg_parser_json import RegParserJSON
 from .reg_writer import RegWriter
 from .signals import Signals
+from .const import OLD_REG_EXT
 
 
 class RegisterDb:
@@ -96,7 +97,7 @@ class RegisterDb:
     def read_db(self, filename):
 
         filename = Path(filename)
-        if filename.suffix == ".xml":
+        if filename.suffix == OLD_REG_EXT:
             self.read_xml(filename)
         else:
             self.read_json(filename)

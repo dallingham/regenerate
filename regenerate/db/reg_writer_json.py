@@ -24,7 +24,7 @@ Writes the XML file containing all the information in the register database
 from pathlib import Path
 import json
 from operator import methodcaller
-from .reg_project import REG_EXT
+from .const import REG_EXT
 
 
 def create_backup_file(filename: Path):

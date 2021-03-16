@@ -22,9 +22,14 @@ Manages the reading of the project file (.rprj)
 """
 
 from io import BytesIO as StringIO
+import os
+from pathlib import Path
 import xml.parsers.expat
 from .group_data import GroupData
-from .register_inst import RegisterInstance
+from .block import Block
+from .block_inst import BlockInst
+from .containers import BlockContainer
+from .register_inst import RegisterInst
 
 
 class ProjectReader:
@@ -41,12 +46,13 @@ class ProjectReader:
         self._current_access = 0
         self._current_map_group = None
         self.path = ""
+        self.blocks = {}
 
     def open(self, name):
         """Opens and reads an XML file"""
-        self.path = name
+        self.path = Path(name).resolve()
 
-        with open(name, "rb") as ofile:
+        with self.path.open("rb") as ofile:
             parser = xml.parsers.expat.ParserCreate()
             parser.StartElementHandler = self.startElement
             parser.EndElementHandler = self.endElement
@@ -100,11 +106,16 @@ class ProjectReader:
         self._prj.name = attrs["name"]
         self._prj.short_name = attrs.get("short_name", "")
         self._prj.company_name = attrs.get("company_name", "")
+        self.reg_map = {}
 
     def start_registerset(self, attrs):
         """Called when a registerset tag is found"""
         self._current = attrs["name"]
-        self._prj.append_register_set_to_list(self._current)
+        #        self._prj.append_register_set_to_list(self._current)
+        self._prj.add_register_set(self._current)
+
+        reg_path = self.path.parent / self._current
+        self.reg_map[reg_path.stem] = reg_path.resolve()
 
     def start_export(self, attrs):
         """Called when an export tag is found"""
@@ -139,12 +150,20 @@ class ProjectReader:
         )
         self._prj.add_to_grouping_list(self._current_group)
 
+        self.new_block = Block(
+            attrs["name"],
+            int(attrs.get("repeat_offset", 65536)),
+            attrs.get("title", ""),
+        )
+
+        self.blocks[self.new_block.name] = self.new_block
+
     def start_map(self, attrs):
 
         """Called when a map tag is found"""
         sname = attrs["set"]
 
-        data = RegisterInstance(
+        data = RegisterInst(
             sname,
             attrs.get("inst", sname),
             int(attrs["offset"], 16),
@@ -157,6 +176,7 @@ class ProjectReader:
             int(attrs.get("single_decode", "0")),
         )
         self._current_group.register_sets.append(data)
+        self.new_block.register_sets.append(data)
 
     def start_address_map(self, attrs):
         """Called when an address tag is found"""
@@ -183,6 +203,7 @@ class ProjectReader:
         """
         if self._current_group:
             self._current_group.docs = text
+        self.new_block.doc_pages.update_page("Overview", text)
 
     def start_map_group(self, attrs):
         """
@@ -225,3 +246,32 @@ class ProjectReader:
     def end_parameters(self, _attrs):
         "Ends a parameter"
         ...
+
+    def end_project(self, _text):
+        from collections import Counter
+
+        for blk in self.blocks:
+
+            counter = Counter()
+            for rset in self.blocks[blk].register_sets:
+                counter[Path(self.reg_map[rset.set_name]).parent] += 1
+
+            filename = Path(counter.most_common(1)[0][0]) / f"{blk}.regb"
+
+            block_dir = Path(self.path.parent).resolve()
+            filename = block_dir / filename
+
+            for rset in self.blocks[blk].register_sets:
+                full_reg_path = self.reg_map[rset.set_name]
+                rel_reg_path = Path(
+                    os.path.relpath(full_reg_path, filename.parent)
+                )
+                self.blocks[blk].regname2path[rset.set_name] = str(
+                    rel_reg_path.with_suffix(".regr")
+                )
+
+            blk_container = BlockContainer()
+            blk_container.filename = filename
+            blk_container.block = self.blocks[blk]
+            blk_container.modified = True
+            self._prj.blocks[blk] = blk_container

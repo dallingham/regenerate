@@ -158,7 +158,8 @@ class ModuleText:
 
         self.dbase = dbase
         if dbase:
-            self.widget.set_text(getattr(dbase, self.dbname))
+            val = f"{getattr(dbase, self.dbname)}"
+            self.widget.set_text(val)
         else:
             self.widget.set_text("")
 
@@ -252,8 +253,45 @@ class ModuleInt(ModuleValid):
 
         self.dbase = dbase
         if dbase:
-            val = getattr(dbase, self.dbname)
-            self.widget.set_text(str(val))
+            val = f"{getattr(dbase, self.dbname)}"
+            self.widget.set_text(val)
+        else:
+            self.widget.set_text("")
+
+
+class ModuleHex(ModuleValid):
+    """
+    Connects a database value to a text entry, but restricts the input
+    to a digits.
+    """
+
+    def __init__(self, widget, db_name, modified, placeholder=None):
+        super().__init__(
+            widget,
+            db_name,
+            modified,
+            string.hexdigits + "x",
+            placeholder=placeholder,
+        )
+
+    def on_change(self, obj):
+        """Called on the change event"""
+
+        if self.dbase:
+            if obj.get_text():
+                int_val = int(obj.get_text(), 0)
+            else:
+                int_val = 0
+            setattr(self.dbase, self.dbname, int_val)
+            self.modified()
+
+    def change_db(self, dbase):
+        """Change the database"""
+
+        self.dbase = dbase
+        if dbase:
+            val = f"0x{getattr(dbase, self.dbname):04x}"
+            self.widget.set_text(val)
         else:
             self.widget.set_text("")
 
