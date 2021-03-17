@@ -360,7 +360,7 @@ class ModuleDoc:
 
 
 class ModuleTabs:
-    def __init__(self, builder, modified):
+    def __init__(self, find_obj, modified):
 
         port_list = [
             ("clock_signal", "clock_name", ModuleWord, "Missing clock name"),
@@ -450,7 +450,7 @@ class ModuleTabs:
             if placeholder is not None:
                 self.port_object_list.append(
                     class_type(
-                        builder.get_object(widget_name),
+                        find_obj(widget_name),
                         db_name,
                         self.after_modified,
                         placeholder=placeholder,
@@ -459,7 +459,7 @@ class ModuleTabs:
             else:
                 self.port_object_list.append(
                     class_type(
-                        builder.get_object(widget_name),
+                        find_obj(widget_name),
                         db_name,
                         self.after_modified,
                     )
@@ -468,7 +468,7 @@ class ModuleTabs:
         for (widget_name, db_name, class_type, placeholder) in item_list:
             if placeholder is not None:
                 obj = class_type(
-                    builder.get_object(widget_name),
+                    find_obj(widget_name),
                     db_name,
                     self.after_modified,
                     placeholder=placeholder,
@@ -476,31 +476,32 @@ class ModuleTabs:
                 self.top_object_list.append(obj)
             else:
                 obj = class_type(
-                    builder.get_object(widget_name),
+                    find_obj(widget_name),
                     db_name,
                     self.after_modified,
                 )
                 self.top_object_list.append(obj)
 
         self.preview = ModuleDoc(
-            builder.get_object("overview"),
-            builder.get_object("scroll_webkit"),
+            find_obj("overview"),
+            find_obj("scroll_webkit"),
             "overview_text",
             self.after_modified,
         )
 
         self.dbase = None
         self.set_modified = modified
-        self.icon = builder.get_object("mod_def_warn")
-        self.port_table = builder.get_object("port_table")
+        self.icon = find_obj("mod_def_warn")
+        self.port_table = find_obj("port_table")
 
     def change_db(self, dbase):
         self.dbase = dbase
-        for obj in self.port_object_list:
-            obj.change_db(dbase.ports)
-        for obj in self.top_object_list:
-            obj.change_db(dbase)
-        self.preview.change_db(dbase)
+        if dbase:
+            for obj in self.port_object_list:
+                obj.change_db(dbase.ports)
+            for obj in self.top_object_list:
+                obj.change_db(dbase)
+            self.preview.change_db(dbase)
 
     def after_modified(self):
 

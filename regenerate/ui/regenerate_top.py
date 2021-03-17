@@ -68,7 +68,7 @@ from regenerate.ui.error_dialogs import ErrorMsg, WarnMsg, Question
 from regenerate.ui.filter_mgr import FilterManager
 from regenerate.ui.help_window import HelpWindow
 from regenerate.ui.instance_list import InstMdl, InstanceList
-from regenerate.ui.module_tab import ModuleTabs, ProjectTabs
+from regenerate.ui.module_tab import ProjectTabs
 from regenerate.ui.param_overrides import OverridesList
 from regenerate.ui.parameter_list import ParameterList
 from regenerate.ui.preferences import Preferences
@@ -76,7 +76,6 @@ from regenerate.ui.prj_param_list import PrjParameterList
 
 # from regenerate.ui.project import ProjectList
 from regenerate.ui.block import BlockTab
-from regenerate.ui.reg_description import RegisterDescription
 from regenerate.ui.register_list import RegisterModel, RegisterList
 from regenerate.ui.status_logger import StatusHandler
 from regenerate.ui.summary_window import SummaryWindow
@@ -155,20 +154,12 @@ class MainWindow(BaseWindow):
         self.prj_infobar = self.find_obj("register_infobar")
         self.prj_infobar_label = self.find_obj("register_infobar_label")
 
-        self.module_tabs = ModuleTabs(self.builder, self.set_modified)
-
         self.reglist_obj = RegisterList(
             self.find_obj("register_list"),
             self.selected_reg_changed,
             self.set_modified,
             self.update_register_addr,
             self.set_register_warn_flags,
-        )
-
-        self.reg_description = RegisterDescription(
-            self.find_obj("register_description"),
-            self.find_obj("scroll_reg_webkit"),
-            self.register_description_callback,
         )
 
         self.bitfield_obj = BitList(
@@ -222,9 +213,6 @@ class MainWindow(BaseWindow):
     def find_obj(self, name):
         return self.builder.get_object(name)
 
-    def register_description_callback(self, reg):
-        self.set_modified()
-        self.set_register_warn_flags(reg)
 
     def on_instances_cursor_changed(self, _obj):
         """Called when the row of the treeview changes."""
@@ -246,7 +234,13 @@ class MainWindow(BaseWindow):
         )
 
         self.reginst_tab = RegSetTab(
-            self.find_obj("project_list"), self.reglist_obj, self.bitfield_obj
+            self.find_obj,
+            self.set_modified,
+            self.reglist_obj,
+            self.bitfield_obj,
+            self.db_selected,
+            self.reg_selected,
+            self.field_selected,
         )
 
         self.block_tab = BlockTab(
@@ -369,9 +363,9 @@ class MainWindow(BaseWindow):
 
         height = int(ini.get("user", "height", 0))
         width = int(ini.get("user", "width", 0))
-        vpos = int(ini.get("user", "vpos", 0))
-        hpos = int(ini.get("user", "hpos", 0))
-        block_hpos = int(ini.get("user", "block_hpos", 0))
+        vpos = int(ini.get("user", "vpos", 150))
+        hpos = int(ini.get("user", "hpos", 140))
+        block_hpos = int(ini.get("user", "block_hpos", 140))
         if height and width:
             self.top_window.resize(width, height)
         if vpos:
@@ -381,21 +375,22 @@ class MainWindow(BaseWindow):
         if block_hpos:
             self.find_obj("bpaned").set_position(block_hpos)
 
-    def enable_registers(self, value):
-        """
-        Enables UI items when a database has been loaded. This includes
-        enabling the register window, the register related buttons, and
-        the export menu.
-        """
-        self.module_notebook.set_sensitive(value)
-        self.db_selected.set_sensitive(value)
+    # def enable_registers(self, value):
+    #     """
+    #     Enables UI items when a database has been loaded. This includes
+    #     enabling the register window, the register related buttons, and
+    #     the export menu.
+    #     """
+    #     print("ENABLE REGISTERS")
+    #     self.module_notebook.set_sensitive(value)
+    #     self.db_selected.set_sensitive(value)
 
-    def enable_bit_fields(self, value):
-        """
-        Enables UI registers when a register has been selected. This allows
-        bit fields to be edited, along with other register related items.
-        """
-        self.reg_notebook(value)
+    # def enable_bit_fields(self, value):
+    #     """
+    #     Enables UI registers when a register has been selected. This allows
+    #     bit fields to be edited, along with other register related items.
+    #     """
+    #     self.reg_notebook(value)
 
     def build_group(self, group_name, action_names):
         group = Gtk.ActionGroup(group_name)
@@ -491,7 +486,7 @@ class MainWindow(BaseWindow):
 
     def on_summary_action_activate(self, _obj):
         """Displays the summary window"""
-        reg = self.reglist_obj.get_selected_register()
+        reg = self.reginst_tab.get_selected_register()
 
         if reg:
             SummaryWindow(self.builder, reg, self.active.name, self.prj)
@@ -571,14 +566,15 @@ class MainWindow(BaseWindow):
     def on_notebook_switch_page(self, _obj, _page, page_num):
         if page_num == 1:
             self.update_bit_count()
-        if self.reglist_obj.get_selected_register():
+        if self.reginst_tab.get_selected_register():
             self.reg_selected.set_sensitive(page_num == 0)
         else:
             self.reg_selected.set_sensitive(False)
 
     def bit_changed(self, _obj):
         active = len(self.bitfield_obj.get_selected_row())
-        self.field_selected.set_sensitive(active)
+        print("BIT CHANGED", active)
+        self.field_selected.set_sensitive(True)
 
     def blk_selection_changed(self, obj):
         model, node = obj.get_selected()
@@ -591,10 +587,12 @@ class MainWindow(BaseWindow):
         GTK callback that checks the selected objects, and then enables the
         appropriate buttons on the interface.
         """
+        self.reginst_tab.selected_reg_changed(_obj)
+        return 
         old_skip = self.skip_changes
         self.skip_changes = True
-        reg = self.reglist_obj.get_selected_register()
-        self.reg_description.set_register(reg)
+        reg = self.reginst_tab.get_selected_register()
+#        self.reg_description.set_register(reg)
         if reg:
             self.bit_model.clear()
             self.bit_model.register = reg
@@ -666,7 +664,7 @@ class MainWindow(BaseWindow):
 
     def on_no_sharing_toggled(self, obj):
         if obj.get_active():
-            register = self.reglist_obj.get_selected_register()
+            register = self.reginst_tab.get_selected_register()
 
             if self.duplicate_address(register.address):
                 self.set_share(register)
@@ -681,7 +679,7 @@ class MainWindow(BaseWindow):
 
     def on_read_access_toggled(self, obj):
         if obj.get_active():
-            register = self.reglist_obj.get_selected_register()
+            register = self.reginst_tab.get_selected_register()
 
             other = self.find_shared_address(register)
             if other and other.share != ShareType.WRITE:
@@ -697,7 +695,7 @@ class MainWindow(BaseWindow):
 
     def on_write_access_toggled(self, obj):
         if obj.get_active():
-            register = self.reglist_obj.get_selected_register()
+            register = self.reginst_tab.get_selected_register()
 
             other = self.find_shared_address(register)
             if other and other.share != ShareType.READ:
@@ -712,7 +710,7 @@ class MainWindow(BaseWindow):
             self.bitfield_obj.set_mode(register.share)
 
     def on_add_bit_action_activate(self, _obj):
-        register = self.reglist_obj.get_selected_register()
+        register = self.reginst_tab.get_selected_register()
         next_pos = register.find_next_unused_bit()
 
         if next_pos == -1:
@@ -735,7 +733,7 @@ class MainWindow(BaseWindow):
         self.set_register_warn_flags(register)
 
     def on_edit_field_clicked(self, _obj):
-        register = self.reglist_obj.get_selected_register()
+        register = self.reginst_tab.get_selected_register()
         field = self.bitfield_obj.select_field()
         if field:
             BitFieldEditor(
@@ -748,13 +746,13 @@ class MainWindow(BaseWindow):
             )
 
     def set_field_modified(self):
-        reg = self.reglist_obj.get_selected_register()
+        reg = self.reginst_tab.get_selected_register()
         self.set_register_warn_flags(reg)
         self.set_bits_warn_flag()
         self.set_modified()
 
     def on_remove_bit_action_activate(self, _obj):
-        register = self.reglist_obj.get_selected_register()
+        register = self.reginst_tab.get_selected_register()
         row = self.bitfield_obj.get_selected_row()
         field = self.bit_model.get_bitfield_at_path(row[0])
         register.delete_bit_field(field)
@@ -788,7 +786,7 @@ class MainWindow(BaseWindow):
         Makes a copy of the current register, modifying the address, and
         changing name and token
         """
-        reg = self.reglist_obj.get_selected_register()
+        reg = self.reginst_tab.get_selected_register()
         if reg:
             reg_copy = duplicate_register(self.dbase, reg)
             self.insert_new_register(reg_copy)
@@ -1279,7 +1277,6 @@ class MainWindow(BaseWindow):
 
     def redraw(self):
         """Redraws the information in the register list."""
-        self.module_tabs.change_db(self.dbase)
         self.parameter_list.set_db(self.dbase)
         self.reglist_obj.set_parameters(self.dbase.get_parameters())
         self.bitfield_obj.set_parameters(self.dbase.get_parameters())
@@ -1331,7 +1328,7 @@ class MainWindow(BaseWindow):
         """
         if self.top_notebook.get_current_page() == 0:
             row = self.reglist_obj.get_selected_position()
-            reg = self.reglist_obj.get_selected_register()
+            reg = self.reginst_tab.get_selected_register()
             if reg:
                 self.reglist_obj.delete_selected_node()
                 self.dbase.delete_register(reg)
@@ -1347,7 +1344,7 @@ class MainWindow(BaseWindow):
         self.set_db_value("array_is_reg", not obj.get_active())
 
     def button_toggle(self, attr, obj):
-        reg = self.reglist_obj.get_selected_register()
+        reg = self.reginst_tab.get_selected_register()
         if reg:
             setattr(reg.flags, attr, obj.get_active())
             self.set_modified()
@@ -1373,7 +1370,7 @@ class MainWindow(BaseWindow):
         address
         """
         register = Register()
-        register.width = self.dbase.ports.data_bus_width
+        register.width = self.active.regset.ports.data_bus_width
         register.address = calculate_next_address(self.dbase, register.width)
         self.insert_new_register(register)
 
