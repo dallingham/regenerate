@@ -111,8 +111,8 @@ class ProjectReader:
     def start_registerset(self, attrs):
         """Called when a registerset tag is found"""
         self._current = attrs["name"]
-        #        self._prj.append_register_set_to_list(self._current)
-        self._prj.add_register_set(self._current)
+        self._prj.append_register_set_to_list(self._current)
+        # self._prj.add_register_set(self._current)
 
         reg_path = self.path.parent / self._current
         self.reg_map[reg_path.stem] = reg_path.resolve()

@@ -73,12 +73,15 @@ from regenerate.ui.param_overrides import OverridesList
 from regenerate.ui.parameter_list import ParameterList
 from regenerate.ui.preferences import Preferences
 from regenerate.ui.prj_param_list import PrjParameterList
-from regenerate.ui.project import ProjectModel, ProjectList
+
+# from regenerate.ui.project import ProjectList
 from regenerate.ui.block import BlockTab
 from regenerate.ui.reg_description import RegisterDescription
 from regenerate.ui.register_list import RegisterModel, RegisterList
 from regenerate.ui.status_logger import StatusHandler
 from regenerate.ui.summary_window import SummaryWindow
+from regenerate.ui.register_tab import RegSetTab
+
 
 TYPE_ENB = {}
 for data_type in TYPES:
@@ -137,7 +140,6 @@ class MainWindow(BaseWindow):
         self.prj = None
         self.dbmap = {}
         self.register = None
-        self.prj_model = None
 
         self.builder = Gtk.Builder()
         self.builder.add_from_file(GLADE_TOP)
@@ -243,11 +245,9 @@ class MainWindow(BaseWindow):
             self.builder, self.set_project_modified
         )
 
-        self.prj_obj = ProjectList(
-            self.find_obj("project_list"), self.prj_selection_changed
+        self.reginst_tab = RegSetTab(
+            self.find_obj("project_list"), self.reglist_obj, self.bitfield_obj
         )
-        self.prj_model = ProjectModel()
-        self.prj_obj.set_model(self.prj_model)
 
         self.block_tab = BlockTab(
             self.find_obj("block_name"),
@@ -442,7 +442,8 @@ class MainWindow(BaseWindow):
         self.reg_selected = self.build_group("reg_selected", reg_acn)
         self.db_selected = self.build_group("database_selected", db_acn)
         self.field_selected = self.build_group("field_selected", fld_acn)
-        self.file_modified = self.build_group("file_modified", file_acn)
+
+    #        self.file_modified = self.build_group("file_modified", file_acn)
 
     def on_filter_icon_press(self, obj, icon, event):
         if icon == Gtk.EntryIconPosition.SECONDARY:
@@ -496,29 +497,30 @@ class MainWindow(BaseWindow):
             SummaryWindow(self.builder, reg, self.active.name, self.prj)
 
     def on_build_action_activate(self, obj):
-        dbmap = {}
-        item_list = self.prj_model
-        for item in item_list:
-            name = item[PrjCol.NAME]
-            modified = item[PrjCol.MODIFIED]
-            obj = item[PrjCol.OBJ]
-            dbmap[name] = (obj, modified)
+        # dbmap = {}
+        # item_list = self.reginst_model
+        # for item in item_list:
+        #     name = item[PrjCol.NAME]
+        #     modified = item[PrjCol.MODIFIED]
+        #     obj = item[PrjCol.OBJ]
+        #     dbmap[name] = (obj, modified)
 
         Build(self.prj, dbmap, self.top_window)
 
-    def on_revert_action_activate(self, _obj):
-        (store, node) = self.prj_obj.get_selected()
-        if node and store[node][PrjCol.MODIFIED]:
-            filename = store[node][PrjCol.FILE]
+    # def on_revert_action_activate(self, _obj):
+    #     (store, node) = self.reginst_obj.get_selected()
+    #     if node and store[node][PrjCol.MODIFIED]:
+    #         filename = store[node][PrjCol.FILE]
 
-            self.set_busy_cursor(True)
-            self.input_xml(filename)
-            store[node][PrjCol.FILE] = self.dbase
-            store[node][PrjCol.MODIFIED] = False
-            store[node][PrjCol.OOD] = False
-            store[node][PrjCol.ICON] = ""
-            self.set_busy_cursor(False)
-            self.file_modified.set_sensitive(False)
+    #         self.set_busy_cursor(True)
+    #         self.input_xml(filename)
+    #         store[node][PrjCol.FILE] = self.dbase
+    #         store[node][PrjCol.MODIFIED] = False
+    #         store[node][PrjCol.OOD] = False
+    #         store[node][PrjCol.ICON] = ""
+    #         self.set_busy_cursor(False)
+
+    #            self.file_modified.set_sensitive(False)
 
     def on_user_preferences_activate(self, _obj):
         Preferences(self.top_window)
@@ -584,54 +586,6 @@ class MainWindow(BaseWindow):
             block_name = model[node][1]
             self.block_tab.select_group(block_name)
 
-    def prj_selection_changed(self, _obj):
-        data = self.prj_obj.get_selected()
-        old_skip = self.skip_changes
-        self.skip_changes = True
-        if data:
-            (store, node) = data
-            if self.active:
-                self.active.reg_select = self.reglist_obj.get_selected_row()
-                self.active.bit_select = self.bitfield_obj.get_selected_row()
-
-            if node:
-                self.active = store.get_value(node, PrjCol.OBJ)
-                row = store[node]
-                self.file_modified.set_sensitive(row[PrjCol.MODIFIED])
-                self.dbase = self.active.db
-                self.reg_model = self.active.reg_model
-                self.reg_description.set_database(self.active.db)
-
-                self.filter_manage.change_filter(self.active.modelfilter)
-                self.modelsort = self.active.modelsort
-                self.reglist_obj.set_model(self.modelsort)
-                self.bit_model = self.active.bit_field_list
-                self.bitfield_obj.set_model(self.bit_model)
-                text = "<b>%s - %s</b>" % (
-                    self.dbase.module_name,
-                    self.dbase.descriptive_title,
-                )
-                self.selected_dbase.set_text(text)
-                self.selected_dbase.set_use_markup(True)
-                self.selected_dbase.set_ellipsize(Pango.EllipsizeMode.END)
-                if self.active.reg_select:
-                    for row in self.active.reg_select:
-                        self.reglist_obj.select_row(row)
-                if self.active.bit_select:
-                    for row in self.active.bit_select:
-                        self.bitfield_obj.select_row(row)
-                self.redraw()
-                self.enable_registers(True)
-            else:
-                self.active = None
-                self.dbase = None
-                self.selected_dbase.set_text("")
-                self.reglist_obj.set_model(None)
-                self.enable_registers(False)
-        else:
-            self.enable_registers(False)
-        self.skip_changes = old_skip
-
     def selected_reg_changed(self, _obj):
         """
         GTK callback that checks the selected objects, and then enables the
@@ -684,8 +638,8 @@ class MainWindow(BaseWindow):
         """
         if self.active and not self.active.modified and not self.skip_changes:
             self.active.modified = True
-            self.prj_model.set_markup(self.active.node, True)
-            self.file_modified.set_sensitive(True)
+            # self.reginst_model.set_markup(self.active.node, True)
+            # self.file_modified.set_sensitive(True)
 
     def clear_modified(self, prj=None):
         """
@@ -695,7 +649,7 @@ class MainWindow(BaseWindow):
         if prj is None:
             prj = self.active
         else:
-            self.prj_model.set_markup(prj.node, False)
+            self.reginst_model.set_markup(prj.node, False)
 
     def duplicate_address(self, reg_addr):
         cnt = 0
@@ -909,7 +863,7 @@ class MainWindow(BaseWindow):
                 self.prj.add_register_set(filename)
                 self.set_project_modified()
                 self.infobar_reveal(False)
-            self.prj_model.load_icons()
+            self.reginst_model.load_icons()
         choose.destroy()
 
     def on_remove_register_set_activate(self, _obj):
@@ -918,7 +872,7 @@ class MainWindow(BaseWindow):
         create_selector method, then runs the dialog, and calls the
         open_xml routine with the result.
         """
-        data = self.prj_obj.get_selected()
+        data = self.reginst_obj.get_selected()
         old_skip = self.skip_changes
         self.skip_changes = True
         if data:
@@ -972,8 +926,7 @@ class MainWindow(BaseWindow):
             self.prj.path = filename
             self.initialize_project_address_maps()
             self.prj.name = filename.stem
-            self.prj_model = ProjectModel()
-            self.prj_obj.set_model(self.prj_model)
+            self.clear()
             self.prj.save()
 
             self.block_tab.clear_flags()
@@ -1026,10 +979,8 @@ class MainWindow(BaseWindow):
 
     def open_project(self, filename, uri):
         self.loading_project = True
-        self.prj_model = ProjectModel()
-        self.prj_obj.set_model(self.prj_model)
+        self.reginst_tab.clear()
 
-        print("OPEN PROJECT")
         try:
             self.prj = RegProject(filename)
             self.project_tabs.change_db(self.prj)
@@ -1044,7 +995,6 @@ class MainWindow(BaseWindow):
         except IOError as msg:
             ErrorMsg(f"Could not open {filename}", str(msg), self.top_window)
             return
-        print("PROJECT OPEN")
 
         self.prj_parameter_list.set_prj(self.prj)
 
@@ -1060,33 +1010,8 @@ class MainWindow(BaseWindow):
 
         ini.set("user", "last_project", str(filepath.resolve()))
 
-        print(">>>", self.prj.regsets)
-        for container_name in self.prj.regsets:
-            print(container_name)
-            icon = (
-                Gtk.STOCK_EDIT
-                if self.prj.regsets[container_name].modified
-                else ""
-            )
+        self.reginst_tab.change_project(self.prj)
 
-            self.prj_model.add_dbase(
-                icon,
-                self.prj.regsets[container_name],
-            )
-
-        # for fname in sorted(self.prj.get_register_set(), key=sort_regset):
-        #     try:
-        #         self.open_xml(fname, False)
-        #     except xml.parsers.expat.ExpatError as msg:
-        #         ErrorMsg(
-        #             f"{fname} was not a valid register set file",
-        #             str(msg),
-        #             self.top_window,
-        #         )
-        #         continue
-
-        self.prj_obj.select_path(0)
-        self.prj_model.load_icons()
         if self.recent_manager and uri:
             self.recent_manager.add_item(uri)
         self.find_obj("save_btn").set_sensitive(True)
@@ -1139,11 +1064,11 @@ class MainWindow(BaseWindow):
             self.bit_model,
         )
 
-        self.active.node = self.prj_model.add_dbase(name, self.active)
-        self.prj_obj.select(self.active.node)
+        self.active.node = self.reginst_model.add_dbase(name, self.active)
+        self.reginst_obj.select(self.active.node)
         self.redraw()
 
-        self.prj_model.load_icons()
+        self.reginst_model.load_icons()
         self.prj.add_register_set(name)
 
         self.block_obj.set_project(self.prj)
@@ -1226,11 +1151,11 @@ class MainWindow(BaseWindow):
                 self.bit_model,
             )
 
-            self.active.node = self.prj_model.add_dbase(
+            self.active.node = self.reginst_model.add_dbase(
                 name, self.active, converted
             )
             if load:
-                self.prj_obj.select(self.active.node)
+                self.reginst_obj.select(self.active.node)
                 self.module_notebook.set_sensitive(True)
         self.project_modified(True)
 
@@ -1251,7 +1176,7 @@ class MainWindow(BaseWindow):
 
         # self.prj.save()
 
-        # for item in self.prj_model:
+        # for item in self.reginst_model:
         #     if item[PrjCol.MODIFIED]:
         #         try:
         #             old_path = Path(item[PrjCol.OBJ].path)
@@ -1273,7 +1198,7 @@ class MainWindow(BaseWindow):
         #                 self.top_window,
         #             )
 
-        self.prj.set_new_order([item[0] for item in self.prj_model])
+        self.prj.set_new_order([item[0] for item in self.reginst_model])
         self.instance_obj.get_groups()
 
         current_path = Path(self.prj.path)
@@ -1378,7 +1303,7 @@ class MainWindow(BaseWindow):
         """
         if (
             self.modified
-            or self.prj_model.is_not_saved()
+            or self.reginst_model.is_not_saved()
             or (self.prj and self.prj.modified)
         ):
 

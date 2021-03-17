@@ -45,13 +45,15 @@ class ProjectModel(Gtk.ListStore):
 
     def set_markup(self, node, modified):
         """Sets the icon if the project has been modified"""
+        return
 
         if modified:
             icon = Gtk.STOCK_EDIT
         else:
             icon = None
         self.set_value(node, BlockCol.ICON, icon)
-        self.set_value(node, BlockCol.MODIFIED, modified)
+
+    #        self.set_value(node, BlockCol.MODIFIED, modified)
 
     def is_not_saved(self):
         """True if the project is not saved"""
@@ -72,87 +74,11 @@ class ProjectModel(Gtk.ListStore):
         base = regset.filename.stem
         if modified:
             node = self.append(row=[Gtk.STOCK_EDIT, base])
+            print([Gtk.STOCK_EDIT, base])
         else:
             node = self.append(row=["", base])
+            print(["", base])
+
         self.file_list[str(regset.filename)] = node
         self.paths.add(regset.filename.parent)
         return node
-
-
-class ProjectList:
-    """Project list"""
-
-    def __init__(self, obj, selection_callback):
-        self.__obj = obj
-        self.__obj.get_selection().connect("changed", selection_callback)
-        self.__obj.set_reorderable(True)
-        self.__model = None
-        self.__build_prj_window()
-
-        self.__obj.set_tooltip_column(PrjCol.FILE)
-
-        self.__obj.enable_model_drag_source(
-            Gdk.ModifierType.BUTTON1_MASK,
-            [("text/plain", 0, 0)],
-            Gdk.DragAction.DEFAULT | Gdk.DragAction.MOVE,
-        )
-        self.__obj.connect("drag-data-get", self.drag_data_get)
-
-        self.factory = Gtk.IconFactory()
-        filename = os.path.join(INSTALL_PATH, "media", "ModifiedIcon.png")
-        pixbuf = GdkPixbuf.Pixbuf.new_from_file(filename)
-        iconset = Gtk.IconSet(pixbuf)
-        self.factory.add("out-of-date", iconset)
-        self.factory.add_default()
-
-    def drag_data_get(self, treeview, _context, selection, _target_id, _etime):
-        """Get the data when a drag starts"""
-
-        tselection = treeview.get_selection()
-        model, tree_iter = tselection.get_selected()
-
-        prj_name = model.get_value(tree_iter, PrjCol.NAME)
-        prj_obj = model.get_value(tree_iter, PrjCol.OBJ)
-        data = "{0}:{1:x}".format(prj_name, 1 << prj_obj.db.address_bus_width)
-
-        try:
-            selection.set(selection.target, 8, data)
-        except AttributeError:
-            selection.set_text(data, -1)
-
-    def set_model(self, model):
-        """Sets the model"""
-
-        self.__model = model
-        self.__obj.set_model(model)
-
-    def __build_prj_window(self):
-        """Build the project window"""
-
-        renderer = Gtk.CellRendererPixbuf()
-        column = Gtk.TreeViewColumn("", renderer, stock_id=1)
-        column.set_min_width(20)
-        self.__obj.append_column(column)
-
-        renderer = Gtk.CellRendererText()
-        renderer.set_property("ellipsize", Pango.EllipsizeMode.END)
-        column = Gtk.TreeViewColumn("Register Sets", renderer, text=0)
-        column.set_min_width(140)
-        self.__obj.append_column(column)
-
-    def get_selected(self):
-        """Return the selected object"""
-        return self.__obj.get_selection().get_selected()
-
-    def select(self, node):
-        """Select the specified row"""
-
-        selection = self.__obj.get_selection()
-        if node and selection:
-            selection.select_iter(node)
-
-    def select_path(self, path):
-        """Select based on path"""
-
-        selection = self.__obj.get_selection()
-        selection.select_path(path)
