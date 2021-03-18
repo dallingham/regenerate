@@ -29,13 +29,14 @@ from regenerate.ui.bit_list import BitModel, BitList
 from regenerate.ui.enums import BlockCol
 from regenerate.ui.module_tab import ModuleTabs
 from regenerate.ui.reg_description import RegisterDescription
-from regenerate.ui.register_list import RegisterModel
+from regenerate.ui.register_list import RegisterModel, RegisterList
 from regenerate.extras.remap import REMAP_NAME
 from regenerate.extras.regutils import calculate_next_address
 
 
 class RegSetWidgets:
     def __init__(self, find_obj):
+        self.reglist = find_obj("register_list")
         self.regset_list = find_obj("project_list")
         self.notebook = find_obj("module_notebook")
         self.descript = find_obj("register_description")
@@ -185,13 +186,11 @@ class RegSetTab:
         self,
         find_obj,
         modified,
-        reglist_obj,
         bitfield_obj,
         db_selected_action,
         reg_selected_action,
         field_selected_action,
     ):
-        self.reglist_obj = reglist_obj
         self.set_modified = modified
         self.bitfield_obj = bitfield_obj
         self.db_selected_action = db_selected_action
@@ -206,6 +205,14 @@ class RegSetTab:
             self.widgets.regset_list, self.regset_sel_changed
         )
         self.module_tabs = ModuleTabs(find_obj, self.set_modified)
+
+        self.reglist_obj = RegisterList(
+            self.widgets.reglist,
+            self.selected_reg_changed,
+            self.set_modified,
+            self.update_register_addr,
+            self.set_register_warn_flags,
+        )
 
         self.active = None
         self.active_name = ""
@@ -465,6 +472,26 @@ class RegSetTab:
         self.bitfield_obj.add_new_field(field)
         self.set_modified()
         self.set_register_warn_flags(register)
+
+    def update_register_addr(self, register, new_addr, new_length=0):
+        dbase = self.active.regset
+        dbase.delete_register(register)
+        register.address = new_addr
+        register.ram_size = new_length
+        share_reg = self.find_shared_address(register)
+        if share_reg:
+            if share_reg.share == ShareType.READ:
+                register.share = ShareType.WRITE
+            else:
+                register.share = ShareType.READ
+            self.set_share(register)
+        dbase.add_register(register)
+
+    def find_shared_address(self, reg):
+        for shared_reg in self.active.regset.get_all_registers():
+            if shared_reg != reg and shared_reg.address == reg.address:
+                return shared_reg
+        return None
 
 
 def check_field(field):

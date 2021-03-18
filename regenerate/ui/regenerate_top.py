@@ -27,32 +27,24 @@ regenerate
 
 import xml
 import os
-import sys
 from pathlib import Path
 
-from gi.repository import Gtk, GdkPixbuf, Gdk, Pango
+from gi.repository import Gtk, GdkPixbuf, Gdk
 from regenerate import PROGRAM_VERSION, PROGRAM_NAME
 from regenerate.db import (
-    RegWriterJSON,
     RegisterDb,
-    Register,
     GroupData,
-    BitField,
     RegProject,
     LOGGER,
     TYPES,
     remove_default_handler,
     ResetType,
     ShareType,
-    BitType,
     REG_EXT,
     PRJ_EXT,
     OLD_PRJ_EXT,
 )
-from regenerate.extras.regutils import (
-    calculate_next_address,
-    duplicate_register,
-)
+from regenerate.extras.regutils import duplicate_register
 from regenerate.extras.remap import REMAP_NAME
 from regenerate.importers import IMPORTERS
 from regenerate.settings import ini
@@ -76,7 +68,7 @@ from regenerate.ui.prj_param_list import PrjParameterList
 
 # from regenerate.ui.project import ProjectList
 from regenerate.ui.block import BlockTab
-from regenerate.ui.register_list import RegisterModel, RegisterList
+from regenerate.ui.register_list import RegisterModel
 from regenerate.ui.status_logger import StatusHandler
 from regenerate.ui.summary_window import SummaryWindow
 from regenerate.ui.register_tab import RegSetTab
@@ -132,7 +124,7 @@ class MainWindow(BaseWindow):
         self.loading_project = False
         self.active = None
         self.dbase = None
-        self.reg_model = None
+        #        self.reg_model = None
         self.bit_model = None
         self.modelsort = None
         self.instance_model = None
@@ -153,14 +145,6 @@ class MainWindow(BaseWindow):
         self.module_notebook = self.find_obj("module_notebook")
         self.prj_infobar = self.find_obj("register_infobar")
         self.prj_infobar_label = self.find_obj("register_infobar_label")
-
-        self.reglist_obj = RegisterList(
-            self.find_obj("register_list"),
-            self.selected_reg_changed,
-            self.set_modified,
-            self.update_register_addr,
-            self.set_register_warn_flags,
-        )
 
         self.bitfield_obj = BitList(
             self.find_obj("bitfield_list"),
@@ -235,7 +219,6 @@ class MainWindow(BaseWindow):
         self.reginst_tab = RegSetTab(
             self.find_obj,
             self.set_modified,
-            self.reglist_obj,
             self.bitfield_obj,
             self.db_selected,
             self.reg_selected,
@@ -554,7 +537,7 @@ class MainWindow(BaseWindow):
             self.reg_selected.set_sensitive(False)
 
     def bit_changed(self, _obj):
-        active = len(self.bitfield_obj.get_selected_row())
+        # active = len(self.bitfield_obj.get_selected_row())
         self.field_selected.set_sensitive(True)
 
     def blk_selection_changed(self, obj):
@@ -677,7 +660,7 @@ class MainWindow(BaseWindow):
 
     def set_field_modified(self):
         reg = self.reginst_tab.get_selected_register()
-        self.set_register_warn_flags(reg)
+        self.reginst_tab.set_register_warn_flags(reg)
         self.set_bits_warn_flag()
         self.set_modified()
 
@@ -688,28 +671,15 @@ class MainWindow(BaseWindow):
         register.delete_bit_field(field)
         node = self.bit_model.get_iter(row[0])
         self.bit_model.remove(node)
-        self.set_register_warn_flags(register)
+        self.reginst_tab.set_register_warn_flags(register)
         self.set_modified()
 
     def insert_new_register(self, register):
         if self.top_notebook.get_current_page() == 0:
             self.reglist_obj.add_new_register(register)
             self.dbase.add_register(register)
-            self.set_register_warn_flags(register)
+            self.reginst_tab.set_register_warn_flags(register)
             self.set_modified()
-
-    def update_register_addr(self, register, new_addr, new_length=0):
-        self.dbase.delete_register(register)
-        register.address = new_addr
-        register.ram_size = new_length
-        share_reg = self.find_shared_address(register)
-        if share_reg:
-            if share_reg.share == ShareType.READ:
-                register.share = ShareType.WRITE
-            else:
-                register.share = ShareType.READ
-            self.set_share(register)
-        self.dbase.add_register(register)
 
     def on_duplicate_register_action_activate(self, _obj):
         """
@@ -720,7 +690,7 @@ class MainWindow(BaseWindow):
         if reg:
             reg_copy = duplicate_register(self.dbase, reg)
             self.insert_new_register(reg_copy)
-            self.set_register_warn_flags(reg_copy)
+            self.reginst_tab.set_register_warn_flags(reg_copy)
 
     def create_file_selector(self, title, m_name, m_regex, action, icon):
         """
@@ -1041,7 +1011,7 @@ class MainWindow(BaseWindow):
             for key in self.dbase.get_keys():
                 register = self.dbase.get_register(key)
                 self.reg_model.append_register(register)
-                self.set_register_warn_flags(register)
+                self.reginst_tab.set_register_warn_flags(register)
         self.redraw()
         self.skip_changes = old_skip
 
@@ -1355,41 +1325,6 @@ class MainWindow(BaseWindow):
         box.set_logo(GdkPixbuf.Pixbuf.new_from_file(fname))
         box.run()
         box.destroy()
-
-    def set_register_warn_flags(self, reg, mark=True):
-        warn_reg = warn_bit = False
-        msg = []
-        if not reg.description:
-            warn_reg = True
-            msg.append("Missing register description")
-        if reg.token.lower() in REMAP_NAME:
-            warn_reg = True
-            msg.append("Register name is a SystemVerilog reserved word")
-        if not reg.get_bit_fields():
-            warn_bit = True
-            msg.append("No bit fields exist for the register")
-        else:
-            for field in reg.get_bit_fields():
-                if field.name.lower() in REMAP_NAME:
-                    txt = f"Field name ({field.name}) is a SystemVerilog reserved word"
-                    msg.append(txt)
-                if check_field(field):
-                    txt = "Missing field description for '{field.name}'"
-                    msg.append(txt)
-                    warn_bit = True
-                if check_reset(field):
-                    txt = "Missing reset parameter name for '{field.name}'"
-                    msg.append(txt)
-                    warn_bit = True
-        if mark and not self.loading_project:
-            self.find_obj("reg_descr_warn").set_property("visible", warn_reg)
-            self.find_obj("reg_bit_warn").set_property("visible", warn_bit)
-        self.reg_model.set_warning_for_register(reg, warn_reg or warn_bit)
-        if msg:
-            tip = "\n".join(msg)
-        else:
-            tip = None
-        self.reg_model.set_tooltip(reg, tip)
 
     def set_description_warn_flag(self):
         if not self.loading_project:
