@@ -22,24 +22,39 @@ Containers for data groups, modified flags, and file paths
 """
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 from operator import methodcaller
 import json
 
+from .const import REG_EXT
 from .block import Block
 from .register_db import RegisterDb
+from .logger import LOGGER
 
 
 class Container:
     def __init__(self):
-        self.filename = Path("")
+        self._filename = Path("")
         self.modified = False
 
+    @property
+    def filename(self) -> Path:
+        return self._filename
+
+    @filename.setter
+    def filename(self, value: Union[str, Path]) -> None:
+        print(f"Got {str(value)}")
+        self._filename = Path(value).with_suffix(REG_EXT)
+    
     def _save_data(self, data):
-        with self.filename.open("w") as ofile:
-            ofile.write(
-                json.dumps(data, default=methodcaller("json"), indent=4)
-            )
+        try:
+            with self._filename.open("w") as ofile:
+                ofile.write(
+                    json.dumps(data, default=methodcaller("json"), indent=4)
+                )
+        except FileNotFoundError as msg:
+            LOGGER.error(str(msg))
+            print("BARF", str(msg))
 
     def save(self):
         ...
@@ -48,7 +63,7 @@ class Container:
 class BlockContainer(Container):
     def __init__(self):
         super().__init__()
-        self.block: Optional[Block, None] = None
+        self.block: Optional[Block] = None
 
     def save(self):
         if self.block:
@@ -58,7 +73,7 @@ class BlockContainer(Container):
 class RegSetContainer(Container):
     def __init__(self):
         super().__init__()
-        self.regset: Optional[RegisterDb, None] = None
+        self.regset: Optional[RegisterDb] = None
 
     def save(self):
         if self.regset:

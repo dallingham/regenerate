@@ -54,7 +54,7 @@ from regenerate.ui.addrmap_list import AddrMapList
 from regenerate.ui.base_window import BaseWindow
 from regenerate.ui.bit_list import BitModel, BitList
 from regenerate.ui.build import Build
-from regenerate.ui.enums import FilterField, BitCol, InstCol, PrjCol
+from regenerate.ui.enums import InstCol
 from regenerate.ui.error_dialogs import ErrorMsg, WarnMsg, Question
 from regenerate.ui.help_window import HelpWindow
 from regenerate.ui.instance_list import InstMdl, InstanceList
@@ -64,7 +64,6 @@ from regenerate.ui.parameter_list import ParameterList
 from regenerate.ui.preferences import Preferences
 from regenerate.ui.prj_param_list import PrjParameterList
 
-# from regenerate.ui.project import ProjectList
 from regenerate.ui.block import BlockTab
 from regenerate.ui.register_list import RegisterModel
 from regenerate.ui.status_logger import StatusHandler
@@ -413,23 +412,6 @@ class MainWindow(BaseWindow):
     def on_prj_remove_param_clicked(self, _obj):
         self.prj_parameter_list.remove_clicked()
 
-    def on_address_token_name_toggled(self, obj):
-        self.set_search(
-            (FilterField.TOKEN, FilterField.NAME, FilterField.TOKEN), obj
-        )
-
-    def on_token_name_toggled(self, obj):
-        self.set_search((FilterField.NAME, FilterField.TOKEN), obj)
-
-    def on_token_toggled(self, obj):
-        self.set_search((FilterField.TOKEN,), obj)
-
-    def on_address_toggled(self, obj):
-        self.set_search((FilterField.ADDR,), obj)
-
-    def on_name_toggled(self, obj):
-        self.set_search((FilterField.NAME,), obj)
-
     def on_summary_action_activate(self, _obj):
         """Displays the summary window"""
         reg = self.reginst_tab.get_selected_register()
@@ -438,30 +420,8 @@ class MainWindow(BaseWindow):
             SummaryWindow(self.builder, reg, self.active.name, self.prj)
 
     def on_build_action_activate(self, obj):
-        # dbmap = {}
-        # item_list = self.reginst_model
-        # for item in item_list:
-        #     name = item[PrjCol.NAME]
-        #     modified = item[PrjCol.MODIFIED]
-        #     obj = item[PrjCol.OBJ]
-        #     dbmap[name] = (obj, modified)
 
         Build(self.prj, dbmap, self.top_window)
-
-    # def on_revert_action_activate(self, _obj):
-    #     (store, node) = self.reginst_obj.get_selected()
-    #     if node and store[node][PrjCol.MODIFIED]:
-    #         filename = store[node][PrjCol.FILE]
-
-    #         self.set_busy_cursor(True)
-    #         self.input_xml(filename)
-    #         store[node][PrjCol.FILE] = self.dbase
-    #         store[node][PrjCol.MODIFIED] = False
-    #         store[node][PrjCol.OOD] = False
-    #         store[node][PrjCol.ICON] = ""
-    #         self.set_busy_cursor(False)
-
-    #            self.file_modified.set_sensitive(False)
 
     def on_user_preferences_activate(self, _obj):
         Preferences(self.top_window)
@@ -941,7 +901,6 @@ class MainWindow(BaseWindow):
         """
         change_suffix = False
 
-        self.prj.set_new_order([item[0] for item in self.reginst_model])
         self.instance_obj.get_groups()
 
         current_path = Path(self.prj.path)
@@ -957,14 +916,13 @@ class MainWindow(BaseWindow):
             self.project_modified(False)
             self.block_tab.clear_flags()
         except IOError as msg:
-            os.rename(new_path, old_path)
+            osxs.rename(backup_path, current_path)
             ErrorMsg(
                 f"Could not save {current_path}, restoring original",
                 str(msg),
                 self.top_window,
             )
 
-        self.active.modified = False
 
     def exit(self):
         """

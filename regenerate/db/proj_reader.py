@@ -25,6 +25,7 @@ from io import BytesIO as StringIO
 import os
 from pathlib import Path
 import xml.parsers.expat
+from .const import REG_EXT
 from .group_data import GroupData
 from .block import Block
 from .block_inst import BlockInst
@@ -111,17 +112,19 @@ class ProjectReader:
     def start_registerset(self, attrs):
         """Called when a registerset tag is found"""
         self._current = attrs["name"]
-        self._prj.append_register_set_to_list(self._current)
-        # self._prj.add_register_set(self._current)
-
         reg_path = self.path.parent / self._current
+        self._prj.append_register_set_to_list(reg_path.resolve())
         self.reg_map[reg_path.stem] = reg_path.resolve()
 
     def start_export(self, attrs):
         """Called when an export tag is found"""
-        path = attrs["path"]
-        option = attrs["option"]
-        self._prj.append_to_export_list(path, option, self._current)
+        
+        dest_path = Path(self._current).with_suffix(REG_EXT)
+        self._prj.append_to_export_list(
+            attrs['path'],
+            attrs['option'],
+            str(dest_path)
+        )
 
     def start_group_export(self, attrs):
         """Called when an group_export tag is found"""
@@ -262,16 +265,13 @@ class ProjectReader:
             filename = block_dir / filename
 
             for rset in self.blocks[blk].register_sets:
-                full_reg_path = self.reg_map[rset.set_name]
-                rel_reg_path = Path(
-                    os.path.relpath(full_reg_path, filename.parent)
-                )
+                full_reg_path = self.reg_map[rset.set_name].absolute()
                 self.blocks[blk].regname2path[rset.set_name] = str(
-                    rel_reg_path.with_suffix(".regr")
+                    full_reg_path.with_suffix(".regr")
                 )
 
             blk_container = BlockContainer()
-            blk_container.filename = filename
+            blk_container.filename = full_reg_path
             blk_container.block = self.blocks[blk]
             blk_container.modified = True
             self._prj.blocks[blk] = blk_container

@@ -112,21 +112,11 @@ class FilterField(IntEnum):
     TOKEN = 3
 
 
-class BlockCol(IntEnum):
+class SelectCol(IntEnum):
 
     ICON = 0
     NAME = 1
 
-
-class PrjCol(IntEnum):
-    """Column numbers for the Project List"""
-
-    NAME = 0
-    ICON = 1
-    FILE = 2
-    MODIFIED = 3
-    OOD = 4
-    OBJ = 5
 
 
 class RegCol(IntEnum):

@@ -26,7 +26,7 @@ from pathlib import Path
 
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango
 from regenerate.settings.paths import INSTALL_PATH
-from regenerate.ui.enums import PrjCol, BlockCol
+from regenerate.ui.enums import SelectCol
 from regenerate.db import RegisterDb
 from regenerate.db.containers import RegSetContainer
 
@@ -51,15 +51,15 @@ class ProjectModel(Gtk.ListStore):
             icon = Gtk.STOCK_EDIT
         else:
             icon = None
-        self.set_value(node, BlockCol.ICON, icon)
+        self.set_value(node, SelectCol.ICON, icon)
 
-    #        self.set_value(node, BlockCol.MODIFIED, modified)
+    #        self.set_value(node, SelectCol.MODIFIED, modified)
 
     def is_not_saved(self):
         """True if the project is not saved"""
 
         for item in self:
-            if item[BlockCol.ICON] != "":
+            if item[SelectCol.ICON] != "":
                 return True
         return False
 

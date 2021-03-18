@@ -48,70 +48,6 @@
     <property name="short_label">_Edit</property>
     <property name="stock_id">gtk-edit</property>
   </object>
-  <object class="GtkMenu" id="filter_menu">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <child>
-      <object class="GtkRadioMenuItem" id="menuitem14">
-        <property name="use_action_appearance">False</property>
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Filter on Name</property>
-        <property name="use_underline">True</property>
-        <property name="draw_as_radio">True</property>
-        <signal name="toggled" handler="on_name_toggled" swapped="no"/>
-      </object>
-    </child>
-    <child>
-      <object class="GtkRadioMenuItem" id="menuitem15">
-        <property name="use_action_appearance">False</property>
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Filter on Token</property>
-        <property name="use_underline">True</property>
-        <property name="draw_as_radio">True</property>
-        <property name="group">menuitem14</property>
-        <signal name="toggled" handler="on_token_toggled" swapped="no"/>
-      </object>
-    </child>
-    <child>
-      <object class="GtkRadioMenuItem" id="menuitem16">
-        <property name="use_action_appearance">False</property>
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Filter on Address</property>
-        <property name="use_underline">True</property>
-        <property name="draw_as_radio">True</property>
-        <property name="group">menuitem14</property>
-        <signal name="toggled" handler="on_address_toggled" swapped="no"/>
-      </object>
-    </child>
-    <child>
-      <object class="GtkRadioMenuItem" id="menuitem18">
-        <property name="use_action_appearance">False</property>
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Filter on Token and Name</property>
-        <property name="use_underline">True</property>
-        <property name="draw_as_radio">True</property>
-        <property name="group">menuitem14</property>
-        <signal name="group-changed" handler="on_token_name_toggled" swapped="no"/>
-      </object>
-    </child>
-    <child>
-      <object class="GtkRadioMenuItem" id="menuitem17">
-        <property name="use_action_appearance">False</property>
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Filter on Address, Token, and Name</property>
-        <property name="use_underline">True</property>
-        <property name="active">True</property>
-        <property name="draw_as_radio">True</property>
-        <property name="group">menuitem14</property>
-        <signal name="toggled" handler="on_address_token_name_toggled" swapped="no"/>
-      </object>
-    </child>
-  </object>
   <object class="GtkMessageDialog" id="foobar0">
     <property name="can_focus">False</property>
     <property name="type_hint">dialog</property>
@@ -797,7 +733,7 @@
                 <property name="tooltip_text" translatable="yes">Display the builder tool</property>
                 <property name="label" translatable="yes">Build</property>
                 <property name="use_underline">True</property>
-                <property name="stock_id">gtk-convert</property>
+                <property name="stock_id">gtk-execute</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -3548,7 +3484,7 @@
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="margin_left">24</property>
-                            <property name="label" translatable="yes">Project code name:</property>
+                            <property name="label" translatable="yes">Code name:</property>
                             <property name="xalign">0</property>
                           </object>
                           <packing>
@@ -3760,7 +3696,7 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
-                                <property name="tooltip_text" translatable="yes">Adds a new subsystem</property>
+                                <property name="tooltip_text" translatable="yes">Adds a block from the Blocks tab to the top level</property>
                                 <property name="use_stock">True</property>
                                 <signal name="clicked" handler="on_add_instance_clicked" swapped="no"/>
                               </object>
@@ -3776,7 +3712,7 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
-                                <property name="tooltip_text" translatable="yes">Deletes the selected subsystem</property>
+                                <property name="tooltip_text" translatable="yes">Removes the selected block from the top</property>
                                 <property name="use_stock">True</property>
                                 <signal name="clicked" handler="on_delete_instance_clicked" swapped="no"/>
                               </object>
@@ -3785,25 +3721,6 @@
                                 <property name="fill">True</property>
                                 <property name="position">1</property>
                               </packing>
-                            </child>
-                            <child>
-                              <object class="GtkButton" id="instance_edit_btn">
-                                <property name="label">gtk-edit</property>
-                                <property name="visible">True</property>
-                                <property name="sensitive">False</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">True</property>
-                                <property name="tooltip_text" translatable="yes">Edits the documentation for the selected subsystem</property>
-                                <property name="use_stock">True</property>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">False</property>
-                                <property name="position">2</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <placeholder/>
                             </child>
                           </object>
                           <packing>
@@ -3854,7 +3771,7 @@
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="margin_left">24</property>
-                            <property name="label" translatable="yes">Project description:</property>
+                            <property name="label" translatable="yes">Description:</property>
                             <property name="xalign">0</property>
                           </object>
                           <packing>
@@ -3889,7 +3806,7 @@
                   <object class="GtkLabel" id="label3">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Project Properties</property>
+                    <property name="label" translatable="yes">Top Level Properties</property>
                     <property name="use_markup">True</property>
                   </object>
                   <packing>
@@ -4077,7 +3994,7 @@
                       <object class="GtkLabel" id="para_override_label">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">&lt;b&gt;Submodule Parameter Overrides&lt;/b&gt;</property>
+                        <property name="label" translatable="yes">&lt;b&gt;Block Parameter Overrides&lt;/b&gt;</property>
                         <property name="use_markup">True</property>
                         <property name="xalign">0</property>
                         <property name="yalign">0</property>
@@ -4133,7 +4050,7 @@
                   <object class="GtkLabel" id="dna95013">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Project Parameters</property>
+                    <property name="label" translatable="yes">Top Level Parameters</property>
                     <property name="use_markup">True</property>
                   </object>
                   <packing>
@@ -4236,7 +4153,7 @@
                   <object class="GtkLabel" id="label12">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Project Documentation</property>
+                    <property name="label" translatable="yes">Top Level Documentation</property>
                     <property name="use_markup">True</property>
                   </object>
                   <packing>
@@ -4255,7 +4172,7 @@
                 <property name="can_focus">False</property>
                 <property name="margin_top">12</property>
                 <property name="margin_bottom">12</property>
-                <property name="label" translatable="yes">&lt;b&gt;Project&lt;/b&gt;</property>
+                <property name="label" translatable="yes">&lt;b&gt;Top Level&lt;/b&gt;</property>
                 <property name="use_markup">True</property>
                 <property name="angle">90</property>
               </object>

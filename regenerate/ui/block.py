@@ -26,7 +26,7 @@ from gi.repository import Gtk, Gdk, GdkPixbuf, Pango
 from regenerate.settings.paths import INSTALL_PATH
 from regenerate.db import RegisterInst
 from regenerate.db.containers import BlockContainer
-from regenerate.ui.enums import BlockCol
+from regenerate.ui.enums import SelectCol
 from regenerate.ui.columns import ReadOnlyColumn, EditableColumn
 from regenerate.ui.preview_editor import PreviewEditor
 from regenerate.ui.module_tab import PageInfo
@@ -85,14 +85,14 @@ class BlockTab:
 
     def clear_flags(self):
         for row in self.block_model:
-            row[BlockCol.ICON] = ""
+            row[SelectCol.ICON] = ""
 
     def blk_selection_changed(self, obj):
         model, node = obj.get_selected()
         if node:
             block_name = model[node][1]
             self.disable_modified = True
-            self.select_group(block_name)
+            self.select_block(block_name)
             self.disable_modified = False
 
     def after_modified(self):
@@ -138,7 +138,7 @@ class BlockTab:
 
         model, node = self.block_obj.get_selected()
         if node:
-            model[node][BlockCol.ICON] = Gtk.STOCK_EDIT
+            model[node][SelectCol.ICON] = Gtk.STOCK_EDIT
             self.blk_cont.modified = True
 
     def instance_changed(self, _cell, path, new_text, col):
@@ -188,7 +188,7 @@ class BlockTab:
         self.project = project
         key_list = project.blocks.keys()
         if key_list:
-            self.select_group(list(key_list)[0])
+            self.select_block(list(key_list)[0])
         self.build_add_regset_menu()
         self.block_obj.set_project(project)
         self.disable_modified = False
@@ -248,7 +248,7 @@ class BlockTab:
         model.remove(node)
         self.modified()
 
-    def select_group(self, blk_name):
+    def select_block(self, blk_name):
         self.blk_cont = self.project.blocks[blk_name]
 
         self.block_name.change_db(self.blk_cont.block)
@@ -260,7 +260,6 @@ class BlockTab:
         self.preview.change_block(self.blk_cont)
 
         for regset in self.blk_cont.block.register_sets:
-            print(regset.set_name)
             self.regmodel.append(
                 row=(
                     regset.set_name,
@@ -287,7 +286,7 @@ class BlockModel(Gtk.ListStore):
 
     def set_modified(self):
         model, node = self.block_obj.get_selected()
-        model[node][BlockCol.ICON] = Gtk.STOCK_EDIT
+        model[node][SelectCol.ICON] = Gtk.STOCK_EDIT
 
     def load_icons(self):
         """Clear paths and the file list"""

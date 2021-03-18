@@ -27,7 +27,7 @@ from regenerate.db.containers import RegSetContainer
 from regenerate.db.enums import ShareType, ResetType
 from regenerate.ui.bit_list import BitModel, BitList
 from regenerate.ui.bitfield_editor import BitFieldEditor
-from regenerate.ui.enums import BlockCol, BitCol
+from regenerate.ui.enums import SelectCol, BitCol
 from regenerate.ui.module_tab import ModuleTabs
 from regenerate.ui.reg_description import RegisterDescription
 from regenerate.ui.register_list import RegisterModel, RegisterList
@@ -108,9 +108,9 @@ class RegSetModel(Gtk.ListStore):
             icon = Gtk.STOCK_EDIT
         else:
             icon = None
-        self.set_value(node, BlockCol.ICON, icon)
+        self.set_value(node, SelectCol.ICON, icon)
 
-    #        self.set_value(node, BlockCol.MODIFIED, modified)
+    #        self.set_value(node, SelectCol.MODIFIED, modified)
 
     def is_not_saved(self):
         return False
@@ -141,8 +141,6 @@ class RegSetList:
         self.__obj.set_reorderable(True)
         self.__model = None
         self.__build_prj_window()
-
-        #        self.__obj.set_tooltip_column(PrjCol.FILE)
 
         self.factory = Gtk.IconFactory()
         filename = os.path.join(INSTALL_PATH, "media", "ModifiedIcon.png")
@@ -650,7 +648,7 @@ class RegSetTab:
         self.skip_changes = True
         
         (store, node) = data
-        base = store.get_value(node, BlockCol.NAME)
+        base = store.get_value(node, SelectCol.NAME)
         store.remove(node)
         self.remove_regset_from_project(base)
         self.remove_regset_from_groups(base)

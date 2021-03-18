@@ -24,7 +24,7 @@ RegProject is the container object for a regenerate project
 from collections import defaultdict
 from pathlib import Path
 import os.path
-from typing import List, Dict
+from typing import List, Dict, Union
 import xml.sax.saxutils
 
 from .proj_reader import ProjectReader
@@ -104,18 +104,18 @@ class RegProject:
         writer.save(self.path.with_suffix(PRJ_EXT))
 
         for container_name in self.blocks:
-            container = self.blocks[container_name]
-            if container.modified:
-                print(f"Saving {container_name} {str(container.filename)}")
-                container.save()
-                container.modified = False
+            blk_container = self.blocks[container_name]
+            if blk_container.modified:
+                print(f"Saving {container_name} {str(blk_container.filename)}")
+                blk_container.save()
+                blk_container.modified = False
 
         for container_name in self.regsets:
-            container = self.regsets[container_name]
-            if container.modified:
-                print(f"Saving {container_name} {str(container.filename)}")
-                container.save()
-                container.modified = False
+            reg_container = self.regsets[container_name]
+            if reg_container.modified:
+                print(f"Saving {container_name} {str(reg_container.filename)}")
+                reg_container.save()
+                reg_container.modified = False
 
     def open(self, name: str) -> None:
         """Opens and reads a project file. The project could be in either
@@ -144,7 +144,7 @@ class RegProject:
             htbl[i.stem] = i
         self._filelist = [htbl[i] for i in new_order]
 
-    def append_register_set_to_list(self, name: str):
+    def append_register_set_to_list(self, name: Union[str,Path]):
         """Adds a register set"""
 
         self._modified = True
@@ -157,7 +157,7 @@ class RegProject:
         regset.regset.read_db(self.path.parent / new_file)
         self.regsets[regset.regset.set_name] = regset
         self._filelist.append(new_file)
-        self._exports[name] = []
+        self._exports[str(name)] = []
 
     def add_register_set(self, path: str) -> None:
         """
@@ -630,7 +630,8 @@ class RegProject:
             data[token] = self.__getattribute__(key)
 
         data["filelist"] = [
-            str(fname.with_suffix(REG_EXT)) for fname in self._filelist
+            os.path.relpath(fname.with_suffix(REG_EXT), self.path.parent)
+            for fname in self._filelist
         ]
 
         return data
