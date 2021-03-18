@@ -183,14 +183,17 @@ class BitFieldEditor(BaseWindow):
 
     def on_help_clicked(self, _obj):
         """Display the help window"""
+        return
         HelpWindow(self._top_builder, "bitfield_value_help.rst")
 
     def on_property_help_clicked(self, _obj):
         """Display the help window"""
+        return
         HelpWindow(self._top_builder, "bitfield_signal_prop_help.rst")
 
     def on_signal_help_clicked(self, _obj):
         """Display the help window"""
+        return
         HelpWindow(self._top_builder, "bitfield_signal_help.rst")
 
     def _set_field_value(self, val, obj):

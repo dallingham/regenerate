@@ -53,11 +53,9 @@ from regenerate.ui.addr_edit import AddrMapEdit
 from regenerate.ui.addrmap_list import AddrMapList
 from regenerate.ui.base_window import BaseWindow
 from regenerate.ui.bit_list import BitModel, BitList
-from regenerate.ui.bitfield_editor import BitFieldEditor
 from regenerate.ui.build import Build
 from regenerate.ui.enums import FilterField, BitCol, InstCol, PrjCol
 from regenerate.ui.error_dialogs import ErrorMsg, WarnMsg, Question
-from regenerate.ui.filter_mgr import FilterManager
 from regenerate.ui.help_window import HelpWindow
 from regenerate.ui.instance_list import InstMdl, InstanceList
 from regenerate.ui.module_tab import ProjectTabs
@@ -138,21 +136,11 @@ class MainWindow(BaseWindow):
         self.setup_main_window()
         self.build_actions()
 
-        self.selected_dbase = self.find_obj("selected_dbase")
-        self.reg_notebook = self.find_obj("reg_notebook")
         self.top_notebook = self.find_obj("main_notebook")
         self.top_notebook.set_current_page(2)
         self.module_notebook = self.find_obj("module_notebook")
         self.prj_infobar = self.find_obj("register_infobar")
         self.prj_infobar_label = self.find_obj("register_infobar_label")
-
-        self.bitfield_obj = BitList(
-            self.find_obj("bitfield_list"),
-            self.find_obj("error_infobar_label"),
-            self.find_obj("error_infobar"),
-            self.bit_changed,
-            self.set_modified,
-        )
 
         self.setup_project()
         self.setup_recent_menu()
@@ -167,12 +155,6 @@ class MainWindow(BaseWindow):
         self.builder.connect_signals(self)
         self.build_import_menu()
 
-        filter_obj = self.find_obj("filter")
-        try:
-            filter_obj.set_placeholder_text("Signal Filter")
-        except AttributeError:
-            pass
-        self.filter_manage = FilterManager(filter_obj)
 
     def check_subsystem_addresses(self):
         if check_address_ranges(self.prj, self.dbmap):
@@ -219,7 +201,6 @@ class MainWindow(BaseWindow):
         self.reginst_tab = RegSetTab(
             self.find_obj,
             self.set_modified,
-            self.bitfield_obj,
             self.db_selected,
             self.reg_selected,
             self.field_selected,
@@ -518,27 +499,17 @@ class MainWindow(BaseWindow):
         submenu.show()
         menu.set_submenu(submenu)
 
-    def update_bit_count(self):
-        if self.dbase:
-            text = "%d" % self.dbase.total_bits()
-        else:
-            text = ""
-        self.find_obj("reg_count").set_text(text)
 
     def on_main_notebook_switch_page(self, _obj, _page, _page_num):
         pass
 
     def on_notebook_switch_page(self, _obj, _page, page_num):
         if page_num == 1:
-            self.update_bit_count()
+            self.reginst_tab.update_bit_count()
         if self.reginst_tab.get_selected_register():
             self.reg_selected.set_sensitive(page_num == 0)
         else:
             self.reg_selected.set_sensitive(False)
-
-    def bit_changed(self, _obj):
-        # active = len(self.bitfield_obj.get_selected_row())
-        self.field_selected.set_sensitive(True)
 
     def blk_selection_changed(self, obj):
         model, node = obj.get_selected()
@@ -552,14 +523,6 @@ class MainWindow(BaseWindow):
         appropriate buttons on the interface.
         """
         self.reginst_tab.selected_reg_changed(_obj)
-
-    def set_share(self, reg):
-        if reg.share == ShareType.NONE:
-            self.find_obj("no_sharing").set_active(True)
-        elif reg.share == ShareType.READ:
-            self.find_obj("read_access").set_active(True)
-        else:
-            self.find_obj("write_access").set_active(True)
 
     def set_modified(self):
         """
@@ -582,103 +545,29 @@ class MainWindow(BaseWindow):
         else:
             self.reginst_model.set_markup(prj.node, False)
 
-    def duplicate_address(self, reg_addr):
-        cnt = 0
-        for reg in self.dbase.get_all_registers():
-            if reg.address == reg_addr:
-                cnt += 1
-        return cnt > 1
-
-    def find_shared_address(self, reg):
-        for shared_reg in self.dbase.get_all_registers():
-            if shared_reg != reg and shared_reg.address == reg.address:
-                return shared_reg
-        return None
-
     def on_no_sharing_toggled(self, obj):
-        if obj.get_active():
-            register = self.reginst_tab.get_selected_register()
-
-            if self.duplicate_address(register.address):
-                self.set_share(register)
-                LOGGER.error(
-                    "Register cannot be set to non-sharing "
-                    "if it shares an address with another"
-                )
-            else:
-                register.share = ShareType.NONE
-                self.set_modified()
-            self.bitfield_obj.set_mode(register.share)
+        self.reginst_tab.on_no_sharing_toggled(obj)
 
     def on_read_access_toggled(self, obj):
-        if obj.get_active():
-            register = self.reginst_tab.get_selected_register()
-
-            other = self.find_shared_address(register)
-            if other and other.share != ShareType.WRITE:
-                self.set_share(register)
-                LOGGER.error("The shared register is not of Write Access type")
-            elif register.is_completely_read_only():
-                register.share = ShareType.READ
-                self.set_modified()
-            else:
-                self.set_share(register)
-                LOGGER.error("All bits in the register must be read only")
-            self.bitfield_obj.set_mode(register.share)
+        self.reginst_tab.on_read_access_toggled(obj)
 
     def on_write_access_toggled(self, obj):
-        if obj.get_active():
-            register = self.reginst_tab.get_selected_register()
-
-            other = self.find_shared_address(register)
-            if other and other.share != ShareType.READ:
-                self.set_share(register)
-                LOGGER.error("The shared register is not of Read Access type")
-            elif register.is_completely_write_only():
-                register.share = ShareType.WRITE
-                self.set_modified()
-            else:
-                self.set_share(register)
-                LOGGER.error("All bits in the register must be write only")
-            self.bitfield_obj.set_mode(register.share)
+        self.reginst_tab.on_write_access_toggled(obj)
 
     def on_add_bit_action_activate(self, _obj):
         self.reginst_tab.add_bit()
 
     def on_edit_field_clicked(self, _obj):
-        register = self.reginst_tab.get_selected_register()
-        field = self.bitfield_obj.select_field()
-        if field:
-            BitFieldEditor(
-                self.dbase,
-                register,
-                field,
-                self.set_field_modified,
-                self.builder,
-                self.top_window,
-            )
-
-    def set_field_modified(self):
-        reg = self.reginst_tab.get_selected_register()
-        self.reginst_tab.set_register_warn_flags(reg)
-        self.set_bits_warn_flag()
-        self.set_modified()
+        self.reginst_tab.edit_bit()
 
     def on_remove_bit_action_activate(self, _obj):
-        register = self.reginst_tab.get_selected_register()
-        row = self.bitfield_obj.get_selected_row()
-        field = self.bit_model.get_bitfield_at_path(row[0])
-        register.delete_bit_field(field)
-        node = self.bit_model.get_iter(row[0])
-        self.bit_model.remove(node)
-        self.reginst_tab.set_register_warn_flags(register)
-        self.set_modified()
+        self.reginst_tab.remove_bit()
 
     def insert_new_register(self, register):
         if self.top_notebook.get_current_page() == 0:
             self.reglist_obj.add_new_register(register)
             self.dbase.add_register(register)
-            self.reginst_tab.set_register_warn_flags(register)
+            self.set_register_warn_flags(register)
             self.set_modified()
 
     def on_duplicate_register_action_activate(self, _obj):
@@ -765,21 +654,7 @@ class MainWindow(BaseWindow):
         choose.destroy()
 
     def on_remove_register_set_activate(self, _obj):
-        """
-        GTK callback that creates a file open selector using the
-        create_selector method, then runs the dialog, and calls the
-        open_xml routine with the result.
-        """
-        data = self.reginst_obj.get_selected()
-        old_skip = self.skip_changes
-        self.skip_changes = True
-        if data:
-            (store, node) = data
-            filename = store.get_value(node, PrjCol.FILE)
-            store.remove(node)
-            self.prj.remove_register_set(filename)
-            self.set_project_modified()
-        self.skip_changes = old_skip
+        self.reginst_tab.on_remove_register_set_activate(_obj)
 
     def get_new_filename(self):
         """
@@ -1066,30 +941,6 @@ class MainWindow(BaseWindow):
         """
         change_suffix = False
 
-        # self.prj.save()
-
-        # for item in self.reginst_model:
-        #     if item[PrjCol.MODIFIED]:
-        #         try:
-        #             old_path = Path(item[PrjCol.OBJ].path)
-        #             if old_path.suffix != ".xml":
-        #                 new_path = Path("%s.bak" % old_path)
-        #                 if new_path.is_file():
-        #                     new_path.unlink()
-        #                 if old_path.is_file():
-        #                     old_path.rename(new_path)
-
-        #             writer = RegWriterJSON(item[PrjCol.OBJ].db)
-        #             writer.save(str(old_path.with_suffix(REG_EXT)))
-        #             self.clear_modified(item[PrjCol.OBJ])
-        #         except IOError as msg:
-        #             os.rename(new_path, old_path)
-        #             ErrorMsg(
-        #                 f"Could not save {old_path}, restoring original",
-        #                 str(msg),
-        #                 self.top_window,
-        #             )
-
         self.prj.set_new_order([item[0] for item in self.reginst_model])
         self.instance_obj.get_groups()
 
@@ -1217,14 +1068,7 @@ class MainWindow(BaseWindow):
         """
         Deletes the selected object (either a register or a bit range)
         """
-        if self.top_notebook.get_current_page() == 0:
-            row = self.reglist_obj.get_selected_position()
-            reg = self.reginst_tab.get_selected_register()
-            if reg:
-                self.reglist_obj.delete_selected_node()
-                self.dbase.delete_register(reg)
-                self.reglist_obj.select_row(row)
-                self.set_modified()
+        self.reginst_tab.remove_register()
 
     def set_db_value(self, attr, val):
         if self.dbase:
@@ -1332,15 +1176,6 @@ class MainWindow(BaseWindow):
                 "visible", self.dbase.overview_text == ""
             )
 
-    def set_bits_warn_flag(self):
-        warn = False
-        for row in self.bit_model:
-            field = row[BitCol.FIELD]
-            icon = check_field(field)
-            row[BitCol.ICON] = icon
-            if icon:
-                warn = True
-        return warn
 
     def set_title(self, modified):
         if modified:

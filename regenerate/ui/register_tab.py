@@ -26,12 +26,14 @@ from regenerate.db import Register, BitField, LOGGER
 from regenerate.db.containers import RegSetContainer
 from regenerate.db.enums import ShareType, ResetType
 from regenerate.ui.bit_list import BitModel, BitList
-from regenerate.ui.enums import BlockCol
+from regenerate.ui.bitfield_editor import BitFieldEditor
+from regenerate.ui.enums import BlockCol, BitCol
 from regenerate.ui.module_tab import ModuleTabs
 from regenerate.ui.reg_description import RegisterDescription
 from regenerate.ui.register_list import RegisterModel, RegisterList
 from regenerate.extras.remap import REMAP_NAME
-from regenerate.extras.regutils import calculate_next_address
+from regenerate.extras.regutils import calculate_next_address, duplicate_register
+from regenerate.ui.filter_mgr import FilterManager
 
 
 class RegSetWidgets:
@@ -52,7 +54,13 @@ class RegSetWidgets:
         self.no_sharing = find_obj("no_sharing")
         self.read_access = find_obj("read_access")
         self.write_access = find_obj("write_access")
-
+        self.selected_regset = find_obj("selected_dbase")
+        self.filter_obj = find_obj("filter")
+        self.reg_count = find_obj("reg_count")
+        self.mod_descr_warn = find_obj("mod_descr_warn")
+        self.bitfield_list = find_obj("bitfield_list")
+        self.error_infobar_label = find_obj("error_infobar_label")
+        self.error_infobar = find_obj("error_infobar")
 
 class RegSetStatus:
     """
@@ -186,13 +194,11 @@ class RegSetTab:
         self,
         find_obj,
         modified,
-        bitfield_obj,
         db_selected_action,
         reg_selected_action,
         field_selected_action,
     ):
         self.set_modified = modified
-        self.bitfield_obj = bitfield_obj
         self.db_selected_action = db_selected_action
         self.reg_selected_action = reg_selected_action
         self.field_selected_action = field_selected_action
@@ -214,11 +220,24 @@ class RegSetTab:
             self.set_register_warn_flags,
         )
 
+        self.bitfield_obj = BitList(
+            self.widgets.bitfield_list,
+            self.widgets.error_infobar_label,
+            self.widgets.error_infobar,
+            self.bit_changed,
+            self.set_modified,
+        )
+
+        
         self.active = None
         self.active_name = ""
         self.project = None
         self.name2container: Dict[str, RegSetContainer] = {}
         self.name2status: Dict[str, RegSetStatus] = {}
+
+        self.widgets.filter_obj.set_placeholder_text("Signal Filter")
+        self.filter_manage = FilterManager(self.widgets.filter_obj)
+
         self.clear()
         # self.bitfield_obj.set_model(self.bit_model)
 
@@ -244,11 +263,16 @@ class RegSetTab:
 
             self.reg_set_model.add_dbase(container)
 
-            model = RegisterModel()
+            self.reg_model = RegisterModel()
+            mdl = self.reg_model.filter_new()
+            self.filter_manage.change_filter(mdl, True)
+            self.modelsort = Gtk.TreeModelSort(mdl)
+            self.reglist_obj.set_model(self.modelsort)
 
+            
             for key in container.regset.get_keys():
                 register = container.regset.get_register(key)
-                model.append_register(register)
+                self.reg_model.append_register(register)
 
             bit_model = BitModel()
 
@@ -259,7 +283,11 @@ class RegSetTab:
             )
 
             status = RegSetStatus(
-                container, model, Gtk.TreeModelSort(model), None, bit_model
+                container,
+                self.reg_model,
+                self.modelsort,
+                self.filter_manage.get_model(),
+                bit_model
             )
 
             self.name2status[container_name] = status
@@ -273,16 +301,10 @@ class RegSetTab:
         self.set_register_warn_flags(reg)
 
     def update_display(self):
-        # old_skip = self.skip_changes
-        # self.skip_changes = True
-        # if self.name2container[sereg_model:
-        #     self.reg_model.clear()
-        #     for key in self.dbase.get_keys():
-        #         register = self.dbase.get_register(key)
-        #         self.reg_model.append_register(register)
-        #         self.set_register_warn_flags(register)
+        old_skip = self.skip_changes
+        self.skip_changes = True
         self.redraw()
-        # self.skip_changes = old_skip
+        self.skip_changes = old_skip
 
     def redraw(self):
         """Redraws the information in the register list."""
@@ -297,10 +319,9 @@ class RegSetTab:
         # else:
         #    self.find_obj("array_notation").set_active(True)
 
-        # self.update_bit_count()
+        self.update_bit_count()
+        self.set_description_warn_flag()
 
-        # self.set_description_warn_flag()
-        ...
 
     def get_selected_register(self):
         return self.reglist_obj.get_selected_register()
@@ -327,22 +348,25 @@ class RegSetTab:
 
             status = self.name2status[self.active_name]
             self.reg_model = status.reg_model
-            self.reglist_obj.set_model(self.reg_model)
+            self.filter_manage.change_filter(status.modelfilter)
+            self.modelsort = status.modelsort
+            
             # self.reg_description.set_database(self.active.db)
 
-            # self.filter_manage.change_filter(self.active.modelfilter)
-            # self.modelsort = self.active.modelsort
-            # self.reglist_obj.set_model(self.modelsort)
+            status = self.name2status[self.active_name]
+            self.filter_manage.change_filter(status.modelfilter)
+            self.reglist_obj.set_model(status.modelsort)
 
-            self.bit_model = self.name2status[self.active_name].bit_model
+            self.bit_model = status.bit_model
             self.bitfield_obj.set_model(self.bit_model)
-            # text = "<b>%s - %s</b>" % (
-            #     self.dbase.module_name,
-            #     self.dbase.descriptive_title,
-            # )
-            # self.selected_dbase.set_text(text)
-            # self.selected_dbase.set_use_markup(True)
-            # self.selected_dbase.set_ellipsize(Pango.EllipsizeMode.END)
+            
+            text = "<b>%s - %s</b>" % (
+                self.active.regset.module_name,
+                self.active.regset.descriptive_title,
+            )
+            self.widgets.selected_regset.set_text(text)
+            self.widgets.selected_regset.set_use_markup(True)
+            self.widgets.selected_regset.set_ellipsize(Pango.EllipsizeMode.END)
             # if self.active.reg_select:
             #     for row in self.active.reg_select:
             #         self.reglist_obj.select_row(row)
@@ -354,7 +378,7 @@ class RegSetTab:
         else:
             self.active = None
             self.dbase = None
-            #            self.selected_dbase.set_text("")
+            self.widgets.selected_regset.set_text("")
             self.reglist_obj.set_model(None)
             self.enable_registers(False)
             self.skip_changes = old_skip
@@ -420,8 +444,8 @@ class RegSetTab:
 
             self.widgets.notebook.set_sensitive(True)
             self.reg_selected_action.set_sensitive(True)
-            # self.set_register_warn_flags(reg)
-            #            self.set_bits_warn_flag()
+            self.set_register_warn_flags(reg)
+            self.set_bits_warn_flag()
             self.set_share(reg)
         else:
             self.widgets.notebook.set_sensitive(False)
@@ -435,6 +459,15 @@ class RegSetTab:
             self.widgets.read_access.set_active(True)
         else:
             self.widgets.write_access.set_active(True)
+
+    def remove_register(self):
+        row = self.reglist_obj.get_selected_position()
+        reg = self.get_selected_register()
+        if reg:
+            self.reglist_obj.delete_selected_node()
+            self.active.regset.delete_register(reg)
+            self.reglist_obj.select_row(row)
+            self.set_modified()
 
     def new_register(self):
         register = Register()
@@ -473,6 +506,29 @@ class RegSetTab:
         self.set_modified()
         self.set_register_warn_flags(register)
 
+    def remove_bit(self):
+        register = self.get_selected_register()
+        row = self.bitfield_obj.get_selected_row()
+        field = self.bit_model.get_bitfield_at_path(row[0])
+        register.delete_bit_field(field)
+        node = self.bit_model.get_iter(row[0])
+        self.bit_model.remove(node)
+        self.set_register_warn_flags(register)
+        self.set_modified()
+
+    def edit_bit(self):
+        register = self.get_selected_register()
+        field = self.bitfield_obj.select_field()
+        if field:
+            BitFieldEditor(
+                self.active.regset,
+                register,
+                field,
+                self.set_field_modified,
+                None, #self.builder,
+                None, #self.top_window,
+            )
+                
     def update_register_addr(self, register, new_addr, new_length=0):
         dbase = self.active.regset
         dbase.delete_register(register)
@@ -493,7 +549,133 @@ class RegSetTab:
                 return shared_reg
         return None
 
+    def set_field_modified(self):
+        reg = self.get_selected_register()
+        self.set_register_warn_flags(reg)
+        self.set_bits_warn_flag()
+        self.set_modified()
 
+    def set_bits_warn_flag(self):
+        warn = False
+        for row in self.bit_model:
+            field = row[BitCol.FIELD]
+            icon = check_field(field)
+            row[BitCol.ICON] = icon
+            if icon:
+                warn = True
+        return warn
+        
+    def update_bit_count(self):
+        if self.active:
+            text = "%d" % self.active.regset.total_bits()
+        else:
+            text = ""
+        self.widgets.reg_count.set_text(text)
+
+    def set_description_warn_flag(self):
+        if self.active:
+            warn = self.active.regset.overview_text == ""
+        else:
+            warn = False
+        self.widgets.mod_descr_warn.set_property("visible", warn)
+        #    if not self.loading_project:
+
+    def on_no_sharing_toggled(self, obj):
+        if obj.get_active():
+            register = self.get_selected_register()
+
+            if self.duplicate_address(register.address):
+                self.set_share(register)
+                LOGGER.error(
+                    "Register cannot be set to non-sharing "
+                    "if it shares an address with another"
+                )
+            else:
+                register.share = ShareType.NONE
+                self.set_modified()
+            self.bitfield_obj.set_mode(register.share)
+
+    def on_read_access_toggled(self, obj):
+        if obj.get_active():
+            register = self.get_selected_register()
+
+            other = self.find_shared_address(register)
+            if other and other.share != ShareType.WRITE:
+                self.set_share(register)
+                LOGGER.error("The shared register is not of Write Access type")
+            elif register.is_completely_read_only():
+                register.share = ShareType.READ
+                self.set_modified()
+            else:
+                self.set_share(register)
+                LOGGER.error("All bits in the register must be read only")
+            self.bitfield_obj.set_mode(register.share)
+
+    def on_write_access_toggled(self, obj):
+        if obj.get_active():
+            register = self.get_selected_register()
+
+            other = self.find_shared_address(register)
+            if other and other.share != ShareType.READ:
+                self.set_share(register)
+                LOGGER.error("The shared register is not of Read Access type")
+            elif register.is_completely_write_only():
+                register.share = ShareType.WRITE
+                self.set_modified()
+            else:
+                self.set_share(register)
+                LOGGER.error("All bits in the register must be write only")
+            self.bitfield_obj.set_mode(register.share)
+
+    def duplicate_address(self, reg_addr):
+        cnt = 0
+        for reg in self.active.regset.get_all_registers():
+            if reg.address == reg_addr:
+                cnt += 1
+        return cnt > 1
+
+    def bit_changed(self, _obj):
+        self.field_selected_action.set_sensitive(True)
+
+    def on_remove_register_set_activate(self, _obj):
+        """
+        GTK callback that creates a file open selector using the
+        create_selector method, then runs the dialog, and calls the
+        open_xml routine with the result.
+        """
+        data = self.reg_set_obj.get_selected()
+        if not data:
+            return
+        old_skip = self.skip_changes
+        self.skip_changes = True
+        
+        (store, node) = data
+        base = store.get_value(node, BlockCol.NAME)
+        store.remove(node)
+        self.remove_regset_from_project(base)
+        self.remove_regset_from_groups(base)
+        self.set_modified()
+        self.skip_changes = old_skip
+
+    def remove_regset_from_project(self, name):
+        regset = self.project.regsets[name]
+        self.project.remove_register_set(regset.filename)
+        del self.project.regsets[name]
+
+    def remove_regset_from_groups(self, name):
+        for key, block in self.project.blocks.items():
+            new_reglist = [
+                reglist
+                for reglist in block.block.register_sets
+                if reglist.set_name != name
+            ]
+            block.block.register_sets = new_reglist
+
+            if name in block.block.regname2path:
+                block.modified = True
+                del block.block.regname2path[name]
+    
+        
 def check_field(field):
     if field.description.strip() == "":
         return Gtk.STOCK_DIALOG_WARNING

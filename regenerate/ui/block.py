@@ -260,6 +260,7 @@ class BlockTab:
         self.preview.change_block(self.blk_cont)
 
         for regset in self.blk_cont.block.register_sets:
+            print(regset.set_name)
             self.regmodel.append(
                 row=(
                     regset.set_name,

@@ -377,8 +377,8 @@ class RegisterList:
         self._obj.set_model(model)
         if model:
             #until filter fixed
-#            self._model = model.get_model().get_model()
-            self._model = model
+            self._model = model.get_model().get_model()
+#            self._model = model
         else:
             self._model = None
 
