@@ -213,7 +213,6 @@ class MainWindow(BaseWindow):
     def find_obj(self, name):
         return self.builder.get_object(name)
 
-
     def on_instances_cursor_changed(self, _obj):
         """Called when the row of the treeview changes."""
         self.find_obj("instance_edit_btn").set_sensitive(True)
@@ -374,23 +373,6 @@ class MainWindow(BaseWindow):
             self.find_obj("hpaned").set_position(hpos)
         if block_hpos:
             self.find_obj("bpaned").set_position(block_hpos)
-
-    # def enable_registers(self, value):
-    #     """
-    #     Enables UI items when a database has been loaded. This includes
-    #     enabling the register window, the register related buttons, and
-    #     the export menu.
-    #     """
-    #     print("ENABLE REGISTERS")
-    #     self.module_notebook.set_sensitive(value)
-    #     self.db_selected.set_sensitive(value)
-
-    # def enable_bit_fields(self, value):
-    #     """
-    #     Enables UI registers when a register has been selected. This allows
-    #     bit fields to be edited, along with other register related items.
-    #     """
-    #     self.reg_notebook(value)
 
     def build_group(self, group_name, action_names):
         group = Gtk.ActionGroup(group_name)
@@ -573,7 +555,6 @@ class MainWindow(BaseWindow):
 
     def bit_changed(self, _obj):
         active = len(self.bitfield_obj.get_selected_row())
-        print("BIT CHANGED", active)
         self.field_selected.set_sensitive(True)
 
     def blk_selection_changed(self, obj):
@@ -588,37 +569,6 @@ class MainWindow(BaseWindow):
         appropriate buttons on the interface.
         """
         self.reginst_tab.selected_reg_changed(_obj)
-        return 
-        old_skip = self.skip_changes
-        self.skip_changes = True
-        reg = self.reginst_tab.get_selected_register()
-#        self.reg_description.set_register(reg)
-        if reg:
-            self.bit_model.clear()
-            self.bit_model.register = reg
-            self.bitfield_obj.set_mode(reg.share)
-            for key in reg.get_bit_field_keys():
-                field = reg.get_bit_field(key)
-                self.bit_model.append_field(field)
-
-            self.find_obj("no_rtl").set_active(reg.flags.do_not_generate_code)
-            self.find_obj("no_uvm").set_active(reg.flags.do_not_use_uvm)
-            self.find_obj("no_test").set_active(reg.flags.do_not_test)
-            self.find_obj("no_cover").set_active(reg.flags.do_not_cover)
-            self.find_obj("hide_doc").set_active(reg.flags.hide)
-
-            self.reg_notebook.set_sensitive(True)
-            self.reg_selected.set_sensitive(True)
-            self.set_register_warn_flags(reg)
-            self.set_bits_warn_flag()
-            self.set_share(reg)
-        else:
-            if self.bit_model:
-                self.bit_model.clear()
-                self.register = None
-            self.reg_notebook.set_sensitive(False)
-            self.reg_selected.set_sensitive(False)
-        self.skip_changes = old_skip
 
     def set_share(self, reg):
         if reg.share == ShareType.NONE:
@@ -710,27 +660,7 @@ class MainWindow(BaseWindow):
             self.bitfield_obj.set_mode(register.share)
 
     def on_add_bit_action_activate(self, _obj):
-        register = self.reginst_tab.get_selected_register()
-        next_pos = register.find_next_unused_bit()
-
-        if next_pos == -1:
-            LOGGER.error("All bits are used in this register")
-            return
-
-        field = BitField()
-        field.lsb = next_pos
-
-        field.msb = field.lsb
-        field.name = "BIT%d" % field.lsb
-        field.output_signal = ""
-        if register.share == ShareType.WRITE:
-            field.field_type = BitType.WRITE_ONLY
-
-        register.add_bit_field(field)
-
-        self.bitfield_obj.add_new_field(field)
-        self.set_modified()
-        self.set_register_warn_flags(register)
+        self.reginst_tab.add_bit()
 
     def on_edit_field_clicked(self, _obj):
         register = self.reginst_tab.get_selected_register()
@@ -928,11 +858,6 @@ class MainWindow(BaseWindow):
             self.prj.save()
 
             self.block_tab.clear_flags()
-
-            #            self.block_obj.set_project(self.prj)
-            #            self.block_model = BlockModel()
-            #            self.block_obj.set_model(self.block_model)
-
             self.prj_infobar_label.set_text(
                 "Add a register set to the project by selecting from the File menu"
             )
@@ -940,8 +865,7 @@ class MainWindow(BaseWindow):
             self.infobar_reveal(True)
             self.project_modified(False)
             if self.recent_manager:
-                sys.stdout.write("Add %s=n" % filename)
-                self.recent_manager.add_item("file:///" + str(filename))
+                self.recent_manager.add_item(f"file:///{str(filename)}")
             self.find_obj("save_btn").set_sensitive(True)
             self.prj_loaded.set_sensitive(True)
             self.load_project_tab()
@@ -1298,11 +1222,8 @@ class MainWindow(BaseWindow):
         Called when the quit button is clicked.  Checks to see if the
         data needs to be saved first.
         """
-        if (
-            self.modified
-            or self.reginst_model.is_not_saved()
-            or (self.prj and self.prj.modified)
-        ):
+        #            or self.reginst_model.is_not_saved()
+        if self.modified or (self.prj and self.prj.modified):
 
             dialog = Question(
                 "Save Changes?",
@@ -1369,10 +1290,7 @@ class MainWindow(BaseWindow):
         Adds a new register, seeding the address with the next available
         address
         """
-        register = Register()
-        register.width = self.active.regset.ports.data_bus_width
-        register.address = calculate_next_address(self.dbase, register.width)
-        self.insert_new_register(register)
+        self.reginst_tab.new_register()
 
     def cb_open_recent(self, chooser):
         """

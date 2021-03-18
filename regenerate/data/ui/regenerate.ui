@@ -466,7 +466,6 @@
     <property name="label">Revert Changes</property>
     <property name="short_label">Revert</property>
     <property name="stock_id">gtk-revert-to-saved</property>
-    <signal name="activate" handler="on_revert_action_activate" swapped="no"/>
   </object>
   <object class="GtkAction" id="save_project_action">
     <property name="label" translatable="yes">Save Project</property>
