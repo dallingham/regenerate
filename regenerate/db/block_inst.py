@@ -60,20 +60,16 @@ class BlockInst(JSONEncodable):
             or self.name != other.name
             or self.base != other.base
             or self.hdl != other.hdl
-            or self.title != other.title
+            or self.description != other.description
             or self.repeat != other.repeat
-            or self.repeat_offset != other.repeat_offset
-            or self.docs != other.docs
         ):
             return False
         return True
 
     def json_decode(self, data) -> None:
         """Compare for equality."""
-        self.name = data["name"]
-        self.base = data["base"]
-        self.hdl = data["hdl"]
-        self.title = data["title"]
+        self.inst_name = data["name"]
+        self.address_base = data["base"]
+        self.hdl_path = data["hdl"]
+        self.description = data["description"]
         self.repeat = data["repeat"]
-        self.repeat_offset = data["repeat_offset"]
-        self.docs = data["docs"]

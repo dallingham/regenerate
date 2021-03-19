@@ -26,7 +26,7 @@ from typing import Optional, Union
 from operator import methodcaller
 import json
 
-from .const import REG_EXT
+from .const import REG_EXT, BLK_EXT
 from .block import Block
 from .register_db import RegisterDb
 from .logger import LOGGER
@@ -37,15 +37,6 @@ class Container:
         self._filename = Path("")
         self.modified = False
 
-    @property
-    def filename(self) -> Path:
-        return self._filename
-
-    @filename.setter
-    def filename(self, value: Union[str, Path]) -> None:
-        print(f"Got {str(value)}")
-        self._filename = Path(value).with_suffix(REG_EXT)
-    
     def _save_data(self, data):
         try:
             with self._filename.open("w") as ofile:
@@ -54,7 +45,6 @@ class Container:
                 )
         except FileNotFoundError as msg:
             LOGGER.error(str(msg))
-            print("BARF", str(msg))
 
     def save(self):
         ...
@@ -65,15 +55,36 @@ class BlockContainer(Container):
         super().__init__()
         self.block: Optional[Block] = None
 
+    @property
+    def filename(self) -> Path:
+        return self._filename
+
+    @filename.setter
+    def filename(self, value: Union[str, Path]) -> None:
+        self._filename = Path(value).with_suffix(BLK_EXT)
+
     def save(self):
         if self.block:
             self._save_data(self.block)
+
+    def json(self):
+        return {
+            "filename": str(self.filename),
+        }
 
 
 class RegSetContainer(Container):
     def __init__(self):
         super().__init__()
         self.regset: Optional[RegisterDb] = None
+
+    @property
+    def filename(self) -> Path:
+        return self._filename
+
+    @filename.setter
+    def filename(self, value: Union[str, Path]) -> None:
+        self._filename = Path(value).with_suffix(REG_EXT)
 
     def save(self):
         if self.regset:

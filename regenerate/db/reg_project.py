@@ -39,6 +39,7 @@ from .export import ExportData
 from .doc_pages import DocPages
 from .register_db import RegisterDb
 from .block import Block
+from .block_inst import BlockInst
 from .containers import BlockContainer, RegSetContainer
 from .const import REG_EXT, PRJ_EXT, OLD_PRJ_EXT
 
@@ -80,7 +81,7 @@ class RegProject:
         self._addr_map_grps = {}
         self._addr_map_list = []
 
-        self._groupings: List[GroupData] = []
+        self.block_insts: List[BlockInst] = []
 
         self.blocks: Dict[str, BlockContainer] = {}
         self.regsets: Dict[str, RegSetContainer] = {}
@@ -106,14 +107,18 @@ class RegProject:
         for container_name in self.blocks:
             blk_container = self.blocks[container_name]
             if blk_container.modified:
-                print(f"Saving {container_name} {str(blk_container.filename)}")
+                print(
+                    f"Saving block {container_name} {str(blk_container.filename)}"
+                )
                 blk_container.save()
                 blk_container.modified = False
 
         for container_name in self.regsets:
             reg_container = self.regsets[container_name]
             if reg_container.modified:
-                print(f"Saving {container_name} {str(reg_container.filename)}")
+                print(
+                    f"Saving register set {container_name} {str(reg_container.filename)}"
+                )
                 reg_container.save()
                 reg_container.modified = False
 
@@ -144,7 +149,7 @@ class RegProject:
             htbl[i.stem] = i
         self._filelist = [htbl[i] for i in new_order]
 
-    def append_register_set_to_list(self, name: Union[str,Path]):
+    def append_register_set_to_list(self, name: Union[str, Path]):
         """Adds a register set"""
 
         self._modified = True
@@ -201,12 +206,16 @@ class RegProject:
         option - the chosen export option (exporter)
         dest - destination output name
         """
+
+        full_path = self.path.parent / path
+        dest_path = self.path.parent / dest
+
         self._modified = True
-        exp = ExportData(option, path)
+        exp = ExportData(option, full_path.resolve())
         if dest in self._exports:
-            self._exports[dest].append(exp)
+            self._exports[dest_path.resolve()].append(exp)
         else:
-            self._exports[dest] = [exp]
+            self._exports[dest_path.resolve()] = [exp]
 
     def add_to_export_list(self, path: str, option: str, dest: str) -> None:
         """
@@ -328,11 +337,13 @@ class RegProject:
         The group contents are found by indexing using the Group name
         (GroupData.name) into the group map.
         """
-        return self._groupings
+        return []
+        # return self._groupings
 
     def set_grouping_list(self, glist: List[GroupData]) -> None:
         """Sets the grouping list"""
-        self._groupings = glist
+        ...
+        # self._groupings = glist
 
     def set_grouping(
         self,
@@ -345,27 +356,27 @@ class RegProject:
     ) -> None:
         """Modifies an existing grouping."""
         self._modified = True
-        self._groupings[index] = GroupData(
-            name, start, hdl, repeat, repeat_offset
-        )
+        # self._groupings[index] = GroupData(
+        #     name, start, hdl, repeat, repeat_offset
+        # )
 
     def add_to_grouping_list(self, group_data: GroupData) -> None:
         """Adds a new grouping to the grouping list"""
         self._modified = True
         self._group_exports[group_data.name] = []
-        self._groupings.append(group_data)
+        # self._groupings.append(group_data)
 
     def _add_to_grouping_list(self, name, start, hdl, repeat, repeat_offset):
         """Adds a new grouping to the grouping list"""
         self._modified = True
-        self._groupings.append(
-            GroupData(name, start, hdl, repeat, repeat_offset)
-        )
+        # self._groupings.append(
+        #     GroupData(name, start, hdl, repeat, repeat_offset)
+        # )
 
     def remove_group_from_grouping_list(self, grp) -> None:
         """Removes a grouping from the grouping list"""
         self._modified = True
-        self._groupings.remove(grp)
+        # self._groupings.remove(grp)
 
     def get_address_maps(self) -> List[AddrMapData]:
         """Returns a list of the existing address maps"""
@@ -615,7 +626,8 @@ class RegProject:
             "_parameters",
             "_addr_map_grps",
             "_addr_map_list",
-            "_groupings",
+            "blocks",
+            "block_insts",
             "_exports",
             "_group_exports",
             "_project_exports",
@@ -657,6 +669,7 @@ class RegProject:
         self.doc_pages = doc_pages
         self.company_name = data["company_name"]
         self.access_map = data["access_map"]
+        self.block_insts = data["block_insts"]
         self._filelist = []
         for path in data["filelist"]:
             self._filelist.append(Path(path))
@@ -672,12 +685,6 @@ class RegProject:
         for param_json in data["parameters"]:
             param = PrjParameterData(param_json["name"], param_json["value"])
             self._parameters.append(param)
-
-        self._groupings = []
-        for grp in data["groupings"]:
-            grp_data = GroupData()
-            grp_data.json_decode(grp)
-            self._groupings.append(grp_data)
 
         self._exports = {}
         for key in data["exports"]:

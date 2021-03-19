@@ -29,7 +29,7 @@ from .reg_parser import RegParser
 from .reg_parser_json import RegParserJSON
 from .reg_writer import RegWriter
 from .signals import Signals
-from .const import OLD_REG_EXT
+from .const import OLD_REG_EXT, REG_EXT
 
 
 class RegisterDb:
@@ -43,6 +43,7 @@ class RegisterDb:
         self._title = ""
         self._registers = {}
         self._parameters = []
+        self.exports = []
 
         self.ports = Signals()
 
@@ -102,7 +103,7 @@ class RegisterDb:
         else:
             self.read_json(filename)
 
-    def read_xml(self, filename):
+    def read_xml(self, filename: Path):
         """Reads the XML file, loading the databsae."""
 
         with filename.open("rb") as ifile:
@@ -111,10 +112,10 @@ class RegisterDb:
             parser.parse(ifile)
         return self
 
-    def read_json(self, filename):
+    def read_json(self, filename: Path):
         """Reads the XML file, loading the databsae."""
 
-        filename = filename.with_suffix(".regr")
+        filename = filename.with_suffix(REG_EXT)
 
         with filename.open("r") as ifile:
             self.set_name = filename.stem

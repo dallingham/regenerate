@@ -154,7 +154,6 @@ class MainWindow(BaseWindow):
         self.builder.connect_signals(self)
         self.build_import_menu()
 
-
     def check_subsystem_addresses(self):
         if check_address_ranges(self.prj, self.dbmap):
             self.set_project_modified()
@@ -177,10 +176,6 @@ class MainWindow(BaseWindow):
 
     def find_obj(self, name):
         return self.builder.get_object(name)
-
-    def on_instances_cursor_changed(self, _obj):
-        """Called when the row of the treeview changes."""
-        self.find_obj("instance_edit_btn").set_sensitive(True)
 
     def on_addrmap_cursor_changed(self, obj):
         """Called when the row of the treeview changes."""
@@ -458,7 +453,6 @@ class MainWindow(BaseWindow):
             submenu.append(menu_item)
         submenu.show()
         menu.set_submenu(submenu)
-
 
     def on_main_notebook_switch_page(self, _obj, _page, _page_num):
         pass
@@ -923,7 +917,6 @@ class MainWindow(BaseWindow):
                 self.top_window,
             )
 
-
     def exit(self):
         """
         Save the window size, along with the positions of the paned windows,
@@ -1133,7 +1126,6 @@ class MainWindow(BaseWindow):
             self.find_obj("mod_descr_warn").set_property(
                 "visible", self.dbase.overview_text == ""
             )
-
 
     def set_title(self, modified):
         if modified:

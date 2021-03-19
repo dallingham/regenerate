@@ -22,10 +22,9 @@ Manages the reading of the project file (.rprj)
 """
 
 from io import BytesIO as StringIO
-import os
 from pathlib import Path
 import xml.parsers.expat
-from .const import REG_EXT
+from .const import REG_EXT, BLK_EXT
 from .group_data import GroupData
 from .block import Block
 from .block_inst import BlockInst
@@ -48,6 +47,7 @@ class ProjectReader:
         self._current_map_group = None
         self.path = ""
         self.blocks = {}
+        self.block_insts = []
 
     def open(self, name):
         """Opens and reads an XML file"""
@@ -118,13 +118,13 @@ class ProjectReader:
 
     def start_export(self, attrs):
         """Called when an export tag is found"""
-        
-        dest_path = Path(self._current).with_suffix(REG_EXT)
-        self._prj.append_to_export_list(
-            attrs['path'],
-            attrs['option'],
-            str(dest_path)
-        )
+
+        db_path = Path(self._current).with_suffix(REG_EXT).resolve()
+        target = Path(self.path.parent) / attrs["path"]
+
+        # self._prj.append_to_export_list(
+        #     str(target), attrs["option"], str(db_path)
+        # )
 
     def start_group_export(self, attrs):
         """Called when an group_export tag is found"""
@@ -143,6 +143,16 @@ class ProjectReader:
         """Called when a grouping tag is found"""
 
         repeat_offset = int(attrs.get("repeat_offset", 0x10000))
+
+        self._current_blk_inst = BlockInst()
+        self._prj.block_insts.append(self._current_blk_inst)
+
+        self._current_blk_inst.inst_name = attrs["name"]
+        self._current_blk_inst.block = attrs["name"]
+        self._current_blk_inst.start = int(attrs["start"], 16)
+        self._current_blk_inst.hdl_path = attrs.get("hdl", "")
+        self._current_blk_inst.repeat = int(attrs.get("repeat", "1"))
+
         self._current_group = GroupData(
             attrs["name"],
             int(attrs["start"], 16),
@@ -259,19 +269,18 @@ class ProjectReader:
             for rset in self.blocks[blk].register_sets:
                 counter[Path(self.reg_map[rset.set_name]).parent] += 1
 
-            filename = Path(counter.most_common(1)[0][0]) / f"{blk}.regb"
-
+            filename = Path(counter.most_common(1)[0][0]) / f"{blk}{BLK_EXT}"
             block_dir = Path(self.path.parent).resolve()
             filename = block_dir / filename
 
             for rset in self.blocks[blk].register_sets:
                 full_reg_path = self.reg_map[rset.set_name].absolute()
                 self.blocks[blk].regname2path[rset.set_name] = str(
-                    full_reg_path.with_suffix(".regr")
+                    full_reg_path.with_suffix(REG_EXT)
                 )
 
             blk_container = BlockContainer()
-            blk_container.filename = full_reg_path
+            blk_container.filename = filename
             blk_container.block = self.blocks[blk]
             blk_container.modified = True
             self._prj.blocks[blk] = blk_container

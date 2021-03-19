@@ -3672,7 +3672,6 @@
                               <object class="GtkTreeView" id="instances">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
-                                <signal name="cursor-changed" handler="on_instances_cursor_changed" swapped="no"/>
                                 <child internal-child="selection">
                                   <object class="GtkTreeSelection"/>
                                 </child>
