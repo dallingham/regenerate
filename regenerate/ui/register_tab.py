@@ -23,7 +23,7 @@ from typing import Dict
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango
 from regenerate.settings.paths import INSTALL_PATH
 from regenerate.db import Register, BitField, LOGGER
-from regenerate.db.containers import RegSetContainer
+from regenerate.db.register_db import RegSetContainer
 from regenerate.db.enums import ShareType, ResetType
 from regenerate.ui.bit_list import BitModel, BitList
 from regenerate.ui.bitfield_editor import BitFieldEditor
@@ -664,15 +664,11 @@ class RegSetTab:
         for key, block in self.project.blocks.items():
             new_reglist = [
                 reglist
-                for reglist in block.block.register_sets
+                for reglist in block.block.regset_insts
                 if reglist.set_name != name
             ]
-            block.block.register_sets = new_reglist
+            block.block.regset_insts = new_reglist
 
-            if name in block.block.regname2path:
-                block.modified = True
-                del block.block.regname2path[name]
-    
         
 def check_field(field):
     if field.description.strip() == "":

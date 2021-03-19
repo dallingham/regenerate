@@ -26,11 +26,10 @@ from pathlib import Path
 import xml.parsers.expat
 from .const import REG_EXT, BLK_EXT
 from .group_data import GroupData
-from .block import Block
+from .block import Block, BlockContainer
 from .block_inst import BlockInst
-from .containers import BlockContainer
 from .register_inst import RegisterInst
-
+from .register_db import RegisterDb, RegSetContainer
 
 class ProjectReader:
     """
@@ -142,8 +141,6 @@ class ProjectReader:
     def start_grouping(self, attrs):
         """Called when a grouping tag is found"""
 
-        repeat_offset = int(attrs.get("repeat_offset", 0x10000))
-
         self._current_blk_inst = BlockInst()
         self._prj.block_insts.append(self._current_blk_inst)
 
@@ -153,29 +150,23 @@ class ProjectReader:
         self._current_blk_inst.hdl_path = attrs.get("hdl", "")
         self._current_blk_inst.repeat = int(attrs.get("repeat", "1"))
 
-        self._current_group = GroupData(
-            attrs["name"],
-            int(attrs["start"], 16),
-            attrs.get("hdl", ""),
-            int(attrs.get("repeat", 1)),
-            repeat_offset,
-            attrs.get("title", ""),
-        )
-        self._prj.add_to_grouping_list(self._current_group)
 
-        self.new_block = Block(
-            attrs["name"],
-            int(attrs.get("repeat_offset", 65536)),
-            attrs.get("title", ""),
-        )
+        if attrs['name'] not in self.blocks:
+            self.new_block = Block(
+                attrs["name"],
+                int(attrs.get("repeat_offset", 0x10000)),
+                attrs.get("title", ""),
+            )
+            self.blocks[self.new_block.name] = self.new_block
+        else:
+            self.new_block = self.blocks[self.new_block.name]
 
-        self.blocks[self.new_block.name] = self.new_block
 
     def start_map(self, attrs):
 
         """Called when a map tag is found"""
         sname = attrs["set"]
-
+        
         data = RegisterInst(
             sname,
             attrs.get("inst", sname),
@@ -188,8 +179,7 @@ class ProjectReader:
             int(attrs.get("array", "0")),
             int(attrs.get("single_decode", "0")),
         )
-        self._current_group.register_sets.append(data)
-        self.new_block.register_sets.append(data)
+        self.new_block.regset_insts.append(data)
 
     def start_address_map(self, attrs):
         """Called when an address tag is found"""
@@ -263,24 +253,43 @@ class ProjectReader:
     def end_project(self, _text):
         from collections import Counter
 
+        regdbs = {}
+
+        for key, path in self.reg_map.items():
+            new_db = RegisterDb()
+            new_db.read_xml(self.path.parent / path)
+            regdbs[key] = new_db
+        
         for blk in self.blocks:
 
             counter = Counter()
-            for rset in self.blocks[blk].register_sets:
+            for rset in self.blocks[blk].regset_insts:
                 counter[Path(self.reg_map[rset.set_name]).parent] += 1
 
             filename = Path(counter.most_common(1)[0][0]) / f"{blk}{BLK_EXT}"
             block_dir = Path(self.path.parent).resolve()
             filename = block_dir / filename
 
-            for rset in self.blocks[blk].register_sets:
-                full_reg_path = self.reg_map[rset.set_name].absolute()
-                self.blocks[blk].regname2path[rset.set_name] = str(
-                    full_reg_path.with_suffix(REG_EXT)
-                )
+            # for rset in self.blocks[blk].register_sets:
+            #     full_reg_path = self.reg_map[rset.set_name].absolute()
+            #     self.blocks[blk].regname2path[rset.set_name] = str(
+            #         full_reg_path.with_suffix(REG_EXT)
+            #     )
 
             blk_container = BlockContainer()
             blk_container.filename = filename
             blk_container.block = self.blocks[blk]
             blk_container.modified = True
             self._prj.blocks[blk] = blk_container
+
+            block = self.blocks[blk]
+
+            for rset_inst in block.regset_insts:
+                rcont = RegSetContainer()
+                rcont.filename = self.reg_map[rset_inst.set_name]
+                rcont.modified = True
+                rcont.regset = regdbs[rset_inst.set_name]
+                if rset_inst.set_name not in block.regsets:
+                    block.regsets[rset_inst.set_name] = rcont
+                
+            

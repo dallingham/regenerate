@@ -31,7 +31,7 @@ class BlockInst(JSONEncodable):
     def __init__(
         self,
         inst_name="",
-        block=None,
+        block="",
         address_base=0,
         hdl_path="",
         repeat=1,
@@ -39,11 +39,26 @@ class BlockInst(JSONEncodable):
     ) -> None:
         """Initialize the group data item."""
         self.inst_name = inst_name
+        self.block = block
         self.address_base = address_base
         self.hdl_path = hdl_path
         self.repeat = repeat
         self.description = description
 
+    @property
+    def regset_insts(self):
+        import traceback
+        traceback.stack_trace()
+
+    @regset_insts.setter
+    def regset_insts(self, foo):
+        import traceback
+        traceback.stack_trace()
+        
+        
+    def __repr__(self):
+        return f'BlockInst({self.inst_name}, {self.block})'
+        
     def __hash__(self):
         "Return the ID as the hash for the instance"
 
@@ -57,9 +72,9 @@ class BlockInst(JSONEncodable):
         """Compare for equality."""
         if (
             other is None
-            or self.name != other.name
-            or self.base != other.base
-            or self.hdl != other.hdl
+            or self.inst_name != other.inst_name
+            or self.address_base != other.address_base
+            or self.hdl_path != other.hdl_path
             or self.description != other.description
             or self.repeat != other.repeat
         ):
@@ -68,8 +83,9 @@ class BlockInst(JSONEncodable):
 
     def json_decode(self, data) -> None:
         """Compare for equality."""
-        self.inst_name = data["name"]
-        self.address_base = data["base"]
-        self.hdl_path = data["hdl"]
+        self.inst_name = data["inst_name"]
+        self.block = data["block"]
+        self.address_base = data["address_base"]
+        self.hdl_path = data["hdl_path"]
         self.description = data["description"]
         self.repeat = data["repeat"]

@@ -25,7 +25,7 @@ import os
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango
 from regenerate.settings.paths import INSTALL_PATH
 from regenerate.db import RegisterInst
-from regenerate.db.containers import BlockContainer
+from regenerate.db.block import BlockContainer
 from regenerate.ui.enums import SelectCol
 from regenerate.ui.columns import ReadOnlyColumn, EditableColumn
 from regenerate.ui.preview_editor import PreviewEditor
@@ -69,9 +69,9 @@ class BlockTab:
         self.blk_cont = None
         self.disable_modified = True
 
-        self.block_obj = BlockList(select_list, self.blk_selection_changed)
+        self.block_obj = BlockSelectList(select_list, self.blk_selection_changed)
 
-        self.block_model = BlockModel()
+        self.block_model = BlockSelectModel()
         self.block_obj.set_model(self.block_model)
 
         self.preview = BlockDoc(
@@ -145,7 +145,7 @@ class BlockTab:
         old_text = self.regmodel[int(path)][col]
         self.regmodel[int(path)][col] = new_text
 
-        for rset in self.blk_cont.block.register_sets:
+        for rset in self.blk_cont.block.regset_insts:
             if rset.inst == old_text:
                 rset.inst = new_text
                 self.modified()
@@ -155,7 +155,7 @@ class BlockTab:
             reg_name = self.regmodel[int(path)][0]
             self.regmodel[int(path)][col] = f"0x{int(new_text,0):04x}"
             self.blk_cont.modified = True
-            for rset in self.blk_cont.block.register_sets:
+            for rset in self.blk_cont.block.regset_insts:
                 if rset.inst == reg_name:
                     rset.offset = int(new_text, 0)
                     self.modified()
@@ -167,7 +167,7 @@ class BlockTab:
             reg_name = self.regmodel[int(path)][0]
             self.regmodel[int(path)][col] = f"{int(new_text)}"
             self.blk_cont.modified = True
-            for rset in self.blk_cont.block.register_sets:
+            for rset in self.blk_cont.block.regset_insts:
                 if rset.inst == reg_name:
                     rset.repeat = int(new_text)
             self.modified()
@@ -178,7 +178,7 @@ class BlockTab:
         reg_name = self.regmodel[int(path)][0]
         self.regmodel[int(path)][col] = new_text
         self.blk_cont.modified = True
-        for rset in self.blk_cont.block.register_sets:
+        for rset in self.blk_cont.block.regset_insts:
             if rset.inst == reg_name:
                 rset.hdl = new_text
         self.modified()
@@ -196,7 +196,7 @@ class BlockTab:
     def build_add_regset_menu(self):
         if self.blk_cont:
             self.reg_menu = Gtk.Menu()
-            for regset in self.blk_cont.block.register_sets:
+            for regset in self.blk_cont.block.regset_insts:
                 menu_item = Gtk.MenuItem(regset.set_name)
                 menu_item.connect(
                     "activate", self.menu_selected, regset.set_name
@@ -206,7 +206,7 @@ class BlockTab:
             self.block_reg_add.set_popup(self.reg_menu)
 
     def find_name_inst_name(self, regset):
-        names = set({rset.inst for rset in self.blk_cont.block.register_sets})
+        names = set({rset.inst for rset in self.blk_cont.block.regset_insts})
 
         if regset not in names:
             new_name = regset
@@ -224,7 +224,7 @@ class BlockTab:
         new_name = self.find_name_inst_name(regset)
 
         reginst = RegisterInst(rset=regset, inst=new_name)
-        self.blk_cont.block.register_sets.append(reginst)
+        self.blk_cont.block.regset_insts.append(reginst)
         self.regmodel.append(
             row=(
                 reginst.set_name,
@@ -240,9 +240,9 @@ class BlockTab:
         model, node = self.block_regsets.get_selection().get_selected()
         inst_name = model[node][1]
 
-        self.blk_cont.block.bregister_sets = [
+        self.blk_cont.block.regset_insts = [
             regset
-            for regset in self.blk_cont.block.register_sets
+            for regset in self.blk_cont.block.regset_insts
             if regset.inst != inst_name
         ]
         model.remove(node)
@@ -259,7 +259,7 @@ class BlockTab:
         self.block_regsets.set_model(self.regmodel)
         self.preview.change_block(self.blk_cont)
 
-        for regset in self.blk_cont.block.register_sets:
+        for regset in self.blk_cont.block.regset_insts:
             self.regmodel.append(
                 row=(
                     regset.set_name,
@@ -272,7 +272,7 @@ class BlockTab:
         self.modified()
 
 
-class BlockModel(Gtk.ListStore):
+class BlockSelectModel(Gtk.ListStore):
     """
     Provides the model for the block list
     """
@@ -312,7 +312,7 @@ class BlockModel(Gtk.ListStore):
         return node
 
 
-class BlockList:
+class BlockSelectList:
     """Block list"""
 
     def __init__(self, obj, selection_callback):

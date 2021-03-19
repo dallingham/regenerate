@@ -37,10 +37,9 @@ from .logger import LOGGER
 from .parammap import PrjParameterData
 from .export import ExportData
 from .doc_pages import DocPages
-from .register_db import RegisterDb
-from .block import Block
+from .register_db import RegisterDb, RegSetContainer
+from .block import Block, BlockContainer
 from .block_inst import BlockInst
-from .containers import BlockContainer, RegSetContainer
 from .const import REG_EXT, PRJ_EXT, OLD_PRJ_EXT
 
 
@@ -82,8 +81,8 @@ class RegProject:
         self._addr_map_list = []
 
         self.block_insts: List[BlockInst] = []
-
         self.blocks: Dict[str, BlockContainer] = {}
+
         self.regsets: Dict[str, RegSetContainer] = {}
 
         self._exports = {}
@@ -134,6 +133,10 @@ class RegProject:
         else:
             json_reader = ProjectReaderJSON(self)
             json_reader.open(name)
+
+            for block_name, container in self.blocks.items():
+                for set_name, reg_set in container.block.regsets.items():
+                    self.regsets[set_name] = reg_set
 
     def loads(self, data: str) -> None:
         """Reads XML from a string"""
@@ -614,6 +617,17 @@ class RegProject:
         """Sets the parameter list"""
         self._parameters = parameter_list
 
+    def change_file_suffix(self, original: str, new: str):
+        """Changes the suffix of the files in the file list"""
+
+        new_list = []
+        for name in self._filelist:
+            new_name = Path(name)
+            if new_name.suffix == original:
+                new_name = new_name.with_suffix(new)
+            new_list.append(new_name)
+        self._filelist = new_list
+
     def json(self):
         """Convert the data into a JSON compatible dict"""
 
@@ -648,17 +662,6 @@ class RegProject:
 
         return data
 
-    def change_file_suffix(self, original: str, new: str):
-        """Changes the suffix of the files in the file list"""
-
-        new_list = []
-        for name in self._filelist:
-            new_name = Path(name)
-            if new_name.suffix == original:
-                new_name = new_name.with_suffix(new)
-            new_list.append(new_name)
-        self._filelist = new_list
-
     def json_decode(self, data):
         """Convert the JSON data back classes"""
 
@@ -671,8 +674,10 @@ class RegProject:
         self.access_map = data["access_map"]
         self.block_insts = data["block_insts"]
         self._filelist = []
+        
         for path in data["filelist"]:
             self._filelist.append(Path(path))
+
         self._addr_map_grps = data["addr_map_grps"]
 
         self._addr_map_list = []
@@ -707,3 +712,15 @@ class RegProject:
             self._project_exports.append(
                 ExportData(key["option"], key["path"])
             )
+
+        self.block_insts = []
+        for blk_inst_data_json in data["block_insts"]:
+            blk_inst_data = BlockInst()
+            blk_inst_data.json_decode(blk_inst_data_json)
+            self.block_insts.append(blk_inst_data)
+            
+        self.blocks = {}
+        for key in data['blocks']:
+            blk_data = BlockContainer()
+            blk_data.json_decode(data['blocks'][key])
+            self.blocks[key] = blk_data

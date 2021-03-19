@@ -23,6 +23,8 @@ Provides the container database for a set of registers.
 from io import BytesIO as StringIO
 from pathlib import Path
 import re
+from typing import Union
+import json
 
 from .register import Register
 from .reg_parser import RegParser
@@ -30,7 +32,7 @@ from .reg_parser_json import RegParserJSON
 from .reg_writer import RegWriter
 from .signals import Signals
 from .const import OLD_REG_EXT, REG_EXT
-
+from .containers import Container
 
 class RegisterDb:
     """
@@ -230,7 +232,7 @@ class RegisterDb:
             "overview_text": self.overview_text,
             "owner": self.owner,
             "use_interface": self.use_interface,
-            "registers": [reg for index, reg in self._registers.items()],
+            "register_inst": [reg for index, reg in self._registers.items()],
         }
 
     def json_decode(self, data):
@@ -251,7 +253,39 @@ class RegisterDb:
         self.owner = data["owner"]
         self.use_interface = data["use_interface"]
 
-        for reg_json in data["registers"]:
+        for reg_json in data["register_inst"]:
             reg = Register()
             reg.json_decode(reg_json)
             self._registers[reg.uuid] = reg
+
+            
+class RegSetContainer(Container):
+    def __init__(self):
+        super().__init__()
+        self.regset: Optional[RegisterDb] = None
+
+    @property
+    def filename(self) -> Path:
+        return self._filename
+
+    @filename.setter
+    def filename(self, value: Union[str, Path]) -> None:
+        self._filename = Path(value).with_suffix(REG_EXT)
+
+    def save(self):
+        if self.regset:
+            self._save_data(self.regset)
+            
+    def json(self):
+        return {
+            "filename": str(self.filename),
+        }
+
+    def json_decode(self, data):
+        self.filename = Path(data["filename"])
+        self.regset = RegisterDb()
+        with self.filename.open() as ifile:
+            new_data = json.loads(ifile.read())
+            self.regset.json_decode(new_data)
+        self.modified = False
+    

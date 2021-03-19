@@ -1,4 +1,4 @@
-#
+1#
 # Manage registers in a hardware design
 #
 # Copyright (C) 2008  Donald N. Allingham
@@ -25,6 +25,7 @@ import re
 from gi.repository import Gtk, Gdk, GObject
 from regenerate.ui.columns import EditableColumn
 from regenerate.db import RegisterInst, GroupData, LOGGER
+from regenerate.db.block_inst import BlockInst
 from regenerate.ui.enums import InstCol
 
 
@@ -37,7 +38,7 @@ class InstMdl(Gtk.TreeStore):
     def __init__(self, project):
 
         super().__init__(
-            str, str, str, GObject.TYPE_UINT64, str, str, str, object
+            str, str, str, GObject.TYPE_UINT64, str, str, object
         )
 
         self.callback = self.__null_callback
@@ -94,7 +95,7 @@ class InstMdl(Gtk.TreeStore):
 
         if len(path.split(":")) == 1:
             obj = self.get_value(node, InstCol.OBJ)
-            obj.name = text
+            obj.inst_name = text
             self.project.change_subsystem_name(old_value, text)
         else:
             pnode = self.get_iter(path.split(":")[0])
@@ -110,7 +111,7 @@ class InstMdl(Gtk.TreeStore):
         self.callback()
         obj = self.get_value(node, InstCol.OBJ)
         if obj:
-            obj.hdl = text
+            obj.hdl_path = text
 
     def change_base(self, path, text):
         """
@@ -127,7 +128,7 @@ class InstMdl(Gtk.TreeStore):
             LOGGER.warning('Illegal base address: "%s"', text)
         obj = self.get_value(node, InstCol.OBJ)
         if obj:
-            obj.base = int(text, 16)
+            obj.address_base = int(text, 16)
 
     def change_repeat(self, path, text):
         """
@@ -159,34 +160,6 @@ class InstMdl(Gtk.TreeStore):
         if obj:
             obj.repeat = int(text)
 
-    def change_repeat_offset(self, path, text):
-        """
-        Called when the base address of an instance has been edited in the
-        InstanceList
-        """
-
-        node = self.get_iter(path)
-        try:
-            value = int(text, 16)
-        except ValueError:
-            LOGGER.warning(
-                '"%s" is not a valid repeat offset. '
-                "The repeat offset must be a valid hexidecimal number",
-                text,
-            )
-            return
-
-        obj = self.get_value(node, InstCol.OBJ)
-        if obj is None:
-            return
-
-        original = obj.repeat_offset
-        obj.repeat_offset = value
-        if not self.callback():
-            obj.repeat_offset = original
-        else:
-            self.set_value(node, InstCol.OFF, "0x{:04x}".format(value))
-
     def new_instance(self):
         """
         Adds a new instance to the model. It is not added to the database until
@@ -200,14 +173,13 @@ class InstMdl(Gtk.TreeStore):
                 break
             name = "new_group%d" % i
 
-        new_grp = GroupData(name)
+        new_grp = BlockInst(name)
         row = build_row_data(
-            new_grp.name,
-            "",
-            new_grp.base,
+            new_grp.block,
+            new_grp.inst_name,
+            new_grp.address_base,
             new_grp.repeat,
-            new_grp.repeat_offset,
-            new_grp.hdl,
+            new_grp.hdl_path,
             new_grp,
         )
 
@@ -225,7 +197,6 @@ class InstanceList:
         self.__project = None
         self.__model = None
         self.__build_instance_table()
-        self.__enable_dnd()
         self.__obj.set_sensitive(False)
         self.modified_callback = callback
         self.need_subsystem = True
@@ -251,12 +222,11 @@ class InstanceList:
         tree_iter = self.__model.get_iter_first()
         while tree_iter is not None:
             current_group = self.__model.get_value(tree_iter, InstCol.OBJ)
-            current_group.register_sets = []
 
             child = self.__model.iter_children(tree_iter)
             while child:
                 cobj = self.col_value(child, InstCol.OBJ)
-                current_group.register_sets.append(
+                current_group.regset_insts.append(
                     RegisterInst(
                         self.col_value(child, InstCol.ID),
                         self.col_value(child, InstCol.INST),
@@ -291,84 +261,82 @@ class InstanceList:
 
         return self.__obj.get_selection().get_selected()
 
-    def __enable_dnd(self):
-        """Enable dg-n-drop"""
+    # def __enable_dnd(self):
+    #     """Enable dg-n-drop"""
 
-        self.__obj.enable_model_drag_dest(
-            [("text/plain", 0, 0)],
-            Gdk.DragAction.DEFAULT | Gdk.DragAction.MOVE,
-        )
-        self.__obj.connect(
-            "drag-data-received", self.__drag_data_received_data
-        )
+    #     self.__obj.enable_model_drag_dest(
+    #         [("text/plain", 0, 0)],
+    #         Gdk.DragAction.DEFAULT | Gdk.DragAction.MOVE,
+    #     )
+    #     self.__obj.connect(
+    #         "drag-data-received", self.__drag_data_received_data
+    #     )
 
-    def __drag_data_received_data(
-        self, treeview, _context, xpos, ypos, selection, _info, _etime
-    ):
-        """Called with drag data is recieved"""
+    # def __drag_data_received_data(
+    #     self, treeview, _context, xpos, ypos, selection, _info, _etime
+    # ):
+    #     """Called with drag data is recieved"""
 
-        model = treeview.get_model()
+    #     model = treeview.get_model()
 
-        try:
-            data = selection.data
-        except AttributeError:
-            data = selection.get_text()
+    #     try:
+    #         data = selection.data
+    #     except AttributeError:
+    #         data = selection.get_text()
 
-        drop_info = treeview.get_dest_row_at_pos(xpos, ypos)
-        (name, width) = data.split(":")
+    #     drop_info = treeview.get_dest_row_at_pos(xpos, ypos)
+    #     (name, width) = data.split(":")
 
-        inst = RegisterInst(
-            name, name, 0, 1, int(width, 16), "", False, False, False, False
-        )
+    #     inst = RegisterInst(
+    #         name, name, 0, 1, int(width, 16), "", False, False, False, False
+    #     )
 
-        row_data = build_row_data(
-            inst.set_name,
-            inst.inst,
-            inst.offset,
-            inst.repeat,
-            inst.repeat_offset,
-            inst.hdl,
-            inst,
-        )
-        if drop_info:
-            path, position = drop_info
-            self.modified_callback()
-            if len(path) == 1:
-                node = self.__model.get_iter(path)
-                self.__model.append(node, row_data)
-            else:
-                parent = self.__model.get_iter((path[0],))
-                node = self.__model.get_iter(path)
-                if position in (
-                    Gtk.TreeViewDropPosition.BEFORE,
-                    Gtk.TreeViewDropPosition.INTO_OR_BEFORE,
-                ):
-                    self.__model.insert_before(parent, node, row_data)
-                else:
-                    model.insert_after(parent, node, row_data)
-        self.need_regset = False
+    #     row_data = build_row_data(
+    #         inst.set_name,
+    #         inst.inst,
+    #         inst.offset,
+    #         inst.repeat,
+    #         inst.repeat_offset,
+    #         inst.hdl,
+    #         inst,
+    #     )
+    #     if drop_info:
+    #         path, position = drop_info
+    #         self.modified_callback()
+    #         if len(path) == 1:
+    #             node = self.__model.get_iter(path)
+    #             self.__model.append(node, row_data)
+    #         else:
+    #             parent = self.__model.get_iter((path[0],))
+    #             node = self.__model.get_iter(path)
+    #             if position in (
+    #                 Gtk.TreeViewDropPosition.BEFORE,
+    #                 Gtk.TreeViewDropPosition.INTO_OR_BEFORE,
+    #             ):
+    #                 self.__model.insert_before(parent, node, row_data)
+    #             else:
+    #                 model.insert_after(parent, node, row_data)
+    #     self.need_regset = False
 
     def __populate(self):
         """Fill the list from the project"""
 
         if self.__project is None:
             return
-        group_list = sorted(
-            self.__project.get_grouping_list(), key=lambda x: x.base
+        blocks = sorted(
+            self.__project.block_insts, key=lambda x: x.address_base
         )
 
-        for item in group_list:
-
+        for item in blocks:
             self.need_subsystem = False
             node = self.__model.append(
                 None,
                 row=build_row_data(
-                    item.name,
-                    "",
-                    item.base,
+                    item.inst_name,
+                    item.block,
+                    item.address_base,
                     item.repeat,
-                    item.repeat_offset,
-                    "",
+                    item.hdl_path,
                     item,
                 ),
             )
@@ -389,7 +357,6 @@ class InstanceList:
             "Block Name",
             self.instance_id_changed,
             InstCol.ID,
-            visible_callback=self.visible_callback,
         )
         column.set_sort_column_id(InstCol.ID)
         column.set_min_width(150)
@@ -412,16 +379,6 @@ class InstanceList:
         self.__obj.append_column(column)
 
         column = EditableColumn(
-            "Repeat Offset",
-            self.instance_repeat_offset_changed,
-            InstCol.OFF,
-            True,
-        )
-        column.set_min_width(150)
-        column.set_resizable(True)
-        self.__obj.append_column(column)
-
-        column = EditableColumn(
             "HDL Path", self.instance_hdl_changed, InstCol.HDL
         )
         column.set_min_width(250)
@@ -429,14 +386,6 @@ class InstanceList:
         column.set_resizable(True)
         self.__obj.append_column(column)
 
-    def visible_callback(self, _column, cell, model, *obj):
-        """Determine if the cell should be seen"""
-
-        node = obj[0]
-        if len(model.get_path(node)) == 1:
-            cell.set_property("visible", False)
-        else:
-            cell.set_property("visible", True)
 
     def instance_id_changed(self, _cell, _path, _new_text, _col):
         """
@@ -465,8 +414,7 @@ class InstanceList:
         """
         Updates the data model when the text value is changed in the model.
         """
-        if len(path) > 1:
-            self.inst_changed("change_format", path, new_text)
+        self.inst_changed("change_format", path, new_text)
 
     def instance_hdl_changed(self, _cell, path, new_text, _col):
         """
@@ -480,14 +428,8 @@ class InstanceList:
         """
         self.inst_changed("change_repeat", path, new_text)
 
-    def instance_repeat_offset_changed(self, _cell, path, new_text, _col):
-        """
-        Updates the data model when the text value is changed in the model.
-        """
-        self.inst_changed("change_repeat_offset", path, new_text)
 
-
-def build_row_data(inst, name, offset, rpt, rpt_offset, hdl, obj):
+def build_row_data(inst, name, offset, rpt, hdl, obj):
     """Build row data from the data"""
 
     row = (
@@ -496,7 +438,6 @@ def build_row_data(inst, name, offset, rpt, rpt_offset, hdl, obj):
         "0x{:04x}".format(offset),
         offset,
         "{:d}".format(rpt),
-        "0x{:04x}".format(rpt_offset),
         hdl,
         obj,
     )

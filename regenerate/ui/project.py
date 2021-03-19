@@ -74,10 +74,8 @@ class ProjectModel(Gtk.ListStore):
         base = regset.filename.stem
         if modified:
             node = self.append(row=[Gtk.STOCK_EDIT, base])
-            print([Gtk.STOCK_EDIT, base])
         else:
             node = self.append(row=["", base])
-            print(["", base])
 
         self.file_list[str(regset.filename)] = node
         self.paths.add(regset.filename.parent)

@@ -18,15 +18,20 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
-Holds the infomration for a group. This includes the name, base address,
+Holds the information for a group. This includes the name, base address,
 HDL path, the repeat count, repeat offset, and the title.
 """
 
-from typing import List, Dict
+from typing import List, Dict, Union
+from pathlib import Path
+import json
+
+from .const import BLK_EXT
 from .register_inst import RegisterInst
 from .doc_pages import DocPages
 from .name_base import NameBase
-
+from .containers import Container
+from .register_db import RegSetContainer
 
 class Block(NameBase):
     """Basic group information."""
@@ -48,7 +53,9 @@ class Block(NameBase):
         self.doc_pages.update_page("Architecture", "")
         self.doc_pages.update_page("Programming Model", "")
         self.doc_pages.update_page("Additional", "")
-        self.regname2path: Dict[str, str] = {}
+
+        self.regset_insts: List[RegisterInst] = []
+        self.regsets: Dict[str, RegSetContainer] = {}
         self.modified = False
 
     def __hash__(self):
@@ -68,7 +75,6 @@ class Block(NameBase):
             or self.description != other.description
             or self.address_size != other.address_size
             or self.doc_pages != other.doc_pages
-            or self.register_sets != other.register_sets
         ):
             return False
         return True
@@ -83,13 +89,18 @@ class Block(NameBase):
         self.doc_pages = DocPages()
         self.doc_pages.json_decode(data["doc_pages"])
 
-        self.register_sets = []
-        for rset in data["register_sets"]:
+        self.regset_insts = []
+        for rset in data["regset_insts"]:
             ginst = RegisterInst()
             ginst.json_decode(rset)
-            self.register_sets.append(ginst)
+            self.regset_insts.append(ginst)
 
-        self.regname2path = data["regname2path"]
+        self.regsets = {}
+        for key, item in data['regsets'].items():
+
+            rs_data = RegSetContainer()
+            rs_data.json_decode(item)
+            self.regsets[key] = rs_data
 
     def json(self):
         return {
@@ -98,6 +109,37 @@ class Block(NameBase):
             "address_size": self.address_size,
             "doc_pages": self.doc_pages.json(),
             "description": self.description,
-            "register_sets": self.register_sets,
-            "regname2path": self.regname2path,
+            "regset_insts": self.regset_insts,
+            "regsets": self.regsets,
         }
+
+class BlockContainer(Container):
+    def __init__(self):
+        super().__init__()
+        self.block: Optional[Block] = None
+
+    @property
+    def filename(self) -> Path:
+        return self._filename
+
+    @filename.setter
+    def filename(self, value: Union[str, Path]) -> None:
+        self._filename = Path(value).with_suffix(BLK_EXT)
+
+    def save(self):
+        if self.block:
+            self._save_data(self.block)
+
+    def json(self):
+        return {
+            "filename": str(self.filename),
+        }
+
+    def json_decode(self, data):
+        self.filename = Path(data["filename"])
+        self.block = Block()
+        with self.filename.open() as ifile:
+            new_data = json.loads(ifile.read())
+            self.block.json_decode(new_data)
+        self.modified = False
+    

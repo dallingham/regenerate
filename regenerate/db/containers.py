@@ -22,13 +22,9 @@ Containers for data groups, modified flags, and file paths
 """
 
 from pathlib import Path
-from typing import Optional, Union
 from operator import methodcaller
 import json
 
-from .const import REG_EXT, BLK_EXT
-from .block import Block
-from .register_db import RegisterDb
 from .logger import LOGGER
 
 
@@ -50,42 +46,6 @@ class Container:
         ...
 
 
-class BlockContainer(Container):
-    def __init__(self):
-        super().__init__()
-        self.block: Optional[Block] = None
 
-    @property
-    def filename(self) -> Path:
-        return self._filename
+    
 
-    @filename.setter
-    def filename(self, value: Union[str, Path]) -> None:
-        self._filename = Path(value).with_suffix(BLK_EXT)
-
-    def save(self):
-        if self.block:
-            self._save_data(self.block)
-
-    def json(self):
-        return {
-            "filename": str(self.filename),
-        }
-
-
-class RegSetContainer(Container):
-    def __init__(self):
-        super().__init__()
-        self.regset: Optional[RegisterDb] = None
-
-    @property
-    def filename(self) -> Path:
-        return self._filename
-
-    @filename.setter
-    def filename(self, value: Union[str, Path]) -> None:
-        self._filename = Path(value).with_suffix(REG_EXT)
-
-    def save(self):
-        if self.regset:
-            self._save_data(self.regset)
