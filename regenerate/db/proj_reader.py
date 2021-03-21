@@ -25,11 +25,11 @@ from io import BytesIO as StringIO
 from pathlib import Path
 import xml.parsers.expat
 from .const import REG_EXT, BLK_EXT
-from .group_data import GroupData
 from .block import Block, BlockContainer
 from .block_inst import BlockInst
 from .register_inst import RegisterInst
 from .register_db import RegisterDb, RegSetContainer
+
 
 class ProjectReader:
     """
@@ -150,8 +150,7 @@ class ProjectReader:
         self._current_blk_inst.hdl_path = attrs.get("hdl", "")
         self._current_blk_inst.repeat = int(attrs.get("repeat", "1"))
 
-
-        if attrs['name'] not in self.blocks:
+        if attrs["name"] not in self.blocks:
             self.new_block = Block(
                 attrs["name"],
                 int(attrs.get("repeat_offset", 0x10000)),
@@ -161,12 +160,11 @@ class ProjectReader:
         else:
             self.new_block = self.blocks[self.new_block.name]
 
-
     def start_map(self, attrs):
 
         """Called when a map tag is found"""
         sname = attrs["set"]
-        
+
         data = RegisterInst(
             sname,
             attrs.get("inst", sname),
@@ -259,7 +257,7 @@ class ProjectReader:
             new_db = RegisterDb()
             new_db.read_xml(self.path.parent / path)
             regdbs[key] = new_db
-        
+
         for blk in self.blocks:
 
             counter = Counter()
@@ -291,5 +289,3 @@ class ProjectReader:
                 rcont.regset = regdbs[rset_inst.set_name]
                 if rset_inst.set_name not in block.regsets:
                     block.regsets[rset_inst.set_name] = rcont
-                
-            

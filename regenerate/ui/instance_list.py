@@ -1,4 +1,4 @@
-1#
+#
 # Manage registers in a hardware design
 #
 # Copyright (C) 2008  Donald N. Allingham
@@ -37,9 +37,7 @@ class InstMdl(Gtk.TreeStore):
 
     def __init__(self, project):
 
-        super().__init__(
-            str, str, str, GObject.TYPE_UINT64, str, str, object
-        )
+        super().__init__(str, str, str, GObject.TYPE_UINT64, str, str, object)
 
         self.callback = self.__null_callback
         self.project = project
@@ -160,32 +158,23 @@ class InstMdl(Gtk.TreeStore):
         if obj:
             obj.repeat = int(text)
 
-    def new_instance(self):
+    def add_instance(self, new_inst):
         """
         Adds a new instance to the model. It is not added to the database until
         either the change_id or change_base is called.
         """
-        grps = set({row[0] for row in self})
-
-        name = "new_group"
-        for i in range(len(grps) + 1):
-            if name not in grps:
-                break
-            name = "new_group%d" % i
-
-        new_grp = BlockInst(name)
         row = build_row_data(
-            new_grp.block,
-            new_grp.inst_name,
-            new_grp.address_base,
-            new_grp.repeat,
-            new_grp.hdl_path,
-            new_grp,
+            new_inst.block,
+            new_inst.inst_name,
+            new_inst.address_base,
+            new_inst.repeat,
+            new_inst.hdl_path,
+            new_inst,
         )
 
         node = self.append(None, row=row)
         self.callback()
-        return (self.get_path(node), new_grp)
+        return (self.get_path(node), new_inst)
 
 
 class InstanceList:
@@ -261,17 +250,6 @@ class InstanceList:
 
         return self.__obj.get_selection().get_selected()
 
-    # def __enable_dnd(self):
-    #     """Enable dg-n-drop"""
-
-    #     self.__obj.enable_model_drag_dest(
-    #         [("text/plain", 0, 0)],
-    #         Gdk.DragAction.DEFAULT | Gdk.DragAction.MOVE,
-    #     )
-    #     self.__obj.connect(
-    #         "drag-data-received", self.__drag_data_received_data
-    #     )
-
     # def __drag_data_received_data(
     #     self, treeview, _context, xpos, ypos, selection, _info, _etime
     # ):
@@ -345,15 +323,6 @@ class InstanceList:
         """Build the table, adding the columns"""
 
         column = EditableColumn(
-            "Block Instance", self.instance_inst_changed, InstCol.INST
-        )
-        column.set_sort_column_id(InstCol.INST)
-        column.set_min_width(200)
-        column.set_resizable(True)
-        self.__obj.append_column(column)
-        self.__col = column
-
-        column = EditableColumn(
             "Block Name",
             self.instance_id_changed,
             InstCol.ID,
@@ -362,6 +331,15 @@ class InstanceList:
         column.set_min_width(150)
         column.set_resizable(True)
         self.__obj.append_column(column)
+
+        column = EditableColumn(
+            "Block Instance", self.instance_inst_changed, InstCol.INST
+        )
+        column.set_sort_column_id(InstCol.INST)
+        column.set_min_width(200)
+        column.set_resizable(True)
+        self.__obj.append_column(column)
+        self.__col = column
 
         column = EditableColumn(
             "Address base", self.instance_base_changed, InstCol.BASE, True
@@ -385,7 +363,6 @@ class InstanceList:
         column.set_sort_column_id(InstCol.HDL)
         column.set_resizable(True)
         self.__obj.append_column(column)
-
 
     def instance_id_changed(self, _cell, _path, _new_text, _col):
         """

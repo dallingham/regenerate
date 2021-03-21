@@ -69,7 +69,9 @@ class BlockTab:
         self.blk_cont = None
         self.disable_modified = True
 
-        self.block_obj = BlockSelectList(select_list, self.blk_selection_changed)
+        self.block_obj = BlockSelectList(
+            select_list, self.blk_selection_changed
+        )
 
         self.block_model = BlockSelectModel()
         self.block_obj.set_model(self.block_model)
@@ -196,11 +198,9 @@ class BlockTab:
     def build_add_regset_menu(self):
         if self.blk_cont:
             self.reg_menu = Gtk.Menu()
-            for regset in self.blk_cont.block.regset_insts:
-                menu_item = Gtk.MenuItem(regset.set_name)
-                menu_item.connect(
-                    "activate", self.menu_selected, regset.set_name
-                )
+            for regset in self.project.regsets:
+                menu_item = Gtk.MenuItem(regset)
+                menu_item.connect("activate", self.menu_selected, regset)
                 menu_item.show()
                 self.reg_menu.append(menu_item)
             self.block_reg_add.set_popup(self.reg_menu)
@@ -224,7 +224,11 @@ class BlockTab:
         new_name = self.find_name_inst_name(regset)
 
         reginst = RegisterInst(rset=regset, inst=new_name)
+        reg_cont = self.project.regsets[new_name]
+
         self.blk_cont.block.regset_insts.append(reginst)
+        self.blk_cont.block.regsets[new_name] = reg_cont
+
         self.regmodel.append(
             row=(
                 reginst.set_name,
@@ -399,8 +403,7 @@ class BlockDoc:
     def remove_pages(self):
         page_count = self.notebook.get_n_pages()
         for page in range(0, page_count):
-            self.notebook.remove_page(page_count - page - 1)
-        page_count = self.notebook.get_n_pages()
+            self.notebook.remove_page(0)
 
     def add_page(self, name, data):
         paned = Gtk.VPaned()

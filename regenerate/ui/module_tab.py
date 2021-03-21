@@ -553,7 +553,7 @@ class ProjectDoc:
     def remove_pages(self):
         page_count = self.notebook.get_n_pages()
         for page in range(0, page_count):
-            self.notebook.remove_page(page)
+            self.notebook.remove_page(0)
 
     def preview_enable(self):
         """Enables the preview window"""

@@ -44,10 +44,9 @@ class Build(BaseWindow):
     as to what should be built.
     """
 
-    def __init__(self, project, dbmap, parent):
+    def __init__(self, project):
         super().__init__()
 
-        self.__dbmap = dbmap
         self.__prj = project
         self.__modlist = []
 
@@ -56,7 +55,7 @@ class Build(BaseWindow):
             base_path = os.path.splitext(os.path.basename(item))
             self.__base2path[base_path[0]] = item
 
-        self.__build_interface(parent)
+        self.__build_interface(None)
         self.__build_export_maps()
         self.__populate()
 
@@ -121,7 +120,7 @@ class Build(BaseWindow):
         local_dest = os.path.join(os.path.dirname(self.__prj.path), dest)
 
         register_set = self.__prj.get_register_set()
-        mod = file_needs_rebuilt(local_dest, self.__dbmap, register_set)
+        mod = file_needs_rebuilt(local_dest, register_set)
         self.__modlist.append(mod)
         (fmt, cls, _) = self.__optmap[option]
         self.__model.append(row=[mod, "<project>", fmt, dest, cls, None, 2])
@@ -138,7 +137,7 @@ class Build(BaseWindow):
         (base, _) = base_and_modtime(dbase_full_path)
         local_dest = os.path.join(os.path.dirname(self.__prj.path), dest)
 
-        mod = file_needs_rebuilt(local_dest, self.__dbmap, [dbase_full_path])
+        mod = file_needs_rebuilt(local_dest, [dbase_full_path])
         self.__modlist.append(mod)
         (fmt, cls, _) = self.__optmap[option]
         dbase = self.__dbmap[base][DbMap.DBASE].db
@@ -283,24 +282,28 @@ class Build(BaseWindow):
             writer_class = item[BuildCol.CLASS]
             dbase = item[BuildCol.DBASE]
             rtype = item[BuildCol.TYPE]
+            print(item[BuildCol.DEST])
+
             dest = os.path.abspath(
                 os.path.join(
                     os.path.dirname(self.__prj.path), item[BuildCol.DEST]
                 )
             )
 
+            print(">>>", dest)
+
             try:
                 if rtype == 0:
                     gen = writer_class(self.__prj, dbase)
                 elif rtype == 1:
                     db_list = [
-                        i[DbMap.DBASE].db for i in self.__dbmap.values()
+                        cont.regset for cont in self.__prj.regsets.values()
                     ]
                     grp = item[BuildCol.BASE].split()[0]
                     gen = writer_class(self.__prj, grp, db_list)
                 else:
                     db_list = [
-                        i[DbMap.DBASE].db for i in self.__dbmap.values()
+                        cont.regset for cont in self.__prj.regsets.values()
                     ]
                     gen = writer_class(self.__prj, db_list)
                 gen.write(dest)
@@ -403,7 +406,7 @@ def base_and_modtime(dbase_full_path):
         return (base, 0)
 
 
-def file_needs_rebuilt(local_dest, dbmap, db_paths):
+def file_needs_rebuilt(local_dest, db_paths):
     """
     Returns True if the associated database has been modified since the
     local_dest file has been last modified. If the destination file does
@@ -418,7 +421,7 @@ def file_needs_rebuilt(local_dest, dbmap, db_paths):
         for full_path in db_paths:
             (base, db_file_mtime) = base_and_modtime(full_path)
             dest_mtime = os.path.getmtime(local_dest)
-            if db_file_mtime > dest_mtime or dbmap[base][DbMap.MODIFIED]:
+            if db_file_mtime > dest_mtime or self.__prj.blocks[base].modified:
                 mod = True
     return mod
 

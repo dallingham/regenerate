@@ -21,14 +21,9 @@
 Project model and list
 """
 
-import os
-from pathlib import Path
-
-from gi.repository import Gtk, Gdk, GdkPixbuf, Pango
-from regenerate.settings.paths import INSTALL_PATH
+from gi.repository import Gtk, Gdk
 from regenerate.ui.enums import SelectCol
-from regenerate.db import RegisterDb
-from regenerate.db.containers import RegSetContainer
+from regenerate.db.register_db import RegSetContainer
 
 
 class ProjectModel(Gtk.ListStore):
@@ -45,15 +40,11 @@ class ProjectModel(Gtk.ListStore):
 
     def set_markup(self, node, modified):
         """Sets the icon if the project has been modified"""
-        return
-
         if modified:
             icon = Gtk.STOCK_EDIT
         else:
             icon = None
         self.set_value(node, SelectCol.ICON, icon)
-
-    #        self.set_value(node, SelectCol.MODIFIED, modified)
 
     def is_not_saved(self):
         """True if the project is not saved"""

@@ -33,42 +33,38 @@ from gi.repository import Gtk, GdkPixbuf, Gdk
 from regenerate import PROGRAM_VERSION, PROGRAM_NAME
 from regenerate.db import (
     RegisterDb,
-    GroupData,
     RegProject,
     LOGGER,
     TYPES,
     remove_default_handler,
     ResetType,
-    ShareType,
     REG_EXT,
     PRJ_EXT,
     OLD_PRJ_EXT,
 )
 from regenerate.extras.regutils import duplicate_register
-from regenerate.extras.remap import REMAP_NAME
 from regenerate.importers import IMPORTERS
 from regenerate.settings import ini
 from regenerate.settings.paths import GLADE_TOP, INSTALL_PATH
 from regenerate.ui.addr_edit import AddrMapEdit
 from regenerate.ui.addrmap_list import AddrMapList
 from regenerate.ui.base_window import BaseWindow
-from regenerate.ui.bit_list import BitModel, BitList
+from regenerate.ui.bit_list import BitModel
 from regenerate.ui.build import Build
-from regenerate.ui.enums import InstCol
 from regenerate.ui.error_dialogs import ErrorMsg, WarnMsg, Question
 from regenerate.ui.help_window import HelpWindow
-from regenerate.ui.instance_list import InstMdl, InstanceList
-from regenerate.ui.module_tab import ProjectTabs
 from regenerate.ui.param_overrides import OverridesList
 from regenerate.ui.parameter_list import ParameterList
 from regenerate.ui.preferences import Preferences
 from regenerate.ui.prj_param_list import PrjParameterList
 
-from regenerate.ui.block import BlockTab
-from regenerate.ui.register_list import RegisterModel
+from regenerate.ui.module_tab import ProjectTabs
+from regenerate.ui.block_tab import BlockTab
+from regenerate.ui.top_level_tab import TopLevelTab
+from regenerate.ui.register_tab import RegSetTab
+
 from regenerate.ui.status_logger import StatusHandler
 from regenerate.ui.summary_window import SummaryWindow
-from regenerate.ui.register_tab import RegSetTab
 
 
 TYPE_ENB = {}
@@ -144,9 +140,10 @@ class MainWindow(BaseWindow):
         self.setup_project()
         self.setup_recent_menu()
 
-        self.instance_obj = InstanceList(
-            self.find_obj("instances"),
+        self.top_level_tab = TopLevelTab(
+            self.find_obj,
             self.check_subsystem_addresses,
+            self.project_modified,
         )
 
         self.restore_position_and_size()
@@ -416,25 +413,16 @@ class MainWindow(BaseWindow):
 
     def on_build_action_activate(self, obj):
 
-        Build(self.prj, dbmap, self.top_window)
+        Build(self.prj)
 
     def on_user_preferences_activate(self, _obj):
         Preferences(self.top_window)
 
     def on_delete_instance_clicked(self, _obj):
-        """
-        Called with the remove button is clicked
-        """
-        selected = self.instance_obj.get_selected_instance()
-        if selected and selected[1]:
-            grp = selected[0].get_value(selected[1], InstCol.OBJ)
-            self.instance_model.remove(selected[1])
-            self.project_modified(True)
-            if isinstance(grp, GroupData):
-                self.prj.remove_group_from_grouping_list(grp)
+        self.top_level_tab.delete_blkinst()
 
     def on_add_instance_clicked(self, _obj):
-        self.instance_obj.new_instance()
+        self.top_level_tab.blkinst_list.new_instance()
         self.project_modified(True)
 
     def build_import_menu(self):
@@ -455,7 +443,7 @@ class MainWindow(BaseWindow):
         menu.set_submenu(submenu)
 
     def on_main_notebook_switch_page(self, _obj, _page, _page_num):
-        pass
+        self.block_tab.build_add_regset_menu()
 
     def on_notebook_switch_page(self, _obj, _page, page_num):
         if page_num == 1:
@@ -588,24 +576,7 @@ class MainWindow(BaseWindow):
         )
 
     def on_add_register_set_activate(self, _obj):
-        """
-        GTK callback that creates a file open selector using the
-        create_selector method, then runs the dialog, and calls the
-        open_xml routine with the result.
-        """
-        choose = self.create_open_selector(
-            "Open Register Database", "XML files", "*.xml"
-        )
-        choose.set_select_multiple(True)
-        response = choose.run()
-        if response == Gtk.ResponseType.OK:
-            for filename in choose.get_filenames():
-                self.open_xml(filename)
-                self.prj.add_register_set(filename)
-                self.set_project_modified()
-                self.infobar_reveal(False)
-            self.reginst_model.load_icons()
-        choose.destroy()
+        self.reginst_tab.add_register_set(_obj)
 
     def on_remove_register_set_activate(self, _obj):
         self.reginst_tab.on_remove_register_set_activate(_obj)
@@ -618,7 +589,7 @@ class MainWindow(BaseWindow):
         name = None
         choose = Gtk.FileChooserDialog(
             "New",
-            self.top_window,
+            None,  # self.top_window,
             Gtk.FileChooserAction.SAVE,
             (
                 Gtk.STOCK_CANCEL,
@@ -651,7 +622,8 @@ class MainWindow(BaseWindow):
 
             self.prj = RegProject()
             self.prj.path = filename
-            self.initialize_project_address_maps()
+            #            self.initialize_project_address_maps()
+            self.top_level_tab.change_project(self.prj)
             self.prj.name = filename.stem
             self.clear()
             self.prj.save()
@@ -705,7 +677,8 @@ class MainWindow(BaseWindow):
         try:
             self.prj = RegProject(filename)
             self.project_tabs.change_db(self.prj)
-            self.initialize_project_address_maps()
+            self.top_level_tab.change_project(self.prj)
+        #            self.initialize_project_address_maps()
         except xml.parsers.expat.ExpatError as msg:
             ErrorMsg(
                 f"{filename} was not a valid project file",
@@ -744,59 +717,8 @@ class MainWindow(BaseWindow):
         self.loading_project = False
         self.skip_changes = False
 
-    def initialize_project_address_maps(self):
-        self.instance_model = InstMdl(self.prj)
-        self.instance_obj.set_model(self.instance_model)
-        self.instance_obj.set_project(self.prj)
-
     def on_new_register_set_activate(self, _obj):
-        """
-        Creates a new database, and initializes the interface.
-        """
-        name = self.get_new_filename()
-        if not name:
-            return
-        name = Path(name)
-
-        name = name.with_suffix(REG_EXT)
-
-        self.dbase = RegisterDb()
-        self.dbase.module_name = name.stem
-        self.dbase.set_name = name.stem
-
-        self.reg_model = RegisterModel()
-        mdl = self.reg_model.filter_new()
-        self.filter_manage.change_filter(mdl, True)
-        self.modelsort = Gtk.TreeModelSort(mdl)
-        self.reglist_obj.set_model(self.modelsort)
-
-        self.bit_model = BitModel()
-        self.bitfield_obj.set_model(self.bit_model)
-
-        self.dbmap[self.dbase.set_name] = self.dbase
-
-        self.active = DbaseStatus(
-            self.dbase,
-            str(name),
-            name.stem,
-            self.reg_model,
-            self.modelsort,
-            self.filter_manage.get_model(),
-            self.bit_model,
-        )
-
-        self.active.node = self.reginst_model.add_dbase(name, self.active)
-        self.reginst_obj.select(self.active.node)
-        self.redraw()
-
-        self.reginst_model.load_icons()
-        self.prj.add_register_set(name)
-
-        self.block_obj.set_project(self.prj)
-
-        self.module_notebook.set_sensitive(True)
-        self.set_project_modified()
-        self.clear_modified()
+        self.reginst_tab.new_register_set(_obj)
 
     def input_xml(self, name, load=True):
         old_skip = self.skip_changes
@@ -817,7 +739,6 @@ class MainWindow(BaseWindow):
                 self.top_window,
             )
 
-        self.reg_model = RegisterModel()
         mdl = self.reg_model.filter_new()
         self.filter_manage.change_filter(mdl, True)
         self.modelsort = Gtk.TreeModelSort(mdl)
@@ -893,9 +814,9 @@ class MainWindow(BaseWindow):
         Called with the save button is clicked (gtk callback). Saves the
         database.
         """
-        change_suffix = False
+        # change_suffix = False
 
-        self.instance_obj.get_groups()
+        # self.top_level_tab.blkinst_list.get_groups()
 
         current_path = Path(self.prj.path)
         backup_path = Path(f"{current_path}.bak")

@@ -27,8 +27,8 @@ from enum import IntEnum
 class InstCol(IntEnum):
     """Instance columns numbers for the InstanceList"""
 
-    INST = 0
-    ID = 1
+    ID = 0
+    INST = 1
     BASE = 2
     SORT = 3
     RPT = 4
@@ -115,7 +115,6 @@ class SelectCol(IntEnum):
 
     ICON = 0
     NAME = 1
-
 
 
 class RegCol(IntEnum):

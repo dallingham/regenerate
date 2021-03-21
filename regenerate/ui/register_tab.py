@@ -20,11 +20,14 @@
 import os
 
 from typing import Dict
+from pathlib import Path
+
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango
 from regenerate.settings.paths import INSTALL_PATH
-from regenerate.db import Register, BitField, LOGGER
+from regenerate.db import Register, BitField, LOGGER, RegisterDb
 from regenerate.db.register_db import RegSetContainer
 from regenerate.db.enums import ShareType, ResetType
+from regenerate.db.const import REG_EXT, OLD_REG_EXT
 from regenerate.ui.bit_list import BitModel, BitList
 from regenerate.ui.bitfield_editor import BitFieldEditor
 from regenerate.ui.enums import SelectCol, BitCol
@@ -32,7 +35,10 @@ from regenerate.ui.module_tab import ModuleTabs
 from regenerate.ui.reg_description import RegisterDescription
 from regenerate.ui.register_list import RegisterModel, RegisterList
 from regenerate.extras.remap import REMAP_NAME
-from regenerate.extras.regutils import calculate_next_address, duplicate_register
+from regenerate.extras.regutils import (
+    calculate_next_address,
+    duplicate_register,
+)
 from regenerate.ui.filter_mgr import FilterManager
 
 
@@ -61,6 +67,7 @@ class RegSetWidgets:
         self.bitfield_list = find_obj("bitfield_list")
         self.error_infobar_label = find_obj("error_infobar_label")
         self.error_infobar = find_obj("error_infobar")
+
 
 class RegSetStatus:
     """
@@ -226,7 +233,6 @@ class RegSetTab:
             self.set_modified,
         )
 
-        
         self.active = None
         self.active_name = ""
         self.project = None
@@ -249,6 +255,40 @@ class RegSetTab:
         self.db_selected_action.set_sensitive(value)
         self.widgets.reg_notebook.set_sensitive(value)
 
+    def new_regset(self, container, name):
+        icon = Gtk.STOCK_EDIT if container.modified else ""
+
+        node = self.reg_set_model.add_dbase(container)
+        self.reg_model = RegisterModel()
+        mdl = self.reg_model.filter_new()
+        self.filter_manage.change_filter(mdl, True)
+        self.modelsort = Gtk.TreeModelSort(mdl)
+        self.reglist_obj.set_model(self.modelsort)
+
+        for key in container.regset.get_keys():
+            register = container.regset.get_register(key)
+            self.reg_model.append_register(register)
+
+        bit_model = BitModel()
+
+        self.reg_description = RegisterDescription(
+            self.widgets.descript,
+            self.widgets.regset_preview,
+            self.register_description_callback,
+        )
+
+        status = RegSetStatus(
+            container,
+            self.reg_model,
+            self.modelsort,
+            self.filter_manage.get_model(),
+            bit_model,
+        )
+
+        self.name2status[name] = status
+        self.name2container[name] = container
+        return node
+
     def change_project(self, prj):
 
         self.project = prj
@@ -256,40 +296,7 @@ class RegSetTab:
         self.name2status = {}
         for container_name in self.project.regsets:
             container = self.project.regsets[container_name]
-
-            icon = Gtk.STOCK_EDIT if container.modified else ""
-
-            self.reg_set_model.add_dbase(container)
-
-            self.reg_model = RegisterModel()
-            mdl = self.reg_model.filter_new()
-            self.filter_manage.change_filter(mdl, True)
-            self.modelsort = Gtk.TreeModelSort(mdl)
-            self.reglist_obj.set_model(self.modelsort)
-
-            
-            for key in container.regset.get_keys():
-                register = container.regset.get_register(key)
-                self.reg_model.append_register(register)
-
-            bit_model = BitModel()
-
-            self.reg_description = RegisterDescription(
-                self.widgets.descript,
-                self.widgets.regset_preview,
-                self.register_description_callback,
-            )
-
-            status = RegSetStatus(
-                container,
-                self.reg_model,
-                self.modelsort,
-                self.filter_manage.get_model(),
-                bit_model
-            )
-
-            self.name2status[container_name] = status
-            self.name2container[container_name] = container
+            self.new_regset(container, container_name)
 
         self.update_display()
         self.reg_set_obj.select_path(0)
@@ -320,7 +327,6 @@ class RegSetTab:
         self.update_bit_count()
         self.set_description_warn_flag()
 
-
     def get_selected_register(self):
         return self.reglist_obj.get_selected_register()
 
@@ -348,7 +354,7 @@ class RegSetTab:
             self.reg_model = status.reg_model
             self.filter_manage.change_filter(status.modelfilter)
             self.modelsort = status.modelsort
-            
+
             # self.reg_description.set_database(self.active.db)
 
             status = self.name2status[self.active_name]
@@ -357,7 +363,7 @@ class RegSetTab:
 
             self.bit_model = status.bit_model
             self.bitfield_obj.set_model(self.bit_model)
-            
+
             text = "<b>%s - %s</b>" % (
                 self.active.regset.module_name,
                 self.active.regset.descriptive_title,
@@ -523,10 +529,10 @@ class RegSetTab:
                 register,
                 field,
                 self.set_field_modified,
-                None, #self.builder,
-                None, #self.top_window,
+                None,  # self.builder,
+                None,  # self.top_window,
             )
-                
+
     def update_register_addr(self, register, new_addr, new_length=0):
         dbase = self.active.regset
         dbase.delete_register(register)
@@ -562,7 +568,7 @@ class RegSetTab:
             if icon:
                 warn = True
         return warn
-        
+
     def update_bit_count(self):
         if self.active:
             text = "%d" % self.active.regset.total_bits()
@@ -646,7 +652,7 @@ class RegSetTab:
             return
         old_skip = self.skip_changes
         self.skip_changes = True
-        
+
         (store, node) = data
         base = store.get_value(node, SelectCol.NAME)
         store.remove(node)
@@ -669,7 +675,131 @@ class RegSetTab:
             ]
             block.block.regset_insts = new_reglist
 
-        
+    def new_register_set(self, _obj):
+        """
+        Creates a new database, and initializes the interface.
+        """
+        name = self.get_new_filename()
+        if not name:
+            return
+
+        name = Path(name).with_suffix(REG_EXT)
+
+        dbase = RegisterDb()
+        dbase.module_name = name.stem
+        dbase.set_name = name.stem
+        container = RegSetContainer()
+        container.filename = name
+        container.regset = dbase
+        container.modified = True
+
+        self.project.regsets[dbase.set_name] = container
+        node = self.new_regset(container, name.stem)
+        self.reg_set_obj.select(node)
+
+        # self.set_project_modified()
+        return
+
+    def get_new_filename(self):
+        """
+        Opens up a file selector, and returns the selected file. The
+        selected file is added to the recent manager.
+        """
+        name = None
+        choose = Gtk.FileChooserDialog(
+            "New",
+            None,
+            Gtk.FileChooserAction.SAVE,
+            (
+                Gtk.STOCK_CANCEL,
+                Gtk.ResponseType.CANCEL,
+                Gtk.STOCK_SAVE,
+                Gtk.ResponseType.OK,
+            ),
+        )
+        choose.set_current_folder(os.curdir)
+        choose.show()
+
+        response = choose.run()
+        if response == Gtk.ResponseType.OK:
+            name = choose.get_filename()
+        choose.destroy()
+        return name
+
+    def add_register_set(self, obj):
+        """
+        GTK callback that creates a file open selector using the
+        create_selector method, then runs the dialog, and calls the
+        open_xml routine with the result.
+        """
+        print([REG_EXT, OLD_REG_EXT])
+
+        choose = self.create_open_selector(
+            "Open Register Database",
+            "Register files",
+            [f"*{REG_EXT}", f"*{OLD_REG_EXT}"],
+        )
+        choose.set_select_multiple(True)
+        response = choose.run()
+        if response == Gtk.ResponseType.OK:
+            for filename in choose.get_filenames():
+
+                name = Path(filename)
+                dbase = RegisterDb(name)
+                container = RegSetContainer()
+                container.filename = name
+                container.regset = dbase
+                container.modified = True
+
+                self.project.regsets[dbase.set_name] = container
+                node = self.new_regset(container, name.stem)
+                self.reg_set_obj.select(node)
+                # self.set_project_modified()
+                # self.infobar_reveal(False)
+            # self.reginst_model.load_icons()
+        choose.destroy()
+
+    def create_open_selector(self, title, mime_name=None, mime_regex=None):
+        """
+        Creates a file save selector, using the mime type and regular
+        expression to control the selector.
+        """
+        return self.create_file_selector(
+            title,
+            mime_name,
+            mime_regex,
+            Gtk.FileChooserAction.OPEN,
+            Gtk.STOCK_OPEN,
+        )
+
+    def create_file_selector(self, title, name, mime_types, action, icon):
+        """
+        Creates a file save selector, using the mime type and regular
+        expression to control the selector.
+        """
+        choose = Gtk.FileChooserDialog(
+            title,
+            None,
+            action,
+            (
+                Gtk.STOCK_CANCEL,
+                Gtk.ResponseType.CANCEL,
+                icon,
+                Gtk.ResponseType.OK,
+            ),
+        )
+        choose.set_current_folder(os.curdir)
+        mime_filter = Gtk.FileFilter()
+        mime_filter.set_name(name)
+
+        for m_regex in mime_types:
+            mime_filter.add_pattern(m_regex)
+
+        choose.add_filter(mime_filter)
+        choose.show()
+        return choose
+
+
 def check_field(field):
     if field.description.strip() == "":
         return Gtk.STOCK_DIALOG_WARNING

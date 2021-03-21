@@ -840,6 +840,7 @@
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
+                            <property name="tooltip_text" translatable="yes">Add an existing register set to the project</property>
                             <signal name="clicked" handler="on_new_register_set_activate" swapped="no"/>
                             <child>
                               <object class="GtkImage">
@@ -862,6 +863,7 @@
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
+                            <property name="tooltip_text" translatable="yes">Create a new register set and add it to the project</property>
                             <signal name="clicked" handler="on_add_register_set_activate" swapped="no"/>
                             <child>
                               <object class="GtkImage">
@@ -884,6 +886,7 @@
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
+                            <property name="tooltip_text" translatable="yes">Remove the selected register set from the project</property>
                             <signal name="clicked" handler="on_remove_register_set_activate" swapped="no"/>
                             <child>
                               <object class="GtkImage">
@@ -2837,6 +2840,12 @@
                                 <child>
                                   <placeholder/>
                                 </child>
+                                <child>
+                                  <placeholder/>
+                                </child>
+                                <child>
+                                  <placeholder/>
+                                </child>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
@@ -3690,14 +3699,19 @@
                             <property name="can_focus">False</property>
                             <property name="layout_style">start</property>
                             <child>
-                              <object class="GtkButton" id="add_subsystem">
-                                <property name="label">gtk-add</property>
+                              <object class="GtkMenuButton" id="top_block_add">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
+                                <property name="focus_on_click">False</property>
                                 <property name="receives_default">True</property>
-                                <property name="tooltip_text" translatable="yes">Adds a block from the Blocks tab to the top level</property>
-                                <property name="use_stock">True</property>
-                                <signal name="clicked" handler="on_add_instance_clicked" swapped="no"/>
+                                <property name="use_popover">False</property>
+                                <child>
+                                  <object class="GtkLabel">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="label" translatable="yes">Add</property>
+                                  </object>
+                                </child>
                               </object>
                               <packing>
                                 <property name="expand">True</property>

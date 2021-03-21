@@ -120,6 +120,10 @@ class RegProject:
                 )
                 reg_container.save()
                 reg_container.modified = False
+            else:
+                print(
+                    f"Not saving register set {container_name} {str(reg_container.filename)}"
+                )
 
     def open(self, name: str) -> None:
         """Opens and reads a project file. The project could be in either
@@ -655,9 +659,9 @@ class RegProject:
                 token = key
             data[token] = self.__getattribute__(key)
 
+        #            os.path.relpath(fname.with_suffix(REG_EXT), self.path.parent)
         data["filelist"] = [
-            os.path.relpath(fname.with_suffix(REG_EXT), self.path.parent)
-            for fname in self._filelist
+            str(fname.with_suffix(REG_EXT)) for fname in self._filelist
         ]
 
         return data
@@ -674,7 +678,7 @@ class RegProject:
         self.access_map = data["access_map"]
         self.block_insts = data["block_insts"]
         self._filelist = []
-        
+
         for path in data["filelist"]:
             self._filelist.append(Path(path))
 
@@ -718,9 +722,9 @@ class RegProject:
             blk_inst_data = BlockInst()
             blk_inst_data.json_decode(blk_inst_data_json)
             self.block_insts.append(blk_inst_data)
-            
+
         self.blocks = {}
-        for key in data['blocks']:
+        for key in data["blocks"]:
             blk_data = BlockContainer()
-            blk_data.json_decode(data['blocks'][key])
+            blk_data.json_decode(data["blocks"][key])
             self.blocks[key] = blk_data

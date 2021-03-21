@@ -23,7 +23,7 @@ Provides the container database for a set of registers.
 from io import BytesIO as StringIO
 from pathlib import Path
 import re
-from typing import Union
+from typing import Union, Optional
 import json
 
 from .register import Register
@@ -33,6 +33,7 @@ from .reg_writer import RegWriter
 from .signals import Signals
 from .const import OLD_REG_EXT, REG_EXT
 from .containers import Container
+
 
 class RegisterDb:
     """
@@ -258,7 +259,7 @@ class RegisterDb:
             reg.json_decode(reg_json)
             self._registers[reg.uuid] = reg
 
-            
+
 class RegSetContainer(Container):
     def __init__(self):
         super().__init__()
@@ -275,7 +276,7 @@ class RegSetContainer(Container):
     def save(self):
         if self.regset:
             self._save_data(self.regset)
-            
+
     def json(self):
         return {
             "filename": str(self.filename),
@@ -288,4 +289,3 @@ class RegSetContainer(Container):
             new_data = json.loads(ifile.read())
             self.regset.json_decode(new_data)
         self.modified = False
-    
