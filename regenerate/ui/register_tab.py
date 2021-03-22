@@ -34,6 +34,7 @@ from regenerate.ui.enums import SelectCol, BitCol
 from regenerate.ui.module_tab import ModuleTabs
 from regenerate.ui.reg_description import RegisterDescription
 from regenerate.ui.register_list import RegisterModel, RegisterList
+from regenerate.ui.summary_window import SummaryWindow
 from regenerate.extras.remap import REMAP_NAME
 from regenerate.extras.regutils import (
     calculate_next_address,
@@ -67,6 +68,9 @@ class RegSetWidgets:
         self.bitfield_list = find_obj("bitfield_list")
         self.error_infobar_label = find_obj("error_infobar_label")
         self.error_infobar = find_obj("error_infobar")
+        self.summary_window = find_obj("summary_window")
+        self.summary_scroll = find_obj("summary_scroll")
+        self.summary_button = find_obj("summary_button")
 
 
 class RegSetStatus:
@@ -129,7 +133,7 @@ class RegSetModel(Gtk.ListStore):
         """Add the the database to the model"""
 
         base = regset.filename.stem
-        if modified:
+        if modified or regset.modified:
             node = self.append(row=[Gtk.STOCK_EDIT, base])
         else:
             node = self.append(row=["", base])
@@ -183,6 +187,7 @@ class RegSetList:
     def select(self, node):
         """Select the specified row"""
 
+        self.notebook.set_sensitive(True)
         selection = self.__obj.get_selection()
         if node and selection:
             selection.select_iter(node)
@@ -256,7 +261,6 @@ class RegSetTab:
         self.widgets.reg_notebook.set_sensitive(value)
 
     def new_regset(self, container, name):
-        icon = Gtk.STOCK_EDIT if container.modified else ""
 
         node = self.reg_set_model.add_dbase(container)
         self.reg_model = RegisterModel()
@@ -798,6 +802,14 @@ class RegSetTab:
         choose.add_filter(mime_filter)
         choose.show()
         return choose
+
+    def show_summary(self):
+        reg = self.get_selected_register()
+
+        if reg:
+            SummaryWindow(
+                self.widgets, reg, self.active.regset.set_name, self.project
+            )
 
 
 def check_field(field):

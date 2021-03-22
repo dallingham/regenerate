@@ -35,6 +35,9 @@ class PreviewEditor:
 
         self.__webkit = HtmlDisplay()
         self.__container = webkit_container
+        child = self.__container.get_child()
+        if child:
+            self.__container.remove(child)
         self.__container.add(self.__webkit)
         self.__container.hide()
         self.__text_buffer = text_buffer

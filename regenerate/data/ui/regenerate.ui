@@ -2,6 +2,12 @@
 <!-- Generated with glade 3.22.2 -->
 <interface>
   <requires lib="gtk+" version="3.12"/>
+  <object class="GtkButton">
+    <property name="label" translatable="yes">button</property>
+    <property name="visible">True</property>
+    <property name="can_focus">True</property>
+    <property name="receives_default">True</property>
+  </object>
   <object class="GtkAction" id="add_bit_action">
     <property name="label">_Add Bit Field</property>
     <property name="short_label">_Add</property>
@@ -689,42 +695,6 @@
               </packing>
             </child>
             <child>
-              <object class="GtkSeparatorToolItem" id="toolbutton5">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="homogeneous">True</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkToolButton" id="copy_btn">
-                <property name="related_action">duplicate_register_action</property>
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="has_tooltip">True</property>
-                <property name="tooltip_text" translatable="yes">Duplicates the selected register</property>
-                <property name="label" translatable="yes">Copy</property>
-                <property name="use_underline">True</property>
-                <property name="stock_id">gtk-copy</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="homogeneous">True</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkSeparatorToolItem" id="toolbutton7">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="homogeneous">True</property>
-              </packing>
-            </child>
-            <child>
               <object class="GtkToolButton" id="build">
                 <property name="related_action">build_action</property>
                 <property name="visible">True</property>
@@ -734,30 +704,6 @@
                 <property name="label" translatable="yes">Build</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-execute</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="homogeneous">True</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkSeparatorToolItem" id="toolbutton1">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="homogeneous">True</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkToolButton" id="Summary">
-                <property name="related_action">summary_action</property>
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Summary</property>
-                <property name="use_underline">True</property>
-                <property name="stock_id">gtk-file</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -1076,6 +1022,7 @@
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="receives_default">True</property>
+                                        <property name="tooltip_text" translatable="yes">Create a new register</property>
                                         <property name="use_stock">True</property>
                                       </object>
                                       <packing>
@@ -1086,17 +1033,50 @@
                                     </child>
                                     <child>
                                       <object class="GtkButton">
-                                        <property name="label">gtk-remove</property>
-                                        <property name="related_action">remove_register_action</property>
+                                        <property name="label">gtk-copy</property>
+                                        <property name="related_action">duplicate_register_action</property>
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="receives_default">True</property>
+                                        <property name="tooltip_text" translatable="yes">Make a copy of the selected register</property>
                                         <property name="use_stock">True</property>
                                       </object>
                                       <packing>
                                         <property name="expand">True</property>
                                         <property name="fill">True</property>
                                         <property name="position">1</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkButton">
+                                        <property name="label" translatable="yes">Preview</property>
+                                        <property name="use_action_appearance">False</property>
+                                        <property name="related_action">summary_action</property>
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="receives_default">True</property>
+                                        <property name="tooltip_text" translatable="yes">View the selected register's summary page</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">True</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">2</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkButton">
+                                        <property name="label">gtk-remove</property>
+                                        <property name="related_action">remove_register_action</property>
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="receives_default">True</property>
+                                        <property name="tooltip_text" translatable="yes">Remove the selected register</property>
+                                        <property name="use_stock">True</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">True</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">3</property>
                                       </packing>
                                     </child>
                                   </object>
@@ -2846,6 +2826,9 @@
                                 <child>
                                   <placeholder/>
                                 </child>
+                                <child>
+                                  <placeholder/>
+                                </child>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
@@ -3062,6 +3045,7 @@
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
+                            <property name="tooltip_text" translatable="yes">Create a new block</property>
                             <child>
                               <object class="GtkImage">
                                 <property name="visible">True</property>
@@ -3081,6 +3065,7 @@
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
+                            <property name="tooltip_text" translatable="yes">Import an existing block</property>
                             <child>
                               <object class="GtkImage">
                                 <property name="visible">True</property>
@@ -3100,6 +3085,7 @@
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
+                            <property name="tooltip_text" translatable="yes">Remove the selected block</property>
                             <child>
                               <object class="GtkImage">
                                 <property name="visible">True</property>
@@ -3152,6 +3138,7 @@
                                 <property name="can_focus">True</property>
                                 <property name="focus_on_click">False</property>
                                 <property name="receives_default">True</property>
+                                <property name="tooltip_text" translatable="yes">Select a register set to add the the block</property>
                                 <property name="use_popover">False</property>
                                 <child>
                                   <object class="GtkLabel">
@@ -3173,6 +3160,7 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
+                                <property name="tooltip_text" translatable="yes">Remove the selected register set from the block</property>
                                 <property name="use_stock">True</property>
                               </object>
                               <packing>

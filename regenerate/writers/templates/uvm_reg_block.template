@@ -42,6 +42,7 @@ package {{project.short_name|lower}}_reg_pkg;
 {% endfor %}
    };
 
+// {{dblist}}
 
 {% for db in dblist %}
 

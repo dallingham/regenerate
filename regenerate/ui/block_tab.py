@@ -31,6 +31,7 @@ from regenerate.ui.columns import ReadOnlyColumn, EditableColumn
 from regenerate.ui.preview_editor import PreviewEditor
 from regenerate.ui.module_tab import PageInfo
 from regenerate.ui.spell import Spell
+from regenerate.ui.utils import clean_format_if_needed
 from regenerate.ui.module_tab import (
     ModuleText,
     ModuleWord,
@@ -155,7 +156,7 @@ class BlockTab:
     def offset_changed(self, _cell, path, new_text, col):
         try:
             reg_name = self.regmodel[int(path)][0]
-            self.regmodel[int(path)][col] = f"0x{int(new_text,0):04x}"
+            self.regmodel[int(path)][col] = f"0x{int(new_text,0):08x}"
             self.blk_cont.modified = True
             for rset in self.blk_cont.block.regset_insts:
                 if rset.inst == reg_name:
@@ -233,7 +234,7 @@ class BlockTab:
             row=(
                 reginst.set_name,
                 reginst.inst,
-                f"0x{reginst.offset:04x}",
+                f"0x{reginst.offset:08x}",
                 f"{reginst.repeat}",
                 reginst.hdl,
             )
@@ -268,7 +269,7 @@ class BlockTab:
                 row=(
                     regset.set_name,
                     regset.inst,
-                    f"0x{regset.offset:04x}",
+                    f"0x{regset.offset:08x}",
                     f"{regset.repeat}",
                     regset.hdl,
                 )
@@ -454,9 +455,10 @@ class BlockDoc:
             obj.get_start_iter(), obj.get_end_iter(), False
         )
         info = self.name_2_textview.get(self.notebook.get_current_page())
-        self.blk_cont.block.doc_pages.update_page(info.name, new_text)
-        self.blk_cont.modified = True
-        self.callback()
+        if info:
+            self.blk_cont.block.doc_pages.update_page(info.name, new_text)
+            self.blk_cont.modified = True
+            self.callback()
 
     def on_key_press_event(self, obj, event):
         """Look for the F12 key"""

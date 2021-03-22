@@ -282,7 +282,7 @@ class BitField(NameBase):
             "description": self.description,
             "input_signal": self._input_signal,
             "output_signal": self._output_signal,
-            "reset_value": self._reset_value,
+            "reset_value": f"{self._reset_value}",
             "control_signal": self.control_signal,
             "field_type": self.field_type,
             "lsb": self.lsb,
@@ -312,7 +312,7 @@ class BitField(NameBase):
         self.output_has_side_effect = data["output_has_side_effect"]
         self.output_is_static = data["output_is_static"]
 
-        self._reset_value = data["reset_value"]
+        self._reset_value = int(data["reset_value"], 0)
         self.reset_input = data["reset_input"]
         self.reset_parameter = data["reset_parameter"]
         self.reset_type = data["reset_type"]

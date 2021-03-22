@@ -64,7 +64,6 @@ from regenerate.ui.top_level_tab import TopLevelTab
 from regenerate.ui.register_tab import RegSetTab
 
 from regenerate.ui.status_logger import StatusHandler
-from regenerate.ui.summary_window import SummaryWindow
 
 
 TYPE_ENB = {}
@@ -117,7 +116,6 @@ class MainWindow(BaseWindow):
         self.loading_project = False
         self.active = None
         self.dbase = None
-        #        self.reg_model = None
         self.bit_model = None
         self.modelsort = None
         self.instance_model = None
@@ -133,7 +131,6 @@ class MainWindow(BaseWindow):
 
         self.top_notebook = self.find_obj("main_notebook")
         self.top_notebook.set_current_page(2)
-        self.module_notebook = self.find_obj("module_notebook")
         self.prj_infobar = self.find_obj("register_infobar")
         self.prj_infobar_label = self.find_obj("register_infobar_label")
 
@@ -260,11 +257,14 @@ class MainWindow(BaseWindow):
         if map_name is None:
             return
 
-        current = self.prj.get_address_map_groups(map_name)
+        current = self.prj.address_maps[map_name].blocks
 
         new_list = [
-            (grp, grp.name in current) for grp in self.prj.get_grouping_list()
+            (blk_inst, blk_inst.inst_name in current)
+            for blk_inst in self.prj.block_insts
         ]
+
+        print(new_list)
 
         dialog = AddrMapEdit(
             map_name,
@@ -366,7 +366,6 @@ class MainWindow(BaseWindow):
         ]
         db_acn = ["add_register_action", "remove_set_action", "import_action"]
         fld_acn = ["remove_bit_action", "edit_bit_action"]
-        file_acn = ["revert_action"]
 
         prj_acn.append("preview_action")
 
@@ -374,8 +373,6 @@ class MainWindow(BaseWindow):
         self.reg_selected = self.build_group("reg_selected", reg_acn)
         self.db_selected = self.build_group("database_selected", db_acn)
         self.field_selected = self.build_group("field_selected", fld_acn)
-
-    #        self.file_modified = self.build_group("file_modified", file_acn)
 
     def on_filter_icon_press(self, obj, icon, event):
         if icon == Gtk.EntryIconPosition.SECONDARY:
@@ -406,10 +403,7 @@ class MainWindow(BaseWindow):
 
     def on_summary_action_activate(self, _obj):
         """Displays the summary window"""
-        reg = self.reginst_tab.get_selected_register()
-
-        if reg:
-            SummaryWindow(self.builder, reg, self.active.name, self.prj)
+        self.reginst_tab.show_summary()
 
     def on_build_action_activate(self, obj):
 
@@ -472,20 +466,18 @@ class MainWindow(BaseWindow):
         value is set, and the status bar is updated with an appropriate
         message.
         """
-        if self.active and not self.active.modified and not self.skip_changes:
-            self.active.modified = True
-            # self.reginst_model.set_markup(self.active.node, True)
-            # self.file_modified.set_sensitive(True)
+        ...
+        # if self.active and not self.active.modified and not self.skip_changes:
+        #     self.active.modified = True
+        #     self.file_modified.set_sensitive(True)
 
     def clear_modified(self, prj=None):
         """
         Clears the modified tag in the status bar.
         """
         self.modified = False
-        if prj is None:
-            prj = self.active
-        else:
-            self.reginst_model.set_markup(prj.node, False)
+        # if prj is None:
+        #     prj = self.active
 
     def on_no_sharing_toggled(self, obj):
         self.reginst_tab.on_no_sharing_toggled(obj)
@@ -622,18 +614,13 @@ class MainWindow(BaseWindow):
 
             self.prj = RegProject()
             self.prj.path = filename
-            #            self.initialize_project_address_maps()
             self.top_level_tab.change_project(self.prj)
             self.prj.name = filename.stem
             self.clear()
             self.prj.save()
 
             self.block_tab.clear_flags()
-            self.prj_infobar_label.set_text(
-                "Add a register set to the project by selecting from the File menu"
-            )
 
-            self.infobar_reveal(True)
             self.project_modified(False)
             if self.recent_manager:
                 self.recent_manager.add_item(f"file:///{str(filename)}")
@@ -783,22 +770,16 @@ class MainWindow(BaseWindow):
                     self.top_window,
                 )
 
-            self.active = DbaseStatus(
-                self.dbase,
-                name,
-                str(path.stem),
-                self.reg_model,
-                self.modelsort,
-                self.filter_manage.get_model(),
-                self.bit_model,
-            )
+            # self.active = DbaseStatus(
+            #     self.dbase,
+            #     name,
+            #     str(path.stem),
+            #     self.reg_model,
+            #     self.modelsort,
+            #     self.filter_manage.get_model(),
+            #     self.bit_model,
+            # )
 
-            self.active.node = self.reginst_model.add_dbase(
-                name, self.active, converted
-            )
-            if load:
-                self.reginst_obj.select(self.active.node)
-                self.module_notebook.set_sensitive(True)
         self.project_modified(True)
 
     def load_database(self, filename):
@@ -915,7 +896,6 @@ class MainWindow(BaseWindow):
         Called when the quit button is clicked.  Checks to see if the
         data needs to be saved first.
         """
-        #            or self.reginst_model.is_not_saved()
         if self.modified or (self.prj and self.prj.modified):
 
             dialog = Question(

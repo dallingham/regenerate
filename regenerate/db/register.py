@@ -462,7 +462,7 @@ class Register(NameBase):
             "dimension": self.dimension,
             "parameters": self._parameter_list,
             "token": self._token,
-            "address": self.address,
+            "address": f"{self.address}",
             "flags": self.flags,
             "ram_size": self.ram_size,
             "share": self.share,
@@ -481,7 +481,7 @@ class Register(NameBase):
             self._parameter_list.append(ParameterData[param_json])
 
         self._token = data["token"]
-        self.address = data["address"]
+        self.address = int(data["address"], 0)
 
         self.flags = RegisterFlags()
         self.flags.json_decode(data["flags"])

@@ -21,9 +21,13 @@ Provides the Address List interface
 """
 
 from gi.repository import Gtk
-from regenerate.db import LOGGER
-from regenerate.db import AddrMapData
-from regenerate.ui.columns import EditableColumn, ToggleColumn, ComboMapColumn
+from regenerate.db import LOGGER, AddressMap
+from regenerate.ui.columns import (
+    EditableColumn,
+    ToggleColumn,
+    ComboMapColumn,
+    ReadOnlyColumn,
+)
 from regenerate.ui.enums import AddrCol
 
 _BITS8 = "8 bits"
@@ -54,14 +58,14 @@ class AddrMapMdl(Gtk.ListStore):
     """
 
     def __init__(self):
-        super().__init__(str, str, bool, bool, str, object)
+        super().__init__(str, str, str, str, object)
 
     def new_instance(self):
         """
         Adds a new instance to the model. It is not added to the database until
         either the change_id or change_base is called.
         """
-        new_obj = AddrMapData("new_map", 0, 8, False, False)
+        new_obj = AddressMap("new_map", 0, 8, False, False)
         node = self.append(None, row=get_row_data(new_obj))
         return self.get_path(node)
 
@@ -164,30 +168,6 @@ class AddrMapList:
         obj.width = width
         self._callback()
 
-    def _fixed_changed(self, _cell, path, _source):
-        """
-        Called with the modified toggle is changed. Toggles the value in
-        the internal list.
-        """
-        obj = self.get_obj(path)
-        fixed = self._model[path][AddrCol.FIXED]
-
-        obj.fixed = not fixed
-        self._model[path][AddrCol.FIXED] = not fixed
-        self._callback()
-
-    def _uvm_changed(self, _cell, path, _source):
-        """
-        Called with the modified toggle is changed. Toggles the value in
-        the internal list.
-        """
-        obj = self.get_obj(path)
-        uvm = self._model[path][AddrCol.UVM]
-
-        obj.uvm = not uvm
-        self._model[path][AddrCol.UVM] = not uvm
-        self._callback()
-
     def _build_instance_table(self):
         """
         Builds the columns, adding them to the address map list.
@@ -207,7 +187,7 @@ class AddrMapList:
             tooltip="Base address in hex format",
         )
         column.set_sort_column_id(AddrCol.BASE)
-        column.set_min_width(150)
+        column.set_min_width(200)
         column.set_resizable(True)
         self._obj.append_column(column)
 
@@ -218,22 +198,9 @@ class AddrMapList:
         column.set_resizable(True)
         self._obj.append_column(column)
 
-        column = ToggleColumn(
-            "Fixed Address",
-            self._fixed_changed,
-            AddrCol.FIXED,
-            tooltip="Indicates if the address base is relocatable or fixed",
-        )
-        column.set_max_width(250)
-        column.set_resizable(True)
-        self._obj.append_column(column)
-
-        column = ToggleColumn(
-            "Exclude from UVM",
-            self._uvm_changed,
-            AddrCol.UVM,
-            tooltip="Indicates if the address should be excluded"
-            "from the UVM register package",
+        column = ReadOnlyColumn(
+            "Flags",
+            AddrCol.FLAGS,
         )
         column.set_max_width(250)
         column.set_resizable(True)
@@ -252,7 +219,7 @@ class AddrMapList:
         """
         Add the data to the list.
         """
-        obj = AddrMapData(base, addr, width, fixed, uvm)
+        obj = AddressMap(base, addr, width, fixed, uvm)
         self._model.append(row=get_row_data(obj))
 
     def get_selected(self):
@@ -292,7 +259,7 @@ class AddrMapList:
         data, and sets the first field to start editing.
         """
         name = self._create_new_map_name()
-        obj = AddrMapData(name, 0, 8, False, False)
+        obj = AddressMap(name, 0, 8, False, False)
         node = self._model.append(row=get_row_data(obj))
 
         path = self._model.get_path(node)
@@ -317,13 +284,21 @@ class AddrMapList:
         return self._model[row][AddrCol.OBJ]
 
 
+def get_flags(map_obj):
+    flag_str = []
+    if map_obj.fixed:
+        flag_str.append("fixed address")
+    if map_obj.uvm:
+        flag_str.append("exclude from UVM")
+    return ", ".join(flag_str)
+
+
 def get_row_data(map_obj):
     """Builds the data for the table row"""
     return (
         map_obj.name,
-        "0x{:04x}".format(map_obj.base),
-        map_obj.fixed,
-        map_obj.uvm,
+        "0x{:08x}".format(map_obj.base),
+        get_flags(map_obj),
         INT2SIZE[map_obj.width],
         map_obj,
     )

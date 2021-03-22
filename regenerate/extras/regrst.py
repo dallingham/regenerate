@@ -444,26 +444,31 @@ class RegisterRst:
                 ofile.write("\n")
 
                 for val in sorted(
-                    field.values, key=lambda x: int(int(x[0], 16))
+                    field.values,
+                    key=lambda x: x.value,
                 ):
-                    if val[1] and val[2]:
+                    if val.token and val.description:
                         ofile.write(
                             "        0x%x : %s\n            %s\n\n"
-                            % (int(val[0], 16), val[1], val[2])
+                            % (val.value, val.token, val.description)
                         )
-                    elif val[1]:
+                    elif val.token:
                         ofile.write(
                             "        0x%x : %s\n            %s\n\n"
                             % (
-                                int(val[0], 16),
-                                val[1],
+                                val.value,
+                                val.token,
                                 "*no description available*",
                             )
                         )
                     else:
                         ofile.write(
                             "        0x%x : %s\n            %s\n\n"
-                            % (int(val[0], 16), "*no token available*", val[2])
+                            % (
+                                val.value,
+                                "*no token available*",
+                                val.description,
+                            )
                         )
             last_index = field.lsb - 1
         if last_index >= 0:
@@ -508,10 +513,12 @@ class RegisterRst:
 
         for inst in instances:
             for x_map in x_addr_maps:
-                groups_in_addr_map = self._prj.get_address_map_groups(
+                groups_in_addr_map = self._prj.get_blocks_in_address_map(
                     x_map.name
                 )
-                if inst.group in groups_in_addr_map:
+                blk_names = [group.name for group in groups_in_addr_map]
+                print(">>", inst.group, blk_names)
+                if inst.group in blk_names:
                     addr_maps.add(x_map)
 
         if not addr_maps:

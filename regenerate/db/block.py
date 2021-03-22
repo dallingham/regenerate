@@ -33,6 +33,7 @@ from .name_base import NameBase
 from .containers import Container
 from .register_db import RegSetContainer
 
+
 class Block(NameBase):
     """Basic group information."""
 
@@ -85,7 +86,7 @@ class Block(NameBase):
         self.name = data["name"]
         self.uuid = data["uuid"]
         self.description = data["description"]
-        self.address_size = data["address_size"]
+        self.address_size = int(data["address_size"], 0)
         self.doc_pages = DocPages()
         self.doc_pages.json_decode(data["doc_pages"])
 
@@ -96,7 +97,7 @@ class Block(NameBase):
             self.regset_insts.append(ginst)
 
         self.regsets = {}
-        for key, item in data['regsets'].items():
+        for key, item in data["regsets"].items():
 
             rs_data = RegSetContainer()
             rs_data.json_decode(item)
@@ -106,12 +107,13 @@ class Block(NameBase):
         return {
             "name": self.name,
             "uuid": self.uuid,
-            "address_size": self.address_size,
+            "address_size": f"{self.address_size}",
             "doc_pages": self.doc_pages.json(),
             "description": self.description,
             "regset_insts": self.regset_insts,
             "regsets": self.regsets,
         }
+
 
 class BlockContainer(Container):
     def __init__(self):
@@ -142,4 +144,3 @@ class BlockContainer(Container):
             new_data = json.loads(ifile.read())
             self.block.json_decode(new_data)
         self.modified = False
-    

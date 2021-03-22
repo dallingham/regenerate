@@ -166,6 +166,8 @@ class Verilog(WriterBase):
             for reg in dbase.get_all_registers()
             if not (reg.flags.do_not_generate_code or reg.ram_size > 0)
         ]
+        print(self.__sorted_regs)
+
         self._used_types: Set[BitType] = set()
 
     def _byte_info(

@@ -22,10 +22,9 @@ Instance List and Model
 """
 
 import re
-from gi.repository import Gtk, Gdk, GObject
+from gi.repository import Gtk, GObject
 from regenerate.ui.columns import EditableColumn
-from regenerate.db import RegisterInst, GroupData, LOGGER
-from regenerate.db.block_inst import BlockInst
+from regenerate.db import RegisterInst, LOGGER
 from regenerate.ui.enums import InstCol
 
 
@@ -120,7 +119,7 @@ class InstMdl(Gtk.TreeStore):
         node = self.get_iter(path)
         try:
             self.set_value(node, InstCol.SORT, int(text, 0))
-            self.set_value(node, InstCol.BASE, "0x{:04x}".format(int(text, 0)))
+            self.set_value(node, InstCol.BASE, "0x{:08x}".format(int(text, 0)))
             self.callback()
         except AttributeError:
             LOGGER.warning('Illegal base address: "%s"', text)
@@ -412,7 +411,7 @@ def build_row_data(inst, name, offset, rpt, hdl, obj):
     row = (
         inst,
         name,
-        "0x{:04x}".format(offset),
+        "0x{:08x}".format(offset),
         offset,
         "{:d}".format(rpt),
         hdl,

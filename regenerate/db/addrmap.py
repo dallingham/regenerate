@@ -21,10 +21,10 @@
 Contains the data in the address map
 """
 
-from .json_base import JSONEncodable
+from typing import List, Union
 
 
-class AddrMapData(JSONEncodable):
+class AddressMap:
     """Address map data"""
 
     def __init__(
@@ -32,18 +32,46 @@ class AddrMapData(JSONEncodable):
         name: str = "",
         base: int = 0,
         width: int = 0,
-        fixed: int = 0,
-        uvm: int = 0,
+        fixed: bool = False,
+        uvm: bool = False,
     ):
         self.name: str = name
         self.base: int = base
         self.width: int = width
-        self.fixed: int = fixed
-        self.uvm: int = uvm
+        self._fixed: bool = fixed
+        self._uvm: bool = uvm
+        self.blocks: List[str] = []
+
+    @property
+    def fixed(self) -> bool:
+        return self._fixed
+
+    @fixed.setter
+    def fixed(self, val: Union[bool, int]) -> None:
+        self._fixed = bool(val)
+
+    @property
+    def uvm(self) -> bool:
+        return self._uvm
+
+    @uvm.setter
+    def uvm(self, val: Union[int, bool]) -> bool:
+        self._uvm = bool(val)
 
     def json_decode(self, data):
         self.name = data["name"]
-        self.base = data["base"]
+        self.base = int(data["base"], 0)
         self.width = data["width"]
         self.fixed = data["fixed"]
         self.uvm = data["uvm"]
+        self.blocks = data["block_insts"]
+
+    def json(self):
+        return {
+            "name": self.name,
+            "base": f"{self.base}",
+            "width": self.width,
+            "fixed": self.fixed,
+            "uvm": self.uvm,
+            "block_insts": self.blocks,
+        }

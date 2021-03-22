@@ -428,7 +428,11 @@ class RegParser:
         value are added to the field's value list.
         """
         bfval = BitValues()
-        bfval.value = int(self.__current_val)
+        try:
+            bfval.value = int(self.__current_val, 16)
+        except ValueError:
+            bfval.value = int(self.__current_val, 0)
+
         bfval.token = self.__current_token
         bfval.description = text
         self.__field.values.append(bfval)

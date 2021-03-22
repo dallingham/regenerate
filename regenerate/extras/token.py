@@ -53,27 +53,39 @@ def uvm_name(group_name, reg_name, set_name, index):
             index,
             reg_name.lower(),
         )
-    return "<top>.%s.%s.%s" % (group_name.lower(), set_name.lower(), reg_name.lower())
+    return "<top>.%s.%s.%s" % (
+        group_name.lower(),
+        set_name.lower(),
+        reg_name.lower(),
+    )
 
 
 def in_groups(name, project):
     groups = []
     if name and project:
-        for group in project.get_grouping_list():
-            for regset in [rs for rs in group.register_sets if rs.set == name]:
+        for group in project.block_insts:
+            block = project.blocks[group.block]
+
+            print(">", block)
+            print(">>", block.block)
+            print(">>>", block.block.regsets)
+
+            for regset in [
+                rs for rs in block.block.regset_insts if rs.set_name == name
+            ]:
                 fmt = DEFAULT_FORMAT
                 groups.append(
                     InstData(
-                        group.name,
-                        regset.inst,
-                        regset.set,
-                        group.base,
+                        block,
+                        group.inst_name,
+                        regset.set_name,
+                        group.address_base,
                         regset.offset,
                         regset.repeat,
                         regset.repeat_offset,
                         fmt,
                         group.repeat,
-                        group.repeat_offset,
+                        block.block.address_size,
                         regset.array,
                     )
                 )

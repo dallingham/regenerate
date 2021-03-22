@@ -30,7 +30,7 @@ import xml.sax.saxutils
 from .proj_reader import ProjectReader
 from .proj_writer_json import ProjectWriterJSON
 from .proj_reader_json import ProjectReaderJSON
-from .addrmap import AddrMapData
+from .addrmap import AddressMap
 from .group_data import GroupData
 from .textutils import clean_text
 from .logger import LOGGER
@@ -77,8 +77,7 @@ class RegProject:
         self._filelist: List[Path] = []
 
         self._parameters: List[PrjParameterData] = []
-        self._addr_map_grps = {}
-        self._addr_map_list = []
+        self.address_maps: Dict[str, AddressMap] = {}
 
         self.block_insts: List[BlockInst] = []
         self.blocks: Dict[str, BlockContainer] = {}
@@ -150,11 +149,12 @@ class RegProject:
 
     def set_new_order(self, new_order: List[int]) -> None:
         """Alters the order of the items in the files in the list."""
-        self._modified = True
-        htbl = {}
-        for i in self._filelist:
-            htbl[i.stem] = i
-        self._filelist = [htbl[i] for i in new_order]
+        ...
+        # self._modified = True
+        # htbl = {}
+        # for i in self._filelist:
+        #     htbl[i.stem] = i
+        # self._filelist = [htbl[i] for i in new_order]
 
     def append_register_set_to_list(self, name: Union[str, Path]):
         """Adds a register set"""
@@ -385,47 +385,45 @@ class RegProject:
         self._modified = True
         # self._groupings.remove(grp)
 
-    def get_address_maps(self) -> List[AddrMapData]:
+    def get_address_maps(self):
         """Returns a list of the existing address maps"""
-        return self._addr_map_list
+        return self.address_maps.values()
 
-    def get_address_map_groups(self, name: str) -> List[AddrMapData]:
+    def get_blocks_in_address_map(self, name: str):
         """Returns the address maps associated with the specified group."""
-        return self._addr_map_grps.get(name, [])
+        blocks = self.address_maps.get(name)
+        if blocks:
+            return [blocks]
+        else:
+            return self.regsets.keys()
 
-    def get_address_maps_used_by_group(self, name: str):
+    def get_address_maps_used_by_block(self, name: str):
         """Returns the address maps associated with the specified group."""
-        used_in_uvm = set({m.name for m in self._addr_map_list if m.uvm == 0})
+
+        used_in_uvm = set(
+            {m.name for m in self.address_maps.values() if m.uvm == 0}
+        )
 
         return [
             key
-            for key in self._addr_map_grps
-            if key in used_in_uvm and name in self._addr_map_grps[key]
+            for key in self.address_maps
+            if key in used_in_uvm
+            and name in self.address_maps[key].blocks.keys()
         ]
 
     def change_address_map_name(self, old_name: str, new_name: str) -> None:
         """Changes the name of an address map"""
-        for (i, addrmap) in enumerate(self._addr_map_list):
-            if addrmap.name != old_name:
-                continue
-            old_data = self._addr_map_list[i]
-            self._addr_map_list[i] = AddrMapData(
-                new_name,
-                old_data.base,
-                old_data.width,
-                old_data.fixed,
-                old_data.uvm,
-            )
-            self._addr_map_grps[new_name] = self._addr_map_grps[old_name]
-            del self._addr_map_grps[old_name]
-            self._modified = True
-            return
-        return
 
-    def add_address_map_group(self, name: str, group_name: str) -> bool:
+        self.address_maps[new_name] = self.address_maps[old_name]
+        del self.address_maps[old_name]
+        self._modified = True
+
+    def add_address_map_to_block(
+        self, name: str, block_inst_name: str
+    ) -> bool:
         """Adds an address map to a group if it does not already exist"""
-        if group_name not in self._addr_map_grps[name]:
-            self._addr_map_grps[name].append(group_name)
+        if block_inst_name not in self.address_maps[name].blocks:
+            self.address_maps[name].blocks.append(block_inst_name)
             return True
         return False
 
@@ -491,24 +489,13 @@ class RegProject:
         """Sets the specififed address map"""
 
         self._modified = True
-        for i, data in enumerate(self._addr_map_list):
-            if data.name == addr_map.name:
-                self._addr_map_list[i] = addr_map
-                return
-        self._addr_map_list.append(addr_map)
-        self._addr_map_grps[addr_map.name] = []
+        self.address_maps[addr_map.name] = addr_map
 
     def set_address_map(self, name, base, width, fixed, uvm):
         """Sets the specififed address map"""
-
         self._modified = True
-        new_data = AddrMapData(name, base, width, fixed, uvm)
-        for i, data in enumerate(self._addr_map_list):
-            if data.name == name:
-                self._addr_map_list[i] = new_data
-                return
-        self._addr_map_list.append(new_data)
-        self._addr_map_grps[name] = []
+        new_data = AddressMap(name, base, width, fixed, uvm)
+        self.address_maps[name] = new_data
 
     def remove_address_map(self, name):
         """Removes the address map"""
@@ -642,8 +629,6 @@ class RegProject:
             "company_name",
             "access_map",
             "_parameters",
-            "_addr_map_grps",
-            "_addr_map_list",
             "blocks",
             "block_insts",
             "_exports",
@@ -663,6 +648,7 @@ class RegProject:
         data["filelist"] = [
             str(fname.with_suffix(REG_EXT)) for fname in self._filelist
         ]
+        data["address_maps"] = self.address_maps
 
         return data
 
@@ -682,13 +668,11 @@ class RegProject:
         for path in data["filelist"]:
             self._filelist.append(Path(path))
 
-        self._addr_map_grps = data["addr_map_grps"]
-
-        self._addr_map_list = []
-        for addr_data_json in data["addr_map_list"]:
-            addr_data = AddrMapData()
+        self.address_maps = {}
+        for name, addr_data_json in data["address_maps"].items():
+            addr_data = AddressMap()
             addr_data.json_decode(addr_data_json)
-            self._addr_map_list.append(addr_data)
+            self.address_maps[name] = addr_data
 
         self._parameters = []
         for param_json in data["parameters"]:

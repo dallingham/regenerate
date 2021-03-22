@@ -58,7 +58,7 @@ class ProjectReader:
             parser.EndElementHandler = self.endElement
             parser.CharacterDataHandler = self.characters
             parser.ParseFile(ofile)
-        self._prj.modified = False
+        self._prj.modified = True
 
     def loads(self, data):
         """Loads the data from a text string"""
@@ -71,7 +71,7 @@ class ProjectReader:
         parser.EndElementHandler = self.endElement
         parser.CharacterDataHandler = self.characters
         parser.ParseFile(ofile)
-        self._prj.modified = False
+        self._prj.modified = True
 
     def startElement(self, tag, attrs):  # pylint: disable=invalid-name
         """
@@ -127,6 +127,7 @@ class ProjectReader:
 
     def start_group_export(self, attrs):
         """Called when an group_export tag is found"""
+        return
         dest = attrs["dest"]
         option = attrs["option"]
         self._prj.append_to_group_export_list(
@@ -146,8 +147,8 @@ class ProjectReader:
 
         self._current_blk_inst.inst_name = attrs["name"]
         self._current_blk_inst.block = attrs["name"]
-        self._current_blk_inst.start = int(attrs["start"], 16)
-        self._current_blk_inst.hdl_path = attrs.get("hdl", "")
+        self._current_blk_inst.address_base = int(attrs["start"], 16)
+
         self._current_blk_inst.repeat = int(attrs.get("repeat", "1"))
 
         if attrs["name"] not in self.blocks:
@@ -184,8 +185,8 @@ class ProjectReader:
         name = attrs["name"]
         base = int(attrs.get("base", 0), 16)
         width = int(attrs.get("width", 4))
-        fixed = int(attrs.get("fixed", 1))
-        uvm = int(attrs.get("no_uvm", 0))
+        fixed = bool(int(attrs.get("fixed", 1)))
+        uvm = bool(int(attrs.get("no_uvm", 0)))
         self._prj.set_address_map(name, base, width, fixed, uvm)
         self._current_map = attrs["name"]
         self._current_map_group = None
@@ -213,7 +214,10 @@ class ProjectReader:
         """
 
         self._current_map_group = attrs.get("name")
-        self._prj.add_address_map_group(
+
+        if self._current_map_group == "None":
+            return
+        self._prj.add_address_map_to_block(
             self._current_map, self._current_map_group
         )
 
@@ -267,12 +271,6 @@ class ProjectReader:
             filename = Path(counter.most_common(1)[0][0]) / f"{blk}{BLK_EXT}"
             block_dir = Path(self.path.parent).resolve()
             filename = block_dir / filename
-
-            # for rset in self.blocks[blk].register_sets:
-            #     full_reg_path = self.reg_map[rset.set_name].absolute()
-            #     self.blocks[blk].regname2path[rset.set_name] = str(
-            #         full_reg_path.with_suffix(REG_EXT)
-            #     )
 
             blk_container = BlockContainer()
             blk_container.filename = filename

@@ -290,7 +290,7 @@ class ModuleHex(ModuleValid):
 
         self.dbase = dbase
         if dbase:
-            val = f"0x{getattr(dbase, self.dbname):04x}"
+            val = f"0x{getattr(dbase, self.dbname):08x}"
             self.widget.set_text(val)
         else:
             self.widget.set_text("")

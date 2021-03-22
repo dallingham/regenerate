@@ -41,10 +41,9 @@ class AddrCol(IntEnum):
 
     NAME = 0
     BASE = 1
-    FIXED = 2
-    UVM = 3
-    WIDTH = 4
-    OBJ = 5
+    FLAGS = 2
+    WIDTH = 3
+    OBJ = 4
 
 
 class BitCol(IntEnum):

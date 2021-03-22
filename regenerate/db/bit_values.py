@@ -21,10 +21,8 @@
 Provides the bit values for a bit field
 """
 
-from .json_base import JSONEncodable
 
-
-class BitValues(JSONEncodable):
+class BitValues:
     """
     Provides the bit values for a field - roughly the equivalent
     to and enumerated type. This BitValue consists of:
@@ -42,6 +40,13 @@ class BitValues(JSONEncodable):
     def json_decode(self, data):
         """Converts the json data into a BitValue"""
 
-        self.value = data["value"]
+        self.value = int(data["value"], 0)
         self.token = data["token"]
         self.description = data["description"]
+
+    def json(self):
+        return {
+            "value": f"{self.value}",
+            "token": self.token,
+            "description": self.description,
+        }

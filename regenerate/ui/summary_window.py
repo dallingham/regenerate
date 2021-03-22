@@ -34,17 +34,17 @@ class SummaryWindow(BaseWindow):
     container = None
     button = None
 
-    def __init__(self, builder, reg, regset_name, project):
+    def __init__(self, widgets, reg, regset_name, project):
 
         super().__init__()
 
         if SummaryWindow.window is None:
-            SummaryWindow.window = builder.get_object("summary_window")
+            SummaryWindow.window = widgets.summary_window
             self.configure(SummaryWindow.window)
             SummaryWindow.wkit = HtmlDisplay()
-            SummaryWindow.container = builder.get_object("summary_scroll")
+            SummaryWindow.container = widgets.summary_scroll
             SummaryWindow.container.add(SummaryWindow.wkit)
-            SummaryWindow.button = builder.get_object("summary_button")
+            SummaryWindow.button = widgets.summary_button
             SummaryWindow.button.connect("clicked", self.hide)
             SummaryWindow.window.connect("destroy", self.destroy)
             SummaryWindow.window.connect("delete_event", self.delete)

@@ -54,7 +54,7 @@ class UVMRegBlockRegisters(WriterBase):
         supported by the package
         """
         super().__init__(project, None)
-        self.dblist = dblist
+        self.dblist = [dbase[1].regset for dbase in project.regsets.items()]
 
     def uvm_address_maps(self) -> List[AddrMapData]:
         "Return a list of all the address maps that are not excluded from UVM"

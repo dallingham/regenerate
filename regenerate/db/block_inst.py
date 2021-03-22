@@ -22,10 +22,8 @@ Holds the infomration for a group. This includes the name, base address,
 HDL path, the repeat count, repeat offset, and the title.
 """
 
-from .json_base import JSONEncodable
 
-
-class BlockInst(JSONEncodable):
+class BlockInst:
     """Basic block instance information."""
 
     def __init__(
@@ -48,17 +46,18 @@ class BlockInst(JSONEncodable):
     @property
     def regset_insts(self):
         import traceback
+
         traceback.stack_trace()
 
     @regset_insts.setter
     def regset_insts(self, foo):
         import traceback
+
         traceback.stack_trace()
-        
-        
+
     def __repr__(self):
-        return f'BlockInst({self.inst_name}, {self.block})'
-        
+        return f"BlockInst({self.inst_name}, {self.block})"
+
     def __hash__(self):
         "Return the ID as the hash for the instance"
 
@@ -82,10 +81,19 @@ class BlockInst(JSONEncodable):
         return True
 
     def json_decode(self, data) -> None:
-        """Compare for equality."""
         self.inst_name = data["inst_name"]
         self.block = data["block"]
-        self.address_base = data["address_base"]
+        self.address_base = int(data["address_base"], 0)
         self.hdl_path = data["hdl_path"]
         self.description = data["description"]
         self.repeat = data["repeat"]
+
+    def json(self):
+        return {
+            "inst_name": self.inst_name,
+            "block": self.block,
+            "address_base": f"{self.address_base}",
+            "hdl_path": self.hdl_path,
+            "description": self.description,
+            "repeat": self.repeat,
+        }

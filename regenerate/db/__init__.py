@@ -34,7 +34,7 @@ from .reg_writer_json import RegWriterJSON
 from .register_db import RegisterDb
 from .proj_reader import ProjectReader
 from .proj_writer import ProjectWriter
-from .addrmap import AddrMapData
+from .addrmap import AddressMap
 from .parammap import ParameterData, PrjParameterData
 from .enums import *
 from .logger import *
