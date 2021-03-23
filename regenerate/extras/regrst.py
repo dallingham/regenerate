@@ -507,11 +507,22 @@ class RegisterRst:
             ofile = StringIO()
             ret_str = True
 
-        x_addr_maps = self._prj.get_address_maps()
-        instances = in_groups(self._regset_name, self._prj)
-        addr_maps = set([])
 
-        for inst in instances:
+        all_addr_maps = self._prj.get_address_maps()
+        regset_blocks = self._prj.blocks_containing_regset(self._regset_name)
+
+        block_inst_list = []
+        for blk in regset_blocks:
+            block_inst_list += self._prj.instances_of_block(blk)
+
+        
+        blks_set_is_in = in_groups(self._regset_name, self._prj)
+        
+        addr_maps_regset_is_in = set([])
+
+        for inst in blks_set_is_in :
+            print(inst.group)
+            
             for x_map in x_addr_maps:
                 groups_in_addr_map = self._prj.get_blocks_in_address_map(
                     x_map.name
@@ -519,9 +530,10 @@ class RegisterRst:
                 blk_names = [group.name for group in groups_in_addr_map]
                 print(">>", inst.group, blk_names)
                 if inst.group in blk_names:
-                    addr_maps.add(x_map)
+                    addr_maps_regset_is_in.add(x_map)
 
-        if not addr_maps:
+        print("ADDR MAPS", addr_maps_regset_is_in)
+        if not addr_maps_regset_is_in:
             ofile.write(".. warning::\n")
             ofile.write("   :class: alert alert-warning\n\n")
             ofile.write(
@@ -531,11 +543,11 @@ class RegisterRst:
         elif in_groups(self._regset_name, self._prj):
             ofile.write(".. list-table::\n")
             ofile.write("   :header-rows: 1\n")
-            if len(addr_maps) == 1:
+            if len(addr_maps_regset_is_in) == 1:
                 ofile.write("   :widths: 50, 50\n")
-            elif len(addr_maps) == 2:
+            elif len(addr_maps_regset_is_in) == 2:
                 ofile.write("   :widths: 50, 25, 25\n")
-            elif len(addr_maps) == 3:
+            elif len(addr_maps_regset_is_in) == 3:
                 ofile.write("   :widths: 50, 16, 16, 17\n")
             if self._bootstrap:
                 ofile.write(
@@ -550,7 +562,7 @@ class RegisterRst:
                 if use_uvm:
                     ofile.write("    ")
                 ofile.write(" - ID\n")
-            for amap in addr_maps:
+            for amap in addr_maps_regset_is_in:
                 ofile.write("     - %s\n" % amap.name)
 
             for inst in in_groups(self._regset_name, self._prj):
@@ -568,7 +580,7 @@ class RegisterRst:
                                 inst,
                                 use_uvm,
                                 use_id,
-                                addr_maps,
+                                addr_maps_regset_is_in,
                                 grp_inst,
                                 -1,
                                 -1,
@@ -580,7 +592,7 @@ class RegisterRst:
                                     inst,
                                     use_uvm,
                                     use_id,
-                                    addr_maps,
+                                    addr_maps_regset_is_in,
                                     grp_inst,
                                     -1,
                                     i,
@@ -594,7 +606,7 @@ class RegisterRst:
                                     inst,
                                     use_uvm,
                                     use_id,
-                                    addr_maps,
+                                    addr_maps_regset_is_in,
                                     grp_inst,
                                     ginst,
                                     -1,
@@ -606,7 +618,7 @@ class RegisterRst:
                                         inst,
                                         use_uvm,
                                         use_id,
-                                        addr_maps,
+                                        addr_maps_regset_is_in,
                                         grp_inst,
                                         ginst,
                                         i,

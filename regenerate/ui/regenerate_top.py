@@ -264,8 +264,6 @@ class MainWindow(BaseWindow):
             for blk_inst in self.prj.block_insts
         ]
 
-        print(new_list)
-
         dialog = AddrMapEdit(
             map_name,
             new_list,

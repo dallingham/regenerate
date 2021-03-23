@@ -53,14 +53,11 @@ class TopLevelTab:
             grp = model.get_value(node, InstCol.OBJ)
             self.blkinst_model.remove(node)
             self.project_modified(True)
-            print(self.prj.block_insts)
             self.prj.block_insts = [
                 blkinst
                 for blkinst in self.prj.block_insts
                 if blkinst.inst_name != grp.inst_name
             ]
-            print(self.prj.block_insts)
-            # self.prj.remove_group_from_grouping_list(grp)
 
     def build_add_block_menu(self):
         self.blk_menu = Gtk.Menu()

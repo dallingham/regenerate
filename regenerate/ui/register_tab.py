@@ -736,8 +736,6 @@ class RegSetTab:
         create_selector method, then runs the dialog, and calls the
         open_xml routine with the result.
         """
-        print([REG_EXT, OLD_REG_EXT])
-
         choose = self.create_open_selector(
             "Open Register Database",
             "Register files",

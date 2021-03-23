@@ -619,6 +619,21 @@ class RegProject:
             new_list.append(new_name)
         self._filelist = new_list
 
+    def blocks_containing_regset(self, regset_name: str):
+        return [
+            self.blocks[blk].block
+            for blk in self.blocks
+            if regset_name in self.blocks[blk].block.regsets.keys()
+        ]
+
+    def instances_of_block(self, block: Block):
+        return [
+            blk_inst
+            for blk_inst in self.block_insts
+            if blk_inst.block == block.name
+        ]
+    
+
     def json(self):
         """Convert the data into a JSON compatible dict"""
 
