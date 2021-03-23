@@ -507,84 +507,25 @@ class RegisterRst:
             ofile = StringIO()
             ret_str = True
 
-        all_addr_maps = self._prj.get_address_maps()
         regset_blocks = self._prj.blocks_containing_regset(self._regset_name)
 
         block_inst_list = []
         for blk in regset_blocks:
             block_inst_list += self._prj.instances_of_block(blk)
 
-        registers = []
-        for blk_inst in block_inst_list:
-            block = self._prj.blocks[blk_inst.block].block
-            regset_list = [
-                rs
-                for rs in block.regset_insts
-                if rs.set_name == self._regset_name
-            ]
-            registers.append((blk_inst, regset_list))
 
-        names = []
-        rtoken = self._reg.token.lower()
-
-        for (blk_inst, regset_list) in registers:
-            bname = blk_inst.inst_name
-            if blk_inst.repeat > 1:
-                for idx in range(0, blk_inst.repeat):
-                    for regset in regset_list:
-                        rname = regset.inst
-                        if regset.repeat > 1:
-                            for ridx in range(0, regset.repeat):
-                                names.append(
-                                    (
-                                        f"{bname}[{idx}]/{rname}[{ridx}]/{rtoken}",
-                                        self.reg_addr(
-                                            blk_inst, idx, regset, ridx
-                                        ),
-                                    )
-                                )
-                        else:
-                            names.append(
-                                (
-                                    f"{bname}[{idx}]/{rname}/{rtoken}",
-                                    self.reg_addr(blk_inst, idx, regset, 0),
-                                )
-                            )
-            else:
-                for regset in regset_list:
-                    rname = regset.inst
-                    if regset.repeat > 1:
-                        for ridx in range(0, regset.repeat):
-                            names.append(
-                                (
-                                    f"{bname}/{rname}[{ridx}]/{rtoken}",
-                                    self.reg_addr(blk_inst, 0, regset, ridx),
-                                )
-                            )
-                    else:
-                        names.append(
-                            (
-                                f"{bname}/{rname}/{rtoken}",
-                                self.reg_addr(blk_inst, 0, regset, 0),
-                            )
-                        )
-
+        addr_maps_regset_is_in = {}
+        for addr_map in self._prj.get_address_maps():
+            for blk_inst in block_inst_list:
+                if blk_inst.inst_name in addr_map.blocks:
+                    addr_maps_regset_is_in[addr_map.name] = addr_map
+            
+        registers = self.find_registers(block_inst_list)
+        names = self.expand_register_list(registers)
+        
         for name, addr in names:
             print(f"{name} {addr:x}")
 
-        # for inst in blks_set_is_in:
-        #     print(inst.group)
-
-        #     for x_map in x_addr_maps:
-        #         groups_in_addr_map = self._prj.get_blocks_in_address_map(
-        #             x_map.name
-        #         )
-        #         blk_names = [group.name for group in groups_in_addr_map]
-        #         print(">>", inst.group, blk_names)
-        #         if inst.group in blk_names:
-        #             addr_maps_regset_is_in.add(x_map)
-
-        print("ADDR MAPS", addr_maps_regset_is_in)
         if not addr_maps_regset_is_in:
             ofile.write(".. warning::\n")
             ofile.write("   :class: alert alert-warning\n\n")
@@ -592,7 +533,7 @@ class RegisterRst:
                 "   This register has not been mapped into any address space.\n\n"
             )
 
-        elif in_groups(self._regset_name, self._prj):
+        else:
             ofile.write(".. list-table::\n")
             ofile.write("   :header-rows: 1\n")
             if len(addr_maps_regset_is_in) == 1:
@@ -601,12 +542,9 @@ class RegisterRst:
                 ofile.write("   :widths: 50, 25, 25\n")
             elif len(addr_maps_regset_is_in) == 3:
                 ofile.write("   :widths: 50, 16, 16, 17\n")
-            if self._bootstrap:
-                ofile.write(
-                    "   :class: table table-bordered table-striped table-condensed\n\n"
-                )
-            else:
-                ofile.write("   :class: summary\n\n")
+            ofile.write(
+                "   :class: table table-bordered table-striped table-condensed\n\n"
+            )
             ofile.write("   *")
             if use_uvm:
                 ofile.write(" - Register Name\n")
@@ -614,7 +552,7 @@ class RegisterRst:
                 if use_uvm:
                     ofile.write("    ")
                 ofile.write(" - ID\n")
-            for amap in addr_maps_regset_is_in:
+            for amap in addr_maps_regset_is_in.values():
                 ofile.write("     - %s\n" % amap.name)
 
             for inst in in_groups(self._regset_name, self._prj):
@@ -623,6 +561,7 @@ class RegisterRst:
                 if self._inst and inst.inst != self._inst:
                     continue
 
+                print(">>>", inst, inst.grpt)
                 for grp_inst in range(0, inst.grpt):
 
                     if inst.repeat == 1 and not inst.array:
@@ -633,7 +572,7 @@ class RegisterRst:
                                 use_uvm,
                                 use_id,
                                 addr_maps_regset_is_in,
-                                grp_inst,
+                                grp_inst
                                 -1,
                                 -1,
                             )
@@ -859,7 +798,7 @@ class RegisterRst:
             self.str_overview() + "\n" + text
         ) + self.html_from_text(text)
 
-    def reg_addr(self, blk_inst, brpt, regset_inst, rrpt, reg):
+    def reg_addr(self, blk_inst, brpt, regset_inst, rrpt):
         blk = self._prj.blocks[blk_inst.block]
         regset = self._prj.regsets[regset_inst.set_name]
         rset_width = 1 << regset.regset.ports.address_bus_width
@@ -872,6 +811,64 @@ class RegisterRst:
             + self._reg.address
         )
 
+    def find_registers(self, block_inst_list):
+        registers = []
+        for blk_inst in block_inst_list:
+            block = self._prj.blocks[blk_inst.block].block
+            regset_list = [
+                rs
+                for rs in block.regset_insts
+                if rs.set_name == self._regset_name
+            ]
+            registers.append((blk_inst, regset_list))
+        return registers
+    
+    def expand_register_list(self, registers):
+        rtoken = self._reg.token.lower()
+        names = []
+        for (blk_inst, regset_list) in registers:
+            bname = blk_inst.inst_name
+            if blk_inst.repeat > 1:
+                for idx in range(0, blk_inst.repeat):
+                    for regset in regset_list:
+                        rname = regset.inst
+                        if regset.repeat > 1:
+                            for ridx in range(0, regset.repeat):
+                                names.append(
+                                    (
+                                        f"{bname}[{idx}]/{rname}[{ridx}]/{rtoken}",
+                                        self.reg_addr(
+                                            blk_inst, idx, regset, ridx
+                                        ),
+                                    )
+                                )
+                        else:
+                            names.append(
+                                (
+                                    f"{bname}[{idx}]/{rname}/{rtoken}",
+                                    self.reg_addr(blk_inst, idx, regset, 0),
+                                )
+                            )
+            else:
+                for regset in regset_list:
+                    rname = regset.inst
+                    if regset.repeat > 1:
+                        for ridx in range(0, regset.repeat):
+                            names.append(
+                                (
+                                    f"{bname}/{rname}[{ridx}]/{rtoken}",
+                                    self.reg_addr(blk_inst, 0, regset, ridx),
+                                )
+                            )
+                    else:
+                        names.append(
+                            (
+                                f"{bname}/{rname}/{rtoken}",
+                                self.reg_addr(blk_inst, 0, regset, 0),
+                            )
+                        )
+        return names
+    
 
 def display_reserved(ofile, stop, start):
     if stop == start:
