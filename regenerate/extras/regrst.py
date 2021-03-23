@@ -507,7 +507,6 @@ class RegisterRst:
             ofile = StringIO()
             ret_str = True
 
-
         all_addr_maps = self._prj.get_address_maps()
         regset_blocks = self._prj.blocks_containing_regset(self._regset_name)
 
@@ -515,22 +514,75 @@ class RegisterRst:
         for blk in regset_blocks:
             block_inst_list += self._prj.instances_of_block(blk)
 
-        
-        blks_set_is_in = in_groups(self._regset_name, self._prj)
-        
-        addr_maps_regset_is_in = set([])
+        registers = []
+        for blk_inst in block_inst_list:
+            block = self._prj.blocks[blk_inst.block].block
+            regset_list = [
+                rs
+                for rs in block.regset_insts
+                if rs.set_name == self._regset_name
+            ]
+            registers.append((blk_inst, regset_list))
 
-        for inst in blks_set_is_in :
-            print(inst.group)
-            
-            for x_map in x_addr_maps:
-                groups_in_addr_map = self._prj.get_blocks_in_address_map(
-                    x_map.name
-                )
-                blk_names = [group.name for group in groups_in_addr_map]
-                print(">>", inst.group, blk_names)
-                if inst.group in blk_names:
-                    addr_maps_regset_is_in.add(x_map)
+        names = []
+        rtoken = self._reg.token.lower()
+
+        for (blk_inst, regset_list) in registers:
+            bname = blk_inst.inst_name
+            if blk_inst.repeat > 1:
+                for idx in range(0, blk_inst.repeat):
+                    for regset in regset_list:
+                        rname = regset.inst
+                        if regset.repeat > 1:
+                            for ridx in range(0, regset.repeat):
+                                names.append(
+                                    (
+                                        f"{bname}[{idx}]/{rname}[{ridx}]/{rtoken}",
+                                        self.reg_addr(
+                                            blk_inst, idx, regset, ridx
+                                        ),
+                                    )
+                                )
+                        else:
+                            names.append(
+                                (
+                                    f"{bname}[{idx}]/{rname}/{rtoken}",
+                                    self.reg_addr(blk_inst, idx, regset, 0),
+                                )
+                            )
+            else:
+                for regset in regset_list:
+                    rname = regset.inst
+                    if regset.repeat > 1:
+                        for ridx in range(0, regset.repeat):
+                            names.append(
+                                (
+                                    f"{bname}/{rname}[{ridx}]/{rtoken}",
+                                    self.reg_addr(blk_inst, 0, regset, ridx),
+                                )
+                            )
+                    else:
+                        names.append(
+                            (
+                                f"{bname}/{rname}/{rtoken}",
+                                self.reg_addr(blk_inst, 0, regset, 0),
+                            )
+                        )
+
+        for name, addr in names:
+            print(f"{name} {addr:x}")
+
+        # for inst in blks_set_is_in:
+        #     print(inst.group)
+
+        #     for x_map in x_addr_maps:
+        #         groups_in_addr_map = self._prj.get_blocks_in_address_map(
+        #             x_map.name
+        #         )
+        #         blk_names = [group.name for group in groups_in_addr_map]
+        #         print(">>", inst.group, blk_names)
+        #         if inst.group in blk_names:
+        #             addr_maps_regset_is_in.add(x_map)
 
         print("ADDR MAPS", addr_maps_regset_is_in)
         if not addr_maps_regset_is_in:
@@ -806,6 +858,19 @@ class RegisterRst:
         return self.html_from_text(
             self.str_overview() + "\n" + text
         ) + self.html_from_text(text)
+
+    def reg_addr(self, blk_inst, brpt, regset_inst, rrpt, reg):
+        blk = self._prj.blocks[blk_inst.block]
+        regset = self._prj.regsets[regset_inst.set_name]
+        rset_width = 1 << regset.regset.ports.address_bus_width
+
+        return (
+            blk_inst.address_base
+            + (brpt * blk.block.address_size)
+            + regset_inst.offset
+            + (rrpt * rset_width)
+            + self._reg.address
+        )
 
 
 def display_reserved(ofile, stop, start):

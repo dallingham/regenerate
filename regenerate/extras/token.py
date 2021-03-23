@@ -66,10 +66,6 @@ def in_groups(name, project):
         for group in project.block_insts:
             block = project.blocks[group.block]
 
-            print(">", block)
-            print(">>", block.block)
-            print(">>>", block.block.regsets)
-
             for regset in [
                 rs for rs in block.block.regset_insts if rs.set_name == name
             ]:
