@@ -44,7 +44,7 @@ def full_token(group_name, reg_name, set_name, index, fmt_string):
     return fmt_string % name_data
 
 
-def uvm_name(group_name, reg_name, set_name, index):
+def uvm_name(group_name: str, reg_name: str, set_name: str, index: int):
 
     if index >= 0:
         return "<top>.%s.%s[%d].%s" % (

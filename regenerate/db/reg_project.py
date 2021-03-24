@@ -441,9 +441,10 @@ class RegProject:
 
     def get_address_base(self, name: str):
         """Returns the base address  of the address map"""
-        return next(
-            (d.base for d in self._addr_map_list if name == d.name), None
-        )
+        return self.address_maps[name].base
+        # return next(
+        #     (d.base for d in self.address_maps if name == d.name), None
+        # )
 
     def get_address_fixed(self, name: str):
         """Indicates if the specified address map is at a fixed location"""
@@ -632,7 +633,6 @@ class RegProject:
             for blk_inst in self.block_insts
             if blk_inst.block == block.name
         ]
-    
 
     def json(self):
         """Convert the data into a JSON compatible dict"""

@@ -513,18 +513,17 @@ class RegisterRst:
         for blk in regset_blocks:
             block_inst_list += self._prj.instances_of_block(blk)
 
-
         addr_maps_regset_is_in = {}
         for addr_map in self._prj.get_address_maps():
             for blk_inst in block_inst_list:
                 if blk_inst.inst_name in addr_map.blocks:
                     addr_maps_regset_is_in[addr_map.name] = addr_map
-            
+
         registers = self.find_registers(block_inst_list)
         names = self.expand_register_list(registers)
-        
-        for name, addr in names:
-            print(f"{name} {addr:x}")
+
+        # for name, addr in names:
+        #     print(f"{name} {addr:x}")
 
         if not addr_maps_regset_is_in:
             ofile.write(".. warning::\n")
@@ -561,7 +560,6 @@ class RegisterRst:
                 if self._inst and inst.inst != self._inst:
                     continue
 
-                print(">>>", inst, inst.grpt)
                 for grp_inst in range(0, inst.grpt):
 
                     if inst.repeat == 1 and not inst.array:
@@ -572,7 +570,7 @@ class RegisterRst:
                                 use_uvm,
                                 use_id,
                                 addr_maps_regset_is_in,
-                                grp_inst
+                                grp_inst - 1,
                                 -1,
                                 -1,
                             )
@@ -633,16 +631,16 @@ class RegisterRst:
         index,
     ):
         """Write and address entry"""
-
         if inst.grpt == 1:
-            u_grp_name = inst.group
-            t_grp_name = inst.group
+            u_grp_name = inst.inst
+            t_grp_name = inst.inst
         else:
-            u_grp_name = "{0}[{1}]".format(inst.group, grp_inst)
-            t_grp_name = "{0}{1}".format(inst.group, grp_inst)
+            u_grp_name = "{0}[{1}]".format(inst.inst, grp_inst)
+            t_grp_name = "{0}{1}".format(inst.inst, grp_inst)
 
         ofile.write("   *")
         if use_uvm:
+            #            print(u_grp_name, self._reg.token, inst.inst, group_index)
             name = uvm_name(
                 u_grp_name, self._reg.token, inst.inst, group_index
             )
@@ -662,7 +660,7 @@ class RegisterRst:
                 ofile.write("    ")
             ofile.write(" - %s\n" % name)
         for map_name in addr_maps:
-            map_base = self._prj.get_address_base(map_name.name)
+            map_base = self._prj.get_address_base(map_name)
             offset = (
                 map_base
                 + inst.offset
@@ -803,13 +801,16 @@ class RegisterRst:
         regset = self._prj.regsets[regset_inst.set_name]
         rset_width = 1 << regset.regset.ports.address_bus_width
 
-        return (
+        val = (
             blk_inst.address_base
             + (brpt * blk.block.address_size)
             + regset_inst.offset
             + (rrpt * rset_width)
             + self._reg.address
         )
+
+        print(f"B {blk_inst.inst_name} {val:x}")
+        return val
 
     def find_registers(self, block_inst_list):
         registers = []
@@ -822,7 +823,7 @@ class RegisterRst:
             ]
             registers.append((blk_inst, regset_list))
         return registers
-    
+
     def expand_register_list(self, registers):
         rtoken = self._reg.token.lower()
         names = []
@@ -868,7 +869,7 @@ class RegisterRst:
                             )
                         )
         return names
-    
+
 
 def display_reserved(ofile, stop, start):
     if stop == start:
