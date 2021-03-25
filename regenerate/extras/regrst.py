@@ -522,9 +522,6 @@ class RegisterRst:
         registers = self.find_registers(block_inst_list)
         names = self.expand_register_list(registers)
 
-        # for name, addr in names:
-        #     print(f"{name} {addr:x}")
-
         if not addr_maps_regset_is_in:
             ofile.write(".. warning::\n")
             ofile.write("   :class: alert alert-warning\n\n")
@@ -554,64 +551,13 @@ class RegisterRst:
             for amap in addr_maps_regset_is_in.values():
                 ofile.write("     - %s\n" % amap.name)
 
-            for inst in in_groups(self._regset_name, self._prj):
-                if self._group and inst.group != self._group:
-                    continue
-                if self._inst and inst.inst != self._inst:
-                    continue
-
-                for grp_inst in range(0, inst.grpt):
-
-                    if inst.repeat == 1 and not inst.array:
-                        if self._reg.dimension <= 1:
-                            self._addr_entry(
-                                ofile,
-                                inst,
-                                use_uvm,
-                                use_id,
-                                addr_maps_regset_is_in,
-                                grp_inst - 1,
-                                -1,
-                                -1,
-                            )
-                        else:
-                            for i in range(self._reg.dimension):
-                                self._addr_entry(
-                                    ofile,
-                                    inst,
-                                    use_uvm,
-                                    use_id,
-                                    addr_maps_regset_is_in,
-                                    grp_inst,
-                                    -1,
-                                    i,
-                                )
-                    else:
-                        for ginst in range(0, inst.repeat):
-
-                            if self._reg.dimension <= 1:
-                                self._addr_entry(
-                                    ofile,
-                                    inst,
-                                    use_uvm,
-                                    use_id,
-                                    addr_maps_regset_is_in,
-                                    grp_inst,
-                                    ginst,
-                                    -1,
-                                )
-                            else:
-                                for i in range(self._reg.dimension):
-                                    self._addr_entry(
-                                        ofile,
-                                        inst,
-                                        use_uvm,
-                                        use_id,
-                                        addr_maps_regset_is_in,
-                                        grp_inst,
-                                        ginst,
-                                        i,
-                                    )
+            for name, addr in names:
+                self._addr_entry(
+                    ofile,
+                    name,
+                    addr,
+                    addr_maps_regset_is_in,
+                )
 
             ofile.write("\n\n")
 
@@ -619,66 +565,15 @@ class RegisterRst:
             return ofile.getvalue()
         return ""
 
-    def _addr_entry(
-        self,
-        ofile,
-        inst,
-        use_uvm,
-        use_id,
-        addr_maps,
-        grp_inst,
-        group_index,
-        index,
-    ):
+    def _addr_entry(self, ofile, regpath, address, addr_maps):
         """Write and address entry"""
-        if inst.grpt == 1:
-            u_grp_name = inst.inst
-            t_grp_name = inst.inst
-        else:
-            u_grp_name = "{0}[{1}]".format(inst.inst, grp_inst)
-            t_grp_name = "{0}{1}".format(inst.inst, grp_inst)
-
         ofile.write("   *")
-        if use_uvm:
-            #            print(u_grp_name, self._reg.token, inst.inst, group_index)
-            name = uvm_name(
-                u_grp_name, self._reg.token, inst.inst, group_index
-            )
-            if index < 0:
-                ofile.write(" - %s\n" % name)
-            else:
-                ofile.write(" - %s[%d]\n" % (name, index))
-        if use_id:
-            name = full_token(
-                t_grp_name,
-                self._reg.token,
-                inst.inst,
-                group_index,
-                inst.format,
-            )
-            if use_uvm:
-                ofile.write("    ")
-            ofile.write(" - %s\n" % name)
+        ofile.write(f" - {regpath}\n")
+
         for map_name in addr_maps:
             map_base = self._prj.get_address_base(map_name)
-            offset = (
-                map_base
-                + inst.offset
-                + inst.base
-                + (grp_inst * inst.grpt_offset)
-            )
-            if group_index > 0:
-                offset += group_index * inst.roffset
-
-            if index < 0:
-                ofile.write("     - ``%s``\n" % reg_addr(self._reg, offset))
-            else:
-                ofile.write(
-                    "     - ``%s``\n"
-                    % reg_addr(
-                        self._reg, offset + (index * (self._reg.width // 8))
-                    )
-                )
+            offset = address + map_base
+            ofile.write(f"     - ``0x{offset:x}``\n")
 
     def _display_uvm_entry(self, inst, index, ofile):
         """Display the UVM name"""
@@ -686,9 +581,9 @@ class RegisterRst:
         name = full_token(
             inst.group, self._reg.token, self._regset_name, index, inst.format
         )
-        ofile.write("   * - %s\n" % name)
+        ofile.write(f"   * - {name}\n")
         name = uvm_name(inst.group, self._reg.token, inst.inst, index)
-        ofile.write("     - %s\n" % name)
+        ofile.write(f"     - {name}\n")
 
     def _write_uvm(self, ofile):
         """
@@ -809,7 +704,6 @@ class RegisterRst:
             + self._reg.address
         )
 
-        print(f"B {blk_inst.inst_name} {val:x}")
         return val
 
     def find_registers(self, block_inst_list):
@@ -837,7 +731,7 @@ class RegisterRst:
                             for ridx in range(0, regset.repeat):
                                 names.append(
                                     (
-                                        f"{bname}[{idx}]/{rname}[{ridx}]/{rtoken}",
+                                        f"{bname}[{idx}].{rname}[{ridx}].{rtoken}",
                                         self.reg_addr(
                                             blk_inst, idx, regset, ridx
                                         ),
@@ -846,7 +740,7 @@ class RegisterRst:
                         else:
                             names.append(
                                 (
-                                    f"{bname}[{idx}]/{rname}/{rtoken}",
+                                    f"{bname}[{idx}].{rname}.{rtoken}",
                                     self.reg_addr(blk_inst, idx, regset, 0),
                                 )
                             )
@@ -857,14 +751,14 @@ class RegisterRst:
                         for ridx in range(0, regset.repeat):
                             names.append(
                                 (
-                                    f"{bname}/{rname}[{ridx}]/{rtoken}",
+                                    f"{bname}.{rname}[{ridx}].{rtoken}",
                                     self.reg_addr(blk_inst, 0, regset, ridx),
                                 )
                             )
                     else:
                         names.append(
                             (
-                                f"{bname}/{rname}/{rtoken}",
+                                f"{bname}.{rname}.{rtoken}",
                                 self.reg_addr(blk_inst, 0, regset, 0),
                             )
                         )
