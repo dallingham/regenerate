@@ -70,23 +70,18 @@ MODULES = [
 #
 # -----------------------------------------------------------------------------
 
-if platform.system() == "windows":
+from .verilog import Verilog, Verilog2001, SystemVerilog
+from .verilog_defs import VerilogDefines
+from .verilog_param import VerilogParameters
+from .reg_pkg import VerilogConstRegPackage
+from .decoder import AddressDecode
+from .ipxact import IpXactWriter
+from .c_test import CTest
+from .c_defines import CDefines
+from .asm_equ import AsmEqu
+from .odt_doc import OdtDoc
+from .rst_doc import RstDoc
 
-    from .verilog import Verilog, Verilog2001, SystemVerilog
-    from .verilog_defs import VerilogDefines
-    from .verilog_param import VerilogParameters
-    from .reg_pkg import VerilogConstRegPackage
-    from .decoder import AddressDecode
-    from .ipxact import IpXactWriter
-    from .c_test import CTest
-    from .c_defines import CDefines
-    from .asm_equ import AsmEqu
-    from .odt_doc import OdtDoc
-    from .rst_doc import RstDoc
-    from .uvm_reg_block import UVMRegBlockRegisters
-    from .sdc import Sdc
-    from .spyglass import Spyglass
-    from .xdc import Xdc
 
 for module in MODULES:
     for mpath in IMPORT_PATHS:

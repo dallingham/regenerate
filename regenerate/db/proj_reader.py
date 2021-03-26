@@ -118,12 +118,12 @@ class ProjectReader:
     def start_export(self, attrs):
         """Called when an export tag is found"""
 
-        db_path = Path(self._current).with_suffix(REG_EXT).resolve()
-        target = Path(self.path.parent) / attrs["path"]
+        db_path = self.path.parent / Path(self._current).with_suffix(REG_EXT)
+        target = Path(self.path) / attrs["path"]
 
-        # self._prj.append_to_export_list(
-        #     str(target), attrs["option"], str(db_path)
-        # )
+        self._prj.append_to_export_list(
+            str(target.resolve()), attrs["option"], str(db_path.resolve())
+        )
 
     def start_group_export(self, attrs):
         """Called when an group_export tag is found"""

@@ -84,7 +84,7 @@ class RegProject:
 
         self.regsets: Dict[str, RegSetContainer] = {}
 
-        self._exports = {}
+        self._exports: Dict[str, ExportData] = {}
         self._group_exports = {}
         self._project_exports = []
 
@@ -192,7 +192,7 @@ class RegProject:
         Converts the exports to be relative to the passed path. Returns a
         read-only tuple
         """
-        return tuple(self._exports.get(path, []))
+        return tuple(self._exports.get(str(path), []))
 
     def get_project_exports(self):
         """Returns the export project list, returns a read-only tuple"""
@@ -220,9 +220,9 @@ class RegProject:
         self._modified = True
         exp = ExportData(option, full_path.resolve())
         if dest in self._exports:
-            self._exports[dest_path.resolve()].append(exp)
+            self._exports[str(dest_path.resolve())].append(exp)
         else:
-            self._exports[dest_path.resolve()] = [exp]
+            self._exports[str(dest_path.resolve())] = [exp]
 
     def add_to_export_list(self, path: str, option: str, dest: str) -> None:
         """
@@ -237,7 +237,7 @@ class RegProject:
         path = os.path.relpath(path, self.path.parent)
         dest = os.path.relpath(dest, self.path.parent)
         exp = ExportData(option, dest)
-        self._exports[path].append(exp)
+        self._exports[str(path)].append(exp)
 
     def append_to_project_export_list(self, option: str, dest: str) -> None:
         """
@@ -302,9 +302,9 @@ class RegProject:
         """Removes the export from the export list"""
         self._modified = True
         path = os.path.relpath(path, self.path.parent)
-        self._exports[path] = [
+        self._exports[str(path)] = [
             exp
-            for exp in self._exports[path]
+            for exp in self._exports[str(path)]
             if not (exp.option == option and exp.dest == dest)
         ]
 
@@ -337,53 +337,6 @@ class RegProject:
             return self._filelist
         base = self.path.parent
         return [os.path.normpath(base / i) for i in self._filelist]
-
-    def get_grouping_list(self) -> List[GroupData]:
-        """
-        Returns a list of named tuples (GroupData) that defines the groups.
-        The group contents are found by indexing using the Group name
-        (GroupData.name) into the group map.
-        """
-        return []
-        # return self._groupings
-
-    def set_grouping_list(self, glist: List[GroupData]) -> None:
-        """Sets the grouping list"""
-        ...
-        # self._groupings = glist
-
-    def set_grouping(
-        self,
-        index: int,
-        name: str,
-        start: int,
-        hdl: str,
-        repeat: int,
-        repeat_offset: int,
-    ) -> None:
-        """Modifies an existing grouping."""
-        self._modified = True
-        # self._groupings[index] = GroupData(
-        #     name, start, hdl, repeat, repeat_offset
-        # )
-
-    def add_to_grouping_list(self, group_data: GroupData) -> None:
-        """Adds a new grouping to the grouping list"""
-        self._modified = True
-        self._group_exports[group_data.name] = []
-        # self._groupings.append(group_data)
-
-    def _add_to_grouping_list(self, name, start, hdl, repeat, repeat_offset):
-        """Adds a new grouping to the grouping list"""
-        self._modified = True
-        # self._groupings.append(
-        #     GroupData(name, start, hdl, repeat, repeat_offset)
-        # )
-
-    def remove_group_from_grouping_list(self, grp) -> None:
-        """Removes a grouping from the grouping list"""
-        self._modified = True
-        # self._groupings.remove(grp)
 
     def get_address_maps(self):
         """Returns a list of the existing address maps"""
@@ -633,6 +586,13 @@ class RegProject:
             for blk_inst in self.block_insts
             if blk_inst.block == block.name
         ]
+
+    @property
+    def documentation(self) -> str:
+        page_names = self.doc_pages.get_page_names()
+        if page_names:
+            return self.doc_pages.get_page(page_names[0])
+        return ""
 
     def json(self):
         """Convert the data into a JSON compatible dict"""

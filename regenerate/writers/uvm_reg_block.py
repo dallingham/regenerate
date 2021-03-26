@@ -32,8 +32,8 @@ from ..db.reg_project import RegProject
 from ..db.register_db import RegisterDb
 from ..db.bitfield import BitField
 from ..db.register import Register
-from ..db.addrmap import AddrMapData
-from ..db.group_data import GroupData
+from ..db.addrmap import AddressMap
+from ..db.block_inst import BlockInst
 
 ACCESS_MAP = {}
 for i in TYPES:
@@ -56,22 +56,24 @@ class UVMRegBlockRegisters(WriterBase):
         super().__init__(project, None)
         self.dblist = [dbase[1].regset for dbase in project.regsets.items()]
 
-    def uvm_address_maps(self) -> List[AddrMapData]:
+    def uvm_address_maps(self) -> List[AddressMap]:
         "Return a list of all the address maps that are not excluded from UVM"
 
         return [d for d in self._project.get_address_maps() if not d.uvm]
 
-    def _build_group_maps(self) -> Dict[GroupData, Set[str]]:
+    def _build_group_maps(self) -> Dict[BlockInst, Set[str]]:
         group_maps = {}
 
-        for group in self._project.get_grouping_list():
+        for blk_inst in self._project.block_insts:
             in_maps = set()
             for addr_map in self.uvm_address_maps():
-                map_list = self._project.get_address_map_groups(addr_map.name)
-                if not map_list or group.name in map_list:
+                map_list = self._project.get_address_maps_used_by_block(
+                    blk_inst.block
+                )
+                if not map_list or blk_inst.name in map_list:
                     in_maps.add(addr_map.name)
             if in_maps:
-                group_maps[group] = in_maps
+                group_maps[blk_inst] = in_maps
         return group_maps
 
     def _used_maps(self) -> Set[str]:

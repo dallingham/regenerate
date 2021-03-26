@@ -22,6 +22,8 @@ keeps track of when an output file should be rebuilt.
 """
 
 import os
+from pathlib import Path
+
 from gi.repository import Gtk
 from regenerate.settings.paths import INSTALL_PATH
 from regenerate.ui.base_window import BaseWindow
@@ -140,8 +142,10 @@ class Build(BaseWindow):
         mod = file_needs_rebuilt(local_dest, self.__prj, [dbase_full_path])
         self.__modlist.append(mod)
         (fmt, cls, _) = self.__optmap[option]
-        dbase = self.__dbmap[base][DbMap.DBASE].db
-        self.__model.append(row=(mod, base, fmt, dest, cls, dbase, 0))
+        dbase = self.__prj.regsets[base].regset
+        rel_dest = os.path.relpath(str(dest))
+
+        self.__model.append(row=(mod, base, fmt, rel_dest, cls, dbase, 0))
 
     def __add_group_item_to_list(self, group_name, option, dest):
         """
@@ -161,7 +165,10 @@ class Build(BaseWindow):
         export list.
         """
         for item in self.__prj.get_register_set():
-            path = os.path.relpath(item, os.path.dirname(self.__prj.path))
+            directory = Path(self.__prj.path).parent
+            path = directory / item
+            path = path.with_suffix(".regr")
+
             for export_data in self.__prj.get_exports(path):
                 try:
                     self.__add_dbase_item_to_list(
@@ -170,10 +177,12 @@ class Build(BaseWindow):
                 except KeyError:
                     pass
 
-        for group_data in self.__prj.get_grouping_list():
-            for export_data in self.__prj.get_group_exports(group_data.name):
+        for group_data in self.__prj.block_insts:
+            for export_data in self.__prj.get_group_exports(
+                group_data.inst_name
+            ):
                 self.__add_group_item_to_list(
-                    "%s (group)" % group_data.name,
+                    "%s (group)" % group_data.int_name,
                     export_data.option,
                     export_data.path,
                 )
@@ -333,7 +342,7 @@ class Build(BaseWindow):
             for i in self.__prj.get_register_set()
         ]
 
-        groups = [group.name for group in self.__prj.get_grouping_list()]
+        groups = [group.int_name for group in self.__prj.block_insts]
 
         ExportAssistant(
             self.__prj.short_name,
