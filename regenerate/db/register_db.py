@@ -33,7 +33,7 @@ from .reg_writer import RegWriter
 from .signals import Signals
 from .const import OLD_REG_EXT, REG_EXT
 from .containers import Container
-
+from .export import ExportData
 
 class RegisterDb:
     """
@@ -46,7 +46,7 @@ class RegisterDb:
         self._title = ""
         self._registers = {}
         self._parameters = []
-        self.exports = []
+        self.exports: List[ExportData] = []
 
         self.ports = Signals()
 
@@ -234,6 +234,7 @@ class RegisterDb:
             "owner": self.owner,
             "use_interface": self.use_interface,
             "register_inst": [reg for index, reg in self._registers.items()],
+            "exports": self.exports,
         }
 
     def json_decode(self, data):
@@ -258,6 +259,12 @@ class RegisterDb:
             reg = Register()
             reg.json_decode(reg_json)
             self._registers[reg.uuid] = reg
+
+        self.exports = []
+        for exp_json in data["exports"]:
+            exp = ExportData()
+            exp.json_decode(exp_json)
+            self.exports.append(exp)
 
 
 class RegSetContainer(Container):

@@ -23,13 +23,15 @@ Manages the reading of the project file (.rprj)
 
 from io import BytesIO as StringIO
 from pathlib import Path
+from collections import defaultdict
+
 import xml.parsers.expat
-from .const import REG_EXT, BLK_EXT
+from .const import REG_EXT, BLK_EXT, OLD_REG_EXT
 from .block import Block, BlockContainer
 from .block_inst import BlockInst
 from .register_inst import RegisterInst
 from .register_db import RegisterDb, RegSetContainer
-
+from .export import ExportData
 
 class ProjectReader:
     """
@@ -47,6 +49,7 @@ class ProjectReader:
         self.path = ""
         self.blocks = {}
         self.block_insts = []
+        self.reg_exports = defaultdict(list)
 
     def open(self, name):
         """Opens and reads an XML file"""
@@ -73,7 +76,7 @@ class ProjectReader:
         parser.ParseFile(ofile)
         self._prj.modified = True
 
-    def startElement(self, tag, attrs):  # pylint: disable=invalid-name
+    def startElement(self, tag, attrs): 
         """
         Called every time an XML element begins
         """
@@ -83,7 +86,7 @@ class ProjectReader:
             method = getattr(self, mname)
             method(attrs)
 
-    def endElement(self, tag):  # pylint: disable=invalid-name
+    def endElement(self, tag):
         """
         Called every time an XML element end
         """
@@ -112,17 +115,20 @@ class ProjectReader:
         """Called when a registerset tag is found"""
         self._current = attrs["name"]
         reg_path = self.path.parent / self._current
-        self._prj.append_register_set_to_list(reg_path.resolve())
-        self.reg_map[reg_path.stem] = reg_path.resolve()
+        reg_path_str = str(reg_path.resolve())
+        reg_path_xml = str(reg_path.with_suffix(OLD_REG_EXT).resolve())
+        self._prj.append_register_set_to_list(reg_path_xml)
+        self.reg_map[reg_path.stem] = reg_path_str
 
     def start_export(self, attrs):
         """Called when an export tag is found"""
 
         db_path = self.path.parent / Path(self._current).with_suffix(REG_EXT)
-        target = Path(self.path) / attrs["path"]
-
-        self._prj.append_to_export_list(
-            str(target.resolve()), attrs["option"], str(db_path.resolve())
+        db_path_str = str(db_path.resolve())
+        target = Path(self.path.parent) / attrs["path"]
+        print("TARGET", target.resolve())
+        self.reg_exports[db_path_str].append(
+            ExportData(attrs['option'], str(target.resolve()))
         )
 
     def start_group_export(self, attrs):
@@ -257,11 +263,6 @@ class ProjectReader:
 
         regdbs = {}
 
-        for key, path in self.reg_map.items():
-            new_db = RegisterDb()
-            new_db.read_xml(self.path.parent / path)
-            regdbs[key] = new_db
-
         for blk in self.blocks:
 
             counter = Counter()
@@ -273,17 +274,15 @@ class ProjectReader:
             filename = block_dir / filename
 
             blk_container = BlockContainer()
-            blk_container.filename = filename
+            blk_container.filename = Path(filename).resolve()
             blk_container.block = self.blocks[blk]
             blk_container.modified = True
             self._prj.blocks[blk] = blk_container
 
             block = self.blocks[blk]
 
-            for rset_inst in block.regset_insts:
-                rcont = RegSetContainer()
-                rcont.filename = self.reg_map[rset_inst.set_name]
-                rcont.modified = True
-                rcont.regset = regdbs[rset_inst.set_name]
-                if rset_inst.set_name not in block.regsets:
-                    block.regsets[rset_inst.set_name] = rcont
+            for reg_inst in block.regset_insts:
+                name = reg_inst.set_name
+                block.regsets[name] = self._prj.regsets[name]
+                path = block.regsets[name].filename
+                block.regsets[name].regset.exports = self.reg_exports[str(path)]

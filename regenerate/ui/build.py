@@ -26,6 +26,7 @@ from pathlib import Path
 
 from gi.repository import Gtk
 from regenerate.settings.paths import INSTALL_PATH
+from regenerate.db.export import ExportData
 from regenerate.ui.base_window import BaseWindow
 from regenerate.ui.columns import EditableColumn, ToggleColumn
 from regenerate.ui.error_dialogs import ErrorMsg
@@ -101,18 +102,18 @@ class Build(BaseWindow):
         self.__build_top.set_transient_for(parent)
         self.__build_top.show_all()
 
-    def __add_item_to_list(self, full_path, option, dest):
+    def __add_item_to_list(self, full_path, exporter, dest):
         """
         Adds the item to the list view.
         """
-        if self.__optmap[option][OptMap.REGISTER_SET] == Level.BLOCK:
-            self.__add_dbase_item_to_list(full_path, option, dest)
-        elif self.__optmap[option][OptMap.REGISTER_SET] == Level.GROUP:
-            self.__add_group_item_to_list(full_path, option, dest)
+        if self.__optmap[exporter][OptMap.REGISTER_SET] == Level.BLOCK:
+            self.__add_dbase_item_to_list(full_path, exporter, dest)
+        elif self.__optmap[exporter][OptMap.REGISTER_SET] == Level.GROUP:
+            self.__add_group_item_to_list(full_path, exporter, dest)
         else:
-            self.__add_prj_item_to_list(option, dest)
+            self.__add_prj_item_to_list(exporter, dest)
 
-    def __add_prj_item_to_list(self, option, dest):
+    def __add_prj_item_to_list(self, exporter, dest):
         """
         Adds a target to the list that is dependent on the entire project.
         This is similar to adding a target that is dependent on a single
@@ -124,10 +125,10 @@ class Build(BaseWindow):
         register_set = self.__prj.get_register_set()
         mod = file_needs_rebuilt(local_dest, self.__prj, register_set)
         self.__modlist.append(mod)
-        (fmt, cls, _) = self.__optmap[option]
+        (fmt, cls, _) = self.__optmap[exporter]
         self.__model.append(row=[mod, "<project>", fmt, dest, cls, None, 2])
 
-    def __add_dbase_item_to_list(self, dbase_rel_path, option, dest):
+    def __add_dbase_item_to_list(self, dbase_rel_path, exporter, dest):
         """
         Adds the specific item to the build list. We have to check to see
         if the file needs rebuilt, depending on modification flags a file
@@ -141,13 +142,13 @@ class Build(BaseWindow):
 
         mod = file_needs_rebuilt(local_dest, self.__prj, [dbase_full_path])
         self.__modlist.append(mod)
-        (fmt, cls, _) = self.__optmap[option]
+        (fmt, cls, _) = self.__optmap[exporter]
         dbase = self.__prj.regsets[base].regset
         rel_dest = os.path.relpath(str(dest))
 
         self.__model.append(row=(mod, base, fmt, rel_dest, cls, dbase, 0))
 
-    def __add_group_item_to_list(self, group_name, option, dest):
+    def __add_group_item_to_list(self, group_name, exporter, dest):
         """
         Adds the specific item to the build list. We have to check to see
         if the file needs rebuilt, depending on modification flags a file
@@ -156,7 +157,7 @@ class Build(BaseWindow):
         # mod = file_needs_rebuilt(local_dest, self.__dbmap, [dbase_full_path])
         mod = True
         self.__modlist.append(mod)
-        (fmt, cls, _) = self.__optmap[option]
+        (fmt, cls, _) = self.__optmap[exporter]
         self.__model.append(row=(mod, group_name, fmt, dest, cls, None, 1))
 
     def __populate(self):
@@ -167,12 +168,16 @@ class Build(BaseWindow):
         for item in self.__prj.get_register_set():
             directory = Path(self.__prj.path).parent
             path = directory / item
-            path = path.with_suffix(".regr")
+            path_str = str(path.resolve())
 
-            for export_data in self.__prj.get_exports(path):
+
+            for export_data in self.__prj.get_exports(path_str):
+                print("*******", export_data.target)
                 try:
                     self.__add_dbase_item_to_list(
-                        path, export_data.option, export_data.path
+                        path_str,
+                        export_data.exporter,
+                        export_data.target
                     )
                 except KeyError:
                     pass
@@ -183,14 +188,14 @@ class Build(BaseWindow):
             ):
                 self.__add_group_item_to_list(
                     "%s (group)" % group_data.int_name,
-                    export_data.option,
-                    export_data.path,
+                    export_data.exporter,
+                    export_data.target,
                 )
 
         for export_data in self.__prj.get_project_exports():
             try:
                 self.__add_prj_item_to_list(
-                    export_data.option, export_data.path
+                    export_data.exporter, export_data.target
                 )
             except KeyError:
                 pass
@@ -292,11 +297,14 @@ class Build(BaseWindow):
             dbase = item[BuildCol.DBASE]
             rtype = item[BuildCol.TYPE]
 
-            dest = os.path.abspath(
-                os.path.join(
-                    os.path.dirname(self.__prj.path), item[BuildCol.DEST]
-                )
-            )
+            dest = str(Path(item[BuildCol.DEST]).resolve())
+
+            print("Dest", dest, item[BuildCol.DEST])
+            # dest = os.path.abspath(
+            #     os.path.join(
+            #         os.path.dirname(self.__prj.path), item[BuildCol.DEST]
+            #     )
+            # )
 
             try:
                 if rtype == 0:
@@ -342,7 +350,7 @@ class Build(BaseWindow):
             for i in self.__prj.get_register_set()
         ]
 
-        groups = [group.int_name for group in self.__prj.block_insts]
+        groups = [group.inst_name for group in self.__prj.block_insts]
 
         ExportAssistant(
             self.__prj.short_name,
@@ -358,20 +366,23 @@ class Build(BaseWindow):
         Called when a item has been added to the builder, and is used
         to add the new item to the list view.
         """
-        option = self.__mapopt[export_format][MapOpt.ID]
+        exporter = self.__mapopt[export_format][MapOpt.ID]
 
         if self.__mapopt[export_format][MapOpt.REGISTER_SET] == Level.BLOCK:
             register_path = self.__base2path[register_set]
-            self.__prj.add_to_export_list(register_path, option, filename)
-            self.__add_item_to_list(register_path, option, filename)
+            self.__prj.regsets[register_set].regset.exports.append(
+                ExportData(exporter, filename)
+            )
+            self.__prj.regsets[register_set].modified = True
+            self.__add_item_to_list(register_path, exporter, filename)
         elif self.__mapopt[export_format][MapOpt.REGISTER_SET] == Level.GROUP:
-            self.__prj.add_to_group_export_list(group, option, filename)
+            self.__prj.add_to_group_export_list(group, exporter, filename)
             register_path = f"{group} (group)"
-            self.__add_item_to_list(register_path, option, filename)
+            self.__add_item_to_list(register_path, exporter, filename)
         else:
             register_path = "<project>"
-            self.__prj.add_to_project_export_list(option, filename)
-            self.__add_item_to_list(register_path, option, filename)
+            self.__prj.add_to_project_export_list(exporter, filename)
+            self.__add_item_to_list(register_path, exporter, filename)
 
     def on_remove_build_clicked(self, _obj):
         """
@@ -381,13 +392,13 @@ class Build(BaseWindow):
         sel = self.__build_list.get_selection().get_selected()
         data = sel[0][sel[1]]
 
-        option = self.__mapopt[data[BuildCol.FORMAT]][MapOpt.ID]
+        exporter = self.__mapopt[data[BuildCol.FORMAT]][MapOpt.ID]
         filename = data[BuildCol.DEST]
         if data[BuildCol.DBASE]:
             register_path = self.__base2path[data[BuildCol.BASE]]
-            self.__prj.remove_from_export_list(register_path, option, filename)
+            self.__prj.remove_from_export_list(register_path, exporter, filename)
         else:
-            self.__prj.remove_from_project_export_list(option, filename)
+            self.__prj.remove_from_project_export_list(exporter, filename)
         self.__model.remove(sel[1])
 
     def on_close_clicked(self, _obj):

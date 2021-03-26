@@ -84,7 +84,6 @@ class RegProject:
 
         self.regsets: Dict[str, RegSetContainer] = {}
 
-        self._exports: Dict[str, ExportData] = {}
         self._group_exports = {}
         self._project_exports = []
 
@@ -160,16 +159,16 @@ class RegProject:
         """Adds a register set"""
 
         self._modified = True
-        new_file = Path(name)
 
         regset = RegSetContainer()
-        regset.filename = new_file
         regset.modified = True
         regset.regset = RegisterDb()
-        regset.regset.read_db(self.path.parent / new_file)
+        regset.regset.read_db(self.path.parent / name)
         self.regsets[regset.regset.set_name] = regset
-        self._filelist.append(new_file)
-        self._exports[str(name)] = []
+        new_file_path = Path(name).with_suffix(REG_EXT).resolve()
+        new_file_str = str(new_file_path)
+        regset.filename = new_file_path
+        self._filelist.append(new_file_path)
 
     def add_register_set(self, path: str) -> None:
         """
@@ -192,7 +191,11 @@ class RegProject:
         Converts the exports to be relative to the passed path. Returns a
         read-only tuple
         """
-        return tuple(self._exports.get(str(path), []))
+        for regset in self.regsets.values():
+            if str(regset.filename) == path:
+                if regset:
+                    return tuple(regset.regset.exports)
+        return tuple([])
 
     def get_project_exports(self):
         """Returns the export project list, returns a read-only tuple"""
@@ -202,7 +205,7 @@ class RegProject:
         """Returns the export group list, returns a read-only tuple"""
         return tuple(self._group_exports.get(name, []))
 
-    def append_to_export_list(self, path: str, option: str, dest: str) -> None:
+    def append_to_export_list(self, db_path: str, exporter: str, target: str) -> None:
         """
         For internal use only.
 
@@ -210,36 +213,25 @@ class RegProject:
         on the specified register database (XML file).
 
         path - path to the the register XML file. Converted to a relative path
-        option - the chosen export option (exporter)
+        exporter - the chosen exporter
         dest - destination output name
         """
 
-        full_path = self.path.parent / path
-        dest_path = self.path.parent / dest
+        full_db_path = self.path.parent / db_path
+        full_target_path = self.path.parent / target
+
+        full_db_str = str(full_db_path.with_suffix(REG_EXT).resolve())
+        full_target_str = str(full_target_path.resolve())
 
         self._modified = True
-        exp = ExportData(option, full_path.resolve())
-        if dest in self._exports:
-            self._exports[str(dest_path.resolve())].append(exp)
+        exp = ExportData(exporter, full_target_str)
+        if full_db_str in self._exports:
+            self._exports[full_db_str].append(exp)
         else:
-            self._exports[str(dest_path.resolve())] = [exp]
+            self._exports[full_db_str] = [exp]
 
-    def add_to_export_list(self, path: str, option: str, dest: str) -> None:
-        """
-        Adds an export to the export list. The exporter will only operation
-        on the specified register database (XML file).
 
-        path - path to the the register XML file. Converted to a relative path
-        option - the chosen export option (exporter)
-        dest - destination output name
-        """
-        self._modified = True
-        path = os.path.relpath(path, self.path.parent)
-        dest = os.path.relpath(dest, self.path.parent)
-        exp = ExportData(option, dest)
-        self._exports[str(path)].append(exp)
-
-    def append_to_project_export_list(self, option: str, dest: str) -> None:
+    def append_to_project_export_list(self, exporter: str, dest: str) -> None:
         """
         Adds a export to the project export list. Project exporters operation
         on the entire project, not just a specific register database (XML file)
@@ -249,11 +241,11 @@ class RegProject:
         dest - destination output name
         """
         self._modified = True
-        exp = ExportData(option, dest)
+        exp = ExportData(exporter, dest)
         self._project_exports.append(exp)
 
     def append_to_group_export_list(
-        self, group: str, option: str, dest: str
+        self, group: str, exporter: str, dest: str
     ) -> None:
         """
         Adds a export to the group export list. Group exporters operation
@@ -264,40 +256,40 @@ class RegProject:
         dest - destination output name
         """
         self._modified = True
-        exp = ExportData(option, dest)
+        exp = ExportData(exporter, dest)
         self._group_exports[group].append(exp)
 
-    def add_to_project_export_list(self, option: str, dest: str) -> None:
+    def add_to_project_export_list(self, exporter: str, dest: str) -> None:
         """
         Adds a export to the project export list. Project exporters operation
         on the entire project, not just a specific register database (XML file)
 
         path - path to the the register XML file. Converted to a relative path
-        option - the chosen export option (exporter)
+        exporter - the chosen export exporter (exporter)
         dest - destination output name
         """
         self._modified = True
         dest = os.path.relpath(dest, self.path.parent)
-        self._project_exports.append(ExportData(option, dest))
+        self._project_exports.append(ExportData(exporter, dest))
 
     def add_to_group_export_list(
-        self, group: str, option: str, dest: str
+        self, group: str, exporter: str, dest: str
     ) -> None:
         """
         Adds a export to the group export list. Group exporters operation
         on the entire group, not just a specific register database (XML file)
 
         path - path to the the register XML file. Converted to a relative path
-        option - the chosen export option (exporter)
+        exporter - the chosen export exporter (exporter)
         dest - destination output name
         """
         self._modified = True
         dest = os.path.relpath(dest, self.path.parent)
-        exp = ExportData(option, dest)
+        exp = ExportData(exporter, dest)
         self._group_exports[group].append(exp)
 
     def remove_from_export_list(
-        self, path: str, option: str, dest: str
+        self, path: str, exporter: str, dest: str
     ) -> None:
         """Removes the export from the export list"""
         self._modified = True
@@ -305,27 +297,27 @@ class RegProject:
         self._exports[str(path)] = [
             exp
             for exp in self._exports[str(path)]
-            if not (exp.option == option and exp.dest == dest)
+            if not (exp.exporter == exporter and exp.dest == dest)
         ]
 
-    def remove_from_project_export_list(self, option: str, dest: str) -> None:
+    def remove_from_project_export_list(self, exporter: str, dest: str) -> None:
         """Removes the export from the project export list"""
         self._modified = True
         self._project_exports = [
             exp
             for exp in self._project_exports
-            if not (exp.option == option and exp.dest == dest)
+            if not (exp.exporter == exporter and exp.dest == dest)
         ]
 
     def remove_from_group_export_list(
-        self, group: str, option: str, dest: str
+        self, group: str, exporter: str, dest: str
     ) -> None:
         """Removes the export from the group export list"""
         self._modified = True
         self._group_exports[group] = [
             exp
             for exp in self._group_exports[group]
-            if not (exp.option == option and exp.dest == dest)
+            if not (exp.exporter == exporter and exp.dest == dest)
         ]
 
     def get_register_set(self) -> List[Path]:
@@ -361,7 +353,7 @@ class RegProject:
             key
             for key in self.address_maps
             if key in used_in_uvm
-            and name in self.address_maps[key].blocks.keys()
+            and name in self.address_maps[key].blocks
         ]
 
     def change_address_map_name(self, old_name: str, new_name: str) -> None:
@@ -380,24 +372,10 @@ class RegProject:
             return True
         return False
 
-    def set_address_map_group_list(self, name: str, group_list) -> None:
-        """Adds an address map to a group if it does not already exist"""
-        self._addr_map_grps[name] = group_list
-
-    def remove_address_map_group(self, name: str, _group_name: str) -> None:
-        """Removes an address map from a group"""
-        for (i, gname) in self._addr_map_grps[name]:
-            if gname == name:
-                del self._addr_map_grps[name][i]
-                return
-        return
 
     def get_address_base(self, name: str):
         """Returns the base address  of the address map"""
         return self.address_maps[name].base
-        # return next(
-        #     (d.base for d in self.address_maps if name == d.name), None
-        # )
 
     def get_address_fixed(self, name: str):
         """Indicates if the specified address map is at a fixed location"""
@@ -606,7 +584,6 @@ class RegProject:
             "_parameters",
             "blocks",
             "block_insts",
-            "_exports",
             "_group_exports",
             "_project_exports",
         )
@@ -654,26 +631,18 @@ class RegProject:
             param = PrjParameterData(param_json["name"], param_json["value"])
             self._parameters.append(param)
 
-        self._exports = {}
-        for key in data["exports"]:
-            self._exports[key] = []
-            for item in data["exports"][key]:
-                self._exports[key].append(
-                    ExportData(item["option"], item["path"])
-                )
-
         self._group_exports = {}
         for key in data["group_exports"]:
             self._group_exports[key] = []
             for item in data["group_exports"][key]:
                 self._group_exports[key].append(
-                    ExportData(item["option"], item["path"])
+                    ExportData(item["exporter"], item["target"])
                 )
 
         self._project_exports = []
         for key in data["project_exports"]:
             self._project_exports.append(
-                ExportData(key["option"], key["path"])
+                ExportData(key["exporter"], key["target"])
             )
 
         self.block_insts = []

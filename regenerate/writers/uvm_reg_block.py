@@ -70,7 +70,7 @@ class UVMRegBlockRegisters(WriterBase):
                 map_list = self._project.get_address_maps_used_by_block(
                     blk_inst.block
                 )
-                if not map_list or blk_inst.name in map_list:
+                if not map_list or blk_inst.inst_name in map_list:
                     in_maps.add(addr_map.name)
             if in_maps:
                 group_maps[blk_inst] = in_maps
@@ -131,17 +131,16 @@ class UVMRegBlockRegisters(WriterBase):
     def get_used_databases(self) -> Set[RegisterDb]:
 
         grp_set = set()
-        maps = self._build_group_maps()
-        for key in maps:
-            if maps[key]:
-                grp_set.add(key.name)
+        for blk_name, blk in self._project.blocks.items():
+            for regset, db in blk.block.regsets.items():
+                grp_set.add(db)
 
-        used_sets: Set[GroupData] = set()
-        for group in self._project.get_grouping_list():
-            if group.name in grp_set:
-                for reg_sets in group.register_sets:
-                    used_sets.add(reg_sets.set)
-        return set({db for db in self.dblist if db.set_name in used_sets})
+        return grp_set;
+        # for group in self._project.get_grouping_list():
+        #     if group.name in grp_set:
+        #         for reg_sets in group.register_sets:
+        #             used_sets.add(reg_sets.set)
+        # return set({db for db in self.dblist if db.set_name in used_sets})
 
 
 def is_readonly(field: BitField):

@@ -30,11 +30,17 @@ class ExportData(JSONEncodable):
     the exporter name (option) and the destination file (path).
     """
 
-    def __init__(self, option: str = "", path: str = ""):
-        self.option: str = option
-        self.path: str = path
+    def __init__(self, exporter: str = "", target: str = ""):
+        self.exporter: str = exporter
+        self.target: str = str(target)
 
+    def json(self):
+        return {
+            'exporter': self.exporter,
+            'target': str(self.target),
+        }
+        
     def json_decode(self, data):
         """Convert JSON data back into an ExportData instance"""
-        self.option = data["option"]
-        self.path = data["path"]
+        self.exporter = data["exporter"]
+        self.target = str(data["target"])
