@@ -1,4 +1,4 @@
-/*----------------------------------------------------------------------------
+v/*----------------------------------------------------------------------------
  *
  * {{prj.name}} register package
  *
@@ -127,7 +127,7 @@ package {{prj.short_name}}_reg_pkg;
      {% for field  in reg.get_bit_fields() %}
      {%   if field.flags.can_randomize and field.values|length > 0 %}
       constraint con_{{fix_name(field)}} {
-         {{fix_name(field)}}.value inside { {% for value in field.values %}{{field.width}}'h{{value[0]}}{% if not loop.last %}, {% endif %}{% endfor %} };
+         {{fix_name(field)}}.value inside { {% for value in field.values %}{{field.width}}'h{{value.value}}{% if not loop.last %}, {% endif %}{% endfor %} };
       }
      {%   endif %}
 
