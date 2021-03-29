@@ -142,7 +142,7 @@ package {{prj.short_name}}_reg_pkg;
            {% for field in reg.get_bit_fields_with_values() %}
          {{fix_name(field)|upper}}: coverpoint {{field.name|lower}}.value[{{field.msb}}:{{field.lsb}}] {
                {% for value in field.values %}
-            bins {{fix_name(field)}}_{{value[0]}} = {'h{{value[0]}} };
+            bins {{fix_name(field)}}_{{value.value}} = {'h{{value.value}} };
                {% endfor %}
          }
            {% endfor %}
