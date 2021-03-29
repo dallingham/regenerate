@@ -499,7 +499,7 @@ package {{prj.short_name}}_reg_pkg;
     {%  endif %}
   {% endfor %}
       endfunction: build
-  endclass : {{grp.name}}_grp_reg_blk
+  endclass : {{grp.inst_name}}_grp_reg_blk
 {% endfor %}
 
   /* Top level register block */
@@ -509,9 +509,9 @@ package {{prj.short_name}}_reg_pkg;
 
 {% for grp in group_maps %}
 {%   if grp.repeat > 1 %}
-     {{grp.name}}_grp_reg_blk {{grp.name}}[{{grp.repeat}}];
+     {{grp.inst_name}}_grp_reg_blk {{grp.inst_name}}[{{grp.repeat}}];
 {%   else %}
-     {{grp.name}}_grp_reg_blk {{grp.name}};
+     {{grp.inst_name}}_grp_reg_blk {{grp.inst_name}};
 {%   endif %}
 {%- endfor %}
 {% for data in used_maps %}
