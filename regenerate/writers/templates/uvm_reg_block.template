@@ -42,6 +42,10 @@ package {{prj.short_name}}_reg_pkg;
 {% endfor %}
    };
 
+   /*
+    * Register classes
+    */
+
 {% for db in dblist %}
 
   {%- if db.coverage %}
@@ -60,9 +64,9 @@ package {{prj.short_name}}_reg_pkg;
             {% for reg in db.get_all_registers()|remove_no_uvm %}
               {% if reg.flags.do_not_cover == False and reg.is_completely_write_only() == False %}
                 {% if reg.dimension > 1 %}
-           bins r_{{fix_reg(reg)}} = { {% for i in range(0, reg.dimension) %}'h{{ '%x' | format(reg.address + (i * (reg.width // 8))) }}{% if not loop.last %}, {% endif %}{% endfor %} };
+           bins r_{{fix_reg(reg)}} = { {% for i in range(0, reg.dimension) %}'h{{ '%x' % (reg.address + (i * (reg.width // 8)),) }}{% if not loop.last %}, {% endif %}{% endfor %} };
                 {% else %}
-           bins r_{{fix_reg(reg)}} = { 'h{{ '%x' | format(reg.address) }} };
+           bins r_{{fix_reg(reg)}} = { 'h{{ '%x' % reg.address }} };
                 {% endif %}
               {% endif %}
             {% endfor %}
@@ -73,9 +77,9 @@ package {{prj.short_name}}_reg_pkg;
               {% if reg.is_completely_read_only() == False %}
                 {% if reg.flags.do_not_cover == False and reg.is_completely_read_only() == False %}
                   {% if reg.dimension > 1 %}
-           bins w_{{fix_reg(reg)}} = { {% for i in range(0, reg.dimension) %}'h{{ '%x' | format(reg.address + (i * (reg.width // 8))) }}{% if not loop.last %}, {% endif %}{% endfor %} };
+           bins w_{{fix_reg(reg)}} = { {% for i in range(0, reg.dimension) %}'h{{ '%x' % (reg.address + (i * (reg.width // 8)),) }}{% if not loop.last %}, {% endif %}{% endfor %} };
                   {% else %}
-           bins w_{{fix_reg(reg)}} = { 'h{{ '%x' | format(reg.address) }} };
+           bins w_{{fix_reg(reg)}} = { 'h{{ '%x' % reg.address }} };
                   {% endif %}
                 {% endif %}
               {% endif %}
@@ -223,7 +227,7 @@ package {{prj.short_name}}_reg_pkg;
         {% else %}
           {% set volatile = "0" %}
         {% endif %}
-        {%- set reset = "%d'h%x" | format(field.width, field.reset_value) %}
+        {%- set reset = "%d'h%x" % (field.width, field.reset_value) %}
         {%- set has_reset = 1 %}
         {%- set ind_access = individual_access(field, reg) %}
         {%- set access = ACCESS_MAP[field.field_type] %}
@@ -249,10 +253,13 @@ package {{prj.short_name}}_reg_pkg;
    {% endfor %}
 {% endfor %}
 
+  /*
+   * Block instantiations
+   */
 {% for db, grp, grp_map in db_grp_maps %}
-  class {{grp}}_{{db.set_name}}_reg_blk extends uvm_reg_block;
+  class {{grp}}_{{db.set_name}}_blk extends uvm_reg_block;
 
-    `uvm_object_utils({{grp}}_{{db.set_name}}_reg_blk)
+    `uvm_object_utils({{grp}}_{{db.set_name}}_blk)
 
    {% for reg in db.get_all_registers()|remove_no_uvm %}
      {% if reg.ram_size %}
@@ -276,7 +283,7 @@ package {{prj.short_name}}_reg_pkg;
     {{db.set_name}}_reg_access_wrapper {{db.set_name}}_access_cg;
    {% endif %}
 
-    function new(string name = "{{grp}}_{{db.set_name}}_reg_blk");
+    function new(string name = "{{grp}}_{{db.set_name}}_blk");
        super.new(name, build_coverage(UVM_CVR_ADDR_MAP));
        add_coverage(build_coverage(UVM_CVR_ADDR_MAP));
     endfunction
@@ -312,14 +319,14 @@ package {{prj.short_name}}_reg_pkg;
        {% endif %}
        
        {% if reg.ram_size %}
-          rmap.add_mem({{fix_reg(reg)}}, 'h{{"%04x" | format(reg.address)}}, access_mode("{{mode}}", force_mode));
+          rmap.add_mem({{fix_reg(reg)}}, 'h{{"%04x" % reg.address}}, access_mode("{{mode}}", force_mode));
       {% else %}
          {% if reg.dimension > 1 %}
            {% for i in range(0, reg.dimension) %}
-          rmap.add_reg({{fix_reg(reg)}}[{{i}}], 'h{{"%04x" | format(reg.address + (i * (reg.width // 8)))}}, access_mode("{{mode}}", force_mode));
+          rmap.add_reg({{fix_reg(reg)}}[{{i}}], 'h{{"%04x" % (reg.address + (i * (reg.width // 8)),)}}, access_mode("{{mode}}", force_mode));
            {% endfor %}
          {% else %}
-          rmap.add_reg({{fix_reg(reg)}}, 'h{{"%04x" | format(reg.address)}}, access_mode("{{mode}}", force_mode));
+          rmap.add_reg({{fix_reg(reg)}}, 'h{{"%04x" % reg.address}}, access_mode("{{mode}}", force_mode));
          {% endif %}
       {% endif %}
     {%- endfor %}
@@ -381,7 +388,7 @@ package {{prj.short_name}}_reg_pkg;
       {{fix_reg(reg)}}.configure(this);
       {{fix_reg(reg)}}.build();
 {%       for field in reg.get_bit_fields() %}
-      {{fix_reg(reg)}}.add_hdl_path_slice("r{{'%02x' | format(reg.address)}}{{mode}}{{fix_name(field)}}", {{field.lsb}}, {{field.width}});
+      {{fix_reg(reg)}}.add_hdl_path_slice("r{{'%02x' % reg.address}}{{mode}}{{fix_name(field)}}", {{field.lsb}}, {{field.width}});
 {%       endfor %}
 {%     endif %}
 {%   endif %}
@@ -407,21 +414,21 @@ package {{prj.short_name}}_reg_pkg;
     endfunction: sample
    {% endif %}
 
-  endclass : {{grp}}_{{db.set_name}}_reg_blk
+  endclass : {{grp}}_{{db.set_name}}_blk
 
 {% endfor %}
 
 {% for grp in group_maps %}
 
-  class {{grp.name}}_grp_reg_blk extends uvm_reg_block;
+  class {{grp.name}}_grp_blk extends uvm_reg_block;
 
-     `uvm_object_utils({{grp.name}}_grp_reg_blk)
+     `uvm_object_utils({{grp.name}}_grp_blk)
 
   {% for grp_entry in grp.register_sets %}
   {%    if grp_entry.repeat > 1 or grp_entry.array %}
-     {{grp.name}}_{{grp_entry.set}}_reg_blk {{grp_entry.inst}}[{{grp_entry.repeat}}];
+     {{grp.name}}_{{grp_entry.set}}_blk {{grp_entry.inst}}[{{grp_entry.repeat}}];
   {%    else %}
-     {{grp.name}}_{{grp_entry.set}}_reg_blk {{grp_entry.inst}};
+     {{grp.name}}_{{grp_entry.set}}_blk {{grp_entry.inst}};
   {%    endif %}
   {% endfor %}
 
@@ -432,7 +439,7 @@ package {{prj.short_name}}_reg_pkg;
      bit disable_{{map}}_map = 1'b0;
   {% endfor %}
 
-     function new(string name = "{{grp.name}}_grp_reg_blk");
+     function new(string name = "{{grp.name}}_grp_blk");
         super.new(name, build_coverage(UVM_NO_COVERAGE));
      endfunction : new
 
@@ -452,7 +459,7 @@ package {{prj.short_name}}_reg_pkg;
   {% for grp_entry in grp.register_sets %}
    {% if grp_entry.repeat > 1 or grp_entry.array %}
         for (int i = 0; i < {{grp_entry.repeat}}; i++) begin
-           {{grp_entry.inst}}[i] = {{grp.name}}_{{grp_entry.set}}_reg_blk::type_id::create($sformatf("{{grp_entry.inst}}[%0d]", i));
+           {{grp_entry.inst}}[i] = {{grp.name}}_{{grp_entry.set}}_blk::type_id::create($sformatf("{{grp_entry.inst}}[%0d]", i));
       {% if grp_entry.hdl: %}
            {{grp_entry.inst}}[i].configure(this, $sformatf("{{grp_entry.hdl}}", i));
       {% else %}
@@ -467,10 +474,10 @@ package {{prj.short_name}}_reg_pkg;
       {% for item in group_maps[grp] %}
         {% if group_maps[grp]| length > 1 %}
            if (!disable_{{item}}_map) begin
-              {{item}}_map.add_submap({{grp_entry.inst}}[i].{{item}}_map, 'h{{"%x" | format(grp_entry.offset)}} + (i * 'h{{"%x" | format(grp_entry.repeat_offset)}}));
+              {{item}}_map.add_submap({{grp_entry.inst}}[i].{{item}}_map, 'h{{"%x" % grp_entry.offset}} + (i * 'h{{"%x" % grp_entry.repeat_offset}}));
            end
         {% else %}
-           {{item}}_map.add_submap({{grp_entry.inst}}[i].{{item}}_map, 'h{{"%x" | format(grp_entry.offset)}} + (i * 'h{{"%x" | format(grp_entry.repeat_offset)}}));
+           {{item}}_map.add_submap({{grp_entry.inst}}[i].{{item}}_map, 'h{{"%x" % grp_entry.offset}} + (i * 'h{{"%x" % grp_entry.repeat_offset}}));
         {% endif %}
         {% if grp_entry.no_uvm %}
            uvm_resource_db#(bit)::set({"REG::",{{grp_entry.inst}}[i].get_full_name(),".*"}, "NO_REG_TESTS", 1, this);
@@ -478,7 +485,7 @@ package {{prj.short_name}}_reg_pkg;
       {% endfor %}
         end
     {% else %}
-        {{grp_entry.inst}} = {{grp.name}}_{{grp_entry.set}}_reg_blk::type_id::create("{{grp_entry.inst}}");
+        {{grp_entry.inst}} = {{grp.name}}_{{grp_entry.set}}_blk::type_id::create("{{grp_entry.inst}}");
         {{grp_entry.inst}}.configure(this, "{{grp_entry.hdl}}");
 	
       {% for item in group_maps[grp] %}
@@ -488,9 +495,9 @@ package {{prj.short_name}}_reg_pkg;
         {{grp_entry.inst}}.build();
       {% for item in group_maps[grp] %}
         {% if group_maps[grp]| length > 1 %}
-        if (!disable_{{item}}_map) {{item}}_map.add_submap({{grp_entry.inst}}.{{item}}_map, 'h{{"%x"| format(grp_entry.offset)}});
+        if (!disable_{{item}}_map) {{item}}_map.add_submap({{grp_entry.inst}}.{{item}}_map, 'h{{"%x" % grp_entry.offset}});
         {% else %}
-        {{item}}_map.add_submap({{grp_entry.inst}}.{{item}}_map, 'h{{"%x"| format(grp_entry.offset)}});
+        {{item}}_map.add_submap({{grp_entry.inst}}.{{item}}_map, 'h{{"%x" % grp_entry.offset}});
         {% endif %}
         {% if grp_entry.no_uvm %}
         uvm_resource_db#(bit)::set({"REG::",{{grp_entry.inst}}.get_full_name(),".*"}, "NO_REG_TESTS", 1, this);
@@ -499,7 +506,7 @@ package {{prj.short_name}}_reg_pkg;
     {%  endif %}
   {% endfor %}
       endfunction: build
-  endclass : {{grp.inst_name}}_grp_reg_blk
+  endclass : {{grp.inst_name}}_grp_blk
 {% endfor %}
 
   /* Top level register block */
@@ -509,9 +516,9 @@ package {{prj.short_name}}_reg_pkg;
 
 {% for grp in group_maps %}
 {%   if grp.repeat > 1 %}
-     {{grp.inst_name}}_grp_reg_blk {{grp.inst_name}}[{{grp.repeat}}];
+     {{grp.inst_name}}_grp_blk {{grp.inst_name}}[{{grp.repeat}}];
 {%   else %}
-     {{grp.inst_name}}_grp_reg_blk {{grp.inst_name}};
+     {{grp.inst_name}}_grp_blk {{grp.inst_name}};
 {%   endif %}
 {%- endfor %}
 {% for data in used_maps %}
@@ -532,16 +539,16 @@ package {{prj.short_name}}_reg_pkg;
 {% for map in prj.get_address_maps() %}
   {% if map.name in used_maps %}
     {% if used_maps|length > 1 %}
-        if (!disable_{{map.name}}_map) {{map.name}}_map = create_map("{{map.name}}_map", 'h{{"%x" | format(map.base)}}, {{prj.get_address_width(map.name)}}, UVM_LITTLE_ENDIAN);
+        if (!disable_{{map.name}}_map) {{map.name}}_map = create_map("{{map.name}}_map", 'h{{"%x" % map.base}}, {{prj.get_address_width(map.name)}}, UVM_LITTLE_ENDIAN);
     {% else %}
-        {{map.name}}_map = create_map("{{map.name}}_map", 'h{{"%x" | format(map.base)}}, {{prj.get_address_width(map.name)}}, UVM_LITTLE_ENDIAN);
+        {{map.name}}_map = create_map("{{map.name}}_map", 'h{{"%x" % map.base}}, {{prj.get_address_width(map.name)}}, UVM_LITTLE_ENDIAN);
     {% endif %}
   {% endif %}
 {% endfor %}
 
 {% for grp in group_maps %}
   {% if grp.repeat <= 1 %}
-        {{grp.inst_name}} = {{grp.inst_name}}_grp_reg_blk::type_id::create("{{grp.inst_name}}");
+        {{grp.inst_name}} = {{grp.inst_name}}_grp_blk::type_id::create("{{grp.inst_name}}");
     {% if grp.hdl != "" %}
         {{grp.inst_name}}.configure(this, "{{grp.hdl}}");
     {% else %}
@@ -556,18 +563,18 @@ package {{prj.short_name}}_reg_pkg;
 
     {% if used_maps|length > 1 %}
       {%- for mset in group_maps[grp] -%}
-        if (!disable_{{mset}}_map) {{mset}}_map.add_submap({{grp.inst_name}}.{{mset}}_map, 'h{{"%x" | format(grp.address_base)}});
+        if (!disable_{{mset}}_map) {{mset}}_map.add_submap({{grp.inst_name}}.{{mset}}_map, 'h{{"%x" % grp.address_base}});
       {% endfor %}
     {%- else -%}
       {% for mset in used_maps %}
-        {{mset}}_map.add_submap({{grp.inst_name}}.{{mset}}_map, 'h{{"%x" | format(grp.address_base)}});
+        {{mset}}_map.add_submap({{grp.inst_name}}.{{mset}}_map, 'h{{"%x" % grp.address_base}});
       {% endfor %}
 
     {% endif %}
   {% else %}
 
         foreach ({{grp.inst_name}}[i]) begin
-           {{grp.inst_name}}[i] = {{grp.inst_name}}_grp_reg_blk::type_id::create($sformatf("{{grp.inst_name}}[%0d]", i));
+           {{grp.inst_name}}[i] = {{grp.inst_name}}_grp_blk::type_id::create($sformatf("{{grp.inst_name}}[%0d]", i));
     {% if grp.hdl != "" %}
            {{grp.inst_name}}[i].configure(this, $sformatf("{{grp.hdl}}", i));
     {% else %}
@@ -579,9 +586,9 @@ package {{prj.short_name}}_reg_pkg;
            {{grp.inst_name}}[i].build();
 
     {% for mset in group_maps[grp] %}
-           if (!disable_{{mset}}_map) {{mset}}_map.add_submap({{grp.inst_name}}[i].{{mset}}_map, 'h{{"%x" | format(grp.base)}} + (i * 'h{{"%x" | format(grp.repeat_offset)}}));
+           if (!disable_{{mset}}_map) {{mset}}_map.add_submap({{grp.inst_name}}[i].{{mset}}_map, 'h{{"%x" % grp.base}} + (i * 'h{{"%x" % grp.repeat_offset}}));
         {% else %}
-           {{mset}}_map.add_submap({{grp.inst_name}}[i].{{mset}}_map, 'h{{"%x" | format(grp.base)}} + (i * 'h{{"%x" | format(grp.repeat_offset)}}));
+           {{mset}}_map.add_submap({{grp.inst_name}}[i].{{mset}}_map, 'h{{"%x" % grp.base}} + (i * 'h{{"%x" % grp.repeat_offset}}));
     {% endfor %}
         end
 
