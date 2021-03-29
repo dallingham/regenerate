@@ -134,6 +134,7 @@ class Build(BaseWindow):
         if the file needs rebuilt, depending on modification flags a file
         timestamps.
         """
+
         dbase_full_path = os.path.join(
             os.path.dirname(self.__prj.path), dbase_rel_path
         )
@@ -144,7 +145,7 @@ class Build(BaseWindow):
         self.__modlist.append(mod)
         (fmt, cls, _) = self.__optmap[exporter]
         dbase = self.__prj.regsets[base].regset
-        rel_dest = os.path.relpath(str(dest))
+        rel_dest = dest
 
         self.__model.append(row=(mod, base, fmt, rel_dest, cls, dbase, 0))
 
@@ -166,18 +167,14 @@ class Build(BaseWindow):
         export list.
         """
         for item in self.__prj.get_register_set():
-            directory = Path(self.__prj.path).parent
+            directory = Path(self.__prj.path).parent.resolve()
             path = directory / item
             path_str = str(path.resolve())
 
-
             for export_data in self.__prj.get_exports(path_str):
-                print("*******", export_data.target)
                 try:
                     self.__add_dbase_item_to_list(
-                        path_str,
-                        export_data.exporter,
-                        export_data.target
+                        path_str, export_data.exporter, str(export_data.target)
                     )
                 except KeyError:
                     pass
@@ -299,13 +296,6 @@ class Build(BaseWindow):
 
             dest = str(Path(item[BuildCol.DEST]).resolve())
 
-            print("Dest", dest, item[BuildCol.DEST])
-            # dest = os.path.abspath(
-            #     os.path.join(
-            #         os.path.dirname(self.__prj.path), item[BuildCol.DEST]
-            #     )
-            # )
-
             try:
                 if rtype == 0:
                     gen = writer_class(self.__prj, dbase)
@@ -396,7 +386,9 @@ class Build(BaseWindow):
         filename = data[BuildCol.DEST]
         if data[BuildCol.DBASE]:
             register_path = self.__base2path[data[BuildCol.BASE]]
-            self.__prj.remove_from_export_list(register_path, exporter, filename)
+            self.__prj.remove_from_export_list(
+                register_path, exporter, filename
+            )
         else:
             self.__prj.remove_from_project_export_list(exporter, filename)
         self.__model.remove(sel[1])

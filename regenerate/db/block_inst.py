@@ -43,18 +43,6 @@ class BlockInst:
         self.repeat = repeat
         self.description = description
 
-    @property
-    def regset_insts(self):
-        import traceback
-
-        traceback.stack_trace()
-
-    @regset_insts.setter
-    def regset_insts(self, foo):
-        import traceback
-
-        traceback.stack_trace()
-
     def __repr__(self):
         return f"BlockInst({self.inst_name}, {self.block})"
 

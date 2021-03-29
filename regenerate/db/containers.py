@@ -29,6 +29,10 @@ from .logger import LOGGER
 
 
 class Container:
+
+    block_data_path = ""
+    regset_data_path = ""
+
     def __init__(self):
         self._filename = Path("")
         self.modified = False
@@ -44,8 +48,3 @@ class Container:
 
     def save(self):
         ...
-
-
-
-    
-

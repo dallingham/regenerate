@@ -32,10 +32,10 @@ class DocPages:
             del self.pages[name]
 
     def get_page_names(self):
-        return self.pages.keys()
+        return list(self.pages.keys())
 
     def get_page(self, name: str):
-        return self.pages.get(name, "")
+        return self.pages[name]
 
     def json(self):
         return self.pages

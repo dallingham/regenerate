@@ -41,6 +41,7 @@ from .register_db import RegisterDb, RegSetContainer
 from .block import Block, BlockContainer
 from .block_inst import BlockInst
 from .const import REG_EXT, PRJ_EXT, OLD_PRJ_EXT
+from .containers import Container
 
 
 def nested_dict(depth, dict_type):
@@ -85,7 +86,7 @@ class RegProject:
         self.regsets: Dict[str, RegSetContainer] = {}
 
         self._group_exports = {}
-        self._project_exports = []
+        self.exports = []
 
         self._modified = False
 
@@ -118,10 +119,6 @@ class RegProject:
                 )
                 reg_container.save()
                 reg_container.modified = False
-            else:
-                print(
-                    f"Not saving register set {container_name} {str(reg_container.filename)}"
-                )
 
     def open(self, name: str) -> None:
         """Opens and reads a project file. The project could be in either
@@ -136,7 +133,7 @@ class RegProject:
             json_reader = ProjectReaderJSON(self)
             json_reader.open(name)
 
-            for block_name, container in self.blocks.items():
+            for _, container in self.blocks.items():
                 for set_name, reg_set in container.block.regsets.items():
                     self.regsets[set_name] = reg_set
 
@@ -166,7 +163,6 @@ class RegProject:
         regset.regset.read_db(self.path.parent / name)
         self.regsets[regset.regset.set_name] = regset
         new_file_path = Path(name).with_suffix(REG_EXT).resolve()
-        new_file_str = str(new_file_path)
         regset.filename = new_file_path
         self._filelist.append(new_file_path)
 
@@ -182,7 +178,7 @@ class RegProject:
         self._modified = True
         try:
             path2remove = os.path.relpath(path, self.path.parent)
-            self._filelist.remove(Path(path2remove))
+            self._filelist.remove(Path(path2remove).resolve())
         except ValueError as msg:
             LOGGER.error(str(msg))
 
@@ -193,19 +189,20 @@ class RegProject:
         """
         for regset in self.regsets.values():
             if str(regset.filename) == path:
-                if regset:
-                    return tuple(regset.regset.exports)
+                return tuple(regset.regset.exports)
         return tuple([])
 
     def get_project_exports(self):
         """Returns the export project list, returns a read-only tuple"""
-        return tuple(self._project_exports)
+        return tuple(self.exports)
 
     def get_group_exports(self, name: str):
         """Returns the export group list, returns a read-only tuple"""
         return tuple(self._group_exports.get(name, []))
 
-    def append_to_export_list(self, db_path: str, exporter: str, target: str) -> None:
+    def append_to_export_list(
+        self, db_path: str, exporter: str, target: str
+    ) -> None:
         """
         For internal use only.
 
@@ -230,7 +227,6 @@ class RegProject:
         else:
             self._exports[full_db_str] = [exp]
 
-
     def append_to_project_export_list(self, exporter: str, dest: str) -> None:
         """
         Adds a export to the project export list. Project exporters operation
@@ -242,7 +238,7 @@ class RegProject:
         """
         self._modified = True
         exp = ExportData(exporter, dest)
-        self._project_exports.append(exp)
+        self.exports.append(exp)
 
     def append_to_group_export_list(
         self, group: str, exporter: str, dest: str
@@ -270,7 +266,7 @@ class RegProject:
         """
         self._modified = True
         dest = os.path.relpath(dest, self.path.parent)
-        self._project_exports.append(ExportData(exporter, dest))
+        self.exports.append(ExportData(exporter, dest))
 
     def add_to_group_export_list(
         self, group: str, exporter: str, dest: str
@@ -300,12 +296,14 @@ class RegProject:
             if not (exp.exporter == exporter and exp.dest == dest)
         ]
 
-    def remove_from_project_export_list(self, exporter: str, dest: str) -> None:
+    def remove_from_project_export_list(
+        self, exporter: str, dest: str
+    ) -> None:
         """Removes the export from the project export list"""
         self._modified = True
-        self._project_exports = [
+        self.exports = [
             exp
-            for exp in self._project_exports
+            for exp in self.exports
             if not (exp.exporter == exporter and exp.dest == dest)
         ]
 
@@ -328,7 +326,7 @@ class RegProject:
         if self.path is None:
             return self._filelist
         base = self.path.parent
-        return [os.path.normpath(base / i) for i in self._filelist]
+        return [Path(base / i).resolve() for i in self._filelist]
 
     def get_address_maps(self):
         """Returns a list of the existing address maps"""
@@ -352,8 +350,7 @@ class RegProject:
         return [
             key
             for key in self.address_maps
-            if key in used_in_uvm
-            and name in self.address_maps[key].blocks
+            if key in used_in_uvm and name in self.address_maps[key].blocks
         ]
 
     def change_address_map_name(self, old_name: str, new_name: str) -> None:
@@ -371,7 +368,6 @@ class RegProject:
             self.address_maps[name].blocks.append(block_inst_name)
             return True
         return False
-
 
     def get_address_base(self, name: str):
         """Returns the base address  of the address map"""
@@ -391,7 +387,7 @@ class RegProject:
 
     def get_address_width(self, name: str):
         """Returns the width of the address group"""
-        for data in self._addr_map_list:
+        for data in self.address_maps.values():
             if name == data.name:
                 return data.width
         LOGGER.error("Address map not found (%s)", name)
@@ -548,7 +544,7 @@ class RegProject:
             new_name = Path(name)
             if new_name.suffix == original:
                 new_name = new_name.with_suffix(new)
-            new_list.append(new_name)
+            new_list.append(new_name.resolve())
         self._filelist = new_list
 
     def blocks_containing_regset(self, regset_name: str):
@@ -585,7 +581,6 @@ class RegProject:
             "blocks",
             "block_insts",
             "_group_exports",
-            "_project_exports",
         )
 
         data = {}
@@ -598,14 +593,26 @@ class RegProject:
 
         #            os.path.relpath(fname.with_suffix(REG_EXT), self.path.parent)
         data["filelist"] = [
-            str(fname.with_suffix(REG_EXT)) for fname in self._filelist
+            os.path.relpath(fname.with_suffix(REG_EXT), self.path.parent)
+            for fname in self._filelist
         ]
         data["address_maps"] = self.address_maps
+
+        data["exports"] = []
+        for exp in self.exports:
+            info = {
+                "options": exp.options,
+                "target": os.path.relpath(exp.target, self.path.parent),
+                "exporter": exp.exporter,
+            }
+            data["exports"].append(info)
 
         return data
 
     def json_decode(self, data):
         """Convert the JSON data back classes"""
+
+        Container.block_data_path = self.path.parent
 
         self.short_name = data["short_name"]
         self.name = data["name"]
@@ -618,7 +625,9 @@ class RegProject:
         self._filelist = []
 
         for path in data["filelist"]:
-            self._filelist.append(Path(path))
+            self._filelist.append(
+                Path(self.path.parent / Path(path)).resolve()
+            )
 
         self.address_maps = {}
         for name, addr_data_json in data["address_maps"].items():
@@ -639,11 +648,18 @@ class RegProject:
                     ExportData(item["exporter"], item["target"])
                 )
 
-        self._project_exports = []
-        for key in data["project_exports"]:
-            self._project_exports.append(
-                ExportData(key["exporter"], key["target"])
+        self.exports = []
+        for item in data["exports"]:
+            exporter = item["exporter"]
+            target = self.path / item["target"]
+
+            exp_data = ExportData(
+                exporter,
+                str(target.resolve()),
             )
+            exp_data.options = item["options"]
+
+            self.exports.append(exp_data)
 
         self.block_insts = []
         for blk_inst_data_json in data["block_insts"]:

@@ -298,7 +298,7 @@ class RegSetTab:
         self.project = prj
         self.name2container = {}
         self.name2status = {}
-        for container_name in self.project.regsets:
+        for container_name in sorted(self.project.regsets):
             container = self.project.regsets[container_name]
             self.new_regset(container, container_name)
 

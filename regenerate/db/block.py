@@ -22,8 +22,9 @@ Holds the information for a group. This includes the name, base address,
 HDL path, the repeat count, repeat offset, and the title.
 """
 
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Optional
 from pathlib import Path
+import os
 import json
 
 from .const import BLK_EXT
@@ -116,6 +117,11 @@ class Block(NameBase):
 
 
 class BlockContainer(Container):
+    """
+    Wrapper around the block class that contains the modified flag
+    and the filename.
+    """
+
     def __init__(self):
         super().__init__()
         self.block: Optional[Block] = None
@@ -133,12 +139,22 @@ class BlockContainer(Container):
             self._save_data(self.block)
 
     def json(self):
+        if Container.block_data_path:
+            filename = os.path.relpath(
+                self.filename, Container.block_data_path
+            )
+        else:
+            filename = self.filename
+
         return {
-            "filename": str(self.filename),
+            "filename": str(filename),
         }
 
     def json_decode(self, data):
-        self.filename = Path(data["filename"])
+        self.filename = Path(Container.block_data_path) / Path(
+            data["filename"]
+        )
+        Container.regset_data_path = self.filename.parent
         self.block = Block()
         with self.filename.open() as ifile:
             new_data = json.loads(ifile.read())

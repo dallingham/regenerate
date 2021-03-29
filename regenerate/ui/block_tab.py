@@ -338,7 +338,7 @@ class BlockSelectList:
     def set_project(self, project):
         self.__model.clear()
         self.project = project
-        for block in self.project.blocks:
+        for block in sorted(self.project.blocks):
             self.__model.add_block(self.project.blocks[block])
 
     def set_model(self, model):

@@ -24,6 +24,9 @@ from pathlib import Path
 from operator import methodcaller
 import json
 
+from .block import BlockContainer
+from .containers import Container
+
 
 class ProjectWriterJSON:
     """
@@ -37,6 +40,8 @@ class ProjectWriterJSON:
         """Save the JSON data to the specified file"""
 
         new_path = Path(path)
+        Container.block_data_path = new_path.parent
+
         with new_path.open("w") as ofile:
             ofile.write(
                 json.dumps(self._prj, default=methodcaller("json"), indent=4)

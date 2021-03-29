@@ -22,14 +22,14 @@ UVM register generation
 """
 
 import time
-import os
+from pathlib import Path
 from typing import List, Set, Dict
 from jinja2 import Environment
 from ..db import TYPES
 from ..extras.remap import REMAP_NAME
 from .writer_base import WriterBase, ExportInfo
 from ..db.reg_project import RegProject
-from ..db.register_db import RegisterDb
+from ..db.register_db import RegisterDb, RegSetContainer
 from ..db.bitfield import BitField
 from ..db.register import Register
 from ..db.addrmap import AddressMap
@@ -63,17 +63,12 @@ class UVMRegBlockRegisters(WriterBase):
 
     def _build_group_maps(self) -> Dict[BlockInst, Set[str]]:
         group_maps = {}
-
         for blk_inst in self._project.block_insts:
-            in_maps = set()
-            for addr_map in self.uvm_address_maps():
-                map_list = self._project.get_address_maps_used_by_block(
-                    blk_inst.block
-                )
-                if not map_list or blk_inst.inst_name in map_list:
-                    in_maps.add(addr_map.name)
-            if in_maps:
-                group_maps[blk_inst] = in_maps
+            group_maps[
+                blk_inst
+            ] = self._project.get_address_maps_used_by_block(
+                blk_inst.inst_name
+            )
         return group_maps
 
     def _used_maps(self) -> Set[str]:
@@ -89,11 +84,11 @@ class UVMRegBlockRegisters(WriterBase):
         env = Environment(trim_blocks=True, lstrip_blocks=True)
         env.filters["remove_no_uvm"] = remove_no_uvm
 
-        template_file = os.path.join(
-            os.path.dirname(__file__), "templates", "uvm_reg_block.template"
+        template_file = (
+            Path(__file__).parent / "templates" / "uvm_reg_block.template"
         )
 
-        with open(template_file) as ofile:
+        with template_file.open() as ofile:
             template = env.from_string(ofile.read())
 
         used_dbs = self.get_used_databases()
@@ -101,8 +96,8 @@ class UVMRegBlockRegisters(WriterBase):
         with open(filename, "w") as ofile:
             ofile.write(
                 template.render(
-                    project=self._project,
-                    dblist=used_dbs,
+                    prj=self._project,
+                    dblist=[cont.regset for cont in used_dbs],
                     individual_access=individual_access,
                     ACCESS_MAP=ACCESS_MAP,
                     TYPE_TO_INPUT=TYPE_TO_INPUT,
@@ -119,28 +114,34 @@ class UVMRegBlockRegisters(WriterBase):
         data_set = []
         group_maps = self._build_group_maps()
         for dbase in self.get_used_databases():
-            for group in self._project.get_grouping_list():
+            for blk_inst in self._project.block_insts:
                 used = set()
-                for grp in group.register_sets:
-                    if grp.set == dbase.set_name and grp.set not in used:
-                        used.add(grp.set)
-                        if group in group_maps:
-                            data_set.append((dbase, group, group_maps[group]))
+                for rset_cont in self._project.blocks[
+                    blk_inst.block
+                ].block.regsets:
+                    grp_name = rset_cont
+                    if (
+                        grp_name == dbase.regset.set_name
+                        and grp_name not in used
+                    ):
+                        used.add(grp_name)
+                        if grp_name in group_maps:
+                            data_set.append(
+                                (
+                                    dbase.regset,
+                                    grp_name.lower(),
+                                    group_maps[grp_name],
+                                )
+                            )
         return data_set
 
-    def get_used_databases(self) -> Set[RegisterDb]:
+    def get_used_databases(self) -> Set[RegSetContainer]:
 
         grp_set = set()
-        for blk_name, blk in self._project.blocks.items():
-            for regset, db in blk.block.regsets.items():
+        for blk in self._project.blocks.values():
+            for db in blk.block.regsets.values():
                 grp_set.add(db)
-
-        return grp_set;
-        # for group in self._project.get_grouping_list():
-        #     if group.name in grp_set:
-        #         for reg_sets in group.register_sets:
-        #             used_sets.add(reg_sets.set)
-        # return set({db for db in self.dblist if db.set_name in used_sets})
+        return grp_set
 
 
 def is_readonly(field: BitField):

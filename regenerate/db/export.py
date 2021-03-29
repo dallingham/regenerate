@@ -33,14 +33,17 @@ class ExportData(JSONEncodable):
     def __init__(self, exporter: str = "", target: str = ""):
         self.exporter: str = exporter
         self.target: str = str(target)
+        self.options: Dict[str, str] = {}
 
     def json(self):
         return {
-            'exporter': self.exporter,
-            'target': str(self.target),
+            "exporter": self.exporter,
+            "target": str(self.target),
+            "options": self.options,
         }
-        
+
     def json_decode(self, data):
         """Convert JSON data back into an ExportData instance"""
         self.exporter = data["exporter"]
         self.target = str(data["target"])
+        self.options = data["options"]

@@ -33,6 +33,7 @@ from .register_inst import RegisterInst
 from .register_db import RegisterDb, RegSetContainer
 from .export import ExportData
 
+
 class ProjectReader:
     """
     Reads the project information from the project file.
@@ -76,7 +77,7 @@ class ProjectReader:
         parser.ParseFile(ofile)
         self._prj.modified = True
 
-    def startElement(self, tag, attrs): 
+    def startElement(self, tag, attrs):
         """
         Called every time an XML element begins
         """
@@ -126,9 +127,8 @@ class ProjectReader:
         db_path = self.path.parent / Path(self._current).with_suffix(REG_EXT)
         db_path_str = str(db_path.resolve())
         target = Path(self.path.parent) / attrs["path"]
-        print("TARGET", target.resolve())
         self.reg_exports[db_path_str].append(
-            ExportData(attrs['option'], str(target.resolve()))
+            ExportData(attrs["option"], str(target.resolve()))
         )
 
     def start_group_export(self, attrs):
@@ -143,7 +143,10 @@ class ProjectReader:
     def start_project_export(self, attrs):
         """Called when a project_export tag is found"""
 
-        self._prj.append_to_project_export_list(attrs["option"], attrs["path"])
+        target = Path(self.path.parent) / attrs["path"]
+        self._prj.append_to_project_export_list(
+            attrs["option"], str(target.resolve())
+        )
 
     def start_grouping(self, attrs):
         """Called when a grouping tag is found"""
@@ -261,8 +264,6 @@ class ProjectReader:
     def end_project(self, _text):
         from collections import Counter
 
-        regdbs = {}
-
         for blk in self.blocks:
 
             counter = Counter()
@@ -285,4 +286,6 @@ class ProjectReader:
                 name = reg_inst.set_name
                 block.regsets[name] = self._prj.regsets[name]
                 path = block.regsets[name].filename
-                block.regsets[name].regset.exports = self.reg_exports[str(path)]
+                block.regsets[name].regset.exports = self.reg_exports[
+                    str(path)
+                ]

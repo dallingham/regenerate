@@ -25,6 +25,7 @@ from pathlib import Path
 import json
 from operator import methodcaller
 from .const import REG_EXT
+from .containers import Container
 
 
 def create_backup_file(filename: Path):
@@ -49,7 +50,9 @@ class RegWriterJSON:
     def save(self, filename: str):
         """Saves the data to the specified XML file."""
 
-        with open(filename, "w") as ofile:
+        new_path = Path(filename)
+
+        with new_path.open("w") as ofile:
             ofile.write(
                 json.dumps(self.dbase, default=methodcaller("json"), indent=4)
             )
