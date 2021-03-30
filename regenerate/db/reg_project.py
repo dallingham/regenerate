@@ -353,6 +353,9 @@ class RegProject:
             if key in used_in_uvm and name in self.address_maps[key].blocks
         ]
 
+    def get_block_from_inst(self, name: str) -> Block:
+        return self.blocks[name].block
+
     def change_address_map_name(self, old_name: str, new_name: str) -> None:
         """Changes the name of an address map"""
 

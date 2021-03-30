@@ -420,15 +420,15 @@ package {{prj.short_name}}_reg_pkg;
 
 {% for grp in group_maps %}
 
-  class {{grp.name}}_grp_blk extends uvm_reg_block;
+  class {{grp.inst_name}}_grp_blk extends uvm_reg_block;
 
-     `uvm_object_utils({{grp.name}}_grp_blk)
+     `uvm_object_utils({{grp.inst_name}}_grp_blk)
 
-  {% for grp_entry in grp.register_sets %}
-  {%    if grp_entry.repeat > 1 or grp_entry.array %}
-     {{grp.name}}_{{grp_entry.set}}_blk {{grp_entry.inst}}[{{grp_entry.repeat}}];
+  {% for regset in prj.blocks[grp.block].block.register_sets %}
+  {%    if regset.repeat > 1 or regset.array %}
+     {{grp.inst_name}}_{{regset.set}}_blk {{regset.inst}}[{{regset.repeat}}];
   {%    else %}
-     {{grp.name}}_{{grp_entry.set}}_blk {{grp_entry.inst}};
+     {{grp.inst_name}}_{{regset.set}}_blk {{regset.inst}};
   {%    endif %}
   {% endfor %}
 
@@ -439,7 +439,7 @@ package {{prj.short_name}}_reg_pkg;
      bit disable_{{map}}_map = 1'b0;
   {% endfor %}
 
-     function new(string name = "{{grp.name}}_grp_blk");
+     function new(string name = "{{grp.inst_name}}_grp_blk");
         super.new(name, build_coverage(UVM_NO_COVERAGE));
      endfunction : new
 
@@ -456,51 +456,52 @@ package {{prj.short_name}}_reg_pkg;
     {% endfor %}
   {% endif %}
 
-  {% for grp_entry in grp.register_sets %}
-   {% if grp_entry.repeat > 1 or grp_entry.array %}
-        for (int i = 0; i < {{grp_entry.repeat}}; i++) begin
-           {{grp_entry.inst}}[i] = {{grp.name}}_{{grp_entry.set}}_blk::type_id::create($sformatf("{{grp_entry.inst}}[%0d]", i));
-      {% if grp_entry.hdl: %}
-           {{grp_entry.inst}}[i].configure(this, $sformatf("{{grp_entry.hdl}}", i));
+  {% for regset_inst in prj.blocks[grp.block].block.regset_insts %}
+   {% set regset = prj.regsets[regset_inst.set_name] %}
+   {% if regset_inst.repeat > 1 or regset.array %}
+        for (int i = 0; i < {{regset_inst.repeat}}; i++) begin
+           {{regset_inst.inst}}[i] = {{grp_inst.inst_name}}_{{regset_inst.inst}}_blk::type_id::create($sformatf("{{regset_inst.inst}}[%0d]", i));
+      {% if regset_inst.hdl: %}
+           {{regset_inst.inst}}[i].configure(this, $sformatf("{{regset_inst.hdl}}", i));
       {% else %}
-           {{grp_entry.inst}}[i].configure(this, "");
+           {{regset_inst.inst}}[i].configure(this, "");
       {% endif %}
       
       {% for item in group_maps[grp] %}
-           {{grp_entry.inst}}[i].disable_{{item}}_map = disable_{{item}}_map;
+           {{regset_inst.inst}}[i].disable_{{item}}_map = disable_{{item}}_map;
       {% endfor %}
       
-           {{grp_entry.inst}}[i].build();
+           {{regset_inst.inst}}[i].build();
       {% for item in group_maps[grp] %}
         {% if group_maps[grp]| length > 1 %}
            if (!disable_{{item}}_map) begin
-              {{item}}_map.add_submap({{grp_entry.inst}}[i].{{item}}_map, 'h{{"%x" % grp_entry.offset}} + (i * 'h{{"%x" % grp_entry.repeat_offset}}));
+              {{item}}_map.add_submap({{regset_inst.inst}}[i].{{item}}_map, 'h{{"%x" % regset_inst.offset}} + (i * 'h{{"%x" % regset.repeat_offset}}));
            end
         {% else %}
-           {{item}}_map.add_submap({{grp_entry.inst}}[i].{{item}}_map, 'h{{"%x" % grp_entry.offset}} + (i * 'h{{"%x" % grp_entry.repeat_offset}}));
+           {{item}}_map.add_submap({{regset_inst.inst}}[i].{{item}}_map, 'h{{"%x" % regset_inst.offset}} + (i * 'h{{"%x" % regset.repeat_offset}}));
         {% endif %}
-        {% if grp_entry.no_uvm %}
-           uvm_resource_db#(bit)::set({"REG::",{{grp_entry.inst}}[i].get_full_name(),".*"}, "NO_REG_TESTS", 1, this);
+        {% if regset.no_uvm %}
+           uvm_resource_db#(bit)::set({"REG::",{{regset_inst.inst}}[i].get_full_name(),".*"}, "NO_REG_TESTS", 1, this);
         {% endif %}
       {% endfor %}
         end
     {% else %}
-        {{grp_entry.inst}} = {{grp.name}}_{{grp_entry.set}}_blk::type_id::create("{{grp_entry.inst}}");
-        {{grp_entry.inst}}.configure(this, "{{grp_entry.hdl}}");
+        {{regset_inst.inst}} = {{grp.inst_name}}_{{regset_inst.set_name}}_blk::type_id::create("{{regset_inst.inst}}");
+        {{regset_inst.inst}}.configure(this, "{{regset_inst.hdl}}");
 	
       {% for item in group_maps[grp] %}
-        {{grp_entry.inst}}.disable_{{item}}_map = disable_{{item}}_map;
+        {{regset_inst.inst}}.disable_{{item}}_map = disable_{{item}}_map;
       {% endfor %}
       
-        {{grp_entry.inst}}.build();
+        {{regset_inst.inst}}.build();
       {% for item in group_maps[grp] %}
         {% if group_maps[grp]| length > 1 %}
-        if (!disable_{{item}}_map) {{item}}_map.add_submap({{grp_entry.inst}}.{{item}}_map, 'h{{"%x" % grp_entry.offset}});
+        if (!disable_{{item}}_map) {{item}}_map.add_submap({{regset_inst.inst}}.{{item}}_map, 'h{{"%x" % regset_inst.offset}});
         {% else %}
-        {{item}}_map.add_submap({{grp_entry.inst}}.{{item}}_map, 'h{{"%x" % grp_entry.offset}});
+        {{item}}_map.add_submap({{regset_inst.inst}}.{{item}}_map, 'h{{"%x" % regset_inst.offset}});
         {% endif %}
-        {% if grp_entry.no_uvm %}
-        uvm_resource_db#(bit)::set({"REG::",{{grp_entry.inst}}.get_full_name(),".*"}, "NO_REG_TESTS", 1, this);
+        {% if regset.no_uvm %}
+        uvm_resource_db#(bit)::set({"REG::",{{regset_inst.inst}}.get_full_name(),".*"}, "NO_REG_TESTS", 1, this);
         {% endif %}
       {% endfor %}
     {%  endif %}
