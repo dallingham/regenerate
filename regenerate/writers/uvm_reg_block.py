@@ -29,7 +29,7 @@ from ..db import TYPES
 from ..extras.remap import REMAP_NAME
 from .writer_base import WriterBase, ExportInfo
 from ..db.reg_project import RegProject
-from ..db.register_db import RegisterDb, RegSetContainer
+from ..db.register_db import RegisterDb
 from ..db.bitfield import BitField
 from ..db.register import Register
 from ..db.addrmap import AddressMap
@@ -54,7 +54,7 @@ class UVMRegBlockRegisters(WriterBase):
         supported by the package
         """
         super().__init__(project, None)
-        self.dblist = [dbase[1].regset for dbase in project.regsets.items()]
+        self.dblist = [dbase[1] for dbase in project.regsets.items()]
 
     def uvm_address_maps(self) -> List[AddressMap]:
         "Return a list of all the address maps that are not excluded from UVM"
@@ -97,7 +97,7 @@ class UVMRegBlockRegisters(WriterBase):
             ofile.write(
                 template.render(
                     prj=self._project,
-                    dblist=[cont.regset for cont in used_dbs],
+                    dblist=used_dbs,
                     individual_access=individual_access,
                     ACCESS_MAP=ACCESS_MAP,
                     TYPE_TO_INPUT=TYPE_TO_INPUT,
@@ -114,13 +114,13 @@ class UVMRegBlockRegisters(WriterBase):
 
         data_set = []
         group_maps = self._build_group_maps()
-
+        print(group_maps)
         for blk_inst in self._project.block_insts:
-            for regset in self._project.blocks[
+            for regset_inst in self._project.blocks[
                 blk_inst.block
-            ].block.register_sets:
+            ].block.regset_insts:
                 data_set.append(
-                    regset.regset, blk_inst, group_maps[blk_inst.block]
+                    regset_inst, blk_inst, group_maps[blk_inst.block]
                 )
 
         return data_set
@@ -154,7 +154,7 @@ class UVMRegBlockRegisters(WriterBase):
         # print(data_set)
         # return data_set
 
-    def get_used_databases(self) -> Set[RegSetContainer]:
+    def get_used_databases(self) -> Set[RegisterDb]:
 
         grp_set = set()
         for blk in self._project.blocks.values():

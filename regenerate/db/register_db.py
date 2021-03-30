@@ -20,10 +20,12 @@
 Provides the container database for a set of registers.
 """
 
-from io import BytesIO as StringIO
 import os
-from pathlib import Path
+import json
 import re
+from operator import methodcaller
+from io import BytesIO as StringIO
+from pathlib import Path
 from typing import Union, Optional
 
 from .register import Register
@@ -59,11 +61,21 @@ class RegisterDb:
         self.overview_text = ""
         self.coverage = True
         self.set_name = ""
-        self.filename = None
+        self._filename = None
+        self.modified = False
 
         if filename is not None:
             self.read_db(filename)
+            self.filename = Path(filename)
+            
+    @property
+    def filename(self) -> Path:
+        return self._filename
 
+    @filename.setter
+    def filename(self, value: Union[str, Path]) -> None:
+        self._filename = Path(value).with_suffix(REG_EXT)
+            
     def total_bits(self):
         """Returns bits in register"""
         bits = 0
@@ -100,13 +112,12 @@ class RegisterDb:
         """Removes the register to the database."""
         del self._registers[reg.uuid]
 
-    def read_db(self, filename):
+    def read_db(self, filename: Path):
 
-        self.filename = Path(filename)
-        if self.filename.suffix == OLD_REG_EXT:
-            self.read_xml(self.filename)
+        if filename.suffix == OLD_REG_EXT:
+            self.read_xml(filename)
         else:
-            self.read_json(self.filename)
+            self.read_json(filename)
 
     def read_xml(self, filename: Path):
         """Reads the XML file, loading the databsae."""
@@ -120,17 +131,19 @@ class RegisterDb:
     def read_json(self, filename: Path):
         """Reads the XML file, loading the databsae."""
 
-        self.filename = Path(
-            Container.regset_data_path
-        ) / filename.with_suffix(REG_EXT)
-
-        self.filename = self.filename.resolve()
+        self.filename = filename.resolve()
 
         with self.filename.open("r") as ifile:
             self.set_name = filename.stem
             parser = RegParserJSON(self)
             parser.parse(ifile)
         return self
+
+    def save_xml(self, filename):
+        """Saves the database to the specified XML file"""
+        self.filename = Path(filename)
+        writer = RegWriter(self)
+        writer.save(filename)
 
     def loads(self, data, filename):
         """Reads the XML file, loading the databsae."""
@@ -143,11 +156,15 @@ class RegisterDb:
         parser.parse(ifile)
         return self
 
-    def save_xml(self, filename):
-        """Saves the database to the specified XML file"""
-        self.filename = Path(filename)
-        writer = RegWriter(self)
-        writer.save(filename)
+    def save(self):
+        try:
+            data = self.json()
+            with self.filename.open("w") as ofile:
+                ofile.write(
+                    json.dumps(data, default=methodcaller("json"), indent=4)
+                )
+        except FileNotFoundError as msg:
+            LOGGER.error(str(msg))
 
     @property
     def module_name(self):
@@ -251,6 +268,7 @@ class RegisterDb:
                 "options": exp.options,
             }
             data["exports"].append(info)
+            
         return data
 
     def json_decode(self, data):
@@ -270,6 +288,7 @@ class RegisterDb:
         self.overview_text = data["overview_text"]
         self.owner = data["owner"]
         self.use_interface = data["use_interface"]
+        self.modified = False
 
         for reg_json in data["register_inst"]:
             reg = Register()
@@ -287,38 +306,3 @@ class RegisterDb:
 
             self.exports.append(exp)
 
-
-class RegSetContainer(Container):
-    def __init__(self):
-        super().__init__()
-        self.regset: Optional[RegisterDb] = None
-
-    @property
-    def filename(self) -> Path:
-        return self._filename
-
-    @filename.setter
-    def filename(self, value: Union[str, Path]) -> None:
-        self._filename = Path(value).with_suffix(REG_EXT)
-
-    def save(self):
-        if self.regset:
-            self._save_data(self.regset)
-
-    def json(self):
-        if Container.regset_data_path:
-            filename = Path(
-                os.path.relpath(self.filename, Container.regset_data_path)
-            )
-        else:
-            filename = self.filename
-
-        return {
-            "filename": str(filename),
-        }
-
-    def json_decode(self, data):
-        self.filename = Path(data["filename"])
-        self.regset = RegisterDb()
-        self.regset.read_json(self.filename)
-        self.modified = False

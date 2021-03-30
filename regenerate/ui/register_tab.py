@@ -25,7 +25,6 @@ from pathlib import Path
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango
 from regenerate.settings.paths import INSTALL_PATH
 from regenerate.db import Register, BitField, LOGGER, RegisterDb
-from regenerate.db.register_db import RegSetContainer
 from regenerate.db.enums import ShareType, ResetType
 from regenerate.db.const import REG_EXT, OLD_REG_EXT
 from regenerate.ui.bit_list import BitModel, BitList
@@ -129,9 +128,10 @@ class RegSetModel(Gtk.ListStore):
     def load_icons(self):
         pass
 
-    def add_dbase(self, regset: RegSetContainer, modified=False):
+    def add_dbase(self, regset: RegisterDb, modified=False):
         """Add the the database to the model"""
 
+        print("***", regset)
         base = regset.filename.stem
         if modified or regset.modified:
             node = self.append(row=[Gtk.STOCK_EDIT, base])
@@ -241,7 +241,6 @@ class RegSetTab:
         self.active = None
         self.active_name = ""
         self.project = None
-        self.name2container: Dict[str, RegSetContainer] = {}
         self.name2status: Dict[str, RegSetStatus] = {}
 
         self.widgets.filter_obj.set_placeholder_text("Signal Filter")
@@ -260,17 +259,17 @@ class RegSetTab:
         self.db_selected_action.set_sensitive(value)
         self.widgets.reg_notebook.set_sensitive(value)
 
-    def new_regset(self, container, name):
+    def new_regset(self, regset, name):
 
-        node = self.reg_set_model.add_dbase(container)
+        node = self.reg_set_model.add_dbase(regset)
         self.reg_model = RegisterModel()
         mdl = self.reg_model.filter_new()
         self.filter_manage.change_filter(mdl, True)
         self.modelsort = Gtk.TreeModelSort(mdl)
         self.reglist_obj.set_model(self.modelsort)
 
-        for key in container.regset.get_keys():
-            register = container.regset.get_register(key)
+        for key in regset.get_keys():
+            register = regset.get_register(key)
             self.reg_model.append_register(register)
 
         bit_model = BitModel()
@@ -282,7 +281,7 @@ class RegSetTab:
         )
 
         status = RegSetStatus(
-            container,
+            regset,
             self.reg_model,
             self.modelsort,
             self.filter_manage.get_model(),
@@ -290,17 +289,15 @@ class RegSetTab:
         )
 
         self.name2status[name] = status
-        self.name2container[name] = container
         return node
 
     def change_project(self, prj):
 
         self.project = prj
-        self.name2container = {}
         self.name2status = {}
-        for container_name in sorted(self.project.regsets):
-            container = self.project.regsets[container_name]
-            self.new_regset(container, container_name)
+        for set_name in sorted(self.project.regsets):
+            regset = self.project.regsets[set_name]
+            self.new_regset(regset, set_name)
 
         self.update_display()
         self.reg_set_obj.select_path(0)
@@ -318,7 +315,7 @@ class RegSetTab:
     def redraw(self):
         """Redraws the information in the register list."""
         if self.active:
-            self.module_tabs.change_db(self.active.regset)
+            self.module_tabs.change_db(self.active)
         # self.parameter_list.set_db(self.dbase)
         # self.reglist_obj.set_parameters(self.dbase.get_parameters())
         # self.bitfield_obj.set_parameters(self.dbase.get_parameters())
@@ -369,8 +366,8 @@ class RegSetTab:
             self.bitfield_obj.set_model(self.bit_model)
 
             text = "<b>%s - %s</b>" % (
-                self.active.regset.module_name,
-                self.active.regset.descriptive_title,
+                self.active.module_name,
+                self.active.descriptive_title,
             )
             self.widgets.selected_regset.set_text(text)
             self.widgets.selected_regset.set_use_markup(True)
@@ -473,13 +470,13 @@ class RegSetTab:
         reg = self.get_selected_register()
         if reg:
             self.reglist_obj.delete_selected_node()
-            self.active.regset.delete_register(reg)
+            self.active.delete_register(reg)
             self.reglist_obj.select_row(row)
             self.set_modified()
 
     def new_register(self):
         register = Register()
-        dbase = self.active.regset
+        dbase = self.regset
         register.width = dbase.ports.data_bus_width
         register.address = calculate_next_address(dbase, register.width)
         self.insert_new_register(register)
@@ -487,7 +484,7 @@ class RegSetTab:
     def insert_new_register(self, register):
         if self.widgets.notebook.get_current_page() == 0:
             self.reglist_obj.add_new_register(register)
-            self.active.regset.add_register(register)
+            self.active.add_register(register)
             self.set_register_warn_flags(register)
             self.set_modified()
 
@@ -529,7 +526,7 @@ class RegSetTab:
         field = self.bitfield_obj.select_field()
         if field:
             BitFieldEditor(
-                self.active.regset,
+                self.regset,
                 register,
                 field,
                 self.set_field_modified,
@@ -538,7 +535,7 @@ class RegSetTab:
             )
 
     def update_register_addr(self, register, new_addr, new_length=0):
-        dbase = self.active.regset
+        dbase = self.regset
         dbase.delete_register(register)
         register.address = new_addr
         register.ram_size = new_length
@@ -552,7 +549,7 @@ class RegSetTab:
         dbase.add_register(register)
 
     def find_shared_address(self, reg):
-        for shared_reg in self.active.regset.get_all_registers():
+        for shared_reg in self.active.get_all_registers():
             if shared_reg != reg and shared_reg.address == reg.address:
                 return shared_reg
         return None
@@ -575,14 +572,14 @@ class RegSetTab:
 
     def update_bit_count(self):
         if self.active:
-            text = "%d" % self.active.regset.total_bits()
+            text = "%d" % self.active.total_bits()
         else:
             text = ""
         self.widgets.reg_count.set_text(text)
 
     def set_description_warn_flag(self):
         if self.active:
-            warn = self.active.regset.overview_text == ""
+            warn = self.active.overview_text == ""
         else:
             warn = False
         self.widgets.mod_descr_warn.set_property("visible", warn)
@@ -637,7 +634,7 @@ class RegSetTab:
 
     def duplicate_address(self, reg_addr):
         cnt = 0
-        for reg in self.active.regset.get_all_registers():
+        for reg in self.active.get_all_registers():
             if reg.address == reg_addr:
                 cnt += 1
         return cnt > 1
@@ -692,13 +689,11 @@ class RegSetTab:
         dbase = RegisterDb()
         dbase.module_name = name.stem
         dbase.set_name = name.stem
-        container = RegSetContainer()
-        container.filename = name
-        container.regset = dbase
-        container.modified = True
+        dbase.filename = name
+        dbase.modified = True
 
         self.project.regsets[dbase.set_name] = container
-        node = self.new_regset(container, name.stem)
+        node = self.new_regset(dbase, name.stem)
         self.reg_set_obj.select(node)
 
         # self.set_project_modified()
@@ -748,10 +743,8 @@ class RegSetTab:
 
                 name = Path(filename)
                 dbase = RegisterDb(name)
-                container = RegSetContainer()
-                container.filename = name
-                container.regset = dbase
-                container.modified = True
+                dbase.filename = name
+                dbase.modified = True
 
                 self.project.regsets[dbase.set_name] = container
                 node = self.new_regset(container, name.stem)
@@ -806,7 +799,7 @@ class RegSetTab:
 
         if reg:
             SummaryWindow(
-                self.widgets, reg, self.active.regset.set_name, self.project
+                self.widgets, reg, self.active.set_name, self.project
             )
 
 

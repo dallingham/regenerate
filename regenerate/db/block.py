@@ -29,10 +29,10 @@ import json
 
 from .const import BLK_EXT
 from .register_inst import RegisterInst
+from .register_db import RegisterDb
 from .doc_pages import DocPages
 from .name_base import NameBase
 from .containers import Container
-from .register_db import RegSetContainer
 
 
 class Block(NameBase):
@@ -57,7 +57,7 @@ class Block(NameBase):
         self.doc_pages.update_page("Additional", "")
 
         self.regset_insts: List[RegisterInst] = []
-        self.regsets: Dict[str, RegSetContainer] = {}
+        self.regsets: Dict[str, RegisterDb] = {}
         self.modified = False
 
     def __hash__(self):
@@ -99,21 +99,38 @@ class Block(NameBase):
 
         self.regsets = {}
         for key, item in data["regsets"].items():
-
-            rs_data = RegSetContainer()
-            rs_data.json_decode(item)
-            self.regsets[key] = rs_data
+            filename = Path(
+                Container.block_data_path / item['filename']
+            ).resolve()
+            regset = RegisterDb()
+            regset.read_json(filename)
+            self.regsets[key] = regset
+            
+#            rs_data = RegSetContainer()
+#            rs_data.json_decode(item)
+#            self.regsets[key] = rs_data
 
     def json(self):
-        return {
+        data = {
             "name": self.name,
             "uuid": self.uuid,
             "address_size": f"{self.address_size}",
             "doc_pages": self.doc_pages.json(),
             "description": self.description,
             "regset_insts": self.regset_insts,
-            "regsets": self.regsets,
         }
+
+        data['regsets'] = {}
+        for name in self.regsets:
+            new_path = os.path.relpath(
+                self.regsets[name].filename,
+                Container.block_data_path,
+            )
+            data["regsets"][name] = {
+                'filename': new_path,
+            }
+        
+        return data
 
 
 class BlockContainer(Container):

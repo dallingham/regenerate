@@ -42,13 +42,17 @@ package {{prj.short_name}}_reg_pkg;
 {% endfor %}
    };
 
-   /*
+   /*-------------------------------------------------------------------------
+    *
     * Register classes
+    *
+    *-------------------------------------------------------------------------
     */
 
 {% for db in dblist %}
 
   {%- if db.coverage %}
+  
    class {{db.set_name}}_reg_access_wrapper extends uvm_object;
 
       `uvm_object_utils({{db.set_name}}_reg_access_wrapper)
@@ -253,13 +257,16 @@ package {{prj.short_name}}_reg_pkg;
    {% endfor %}
 {% endfor %}
 
-  /*
-   * Block instantiations
+  /*--------------------------------------------------------------------------
+   *
+   * Regset instantiations
+   *
+   *--------------------------------------------------------------------------
    */
 {% for db, grp, grp_map in db_grp_maps %}
-  class {{grp}}_{{db.set_name}}_blk extends uvm_reg_block;
+  class {{grp}}_{{db.set_name}}_regset extends uvm_reg_block;
 
-    `uvm_object_utils({{grp}}_{{db.set_name}}_blk)
+    `uvm_object_utils({{grp}}_{{db.set_name}}_regset)
 
    {% for reg in db.get_all_registers()|remove_no_uvm %}
      {% if reg.ram_size %}
@@ -283,7 +290,7 @@ package {{prj.short_name}}_reg_pkg;
     {{db.set_name}}_reg_access_wrapper {{db.set_name}}_access_cg;
    {% endif %}
 
-    function new(string name = "{{grp}}_{{db.set_name}}_blk");
+    function new(string name = "{{grp}}_{{db.set_name}}_regset");
        super.new(name, build_coverage(UVM_CVR_ADDR_MAP));
        add_coverage(build_coverage(UVM_CVR_ADDR_MAP));
     endfunction
@@ -414,13 +421,19 @@ package {{prj.short_name}}_reg_pkg;
     endfunction: sample
    {% endif %}
 
-  endclass : {{grp}}_{{db.set_name}}_blk
+  endclass : {{grp}}_{{db.set_name}}_regset
 
 {% endfor %}
 
+  /*--------------------------------------------------------------------------
+   *
+   * Blocks
+   *
+   *--------------------------------------------------------------------------
+   */
 {% for grp in group_maps %}
 
-  class {{grp.inst_name}}_grp_blk extends uvm_reg_block;
+  class {{grp.inst_name}}__blk extends uvm_reg_block;
 
      `uvm_object_utils({{grp.inst_name}}_grp_blk)
 

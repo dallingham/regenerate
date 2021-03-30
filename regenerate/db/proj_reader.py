@@ -30,7 +30,7 @@ from .const import REG_EXT, BLK_EXT, OLD_REG_EXT
 from .block import Block, BlockContainer
 from .block_inst import BlockInst
 from .register_inst import RegisterInst
-from .register_db import RegisterDb, RegSetContainer
+from .register_db import RegisterDb
 from .export import ExportData
 
 
@@ -286,6 +286,6 @@ class ProjectReader:
                 name = reg_inst.set_name
                 block.regsets[name] = self._prj.regsets[name]
                 path = block.regsets[name].filename
-                block.regsets[name].regset.exports = self.reg_exports[
+                block.regsets[name].exports = self.reg_exports[
                     str(path)
                 ]

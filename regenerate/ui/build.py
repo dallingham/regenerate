@@ -144,7 +144,7 @@ class Build(BaseWindow):
         mod = file_needs_rebuilt(local_dest, self.__prj, [dbase_full_path])
         self.__modlist.append(mod)
         (fmt, cls, _) = self.__optmap[exporter]
-        dbase = self.__prj.regsets[base].regset
+        dbase = self.__prj.regsets[base]
         rel_dest = dest
 
         self.__model.append(row=(mod, base, fmt, rel_dest, cls, dbase, 0))
@@ -300,15 +300,11 @@ class Build(BaseWindow):
                 if rtype == 0:
                     gen = writer_class(self.__prj, dbase)
                 elif rtype == 1:
-                    db_list = [
-                        cont.regset for cont in self.__prj.regsets.values()
-                    ]
+                    db_list = self.__prj.regsets.values()
                     grp = item[BuildCol.BASE].split()[0]
                     gen = writer_class(self.__prj, grp, db_list)
                 else:
-                    db_list = [
-                        cont.regset for cont in self.__prj.regsets.values()
-                    ]
+                    db_list = self.__prj.regsets.values()
                     gen = writer_class(self.__prj, db_list)
                 gen.write(dest)
                 item[BuildCol.MODIFIED] = False

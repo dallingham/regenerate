@@ -82,7 +82,6 @@ from .asm_equ import AsmEqu
 from .odt_doc import OdtDoc
 from .rst_doc import RstDoc
 
-
 for module in MODULES:
     for mpath in IMPORT_PATHS:
         try:

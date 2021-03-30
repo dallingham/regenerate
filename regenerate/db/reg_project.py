@@ -37,7 +37,7 @@ from .logger import LOGGER
 from .parammap import PrjParameterData
 from .export import ExportData
 from .doc_pages import DocPages
-from .register_db import RegisterDb, RegSetContainer
+from .register_db import RegisterDb
 from .block import Block, BlockContainer
 from .block_inst import BlockInst
 from .const import REG_EXT, PRJ_EXT, OLD_PRJ_EXT
@@ -83,7 +83,7 @@ class RegProject:
         self.block_insts: List[BlockInst] = []
         self.blocks: Dict[str, BlockContainer] = {}
 
-        self.regsets: Dict[str, RegSetContainer] = {}
+        self.regsets: Dict[str, RegProject] = {}
 
         self._group_exports = {}
         self.exports = []
@@ -157,11 +157,10 @@ class RegProject:
 
         self._modified = True
 
-        regset = RegSetContainer()
+        regset = RegisterDb()
         regset.modified = True
-        regset.regset = RegisterDb()
-        regset.regset.read_db(self.path.parent / name)
-        self.regsets[regset.regset.set_name] = regset
+        regset.read_db(self.path.parent / name)
+        self.regsets[regset.set_name] = regset
         new_file_path = Path(name).with_suffix(REG_EXT).resolve()
         regset.filename = new_file_path
         self._filelist.append(new_file_path)
@@ -189,7 +188,7 @@ class RegProject:
         """
         for regset in self.regsets.values():
             if str(regset.filename) == path:
-                return tuple(regset.regset.exports)
+                return tuple(regset.exports)
         return tuple([])
 
     def get_project_exports(self):
