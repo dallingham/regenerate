@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 #
 # Copyright (C) 2017  Donald N. Allingham
 #
@@ -159,7 +159,7 @@ class IpXactParser:
 
                     for field in register.findall(scope + "field"):
                         self.start_field()
-                        self._field.field_name = field.find(
+                        self._field.name = field.find(
                             scope + "name"
                         ).text.upper()
                         self._field.description = field.find(
@@ -177,7 +177,7 @@ class IpXactParser:
                             BitType.WRITE_1_TO_SET,
                             BitType.WRITE_1_TO_CLEAR_SET,
                         ):
-                            self._field.field_type = text2field.get(
+                            self._field.field_type = TEXT2FIELD.get(
                                 field.find(scope + "access").text,
                                 BitType.READ_ONLY,
                             )
@@ -343,7 +343,7 @@ class IpXactParser:
 
     def end_name(self, text):
         if self._field:
-            self._field.field_name = text.upper()
+            self._field.name = text.upper()
         elif self._reg:
             self._reg.token = text.upper()
             self._reg.name = name_from_token(text.upper())
@@ -486,7 +486,7 @@ def ignore_by_field_name(field):
 
     for pattern in RESERVED:
 
-        match = pattern.match(field.field_name)
+        match = pattern.match(field.name)
         if match:
             return True
 
@@ -618,7 +618,7 @@ if __name__ == "__main__":
             if db2 is not None:
                 old_reg = db2.find_register_by_token(r.token)
                 if old_reg:
-                    r.name = old_reg.register_name
+                    r.name = old_reg.name
 
             max_addr = max(r.address, max_addr)
 
