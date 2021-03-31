@@ -68,7 +68,6 @@ class BitField(NameBase):
         "_reset_value",
         "control_signal",
         "field_type",
-        "is_error_field",
         "lsb",
         "msb",
         "output_has_side_effect",
@@ -78,13 +77,11 @@ class BitField(NameBase):
         "reset_type",
         "use_output_enable",
         "values",
-        "volatile",
     )
 
     _doc_compare = (
         "_reset_value",
         "field_type",
-        "is_error_field",
         "lsb",
         "msb",
         "reset_input",
