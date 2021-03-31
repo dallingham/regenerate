@@ -50,7 +50,7 @@ class Block(NameBase):
 
         super().__init__(name)
         self.address_size = address_size
-        self.register_sets: List[RegisterInst] = []
+#        self.register_sets: List[RegisterInst] = []
         self.description = description
         self.doc_pages = DocPages()
         self.doc_pages.update_page("Overview", "")

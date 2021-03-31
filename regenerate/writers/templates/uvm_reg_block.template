@@ -437,11 +437,11 @@ package {{prj.short_name}}_reg_pkg;
 
      `uvm_object_utils({{grp.inst_name}}_blk)
 
-  {% for regset in prj.blocks[grp.block].register_sets %}
-  {%    if regset.repeat > 1 or regset.array %}
-     {{grp.inst_name}}_{{regset.set}}_regset {{regset.inst}}[{{regset.repeat}}];
+  {% for regset_inst in prj.blocks[grp.block].regset_insts %}
+  {%    if regset_inst.repeat > 1 or regset_inst.array %}
+     {{grp.inst_name}}_{{regset_inst.set_name}}_regset {{regset_inst.inst}}[{{regset_inst.repeat}}];
   {%    else %}
-     {{grp.inst_name}}_{{regset.set}}_regset {{regset.inst}};
+     {{grp.inst_name}}_{{regset_inst.set_name}}_regset {{regset_inst.inst}};
   {%    endif %}
   {% endfor %}
 
