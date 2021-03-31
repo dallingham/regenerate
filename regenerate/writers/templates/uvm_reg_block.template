@@ -433,15 +433,15 @@ package {{prj.short_name}}_reg_pkg;
    */
 {% for grp in group_maps %}
 
-  class {{grp.inst_name}}__blk extends uvm_reg_block;
+  class {{grp.inst_name}}_blk extends uvm_reg_block;
 
-     `uvm_object_utils({{grp.inst_name}}_grp_blk)
+     `uvm_object_utils({{grp.inst_name}}_blk)
 
   {% for regset in prj.blocks[grp.block].register_sets %}
   {%    if regset.repeat > 1 or regset.array %}
-     {{grp.inst_name}}_{{regset.set}}_blk {{regset.inst}}[{{regset.repeat}}];
+     {{grp.inst_name}}_{{regset.set}}_regset {{regset.inst}}[{{regset.repeat}}];
   {%    else %}
-     {{grp.inst_name}}_{{regset.set}}_blk {{regset.inst}};
+     {{grp.inst_name}}_{{regset.set}}_regset {{regset.inst}};
   {%    endif %}
   {% endfor %}
 
@@ -452,7 +452,7 @@ package {{prj.short_name}}_reg_pkg;
      bit disable_{{map}}_map = 1'b0;
   {% endfor %}
 
-     function new(string name = "{{grp.inst_name}}_grp_blk");
+     function new(string name = "{{grp.inst_name}}_blk");
         super.new(name, build_coverage(UVM_NO_COVERAGE));
      endfunction : new
 
@@ -473,7 +473,7 @@ package {{prj.short_name}}_reg_pkg;
    {% set regset = prj.regsets[regset_inst.set_name] %}
    {% if regset_inst.repeat > 1 or regset.array %}
         for (int i = 0; i < {{regset_inst.repeat}}; i++) begin
-           {{regset_inst.inst}}[i] = {{grp_inst.inst_name}}_{{regset_inst.inst}}_blk::type_id::create($sformatf("{{regset_inst.inst}}[%0d]", i));
+           {{regset_inst.inst}}[i] = {{grp_inst.inst_name}}_{{regset_inst.inst}}_regset::type_id::create($sformatf("{{regset_inst.inst}}[%0d]", i));
       {% if regset_inst.hdl: %}
            {{regset_inst.inst}}[i].configure(this, $sformatf("{{regset_inst.hdl}}", i));
       {% else %}
@@ -499,7 +499,7 @@ package {{prj.short_name}}_reg_pkg;
       {% endfor %}
         end
     {% else %}
-        {{regset_inst.inst}} = {{grp.inst_name}}_{{regset_inst.set_name}}_blk::type_id::create("{{regset_inst.inst}}");
+        {{regset_inst.inst}} = {{grp.inst_name}}_{{regset_inst.set_name}}_regset::type_id::create("{{regset_inst.inst}}");
         {{regset_inst.inst}}.configure(this, "{{regset_inst.hdl}}");
 	
       {% for item in group_maps[grp] %}
@@ -520,19 +520,18 @@ package {{prj.short_name}}_reg_pkg;
     {%  endif %}
   {% endfor %}
       endfunction: build
-  endclass : {{grp.inst_name}}_grp_blk
+  endclass : {{grp.inst_name}}_blk
 {% endfor %}
 
   /* Top level register block */
   class {{prj.short_name}}_reg_block extends uvm_reg_block;
 
      `uvm_object_utils({{prj.short_name}}_reg_block)
-
 {% for grp in group_maps %}
 {%   if grp.repeat > 1 %}
-     {{grp.inst_name}}_grp_blk {{grp.inst_name}}[{{grp.repeat}}];
+     {{grp.inst_name}}_blk {{grp.inst_name}}[{{grp.repeat}}];
 {%   else %}
-     {{grp.inst_name}}_grp_blk {{grp.inst_name}};
+     {{grp.inst_name}}_blk {{grp.inst_name}};
 {%   endif %}
 {%- endfor %}
 {% for data in used_maps %}
@@ -562,7 +561,7 @@ package {{prj.short_name}}_reg_pkg;
 
 {% for grp in group_maps %}
   {% if grp.repeat <= 1 %}
-        {{grp.inst_name}} = {{grp.inst_name}}_grp_blk::type_id::create("{{grp.inst_name}}");
+        {{grp.inst_name}} = {{grp.inst_name}}_blk::type_id::create("{{grp.inst_name}}");
     {% if grp.hdl != "" %}
         {{grp.inst_name}}.configure(this, "{{grp.hdl}}");
     {% else %}
@@ -588,7 +587,7 @@ package {{prj.short_name}}_reg_pkg;
   {% else %}
 
         foreach ({{grp.inst_name}}[i]) begin
-           {{grp.inst_name}}[i] = {{grp.inst_name}}_grp_blk::type_id::create($sformatf("{{grp.inst_name}}[%0d]", i));
+           {{grp.inst_name}}[i] = {{grp.inst_name}}_blk::type_id::create($sformatf("{{grp.inst_name}}[%0d]", i));
     {% if grp.hdl != "" %}
            {{grp.inst_name}}[i].configure(this, $sformatf("{{grp.hdl}}", i));
     {% else %}
