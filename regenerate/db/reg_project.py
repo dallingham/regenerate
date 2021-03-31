@@ -82,7 +82,7 @@ class RegProject:
         self.block_insts: List[BlockInst] = []
         self.blocks: Dict[str, Block] = {}
 
-        self.regsets: Dict[str, RegProject] = {}
+        self.regsets: Dict[str, RegisterDb] = {}
 
         self._group_exports = {}
         self.exports = []
@@ -126,9 +126,11 @@ class RegProject:
         self.path = Path(name)
 
         if self.path.suffix == OLD_PRJ_EXT:
+            LOGGER.info("Loading XML project file '%s'", str(self.path))
             xml_reader = ProjectReader(self)
             xml_reader.open(name)
         else:
+            LOGGER.info("Loading JSON project file '%s'", str(self.path))
             json_reader = ProjectReaderJSON(self)
             json_reader.open(name)
 
@@ -220,10 +222,10 @@ class RegProject:
 
         self._modified = True
         exp = ExportData(exporter, full_target_str)
-        if full_db_str in self._exports:
-            self._exports[full_db_str].append(exp)
+        if full_db_str in self.exports:
+            self.exports[full_db_str].append(exp)
         else:
-            self._exports[full_db_str] = [exp]
+            self.exports[full_db_str] = [exp]
 
     def append_to_project_export_list(self, exporter: str, dest: str) -> None:
         """
@@ -288,9 +290,9 @@ class RegProject:
         """Removes the export from the export list"""
         self._modified = True
         path = os.path.relpath(path, self.path.parent)
-        self._exports[str(path)] = [
+        self.exports[str(path)] = [
             exp
-            for exp in self._exports[str(path)]
+            for exp in self.exports[str(path)]
             if not (exp.exporter == exporter and exp.dest == dest)
         ]
 
@@ -352,7 +354,7 @@ class RegProject:
         ]
 
     def get_block_from_inst(self, name: str) -> Block:
-        return self.blocks[name].block
+        return self.blocks[name]
 
     def change_address_map_name(self, old_name: str, new_name: str) -> None:
         """Changes the name of an address map"""
@@ -377,13 +379,13 @@ class RegProject:
     def get_address_fixed(self, name: str):
         """Indicates if the specified address map is at a fixed location"""
         return next(
-            (d.fixed for d in self._addr_map_list if name == d.name), None
+            (d.fixed for d in self.address_maps.values() if name == d.name), None
         )
 
     def get_address_uvm(self, name: str):
         """Indicates if the specified address map is at a fixed location"""
         return next(
-            (d.uvm for d in self._addr_map_list if name == d.name), None
+            (d.uvm for d in self.address_maps.values() if name == d.name), None
         )
 
     def get_address_width(self, name: str):
@@ -550,9 +552,9 @@ class RegProject:
 
     def blocks_containing_regset(self, regset_name: str):
         return [
-            self.blocks[blk].block
+            self.blocks[blk]
             for blk in self.blocks
-            if regset_name in self.blocks[blk].block.regsets.keys()
+            if regset_name in self.blocks[blk].regsets.keys()
         ]
 
     def instances_of_block(self, block: Block):

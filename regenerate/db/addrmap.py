@@ -55,7 +55,7 @@ class AddressMap:
         return self._uvm
 
     @uvm.setter
-    def uvm(self, val: Union[int, bool]) -> bool:
+    def uvm(self, val: Union[int, bool]):
         self._uvm = bool(val)
 
     def json_decode(self, data):

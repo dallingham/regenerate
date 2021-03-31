@@ -39,7 +39,7 @@ class ProjectWriterJSON:
         """Save the JSON data to the specified file"""
 
         new_path = Path(path)
-        Container.block_data_path = new_path.parent
+        Container.block_data_path = str(new_path.parent)
 
         with new_path.open("w") as ofile:
             ofile.write(

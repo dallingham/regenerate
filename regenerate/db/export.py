@@ -20,7 +20,7 @@
 """
 Provides the export rules for the builder
 """
-
+from typing import Dict
 from .json_base import JSONEncodable
 
 

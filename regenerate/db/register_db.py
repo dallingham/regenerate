@@ -142,12 +142,6 @@ class RegisterDb:
             parser.parse(ifile)
         return self
 
-    def save_xml(self, filename):
-        """Saves the database to the specified XML file"""
-        self.filename = Path(filename)
-        writer = RegWriter(self)
-        writer.save(filename)
-
     def loads(self, data, filename):
         """Reads the XML file, loading the databsae."""
 

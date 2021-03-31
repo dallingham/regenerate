@@ -437,7 +437,7 @@ package {{prj.short_name}}_reg_pkg;
 
      `uvm_object_utils({{grp.inst_name}}_grp_blk)
 
-  {% for regset in prj.blocks[grp.block].block.register_sets %}
+  {% for regset in prj.blocks[grp.block].register_sets %}
   {%    if regset.repeat > 1 or regset.array %}
      {{grp.inst_name}}_{{regset.set}}_blk {{regset.inst}}[{{regset.repeat}}];
   {%    else %}
@@ -469,7 +469,7 @@ package {{prj.short_name}}_reg_pkg;
     {% endfor %}
   {% endif %}
 
-  {% for regset_inst in prj.blocks[grp.block].block.regset_insts %}
+  {% for regset_inst in prj.blocks[grp.block].regset_insts %}
    {% set regset = prj.regsets[regset_inst.set_name] %}
    {% if regset_inst.repeat > 1 or regset.array %}
         for (int i = 0; i < {{regset_inst.repeat}}; i++) begin

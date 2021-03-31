@@ -118,9 +118,11 @@ class UVMRegBlockRegisters(WriterBase):
         for blk_inst in self._project.block_insts:
             for regset_inst in self._project.blocks[
                 blk_inst.block
-            ].block.regset_insts:
+            ].regset_insts:
                 data_set.append(
-                    regset_inst, blk_inst, group_maps[blk_inst.block]
+                    (self._project.regsets[regset_inst.set_name],
+                     blk_inst,
+                     group_maps[blk_inst])
                 )
 
         return data_set
@@ -158,7 +160,7 @@ class UVMRegBlockRegisters(WriterBase):
 
         grp_set = set()
         for blk in self._project.blocks.values():
-            for db in blk.block.regsets.values():
+            for db in blk.regsets.values():
                 grp_set.add(db)
         return grp_set
 
