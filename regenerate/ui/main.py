@@ -25,8 +25,9 @@ Actual program. Parses the arguments, and initiates the main window
 
 import os
 import sys
-
+import logging
 import gi
+
 gi.require_version("Gtk", "3.0")
 gi.require_version("Pango", "1.0")
 from gi.repository import Gtk
@@ -83,8 +84,19 @@ def main():
     parser.add_argument(
         "project_file", nargs="?", default=None, help="Regenerate project file"
     )
+    parser.add_argument(
+        "--log", type=str, default="WARN", help="logging level"
+    )
 
     args = parser.parse_args()
+
+    if args.log:
+        numeric_level = getattr(logging, args.log.upper(), None)
+        if not isinstance(numeric_level, int):
+            raise ValueError("Invalid log level: %s" % args.log)
+        logging.basicConfig(
+            level=numeric_level, format="%(levelname)s: %(message)s"
+        )
 
     if "DISPLAY" in os.environ:
         run_gui(args)
@@ -93,4 +105,3 @@ def main():
             'ERROR: Display not available. Did you forget to give ssh the "-X" option?\n'
         )
         sys.exit(1)
-

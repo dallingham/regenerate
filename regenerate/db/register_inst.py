@@ -21,10 +21,8 @@
 Manages the instance of a register within a group.
 """
 
-from .json_base import JSONEncodable
 
-
-class RegisterInst(JSONEncodable):
+class RegisterInst:
     """Instance information when contained in a group"""
 
     def __init__(
@@ -46,10 +44,10 @@ class RegisterInst(JSONEncodable):
         self.repeat = repeat
         self.repeat_offset = repeat_offset
         self.hdl = hdl
-        self.no_uvm = no_uvm
-        self.no_decode = no_decode
-        self.array = array
-        self.single_decode = single_decode
+        self._no_uvm = no_uvm
+        self._no_decode = no_decode
+        self._array = array
+        self._single_decode = single_decode
 
     def __eq__(self, other) -> bool:
         return (
@@ -58,11 +56,43 @@ class RegisterInst(JSONEncodable):
             and self.offset == other.offset
             and self.repeat == other.repeat
             and self.hdl == other.hdl
-            and self.no_uvm == other.no_uvm
-            and self.no_decode == other.no_decode
-            and self.array == other.array
-            and self.single_decode == other.single_decode
+            and self._no_uvm == other._no_uvm
+            and self._no_decode == other._no_decode
+            and self._array == other._array
+            and self._single_decode == other._single_decode
         )
+
+    @property
+    def single_decode(self) -> bool:
+        return self._single_decode
+
+    @single_decode.setter
+    def single_decode(self, val) -> None:
+        self._single_decode = bool(val)
+
+    @property
+    def no_uvm(self) -> bool:
+        return self._no_uvm
+
+    @no_uvm.setter
+    def no_uvm(self, val) -> None:
+        self._no_uvm = bool(val)
+
+    @property
+    def no_decode(self) -> bool:
+        return self._no_decode
+
+    @no_decode.setter
+    def no_decode(self, val) -> None:
+        self._no_decode = bool(val)
+
+    @property
+    def array(self) -> bool:
+        return self._array
+
+    @array.setter
+    def array(self, val) -> None:
+        self._array = bool(val)
 
     def json_decode(self, data) -> None:
         self.set_name = data["set_name"]
@@ -70,7 +100,20 @@ class RegisterInst(JSONEncodable):
         self.offset = data["offset"]
         self.repeat = data["repeat"]
         self.hdl = data["hdl"]
-        self.no_uvm = data["no_uvm"]
-        self.no_decode = data["no_decode"]
-        self.array = data["array"]
-        self.single_decode = data["single_decode"]
+        self._no_uvm = data["no_uvm"]
+        self._no_decode = data["no_decode"]
+        self._array = data["array"]
+        self._single_decode = data["single_decode"]
+
+    def json(self):
+        return {
+            "set_name": self.set_name,
+            "inst": self.inst,
+            "offset": self.offset,
+            "repeat": self.repeat,
+            "hdl": self.hdl,
+            "no_uvm": self._no_uvm,
+            "no_decode": self._no_decode,
+            "array": self._array,
+            "single_decode": self._single_decode,
+        }

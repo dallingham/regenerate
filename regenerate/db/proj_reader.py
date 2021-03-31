@@ -27,10 +27,9 @@ from collections import defaultdict
 
 import xml.parsers.expat
 from .const import REG_EXT, BLK_EXT, OLD_REG_EXT
-from .block import Block, BlockContainer
+from .block import Block
 from .block_inst import BlockInst
 from .register_inst import RegisterInst
-from .register_db import RegisterDb
 from .export import ExportData
 
 
@@ -264,28 +263,25 @@ class ProjectReader:
     def end_project(self, _text):
         from collections import Counter
 
-        for blk in self.blocks:
+        for blk_name in self.blocks:
 
             counter = Counter()
-            for rset in self.blocks[blk].regset_insts:
+            for rset in self.blocks[blk_name].regset_insts:
                 counter[Path(self.reg_map[rset.set_name]).parent] += 1
 
-            filename = Path(counter.most_common(1)[0][0]) / f"{blk}{BLK_EXT}"
+            filename = (
+                Path(counter.most_common(1)[0][0]) / f"{blk_name}{BLK_EXT}"
+            )
             block_dir = Path(self.path.parent).resolve()
             filename = block_dir / filename
 
-            blk_container = BlockContainer()
-            blk_container.filename = Path(filename).resolve()
-            blk_container.block = self.blocks[blk]
-            blk_container.modified = True
-            self._prj.blocks[blk] = blk_container
+            blk = self.blocks[blk_name]
+            blk.filename = Path(filename).resolve()
+            blk.modified = True
+            self._prj.blocks[blk_name] = blk
 
-            block = self.blocks[blk]
-
-            for reg_inst in block.regset_insts:
+            for reg_inst in blk.regset_insts:
                 name = reg_inst.set_name
-                block.regsets[name] = self._prj.regsets[name]
-                path = block.regsets[name].filename
-                block.regsets[name].exports = self.reg_exports[
-                    str(path)
-                ]
+                blk.regsets[name] = self._prj.regsets[name]
+                path = blk.regsets[name].filename
+                blk.regsets[name].exports = self.reg_exports[str(path)]

@@ -26,7 +26,7 @@ import re
 from operator import methodcaller
 from io import BytesIO as StringIO
 from pathlib import Path
-from typing import Union, Optional
+from typing import Union, List
 
 from .register import Register
 from .reg_parser import RegParser
@@ -36,6 +36,7 @@ from .signals import Signals
 from .const import OLD_REG_EXT, REG_EXT
 from .containers import Container
 from .export import ExportData
+from .logger import LOGGER
 
 
 class RegisterDb:
@@ -67,7 +68,7 @@ class RegisterDb:
         if filename is not None:
             self.read_db(filename)
             self.filename = Path(filename)
-            
+
     @property
     def filename(self) -> Path:
         return self._filename
@@ -75,7 +76,7 @@ class RegisterDb:
     @filename.setter
     def filename(self, value: Union[str, Path]) -> None:
         self._filename = Path(value).with_suffix(REG_EXT)
-            
+
     def total_bits(self):
         """Returns bits in register"""
         bits = 0
@@ -122,6 +123,7 @@ class RegisterDb:
     def read_xml(self, filename: Path):
         """Reads the XML file, loading the databsae."""
 
+        LOGGER.info("Reading XML register file %s", str(filename))
         with filename.open("rb") as ifile:
             self.set_name = filename.stem
             parser = RegParser(self)
@@ -133,6 +135,7 @@ class RegisterDb:
 
         self.filename = filename.resolve()
 
+        LOGGER.info("Reading JSON register file %s", str(self.filename))
         with self.filename.open("r") as ifile:
             self.set_name = filename.stem
             parser = RegParserJSON(self)
@@ -268,7 +271,7 @@ class RegisterDb:
                 "options": exp.options,
             }
             data["exports"].append(info)
-            
+
         return data
 
     def json_decode(self, data):
@@ -305,4 +308,3 @@ class RegisterDb:
             exp.exporter = exp_json["exporter"]
 
             self.exports.append(exp)
-

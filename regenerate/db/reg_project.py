@@ -31,14 +31,13 @@ from .proj_reader import ProjectReader
 from .proj_writer_json import ProjectWriterJSON
 from .proj_reader_json import ProjectReaderJSON
 from .addrmap import AddressMap
-from .group_data import GroupData
 from .textutils import clean_text
 from .logger import LOGGER
 from .parammap import PrjParameterData
 from .export import ExportData
 from .doc_pages import DocPages
 from .register_db import RegisterDb
-from .block import Block, BlockContainer
+from .block import Block
 from .block_inst import BlockInst
 from .const import REG_EXT, PRJ_EXT, OLD_PRJ_EXT
 from .containers import Container
@@ -81,7 +80,7 @@ class RegProject:
         self.address_maps: Dict[str, AddressMap] = {}
 
         self.block_insts: List[BlockInst] = []
-        self.blocks: Dict[str, BlockContainer] = {}
+        self.blocks: Dict[str, Block] = {}
 
         self.regsets: Dict[str, RegProject] = {}
 
@@ -102,23 +101,23 @@ class RegProject:
         writer = ProjectWriterJSON(self)
         writer.save(self.path.with_suffix(PRJ_EXT))
 
-        for container_name in self.blocks:
-            blk_container = self.blocks[container_name]
-            if blk_container.modified:
-                print(
-                    f"Saving block {container_name} {str(blk_container.filename)}"
+        for blk_name in self.blocks:
+            blk = self.blocks[blk_name]
+            if blk.modified:
+                LOGGER.info(
+                    "Saving block %s - %s", blk_name, str(blk.filename)
                 )
-                blk_container.save()
-                blk_container.modified = False
+                blk.save()
+                blk.modified = False
 
-        for container_name in self.regsets:
-            reg_container = self.regsets[container_name]
-            if reg_container.modified:
-                print(
-                    f"Saving register set {container_name} {str(reg_container.filename)}"
+        for name in self.regsets:
+            reg = self.regsets[name]
+            if reg.modified:
+                LOGGER.info(
+                    "Saving register set %s - %s", name, str(reg.filename)
                 )
-                reg_container.save()
-                reg_container.modified = False
+                reg.save()
+                reg.modified = False
 
     def open(self, name: str) -> None:
         """Opens and reads a project file. The project could be in either
@@ -133,8 +132,8 @@ class RegProject:
             json_reader = ProjectReaderJSON(self)
             json_reader.open(name)
 
-            for _, container in self.blocks.items():
-                for set_name, reg_set in container.block.regsets.items():
+            for _, block in self.blocks.items():
+                for set_name, reg_set in block.regsets.items():
                     self.regsets[set_name] = reg_set
 
     def loads(self, data: str) -> None:
@@ -580,7 +579,6 @@ class RegProject:
             "company_name",
             "access_map",
             "_parameters",
-            "blocks",
             "block_insts",
             "_group_exports",
         )
@@ -608,6 +606,12 @@ class RegProject:
                 "exporter": exp.exporter,
             }
             data["exports"].append(info)
+
+        data["blocks"] = {}
+        for blk in self.blocks:
+            data["blocks"][blk] = {
+                "filename": str(self.blocks[blk].filename),
+            }
 
         return data
 
@@ -671,6 +675,7 @@ class RegProject:
 
         self.blocks = {}
         for key in data["blocks"]:
-            blk_data = BlockContainer()
-            blk_data.json_decode(data["blocks"][key])
+            path = data["blocks"][key]["filename"]
+            blk_data = Block()
+            blk_data.open(path)
             self.blocks[key] = blk_data

@@ -22,7 +22,8 @@ Holds the information for a group. This includes the name, base address,
 HDL path, the repeat count, repeat offset, and the title.
 """
 
-from typing import List, Dict, Union, Optional
+from typing import List, Dict, Union
+from operator import methodcaller
 from pathlib import Path
 import os
 import json
@@ -33,6 +34,7 @@ from .register_db import RegisterDb
 from .doc_pages import DocPages
 from .name_base import NameBase
 from .containers import Container
+from .logger import LOGGER
 
 
 class Block(NameBase):
@@ -59,6 +61,25 @@ class Block(NameBase):
         self.regset_insts: List[RegisterInst] = []
         self.regsets: Dict[str, RegisterDb] = {}
         self.modified = False
+        self._filename = Path("")
+
+    @property
+    def filename(self) -> Path:
+        return self._filename
+
+    @filename.setter
+    def filename(self, value: Union[str, Path]) -> None:
+        self._filename = Path(value).with_suffix(BLK_EXT)
+
+    def save(self):
+        try:
+            data = self.json()
+            with self._filename.open("w") as ofile:
+                ofile.write(
+                    json.dumps(data, default=methodcaller("json"), indent=4)
+                )
+        except FileNotFoundError as msg:
+            LOGGER.error(str(msg))
 
     def __hash__(self):
         "Return the ID as the hash for the instance"
@@ -81,9 +102,17 @@ class Block(NameBase):
             return False
         return True
 
+    def open(self, name):
+        self._filename = Path(name)
+
+        LOGGER.info("Reading block file %s", str(self._filename))
+
+        with self._filename.open() as ofile:
+            data = ofile.read()
+        self.json_decode(json.loads(data))
+
     def json_decode(self, data) -> None:
         """Compare for equality."""
-
         self.name = data["name"]
         self.uuid = data["uuid"]
         self.description = data["description"]
@@ -100,15 +129,13 @@ class Block(NameBase):
         self.regsets = {}
         for key, item in data["regsets"].items():
             filename = Path(
-                Container.block_data_path / item['filename']
+                Container.block_data_path / item["filename"]
             ).resolve()
             regset = RegisterDb()
             regset.read_json(filename)
             self.regsets[key] = regset
-            
-#            rs_data = RegSetContainer()
-#            rs_data.json_decode(item)
-#            self.regsets[key] = rs_data
+
+        self.modified = False
 
     def json(self):
         data = {
@@ -120,60 +147,14 @@ class Block(NameBase):
             "regset_insts": self.regset_insts,
         }
 
-        data['regsets'] = {}
+        data["regsets"] = {}
         for name in self.regsets:
             new_path = os.path.relpath(
                 self.regsets[name].filename,
                 Container.block_data_path,
             )
             data["regsets"][name] = {
-                'filename': new_path,
+                "filename": new_path,
             }
-        
+
         return data
-
-
-class BlockContainer(Container):
-    """
-    Wrapper around the block class that contains the modified flag
-    and the filename.
-    """
-
-    def __init__(self):
-        super().__init__()
-        self.block: Optional[Block] = None
-
-    @property
-    def filename(self) -> Path:
-        return self._filename
-
-    @filename.setter
-    def filename(self, value: Union[str, Path]) -> None:
-        self._filename = Path(value).with_suffix(BLK_EXT)
-
-    def save(self):
-        if self.block:
-            self._save_data(self.block)
-
-    def json(self):
-        if Container.block_data_path:
-            filename = os.path.relpath(
-                self.filename, Container.block_data_path
-            )
-        else:
-            filename = self.filename
-
-        return {
-            "filename": str(filename),
-        }
-
-    def json_decode(self, data):
-        self.filename = Path(Container.block_data_path) / Path(
-            data["filename"]
-        )
-        Container.regset_data_path = self.filename.parent
-        self.block = Block()
-        with self.filename.open() as ifile:
-            new_data = json.loads(ifile.read())
-            self.block.json_decode(new_data)
-        self.modified = False

@@ -810,7 +810,7 @@ class MainWindow(BaseWindow):
             self.project_modified(False)
             self.block_tab.clear_flags()
         except IOError as msg:
-            osxs.rename(backup_path, current_path)
+            os.rename(backup_path, current_path)
             ErrorMsg(
                 f"Could not save {current_path}, restoring original",
                 str(msg),

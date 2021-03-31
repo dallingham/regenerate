@@ -25,7 +25,7 @@ import os
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango
 from regenerate.settings.paths import INSTALL_PATH
 from regenerate.db import RegisterInst
-from regenerate.db.block import BlockContainer
+from regenerate.db import Block
 from regenerate.ui.enums import SelectCol
 from regenerate.ui.columns import ReadOnlyColumn, EditableColumn
 from regenerate.ui.preview_editor import PreviewEditor
@@ -67,11 +67,11 @@ class BlockTab:
         self.block_reg_remove = reg_remove
         self.block_docs = docs
         self.project = None
-        self.blk_cont = None
+        self.block = None
         self.disable_modified = True
 
         self.block_obj = BlockSelectList(
-            select_list, self.blk_selection_changed
+            select_list, self.block_selection_changed
         )
 
         self.block_model = BlockSelectModel()
@@ -90,7 +90,7 @@ class BlockTab:
         for row in self.block_model:
             row[SelectCol.ICON] = ""
 
-    def blk_selection_changed(self, obj):
+    def block_selection_changed(self, obj):
         model, node = obj.get_selected()
         if node:
             block_name = model[node][1]
@@ -142,13 +142,13 @@ class BlockTab:
         model, node = self.block_obj.get_selected()
         if node:
             model[node][SelectCol.ICON] = Gtk.STOCK_EDIT
-            self.blk_cont.modified = True
+            self.block.modified = True
 
     def instance_changed(self, _cell, path, new_text, col):
         old_text = self.regmodel[int(path)][col]
         self.regmodel[int(path)][col] = new_text
 
-        for rset in self.blk_cont.block.regset_insts:
+        for rset in self.block.regset_insts:
             if rset.inst == old_text:
                 rset.inst = new_text
                 self.modified()
@@ -157,8 +157,8 @@ class BlockTab:
         try:
             reg_name = self.regmodel[int(path)][0]
             self.regmodel[int(path)][col] = f"0x{int(new_text,0):08x}"
-            self.blk_cont.modified = True
-            for rset in self.blk_cont.block.regset_insts:
+            self.block.modified = True
+            for rset in self.block.regset_insts:
                 if rset.inst == reg_name:
                     rset.offset = int(new_text, 0)
                     self.modified()
@@ -169,8 +169,8 @@ class BlockTab:
         try:
             reg_name = self.regmodel[int(path)][0]
             self.regmodel[int(path)][col] = f"{int(new_text)}"
-            self.blk_cont.modified = True
-            for rset in self.blk_cont.block.regset_insts:
+            self.block.modified = True
+            for rset in self.block.regset_insts:
                 if rset.inst == reg_name:
                     rset.repeat = int(new_text)
             self.modified()
@@ -180,8 +180,8 @@ class BlockTab:
     def hdl_path_changed(self, _cell, path, new_text, col):
         reg_name = self.regmodel[int(path)][0]
         self.regmodel[int(path)][col] = new_text
-        self.blk_cont.modified = True
-        for rset in self.blk_cont.block.regset_insts:
+        self.block.modified = True
+        for rset in self.block.regset_insts:
             if rset.inst == reg_name:
                 rset.hdl = new_text
         self.modified()
@@ -197,7 +197,7 @@ class BlockTab:
         self.disable_modified = False
 
     def build_add_regset_menu(self):
-        if self.blk_cont:
+        if self.block:
             self.reg_menu = Gtk.Menu()
             for regset in self.project.regsets:
                 menu_item = Gtk.MenuItem(regset)
@@ -207,7 +207,7 @@ class BlockTab:
             self.block_reg_add.set_popup(self.reg_menu)
 
     def find_name_inst_name(self, regset):
-        names = set({rset.inst for rset in self.blk_cont.block.regset_insts})
+        names = set({rset.inst for rset in self.block.regset_insts})
 
         if regset not in names:
             new_name = regset
@@ -227,8 +227,8 @@ class BlockTab:
         reginst = RegisterInst(rset=regset, inst=new_name)
         reg_cont = self.project.regsets[new_name]
 
-        self.blk_cont.block.regset_insts.append(reginst)
-        self.blk_cont.block.regsets[new_name] = reg_cont
+        self.block.regset_insts.append(reginst)
+        self.block.regsets[new_name] = reg_cont
 
         self.regmodel.append(
             row=(
@@ -245,26 +245,26 @@ class BlockTab:
         model, node = self.block_regsets.get_selection().get_selected()
         inst_name = model[node][1]
 
-        self.blk_cont.block.regset_insts = [
+        self.block.regset_insts = [
             regset
-            for regset in self.blk_cont.block.regset_insts
+            for regset in self.block.regset_insts
             if regset.inst != inst_name
         ]
         model.remove(node)
         self.modified()
 
     def select_block(self, blk_name):
-        self.blk_cont = self.project.blocks[blk_name]
+        self.block = self.project.blocks[blk_name]
 
-        self.block_name.change_db(self.blk_cont.block)
-        self.block_description.change_db(self.blk_cont.block)
-        self.block_size.change_db(self.blk_cont.block)
+        self.block_name.change_db(self.block)
+        self.block_description.change_db(self.block)
+        self.block_size.change_db(self.block)
 
         self.regmodel = Gtk.ListStore(str, str, str, str, str)
         self.block_regsets.set_model(self.regmodel)
-        self.preview.change_block(self.blk_cont)
+        self.preview.change_block(self.block)
 
-        for regset in self.blk_cont.block.regset_insts:
+        for regset in self.block.regset_insts:
             self.regmodel.append(
                 row=(
                     regset.set_name,
@@ -298,10 +298,10 @@ class BlockSelectModel(Gtk.ListStore):
         self.paths = set()
         self.file_list = {}
 
-    def add_block(self, block: BlockContainer, modified=False):
+    def add_block(self, block: Block, modified=False):
         """Add the the database to the model"""
 
-        base = block.block.name
+        base = block.name
 
         if modified or block.modified:
             node = self.append(
@@ -439,12 +439,12 @@ class BlockDoc:
         Spell(buf)
         buf.set_text(data)
 
-    def change_block(self, blk_cont: BlockContainer):
+    def change_block(self, blk: Block):
         """Change the database so the preview window can resolve references"""
         self.remove_pages()
 
-        self.blk_cont = blk_cont
-        pages = blk_cont.block.doc_pages
+        self.blk = blk
+        pages = blk.doc_pages
 
         for page in pages.get_page_names():
             self.add_page(page, pages.get_page(page))
@@ -456,8 +456,9 @@ class BlockDoc:
         )
         info = self.name_2_textview.get(self.notebook.get_current_page())
         if info:
-            self.blk_cont.block.doc_pages.update_page(info.name, new_text)
-            self.blk_cont.modified = True
+            self.blk.doc_pages.update_page(info.name, new_text)
+            self.blk.modified = True
+            self.modified = True
             self.callback()
 
     def on_key_press_event(self, obj, event):

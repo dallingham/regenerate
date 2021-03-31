@@ -24,7 +24,6 @@ from pathlib import Path
 from operator import methodcaller
 import json
 
-from .block import BlockContainer
 from .containers import Container
 
 

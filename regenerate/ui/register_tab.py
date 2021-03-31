@@ -131,7 +131,6 @@ class RegSetModel(Gtk.ListStore):
     def add_dbase(self, regset: RegisterDb, modified=False):
         """Add the the database to the model"""
 
-        print("***", regset)
         base = regset.filename.stem
         if modified or regset.modified:
             node = self.append(row=[Gtk.STOCK_EDIT, base])
