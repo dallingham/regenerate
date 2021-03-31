@@ -264,9 +264,9 @@ package {{prj.short_name}}_reg_pkg;
    *--------------------------------------------------------------------------
    */
 {% for db, grp, grp_map in db_grp_maps %}
-  class {{grp}}_{{db.set_name}}_regset extends uvm_reg_block;
+  class {{grp.inst_name}}_{{db.set_name}}_regset extends uvm_reg_block;
 
-    `uvm_object_utils({{grp}}_{{db.set_name}}_regset)
+    `uvm_object_utils({{grp.inst_name}}_{{db.set_name}}_regset)
 
    {% for reg in db.get_all_registers()|remove_no_uvm %}
      {% if reg.ram_size %}
@@ -290,7 +290,7 @@ package {{prj.short_name}}_reg_pkg;
     {{db.set_name}}_reg_access_wrapper {{db.set_name}}_access_cg;
    {% endif %}
 
-    function new(string name = "{{grp}}_{{db.set_name}}_regset");
+    function new(string name = "{{grp.inst_name}}_{{db.set_name}}_regset");
        super.new(name, build_coverage(UVM_CVR_ADDR_MAP));
        add_coverage(build_coverage(UVM_CVR_ADDR_MAP));
     endfunction
@@ -421,7 +421,7 @@ package {{prj.short_name}}_reg_pkg;
     endfunction: sample
    {% endif %}
 
-  endclass : {{grp}}_{{db.set_name}}_regset
+  endclass : {{grp.inst_name}}_{{db.set_name}}_regset
 
 {% endfor %}
 
