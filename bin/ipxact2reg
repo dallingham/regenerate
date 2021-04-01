@@ -386,7 +386,7 @@ class Groupings:
         # Sort registers into groups based off the boundary
         reglist = defaultdict(list)
         for reg in self.registers:
-            addr = (reg.address / boundary) * boundary
+            addr = (reg.address // boundary) * boundary
             reglist[addr].append(reg)
 
         # Look for adjacent, idential groups
@@ -583,7 +583,7 @@ if __name__ == "__main__":
 
     # Save files
 
-    for index, rgrp in enumerate(sorted(data)):
+    for index, rgrp in enumerate(sorted(data, key=lambda x: x.addr)):
 
         if index == 0:
             title = ip.db_title
@@ -637,5 +637,5 @@ if __name__ == "__main__":
     if len(data) > 1:
         print("%-20s %-8s Repeat" % ("Register Set", "Address"))
         print("%-20s %-8s %s" % ("-" * 20, "-" * 8, "-" * 6))
-        for index, rgrp in enumerate(sorted(data)):
+        for index, rgrp in enumerate(sorted(data, key=lambda x: x.addr)):
             print("%-20s %08x %d" % (filename, rgrp.addr, rgrp.repeat))
