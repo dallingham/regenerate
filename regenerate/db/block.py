@@ -50,7 +50,7 @@ class Block(NameBase):
 
         super().__init__(name)
         self.address_size = address_size
-#        self.register_sets: List[RegisterInst] = []
+        #        self.register_sets: List[RegisterInst] = []
         self.description = description
         self.doc_pages = DocPages()
         self.doc_pages.update_page("Overview", "")
@@ -60,8 +60,16 @@ class Block(NameBase):
 
         self.regset_insts: List[RegisterInst] = []
         self.regsets: Dict[str, RegisterDb] = {}
-        self.modified = False
+        self._modified = False
         self._filename = Path("")
+
+    @property
+    def modified(self) -> bool:
+        return self._modified
+
+    @modified.setter
+    def modified(self, val: bool) -> None:
+        self._modified = val
 
     @property
     def filename(self) -> Path:
@@ -128,9 +136,7 @@ class Block(NameBase):
 
         self.regsets = {}
         for key, item in data["regsets"].items():
-            filename = Path(
-                Path(Container.block_data_path) / item["filename"]
-            ).resolve()
+            filename = Path(self._filename.parent / item["filename"]).resolve()
             regset = RegisterDb()
             regset.read_json(filename)
             self.regsets[key] = regset
@@ -151,7 +157,7 @@ class Block(NameBase):
         for name in self.regsets:
             new_path = os.path.relpath(
                 self.regsets[name].filename,
-                Container.block_data_path,
+                self._filename.parent,  # Container.block_data_path,
             )
             data["regsets"][name] = {
                 "filename": new_path,

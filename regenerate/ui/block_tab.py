@@ -25,7 +25,7 @@ import os
 from pathlib import Path
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango
 from regenerate.settings.paths import INSTALL_PATH
-from regenerate.db import RegisterInst, Block, BLK_EXT
+from regenerate.db import RegisterInst, Block, BLK_EXT, LOGGER
 from regenerate.ui.enums import SelectCol
 from regenerate.ui.columns import ReadOnlyColumn, EditableColumn
 from regenerate.ui.preview_editor import PreviewEditor
@@ -41,9 +41,12 @@ from regenerate.ui.module_tab import (
 
 class BlockTab:
     def __init__(self, find_obj):
-        
+
         self.block_name = ModuleWord(
-            find_obj("block_name"), "name", self.modified, "Enter the block name"
+            find_obj("block_name"),
+            "name",
+            self.modified,
+            "Enter the block name",
         )
         self.block_description = ModuleText(
             find_obj("block_description"),
@@ -77,14 +80,18 @@ class BlockTab:
 
         find_obj("block_add_block").connect("clicked", self.add_block_clicked)
         find_obj("block_new_block").connect("clicked", self.new_block_clicked)
-        find_obj("block_remove_block").connect("clicked", self.remove_block_clicked)
-        
+        find_obj("block_remove_block").connect(
+            "clicked", self.remove_block_clicked
+        )
+
         self.build()
         self.block_reg_remove.connect("clicked", self.on_remove_clicked)
 
+    def redraw(self):
+        self.block_model.update()
+
     def clear_flags(self):
-        for row in self.block_model:
-            row[SelectCol.ICON] = ""
+        self.block_model.update()
 
     def block_selection_changed(self, obj):
         model, node = obj.get_selected()
@@ -95,7 +102,9 @@ class BlockTab:
             self.disable_modified = False
 
     def after_modified(self):
-        ...
+        if not self.disable_modified:
+            self.block.modified = True
+            self.modified = True
 
     def build(self):
         column = ReadOnlyColumn("Register Set", 0)
@@ -298,7 +307,7 @@ class BlockTab:
             # self.prj_loaded.set_sensitive(True)
             # self.load_project_tab()
         choose.destroy()
-        
+
     def add_block_clicked(self, _obj):
         """
         GTK callback that creates a file open selector using the
@@ -308,7 +317,9 @@ class BlockTab:
         choose = self.create_open_selector(
             "Open Block Database",
             "Block files",
-            [f"*{BLK_EXT}",],
+            [
+                f"*{BLK_EXT}",
+            ],
         )
         choose.set_select_multiple(True)
         response = choose.run()
@@ -323,12 +334,15 @@ class BlockTab:
 
                 self.project.blocks[blk.name] = blk
                 node = self.block_model.add_block(blk)
-                self.block_regsets.select(node)
+
+        for regset in blk.regsets:
+            if regset not in self.project.regsets:
+                self.project.regsets[regset] = blk.regsets[regset]
+
         choose.destroy()
 
     def remove_block_clicked(self, _obj):
         print("remove_block_clicked")
-
 
     def create_open_selector(self, title, mime_name=None, mime_regex=None):
         """
@@ -363,7 +377,7 @@ class BlockTab:
         """
         choose = Gtk.FileChooserDialog(
             title,
-            None, #self.top_window,
+            None,  # self.top_window,
             action,
             (
                 Gtk.STOCK_CANCEL,
@@ -381,8 +395,7 @@ class BlockTab:
             choose.add_filter(mime_filter)
         choose.show()
         return choose
-        
-        
+
 
 class BlockSelectModel(Gtk.ListStore):
     """
@@ -390,7 +403,7 @@ class BlockSelectModel(Gtk.ListStore):
     """
 
     def __init__(self):
-        super().__init__(str, str)
+        super().__init__(str, str, object)
 
         Gdk.threads_init()
         self.file_list = {}
@@ -415,15 +428,23 @@ class BlockSelectModel(Gtk.ListStore):
                 row=[
                     Gtk.STOCK_EDIT,
                     base,
+                    block,
                 ]
             )
         else:
-            node = self.append(row=["", base])
+            node = self.append(row=["", base, block])
         self.file_list[str(block.filename)] = node
         self.paths.add(block.filename.parent)
         return node
 
-    
+    def update(self):
+        for row in self:
+            if row[2].modified:
+                row[0] = Gtk.STOCK_EDIT
+            else:
+                row[0] = ""
+
+
 class BlockSelectList:
     """Block list"""
 
@@ -484,7 +505,7 @@ class BlockSelectList:
 
         selection = self.__obj.get_selection()
         selection.select_path(path)
-    
+
 
 class BlockDoc:
     """
@@ -564,8 +585,6 @@ class BlockDoc:
         info = self.name_2_textview.get(self.notebook.get_current_page())
         if info:
             self.blk.doc_pages.update_page(info.name, new_text)
-            self.blk.modified = True
-            self.modified = True
             self.callback()
 
     def on_key_press_event(self, obj, event):
@@ -575,4 +594,3 @@ class BlockDoc:
                 self.callback()
             return True
         return False
-

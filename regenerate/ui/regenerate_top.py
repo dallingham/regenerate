@@ -407,6 +407,8 @@ class MainWindow(BaseWindow):
 
     def on_main_notebook_switch_page(self, _obj, _page, _page_num):
         self.block_tab.build_add_regset_menu()
+        self.reginst_tab.redraw()
+        self.block_tab.redraw()
 
     def on_notebook_switch_page(self, _obj, _page, page_num):
         if page_num == 1:
@@ -777,6 +779,9 @@ class MainWindow(BaseWindow):
                 self.top_window,
             )
 
+        self.reginst_tab.redraw()
+        self.block_tab.redraw()
+
     def exit(self):
         """
         Save the window size, along with the positions of the paned windows,
@@ -842,8 +847,10 @@ class MainWindow(BaseWindow):
         else:
             self.find_obj("array_notation").set_active(True)
 
-        self.update_bit_count()
+        # self.update_bit_count()
 
+        self.block_tab.redraw()
+        self.reginst_tab.redraw()
         self.set_description_warn_flag()
 
     def on_regenerate_delete_event(self, obj, _event):

@@ -104,7 +104,7 @@ class RegSetModel(Gtk.ListStore):
     """
 
     def __init__(self):
-        super().__init__(str, str)
+        super().__init__(str, str, object)
 
         Gdk.threads_init()
         self.file_list = {}
@@ -120,26 +120,25 @@ class RegSetModel(Gtk.ListStore):
             icon = None
         self.set_value(node, SelectCol.ICON, icon)
 
-    #        self.set_value(node, SelectCol.MODIFIED, modified)
-
-    def is_not_saved(self):
-        return False
-
-    def load_icons(self):
-        pass
-
     def add_dbase(self, regset: RegisterDb, modified=False):
         """Add the the database to the model"""
 
         base = regset.filename.stem
         if modified or regset.modified:
-            node = self.append(row=[Gtk.STOCK_EDIT, base])
+            node = self.append(row=[Gtk.STOCK_EDIT, base, regset])
         else:
-            node = self.append(row=["", base])
+            node = self.append(row=["", base, regset])
 
         self.file_list[str(regset.filename)] = node
         self.paths.add(regset.filename.parent)
         return node
+
+    def update(self):
+        for row in self:
+            if row[2].modified:
+                row[0] = Gtk.STOCK_EDIT
+            else:
+                row[0] = ""
 
 
 class RegSetList:
@@ -294,12 +293,16 @@ class RegSetTab:
 
         self.project = prj
         self.name2status = {}
-        for set_name in sorted(self.project.regsets):
-            regset = self.project.regsets[set_name]
-            self.new_regset(regset, set_name)
-
+        self.rebuild_model()
         self.update_display()
         self.reg_set_obj.select_path(0)
+
+    def rebuild_model(self):
+        if len(self.project.regsets) != len(self.reg_set_model):
+            self.reg_set_model.clear()
+            for set_name in sorted(self.project.regsets):
+                regset = self.project.regsets[set_name]
+                self.new_regset(regset, set_name)
 
     def register_description_callback(self, reg):
         self.set_modified()
@@ -315,6 +318,9 @@ class RegSetTab:
         """Redraws the information in the register list."""
         if self.active:
             self.module_tabs.change_db(self.active)
+        self.rebuild_model()
+        #        self.reg_set_model.update()
+
         # self.parameter_list.set_db(self.dbase)
         # self.reglist_obj.set_parameters(self.dbase.get_parameters())
         # self.bitfield_obj.set_parameters(self.dbase.get_parameters())

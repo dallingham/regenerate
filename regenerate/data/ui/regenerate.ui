@@ -1306,6 +1306,8 @@
                                       <object class="GtkLabel" id="label5">
                                         <property name="visible">True</property>
                                         <property name="can_focus">False</property>
+                                        <property name="margin_top">6</property>
+                                        <property name="margin_bottom">6</property>
                                         <property name="label" translatable="yes">Bit Fields</property>
                                       </object>
                                       <packing>
@@ -1382,6 +1384,8 @@
                                       <object class="GtkLabel" id="label6">
                                         <property name="visible">True</property>
                                         <property name="can_focus">False</property>
+                                        <property name="margin_top">6</property>
+                                        <property name="margin_bottom">6</property>
                                         <property name="label" translatable="yes">Register Description</property>
                                       </object>
                                       <packing>
@@ -1513,6 +1517,8 @@
                                   <object class="GtkLabel" id="label7">
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
+                                    <property name="margin_top">6</property>
+                                    <property name="margin_bottom">6</property>
                                     <property name="label" translatable="yes">Exclusions</property>
                                   </object>
                                   <packing>
@@ -1623,6 +1629,8 @@
                                   <object class="GtkLabel" id="label41">
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
+                                    <property name="margin_top">6</property>
+                                    <property name="margin_bottom">6</property>
                                     <property name="label" translatable="yes">Address Sharing</property>
                                   </object>
                                   <packing>
@@ -1642,6 +1650,8 @@
                           <object class="GtkLabel" id="label4">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
+                            <property name="margin_top">6</property>
+                            <property name="margin_bottom">6</property>
                             <property name="label" translatable="yes">Register Definitions</property>
                           </object>
                           <packing>
@@ -2201,6 +2211,8 @@
                               <object class="GtkLabel" id="label13">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
+                                <property name="margin_top">6</property>
+                                <property name="margin_bottom">6</property>
                                 <property name="label" translatable="yes">Module Definition</property>
                               </object>
                               <packing>
@@ -2284,6 +2296,8 @@
                               <object class="GtkLabel" id="label14">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
+                                <property name="margin_top">6</property>
+                                <property name="margin_bottom">6</property>
                                 <property name="label" translatable="yes">Module Description</property>
                               </object>
                               <packing>
@@ -2832,6 +2846,9 @@
                                 <child>
                                   <placeholder/>
                                 </child>
+                                <child>
+                                  <placeholder/>
+                                </child>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
@@ -2895,6 +2912,8 @@
                               <object class="GtkLabel" id="label30">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
+                                <property name="margin_top">6</property>
+                                <property name="margin_bottom">6</property>
                                 <property name="label" translatable="yes">Module Ports</property>
                               </object>
                               <packing>
@@ -3366,6 +3385,8 @@
                       <object class="GtkLabel">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="margin_top">6</property>
+                        <property name="margin_bottom">6</property>
                         <property name="label" translatable="yes">Block Definition</property>
                         <property name="use_markup">True</property>
                       </object>
@@ -3418,6 +3439,8 @@
                       <object class="GtkLabel">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="margin_top">6</property>
+                        <property name="margin_bottom">6</property>
                         <property name="label" translatable="yes">Block Documentation</property>
                         <property name="use_markup">True</property>
                       </object>
@@ -3810,6 +3833,8 @@
                   <object class="GtkLabel" id="label3">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="margin_top">6</property>
+                    <property name="margin_bottom">6</property>
                     <property name="label" translatable="yes">Top Level Properties</property>
                     <property name="use_markup">True</property>
                   </object>
@@ -4054,6 +4079,8 @@
                   <object class="GtkLabel" id="dna95013">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="margin_top">6</property>
+                    <property name="margin_bottom">6</property>
                     <property name="label" translatable="yes">Top Level Parameters</property>
                     <property name="use_markup">True</property>
                   </object>
@@ -4157,6 +4184,8 @@
                   <object class="GtkLabel" id="label12">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="margin_top">6</property>
+                    <property name="margin_bottom">6</property>
                     <property name="label" translatable="yes">Top Level Documentation</property>
                     <property name="use_markup">True</property>
                   </object>
