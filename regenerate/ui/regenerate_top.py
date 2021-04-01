@@ -73,36 +73,6 @@ for data_type in TYPES:
 DEF_MIME = "*" + PRJ_EXT
 
 
-class DbaseStatus:
-    """
-    Holds the state of a particular database. This includes the database model,
-    the list models for the displays, the modified status, and the selected
-    rows in the models.
-    """
-
-    def __init__(
-        self,
-        dbase,
-        fname,
-        name,
-        rmodel,
-        mdlsort,
-        mdlfilter,
-        bmodel,
-    ):
-        self.db = dbase
-        self.path = fname
-        self.reg_model = rmodel
-        self.modelfilter = mdlfilter
-        self.modelsort = mdlsort
-        self.bit_field_list = bmodel
-        self.name = name
-        self.modified = False
-        self.reg_select = None
-        self.bit_select = None
-        self.node = None
-
-
 class MainWindow(BaseWindow):
     """Main window of the Regenerate program"""
 
@@ -195,14 +165,15 @@ class MainWindow(BaseWindow):
         )
 
         self.block_tab = BlockTab(
-            self.find_obj("block_name"),
-            self.find_obj("block_description"),
-            self.find_obj("block_size"),
-            self.find_obj("block_regsets"),
-            self.find_obj("block_reg_add"),
-            self.find_obj("block_reg_remove"),
-            self.find_obj("block_doc_pages"),
-            self.find_obj("block_select_list"),
+            self.find_obj
+            # self.find_obj("block_name"),
+            # self.find_obj("block_description"),
+            # self.find_obj("block_size"),
+            # self.find_obj("block_regsets"),
+            # self.find_obj("block_reg_add"),
+            # self.find_obj("block_reg_remove"),
+            # self.find_obj("block_doc_pages"),
+            # self.find_obj("block_select_list"),
         )
 
         self.addr_map_list = AddrMapList(
@@ -767,17 +738,6 @@ class MainWindow(BaseWindow):
                     str(msg),
                     self.top_window,
                 )
-
-            # self.active = DbaseStatus(
-            #     self.dbase,
-            #     name,
-            #     str(path.stem),
-            #     self.reg_model,
-            #     self.modelsort,
-            #     self.filter_manage.get_model(),
-            #     self.bit_model,
-            # )
-
         self.project_modified(True)
 
     def load_database(self, filename):

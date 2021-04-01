@@ -22,10 +22,10 @@ Project model and list
 """
 
 import os
+from pathlib import Path
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango
 from regenerate.settings.paths import INSTALL_PATH
-from regenerate.db import RegisterInst
-from regenerate.db import Block
+from regenerate.db import RegisterInst, Block, BLK_EXT
 from regenerate.ui.enums import SelectCol
 from regenerate.ui.columns import ReadOnlyColumn, EditableColumn
 from regenerate.ui.preview_editor import PreviewEditor
@@ -40,49 +40,45 @@ from regenerate.ui.module_tab import (
 
 
 class BlockTab:
-    def __init__(
-        self,
-        name,
-        description,
-        size,
-        regsets,
-        reg_add,
-        reg_remove,
-        docs,
-        select_list,
-    ):
-        self.block_select_list = select_list
+    def __init__(self, find_obj):
+        
         self.block_name = ModuleWord(
-            name, "name", self.modified, "Enter the block name"
+            find_obj("block_name"), "name", self.modified, "Enter the block name"
         )
         self.block_description = ModuleText(
-            description,
+            find_obj("block_description"),
             "description",
             self.modified,
             "Enter the block description",
         )
-        self.block_size = ModuleHex(size, "address_size", self.modified)
-        self.block_regsets = regsets
-        self.block_reg_add = reg_add
-        self.block_reg_remove = reg_remove
-        self.block_docs = docs
+        self.block_size = ModuleHex(
+            find_obj("block_size"), "address_size", self.modified
+        )
+        self.block_regsets = find_obj("block_regsets")
+        self.block_reg_add = find_obj("block_reg_add")
+        self.block_reg_remove = find_obj("block_reg_remove")
+        self.block_docs = find_obj("block_doc_pages")
         self.project = None
         self.block = None
         self.disable_modified = True
 
         self.block_obj = BlockSelectList(
-            select_list, self.block_selection_changed
+            find_obj("block_select_list"), self.block_selection_changed
         )
 
         self.block_model = BlockSelectModel()
         self.block_obj.set_model(self.block_model)
 
         self.preview = BlockDoc(
-            docs,
+            self.block_docs,
             "doc_pages",
             self.after_modified,
         )
 
+        find_obj("block_add_block").connect("clicked", self.add_block_clicked)
+        find_obj("block_new_block").connect("clicked", self.new_block_clicked)
+        find_obj("block_remove_block").connect("clicked", self.remove_block_clicked)
+        
         self.build()
         self.block_reg_remove.connect("clicked", self.on_remove_clicked)
 
@@ -276,6 +272,117 @@ class BlockTab:
             )
         self.modified()
 
+    def new_block_clicked(self, _obj):
+        choose = self.create_save_selector(
+            "New Block", "Block", f"*.{BLK_EXT}"
+        )
+
+        response = choose.run()
+        if response == Gtk.ResponseType.OK:
+            filename = Path(choose.get_filename())
+
+            if filename.suffix != BLK_EXT:
+                filename = filename.with_suffix(BLK_EXT)
+
+            self.blk = Block()
+            self.blk.filename = filename
+            self.blk.name = Path(filename).stem
+
+            self.project.blocks[self.blk.name] = self.blk
+            node = self.block_model.add_block(self.blk)
+
+            # self.project_modified(False)
+            # if self.recent_manager:
+            #     self.recent_manager.add_item(f"file:///{str(filename)}")
+            # self.find_obj("save_btn").set_sensitive(True)
+            # self.prj_loaded.set_sensitive(True)
+            # self.load_project_tab()
+        choose.destroy()
+        
+    def add_block_clicked(self, _obj):
+        """
+        GTK callback that creates a file open selector using the
+        create_selector method, then runs the dialog, and calls the
+        open_xml routine with the result.
+        """
+        choose = self.create_open_selector(
+            "Open Block Database",
+            "Block files",
+            [f"*{BLK_EXT}",],
+        )
+        choose.set_select_multiple(True)
+        response = choose.run()
+        if response == Gtk.ResponseType.OK:
+            for filename in choose.get_filenames():
+
+                name = Path(filename)
+                blk = Block()
+                blk.open(name)
+                blk.filename = name
+                blk.modified = True
+
+                self.project.blocks[blk.name] = blk
+                node = self.block_model.add_block(blk)
+                self.block_regsets.select(node)
+        choose.destroy()
+
+    def remove_block_clicked(self, _obj):
+        print("remove_block_clicked")
+
+
+    def create_open_selector(self, title, mime_name=None, mime_regex=None):
+        """
+        Creates a file save selector, using the mime type and regular
+        expression to control the selector.
+        """
+        return self.create_file_selector(
+            title,
+            mime_name,
+            mime_regex,
+            Gtk.FileChooserAction.OPEN,
+            Gtk.STOCK_OPEN,
+        )
+
+    def create_save_selector(self, title, mime_name=None, mime_regex=None):
+        """
+        Creates a file save selector, using the mime type and regular
+        expression to control the selector.
+        """
+        return self.create_file_selector(
+            title,
+            mime_name,
+            mime_regex,
+            Gtk.FileChooserAction.SAVE,
+            Gtk.STOCK_SAVE,
+        )
+
+    def create_file_selector(self, title, m_name, m_regex, action, icon):
+        """
+        Creates a file save selector, using the mime type and regular
+        expression to control the selector.
+        """
+        choose = Gtk.FileChooserDialog(
+            title,
+            None, #self.top_window,
+            action,
+            (
+                Gtk.STOCK_CANCEL,
+                Gtk.ResponseType.CANCEL,
+                icon,
+                Gtk.ResponseType.OK,
+            ),
+        )
+
+        choose.set_current_folder(os.curdir)
+        if m_name:
+            mime_filter = Gtk.FileFilter()
+            mime_filter.set_name(m_name)
+            mime_filter.add_pattern(m_regex[0])
+            choose.add_filter(mime_filter)
+        choose.show()
+        return choose
+        
+        
 
 class BlockSelectModel(Gtk.ListStore):
     """
@@ -316,7 +423,7 @@ class BlockSelectModel(Gtk.ListStore):
         self.paths.add(block.filename.parent)
         return node
 
-
+    
 class BlockSelectList:
     """Block list"""
 
@@ -377,7 +484,7 @@ class BlockSelectList:
 
         selection = self.__obj.get_selection()
         selection.select_path(path)
-
+    
 
 class BlockDoc:
     """
@@ -468,3 +575,4 @@ class BlockDoc:
                 self.callback()
             return True
         return False
+

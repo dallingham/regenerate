@@ -129,7 +129,7 @@ class Block(NameBase):
         self.regsets = {}
         for key, item in data["regsets"].items():
             filename = Path(
-                Container.block_data_path / item["filename"]
+                Path(Container.block_data_path) / item["filename"]
             ).resolve()
             regset = RegisterDb()
             regset.read_json(filename)

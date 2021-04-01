@@ -670,10 +670,10 @@ class RegSetTab:
         for key, block in self.project.blocks.items():
             new_reglist = [
                 reglist
-                for reglist in block.block.regset_insts
+                for reglist in block.regset_insts
                 if reglist.set_name != name
             ]
-            block.block.regset_insts = new_reglist
+            block.regset_insts = new_reglist
 
     def new_register_set(self, _obj):
         """
