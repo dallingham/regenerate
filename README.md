@@ -20,8 +20,8 @@ Why is it called "regenerate?"
 
 Requirements
 
-* python 2.6+
-* pygtk 2.16+
+* python 3.6+
+* gtk 3.22+
 * jinja2 
 
 Recommended
