@@ -114,7 +114,6 @@ class UVMRegBlockRegisters(WriterBase):
 
         data_set = []
         group_maps = self._build_group_maps()
-        print(group_maps)
         for blk_inst in self._project.block_insts:
             for regset_inst in self._project.blocks[
                 blk_inst.block
@@ -124,37 +123,8 @@ class UVMRegBlockRegisters(WriterBase):
                      blk_inst,
                      group_maps[blk_inst])
                 )
-
         return data_set
 
-        # data_set = []
-        # group_maps = self._build_group_maps()
-        # for dbase in self.get_used_databases():
-        #     print("***", self._project.block_insts)
-        #     for blk_inst in self._project.block_insts:
-        #         used = set()
-        #         for rset_cont in self._project.blocks[
-        #             blk_inst.block
-        #         ].block.regsets:
-        #             print("...", rset_cont, dbase.regset.set_name)
-        #             grp_name = rset_cont
-        #             if (
-        #                 grp_name == dbase.regset.set_name
-        #                 and grp_name not in used
-        #             ):
-        #                 print("@@@", grp_name, group_maps)
-        #                 used.add(grp_name)
-        #                 if grp_name in group_maps:
-        #                     data_set.append(
-        #                         (
-        #                             dbase.regset,
-        #                             grp_name.lower(),
-        #                             group_maps[grp_name],
-        #                         )
-        #                     )
-        #                     print(data_set)
-        # print(data_set)
-        # return data_set
 
     def get_used_databases(self) -> Set[RegisterDb]:
 

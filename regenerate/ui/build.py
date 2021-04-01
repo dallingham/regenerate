@@ -406,8 +406,6 @@ def base_and_modtime(dbase_full_path):
         db_file_mtime = os.path.getmtime(dbase_full_path)
         return (base, db_file_mtime)
     except OSError as msg:
-        ErrorMsg("Error accessing file", str(msg))
-        db_file_mtime = os.path.getmtime(dbase_full_path)
         return (base, 0)
 
 

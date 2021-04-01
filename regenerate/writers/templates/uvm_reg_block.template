@@ -473,7 +473,7 @@ package {{prj.short_name}}_reg_pkg;
    {% set regset = prj.regsets[regset_inst.set_name] %}
    {% if regset_inst.repeat > 1 or regset.array %}
         for (int i = 0; i < {{regset_inst.repeat}}; i++) begin
-           {{regset_inst.inst}}[i] = {{grp_inst.inst_name}}_{{regset_inst.inst}}_regset::type_id::create($sformatf("{{regset_inst.inst}}[%0d]", i));
+           {{regset_inst.inst}}[i] = {{grp.inst_name}}_{{regset_inst.inst}}_regset::type_id::create($sformatf("{{regset_inst.inst}}[%0d]", i));
       {% if regset_inst.hdl: %}
            {{regset_inst.inst}}[i].configure(this, $sformatf("{{regset_inst.hdl}}", i));
       {% else %}
@@ -488,10 +488,10 @@ package {{prj.short_name}}_reg_pkg;
       {% for item in group_maps[grp] %}
         {% if group_maps[grp]| length > 1 %}
            if (!disable_{{item}}_map) begin
-              {{item}}_map.add_submap({{regset_inst.inst}}[i].{{item}}_map, 'h{{"%x" % regset_inst.offset}} + (i * 'h{{"%x" % regset.repeat_offset}}));
+              {{item}}_map.add_submap({{regset_inst.inst}}[i].{{item}}_map, 'h{{"%x" % regset_inst.offset}} + (i * 'h{{"%x" % (2 ** regset.ports.address_bus_width,)}}));
            end
         {% else %}
-           {{item}}_map.add_submap({{regset_inst.inst}}[i].{{item}}_map, 'h{{"%x" % regset_inst.offset}} + (i * 'h{{"%x" % regset.repeat_offset}}));
+           {{item}}_map.add_submap({{regset_inst.inst}}[i].{{item}}_map, 'h{{"%x" % regset_inst.offset}} + (i * 'h{{"%x" % (2 ** regset.ports.address_bus_width,)}}));
         {% endif %}
         {% if regset.no_uvm %}
            uvm_resource_db#(bit)::set({"REG::",{{regset_inst.inst}}[i].get_full_name(),".*"}, "NO_REG_TESTS", 1, this);
@@ -599,9 +599,9 @@ package {{prj.short_name}}_reg_pkg;
            {{grp.inst_name}}[i].build();
 
     {% for mset in group_maps[grp] %}
-           if (!disable_{{mset}}_map) {{mset}}_map.add_submap({{grp.inst_name}}[i].{{mset}}_map, 'h{{"%x" % grp.base}} + (i * 'h{{"%x" % grp.repeat_offset}}));
-        {% else %}
-           {{mset}}_map.add_submap({{grp.inst_name}}[i].{{mset}}_map, 'h{{"%x" % grp.base}} + (i * 'h{{"%x" % grp.repeat_offset}}));
+      {% set addr_size = prj.blocks[grp.block].address_size %}
+    //DNA {{addr_size}}
+           if (!disable_{{mset}}_map) {{mset}}_map.add_submap({{grp.inst_name}}[i].{{mset}}_map, 'h{{"%x" % grp.address_base}} + (i * 'h{{"%x" % addr_size}}));
     {% endfor %}
         end
 

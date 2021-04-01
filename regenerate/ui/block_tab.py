@@ -342,7 +342,18 @@ class BlockTab:
         choose.destroy()
 
     def remove_block_clicked(self, _obj):
-        print("remove_block_clicked")
+        model, node = self.block_obj.get_selected()
+        obj = model.get_value(node, 2)
+
+        model.remove(node)
+        del self.project.blocks[obj.name]
+        print(">>>", project.block_inst)
+        self.project.block_inst = [
+            inst for inst in self.project.block_inst
+            if inst.block != obj.name
+        ]
+        print("<<<", project.block_inst)
+        print("remove_block_clicked", node, obj)
 
     def create_open_selector(self, title, mime_name=None, mime_regex=None):
         """
