@@ -644,6 +644,15 @@ class RegSetTab:
                 cnt += 1
         return cnt > 1
 
+    def duplicate_register(self):
+        reg = self.get_selected_register()
+        if reg:
+            reg_copy = duplicate_register(self.active, reg)
+            self.reglist_obj.add_new_register(reg_copy)
+            self.active.add_register(reg_copy)
+            self.set_register_warn_flags(reg_copy)
+            self.set_modified()
+
     def bit_changed(self, _obj):
         self.field_selected_action.set_sensitive(True)
 

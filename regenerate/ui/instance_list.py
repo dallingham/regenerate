@@ -195,7 +195,7 @@ class InstanceList:
 
         self.__project = project
         self.__obj.set_sensitive(True)
-        self.__populate()
+        self.populate()
 
     def set_model(self, model):
         """Set the model object for the instance list"""
@@ -249,53 +249,7 @@ class InstanceList:
 
         return self.__obj.get_selection().get_selected()
 
-    # def __drag_data_received_data(
-    #     self, treeview, _context, xpos, ypos, selection, _info, _etime
-    # ):
-    #     """Called with drag data is recieved"""
-
-    #     model = treeview.get_model()
-
-    #     try:
-    #         data = selection.data
-    #     except AttributeError:
-    #         data = selection.get_text()
-
-    #     drop_info = treeview.get_dest_row_at_pos(xpos, ypos)
-    #     (name, width) = data.split(":")
-
-    #     inst = RegisterInst(
-    #         name, name, 0, 1, int(width, 16), "", False, False, False, False
-    #     )
-
-    #     row_data = build_row_data(
-    #         inst.set_name,
-    #         inst.inst,
-    #         inst.offset,
-    #         inst.repeat,
-    #         inst.repeat_offset,
-    #         inst.hdl,
-    #         inst,
-    #     )
-    #     if drop_info:
-    #         path, position = drop_info
-    #         self.modified_callback()
-    #         if len(path) == 1:
-    #             node = self.__model.get_iter(path)
-    #             self.__model.append(node, row_data)
-    #         else:
-    #             parent = self.__model.get_iter((path[0],))
-    #             node = self.__model.get_iter(path)
-    #             if position in (
-    #                 Gtk.TreeViewDropPosition.BEFORE,
-    #                 Gtk.TreeViewDropPosition.INTO_OR_BEFORE,
-    #             ):
-    #                 self.__model.insert_before(parent, node, row_data)
-    #             else:
-    #                 model.insert_after(parent, node, row_data)
-    #     self.need_regset = False
-
-    def __populate(self):
+    def populate(self):
         """Fill the list from the project"""
 
         if self.__project is None:
@@ -304,6 +258,7 @@ class InstanceList:
             self.__project.block_insts, key=lambda x: x.address_base
         )
 
+        self.__model.clear()
         for item in blocks:
             self.need_subsystem = False
             node = self.__model.append(

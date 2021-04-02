@@ -40,8 +40,9 @@ from regenerate.ui.module_tab import (
 
 
 class BlockTab:
-    def __init__(self, find_obj):
+    def __init__(self, find_obj, block_remove_callback):
 
+        self.block_remove_callback = block_remove_callback
         self.block_name = ModuleWord(
             find_obj("block_name"),
             "name",
@@ -189,7 +190,8 @@ class BlockTab:
         for rset in self.block.regset_insts:
             if rset.inst == reg_name:
                 rset.hdl = new_text
-        self.modified()
+
+    #        self.modified()
 
     def set_project(self, project):
         self.disable_modified = True
@@ -256,7 +258,7 @@ class BlockTab:
             if regset.inst != inst_name
         ]
         model.remove(node)
-        self.modified()
+        # self.modified()
 
     def select_block(self, blk_name):
         self.block = self.project.blocks[blk_name]
@@ -346,14 +348,8 @@ class BlockTab:
         obj = model.get_value(node, 2)
 
         model.remove(node)
-        del self.project.blocks[obj.name]
-        print(">>>", project.block_inst)
-        self.project.block_inst = [
-            inst for inst in self.project.block_inst
-            if inst.block != obj.name
-        ]
-        print("<<<", project.block_inst)
-        print("remove_block_clicked", node, obj)
+        self.project.remove_block(obj.name)
+        self.block_remove_callback()
 
     def create_open_selector(self, title, mime_name=None, mime_regex=None):
         """

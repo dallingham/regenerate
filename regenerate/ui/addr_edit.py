@@ -21,7 +21,10 @@ Provides the edit dialog that allows the user to edit the bit field
 information.
 """
 
+from typing import List, Tuple
+
 from gi.repository import Gtk
+from regenerate.db import BlockInst, RegProject
 from regenerate.ui.columns import ToggleColumn, EditableColumn, ComboMapColumn
 from regenerate.ui.base_window import BaseWindow
 
@@ -32,7 +35,14 @@ class AddrMapEdit(BaseWindow):
     for an address map.
     """
 
-    def __init__(self, map_name, subsystem_list, project, parent, callback):
+    def __init__(
+        self,
+        map_name: str,
+        subsystem_list: List[Tuple[BlockInst, bool]],
+        project: RegProject,
+        parent: Gtk.Window,
+        callback,
+    ):
 
         super().__init__()
         self.project = project
@@ -114,16 +124,16 @@ class AddrMapEdit(BaseWindow):
             blk_inst, active = val
             title = blk_inst.inst_name
             top = self.model.append(None, row=(active, title, "", None, None))
-            blk_cont = project.blocks[blk_inst.block]
-            for item in blk_cont.block.regsets.values():
+            blk = project.blocks[blk_inst.block]
+            for item in blk.regsets.values():
                 access = project.get_access(
-                    map_name, blk_inst.inst_name, item.regset.set_name
+                    map_name, blk_inst.inst_name, item.set_name
                 )
                 self.model.append(
                     top,
                     row=(
                         True,
-                        item.regset.set_name,
+                        item.set_name,
                         options[access][0],
                         item,
                         blk_inst.inst_name,

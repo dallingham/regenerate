@@ -144,14 +144,16 @@ class RegProject:
         reader = ProjectReader(self)
         reader.loads(data)
 
-    def set_new_order(self, new_order: List[int]) -> None:
-        """Alters the order of the items in the files in the list."""
-        ...
-        # self._modified = True
-        # htbl = {}
-        # for i in self._filelist:
-        #     htbl[i.stem] = i
-        # self._filelist = [htbl[i] for i in new_order]
+    def remove_block(self, block_name):
+        del self.blocks[block_name]
+        self.block_insts = [
+            inst for inst in self.block_insts if inst.block != block_name
+        ]
+        for addr_name in self.address_maps:
+            addr_map = self.address_maps[addr_name]
+            addr_map.blocks = [
+                amap for amap in addr_map.blocks if amap != block_name
+            ]
 
     def append_register_set_to_list(self, name: Union[str, Path]):
         """Adds a register set"""
@@ -379,7 +381,8 @@ class RegProject:
     def get_address_fixed(self, name: str):
         """Indicates if the specified address map is at a fixed location"""
         return next(
-            (d.fixed for d in self.address_maps.values() if name == d.name), None
+            (d.fixed for d in self.address_maps.values() if name == d.name),
+            None,
         )
 
     def get_address_uvm(self, name: str):
@@ -427,6 +430,11 @@ class RegProject:
         self._modified = True
         new_data = AddressMap(name, base, width, fixed, uvm)
         self.address_maps[name] = new_data
+
+    def set_address_map_block_list(self, name: str, new_list: List[str]):
+        """Sets the specififed address map"""
+        self._modified = True
+        self.address_maps[name].blocks = new_list
 
     def remove_address_map(self, name):
         """Removes the address map"""

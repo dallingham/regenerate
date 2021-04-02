@@ -24,6 +24,7 @@ from .bitfield import BitField
 from .bitfield_types import *
 from .group_data import GroupData
 from .block import Block
+from .block_inst import BlockInst
 from .register import Register
 from .reg_parser import RegParser
 from .reg_project import RegProject

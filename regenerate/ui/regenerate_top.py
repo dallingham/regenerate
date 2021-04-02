@@ -29,41 +29,36 @@ import xml
 import os
 from pathlib import Path
 
+from typing import List
 from gi.repository import Gtk, GdkPixbuf, Gdk
 from regenerate import PROGRAM_VERSION, PROGRAM_NAME
 from regenerate.db import (
-    RegisterDb,
     RegProject,
     LOGGER,
     TYPES,
     remove_default_handler,
     ResetType,
-    REG_EXT,
     PRJ_EXT,
     OLD_PRJ_EXT,
 )
-from regenerate.extras.regutils import duplicate_register
 from regenerate.importers import IMPORTERS
 from regenerate.settings import ini
 from regenerate.settings.paths import GLADE_TOP, INSTALL_PATH
 from regenerate.ui.addr_edit import AddrMapEdit
 from regenerate.ui.addrmap_list import AddrMapList
 from regenerate.ui.base_window import BaseWindow
-from regenerate.ui.bit_list import BitModel
+from regenerate.ui.block_tab import BlockTab
 from regenerate.ui.build import Build
-from regenerate.ui.error_dialogs import ErrorMsg, WarnMsg, Question
+from regenerate.ui.error_dialogs import ErrorMsg, Question
 from regenerate.ui.help_window import HelpWindow
+from regenerate.ui.module_tab import ProjectTabs
 from regenerate.ui.param_overrides import OverridesList
 from regenerate.ui.parameter_list import ParameterList
 from regenerate.ui.preferences import Preferences
 from regenerate.ui.prj_param_list import PrjParameterList
-
-from regenerate.ui.module_tab import ProjectTabs
-from regenerate.ui.block_tab import BlockTab
-from regenerate.ui.top_level_tab import TopLevelTab
 from regenerate.ui.register_tab import RegSetTab
-
 from regenerate.ui.status_logger import StatusHandler
+from regenerate.ui.top_level_tab import TopLevelTab
 
 
 TYPE_ENB = {}
@@ -88,7 +83,6 @@ class MainWindow(BaseWindow):
         self.dbase = None
         self.bit_model = None
         self.modelsort = None
-        self.instance_model = None
         self.prj = None
         self.dbmap = {}
         self.register = None
@@ -143,6 +137,7 @@ class MainWindow(BaseWindow):
 
     def on_addrmap_cursor_changed(self, obj):
         """Called when the row of the treeview changes."""
+
         mdl, node = obj.get_selection().get_selected()
         btn = self.find_obj("edit_map")
         if node:
@@ -165,15 +160,8 @@ class MainWindow(BaseWindow):
         )
 
         self.block_tab = BlockTab(
-            self.find_obj
-            # self.find_obj("block_name"),
-            # self.find_obj("block_description"),
-            # self.find_obj("block_size"),
-            # self.find_obj("block_regsets"),
-            # self.find_obj("block_reg_add"),
-            # self.find_obj("block_reg_remove"),
-            # self.find_obj("block_doc_pages"),
-            # self.find_obj("block_select_list"),
+            self.find_obj,
+            self.delete_block_callback,
         )
 
         self.addr_map_list = AddrMapList(
@@ -200,11 +188,11 @@ class MainWindow(BaseWindow):
     def set_project_modified(self):
         self.project_modified(True)
 
-    def project_modified(self, value):
+    def project_modified(self, value: bool):
         self.set_title(value)
         self.prj.modified = value
 
-    def infobar_reveal(self, prop):
+    def infobar_reveal(self, prop: bool):
         try:
             self.prj_infobar.set_revealed(prop)
         except AttributeError:
@@ -217,7 +205,7 @@ class MainWindow(BaseWindow):
         self.block_tab.set_project(self.prj)
         self.project_tabs.change_db(self.prj)
         self.addr_map_list.set_project(self.prj)
-        if len(self.prj.files) > 0:
+        if self.prj.files:
             self.infobar_reveal(False)
         else:
             self.infobar_reveal(True)
@@ -244,8 +232,9 @@ class MainWindow(BaseWindow):
         )
 
         new_list = dialog.get_list()
+        print(new_list)
         if new_list is not None:
-            self.prj.set_address_map_group_list(map_name, new_list)
+            self.prj.set_address_map_block_list(map_name, new_list)
             self.addr_map_list.set_project(self.prj)
             self.set_project_modified()
 
@@ -298,7 +287,7 @@ class MainWindow(BaseWindow):
         if block_hpos:
             self.find_obj("bpaned").set_position(block_hpos)
 
-    def build_group(self, group_name, action_names):
+    def build_group(self, group_name: str, action_names: List[str]):
         group = Gtk.ActionGroup(group_name)
         for name in action_names:
             group.add_action(self.find_obj(name))
@@ -354,10 +343,6 @@ class MainWindow(BaseWindow):
                     None, None, None, 1, 0, Gtk.get_current_event_time()
                 )
 
-    def set_search(self, values, obj):
-        if obj.get_active():
-            self.filter_manage.set_search_fields(values)
-
     def on_add_param_clicked(self, _obj):
         self.parameter_list.add_clicked()
 
@@ -374,8 +359,7 @@ class MainWindow(BaseWindow):
         """Displays the summary window"""
         self.reginst_tab.show_summary()
 
-    def on_build_action_activate(self, obj):
-
+    def on_build_action_activate(self, _obj):
         Build(self.prj)
 
     def on_user_preferences_activate(self, _obj):
@@ -417,12 +401,6 @@ class MainWindow(BaseWindow):
             self.reg_selected.set_sensitive(page_num == 0)
         else:
             self.reg_selected.set_sensitive(False)
-
-    def blk_selection_changed(self, obj):
-        model, node = obj.get_selected()
-        if node:
-            block_name = model[node][1]
-            self.block_tab.select_group(block_name)
 
     def selected_reg_changed(self, _obj):
         """
@@ -468,23 +446,12 @@ class MainWindow(BaseWindow):
     def on_remove_bit_action_activate(self, _obj):
         self.reginst_tab.remove_bit()
 
-    def insert_new_register(self, register):
-        if self.top_notebook.get_current_page() == 0:
-            self.reglist_obj.add_new_register(register)
-            self.dbase.add_register(register)
-            self.set_register_warn_flags(register)
-            self.set_modified()
-
     def on_duplicate_register_action_activate(self, _obj):
         """
         Makes a copy of the current register, modifying the address, and
         changing name and token
         """
-        reg = self.reginst_tab.get_selected_register()
-        if reg:
-            reg_copy = duplicate_register(self.dbase, reg)
-            self.insert_new_register(reg_copy)
-            self.reginst_tab.set_register_warn_flags(reg_copy)
+        self.reginst_tab.duplicate_register()
 
     def create_file_selector(self, title, m_name, m_regex, action, icon):
         """
@@ -655,7 +622,8 @@ class MainWindow(BaseWindow):
             filepath = filepath.with_suffix(PRJ_EXT)
             LOGGER.warning(
                 "Converted the database to the new format - "
-                f" the new file name is {filepath}"
+                " the new file name is %s",
+                filepath,
             )
         else:
             LOGGER.warning("Loaded %s", filepath)
@@ -678,39 +646,6 @@ class MainWindow(BaseWindow):
     def on_new_register_set_activate(self, _obj):
         self.reginst_tab.new_register_set(_obj)
 
-    def input_xml(self, name, load=True):
-        old_skip = self.skip_changes
-
-        name_path = Path(name)
-        if name_path.suffix == REG_EXT:
-            self.skip_changes = True
-        else:
-            self.skip_changes = False
-        self.dbase = RegisterDb()
-        self.dbmap[self.dbase.set_name] = self.dbase
-        self.load_database(name)
-        if not os.access(name, os.W_OK):
-            WarnMsg(
-                "Read only file",
-                "You will not be able to save this file unless\n"
-                "you change permissions.",
-                self.top_window,
-            )
-
-        mdl = self.reg_model.filter_new()
-        self.filter_manage.change_filter(mdl, True)
-        self.modelsort = Gtk.TreeModelSort(mdl)
-        self.bit_model = BitModel()
-
-        if load:
-            self.reglist_obj.set_model(self.modelsort)
-            self.bitfield_obj.set_model(self.bit_model)
-
-        self.update_display()
-        if name_path.suffix == REG_EXT:
-            self.clear_modified()
-        self.skip_changes = old_skip
-
     def update_display(self):
         old_skip = self.skip_changes
         self.skip_changes = True
@@ -722,33 +657,6 @@ class MainWindow(BaseWindow):
                 self.reginst_tab.set_register_warn_flags(register)
         self.redraw()
         self.skip_changes = old_skip
-
-    def open_xml(self, name, load=True):
-        """
-        Opens the specified XML file, parsing the data and building the
-        internal RegisterDb data structure.
-        """
-        path = Path(name)
-        converted = path.suffix == ".xml"
-
-        if name:
-            try:
-                self.input_xml(name, load)
-            except IOError as msg:
-                ErrorMsg(
-                    "Could not load existing register set",
-                    str(msg),
-                    self.top_window,
-                )
-        self.project_modified(True)
-
-    def load_database(self, filename):
-        """
-        Reads the specified XML file, and redraws the screen.
-        """
-        self.filename = Path(filename)
-        self.dbase.read_db(filename)
-        self.dbmap[self.dbase.set_name] = self.dbase
 
     def on_save_clicked(self, _obj):
         """
@@ -852,6 +760,9 @@ class MainWindow(BaseWindow):
         self.block_tab.redraw()
         self.reginst_tab.redraw()
         self.set_description_warn_flag()
+
+    def delete_block_callback(self):
+        self.top_level_tab.blkinst_list.populate()
 
     def on_regenerate_delete_event(self, obj, _event):
         return self.on_quit_activate(obj)
