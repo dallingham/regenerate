@@ -66,8 +66,8 @@ class RegSetWidgets:
         self.reg_count = find_obj("reg_count")
         self.mod_descr_warn = find_obj("mod_descr_warn")
         self.bitfield_list = find_obj("bitfield_list")
-        self.error_infobar_label = find_obj("error_infobar_label")
-        self.error_infobar = find_obj("error_infobar")
+#        self.error_infobar_label = find_obj("error_infobar_label")
+#        self.error_infobar = find_obj("error_infobar")
         self.summary_window = find_obj("summary_window")
         self.summary_scroll = find_obj("summary_scroll")
         self.summary_button = find_obj("summary_button")
@@ -238,8 +238,8 @@ class RegSetTab:
 
         self.bitfield_obj = BitList(
             self.widgets.bitfield_list,
-            self.widgets.error_infobar_label,
-            self.widgets.error_infobar,
+#            self.widgets.error_infobar_label,
+#            self.widgets.error_infobar,
             self.bit_changed,
             self.set_modified,
         )

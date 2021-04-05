@@ -94,8 +94,8 @@ class MainWindow(BaseWindow):
 
         self.top_notebook = self.find_obj("main_notebook")
         self.top_notebook.set_current_page(2)
-        self.prj_infobar = self.find_obj("register_infobar")
-        self.prj_infobar_label = self.find_obj("register_infobar_label")
+#        self.prj_infobar = self.find_obj("register_infobar")
+#        self.prj_infobar_label = self.find_obj("register_infobar_label")
 
         self.setup_project()
         self.setup_recent_menu()
@@ -191,23 +191,23 @@ class MainWindow(BaseWindow):
         self.set_title(value)
         self.prj.modified = value
 
-    def infobar_reveal(self, prop: bool):
-        try:
-            self.prj_infobar.set_revealed(prop)
-        except AttributeError:
-            if prop:
-                self.prj_infobar.show()
-            else:
-                self.prj_infobar.hide()
+    # def infobar_reveal(self, prop: bool):
+    #     try:
+    #         self.prj_infobar.set_revealed(prop)
+    #     except AttributeError:
+    #         if prop:
+    #             self.prj_infobar.show()
+    #         else:
+    #             self.prj_infobar.hide()
 
     def load_project_tab(self):
         self.block_tab.set_project(self.prj)
         self.project_tabs.change_db(self.prj)
         self.addr_map_list.set_project(self.prj)
-        if self.prj.files:
-            self.infobar_reveal(False)
-        else:
-            self.infobar_reveal(True)
+        # if self.prj.files:
+        #     self.infobar_reveal(False)
+        # else:
+        #     self.infobar_reveal(True)
         self.project_modified(False)
 
     def on_edit_map_clicked(self, _obj):
@@ -236,12 +236,12 @@ class MainWindow(BaseWindow):
             self.addr_map_list.set_project(self.prj)
             self.set_project_modified()
 
-    def on_infobar_response(self, obj, _obj2):
-        """Called to display the infobar"""
-        try:
-            obj.set_revealed(False)
-        except AttributeError:
-            obj.hide()
+    # def on_infobar_response(self, obj, _obj2):
+    #     """Called to display the infobar"""
+    #     try:
+    #         obj.set_revealed(False)
+    #     except AttributeError:
+    #         obj.hide()
 
     def on_addr_map_help_clicked(self, _obj):
         "Display the address map help" ""
@@ -467,7 +467,13 @@ class MainWindow(BaseWindow):
         if m_name:
             mime_filter = Gtk.FileFilter()
             mime_filter.set_name(m_name)
-            mime_filter.add_pattern(m_regex)
+            if type(m_regex) == str:
+                mime_filter.add_pattern(m_regex)
+            else:
+                for val in m_regex:
+                    print(">>>", val)
+                    mime_filter.add_pattern(val)
+                    
             choose.add_filter(mime_filter)
         choose.show()
         return choose
@@ -533,7 +539,8 @@ class MainWindow(BaseWindow):
     def on_new_project_clicked(self, _obj):
 
         choose = self.create_save_selector(
-            "New Project", "Regenerate Project", DEF_MIME
+            "New Project", "Regenerate Project",
+            DEF_MIME
         )
 
         response = choose.run()
@@ -563,7 +570,8 @@ class MainWindow(BaseWindow):
     def on_open_action_activate(self, _obj):
 
         choose = self.create_open_selector(
-            "Open Project", "Regenerate Project", DEF_MIME
+            "Open Project", "Regenerate Project",
+            [DEF_MIME, f"*{OLD_PRJ_EXT}"]
         )
 
         response = choose.run()

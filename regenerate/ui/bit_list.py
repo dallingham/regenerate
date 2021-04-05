@@ -113,7 +113,7 @@ class BitList:
     )
 
     def __init__(
-        self, obj, infobar_label, infobar, selection_changed, modified
+        self, obj, selection_changed, modified
     ):
         """
         Creates the object, connecting it to the ListView (obj). Three
@@ -126,8 +126,8 @@ class BitList:
         self.__col = None
         self.__model = None
         self.__modified = modified
-        self.__infobar = infobar
-        self.__infobar_label = infobar_label
+#        self.__infobar = infobar
+#        self.__infobar_label = infobar_label
         self.__build_bitfield_columns()
         self.__obj.get_selection().connect(
             "changed", self.my_selection_changed
