@@ -25,7 +25,7 @@ HTML is supported now.
 import re
 import sys
 
-from regenerate.db import TYPE_TO_SIMPLE_TYPE
+from regenerate.db import TYPE_TO_SIMPLE_TYPE, Register
 from regenerate.extras.token import full_token, in_groups, uvm_name
 
 try:
@@ -207,7 +207,7 @@ span.symbolunder {
 """
 
 
-def reg_addr(register, offset):
+def reg_addr(register: Register, offset: int) -> str:
     """Returns the register address range"""
 
     base = register.address + offset
@@ -216,7 +216,7 @@ def reg_addr(register, offset):
     return "%08x" % base
 
 
-def norm_name(text):
+def norm_name(text: str) -> str:
     """Converts the name tolower case, and removes bad characters"""
 
     if text is not None:
@@ -231,7 +231,7 @@ class RegisterRst:
 
     def __init__(
         self,
-        register,
+        register: Register,
         regset_name=None,
         project=None,
         inst=None,
@@ -274,13 +274,13 @@ class RegisterRst:
         self._decode = decode
         self._db = dbase
 
-    def html_css(self, text=""):
+    def html_css(self, text: str = "") -> str:
         """
         Returns the definition with the basic, default CSS provided
         """
         return CSS + self.html(text)
 
-    def restructured_text(self, text=""):
+    def restructured_text(self, text: str = "") -> str:
         """
         Returns the definition of the register in RestructuredText format
         """
@@ -310,7 +310,7 @@ class RegisterRst:
 
         return ofile.getvalue()
 
-    def refname(self, reg_name):
+    def refname(self, reg_name: str) -> str:
         """Create a cross reference name from the register"""
         return "%s-%s-%s" % (
             norm_name(self._inst),
@@ -318,7 +318,7 @@ class RegisterRst:
             norm_name(reg_name),
         )
 
-    def field_ref(self, name):
+    def field_ref(self, name: str) -> str:
         """Create a cross reference name from the field"""
         return "%s-%s-%s-%s" % (
             norm_name(self._inst),
@@ -327,7 +327,7 @@ class RegisterRst:
             norm_name(name),
         )
 
-    def str_title(self, ofile=None):
+    def str_title(self, ofile=None) -> str:
         """Create the title in RST format"""
 
         ret_str = False

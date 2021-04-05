@@ -18,16 +18,20 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 from collections import namedtuple
+from regenerate.db import RegProject
+
 
 InstData = namedtuple(
     "InstData",
-    "group inst set base offset repeat roffset format grpt grpt_offset array",
+    "inst set base offset repeat roffset format grpt grpt_offset array",
 )
 
 DEFAULT_FORMAT = "%(G)s_%(S)s%(D)s_%(R)s"
 
 
-def full_token(group_name, reg_name, set_name, index, fmt_string):
+def full_token(
+    group_name: str, reg_name: str, set_name: str, index: str, fmt_string: str
+):
 
     index_str = "%d" % index if index >= 0 else ""
 
@@ -60,20 +64,19 @@ def uvm_name(group_name: str, reg_name: str, set_name: str, index: int):
     )
 
 
-def in_groups(name, project):
+def in_groups(name: str, project: RegProject):
     groups = []
     if name and project:
         for group in project.block_insts:
             block = project.blocks[group.block]
 
             for regset in [
-                rs for rs in block.block.regset_insts if rs.set_name == name
+                rs for rs in block.regset_insts if rs.set_name == name
             ]:
                 fmt = DEFAULT_FORMAT
                 groups.append(
                     InstData(
-                        block,
-                        group.inst_name,
+                        group,
                         regset.set_name,
                         group.address_base,
                         regset.offset,
@@ -81,7 +84,7 @@ def in_groups(name, project):
                         regset.repeat_offset,
                         fmt,
                         group.repeat,
-                        block.block.address_size,
+                        block.address_size,
                         regset.array,
                     )
                 )

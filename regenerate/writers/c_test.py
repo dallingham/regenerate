@@ -170,7 +170,7 @@ class CTest(WriterBase):
             for index, pos in enumerate(range(0, len(rlist), MAX_REGS)):
                 cfile.write(
                     "uint32 check_{0}_{1}{2} (msgptr func);\n".format(
-                        name, size, string.letters[index]
+                        name, size, string.ascii_letters[index]
                     )
                 )
 
@@ -178,8 +178,8 @@ class CTest(WriterBase):
         if rlist:
             for index, pose in enumerate(range(0, len(rlist), MAX_REGS)):
                 cfile.write(
-                    "  if ((val = check_{0}_{1}{2}(func)) != 0)\n".format(
-                        name, size, string.letters[index]
+                    "  if ((val = check_{}_{}{}(func)) != 0)\n".format(
+                        name, size, string.ascii_letters[index]
                     )
                 )
                 cfile.write("    return val;\n")
@@ -269,7 +269,7 @@ class CTest(WriterBase):
 
         if rdata8:
             for pos, index in enumerate(range(0, len(rdata8), MAX_REGS)):
-                letter = string.letters[pos]
+                letter = string.ascii_letters[pos]
                 self.write_function(
                     cfile,
                     rdata8[index:MAX_REGS],
@@ -282,7 +282,7 @@ class CTest(WriterBase):
 
         if rdata16:
             for pos, index in enumerate(range(0, len(rdata16), MAX_REGS)):
-                letter = string.letters[pos]
+                letter = string.ascii_letters[pos]
                 self.write_function(
                     cfile,
                     rdata16[index:MAX_REGS],
@@ -295,7 +295,7 @@ class CTest(WriterBase):
 
         if rdata32:
             for pos, index in enumerate(range(0, len(rdata32), MAX_REGS)):
-                letter = string.letters[pos]
+                letter = string.ascii_letters[pos]
                 self.write_function(
                     cfile,
                     rdata32[index : index + MAX_REGS],
@@ -308,7 +308,7 @@ class CTest(WriterBase):
 
         if rdata64:
             for pos, index in enumerate(range(0, len(rdata64), MAX_REGS)):
-                letter = string.letters[pos]
+                letter = string.ascii_letters[pos]
                 self.write_function(
                     cfile,
                     rdata64[index : index + MAX_REGS],

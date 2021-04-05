@@ -97,7 +97,7 @@ class Block(NameBase):
         """Compare for inequality."""
         return not self.__eq__(other)
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: "Block") -> bool:
         """Compare for equality."""
         if (
             other is None

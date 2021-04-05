@@ -29,6 +29,7 @@ from regenerate.db.enums import ShareType, ResetType
 from regenerate.db.const import REG_EXT, OLD_REG_EXT
 from regenerate.ui.bit_list import BitModel, BitList
 from regenerate.ui.bitfield_editor import BitFieldEditor
+from regenerate.ui.columns import ReadOnlyColumn
 from regenerate.ui.enums import SelectCol, BitCol
 from regenerate.ui.module_tab import ModuleTabs
 from regenerate.ui.reg_description import RegisterDescription
@@ -79,23 +80,15 @@ class RegSetStatus:
     rows in the models.
     """
 
-    def __init__(
-        self,
-        container,
-        reg_model,
-        mdlsort,
-        mdlfilter,
-        bmodel,
-    ):
+    def __init__(self, container, reg_model, mdlsort, mdlfilter, bmodel, node):
         self.container = container
         self.reg_model = reg_model
         self.modelfilter = mdlfilter
         self.modelsort = mdlsort
         self.bit_model = bmodel
-        self.modified = False
         self.reg_select = None
         self.bit_select = None
-        self.node = None
+        self.node = node
 
 
 class RegSetModel(Gtk.ListStore):
@@ -112,8 +105,6 @@ class RegSetModel(Gtk.ListStore):
 
     def set_markup(self, node, modified):
         """Sets the icon if the project has been modified"""
-        return
-
         if modified:
             icon = Gtk.STOCK_EDIT
         else:
@@ -122,9 +113,8 @@ class RegSetModel(Gtk.ListStore):
 
     def add_dbase(self, regset: RegisterDb, modified=False):
         """Add the the database to the model"""
-
         base = regset.filename.stem
-        if modified or regset.modified:
+        if regset.modified:
             node = self.append(row=[Gtk.STOCK_EDIT, base, regset])
         else:
             node = self.append(row=["", base, regset])
@@ -157,6 +147,7 @@ class RegSetList:
         iconset = Gtk.IconSet(pixbuf)
         self.factory.add("out-of-date", iconset)
         self.factory.add_default()
+        self.prj = None
 
     def set_model(self, model):
         """Sets the model"""
@@ -172,11 +163,21 @@ class RegSetList:
         column.set_min_width(20)
         self.__obj.append_column(column)
 
-        renderer = Gtk.CellRendererText()
-        renderer.set_property("ellipsize", Pango.EllipsizeMode.END)
-        column = Gtk.TreeViewColumn("Register Sets", renderer, text=1)
+        column = ReadOnlyColumn("Register Sets", 1)
+        column.renderer.set_property("ellipsize", Pango.EllipsizeMode.END)
         column.set_min_width(140)
         self.__obj.append_column(column)
+
+    def highlight(self, col, renderer, model, node, ptr):
+        if self.prj:
+            regset = model.get_value(node, 2)
+            for block in self.prj.blocks:
+                for setname in self.prj.blocks[block].regsets:
+                    if setname == regset.set_name:
+                        renderer.set_property("weight", Pango.Weight.NORMAL)
+                        return
+            print(regset.set_name, "bold")
+            renderer.set_property("weight", Pango.Weight.BOLD)
 
     def get_selected(self):
         """Return the selected object"""
@@ -185,7 +186,7 @@ class RegSetList:
     def select(self, node):
         """Select the specified row"""
 
-        self.notebook.set_sensitive(True)
+        #        self.notebook.set_sensitive(True)
         selection = self.__obj.get_selection()
         if node and selection:
             selection.select_iter(node)
@@ -195,6 +196,9 @@ class RegSetList:
 
         selection = self.__obj.get_selection()
         selection.select_path(path)
+
+    def change_project(self, prj):
+        self.prj = prj
 
 
 class RegSetTab:
@@ -206,7 +210,7 @@ class RegSetTab:
         reg_selected_action,
         field_selected_action,
     ):
-        self.set_modified = modified
+        self.modified_callback = modified
         self.db_selected_action = db_selected_action
         self.reg_selected_action = reg_selected_action
         self.field_selected_action = field_selected_action
@@ -214,6 +218,10 @@ class RegSetTab:
         self.skip_changes = False
         self.reg_set_model = None
         self.widgets = RegSetWidgets(find_obj)
+
+        self.widgets.reg_notebook.set_sensitive(False)
+        self.widgets.reg_notebook.hide()
+        self.reg_selected_action.set_sensitive(False)
 
         self.reg_set_obj = RegSetList(
             self.widgets.regset_list, self.regset_sel_changed
@@ -236,6 +244,12 @@ class RegSetTab:
             self.set_modified,
         )
 
+        self.reg_description = RegisterDescription(
+            self.widgets.descript,
+            self.widgets.regset_preview,
+            self.reg_descript_callback,
+        )
+
         self.active = None
         self.active_name = ""
         self.project = None
@@ -245,7 +259,12 @@ class RegSetTab:
         self.filter_manage = FilterManager(self.widgets.filter_obj)
 
         self.clear()
-        # self.bitfield_obj.set_model(self.bit_model)
+
+    def set_modified(self):
+        if not self.skip_changes:
+            self.active.modified = True
+            self.reg_set_model.set_markup(self.node, True)
+            self.modified_callback()
 
     def enable_registers(self, value):
         """
@@ -255,7 +274,10 @@ class RegSetTab:
         """
         self.widgets.notebook.set_sensitive(value)
         self.db_selected_action.set_sensitive(value)
-        self.widgets.reg_notebook.set_sensitive(value)
+        if value:
+            self.widgets.reg_notebook.show()
+        else:
+            self.widgets.reg_notebook.hide()
 
     def new_regset(self, regset, name):
 
@@ -272,18 +294,13 @@ class RegSetTab:
 
         bit_model = BitModel()
 
-        self.reg_description = RegisterDescription(
-            self.widgets.descript,
-            self.widgets.regset_preview,
-            self.register_description_callback,
-        )
-
         status = RegSetStatus(
             regset,
             self.reg_model,
             self.modelsort,
             self.filter_manage.get_model(),
             bit_model,
+            node,
         )
 
         self.name2status[name] = status
@@ -291,6 +308,7 @@ class RegSetTab:
 
     def change_project(self, prj):
 
+        self.reg_set_obj.change_project(prj)
         self.project = prj
         self.name2status = {}
         self.rebuild_model()
@@ -304,7 +322,7 @@ class RegSetTab:
                 regset = self.project.regsets[set_name]
                 self.new_regset(regset, set_name)
 
-    def register_description_callback(self, reg):
+    def reg_descript_callback(self, reg):
         self.set_modified()
         self.set_register_warn_flags(reg)
 
@@ -343,7 +361,7 @@ class RegSetTab:
     def regset_sel_changed(self, _obj):
         model, node = self.reg_set_obj.get_selected()
         if node:
-            self.active_name = model[node][1]
+            self.active_name = model[node][2].set_name
             self.active = self.project.regsets[self.active_name]
         else:
             self.active = None
@@ -360,8 +378,9 @@ class RegSetTab:
             self.reg_model = status.reg_model
             self.filter_manage.change_filter(status.modelfilter)
             self.modelsort = status.modelsort
+            self.node = status.node
 
-            # self.reg_description.set_database(self.active.db)
+            # self.reg_description.set_database(self.active)
 
             status = self.name2status[self.active_name]
             self.filter_manage.change_filter(status.modelfilter)
@@ -391,7 +410,7 @@ class RegSetTab:
             self.widgets.selected_regset.set_text("")
             self.reglist_obj.set_model(None)
             self.enable_registers(False)
-            self.skip_changes = old_skip
+        self.skip_changes = old_skip
 
     def set_register_warn_flags(self, reg, mark=True):
         warn_reg = warn_bit = False
@@ -437,8 +456,11 @@ class RegSetTab:
         old_skip = self.skip_changes
         self.skip_changes = True
         reg = self.get_selected_register()
-        #        self.reg_description.set_register(reg)
+        self.reg_description.set_register(reg)
         if reg:
+            self.widgets.reg_notebook.show()
+            self.widgets.reg_notebook.set_sensitive(True)
+            self.reg_selected_action.set_sensitive(True)
             self.bit_model.clear()
             self.bit_model.register = reg
             self.bitfield_obj.set_mode(reg.share)
@@ -452,13 +474,12 @@ class RegSetTab:
             self.widgets.no_cover.set_active(reg.flags.do_not_cover)
             self.widgets.hide_doc.set_active(reg.flags.hide)
 
-            self.widgets.notebook.set_sensitive(True)
-            self.reg_selected_action.set_sensitive(True)
             self.set_register_warn_flags(reg)
             self.set_bits_warn_flag()
             self.set_share(reg)
         else:
-            self.widgets.notebook.set_sensitive(False)
+            self.widgets.reg_notebook.hide()
+            self.widgets.reg_notebook.set_sensitive(False)
             self.reg_selected_action.set_sensitive(False)
         self.skip_changes = old_skip
 
@@ -481,7 +502,7 @@ class RegSetTab:
 
     def new_register(self):
         register = Register()
-        dbase = self.regset
+        dbase = self.active
         register.width = dbase.ports.data_bus_width
         register.address = calculate_next_address(dbase, register.width)
         self.insert_new_register(register)
@@ -760,8 +781,8 @@ class RegSetTab:
                 dbase.filename = name
                 dbase.modified = True
 
-                self.project.regsets[dbase.set_name] = container
-                node = self.new_regset(container, name.stem)
+                self.project.regsets[dbase.set_name] = dbase
+                node = self.new_regset(dbase, name.stem)
                 self.reg_set_obj.select(node)
                 # self.set_project_modified()
                 # self.infobar_reveal(False)

@@ -144,7 +144,7 @@ class RegProject:
         reader = ProjectReader(self)
         reader.loads(data)
 
-    def remove_block(self, block_name):
+    def remove_block(self, block_name: str):
         del self.blocks[block_name]
         self.block_insts = [
             inst for inst in self.block_insts if inst.block != block_name
@@ -334,13 +334,17 @@ class RegProject:
         """Returns a list of the existing address maps"""
         return self.address_maps.values()
 
-    def get_blocks_in_address_map(self, name: str):
+    def get_blocks_in_address_map(self, name: str) -> List[BlockInst]:
         """Returns the address maps associated with the specified group."""
-        blocks = self.address_maps.get(name)
+        addr_map = self.address_maps.get(name)
+        blocks = addr_map.blocks
         if blocks:
-            return [blocks]
+            blocks = set(blocks)
+            return [
+                inst for inst in self.block_insts if inst.inst_name in blocks
+            ]
         else:
-            return self.regsets.keys()
+            return self.block_insts
 
     def get_address_maps_used_by_block(self, name: str):
         """Returns the address maps associated with the specified group."""

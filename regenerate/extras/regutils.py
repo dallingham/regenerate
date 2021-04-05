@@ -23,6 +23,9 @@ Register utilities
 
 import copy
 import re
+from typing import Set, List
+
+from regenerate.db import Register, RegisterDb
 from .remap import REMAP_NAME
 
 REGNAME = re.compile(r"^(.*)(\d+)(.*)$")
@@ -41,7 +44,7 @@ def _make_transtable():
 _TRANSTABLE = _make_transtable()
 
 
-def build_define(text: str):
+def build_define(text: str) -> str:
     """
     Converts a register name into a define token
     """
@@ -51,7 +54,7 @@ def build_define(text: str):
     return text
 
 
-def duplicate_register(dbase, reg):
+def duplicate_register(dbase: RegisterDb, reg: Register) -> Register:
     """
     Returns a new register which is a dupilcate of the original register,
     changing the register description, signals, and token based on the original
@@ -84,7 +87,7 @@ def duplicate_register(dbase, reg):
     return new_reg
 
 
-def build_signal_set(dbase):
+def build_signal_set(dbase: RegisterDb) -> Set[str]:
     """
     Builds a set of all input, output and control signal name in
     the database.
@@ -101,7 +104,7 @@ def build_signal_set(dbase):
     return signal_list
 
 
-def calculate_next_address(dbase, width):
+def calculate_next_address(dbase: RegisterDb, width: int) -> int:
     """
     Calculates the next address based on the last address that was
     used.
@@ -120,7 +123,7 @@ def calculate_next_address(dbase, width):
     return addr
 
 
-def signal_from_source(source_name, existing_list):
+def signal_from_source(source_name: str, existing_list: List[str]) -> str:
     """
     Builds a copy of a signal name. The existing list contains the names
     that have already been used. The build_new_name is calleded to try to
@@ -135,7 +138,7 @@ def signal_from_source(source_name, existing_list):
     return ""
 
 
-def build_new_name(name, reglist):
+def build_new_name(name: str, reglist: List[str]) -> str:
     """Build a new name from a existing name, making sure it is
     similar, but unique"""
 

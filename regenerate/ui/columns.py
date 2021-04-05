@@ -138,7 +138,7 @@ class ReadOnlyColumn(BaseColumn):
         title,
         source_column,
         monospace=False,
-        _visible_callback=None,
+        visible_callback=None,
         _placeholder=None,
         tooltip=None,
     ):
@@ -149,9 +149,12 @@ class ReadOnlyColumn(BaseColumn):
             self.renderer.set_property("family", "Monospace")
 
         super().__init__(
-            title, self.renderer, text=source_column, tooltip=tooltip
+            title, self.renderer, markup=source_column, tooltip=tooltip
         )
         self.renderer.set_property("editable", False)
+
+        if visible_callback:
+            self.set_cell_data_func(self.renderer, visible_callback)
 
 
 class ComboMapColumn(BaseColumn):

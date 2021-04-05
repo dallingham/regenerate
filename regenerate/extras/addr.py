@@ -21,14 +21,21 @@
 Find all the addresses in the register set
 """
 
+from typing import List
 from .token import in_groups
+from regenerate.db import Register, RegProject
 
 
-def _reg_addr(register, offset):
+def _reg_addr(register: Register, offset: int):
     return register.address + offset
 
 
-def find_addresses(project, regset_name, register, offset_only=True):
+def find_addresses(
+    project: RegProject,
+    regset_name: str,
+    register: Register,
+    offset_only: bool = True,
+) -> List[int]:
     """Find the addresses in the register set"""
 
     address_list = []
@@ -39,8 +46,8 @@ def find_addresses(project, regset_name, register, offset_only=True):
 
     for inst in found_groups:
         for x_map in x_addr_maps:
-            groups_in_addr_map = project.get_address_map_groups(x_map.name)
-            if inst.group in groups_in_addr_map:
+            groups_in_addr_map = project.get_blocks_in_address_map(x_map.name)
+            if inst.inst in groups_in_addr_map:
                 addr_maps.add(x_map)
 
     for inst in found_groups:

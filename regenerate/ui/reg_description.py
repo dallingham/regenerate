@@ -77,9 +77,8 @@ class RegisterDescription:
             new_text = self.buf.get_text(
                 self.buf.get_start_iter(), self.buf.get_end_iter(), False
             )
-            if new_text != self.reg.description:
-                self.reg.description = new_text
-                self.callback(self.reg)
+            self.reg.description = new_text
+            self.callback(self.reg)
 
     def on_key_press_event(self, obj, event):
         """If F12 pressed, clean the selection"""

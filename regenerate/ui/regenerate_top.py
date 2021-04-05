@@ -77,7 +77,6 @@ class MainWindow(BaseWindow):
 
         self.skip_changes = False
         self.filename = None
-        self.modified = False
         self.loading_project = False
         self.active = None
         self.dbase = None
@@ -232,7 +231,6 @@ class MainWindow(BaseWindow):
         )
 
         new_list = dialog.get_list()
-        print(new_list)
         if new_list is not None:
             self.prj.set_address_map_block_list(map_name, new_list)
             self.addr_map_list.set_project(self.prj)
@@ -391,7 +389,7 @@ class MainWindow(BaseWindow):
 
     def on_main_notebook_switch_page(self, _obj, _page, _page_num):
         self.block_tab.build_add_regset_menu()
-        self.reginst_tab.redraw()
+        self.reginst_tab.update_display()
         self.block_tab.redraw()
 
     def on_notebook_switch_page(self, _obj, _page, page_num):
@@ -416,17 +414,12 @@ class MainWindow(BaseWindow):
         message.
         """
         ...
-        # if self.active and not self.active.modified and not self.skip_changes:
-        #     self.active.modified = True
-        #     self.file_modified.set_sensitive(True)
 
     def clear_modified(self, prj=None):
         """
         Clears the modified tag in the status bar.
         """
-        self.modified = False
-        # if prj is None:
-        #     prj = self.active
+        ...
 
     def on_no_sharing_toggled(self, obj):
         self.reginst_tab.on_no_sharing_toggled(obj)
@@ -687,7 +680,7 @@ class MainWindow(BaseWindow):
                 self.top_window,
             )
 
-        self.reginst_tab.redraw()
+        self.reginst_tab.update_display()
         self.block_tab.redraw()
 
     def exit(self):
@@ -758,7 +751,7 @@ class MainWindow(BaseWindow):
         # self.update_bit_count()
 
         self.block_tab.redraw()
-        self.reginst_tab.redraw()
+        self.reginst_tab.update_display()
         self.set_description_warn_flag()
 
     def delete_block_callback(self):
@@ -772,11 +765,24 @@ class MainWindow(BaseWindow):
         Called when the quit button is clicked.  Checks to see if the
         data needs to be saved first.
         """
-        if self.modified or (self.prj and self.prj.modified):
+        need_save = False
+
+        if self.prj:
+            if self.prj.modified:
+                need_save = True
+            else:
+                for blk in self.prj.blocks.values():
+                    if blk.modified:
+                        need_save = True
+                for regset in self.prj.regsets.values():
+                    if regset.modified:
+                        need_save = True
+
+        if need_save:
 
             dialog = Question(
                 "Save Changes?",
-                "The file has been modified. Do you want to save your changes?",
+                "Modifications have been made. Do you want to save your changes?",
                 self.top_window,
             )
 

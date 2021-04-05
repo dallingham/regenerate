@@ -25,7 +25,7 @@ import os
 from pathlib import Path
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango
 from regenerate.settings.paths import INSTALL_PATH
-from regenerate.db import RegisterInst, Block, BLK_EXT, LOGGER
+from regenerate.db import RegisterInst, Block, BLK_EXT
 from regenerate.ui.enums import SelectCol
 from regenerate.ui.columns import ReadOnlyColumn, EditableColumn
 from regenerate.ui.preview_editor import PreviewEditor
@@ -75,8 +75,9 @@ class BlockTab:
 
         self.preview = BlockDoc(
             self.block_docs,
-            "doc_pages",
             self.after_modified,
+            find_obj("add_block_doc"),
+            find_obj("remove_block_doc"),
         )
 
         find_obj("block_add_block").connect("clicked", self.add_block_clicked)
@@ -103,9 +104,7 @@ class BlockTab:
             self.disable_modified = False
 
     def after_modified(self):
-        if not self.disable_modified:
-            self.block.modified = True
-            self.modified = True
+        self.modified()
 
     def build(self):
         column = ReadOnlyColumn("Register Set", 0)
@@ -190,8 +189,7 @@ class BlockTab:
         for rset in self.block.regset_insts:
             if rset.inst == reg_name:
                 rset.hdl = new_text
-
-    #        self.modified()
+        self.modified()
 
     def set_project(self, project):
         self.disable_modified = True
@@ -258,11 +256,12 @@ class BlockTab:
             if regset.inst != inst_name
         ]
         model.remove(node)
-        # self.modified()
+        self.modified()
 
     def select_block(self, blk_name):
         self.block = self.project.blocks[blk_name]
 
+        self.preview.set_block(self.block)
         self.block_name.change_db(self.block)
         self.block_description.change_db(self.block)
         self.block_size.change_db(self.block)
@@ -309,6 +308,7 @@ class BlockTab:
             # self.prj_loaded.set_sensitive(True)
             # self.load_project_tab()
         choose.destroy()
+        self.project.modified = True
 
     def add_block_clicked(self, _obj):
         """
@@ -342,6 +342,7 @@ class BlockTab:
                 self.project.regsets[regset] = blk.regsets[regset]
 
         choose.destroy()
+        self.project.modified = True
 
     def remove_block_clicked(self, _obj):
         model, node = self.block_obj.get_selected()
@@ -350,6 +351,7 @@ class BlockTab:
         model.remove(node)
         self.project.remove_block(obj.name)
         self.block_remove_callback()
+        self.project.modified = True
 
     def create_open_selector(self, title, mime_name=None, mime_regex=None):
         """
@@ -524,17 +526,38 @@ class BlockDoc:
     the system as modified.
     """
 
-    def __init__(self, notebook, db_field, modified):
+    def __init__(
+        self,
+        notebook: Gtk.Notebook,
+        modified,
+        add_btn: Gtk.Button,
+        del_btn: Gtk.Button,
+    ):
         self.pango_font = Pango.FontDescription("monospace")
-
         self.notebook = notebook
-        self.db_field = db_field
-        self.dbase = None
-        self.current_page = 0
+        self.block = None
+        self.add_id = add_btn.connect("clicked", self.add_doc_page)
+        self.del_id = del_btn.connect("clicked", self.del_doc_page)
 
         self.remove_pages()
         self.name_2_textview = {}
         self.callback = modified
+
+    def set_block(self, block: Block):
+        self.block = block
+
+    def add_doc_page(self, _obj):
+        print("add")
+
+    def del_doc_page(self, _obj):
+        page = self.notebook.get_current_page()
+        self.notebook.remove_page(page)
+        info = self.name_2_textview[page]
+
+        for i in range(page + 1, self.notebook.get_n_pages()):
+            self.name_2_textview[i] = self.name_2_textview[i + 1]
+        del self.name_2_textview[self.notebook.get_n_pages()]
+        self.block.doc_pages.remove_page(info.name)
 
     def remove_pages(self):
         page_count = self.notebook.get_n_pages()
