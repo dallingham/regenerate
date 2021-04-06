@@ -26,12 +26,9 @@ from pathlib import Path
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango
 from regenerate.settings.paths import INSTALL_PATH
 from regenerate.db import RegisterInst, Block, BLK_EXT
-from regenerate.ui.enums import SelectCol
 from regenerate.ui.columns import ReadOnlyColumn, EditableColumn
-from regenerate.ui.preview_editor import PreviewEditor
-from regenerate.ui.module_tab import PageInfo
-from regenerate.ui.spell import Spell
-from regenerate.ui.utils import clean_format_if_needed
+from regenerate.ui.base_doc import BaseDoc
+from regenerate.ui.enums import SelectCol
 from regenerate.ui.module_tab import (
     ModuleText,
     ModuleWord,
@@ -76,7 +73,6 @@ class BlockTab:
         self.preview = BlockDoc(
             self.block_docs,
             self.after_modified,
-            find_obj("doc_name"),
             find_obj("add_block_doc"),
             find_obj("remove_block_doc"),
         )
@@ -262,7 +258,7 @@ class BlockTab:
     def select_block(self, blk_name):
         self.block = self.project.blocks[blk_name]
 
-        self.preview.set_block(self.block)
+        self.preview.change_block(self.block)
         self.block_name.change_db(self.block)
         self.block_description.change_db(self.block)
         self.block_size.change_db(self.block)
@@ -517,142 +513,26 @@ class BlockSelectList:
         selection.select_path(path)
 
 
-class BlockDoc:
-    """
-    Handles the Project documentation. Sets the font to a monospace font,
-    sets up the changed handler, sets up the spell checker, and makes
-    the link to the preview editor.
-
-    Requires a callback functions from the main window to mark the
-    the system as modified.
-    """
-
+class BlockDoc(BaseDoc):
     def __init__(
         self,
         notebook: Gtk.Notebook,
         modified,
-        add_dialog,
         add_btn: Gtk.Button,
         del_btn: Gtk.Button,
     ):
-        self.pango_font = Pango.FontDescription("monospace")
-        self.notebook = notebook
+        super().__init__(notebook, modified, add_btn, del_btn)
         self.block = None
-        self.add_id = add_btn.connect("clicked", self.add_doc_page)
-        self.del_id = del_btn.connect("clicked", self.del_doc_page)
-        self.add_dialog = add_dialog
-        self.remove_pages()
-        self.name_2_textview = {}
-        self.callback = modified
 
-    def set_block(self, block: Block):
+    def change_block(self, block: Block):
         self.block = block
-
-    def add_doc_page(self, _obj):
-        dialog = Gtk.Dialog(
-            "New Documentation Category",
-            None,
-            Gtk.DialogFlags.MODAL,
-            (
-                Gtk.STOCK_CANCEL,
-                Gtk.ResponseType.REJECT,
-                Gtk.STOCK_OK,
-                Gtk.ResponseType.ACCEPT,
-            ),
-        )
-        dialog.set_default_response(Gtk.ResponseType.ACCEPT)
-        dialog.set_resizable(False)
-        dialog.set_border_width(8)
-
-        label = Gtk.Label("Enter the title for the documentation category")
-        name = Gtk.Entry()
-        name.set_activates_default(True)
-
-        dialog.vbox.pack_start(label, False, False, 6)
-        dialog.vbox.pack_start(name, False, False, 6)
-
-        dialog.show_all()
-        res = dialog.run()
-        if res == Gtk.ResponseType.ACCEPT:
-            title = name.get_text()
-            self.add_page(title, "")
-            self.block.doc_pages.update_page(title, "")
-            self.callback()
-        dialog.destroy()
-
-    def del_doc_page(self, _obj):
-        page = self.notebook.get_current_page()
-        self.notebook.remove_page(page)
-        info = self.name_2_textview[page]
-
-        for i in range(page + 1, self.notebook.get_n_pages()):
-            self.name_2_textview[i] = self.name_2_textview[i + 1]
-        del self.name_2_textview[self.notebook.get_n_pages()]
-        self.block.doc_pages.remove_page(info.name)
-        self.callback()
-
-    def remove_pages(self):
-        page_count = self.notebook.get_n_pages()
-        for _ in range(0, page_count):
-            self.notebook.remove_page(0)
-
-    def add_page(self, name, data):
-        paned = Gtk.VPaned()
-
-        scrolled_window = Gtk.ScrolledWindow()
-        paned.add1(scrolled_window)
-
-        scrolled_window2 = Gtk.ScrolledWindow()
-        paned.add2(scrolled_window2)
-        paned.set_position(300)
-
-        text = Gtk.TextView()
-        text.set_wrap_mode(Gtk.WrapMode.WORD)
-        buf = text.get_buffer()
-        scrolled_window.add(text)
-
-        self.preview = PreviewEditor(buf, scrolled_window2, False)
-        paned.show_all()
-
-        page = self.notebook.append_page(paned, Gtk.Label(name))
-
-        text.modify_font(self.pango_font)
-        text.set_margin_left(10)
-        text.set_margin_right(10)
-        text.set_margin_top(10)
-        text.set_margin_bottom(10)
-
-        handler = buf.connect("changed", self.on_changed)
-
-        self.name_2_textview[page] = PageInfo(handler, buf, name)
-
-        Spell(buf)
-        buf.set_text(data)
-
-    def change_block(self, blk: Block):
-        """Change the database so the preview window can resolve references"""
         self.remove_pages()
 
-        self.blk = blk
-        pages = blk.doc_pages
+        for page in block.doc_pages.get_page_names():
+            self.add_page(page, self.block.doc_pages.get_page(page))
 
-        for page in pages.get_page_names():
-            self.add_page(page, pages.get_page(page))
+    def remove_page_from_doc(self, title):
+        self.block.doc_pages.remove_page(title)
 
-    def on_changed(self, obj):
-        """A change to the text occurred"""
-        new_text = obj.get_text(
-            obj.get_start_iter(), obj.get_end_iter(), False
-        )
-        info = self.name_2_textview.get(self.notebook.get_current_page())
-        if info:
-            self.blk.doc_pages.update_page(info.name, new_text)
-            self.callback()
-
-    def on_key_press_event(self, obj, event):
-        """Look for the F12 key"""
-        if event.keyval == Gdk.KEY_F12:
-            if clean_format_if_needed(obj):
-                self.callback()
-            return True
-        return False
+    def update_page_from_doc(self, title, text):
+        self.block.doc_pages.update_page(title, text)
