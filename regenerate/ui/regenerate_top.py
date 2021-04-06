@@ -94,8 +94,8 @@ class MainWindow(BaseWindow):
 
         self.top_notebook = self.find_obj("main_notebook")
         self.top_notebook.set_current_page(2)
-#        self.prj_infobar = self.find_obj("register_infobar")
-#        self.prj_infobar_label = self.find_obj("register_infobar_label")
+        #        self.prj_infobar = self.find_obj("register_infobar")
+        #        self.prj_infobar_label = self.find_obj("register_infobar_label")
 
         self.setup_project()
         self.setup_recent_menu()
@@ -471,9 +471,8 @@ class MainWindow(BaseWindow):
                 mime_filter.add_pattern(m_regex)
             else:
                 for val in m_regex:
-                    print(">>>", val)
                     mime_filter.add_pattern(val)
-                    
+
             choose.add_filter(mime_filter)
         choose.show()
         return choose
@@ -539,8 +538,7 @@ class MainWindow(BaseWindow):
     def on_new_project_clicked(self, _obj):
 
         choose = self.create_save_selector(
-            "New Project", "Regenerate Project",
-            DEF_MIME
+            "New Project", "Regenerate Project", DEF_MIME
         )
 
         response = choose.run()
@@ -570,8 +568,7 @@ class MainWindow(BaseWindow):
     def on_open_action_activate(self, _obj):
 
         choose = self.create_open_selector(
-            "Open Project", "Regenerate Project",
-            [DEF_MIME, f"*{OLD_PRJ_EXT}"]
+            "Open Project", "Regenerate Project", [DEF_MIME, f"*{OLD_PRJ_EXT}"]
         )
 
         response = choose.run()

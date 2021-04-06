@@ -605,7 +605,6 @@ class RegProject:
                 token = key
             data[token] = self.__getattribute__(key)
 
-        #            os.path.relpath(fname.with_suffix(REG_EXT), self.path.parent)
         data["filelist"] = [
             os.path.relpath(fname.with_suffix(REG_EXT), self.path.parent)
             for fname in self._filelist
@@ -671,7 +670,7 @@ class RegProject:
         self.exports = []
         for item in data["exports"]:
             exporter = item["exporter"]
-            target = self.path / item["target"]
+            target = self.path.parent / item["target"]
 
             exp_data = ExportData(
                 exporter,

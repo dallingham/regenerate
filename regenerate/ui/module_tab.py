@@ -24,6 +24,7 @@ Handle the module tab
 import string
 from gi.repository import GObject, Gtk, Pango, Gdk
 
+from regenerate.db import RegProject
 from regenerate.ui.spell import Spell
 from regenerate.ui.utils import clean_format_if_needed
 from regenerate.ui.preview_editor import PreviewEditor
@@ -528,104 +529,6 @@ class ModuleTabs:
         self.preview.preview_disable()
 
 
-class ProjectDoc:
-    """
-    Handles the Project documentation. Sets the font to a monospace font,
-    sets up the changed handler, sets up the spell checker, and makes
-    the link to the preview editor.
-
-    Requires a callback functions from the main window to mark the
-    the system as modified.
-    """
-
-    def __init__(self, notebook, db_field, modified):
-        self.pango_font = Pango.FontDescription("monospace")
-
-        self.notebook = notebook
-        self.db_field = db_field
-        self.dbase = None
-        self.current_page = 0
-
-        self.remove_pages()
-        self.name_2_textview = {}
-        self.callback = modified
-
-    def remove_pages(self):
-        page_count = self.notebook.get_n_pages()
-        for page in range(0, page_count):
-            self.notebook.remove_page(0)
-
-    def preview_enable(self):
-        """Enables the preview window"""
-        pass
-
-    #   self.preview.enable()
-
-    def preview_disable(self):
-        """Disables the preview window"""
-
-        # self.preview.disable()
-        pass
-
-    def add_page(self, name, data):
-        paned = Gtk.VPaned()
-
-        scrolled_window = Gtk.ScrolledWindow()
-        paned.add1(scrolled_window)
-
-        scrolled_window2 = Gtk.ScrolledWindow()
-        paned.add2(scrolled_window2)
-        paned.set_position(300)
-
-        text = Gtk.TextView()
-        buf = text.get_buffer()
-        scrolled_window.add(text)
-
-        self.preview = PreviewEditor(buf, scrolled_window2, False)
-        paned.show_all()
-
-        page = self.notebook.append_page(paned, Gtk.Label(name))
-
-        text.modify_font(self.pango_font)
-        text.set_margin_left(10)
-        text.set_margin_right(10)
-        text.set_margin_top(10)
-        text.set_margin_bottom(10)
-
-        handler = buf.connect("changed", self.on_changed)
-
-        self.name_2_textview[page] = PageInfo(handler, buf, name)
-
-        Spell(buf)
-        buf.set_text(data)
-
-    def change_db(self, dbase):
-        """Change the database so the preview window can resolve references"""
-        self.remove_pages()
-        self.dbase = dbase.doc_pages
-
-        for page in self.dbase.get_page_names():
-            self.add_page(page, self.dbase.get_page(page))
-
-    def on_changed(self, obj):
-        """A change to the text occurred"""
-        new_text = obj.get_text(
-            obj.get_start_iter(), obj.get_end_iter(), False
-        )
-        info = self.name_2_textview[self.notebook.get_current_page()]
-
-        self.dbase.update_page(info.name, new_text)
-        self.callback()
-
-    def on_key_press_event(self, obj, event):
-        """Look for the F12 key"""
-        if event.keyval == Gdk.KEY_F12:
-            if clean_format_if_needed(obj):
-                self.callback()
-            return True
-        return False
-
-
 class ProjectTabs:
     """Handles the project tabs"""
 
@@ -665,8 +568,9 @@ class ProjectTabs:
 
         self.preview = ProjectDoc(
             builder.get_object("prj_doc_notebook"),
-            "doc_pages",
             self.after_modified,
+            builder.get_object("add_top_doc"),
+            builder.get_object("del_top_doc"),
         )
 
         self.dbase = None
@@ -675,17 +579,142 @@ class ProjectTabs:
 
     def change_db(self, dbase):
         self.dbase = dbase
+        self.preview.set_project(dbase)
         for obj in self.object_list:
             obj.change_db(dbase)
-        self.preview.change_db(dbase)
 
     def after_modified(self):
         self.set_modified()
 
-    def preview_enable(self):
-        """Enables the preview window"""
-        self.preview.preview_enable()
 
-    def preview_disable(self):
-        """Disables the preview window"""
-        self.preview.preview_disable()
+class ProjectDoc:
+    """
+    Handles the Project documentation. Sets the font to a monospace font,
+    sets up the changed handler, sets up the spell checker, and makes
+    the link to the preview editor.
+
+    Requires a callback functions from the main window to mark the
+    the system as modified.
+    """
+
+    def __init__(
+        self,
+        notebook: Gtk.Notebook,
+        modified,
+        add_btn: Gtk.Button,
+        del_btn: Gtk.Button,
+    ):
+        self.pango_font = Pango.FontDescription("monospace")
+        self.notebook = notebook
+        self.project = None
+        self.add_id = add_btn.connect("clicked", self.add_doc_page)
+        self.del_id = del_btn.connect("clicked", self.del_doc_page)
+        self.remove_pages()
+        self.name_2_textview = {}
+        self.callback = modified
+
+    def set_project(self, project: RegProject):
+        """Change the database so the preview window can resolve references"""
+        self.remove_pages()
+        self.project = project
+
+        for page in project.doc_pages.get_page_names():
+            self.add_page(page, self.project.doc_pages.get_page(page))
+
+    def remove_pages(self):
+        page_count = self.notebook.get_n_pages()
+        for _ in range(0, page_count):
+            self.notebook.remove_page(0)
+
+    def add_doc_page(self, _obj):
+        dialog = Gtk.Dialog(
+            "New Documentation Category",
+            None,
+            Gtk.DialogFlags.MODAL,
+            (
+                Gtk.STOCK_CANCEL,
+                Gtk.ResponseType.REJECT,
+                Gtk.STOCK_OK,
+                Gtk.ResponseType.ACCEPT,
+            ),
+        )
+        dialog.set_default_response(Gtk.ResponseType.ACCEPT)
+        dialog.set_resizable(False)
+        dialog.set_border_width(8)
+
+        label = Gtk.Label("Enter the title for the documentation category")
+        name = Gtk.Entry()
+        name.set_activates_default(True)
+
+        dialog.vbox.pack_start(label, False, False, 6)
+        dialog.vbox.pack_start(name, False, False, 6)
+
+        dialog.show_all()
+        res = dialog.run()
+        if res == Gtk.ResponseType.ACCEPT:
+            title = name.get_text()
+            self.add_page(title, "")
+            self.project.doc_pages.update_page(title, "")
+            self.callback()
+        dialog.destroy()
+
+    def del_doc_page(self, _obj):
+        page = self.notebook.get_current_page()
+        self.notebook.remove_page(page)
+        info = self.name_2_textview[page]
+
+        for i in range(page + 1, self.notebook.get_n_pages()):
+            self.name_2_textview[i] = self.name_2_textview[i + 1]
+        del self.name_2_textview[self.notebook.get_n_pages()]
+        self.project.doc_pages.remove_page(info.name)
+        self.callback()
+
+    def add_page(self, name, data):
+        paned = Gtk.VPaned()
+
+        scrolled_window = Gtk.ScrolledWindow()
+        paned.add1(scrolled_window)
+
+        scrolled_window2 = Gtk.ScrolledWindow()
+        paned.add2(scrolled_window2)
+        paned.set_position(300)
+
+        text = Gtk.TextView()
+        buf = text.get_buffer()
+        scrolled_window.add(text)
+
+        self.preview = PreviewEditor(buf, scrolled_window2, False)
+        paned.show_all()
+
+        page = self.notebook.append_page(paned, Gtk.Label(name))
+
+        text.modify_font(self.pango_font)
+        text.set_margin_left(10)
+        text.set_margin_right(10)
+        text.set_margin_top(10)
+        text.set_margin_bottom(10)
+
+        handler = buf.connect("changed", self.on_changed)
+
+        self.name_2_textview[page] = PageInfo(handler, buf, name)
+
+        Spell(buf)
+        buf.set_text(data)
+
+    def on_changed(self, obj):
+        """A change to the text occurred"""
+        new_text = obj.get_text(
+            obj.get_start_iter(), obj.get_end_iter(), False
+        )
+        info = self.name_2_textview[self.notebook.get_current_page()]
+
+        self.project.doc_pages.update_page(info.name, new_text)
+        self.callback()
+
+    def on_key_press_event(self, obj, event):
+        """Look for the F12 key"""
+        if event.keyval == Gdk.KEY_F12:
+            if clean_format_if_needed(obj):
+                self.callback()
+            return True
+        return False

@@ -76,6 +76,7 @@ class BlockTab:
         self.preview = BlockDoc(
             self.block_docs,
             self.after_modified,
+            find_obj("doc_name"),
             find_obj("add_block_doc"),
             find_obj("remove_block_doc"),
         )
@@ -530,6 +531,7 @@ class BlockDoc:
         self,
         notebook: Gtk.Notebook,
         modified,
+        add_dialog,
         add_btn: Gtk.Button,
         del_btn: Gtk.Button,
     ):
@@ -538,7 +540,7 @@ class BlockDoc:
         self.block = None
         self.add_id = add_btn.connect("clicked", self.add_doc_page)
         self.del_id = del_btn.connect("clicked", self.del_doc_page)
-
+        self.add_dialog = add_dialog
         self.remove_pages()
         self.name_2_textview = {}
         self.callback = modified
@@ -547,7 +549,36 @@ class BlockDoc:
         self.block = block
 
     def add_doc_page(self, _obj):
-        print("add")
+        dialog = Gtk.Dialog(
+            "New Documentation Category",
+            None,
+            Gtk.DialogFlags.MODAL,
+            (
+                Gtk.STOCK_CANCEL,
+                Gtk.ResponseType.REJECT,
+                Gtk.STOCK_OK,
+                Gtk.ResponseType.ACCEPT,
+            ),
+        )
+        dialog.set_default_response(Gtk.ResponseType.ACCEPT)
+        dialog.set_resizable(False)
+        dialog.set_border_width(8)
+
+        label = Gtk.Label("Enter the title for the documentation category")
+        name = Gtk.Entry()
+        name.set_activates_default(True)
+
+        dialog.vbox.pack_start(label, False, False, 6)
+        dialog.vbox.pack_start(name, False, False, 6)
+
+        dialog.show_all()
+        res = dialog.run()
+        if res == Gtk.ResponseType.ACCEPT:
+            title = name.get_text()
+            self.add_page(title, "")
+            self.block.doc_pages.update_page(title, "")
+            self.callback()
+        dialog.destroy()
 
     def del_doc_page(self, _obj):
         page = self.notebook.get_current_page()
@@ -558,10 +589,11 @@ class BlockDoc:
             self.name_2_textview[i] = self.name_2_textview[i + 1]
         del self.name_2_textview[self.notebook.get_n_pages()]
         self.block.doc_pages.remove_page(info.name)
+        self.callback()
 
     def remove_pages(self):
         page_count = self.notebook.get_n_pages()
-        for page in range(0, page_count):
+        for _ in range(0, page_count):
             self.notebook.remove_page(0)
 
     def add_page(self, name, data):
