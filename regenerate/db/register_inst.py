@@ -44,10 +44,10 @@ class RegisterInst:
         self.repeat = repeat
         self.repeat_offset = repeat_offset
         self.hdl = hdl
-        self._no_uvm = no_uvm
-        self._no_decode = no_decode
-        self._array = array
-        self._single_decode = single_decode
+        self.no_uvm = no_uvm
+        self.no_decode = no_decode
+        self.array = array
+        self.single_decode = single_decode
 
     def __eq__(self, other) -> bool:
         return (
@@ -56,10 +56,10 @@ class RegisterInst:
             and self.offset == other.offset
             and self.repeat == other.repeat
             and self.hdl == other.hdl
-            and self._no_uvm == other._no_uvm
-            and self._no_decode == other._no_decode
-            and self._array == other._array
-            and self._single_decode == other._single_decode
+            and self.no_uvm == other.no_uvm
+            and self.no_decode == other.no_decode
+            and self.array == other.array
+            and self.single_decode == other.single_decode
         )
 
     @property
@@ -100,20 +100,21 @@ class RegisterInst:
         self.offset = data["offset"]
         self.repeat = data["repeat"]
         self.hdl = data["hdl"]
-        self._no_uvm = data["no_uvm"]
-        self._no_decode = data["no_decode"]
-        self._array = data["array"]
-        self._single_decode = data["single_decode"]
+        self.no_uvm = data["no_uvm"]
+        self.no_decode = data["no_decode"]
+        self.array = data["array"]
+        self.single_decode = data["single_decode"]
 
     def json(self):
+        print("no_uvm", self.no_uvm)
         return {
             "set_name": self.set_name,
             "inst": self.inst,
             "offset": self.offset,
             "repeat": self.repeat,
             "hdl": self.hdl,
-            "no_uvm": self._no_uvm,
-            "no_decode": self._no_decode,
-            "array": self._array,
-            "single_decode": self._single_decode,
+            "no_uvm": self.no_uvm,
+            "no_decode": self.no_decode,
+            "array": self.array,
+            "single_decode": self.single_decode,
         }

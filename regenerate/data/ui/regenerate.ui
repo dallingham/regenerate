@@ -125,6 +125,11 @@
       </object>
     </child>
   </object>
+  <object class="GtkImage" id="image1">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-file</property>
+  </object>
   <object class="GtkImage" id="image19">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -332,7 +337,6 @@
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="use_underline">True</property>
-                        <property name="image">image8</property>
                         <property name="use_stock">False</property>
                       </object>
                     </child>
@@ -835,6 +839,7 @@
                                         <property name="can_focus">True</property>
                                         <property name="receives_default">True</property>
                                         <property name="tooltip_text" translatable="yes">View the selected register's summary page</property>
+                                        <property name="image">image1</property>
                                       </object>
                                       <packing>
                                         <property name="expand">True</property>
@@ -921,7 +926,6 @@
                                             <property name="tooltip_text" translatable="yes">Edit the selected bit field</property>
                                             <property name="use_underline">True</property>
                                             <property name="use_stock">True</property>
-                                            <property name="xalign">0.46000000834465027</property>
                                             <signal name="clicked" handler="on_edit_field_clicked" swapped="no"/>
                                           </object>
                                           <packing>
@@ -2559,6 +2563,9 @@
                                 <child>
                                   <placeholder/>
                                 </child>
+                                <child>
+                                  <placeholder/>
+                                </child>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
@@ -3302,6 +3309,7 @@
                               <object class="GtkButton" id="remove_map">
                                 <property name="label">gtk-remove</property>
                                 <property name="visible">True</property>
+                                <property name="sensitive">False</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
                                 <property name="tooltip_text" translatable="yes">Deleete the selected address map</property>

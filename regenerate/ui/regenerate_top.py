@@ -94,8 +94,7 @@ class MainWindow(BaseWindow):
 
         self.top_notebook = self.find_obj("main_notebook")
         self.top_notebook.set_current_page(2)
-        #        self.prj_infobar = self.find_obj("register_infobar")
-        #        self.prj_infobar_label = self.find_obj("register_infobar_label")
+        self.top_notebook.set_sensitive(False)
 
         self.setup_project()
         self.setup_recent_menu()
@@ -138,12 +137,15 @@ class MainWindow(BaseWindow):
         """Called when the row of the treeview changes."""
 
         mdl, node = obj.get_selection().get_selected()
-        btn = self.find_obj("edit_map")
+        ebtn = self.find_obj("edit_map")
+        rbtn = self.find_obj("remove_map")
         if node:
             path = mdl.get_path(node)
-            btn.set_sensitive(len(path) == 1)
+            ebtn.set_sensitive(len(path) == 1)
+            rbtn.set_sensitive(len(path) == 1)
         else:
-            btn.set_sensitive(False)
+            ebtn.set_sensitive(False)
+            rbtn.set_sensitive(False)
 
     def setup_project(self):
         self.project_tabs = ProjectTabs(
@@ -191,23 +193,11 @@ class MainWindow(BaseWindow):
         self.set_title(value)
         self.prj.modified = value
 
-    # def infobar_reveal(self, prop: bool):
-    #     try:
-    #         self.prj_infobar.set_revealed(prop)
-    #     except AttributeError:
-    #         if prop:
-    #             self.prj_infobar.show()
-    #         else:
-    #             self.prj_infobar.hide()
-
     def load_project_tab(self):
+        self.top_notebook.set_sensitive(True)
         self.block_tab.set_project(self.prj)
         self.project_tabs.change_db(self.prj)
         self.addr_map_list.set_project(self.prj)
-        # if self.prj.files:
-        #     self.infobar_reveal(False)
-        # else:
-        #     self.infobar_reveal(True)
         self.project_modified(False)
 
     def on_edit_map_clicked(self, _obj):

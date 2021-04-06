@@ -623,7 +623,9 @@ class RegProject:
         data["blocks"] = {}
         for blk in self.blocks:
             data["blocks"][blk] = {
-                "filename": str(self.blocks[blk].filename),
+                "filename": os.path.relpath(
+                    str(self.blocks[blk].filename), self.path.parent
+                ),
             }
 
         return data
@@ -644,8 +646,9 @@ class RegProject:
         self._filelist = []
 
         for path in data["filelist"]:
+            full_path = Path(self.path.parent / Path(path)).resolve()
             self._filelist.append(
-                Path(self.path.parent / Path(path)).resolve()
+                os.path.relpath(full_path, self.path.parent)
             )
 
         self.address_maps = {}
@@ -688,7 +691,7 @@ class RegProject:
 
         self.blocks = {}
         for key in data["blocks"]:
-            path = data["blocks"][key]["filename"]
+            path = self.path.parent / data["blocks"][key]["filename"]
             blk_data = Block()
             blk_data.open(path)
             self.blocks[key] = blk_data
