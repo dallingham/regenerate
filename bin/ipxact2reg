@@ -60,7 +60,6 @@ RESERVED = [
     re.compile("^RESERVED"),
     re.compile("^RSVD"),
     re.compile("^UNSD"),
-    #    re.compile("^R\d+\s*$")
 ]
 
 
@@ -159,7 +158,7 @@ class IpXactParser:
 
                     for field in register.findall(scope + "field"):
                         self.start_field()
-                        self._field.field_name = field.find(
+                        self._field.name = field.find(
                             scope + "name"
                         ).text.upper()
                         self._field.description = field.find(
@@ -177,7 +176,7 @@ class IpXactParser:
                             BitType.WRITE_1_TO_SET,
                             BitType.WRITE_1_TO_CLEAR_SET,
                         ):
-                            self._field.field_type = text2field.get(
+                            self._field.field_type = TEXT2FIELD.get(
                                 field.find(scope + "access").text,
                                 BitType.READ_ONLY,
                             )
@@ -210,7 +209,7 @@ class IpXactParser:
             method = getattr(self, mname)
             method(attrs)
 
-    def end_vendor(self, tag):
+    def end_vendor(self, _tag):
         self.vendor = "".join(self._token_list)
 
     def end_element(self, tag):
@@ -343,7 +342,7 @@ class IpXactParser:
 
     def end_name(self, text):
         if self._field:
-            self._field.field_name = text.upper()
+            self._field.name = text.upper()
         elif self._reg:
             self._reg.token = text.upper()
             self._reg.name = name_from_token(text.upper())
@@ -413,8 +412,6 @@ class Groupings:
         reglist = []
 
         old_count = -1
-        index = 0
-        current_reg = RegGroup()
 
         for key in sorted(counter.keys()):
             count = counter[key]
@@ -470,7 +467,7 @@ def identical(list1, list2):
     return True
 
 
-def copy_from_db(db1, db2):
+def copy_from_db(db, db2):
 
     db.owner = db2.owner
     db.organization = db2.organization
@@ -486,7 +483,7 @@ def ignore_by_field_name(field):
 
     for pattern in RESERVED:
 
-        match = pattern.match(field.field_name)
+        match = pattern.match(field.name)
         if match:
             return True
 
@@ -618,7 +615,7 @@ if __name__ == "__main__":
             if db2 is not None:
                 old_reg = db2.find_register_by_token(r.token)
                 if old_reg:
-                    r.name = old_reg.register_name
+                    r.name = old_reg.name
 
             max_addr = max(r.address, max_addr)
 

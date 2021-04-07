@@ -117,12 +117,17 @@ class InstMdl(Gtk.TreeStore):
         """
 
         node = self.get_iter(path)
-        try:
-            self.set_value(node, InstCol.SORT, int(text, 0))
-            self.set_value(node, InstCol.BASE, "0x{:08x}".format(int(text, 0)))
-            self.callback()
-        except AttributeError:
-            LOGGER.warning('Illegal base address: "%s"', text)
+        # try:
+        #     self.set_value(node, InstCol.SORT, int(text, 0))
+        #     self.set_value(node, InstCol.BASE, "0x{:08x}".format(int(text, 0)))
+        #     self.callback()
+        # except AttributeError:
+        #     LOGGER.warning('Illegal base address: "%s"', text)
+
+        self.set_value(node, InstCol.SORT, int(text, 0))
+        self.set_value(node, InstCol.BASE, "0x{:08x}".format(int(text, 0)))
+        self.callback()
+
         obj = self.get_value(node, InstCol.OBJ)
         if obj:
             obj.address_base = int(text, 16)

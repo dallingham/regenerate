@@ -106,7 +106,6 @@ class RegisterInst:
         self.single_decode = data["single_decode"]
 
     def json(self):
-        print("no_uvm", self.no_uvm)
         return {
             "set_name": self.set_name,
             "inst": self.inst,

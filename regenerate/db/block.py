@@ -33,7 +33,6 @@ from .register_inst import RegisterInst
 from .register_db import RegisterDb
 from .doc_pages import DocPages
 from .name_base import NameBase
-from .containers import Container
 from .logger import LOGGER
 
 
@@ -50,7 +49,6 @@ class Block(NameBase):
 
         super().__init__(name)
         self.address_size = address_size
-        #        self.register_sets: List[RegisterInst] = []
         self.description = description
         self.doc_pages = DocPages()
         self.doc_pages.update_page("Overview", "")

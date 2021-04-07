@@ -31,8 +31,14 @@ class Sdc(WriterBase):
     def __init__(self, project, dblist):
         super().__init__(project, None)
         self._offset = 0
-        self.dblist = dblist
         self._ofile = None
+
+        self.dblist = set()
+        for block_inst in project.block_insts:
+            block = project.blocks[block_inst.block]
+
+            for regset in block.regsets:
+                self.dblist.add(block.regsets[regset])
 
     def write(self, filename):
         """
@@ -43,9 +49,13 @@ class Sdc(WriterBase):
         # Write register blocks
         for dbase in self.dblist:
 
-            for group in self._project.get_grouping_list():
+            for block_inst in self._project.block_insts:
                 used = set()
-                for grp in group.register_sets:
+                block = self._project.blocks[block_inst.block]
+
+                for grp in block.regset_insts:
+                    print(grp)
+
                     if (
                         grp.set == dbase.set_name
                         and grp.set not in used

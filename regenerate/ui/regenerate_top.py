@@ -111,7 +111,7 @@ class MainWindow(BaseWindow):
         self.build_import_menu()
 
     def check_subsystem_addresses(self):
-        if check_address_ranges(self.prj, self.dbmap):
+        if check_address_ranges(self.prj):
             self.set_project_modified()
             return True
         return False
@@ -226,15 +226,14 @@ class MainWindow(BaseWindow):
             self.addr_map_list.set_project(self.prj)
             self.set_project_modified()
 
-    # def on_infobar_response(self, obj, _obj2):
-    #     """Called to display the infobar"""
-    #     try:
-    #         obj.set_revealed(False)
-    #     except AttributeError:
-    #         obj.hide()
+    def on_block_select_changed(self, _obj):
+        if self.top_level_tab.blkinst_list.get_selected_instance():
+            self.builder.get_object("instance_delete_btn").set_sensitive(True)
+        else:
+            self.builder.get_object("instance_delete_btn").set_sensitive(False)
 
     def on_addr_map_help_clicked(self, _obj):
-        "Display the address map help" ""
+        "Display the address map help"
         HelpWindow(self.builder, "addr_map_help.rst")
 
     def on_param_help_clicked(self, _obj):
@@ -567,6 +566,8 @@ class MainWindow(BaseWindow):
         choose.destroy()
         if response == Gtk.ResponseType.OK:
             self.open_project(filename, uri)
+            if self.recent_manager:
+                self.recent_manager.add_item(f"file:///{str(filename)}")
 
     def set_busy_cursor(self, value):
         """
@@ -651,10 +652,6 @@ class MainWindow(BaseWindow):
         Called with the save button is clicked (gtk callback). Saves the
         database.
         """
-        # change_suffix = False
-
-        # self.top_level_tab.blkinst_list.get_groups()
-
         current_path = Path(self.prj.path)
         backup_path = Path(f"{current_path}.bak")
 
@@ -667,6 +664,7 @@ class MainWindow(BaseWindow):
             self.prj.save()
             self.project_modified(False)
             self.block_tab.clear_flags()
+            self.reginst_tab.reg_set_model.update()
         except IOError as msg:
             os.rename(backup_path, current_path)
             ErrorMsg(
@@ -933,32 +931,37 @@ def sort_regset(rset):
     return os.path.basename(rset)
 
 
-def check_address_ranges(project, dbmap):
+def check_address_ranges(project):
 
     glist = []
 
-    for group in project.get_grouping_list():
+    for block_inst in project.block_insts:
 
-        for rset in group.register_sets:
-            space = 1 << dbmap[rset.set].ports.address_bus_width
-            if space > rset.repeat_offset:
+        block = project.blocks[block_inst.block]
+
+        for regset_inst in block.regset_insts:
+            regset = block.regsets[regset_inst.set_name]
+            space = 1 << regset.ports.address_bus_width
+            if space > regset_inst.repeat_offset:
                 LOGGER.warning(
                     "%s.%s - %d bits specified for register set (size %x) which is greater than the repeat offset of %x",
-                    group.name,
-                    rset.inst,
-                    dbmap[rset.set].address_bus_width,
+                    block_inst.inst_name,
+                    regset_inst.inst,
+                    regset.ports.address_bus_width,
                     space,
-                    rset.repeat_offset,
+                    regset_inst.repeat_offset,
                 )
                 return False
 
             glist.append(
                 (
-                    rset.offset,
-                    rset.offset + (rset.repeat * rset.repeat_offset) - 1,
-                    rset.inst,
-                    1 << dbmap[rset.set].address_bus_width,
-                    group.name,
+                    regset_inst.offset,
+                    regset_inst.offset
+                    + (regset_inst.repeat * regset_inst.repeat_offset)
+                    - 1,
+                    regset_inst.inst,
+                    space,
+                    block_inst.inst_name,
                 )
             )
 

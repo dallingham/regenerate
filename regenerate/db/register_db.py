@@ -31,10 +31,8 @@ from typing import Union, List
 from .register import Register
 from .reg_parser import RegParser
 from .reg_parser_json import RegParserJSON
-from .reg_writer import RegWriter
 from .signals import Signals
 from .const import OLD_REG_EXT, REG_EXT
-from .containers import Container
 from .export import ExportData
 from .logger import LOGGER
 

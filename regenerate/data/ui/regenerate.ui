@@ -426,30 +426,6 @@
               </object>
             </child>
             <child>
-              <object class="GtkMenuItem" id="menuitem13">
-                <property name="use_action_appearance">False</property>
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">_View</property>
-                <property name="use_underline">True</property>
-                <child type="submenu">
-                  <object class="GtkMenu" id="view_menu">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <child>
-                      <object class="GtkImageMenuItem" id="menuitem20">
-                        <property name="related_action">summary_action</property>
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="use_underline">True</property>
-                        <property name="use_stock">True</property>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-              </object>
-            </child>
-            <child>
               <object class="GtkMenuItem" id="menuitem4">
                 <property name="use_action_appearance">False</property>
                 <property name="visible">True</property>
@@ -495,13 +471,13 @@
           <object class="GtkToolbar" id="toolbar1">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
+            <property name="toolbar_style">both-horiz</property>
             <child>
               <object class="GtkMenuToolButton" id="open_btn">
                 <property name="related_action">open_action</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="has_tooltip">True</property>
-                <property name="tooltip_text" translatable="yes">Opens a project or a register set</property>
+                <property name="tooltip_text" translatable="yes">Opens a project</property>
                 <property name="label" translatable="yes">Open</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-open</property>
@@ -517,8 +493,7 @@
                 <property name="related_action">save_project_action</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="has_tooltip">True</property>
-                <property name="tooltip_text" translatable="yes">Saves modified register groups and the project</property>
+                <property name="tooltip_text" translatable="yes">Saves all modified files</property>
                 <property name="label" translatable="yes">Save</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-save</property>
@@ -534,8 +509,7 @@
                 <property name="related_action">build_action</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="tooltip_markup">Build generated files</property>
-                <property name="tooltip_text" translatable="yes">Display the builder tool</property>
+                <property name="tooltip_text">Build generated files</property>
                 <property name="label" translatable="yes">Build</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-convert</property>
@@ -547,6 +521,7 @@
             </child>
             <child>
               <object class="GtkToolButton" id="toolbutton2">
+                <property name="use_action_appearance">True</property>
                 <property name="related_action">help_action</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
@@ -2566,6 +2541,9 @@
                                 <child>
                                   <placeholder/>
                                 </child>
+                                <child>
+                                  <placeholder/>
+                                </child>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
@@ -3401,7 +3379,9 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <child internal-child="selection">
-                                  <object class="GtkTreeSelection"/>
+                                  <object class="GtkTreeSelection">
+                                    <signal name="changed" handler="on_block_select_changed" swapped="no"/>
+                                  </object>
                                 </child>
                               </object>
                             </child>
@@ -3442,6 +3422,7 @@
                               <object class="GtkButton" id="instance_delete_btn">
                                 <property name="label">gtk-remove</property>
                                 <property name="visible">True</property>
+                                <property name="sensitive">False</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
                                 <property name="tooltip_text" translatable="yes">Removes the selected block from the top</property>
