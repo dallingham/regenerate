@@ -15,7 +15,19 @@ all:
 	@echo "Type 'make install' to install"
 
 install:
-	python3 setup.py install --home=/home/tools --force
+	@echo "Must use beta, alpha, or release"
+
+release:
+	mkdir -p /home/tools/release
+	python3 setup.py install --home=/home/tools/release --force
+
+beta:
+	mkdir -p /home/tools/beta
+	python3 setup.py install --home=/home/tools/beta --force
+
+alpha:
+	mkdir -p /home/tools/alpha
+	python3 setup.py install --home=/home/tools/alpha --force
 
 clean:
 	rm -f *.pyc *.v *.bak *~ *.log
