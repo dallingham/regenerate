@@ -28,7 +28,7 @@ to maintain.
 """
 
 from collections import namedtuple
-from .writer_base import WriterBase
+from .writer_base import WriterBase, ProjectType
 from regenerate.db import LOGGER
 import platform
 import sys
@@ -88,9 +88,9 @@ for module in MODULES:
             fullpath = mpath + "." + module[0]
             a = __import__(fullpath, globals(), locals(), module[1])
             for t, info in a.EXPORTERS:
-                if t == WriterBase.TYPE_BLOCK:
+                if t == ProjectType.REGSET:
                     EXPORTERS.append(info)
-                elif t == WriterBase.TYPE_GROUP:
+                elif t == ProjectType.BLOCK:
                     GRP_EXPORTERS.append(info)
                 else:
                     PRJ_EXPORTERS.append(info)

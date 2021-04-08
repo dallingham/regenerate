@@ -22,6 +22,7 @@ OdtDoc - Writes out an OpenDocument document that contains the register
 """
 
 import os
+from pathlib import Path
 import zipfile
 import xml
 from xml.sax.saxutils import escape
@@ -29,7 +30,7 @@ from io import StringIO
 
 from ..settings.paths import ODTFILE, USERODTFILE
 
-from .writer_base import WriterBase, ExportInfo
+from .writer_base import WriterBase, ExportInfo, ProjectType
 from ..db import BitField
 from ..db.enums import ResetType
 
@@ -325,7 +326,7 @@ class OdtDoc(WriterBase):
             self.write_table_cell(style, CELLBODY, val)
         self.end_row()
 
-    def write(self, filename):
+    def write(self, filename: Path):
         """
         Writes the output file
         """
@@ -333,7 +334,7 @@ class OdtDoc(WriterBase):
         if not original:
             return
 
-        self.zip = zipfile.ZipFile(filename, "w")
+        self.zip = zipfile.ZipFile(str(filename), "w")
 
         save_info = self.__copy_odt_contents(original)
         self.__write_contents_file(save_info)
@@ -461,7 +462,7 @@ class StylesXmlParser(object):
 
 EXPORTERS = [
     (
-        WriterBase.TYPE_BLOCK,
+        ProjectType.REGSET,
         ExportInfo(
             OdtDoc,
             ("Documentation", "OpenDocument"),

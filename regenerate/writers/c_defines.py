@@ -23,8 +23,8 @@ CWriter - Writes out C defines representing the register addresses
 import os
 
 from typing import Optional, TextIO
-
-from .writer_base import WriterBase, ExportInfo
+from pathlib import Path
+from .writer_base import WriterBase, ExportInfo, ProjectType
 from ..extras import full_token, in_groups
 from ..extras.token import InstData
 from ..db.reg_project import RegProject
@@ -65,7 +65,6 @@ class CDefines(WriterBase):
     def __init__(self, project: RegProject, dbase: RegisterDb) -> None:
         super().__init__(project, dbase)
         self._ofile = Optional[TextIO]
-        self._filename = ""
 
     def write_def(self, reg: Register, data: InstData, base: int) -> None:
         """
@@ -100,16 +99,14 @@ class CDefines(WriterBase):
                 % (name, REG_TYPE[reg.width], address)
             )
 
-    def write(self, filename: str) -> None:
+    def write(self, filename: Path) -> None:
         """
         Writes the output file
         """
         assert self._ofile is not None
         assert self._dbase is not None
 
-        self._filename = os.path.basename(filename)
-
-        with open(filename, "w") as self._ofile:
+        with filename.open("w") as self._ofile:
             self.write_header(self._ofile, "".join(HEADER))
 
             addr_maps = self._project.get_address_maps()
@@ -127,7 +124,7 @@ class CDefines(WriterBase):
 
 EXPORTERS = [
     (
-        WriterBase.TYPE_BLOCK,
+        ProjectType.REGSET,
         ExportInfo(
             CDefines,
             ("Header files", "C Source"),

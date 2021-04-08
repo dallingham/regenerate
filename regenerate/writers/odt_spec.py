@@ -28,6 +28,7 @@ import zipfile
 import tempfile
 import time
 import xml
+from pathlib import Path
 from xml.sax.saxutils import escape
 from cStringIO import StringIO
 
@@ -451,7 +452,7 @@ class OdtSpec(WriterBase):
             self.write_table_cell(style, CELLBODY, val)
         self.end_row()
 
-    def write(self, filename):
+    def write(self, filename: Path):
         """
         Writes the output file
         """
@@ -459,7 +460,7 @@ class OdtSpec(WriterBase):
         if not original:
             return
 
-        self.zip = zipfile.ZipFile(filename, "w")
+        self.zip = zipfile.ZipFile(str(filename), "w")
 
         save_info = self.__copy_odt_contents(original)
         self.__write_contents_file(save_info)

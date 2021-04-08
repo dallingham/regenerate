@@ -25,15 +25,18 @@ import time
 from pathlib import Path
 from typing import List, Set, Dict
 from jinja2 import Environment
-from ..db import TYPES
+from regenerate.db import (
+    RegProject,
+    RegisterDb,
+    BitField,
+    Register,
+    AddressMap,
+    BlockInst,
+    TYPES,
+)
+
 from ..extras.remap import REMAP_NAME
-from .writer_base import WriterBase, ExportInfo
-from ..db.reg_project import RegProject
-from ..db.register_db import RegisterDb
-from ..db.bitfield import BitField
-from ..db.register import Register
-from ..db.addrmap import AddressMap
-from ..db.block_inst import BlockInst
+from .writer_base import ExportInfo, ProjectWriter, ProjectType
 
 ACCESS_MAP = {}
 for i in TYPES:
@@ -42,18 +45,18 @@ for i in TYPES:
 TYPE_TO_INPUT = dict((__i.type, __i.input) for __i in TYPES)
 
 
-class UVMRegBlockRegisters(WriterBase):
+class UVMRegBlockRegisters(ProjectWriter):
     """
     Generates a SystemVerilog package representing the registers in
     the UVM format.
     """
 
-    def __init__(self, project: RegProject, dblist: List[RegisterDb]) -> None:
+    def __init__(self, project: RegProject) -> None:
         """
         Initialize the object. At the current time, only little endian is
         supported by the package
         """
-        super().__init__(project, None)
+        super().__init__(project)
         self.dblist = [dbase[1] for dbase in project.regsets.items()]
 
     def uvm_address_maps(self) -> List[AddressMap]:
@@ -74,7 +77,7 @@ class UVMRegBlockRegisters(WriterBase):
     def _used_maps(self) -> Set[str]:
         return set({addr_map.name for addr_map in self.uvm_address_maps()})
 
-    def write(self, filename: str) -> None:
+    def write(self, filename: Path) -> None:
         """
         Write the data to the file as a SystemVerilog package. This includes
         a block of register definitions for each register and the associated
@@ -93,7 +96,7 @@ class UVMRegBlockRegisters(WriterBase):
 
         used_dbs = self.get_used_databases()
 
-        with open(filename, "w") as ofile:
+        with filename.open("w") as ofile:
             ofile.write(
                 template.render(
                     prj=self._project,
@@ -119,12 +122,13 @@ class UVMRegBlockRegisters(WriterBase):
                 blk_inst.block
             ].regset_insts:
                 data_set.append(
-                    (self._project.regsets[regset_inst.set_name],
-                     blk_inst,
-                     group_maps[blk_inst])
+                    (
+                        self._project.regsets[regset_inst.set_name],
+                        blk_inst,
+                        group_maps[blk_inst],
+                    )
                 )
         return data_set
-
 
     def get_used_databases(self) -> Set[RegisterDb]:
 
@@ -201,7 +205,7 @@ def fix_reg_name(reg: Register) -> str:
 
 EXPORTERS = [
     (
-        WriterBase.TYPE_PROJECT,
+        ProjectType.PROJECT,
         ExportInfo(
             UVMRegBlockRegisters,
             ("Test", "UVM Registers"),

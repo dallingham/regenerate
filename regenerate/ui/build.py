@@ -36,9 +36,13 @@ from regenerate.ui.enums import (
     BuildCol,
     MapOpt,
     OptMap,
-    DbMap,
 )
-from regenerate.writers import EXPORTERS, PRJ_EXPORTERS, GRP_EXPORTERS
+from regenerate.writers import (
+    EXPORTERS,
+    PRJ_EXPORTERS,
+    GRP_EXPORTERS,
+    ProjectType,
+)
 
 
 class Build(BaseWindow):
@@ -126,7 +130,9 @@ class Build(BaseWindow):
         mod = file_needs_rebuilt(local_dest, self.__prj, register_set)
         self.__modlist.append(mod)
         (fmt, cls, _) = self.__optmap[exporter]
-        self.__model.append(row=[mod, "<project>", fmt, dest, cls, None, 2])
+        self.__model.append(
+            row=[mod, "<project>", fmt, dest, cls, None, ProjectType.PROJECT]
+        )
 
     def __add_dbase_item_to_list(self, dbase_rel_path, exporter, dest):
         """
@@ -147,7 +153,9 @@ class Build(BaseWindow):
         dbase = self.__prj.regsets[base]
         rel_dest = dest
 
-        self.__model.append(row=(mod, base, fmt, rel_dest, cls, dbase, 0))
+        self.__model.append(
+            row=(mod, base, fmt, rel_dest, cls, dbase, ProjectType.REGSET)
+        )
 
     def __add_group_item_to_list(self, group_name, exporter, dest):
         """
@@ -159,7 +167,9 @@ class Build(BaseWindow):
         mod = True
         self.__modlist.append(mod)
         (fmt, cls, _) = self.__optmap[exporter]
-        self.__model.append(row=(mod, group_name, fmt, dest, cls, None, 1))
+        self.__model.append(
+            row=(mod, group_name, fmt, dest, cls, None, ProjectType.BLOCK)
+        )
 
     def __populate(self):
         """
@@ -294,18 +304,18 @@ class Build(BaseWindow):
             dbase = item[BuildCol.DBASE]
             rtype = item[BuildCol.TYPE]
 
-            dest = str(Path(item[BuildCol.DEST]).resolve())
+            dest = Path(item[BuildCol.DEST]).resolve()
 
             try:
-                if rtype == 0:
+                if rtype == ProjectType.REGSET:
                     gen = writer_class(self.__prj, dbase)
-                elif rtype == 1:
+                elif rtype == ProjectType.BLOCK:
                     db_list = self.__prj.regsets.values()
                     grp = item[BuildCol.BASE].split()[0]
                     gen = writer_class(self.__prj, grp, db_list)
                 else:
                     db_list = self.__prj.regsets.values()
-                    gen = writer_class(self.__prj, db_list)
+                    gen = writer_class(self.__prj)
                 gen.write(dest)
                 item[BuildCol.MODIFIED] = False
             except IOError as msg:

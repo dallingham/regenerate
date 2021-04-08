@@ -23,6 +23,7 @@ Actual program. Parses the arguments, and initiates the main window
 import os
 import re
 import copy
+from pathlib import Path
 from collections import namedtuple, defaultdict
 from typing import List, Tuple, TextIO, Set, Dict
 
@@ -36,7 +37,7 @@ from regenerate.db import (
     RegisterDb,
     RegProject,
 )
-from regenerate.writers.writer_base import WriterBase, ExportInfo
+from regenerate.writers.writer_base import WriterBase, ExportInfo, ProjectType
 from regenerate.writers.verilog_reg_def import REG
 from regenerate.db.enums import ShareType, ResetType
 
@@ -217,7 +218,7 @@ class Verilog(WriterBase):
                         offset += size // 8
         return item_list
 
-    def write(self, filename: str):
+    def write(self, filename: Path):
         """
         Write the data to the file as a SystemVerilog package. This includes
         a block of register definitions for each register and the associated
@@ -301,7 +302,7 @@ class Verilog(WriterBase):
 
         # TODO: fix 64 bit registers with 32 bit width
 
-        with open(filename, "w") as ofile:
+        with filename.open("w") as ofile:
             ofile.write(
                 template.render(
                     db=self._dbase,
@@ -836,7 +837,7 @@ def make_one_shot(name: str, reg: Register):
 
 EXPORTERS = [
     (
-        WriterBase.TYPE_BLOCK,
+        ProjectType.REGSET,
         ExportInfo(
             SystemVerilog,
             ("RTL", "SystemVerilog"),
@@ -846,7 +847,7 @@ EXPORTERS = [
         ),
     ),
     (
-        WriterBase.TYPE_BLOCK,
+        ProjectType.REGSET,
         ExportInfo(
             Verilog2001,
             ("RTL", "Verilog 2001"),
@@ -856,7 +857,7 @@ EXPORTERS = [
         ),
     ),
     (
-        WriterBase.TYPE_BLOCK,
+        ProjectType.REGSET,
         ExportInfo(
             Verilog,
             ("RTL", "Verilog 95"),

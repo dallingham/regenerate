@@ -23,7 +23,8 @@ descriptions
 
 import os
 import re
-from .writer_base import WriterBase, ExportInfo
+from pathlib import Path
+from .writer_base import ProjectWriter, ExportInfo, ProjectType
 from ..db import RegisterDb
 from ..extras import RegisterRst
 
@@ -32,17 +33,17 @@ def norm_name(text):
     return text.lower().replace(" ", "-").replace("_", "-")
 
 
-class RstDoc(WriterBase):
+class RstDoc(ProjectWriter):
     """
     Writes out an OpenDocument document that contains the register
     descriptions
     """
 
-    def __init__(self, project, dblist):
-        super().__init__(project, None)
+    def __init__(self, project):
+        super().__init__(project)
         self.tblcnt = 0
         self.project = project
-        self.dblist = dblist
+        self.dblist = [dbase[1] for dbase in project.regsets.items()]
         self.zip = None
         self.cnt = None
         self.already_defined = {}
@@ -92,12 +93,12 @@ class RstDoc(WriterBase):
                 return RegisterDb(fullpath)
         return None
 
-    def write(self, filename):
+    def write(self, filename: Path):
         """
         Writes the output file
         """
 
-        with open(filename, "w") as f:
+        with filename.open("w") as f:
             f.write("\n")
             f.write(".. section-numbering::\n\n")
 
@@ -171,7 +172,7 @@ class RstDoc(WriterBase):
 
 EXPORTERS = [
     (
-        WriterBase.TYPE_PROJECT,
+        ProjectType.PROJECT,
         ExportInfo(
             RstDoc,
             ("Specification", "RestructuredText"),

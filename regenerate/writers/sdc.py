@@ -20,17 +20,18 @@
 Sdc - Writes out synthesis constraints
 """
 
+from pathlib import Path
 from regenerate.db import RegProject
-from .writer_base import WriterBase, ExportInfo
+from .writer_base import ExportInfo, ProjectWriter, ProjectType
 
 
-class Sdc(WriterBase):
+class Sdc(ProjectWriter):
     """
     Output file creation class that writes a set of synthesis constraints
     """
 
-    def __init__(self, project: RegProject, _dblist):
-        super().__init__(project, None)
+    def __init__(self, project: RegProject):
+        super().__init__(project)
         self.ofile = None
 
         self.dblist = set()
@@ -40,10 +41,10 @@ class Sdc(WriterBase):
             for regset in block.regsets:
                 self.dblist.add(block.regsets[regset])
 
-    def write(self, filename):
+    def write(self, filename: Path):
         "Writes the output file"
 
-        with open(filename, "w") as self.ofile:
+        with filename.open("w") as self.ofile:
             for dbase in self.dblist:
                 self.write_regset(dbase)
 
@@ -164,7 +165,7 @@ def get_base_signal(address, field):
 
 EXPORTERS = [
     (
-        WriterBase.TYPE_PROJECT,
+        ProjectType.PROJECT,
         ExportInfo(
             Sdc,
             ("Synthesis", "SDC Constraints"),

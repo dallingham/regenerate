@@ -21,19 +21,20 @@
 Sdc - Writes out synthesis constraints
 """
 
+from pathlib import Path
 import datetime
-from .writer_base import WriterBase, ExportInfo
+from .writer_base import ProjectWriter, ExportInfo, ProjectType
 
 
-class Xdc(WriterBase):
+class Xdc(ProjectWriter):
     """
     Output file creation class that writes a set of synthesis constraints
     """
 
-    def __init__(self, project, dblist):
+    def __init__(self, project):
         super().__init__(project, None)
         self._offset = 0
-        self.dblist = dblist
+        self.dblist = [dbase[1] for dbase in project.regsets.items()]
         self._ofile = None
 
     def find_static_outputs(self):
@@ -97,14 +98,14 @@ class Xdc(WriterBase):
             "#----------------------------------------------------------\n\n"
         )
 
-    def write(self, filename):
+    def write(self, filename: Path):
         """Writes the output file"""
 
         name2db = {}
         for db in self.dblist:
             name2db[db.set_name] = db
 
-        with open(filename, "w") as of:
+        with filename.open("w") as of:
             self.write_header(of)
             for group in self._project.get_grouping_list():
                 of.write("#\n# %s group\n#\n\n" % group.name)
@@ -162,7 +163,7 @@ class Xdc(WriterBase):
 
 EXPORTERS = [
     (
-        WriterBase.TYPE_PROJECT,
+        ProjectType.PROJECT,
         ExportInfo(
             Xdc,
             ("Synthesis", "Vivado Constraints"),

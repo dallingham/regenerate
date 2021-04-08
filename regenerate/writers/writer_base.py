@@ -24,12 +24,20 @@ WriterBase - base class for objects that product output from the
 import os
 import time
 import pwd
+from pathlib import Path
+from enum import IntEnum
 from typing import Optional
 from collections import namedtuple
 
 from regenerate.db import RegisterDb, RegProject
-
 from ..settings.paths import INSTALL_PATH
+
+
+class ProjectType(IntEnum):
+    REGSET = 0
+    BLOCK = 1
+    PROJECT = 2
+
 
 ExportInfo = namedtuple(
     "ExportInfo", ["obj_class", "type", "description", "extension", "id"]
@@ -45,8 +53,6 @@ class WriterBase:
     Writes the register information to the output file determined
     by the derived class.
     """
-
-    (TYPE_BLOCK, TYPE_GROUP, TYPE_PROJECT) = range(3)
 
     def __init__(
         self, project: RegProject, dbase: Optional[RegisterDb]
@@ -133,7 +139,7 @@ class WriterBase:
         line = line.replace("$U$", user)
         ofile.write(line)
 
-    def write(self, filename):
+    def write(self, filename: Path):
         """
         The child class must override this to provide an implementation.
         """
@@ -154,7 +160,7 @@ class ProjectWriter:
         self._project = obj
         self._project_name = obj.short_name
 
-    def write(self, filename):
+    def write(self, filename: Path):
         """
         The child class must override this to provide an implementation.
         """

@@ -20,10 +20,12 @@
 Actual program. Parses the arguments, and initiates the main window
 """
 
+import os
+from pathlib import Path
+
 from regenerate.db import BitField
 from rgeneerate.db.enums import BitType
 from regenerate.writers.writer_base import WriterBase
-import os
 from jinja2 import Template
 
 #
@@ -81,7 +83,7 @@ class SpiritWriter(WriterBase):
     def __init__(self, project, dbase):
         super().__init__(project, dbase)
 
-    def write(self, filename):
+    def write(self, filename: Path):
         """
         Write the data to the file as a SystemVerilog package. This includes
         a block of register definitions for each register and the associated
@@ -97,7 +99,7 @@ class SpiritWriter(WriterBase):
                 ifile.read(), trim_blocks=True, lstrip_blocks=True
             )
 
-        with open(filename, "w") as of:
+        with filename.open("w") as of:
             of.write(
                 template.render(
                     db=self._dbase,

@@ -21,8 +21,9 @@ EquWriter - Writes out Assembler defines (based off the GNU assembler)
 """
 
 from typing import Union, Optional, TextIO
+from pathlib import Path
 
-from .writer_base import WriterBase, ExportInfo
+from .writer_base import WriterBase, ExportInfo, ProjectType
 from ..db import RegisterDb, Register
 
 
@@ -50,14 +51,14 @@ class AsmEqu(WriterBase):
         name = "%s%s, " % (prefix, base)
         self._ofile.write("\t.equ %-30s 0x%s\n" % (name, address + offset))
 
-    def write(self, filename: str) -> None:
+    def write(self, filename: Path) -> None:
         """
         Writes the output file
         """
         assert self._ofile is not None
         assert self._dbase is not None
 
-        with open(filename, "w") as self._ofile:
+        with filename.open("w") as self._ofile:
             self._write_header_comment(
                 self._ofile, "site_asm.inc", comment_char=";; "
             )
@@ -72,7 +73,7 @@ class AsmEqu(WriterBase):
 
 EXPORTERS = [
     (
-        WriterBase.TYPE_BLOCK,
+        ProjectType.REGSET,
         ExportInfo(
             AsmEqu,
             ("Header files", "Assembler Source"),
