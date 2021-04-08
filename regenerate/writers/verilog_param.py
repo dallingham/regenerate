@@ -20,7 +20,8 @@
 DefsWriter - Writes out Verilog defines representing the register addresses
 """
 
-from .writer_base import WriterBase, ExportInfo
+from pathlib import Path
+from .writer_base import WriterBase, ExportInfo, ProjectType
 
 
 class VerilogParameters(WriterBase):
@@ -44,12 +45,12 @@ class VerilogParameters(WriterBase):
             "parameter p%s = 'h%x\n" % (name, reg.address + offset)
         )
 
-    def write(self, filename):
+    def write(self, filename: Path):
         """
         Writes the output file
         """
         try:
-            self._ofile = open(filename, "w")
+            self._ofile = filename.open("w")
         except IOError as msg:
             import gtk
 
@@ -80,7 +81,7 @@ class VerilogParameters(WriterBase):
 
 EXPORTERS = [
     (
-        WriterBase.TYPE_BLOCK,
+        ProjectType.REGSET,
         ExportInfo(
             VerilogParameters,
             ("RTL", "Verilog parameters"),

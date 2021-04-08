@@ -20,12 +20,14 @@
 Actual program. Parses the arguments, and initiates the main window
 """
 
-from regenerate.db import BitField, TYPES, LOGGER
-from regenerate.extras.remap import REMAP_NAME
-from regenerate.writers.writer_base import WriterBase, ExportInfo
 import time
 import os
+from pathlib import Path
 from jinja2 import Environment
+
+from regenerate.db import BitField, TYPES, LOGGER
+from regenerate.extras.remap import REMAP_NAME
+from .writer_base import WriterBase, ExportInfo, ProjectType
 
 
 class CStruct(WriterBase):
@@ -97,15 +99,13 @@ class CStruct(WriterBase):
     def _used_maps(self):
         return set([addr_map.name for addr_map in self.uvm_address_maps()])
 
-    def write(self, filename):
+    def write(self, filename: Path):
         """
         Write the data to the file as a SystemVerilog package. This includes
         a block of register definitions for each register and the associated
         container blocks.
         """
 
-        group_maps = self._build_group_maps()
-        name = self._project.short_name
         dirpath = os.path.dirname(__file__)
 
         env = Environment(trim_blocks=True, lstrip_blocks=True)
@@ -117,8 +117,8 @@ class CStruct(WriterBase):
 
         used_dbs = self.get_used_databases()
 
-        with open(filename, "w") as of:
-            of.write(
+        with filename.open("w") as ofile:
+            ofile.write(
                 template.render(
                     project=self._project,
                     dblist=used_dbs,
@@ -164,7 +164,7 @@ class CStruct(WriterBase):
 
 EXPORTERS = [
     (
-        WriterBase.TYPE_PROJECT,
+        ProjectType.REGSET,
         ExportInfo(
             CStruct,
             ("Header files", "C Structures"),

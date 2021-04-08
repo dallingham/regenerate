@@ -21,9 +21,10 @@ Actual program. Parses the arguments, and initiates the main window
 """
 
 import os
+from pathlib import Path
 from jinja2 import Template
 from regenerate.db.enums import BitType
-from regenerate.writers.writer_base import WriterBase, ExportInfo
+from .writer_base import WriterBase, ExportInfo, ProjectType
 
 #
 # Map regenerate types to UVM type strings
@@ -87,7 +88,7 @@ class IpXactWriter(WriterBase):
     def __init__(self, project, dbase):
         super().__init__(project, dbase)
 
-    def write(self, filename):
+    def write(self, filename: Path):
         """
         Write the data to the file as a SystemVerilog package. This includes
         a block of register definitions for each register and the associated
@@ -101,7 +102,7 @@ class IpXactWriter(WriterBase):
                 of.read(), trim_blocks=True, lstrip_blocks=True
             )
 
-        with open(filename, "w") as ofile:
+        with filename.open("w") as ofile:
             text = template.render(
                 db=self._dbase,
                 WRITE_MAP=WRITE_MAP,
@@ -114,7 +115,7 @@ class IpXactWriter(WriterBase):
 
 EXPORTERS = [
     (
-        WriterBase.TYPE_BLOCK,
+        ProjectType.REGSET,
         ExportInfo(
             IpXactWriter,
             ("XML", "IP-XACT"),

@@ -19,11 +19,12 @@
 """
 Actual program. Parses the arguments, and initiates the main window
 """
+import string
+from pathlib import Path
 
 from regenerate.db.enums import BitType
-from .writer_base import WriterBase, ExportInfo
+from .writer_base import WriterBase, ExportInfo, ProjectType
 from regenerate.extras import find_addresses
-import string
 
 MAX_REGS = 100
 
@@ -319,13 +320,13 @@ class CTest(WriterBase):
                     "LL",
                 )
 
-    def write(self, filename):
+    def write(self, filename: Path):
         """
         Actually runs the program
         """
         address_maps = self._project.get_address_maps()
 
-        with open(filename, "w") as cfile:
+        with filename.open("w") as cfile:
 
             if address_maps:
                 token = "#ifdef"
@@ -365,7 +366,7 @@ class CTest(WriterBase):
 
 EXPORTERS = [
     (
-        WriterBase.TYPE_BLOCK,
+        ProjectType.REGSET,
         ExportInfo(CTest, ("Test", "C program"), "C files", ".c", "test-c"),
     )
 ]

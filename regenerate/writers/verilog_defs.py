@@ -20,7 +20,8 @@
 DefsWriter - Writes out Verilog defines representing the register addresses
 """
 
-from .writer_base import WriterBase, ExportInfo
+from pathlib import Path
+from .writer_base import WriterBase, ExportInfo, ProjectType
 
 HEADER = ["`ifdef $M$_DEFS\n", "`else\n", "`define $M$_DEFS 1\n", "\n"]
 
@@ -48,14 +49,16 @@ class VerilogDefines(WriterBase):
             name = "ADDR%04x" % address
         name = "%s%s" % (prefix, name)
 
-        self._ofile.write("`define %-30s (32'h%x)\n" % (name, (address + offset)))
+        self._ofile.write(
+            "`define %-30s (32'h%x)\n" % (name, (address + offset))
+        )
 
-    def write(self, filename):
+    def write(self, filename: Path):
         """
         Writes the output file
         """
         try:
-            self._ofile = open(filename, "w")
+            self._ofile = filename.open("w")
         except IOError as msg:
             import gtk
 
@@ -72,7 +75,9 @@ class VerilogDefines(WriterBase):
             errd.run()
             return
 
-        self._write_comment_header(self._ofile, "site_verilog.inc", comment_char="//")
+        self._write_comment_header(
+            self._ofile, "site_verilog.inc", comment_char="//"
+        )
 
         self.write_header(self._ofile, HEADER)
 
@@ -89,7 +94,7 @@ class VerilogDefines(WriterBase):
 
 EXPORTERS = [
     (
-        WriterBase.TYPE_BLOCK,
+        ProjectType.REGSET,
         ExportInfo(
             VerilogDefines,
             ("RTL", "Verilog defines"),

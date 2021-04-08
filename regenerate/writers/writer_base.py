@@ -23,30 +23,29 @@ WriterBase - base class for objects that product output from the
 
 import os
 import time
-from typing import Optional, Union
+import pwd
+from pathlib import Path
+from enum import IntEnum
+from typing import Optional
 from collections import namedtuple
+
+from regenerate.db import RegisterDb, RegProject
 from ..settings.paths import INSTALL_PATH
-from ..db import RegisterDb, RegProject
+
+
+class ProjectType(IntEnum):
+    REGSET = 0
+    BLOCK = 1
+    PROJECT = 2
+
 
 ExportInfo = namedtuple(
     "ExportInfo", ["obj_class", "type", "description", "extension", "id"]
 )
 
 
-if os.name == "nt":
-
-    def get_username():
-        import getpass
-
-        return getpass.getuser()
-
-
-else:
-
-    def get_username():
-        import pwd
-
-        return pwd.getpwnam(os.environ["USER"])[4].split(",")[0]
+def get_username():
+    return pwd.getpwnam(os.environ["USER"])[4].split(",")[0]
 
 
 class WriterBase:
@@ -54,8 +53,6 @@ class WriterBase:
     Writes the register information to the output file determined
     by the derived class.
     """
-
-    (TYPE_BLOCK, TYPE_GROUP, TYPE_PROJECT) = range(3)
 
     def __init__(
         self, project: RegProject, dbase: Optional[RegisterDb]
@@ -142,7 +139,28 @@ class WriterBase:
         line = line.replace("$U$", user)
         ofile.write(line)
 
-    def write(self, filename):
+    def write(self, filename: Path):
+        """
+        The child class must override this to provide an implementation.
+        """
+        raise NotImplementedError
+
+
+class ProjectWriter:
+    """
+    Writes the register information to the output file determined
+    by the derived class.
+    """
+
+    def __init__(self, project: RegProject) -> None:
+        self._project = project
+        self._project_name = project.short_name
+
+    def set_project(self, obj: RegProject) -> None:
+        self._project = obj
+        self._project_name = obj.short_name
+
+    def write(self, filename: Path):
         """
         The child class must override this to provide an implementation.
         """

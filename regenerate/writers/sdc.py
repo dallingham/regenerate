@@ -20,18 +20,19 @@
 Sdc - Writes out synthesis constraints
 """
 
-from .writer_base import WriterBase, ExportInfo
+from pathlib import Path
+from regenerate.db import RegProject
+from .writer_base import ExportInfo, ProjectWriter, ProjectType
 
 
-class Sdc(WriterBase):
+class Sdc(ProjectWriter):
     """
     Output file creation class that writes a set of synthesis constraints
     """
 
-    def __init__(self, project, dblist):
-        super().__init__(project, None)
-        self._offset = 0
-        self._ofile = None
+    def __init__(self, project: RegProject):
+        super().__init__(project)
+        self.ofile = None
 
         self.dblist = set()
         for block_inst in project.block_insts:
@@ -40,45 +41,41 @@ class Sdc(WriterBase):
             for regset in block.regsets:
                 self.dblist.add(block.regsets[regset])
 
-    def write(self, filename):
-        """
-        Writes the output file
-        """
-        ofile = open(filename, "w")
+    def write(self, filename: Path):
+        "Writes the output file"
 
-        # Write register blocks
-        for dbase in self.dblist:
+        with filename.open("w") as self.ofile:
+            for dbase in self.dblist:
+                self.write_regset(dbase)
 
-            for block_inst in self._project.block_insts:
-                used = set()
-                block = self._project.blocks[block_inst.block]
+    def write_regset(self, dbase):
+        for block_inst in self._project.block_insts:
+            used = set()
+            block = self._project.blocks[block_inst.block]
 
-                for grp in block.regset_insts:
-                    print(grp)
+            for reginst in block.regset_insts:
+                if (
+                    reginst.set_name == dbase.set_name
+                    and reginst.set_name not in used
+                    and reginst.hdl
+                ):
+                    used.add(reginst.set_name)
+                    for reg, field in all_fields(dbase):
+                        for i in range(0, reginst.repeat):
+                            base = get_signal_info(reg.address, field)[0]
+                            for j in range(0, block_inst.repeat):
+                                path = build_format(
+                                    block_inst.hdl_path, j, reginst.hdl, i
+                                )
+                                self.write_statements(f"{path}/{base}")
 
-                    if (
-                        grp.set == dbase.set_name
-                        and grp.set not in used
-                        and grp.hdl
-                    ):
-                        used.add(grp.set)
-                        for reg, field in all_fields(dbase):
-                            for i in range(0, grp.repeat):
-                                base = get_signal_info(reg.address, field)[0]
-                                for j in range(0, group.repeat):
-                                    path = build_format(
-                                        group.hdl, j, grp.hdl, i
-                                    )
-                                    signal_name = "%s/%s" % (path, base)
-                                    ofile.write(
-                                        "set_multicycle -from [get_cells{%s}] -setup 4\n"
-                                        % signal_name
-                                    )
-                                    ofile.write(
-                                        "set_false_path -from [get_cells{%s}] -hold\n"
-                                        % signal_name
-                                    )
-        ofile.close()
+    def write_statements(self, signal_name: str):
+        self.ofile.write(
+            f"set_multicycle -from [get_cells{signal_name}] -setup 4\n"
+        )
+        self.ofile.write(
+            f"set_false_path -from [get_cells{signal_name}] -hold\n"
+        )
 
 
 def build_format(top_hdl, top_count, lower_hdl, lower_count):
@@ -168,7 +165,7 @@ def get_base_signal(address, field):
 
 EXPORTERS = [
     (
-        WriterBase.TYPE_PROJECT,
+        ProjectType.PROJECT,
         ExportInfo(
             Sdc,
             ("Synthesis", "SDC Constraints"),

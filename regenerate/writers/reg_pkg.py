@@ -1,4 +1,3 @@
-#! /usr/bin/python
 #
 # Manage registers in a hardware design
 #
@@ -22,7 +21,8 @@ Actual program. Parses the arguments, and initiates the main window
 """
 
 import os
-from .writer_base import WriterBase, ExportInfo
+from pathlib import Path
+from .writer_base import ProjectWriter, ExportInfo, ProjectType
 
 
 def find_range(address, range_map):
@@ -34,13 +34,13 @@ def find_range(address, range_map):
         return None
 
 
-class VerilogConstRegPackage(WriterBase):
-    def __init__(self, project, dblist):
-        super().__init__(None)
-        self.dblist = dblist
+class VerilogConstRegPackage(ProjectWriter):
+    def __init__(self, project):
+        super().__init__(project)
+        self.dblist = [dbase[1] for dbase in project.regsets.items()]
 
-    def write(self, filename):
-        with open(filename, "w") as cfile:
+    def write(self, filename: Path):
+        with filename.open("w") as cfile:
             base = os.path.splitext(os.path.basename(filename))[0]
             cfile.write("package %s;\n" % base)
             cfile.write("import vlsi_pkg::*;\n")
@@ -61,7 +61,7 @@ class VerilogConstRegPackage(WriterBase):
 
 EXPORTERS = [
     (
-        WriterBase.TYPE_PROJECT,
+        ProjectType.PROJECT,
         ExportInfo(
             VerilogConstRegPackage,
             ("Headers", "SystemVerilog Register Constants"),

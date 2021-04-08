@@ -21,9 +21,10 @@ Actual program. Parses the arguments, and initiates the main window
 """
 
 from collections import namedtuple
+from pathlib import Path
 import os
 from jinja2 import Template
-from regenerate.writers.writer_base import WriterBase, ExportInfo
+from .writer_base import WriterBase, ExportInfo, ProjectType
 
 # Define named tuple to hold the data to pass to the template
 
@@ -93,8 +94,8 @@ class AddressDecode(WriterBase):
         self.dblist = dblist
         self.group = group
 
-    def write(self, filename):
-        with open(filename, "w") as ofile:
+    def write(self, filename: Path):
+        with filename.open("w") as ofile:
             self.build(ofile)
 
     def build(self, ofile):
@@ -125,7 +126,7 @@ class AddressDecode(WriterBase):
 
 EXPORTERS = [
     (
-        WriterBase.TYPE_GROUP,
+        ProjectType.REGSET,
         ExportInfo(
             AddressDecode,
             ("RTL", "Address decoder"),
