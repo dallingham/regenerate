@@ -316,7 +316,7 @@ generate
 {%- endfor %}
 
             end else begin
-	       mux_rdata <= ({{ports['addr'][:-5]}}[3]) ? '0 : '1;
+	       mux_rdata <= '0;
             end
          end
       end
