@@ -694,11 +694,11 @@ class RegisterRst:
     def reg_addr(self, blk_inst, brpt, regset_inst, rrpt):
         blk = self._prj.blocks[blk_inst.block]
         regset = self._prj.regsets[regset_inst.set_name]
-        rset_width = 1 << regset.regset.ports.address_bus_width
+        rset_width = 1 << regset.ports.address_bus_width
 
         val = (
             blk_inst.address_base
-            + (brpt * blk.block.address_size)
+            + (brpt * blk.address_size)
             + regset_inst.offset
             + (rrpt * rset_width)
             + self._reg.address
@@ -709,7 +709,7 @@ class RegisterRst:
     def find_registers(self, block_inst_list):
         registers = []
         for blk_inst in block_inst_list:
-            block = self._prj.blocks[blk_inst.block].block
+            block = self._prj.blocks[blk_inst.block]
             regset_list = [
                 rs
                 for rs in block.regset_insts

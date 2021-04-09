@@ -736,13 +736,6 @@ class MainWindow(BaseWindow):
         self.reglist_obj.set_parameters(self.dbase.get_parameters())
         self.bitfield_obj.set_parameters(self.dbase.get_parameters())
 
-        if self.dbase.array_is_reg:
-            self.find_obj("register_notation").set_active(True)
-        else:
-            self.find_obj("array_notation").set_active(True)
-
-        # self.update_bit_count()
-
         self.block_tab.redraw()
         self.reginst_tab.update_display()
         self.set_description_warn_flag()
@@ -800,16 +793,16 @@ class MainWindow(BaseWindow):
     def set_db_value(self, attr, val):
         if self.dbase:
             setattr(self.dbase, attr, val)
-        self.set_modified()
+        self.reginst_tab.set_modified()
 
     def on_array_changed(self, obj):
-        self.set_db_value("array_is_reg", not obj.get_active())
+        self.reginst_tab.array_changed(obj)
 
     def button_toggle(self, attr, obj):
         reg = self.reginst_tab.get_selected_register()
         if reg:
             setattr(reg.flags, attr, obj.get_active())
-            self.set_modified()
+            self.reginst_tab.set_modified()
 
     def on_no_rtl_toggled(self, obj):
         self.button_toggle("do_not_generate_code", obj)

@@ -71,6 +71,8 @@ class RegSetWidgets:
         self.summary_window = find_obj("summary_window")
         self.summary_scroll = find_obj("summary_scroll")
         self.summary_button = find_obj("summary_button")
+        self.register_notation = find_obj("register_notation")
+        self.array_notation = find_obj("array_notation")
 
 
 class RegSetStatus:
@@ -306,6 +308,10 @@ class RegSetTab:
         self.name2status[name] = status
         return node
 
+    def array_changed(self, obj):
+        self.active.array_is_reg = obj.get_active()
+        self.set_modified()
+
     def change_project(self, prj):
 
         self.reg_set_obj.change_project(prj)
@@ -336,17 +342,17 @@ class RegSetTab:
         """Redraws the information in the register list."""
         if self.active:
             self.module_tabs.change_db(self.active)
+            if self.active.array_is_reg:
+                self.widgets.register_notation.set_active(True)
+            else:
+                self.widgets.array_notation.set_active(True)
         self.rebuild_model()
-        #        self.reg_set_model.update()
 
+        
         # self.parameter_list.set_db(self.dbase)
         # self.reglist_obj.set_parameters(self.dbase.get_parameters())
         # self.bitfield_obj.set_parameters(self.dbase.get_parameters())
 
-        # if self.dbase.array_is_reg:
-        #    self.find_obj("register_notation").set_active(True)
-        # else:
-        #    self.find_obj("array_notation").set_active(True)
 
         self.update_bit_count()
         self.set_description_warn_flag()
@@ -561,8 +567,7 @@ class RegSetTab:
             )
 
     def update_register_addr(self, register, new_addr, new_length=0):
-        dbase = self.regset
-        dbase.delete_register(register)
+        self.active.delete_register(register)
         register.address = new_addr
         register.ram_size = new_length
         share_reg = self.find_shared_address(register)
@@ -572,7 +577,7 @@ class RegSetTab:
             else:
                 register.share = ShareType.READ
             self.set_share(register)
-        dbase.add_register(register)
+        self.active.add_register(register)
 
     def find_shared_address(self, reg):
         for shared_reg in self.active.get_all_registers():
