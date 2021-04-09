@@ -793,7 +793,7 @@ class MainWindow(BaseWindow):
     def set_db_value(self, attr, val):
         if self.dbase:
             setattr(self.dbase, attr, val)
-        self.set_modified()
+        self.reginst_tab.set_modified()
 
     def on_array_changed(self, obj):
         self.reginst_tab.array_changed(obj)
@@ -802,7 +802,7 @@ class MainWindow(BaseWindow):
         reg = self.reginst_tab.get_selected_register()
         if reg:
             setattr(reg.flags, attr, obj.get_active())
-            self.set_modified()
+            self.reginst_tab.set_modified()
 
     def on_no_rtl_toggled(self, obj):
         self.button_toggle("do_not_generate_code", obj)
