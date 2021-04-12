@@ -44,5 +44,8 @@ class JSONEncodable:
     def json_decode(self, data):
         """Converts the dictionary back into local variables"""
 
-        for key, value in data:
-            self.__setattr__(key, value)
+        try:
+            for key in data:
+                self.__setattr__(key, data[key])
+        except ValueError:
+            print("Value failed >>>>", data)

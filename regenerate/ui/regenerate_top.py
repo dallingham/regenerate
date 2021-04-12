@@ -52,8 +52,6 @@ from regenerate.ui.build import Build
 from regenerate.ui.error_dialogs import ErrorMsg, Question
 from regenerate.ui.help_window import HelpWindow
 from regenerate.ui.module_tab import ProjectTabs
-from regenerate.ui.param_overrides import OverridesList
-from regenerate.ui.parameter_list import ParameterList
 from regenerate.ui.preferences import Preferences
 from regenerate.ui.prj_param_list import PrjParameterList
 from regenerate.ui.register_tab import RegSetTab
@@ -169,22 +167,18 @@ class MainWindow(BaseWindow):
             self.find_obj("address_tree"), self.set_project_modified
         )
 
-        self.parameter_list = ParameterList(
-            self.find_obj("parameter_list"), self.set_parameters_modified
-        )
-
         self.prj_parameter_list = PrjParameterList(
             self.find_obj("prj_param_list"), self.set_parameters_modified
         )
 
-        self.overrides_list = OverridesList(
-            self.find_obj("prj_subparam_list"), self.set_parameters_modified
-        )
-
     def set_parameters_modified(self):
         self.set_modified()
-        self.reglist_obj.set_parameters(self.dbase.get_parameters())
-        self.bitfield_obj.set_parameters(self.dbase.get_parameters())
+        self.reginst_tab.reglist_obj.set_parameters(
+            self.dbase.get_parameters()
+        )
+        self.reginst_tab.bitfield_obj.set_parameters(
+            self.dbase.get_parameters()
+        )
 
     def set_project_modified(self):
         self.project_modified(True)
@@ -331,13 +325,13 @@ class MainWindow(BaseWindow):
                 )
 
     def on_add_param_clicked(self, _obj):
-        self.parameter_list.add_clicked()
+        self.reginst_tab.parameter_list.add_clicked()
 
     def on_add_prj_param_clicked(self, _obj):
         self.prj_parameter_list.add_clicked()
 
     def on_remove_param_clicked(self, _obj):
-        self.parameter_list.remove_clicked()
+        self.reginst_tab.parameter_list.remove_clicked()
 
     def on_prj_remove_param_clicked(self, _obj):
         self.prj_parameter_list.remove_clicked()
@@ -732,9 +726,13 @@ class MainWindow(BaseWindow):
 
     def redraw(self):
         """Redraws the information in the register list."""
-        self.parameter_list.set_db(self.dbase)
-        self.reglist_obj.set_parameters(self.dbase.get_parameters())
-        self.bitfield_obj.set_parameters(self.dbase.get_parameters())
+        self.reginst_tab.parameter_list.set_db(self.dbase)
+        self.reginst_tab.reglist_obj.set_parameters(
+            self.dbase.get_parameters()
+        )
+        self.reginst_tab.bitfield_obj.set_parameters(
+            self.dbase.get_parameters()
+        )
 
         self.block_tab.redraw()
         self.reginst_tab.update_display()

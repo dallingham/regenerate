@@ -17,33 +17,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""
-Contains the information for register set parameters and
-project parameters.
-"""
-
-from .json_base import JSONEncodable
+from .parammap import ParameterData
 
 
-class ParameterData(JSONEncodable):
-    """Register set parameter data"""
-
-    def __init__(
-        self,
-        name: str = "",
-        value: int = 1,
-        min_val: int = 0,
-        max_val: int = 0xFFFF_FFFF,
-    ):
-        self.name = name
-        self.value = value
-        self.min_val = min_val
-        self.max_val = max_val
-
-
-class PrjParameterData(JSONEncodable):
-    """Project parameter data"""
-
-    def __init__(self, name, value):
-        self.name = name
-        self.value = value
+class Overrides:
+    def __init__(self):
+        self.blkinst: str = ""
+        self.reginst: str = ""
+        self.parameter: ParameterData = ParameterData()
+        self.value: int = 0

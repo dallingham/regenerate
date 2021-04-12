@@ -175,11 +175,11 @@ class ComboMapColumn(BaseColumn):
     ):
 
         self.renderer = Gtk.CellRendererCombo()
-        model = Gtk.ListStore(str, dtype)
+        self._model = Gtk.ListStore(str, dtype)
         for item in data_list:
-            model.append(row=item)
+            self._model.append(row=item)
         self.renderer.set_property("text-column", 0)
-        self.renderer.set_property("model", model)
+        self.renderer.set_property("model", self._model)
         self.renderer.set_property("has-entry", False)
         self.renderer.set_property("editable", True)
         if callback:
@@ -191,6 +191,13 @@ class ComboMapColumn(BaseColumn):
 
         if visible_callback:
             self.set_cell_data_func(self.renderer, visible_callback)
+
+    def update_menu(self, item_list):
+        """Update the menu with the supplied items."""
+        self.item_list = item_list[:]
+        self._model.clear()
+        for item in item_list:
+            self._model.append(row=item)
 
 
 class MyComboMapColumn(BaseColumn):
@@ -276,7 +283,7 @@ class EditComboMapColumn(BaseColumn):
     def update_menu(self, item_list):
         """Update the menu from the passed list"""
         self.item_list = item_list[:]
-        self.model = Gtk.ListStore(str, str)
+        self.model = Gtk.ListStore(str, object)
         for item in item_list:
             self.model.append(row=item)
 

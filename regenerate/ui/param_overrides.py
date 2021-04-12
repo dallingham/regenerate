@@ -21,7 +21,7 @@ Provides the Address List interface
 """
 
 from gi.repository import Gtk
-from regenerate.ui.columns import EditableColumn
+from regenerate.ui.columns import EditableColumn, ComboMapColumn
 from regenerate.ui.enums import PrjParameterCol
 from regenerate.db.parammap import ParameterData
 from regenerate.ui.utils import find_next_free, check_hex
@@ -34,14 +34,14 @@ class OverridesListMdl(Gtk.ListStore):
     """
 
     def __init__(self):
-        super().__init__(str, str, str)
+        super().__init__(str, str, object)
 
-    def new_instance(self, module, name, val):
+    def new_instance(self, name, value, obj):
         """
         Adds a new instance to the model. It is not added to the database until
         either the change_id or change_base is called.
         """
-        node = self.append((module, name, val))
+        node = self.append((name, value, obj))
         return self.get_path(node)
 
     def append_instance(self, inst):
@@ -54,11 +54,11 @@ class OverridesListMdl(Gtk.ListStore):
         for val in self:
             if val[0]:
                 try:
-                    def_val = int(val[2], 16)
+                    def_val = int(val[1], 0)
                 except ValueError:
                     def_val = 1
-
-                val_list.append((val[0], val[1], def_val))
+                val_list.append((val[0], def_val, val[2]))
+        return val_list
 
 
 class OverridesList:
@@ -69,18 +69,18 @@ class OverridesList:
     def __init__(self, obj, callback):
         self._obj = obj
         self._col = None
-        self._db = None
+        self.prj = None
         self._model = None
         self._build_instance_table()
         self._obj.set_sensitive(True)
         self._callback = callback
 
-    def set_db(self, dbase):
+    def set_project(self, prj):
         """
         Sets the database for the paramter list, and repopulates the list
         from the database.
         """
-        self._db = dbase
+        self.prj = prj
         self._obj.set_sensitive(True)
         self.populate()
 
@@ -88,36 +88,74 @@ class OverridesList:
         """
         Loads the data from the project
         """
-        if self._db is not None:
+        overrides = build_overrides_list(self.prj)
+        self._col.update_menu(overrides)
+
+        if self.prj is not None:
             self._model.clear()
-        for (module, name, value) in self._db.get_parameters():
-            self.append(module, name, value)
+            for data in build_possible_overrides(self.prj):
+                new_data = (
+                    f"{data[0]}.{data[1]}.{data[2].name}",
+                    f"0x{data[2].value}",
+                    data[2],
+                )
+                self._model.append(row=new_data)
 
     def remove_clicked(self):
         name = self.get_selected()
-        self._db.remove_parameter(name)
+        self.prj.remove_parameter(name)
         self.remove_selected()
         self._callback()
 
     def add_clicked(self):
-        current = set({p[0] for p in self._db.get_parameters()})
+        current = set({p[0] for p in self.prj.get_parameters()})
 
         name = find_next_free("pParameter", current)
         self._model.new_instance(name, hex(1))
-        self._db.add_parameter(name, hex(1))
+        self.prj.add_parameter(name, hex(1))
         self._callback()
 
     def _name_changed(self, _cell, path, new_text, _col):
         """
         Called when the name field is changed.
         """
-        current = set({p[0] for p in self._db.get_parameters()})
+        current = set({p[0] for p in self.prj.get_parameters()})
 
         name = self._model[path][PrjParameterCol.NAME]
         if name != new_text and new_text not in current:
             self._model[path][PrjParameterCol.NAME] = new_text
-            self._db.remove_parameter(name)
-            self._db.add_parameter(
+            self.prj.remove_parameter(name)
+            self.prj.add_parameter(
+                new_text, int(self._model[path][PrjParameterCol.VALUE], 16)
+            )
+            self._callback()
+
+    def _blk_changed(self, _cell, path, new_text, _col):
+        """
+        Called when the name field is changed.
+        """
+        current = set({p[0] for p in self.prj.get_parameters()})
+
+        name = self._model[path][PrjParameterCol.BLK]
+        if name != new_text and new_text not in current:
+            self._model[path][PrjParameterCol.BLK] = new_text
+            self.prj.remove_parameter(name)
+            self.prj.add_parameter(
+                new_text, int(self._model[path][PrjParameterCol.VALUE], 16)
+            )
+            self._callback()
+
+    def _reg_changed(self, _cell, path, new_text, _col):
+        """
+        Called when the name field is changed.
+        """
+        current = set({p[0] for p in self.prj.get_parameters()})
+
+        name = self._model[path][PrjParameterCol.REG]
+        if name != new_text and new_text not in current:
+            self._model[path][PrjParameterCol.REG] = new_text
+            self.prj.remove_parameter(name)
+            self.prj.add_parameter(
                 new_text, int(self._model[path][PrjParameterCol.VALUE], 16)
             )
             self._callback()
@@ -131,31 +169,29 @@ class OverridesList:
         value = int(new_text, 16)
 
         self._model[path][PrjParameterCol.VALUE] = new_text
-        self._db.remove_parameter(name)
-        self._db.add_parameter(name, value)
+        self.prj.remove_parameter(name)
+        self.prj.add_parameter(name, value)
         self._callback()
 
     def _build_instance_table(self):
         """
         Builds the columns, adding them to the address map list.
         """
-
-        column = EditableColumn(
-            "Parameter", self._name_changed, PrjParameterCol.NAME
+        self.column = ComboMapColumn(
+            "Parameter", self._name_changed, [], 0, dtype=object
         )
-        column.set_min_width(300)
-        column.set_sort_column_id(PrjParameterCol.NAME)
-        self._obj.append_column(column)
-        self._col = column
+        self.column.set_min_width(300)
+        self.column.set_sort_column_id(0)
+        self._obj.append_column(self.column)
+        self._col = self.column
 
         column = EditableColumn(
             "Value",
             self._value_changed,
-            PrjParameterCol.VALUE,
+            1,
             True,
             tooltip="Value of the parameter",
         )
-        column.set_sort_column_id(PrjParameterCol.VALUE)
         column.set_min_width(150)
         self._obj.append_column(column)
 
@@ -207,4 +243,34 @@ class OverridesList:
 
 
 def get_row_data(map_obj):
-    return (map_obj.name, hex(int(map_obj.value)))
+    return (map_obj.name, hex(int(map_obj.value)), map_obj)
+
+
+def build_possible_overrides(project):
+    param_list = []
+    for blkinst in project.block_insts:
+        blkinst_name = blkinst.inst_name
+        block = project.blocks[blkinst.block]
+        for reginst in block.regset_insts:
+            reginst_name = reginst.inst
+            regset_name = reginst.set_name
+            regset = project.regsets[regset_name]
+            for param in regset.get_parameters():
+                param_list.append((blkinst_name, reginst_name, param))
+    return param_list
+
+
+def build_overrides_list(project):
+    param_list = []
+    for blkinst in project.block_insts:
+        blkinst_name = blkinst.inst_name
+        block = project.blocks[blkinst.block]
+        for reginst in block.regset_insts:
+            reginst_name = reginst.inst
+            regset_name = reginst.set_name
+            regset = project.regsets[regset_name]
+            for param in regset.get_parameters():
+                param_list.append(
+                    (f"{blkinst_name}.{reginst_name}.{param.name}", param)
+                )
+    return param_list

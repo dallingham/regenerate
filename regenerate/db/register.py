@@ -22,11 +22,12 @@ Provides the register description. Contains the general information about the
 register, including the list of bit fields.
 """
 
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Optional
 from .name_base import NameBase
 from .enums import ResetType, ShareType
 from .bitfield import BitField
 from .parammap import ParameterData
+from .param_val import ParamValue
 
 
 class RegisterFlags:
@@ -188,7 +189,7 @@ class Register(NameBase):
 
         super().__init__(name, "")
 
-        self._dimension = "1"
+        self._dimension = ParamValue(1)
         self._token = ""
         self._bit_fields: Dict[int, BitField] = {}
         self._parameter_list: List[ParameterData] = []
@@ -197,7 +198,7 @@ class Register(NameBase):
         self.address = address
         self.ram_size = 0
         self.width = width
-
+        self.regset_name = None
         self.share = ShareType.NONE
 
     def __hash__(self):
@@ -280,11 +281,7 @@ class Register(NameBase):
     def dimension_is_param(self) -> bool:
         """Determines if the dimension is an int or parameter"""
 
-        try:
-            _ = int(self._dimension, 0)
-            return False
-        except ValueError:
-            return True
+        return self._dimension.is_parameter
 
     @property
     def dimension(self) -> int:
@@ -292,25 +289,28 @@ class Register(NameBase):
         Returns the dimension as an integer, resolving the parameter
         value if it exists.
         """
-
-        try:
-            return int(self._dimension)
-        except ValueError:
-            if self._parameter_list:
-                for param in self._parameter_list:
-                    if param.name == self._dimension:
-                        return param.value
-            return 1
+        return self._dimension.resolve(self.regset_name)
 
     @dimension.setter
     def dimension(self, value) -> None:
         """Sets the dimension as a string"""
-        self._dimension = str(value)
+        if type(value) == int:
+            self._dimension.set_int(value)
+        else:
+            try:
+                intval = int(value, 0)
+                self._dimension.set_int(intval)
+            except ValueError:
+                self._dimension.set_param(value)
+
+    def dimension_value(self):
+        a = self._dimension.resolve()
+        return a
 
     @property
     def dimension_str(self) -> str:
         """Returns the dimension as a string, not resolving parameters"""
-        return self._dimension
+        return str(self._dimension)
 
     @property
     def token(self) -> str:
@@ -455,11 +455,10 @@ class Register(NameBase):
         self._parameter_list = parameter_list
 
     def json(self):
-        return {
+        val = {
             "name": self.name,
             "id": self._id,
             "description": self.description,
-            "dimension": self.dimension,
             "parameters": self._parameter_list,
             "token": self._token,
             "address": f"{self.address}",
@@ -469,16 +468,21 @@ class Register(NameBase):
             "width": self.width,
             "bitfields": [field for index, field in self._bit_fields.items()],
         }
+        val["dimension"] = self._dimension
+        return val
 
     def json_decode(self, data):
         self.name = data["name"]
         self._id = data["id"]
         self.description = data["description"]
-        self.dimension = data["dimension"]
+        self._dimension = ParamValue()
+        self._dimension.json_decode(data["dimension"])
 
         self._parameter_list = []
         for param_json in data["parameters"]:
-            self._parameter_list.append(ParameterData[param_json])
+            prm = ParameterData()
+            prm.json_decode(param_json)
+            self._parameter_list.append(prm)
 
         self._token = data["token"]
         self.address = int(data["address"], 0)

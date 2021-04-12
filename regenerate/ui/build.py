@@ -126,35 +126,38 @@ class Build(BaseWindow):
         """
         local_dest = os.path.join(os.path.dirname(self.__prj.path), dest)
 
-        register_set = self.__prj.get_register_set()
-        mod = file_needs_rebuilt(local_dest, self.__prj, register_set)
+        mod = file_needs_rebuilt(local_dest, self.__prj, self.__prj.regsets)
         self.__modlist.append(mod)
         (fmt, cls, _) = self.__optmap[exporter]
         self.__model.append(
             row=[mod, "<project>", fmt, dest, cls, None, ProjectType.PROJECT]
         )
 
-    def __add_dbase_item_to_list(self, dbase_rel_path, exporter, dest):
+    def __add_dbase_item_to_list(self, regset_name: str, exporter, dest):
         """
         Adds the specific item to the build list. We have to check to see
         if the file needs rebuilt, depending on modification flags a file
         timestamps.
         """
-
-        dbase_full_path = os.path.join(
-            os.path.dirname(self.__prj.path), dbase_rel_path
-        )
-        (base, _) = base_and_modtime(dbase_full_path)
+        regset = self.__prj.regsets[regset_name]
+        filename = regset.filename
+        (base, _) = base_and_modtime(filename)
         local_dest = os.path.join(os.path.dirname(self.__prj.path), dest)
-
-        mod = file_needs_rebuilt(local_dest, self.__prj, [dbase_full_path])
+        mod = file_needs_rebuilt(local_dest, self.__prj, [regset_name])
         self.__modlist.append(mod)
         (fmt, cls, _) = self.__optmap[exporter]
-        dbase = self.__prj.regsets[base]
         rel_dest = dest
 
         self.__model.append(
-            row=(mod, base, fmt, rel_dest, cls, dbase, ProjectType.REGSET)
+            row=(
+                mod,
+                regset.set_name,
+                fmt,
+                rel_dest,
+                cls,
+                regset,
+                ProjectType.REGSET,
+            )
         )
 
     def __add_group_item_to_list(self, group_name, exporter, dest):
@@ -176,15 +179,15 @@ class Build(BaseWindow):
         Populate the display with the items stored in the project's
         export list.
         """
-        for item in self.__prj.get_register_set():
-            directory = Path(self.__prj.path).parent.resolve()
-            path = directory / item
-            path_str = str(path.resolve())
+        for item in self.__prj.regsets:
+            path_str = str(self.__prj.regsets[item].filename)
 
             for export_data in self.__prj.get_exports(path_str):
                 try:
                     self.__add_dbase_item_to_list(
-                        path_str, export_data.exporter, str(export_data.target)
+                        item,
+                        export_data.exporter,
+                        str(export_data.target),
                     )
                 except KeyError:
                     pass
@@ -363,7 +366,6 @@ class Build(BaseWindow):
         to add the new item to the list view.
         """
         exporter = self.__mapopt[export_format][MapOpt.ID]
-
         if self.__mapopt[export_format][MapOpt.REGISTER_SET] == Level.BLOCK:
             register_path = self.__base2path[register_set]
             self.__prj.regsets[register_set].regset.exports.append(
@@ -431,11 +433,18 @@ def file_needs_rebuilt(local_dest, prj, db_paths):
     if not os.path.exists(local_dest):
         mod = True
     else:
-        for full_path in db_paths:
-            (base, db_file_mtime) = base_and_modtime(full_path)
+        for regset_name in db_paths:
+            regset = prj.regsets[regset_name]
+            (base, db_file_mtime) = base_and_modtime(regset.filename)
             dest_mtime = os.path.getmtime(local_dest)
-            if db_file_mtime > dest_mtime or prj.regsets[base].modified:
-                mod = True
+            try:
+                if (
+                    db_file_mtime > dest_mtime
+                    or prj.regsets[regset.set_name].modified
+                ):
+                    mod = True
+            except:
+                print(regset.set_name)
     return mod
 
 

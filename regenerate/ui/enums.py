@@ -150,8 +150,10 @@ class ParameterCol(IntEnum):
 class PrjParameterCol(IntEnum):
     """Column numbers for the Parameter List"""
 
-    NAME = 0
-    VALUE = 1
+    BLK = 0
+    REG = 1
+    NAME = 2
+    VALUE = 3
 
 
 class ExportPages(IntEnum):

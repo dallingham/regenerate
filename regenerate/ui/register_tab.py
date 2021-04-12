@@ -32,6 +32,7 @@ from regenerate.ui.bitfield_editor import BitFieldEditor
 from regenerate.ui.columns import ReadOnlyColumn
 from regenerate.ui.enums import SelectCol, BitCol
 from regenerate.ui.module_tab import ModuleTabs
+from regenerate.ui.parameter_list import ParameterList
 from regenerate.ui.reg_description import RegisterDescription
 from regenerate.ui.register_list import RegisterModel, RegisterList
 from regenerate.ui.summary_window import SummaryWindow
@@ -66,8 +67,7 @@ class RegSetWidgets:
         self.reg_count = find_obj("reg_count")
         self.mod_descr_warn = find_obj("mod_descr_warn")
         self.bitfield_list = find_obj("bitfield_list")
-#        self.error_infobar_label = find_obj("error_infobar_label")
-#        self.error_infobar = find_obj("error_infobar")
+        self.parameter_list = find_obj("parameter_list")
         self.summary_window = find_obj("summary_window")
         self.summary_scroll = find_obj("summary_scroll")
         self.summary_button = find_obj("summary_button")
@@ -178,7 +178,6 @@ class RegSetList:
                     if setname == regset.set_name:
                         renderer.set_property("weight", Pango.Weight.NORMAL)
                         return
-            print(regset.set_name, "bold")
             renderer.set_property("weight", Pango.Weight.BOLD)
 
     def get_selected(self):
@@ -230,6 +229,10 @@ class RegSetTab:
         )
         self.module_tabs = ModuleTabs(find_obj, self.set_modified)
 
+        self.parameter_list = ParameterList(
+            self.widgets.parameter_list, self.set_parameters_modified
+        )
+
         self.reglist_obj = RegisterList(
             self.widgets.reglist,
             self.selected_reg_changed,
@@ -240,8 +243,8 @@ class RegSetTab:
 
         self.bitfield_obj = BitList(
             self.widgets.bitfield_list,
-#            self.widgets.error_infobar_label,
-#            self.widgets.error_infobar,
+            #            self.widgets.error_infobar_label,
+            #            self.widgets.error_infobar,
             self.bit_changed,
             self.set_modified,
         )
@@ -261,6 +264,11 @@ class RegSetTab:
         self.filter_manage = FilterManager(self.widgets.filter_obj)
 
         self.clear()
+
+    def set_parameters_modified(self):
+        self.set_modified()
+        self.reglist_obj.set_parameters(self.active.get_parameters())
+        self.bitfield_obj.set_parameters(self.active.get_parameters())
 
     def set_modified(self):
         if not self.skip_changes:
@@ -342,17 +350,14 @@ class RegSetTab:
         """Redraws the information in the register list."""
         if self.active:
             self.module_tabs.change_db(self.active)
+            self.parameter_list.set_db(self.active)
+            self.reglist_obj.set_parameters(self.active.get_parameters())
+            self.bitfield_obj.set_parameters(self.active.get_parameters())
             if self.active.array_is_reg:
                 self.widgets.register_notation.set_active(True)
             else:
                 self.widgets.array_notation.set_active(True)
         self.rebuild_model()
-
-        
-        # self.parameter_list.set_db(self.dbase)
-        # self.reglist_obj.set_parameters(self.dbase.get_parameters())
-        # self.bitfield_obj.set_parameters(self.dbase.get_parameters())
-
 
         self.update_bit_count()
         self.set_description_warn_flag()

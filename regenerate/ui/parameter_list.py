@@ -54,15 +54,15 @@ class ParameterListMdl(Gtk.ListStore):
         for val in self:
             if val[0]:
                 try:
-                    def_val = int(val[1], 16)
+                    def_val = int(val[1], 0)
                 except ValueError:
                     def_val = 1
                 try:
-                    min_val = int(val[2], 16)
+                    min_val = int(val[2], 0)
                 except ValueError:
                     min_val = 0
                 try:
-                    max_val = int(val[3], 16)
+                    max_val = int(val[3], 0)
                 except ValueError:
                     max_val = 0xFFFFFFFF
 
@@ -120,7 +120,9 @@ class ParameterList:
             name = f"{base}{index}"
 
         self._model.new_instance(name, hex(1), hex(0), hex(0xFFFFFFFF))
-        self._db.add_parameter(name, hex(1), hex(0), hex(0xFFFFFFFF))
+        self._db.add_parameter(
+            ParameterData(name, hex(1), hex(0), hex(0xFFFFFFFF))
+        )
         self._callback()
 
     def _name_changed(self, _cell, path, new_text, _col):
@@ -150,9 +152,9 @@ class ParameterList:
             return
 
         name = self._model[path][ParameterCol.NAME]
-        value = int(new_text, 16)
-        min_val = int(self._model[path][ParameterCol.MIN], 16)
-        max_val = int(self._model[path][ParameterCol.MAX], 16)
+        value = int(new_text, 0)
+        min_val = int(self._model[path][ParameterCol.MIN], 0)
+        max_val = int(self._model[path][ParameterCol.MAX], 0)
 
         if not (min_val <= value <= max_val):
             LOGGER.warning(
@@ -273,7 +275,7 @@ class ParameterList:
         """
         self._model.clear()
 
-    def append(self, name, value, max_val, min_val):
+    def append(self, name, value, min_val, max_val):
         """
         Add the data to the list.
         """
@@ -315,7 +317,7 @@ def get_row_data(map_obj):
     """Return row data from the object"""
     return (
         map_obj.name,
-        hex(int(map_obj.value)),
-        hex(int(map_obj.min_val)),
-        hex(int(map_obj.max_val)),
+        f"0x{map_obj.value:x}",
+        f"0x{map_obj.min_val:x}",
+        f"0x{map_obj.max_val:x}",
     )

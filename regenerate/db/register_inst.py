@@ -20,6 +20,7 @@
 """
 Manages the instance of a register within a group.
 """
+from .param_val import ParamValue
 
 
 class RegisterInst:
@@ -41,7 +42,7 @@ class RegisterInst:
         self.set_name = rset
         self.inst = inst
         self.offset = offset
-        self.repeat = repeat
+        self.repeat = ParamValue(repeat)
         self.repeat_offset = repeat_offset
         self.hdl = hdl
         self.no_uvm = no_uvm
@@ -98,7 +99,8 @@ class RegisterInst:
         self.set_name = data["set_name"]
         self.inst = data["inst"]
         self.offset = data["offset"]
-        self.repeat = data["repeat"]
+        self.repeat = ParamValue()
+        self.repeat.json_decode(data["repeat"])
         self.hdl = data["hdl"]
         self.no_uvm = data["no_uvm"]
         self.no_decode = data["no_decode"]

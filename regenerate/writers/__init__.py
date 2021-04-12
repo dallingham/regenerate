@@ -65,22 +65,23 @@ MODULES = [
 
 # -----------------------------------------------------------------------------
 #
-#  Dynamically load writes for Linux. To get the packaging tools to work,
+#  Dynamically load writers for Linux. To get the packaging tools to work,
 #  we must use the stanard import for windows
 #
 # -----------------------------------------------------------------------------
 
-from .verilog import Verilog, Verilog2001, SystemVerilog
-from .verilog_defs import VerilogDefines
-from .verilog_param import VerilogParameters
-from .reg_pkg import VerilogConstRegPackage
-from .decoder import AddressDecode
-from .ipxact import IpXactWriter
-from .c_test import CTest
-from .c_defines import CDefines
-from .asm_equ import AsmEqu
-from .odt_doc import OdtDoc
-from .rst_doc import RstDoc
+# from .verilog import Verilog, Verilog2001, SystemVerilog
+# from .verilog_defs import VerilogDefines
+# from .verilog_param import VerilogParameters
+# from .reg_pkg import VerilogConstRegPackage
+# from .decoder import AddressDecode
+# from .ipxact import IpXactWriter
+# from .c_test import CTest
+# from .c_defines import CDefines
+# from .asm_equ import AsmEqu
+# from .odt_doc import OdtDoc
+# from .rst_doc import RstDoc
+# from .uvm_reg_block import UVMRegBlockRegisters
 
 for module in MODULES:
     for mpath in IMPORT_PATHS:
@@ -100,7 +101,7 @@ for module in MODULES:
         except AttributeError:
             continue
         except SyntaxError as msg:
-            sys.stdout.write("%s\n" % str(msg))
+            print("Could not import %s (%s)" % (fullpath, str(msg)))
             continue
     else:
-        LOGGER.warning('Could not import the "%s" module', module[0])
+        print('Could not import the "%s" module' % module[0])

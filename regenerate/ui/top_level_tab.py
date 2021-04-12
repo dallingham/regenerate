@@ -22,6 +22,7 @@ from gi.repository import Gtk, Gdk, GObject
 from regenerate.db.block_inst import BlockInst
 from regenerate.ui.instance_list import InstMdl, InstanceList
 from regenerate.ui.enums import InstCol
+from regenerate.ui.param_overrides import OverridesList
 
 
 class TopLevelTab:
@@ -36,6 +37,12 @@ class TopLevelTab:
         self.prj = None
         self.blkinst_model = None
         self.project_modified = modified
+        self.overrides_list = OverridesList(
+            find_obj("prj_subparam_list"), self.overrides_modified
+        )
+
+    def overrides_modified(self):
+        self.project_modified()
 
     def change_project(self, prj):
         self.prj = prj
@@ -43,6 +50,7 @@ class TopLevelTab:
         self.blkinst_list.set_model(self.blkinst_model)
         self.blkinst_list.set_project(self.prj)
         self.build_add_block_menu()
+        self.overrides_list.set_project(self.prj)
 
     def delete_blkinst(self):
         """

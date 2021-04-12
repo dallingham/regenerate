@@ -41,6 +41,7 @@ from .block import Block
 from .block_inst import BlockInst
 from .const import REG_EXT, PRJ_EXT, OLD_PRJ_EXT
 from .containers import Container
+from .overrides import Overrides
 
 
 def nested_dict(depth, dict_type):
@@ -77,6 +78,7 @@ class RegProject:
         self._filelist: List[Path] = []
 
         self._parameters: List[PrjParameterData] = []
+        self.overrides_list: List[Overrides] = []
         self.address_maps: Dict[str, AddressMap] = {}
 
         self.block_insts: List[BlockInst] = []
@@ -606,7 +608,7 @@ class RegProject:
             data[token] = self.__getattribute__(key)
 
         data["filelist"] = [
-            os.path.relpath(fname.with_suffix(REG_EXT), self.path.parent)
+            os.path.relpath(Path(fname).with_suffix(REG_EXT), self.path.parent)
             for fname in self._filelist
         ]
         data["address_maps"] = self.address_maps
@@ -647,9 +649,7 @@ class RegProject:
 
         for path in data["filelist"]:
             full_path = Path(self.path.parent / Path(path)).resolve()
-            self._filelist.append(
-                os.path.relpath(full_path, self.path.parent)
-            )
+            self._filelist.append(os.path.relpath(full_path, self.path.parent))
 
         self.address_maps = {}
         for name, addr_data_json in data["address_maps"].items():

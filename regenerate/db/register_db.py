@@ -26,15 +26,17 @@ import re
 from operator import methodcaller
 from io import BytesIO as StringIO
 from pathlib import Path
-from typing import Union, List
+from typing import Union, List, Optional
 
 from .register import Register
 from .reg_parser import RegParser
 from .reg_parser_json import RegParserJSON
+from .param_resolver import ParameterResolver
 from .signals import Signals
 from .const import OLD_REG_EXT, REG_EXT
 from .export import ExportData
 from .logger import LOGGER
+from .parammap import ParameterData
 
 
 class RegisterDb:
@@ -95,16 +97,17 @@ class RegisterDb:
         """Returns the register keys, which is the address of the register"""
         return iter(sorted(self._registers.values(), key=lambda a: a.address))
 
-    def get_register(self, key):
+    def get_register(self, key: str):
         """
         Returns the register from the specified key, which should be the
         address.
         """
         return self._registers.get(key)
 
-    def add_register(self, reg):
+    def add_register(self, reg: Register):
         """Adds the register to the database."""
         self._registers[reg.uuid] = reg
+        reg.regset_name = self.set_name
         reg.set_parameters(self._parameters)
 
     def delete_register(self, reg):
@@ -118,6 +121,11 @@ class RegisterDb:
         else:
             self.read_json(filename)
 
+    def _setup_parameters(self):
+        resolver = ParameterResolver()
+        for parameter in self._parameters:
+            resolver.add_regset_parameter(self.set_name, parameter)
+
     def read_xml(self, filename: Path):
         """Reads the XML file, loading the databsae."""
 
@@ -126,6 +134,7 @@ class RegisterDb:
             self.set_name = filename.stem
             parser = RegParser(self)
             parser.parse(ifile)
+        self._setup_parameters()
         return self
 
     def read_json(self, filename: Path):
@@ -138,6 +147,7 @@ class RegisterDb:
             self.set_name = filename.stem
             parser = RegParserJSON(self)
             parser.parse(ifile)
+        self._setup_parameters()
         return self
 
     def loads(self, data, filename):
@@ -162,48 +172,48 @@ class RegisterDb:
             LOGGER.error(str(msg))
 
     @property
-    def module_name(self):
+    def module_name(self) -> str:
         """
         Gets _module, which is accessed via the module_name property
         """
         return self._module
 
     @module_name.setter
-    def module_name(self, name):
+    def module_name(self, name: str):
         """
         Sets _module, which is accessed via the module_name property
         """
         self._module = name.replace(" ", "_")
 
     @property
-    def descriptive_title(self):
+    def descriptive_title(self) -> str:
         """
         Gets _title, which is accessed via the descriptive_title property
         """
         return self._title
 
     @descriptive_title.setter
-    def descriptive_title(self, name):
+    def descriptive_title(self, name: str):
         """
         Sets _title, which is accessed via the descriptive_title property
         """
         self._title = name.strip()
 
-    def find_register_by_name(self, name):
+    def find_register_by_name(self, name: str) -> Optional[Register]:
         """Finds a register with the given name, or None if not found"""
         for i in self._registers:
             if self._registers[i].name == name:
                 return self._registers[i]
         return None
 
-    def find_register_by_token(self, name):
+    def find_register_by_token(self, name: str) -> Optional[Register]:
         """Finds a register with the given token name, or None if not found"""
         for i in self._registers:
             if self._registers[i].token == name:
                 return self._registers[i]
         return None
 
-    def find_registers_by_name_regexp(self, name):
+    def find_registers_by_name_regexp(self, name: str):
         """Finds a register with the given name, or None if not found"""
         regexp = re.compile(name)
         return [
@@ -212,7 +222,7 @@ class RegisterDb:
             if regexp.match(self._registers[i].name)
         ]
 
-    def find_registers_by_token_regexp(self, name):
+    def find_registers_by_token_regexp(self, name: str):
         """Finds a register with the given name, or None if not found"""
         regexp = re.compile(name)
         return [
@@ -225,16 +235,15 @@ class RegisterDb:
         """Returns the parameter list"""
         return self._parameters
 
-    def add_parameter(self, parameter):
+    def add_parameter(self, parameter: ParameterData):
         """Adds a parameter to the list"""
-
         self._parameters.append(parameter)
 
-    def remove_parameter(self, name):
+    def remove_parameter(self, name: str):
         """Removes a parameter from the list if it exists"""
         self._parameters = [p for p in self._parameters if p.name != name]
 
-    def set_parameters(self, parameter_list):
+    def set_parameters(self, parameter_list: List[ParameterData]):
         """Sets the parameter list"""
         self._parameters = parameter_list
 
@@ -268,7 +277,12 @@ class RegisterDb:
 
     def json_decode(self, data):
         self._module = data["module"]
-        self._parameters = data["parameters"]
+
+        self._parameters = []
+        for param_data in data["parameters"]:
+            param = ParameterData()
+            param.json_decode(param_data)
+            self._parameters.append(param)
         self._title = data["title"]
 
         ports = Signals()
@@ -288,6 +302,7 @@ class RegisterDb:
         for reg_json in data["register_inst"]:
             reg = Register()
             reg.json_decode(reg_json)
+            reg.regset_name = self.set_name
             self._registers[reg.uuid] = reg
 
         self.exports = []
