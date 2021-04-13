@@ -3358,7 +3358,7 @@
                         <property name="orientation">vertical</property>
                         <property name="layout_style">start</property>
                         <child>
-                          <object class="GtkButton" id="submodule_add">
+                          <object class="GtkButton" id="override_add">
                             <property name="label">gtk-add</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>

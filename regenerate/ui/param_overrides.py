@@ -66,7 +66,7 @@ class OverridesList:
     Container for the Parameter List control logic.
     """
 
-    def __init__(self, obj, callback):
+    def __init__(self, obj, find_obj, callback):
         self._obj = obj
         self._col = None
         self.prj = None
@@ -74,6 +74,7 @@ class OverridesList:
         self._build_instance_table()
         self._obj.set_sensitive(True)
         self._callback = callback
+        find_obj("override_add").connect("clicked", self.add_clicked)
 
     def set_project(self, prj):
         """
@@ -91,15 +92,15 @@ class OverridesList:
         overrides = build_overrides_list(self.prj)
         self._col.update_menu(overrides)
 
-        if self.prj is not None:
-            self._model.clear()
-            for data in build_possible_overrides(self.prj):
-                new_data = (
-                    f"{data[0]}.{data[1]}.{data[2].name}",
-                    f"0x{data[2].value}",
-                    data[2],
-                )
-                self._model.append(row=new_data)
+    #        if self.prj is not None:
+    #            self._model.clear()
+    #            for data in build_possible_overrides(self.prj):
+    #                new_data = (
+    #                    f"{data[0]}.{data[1]}.{data[2].name}",
+    #                    f"0x{data[2].value}",
+    #                    data[2],
+    #                )
+    #                self._model.append(row=new_data)
 
     def remove_clicked(self):
         name = self.get_selected()
@@ -107,28 +108,24 @@ class OverridesList:
         self.remove_selected()
         self._callback()
 
-    def add_clicked(self):
-        current = set({p[0] for p in self.prj.get_parameters()})
+    def add_clicked(self, obj):
+        a = build_overrides_list(self.prj)
+        if a:
+            self._model.new_instance(a[0][0], "0x1", a[0][1])
 
-        name = find_next_free("pParameter", current)
-        self._model.new_instance(name, hex(1))
-        self.prj.add_parameter(name, hex(1))
-        self._callback()
+    #        self._callback()
 
-    def _name_changed(self, _cell, path, new_text, _col):
+    def _name_changed(self, combo, path, node, param):
         """
         Called when the name field is changed.
         """
-        current = set({p[0] for p in self.prj.get_parameters()})
+        print(combo, ":", path, ":", node, ":", param)
 
-        name = self._model[path][PrjParameterCol.NAME]
-        if name != new_text and new_text not in current:
-            self._model[path][PrjParameterCol.NAME] = new_text
-            self.prj.remove_parameter(name)
-            self.prj.add_parameter(
-                new_text, int(self._model[path][PrjParameterCol.VALUE], 16)
-            )
-            self._callback()
+        name = self._model[path][0]
+        new_text = self._col.model.get_value(node, 0)
+        if name != new_text:
+            self._model[path][0] = new_text
+            self._callback(True)
 
     def _blk_changed(self, _cell, path, new_text, _col):
         """

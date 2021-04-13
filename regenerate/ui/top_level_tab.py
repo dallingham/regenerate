@@ -38,7 +38,7 @@ class TopLevelTab:
         self.blkinst_model = None
         self.project_modified = modified
         self.overrides_list = OverridesList(
-            find_obj("prj_subparam_list"), self.overrides_modified
+            find_obj("prj_subparam_list"), find_obj, self.overrides_modified
         )
 
     def overrides_modified(self):
