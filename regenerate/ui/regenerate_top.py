@@ -53,7 +53,6 @@ from regenerate.ui.error_dialogs import ErrorMsg, Question
 from regenerate.ui.help_window import HelpWindow
 from regenerate.ui.module_tab import ProjectTabs
 from regenerate.ui.preferences import Preferences
-from regenerate.ui.prj_param_list import PrjParameterList
 from regenerate.ui.register_tab import RegSetTab
 from regenerate.ui.status_logger import StatusHandler
 from regenerate.ui.top_level_tab import TopLevelTab
@@ -165,10 +164,6 @@ class MainWindow(BaseWindow):
 
         self.addr_map_list = AddrMapList(
             self.find_obj("address_tree"), self.set_project_modified
-        )
-
-        self.prj_parameter_list = PrjParameterList(
-            self.find_obj("prj_param_list"), self.set_parameters_modified
         )
 
     def set_parameters_modified(self):
@@ -323,18 +318,6 @@ class MainWindow(BaseWindow):
                 menu.popup(
                     None, None, None, 1, 0, Gtk.get_current_event_time()
                 )
-
-    def on_add_param_clicked(self, _obj):
-        self.reginst_tab.parameter_list.add_clicked()
-
-    def on_add_prj_param_clicked(self, _obj):
-        self.prj_parameter_list.add_clicked()
-
-    def on_remove_param_clicked(self, _obj):
-        self.reginst_tab.parameter_list.remove_clicked()
-
-    def on_prj_remove_param_clicked(self, _obj):
-        self.prj_parameter_list.remove_clicked()
 
     def on_summary_action_activate(self, _obj):
         """Displays the summary window"""
@@ -597,8 +580,6 @@ class MainWindow(BaseWindow):
         except IOError as msg:
             ErrorMsg(f"Could not open {filename}", str(msg), self.top_window)
             return
-
-        self.prj_parameter_list.set_prj(self.prj)
 
         filepath = Path(filename)
         if filepath.suffix != PRJ_EXT:

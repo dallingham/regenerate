@@ -23,6 +23,7 @@ from regenerate.db.block_inst import BlockInst
 from regenerate.ui.instance_list import InstMdl, InstanceList
 from regenerate.ui.enums import InstCol
 from regenerate.ui.param_overrides import OverridesList
+from regenerate.ui.parameter_list import ParameterList
 
 
 class TopLevelTab:
@@ -40,9 +41,19 @@ class TopLevelTab:
         self.overrides_list = OverridesList(
             find_obj("prj_subparam_list"), find_obj, self.overrides_modified
         )
+        self.parameter_list = find_obj("prj_param_list")
+        self.parameter_list = ParameterList(
+            self.parameter_list,
+            find_obj("top_param_add"),
+            find_obj("top_param_remove"),
+            self.plist_modified,
+        )
+
+    def plist_modified(self):
+        self.project_modified(True)
 
     def overrides_modified(self):
-        self.project_modified()
+        self.project_modified(True)
 
     def change_project(self, prj):
         self.prj = prj
@@ -51,6 +62,7 @@ class TopLevelTab:
         self.blkinst_list.set_project(self.prj)
         self.build_add_block_menu()
         self.overrides_list.set_project(self.prj)
+        self.parameter_list.set_db(self.prj)
 
     def delete_blkinst(self):
         """

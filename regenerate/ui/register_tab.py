@@ -73,6 +73,8 @@ class RegSetWidgets:
         self.summary_button = find_obj("summary_button")
         self.register_notation = find_obj("register_notation")
         self.array_notation = find_obj("array_notation")
+        self.add_regset_param = find_obj("add_regset_param")
+        self.remove_regset_param = find_obj("remove_regset_param")
 
 
 class RegSetStatus:
@@ -230,7 +232,10 @@ class RegSetTab:
         self.module_tabs = ModuleTabs(find_obj, self.set_modified)
 
         self.parameter_list = ParameterList(
-            self.widgets.parameter_list, self.set_parameters_modified
+            self.widgets.parameter_list,
+            self.widgets.add_regset_param,
+            self.widgets.remove_regset_param,
+            self.set_parameters_modified,
         )
 
         self.reglist_obj = RegisterList(

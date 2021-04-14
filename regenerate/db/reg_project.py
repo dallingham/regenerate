@@ -33,7 +33,7 @@ from .proj_reader_json import ProjectReaderJSON
 from .addrmap import AddressMap
 from .textutils import clean_text
 from .logger import LOGGER
-from .parammap import PrjParameterData
+from .parammap import ParameterData
 from .export import ExportData
 from .doc_pages import DocPages
 from .register_db import RegisterDb
@@ -77,7 +77,7 @@ class RegProject:
 
         self._filelist: List[Path] = []
 
-        self._parameters: List[PrjParameterData] = []
+        self._parameters: List[ParameterData] = []
         self.overrides_list: List[Overrides] = []
         self.address_maps: Dict[str, AddressMap] = {}
 
@@ -538,9 +538,8 @@ class RegProject:
         """Returns the parameter list"""
         return self._parameters
 
-    def add_parameter(self, name, value):
+    def add_parameter(self, parameter: ParameterData):
         """Adds a parameter to the parameter list"""
-        parameter = PrjParameterData(name, value)
         self._parameters.append(parameter)
 
     def remove_parameter(self, name: str):
@@ -659,7 +658,12 @@ class RegProject:
 
         self._parameters = []
         for param_json in data["parameters"]:
-            param = PrjParameterData(param_json["name"], param_json["value"])
+            param = ParameterData(
+                param_json["name"],
+                param_json["value"],
+                param_json["min_val"],
+                param_json["max_val"],
+            )
             self._parameters.append(param)
 
         self._group_exports = {}

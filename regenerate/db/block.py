@@ -34,6 +34,7 @@ from .register_db import RegisterDb
 from .doc_pages import DocPages
 from .name_base import NameBase
 from .logger import LOGGER
+from .parammap import ParameterData
 
 
 class Block(NameBase):
@@ -60,6 +61,28 @@ class Block(NameBase):
         self.regsets: Dict[str, RegisterDb] = {}
         self._modified = False
         self._filename = Path("")
+        self._parameters = []
+
+    def _setup_parameters(self):
+        resolver = ParameterResolver()
+        for parameter in self._parameters:
+            resolver.add_regset_parameter(self.set_name, parameter)
+
+    def get_parameters(self):
+        """Returns the parameter list"""
+        return self._parameters
+
+    def add_parameter(self, parameter: ParameterData):
+        """Adds a parameter to the list"""
+        self._parameters.append(parameter)
+
+    def remove_parameter(self, name: str):
+        """Removes a parameter from the list if it exists"""
+        self._parameters = [p for p in self._parameters if p.name != name]
+
+    def set_parameters(self, parameter_list: List[ParameterData]):
+        """Sets the parameter list"""
+        self._parameters = parameter_list
 
     @property
     def modified(self) -> bool:
@@ -139,12 +162,19 @@ class Block(NameBase):
             regset.read_json(filename)
             self.regsets[key] = regset
 
+        self._parameters = []
+        for param_data in data["parameters"]:
+            param = ParameterData()
+            param.json_decode(param_data)
+            self._parameters.append(param)
+
         self.modified = False
 
     def json(self):
         data = {
             "name": self.name,
             "uuid": self.uuid,
+            "parameters": self._parameters,
             "address_size": f"{self.address_size}",
             "doc_pages": self.doc_pages.json(),
             "description": self.description,

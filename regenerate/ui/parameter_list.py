@@ -74,7 +74,7 @@ class ParameterList:
     Container for the Parameter List control logic.
     """
 
-    def __init__(self, obj, callback):
+    def __init__(self, obj, add, remove, callback):
         self._obj = obj
         self._col = None
         self._db = None
@@ -82,6 +82,8 @@ class ParameterList:
         self._build_instance_table()
         self._obj.set_sensitive(True)
         self._callback = callback
+        add.connect("clicked", self.add_clicked)
+        remove.connect("clicked", self.remove_clicked)
 
     def set_db(self, dbase):
         """
@@ -101,14 +103,14 @@ class ParameterList:
         for param in self._db.get_parameters():
             self.append(param.name, param.value, param.min_val, param.max_val)
 
-    def remove_clicked(self):
+    def remove_clicked(self, _obj):
         """Remove the entry"""
         name = self.get_selected()
         self._db.remove_parameter(name)
         self.remove_selected()
         self._callback()
 
-    def add_clicked(self):
+    def add_clicked(self, _obj):
         """Add a new entry, after picking a new name"""
         current = set({p.name for p in self._db.get_parameters()})
         base = "pParameter"
@@ -120,9 +122,7 @@ class ParameterList:
             name = f"{base}{index}"
 
         self._model.new_instance(name, hex(1), hex(0), hex(0xFFFFFFFF))
-        self._db.add_parameter(
-            ParameterData(name, hex(1), hex(0), hex(0xFFFFFFFF))
-        )
+        self._db.add_parameter(ParameterData(name, 1, 0, 0xFFFFFFFF))
         self._callback()
 
     def _name_changed(self, _cell, path, new_text, _col):
@@ -166,7 +166,7 @@ class ParameterList:
                 max_val,
             )
         else:
-            self._model[path][ParameterCol.VALUE] = new_text
+            self._model[path][ParameterCol.VALUE] = int(new_text, 0)
             self._db.remove_parameter(name)
             param = ParameterData(name, value, min_val, max_val)
             self._db.add_parameter(param)
@@ -178,8 +178,8 @@ class ParameterList:
 
         name = self._model[path][ParameterCol.NAME]
         min_val = int(new_text, 16)
-        value = int(self._model[path][ParameterCol.VALUE], 16)
-        max_val = int(self._model[path][ParameterCol.MAX], 16)
+        value = int(self._model[path][ParameterCol.VALUE], 0)
+        max_val = int(self._model[path][ParameterCol.MAX], 0)
 
         if min_val > value:
             LOGGER.warning(
@@ -190,7 +190,7 @@ class ParameterList:
                 value,
             )
         else:
-            self._model[path][ParameterCol.MIN] = new_text
+            self._model[path][ParameterCol.MIN] = hex(int(new_text, 0))
             self._db.remove_parameter(name)
             param = ParameterData(name, value, min_val, max_val)
             self._db.add_parameter(param)
@@ -201,9 +201,9 @@ class ParameterList:
             return
 
         name = self._model[path][ParameterCol.NAME]
-        max_val = int(new_text, 16)
-        min_val = int(self._model[path][ParameterCol.MIN], 16)
-        value = int(self._model[path][ParameterCol.VALUE], 16)
+        max_val = int(new_text, 0)
+        min_val = int(self._model[path][ParameterCol.MIN], 0)
+        value = int(self._model[path][ParameterCol.VALUE], 0)
 
         if max_val < value:
             LOGGER.warning(
@@ -214,7 +214,7 @@ class ParameterList:
                 value,
             )
         else:
-            self._model[path][ParameterCol.MAX] = new_text
+            self._model[path][ParameterCol.MAX] = hex(int(new_text, 0))
             self._db.remove_parameter(name)
             self._db.add_parameter(
                 ParameterData(name, value, min_val, max_val)

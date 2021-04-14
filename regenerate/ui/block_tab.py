@@ -27,6 +27,7 @@ from gi.repository import Gtk, Gdk, GdkPixbuf, Pango
 from regenerate.settings.paths import INSTALL_PATH
 from regenerate.db import RegisterInst, Block, BLK_EXT
 from regenerate.ui.columns import ReadOnlyColumn, EditableColumn
+from regenerate.ui.parameter_list import ParameterList
 from regenerate.ui.base_doc import BaseDoc
 from regenerate.ui.enums import SelectCol
 from regenerate.ui.module_tab import (
@@ -77,6 +78,14 @@ class BlockTab:
             find_obj("remove_block_doc"),
         )
 
+        self.parameter_list = find_obj("block_param_list")
+        self.parameter_list = ParameterList(
+            self.parameter_list,
+            find_obj("block_param_add"),
+            find_obj("block_param_remove"),
+            self.set_parameters_modified,
+        )
+
         find_obj("block_add_block").connect("clicked", self.add_block_clicked)
         find_obj("block_new_block").connect("clicked", self.new_block_clicked)
         find_obj("block_remove_block").connect(
@@ -99,6 +108,7 @@ class BlockTab:
             self.disable_modified = True
             self.select_block(block_name)
             self.disable_modified = False
+            self.parameter_list.set_db(self.block)
 
     def after_modified(self):
         self.modified()
@@ -207,6 +217,12 @@ class BlockTab:
                 menu_item.show()
                 self.reg_menu.append(menu_item)
             self.block_reg_add.set_popup(self.reg_menu)
+
+    def set_parameters_modified(self):
+        ...
+        # self.set_modified()
+        # self.reglist_obj.set_parameters(self.active.get_parameters())
+        # self.bitfield_obj.set_parameters(self.active.get_parameters())
 
     def find_name_inst_name(self, regset):
         names = set({rset.inst for rset in self.block.regset_insts})

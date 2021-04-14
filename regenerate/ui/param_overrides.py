@@ -22,9 +22,8 @@ Provides the Address List interface
 
 from gi.repository import Gtk
 from regenerate.ui.columns import EditableColumn, ComboMapColumn
-from regenerate.ui.enums import PrjParameterCol
 from regenerate.db.parammap import ParameterData
-from regenerate.ui.utils import find_next_free, check_hex
+from regenerate.ui.utils import check_hex
 
 
 class OverridesListMdl(Gtk.ListStore):
@@ -115,12 +114,10 @@ class OverridesList:
 
     #        self._callback()
 
-    def _name_changed(self, combo, path, node, param):
+    def _name_changed(self, _combo, path, node, _param):
         """
         Called when the name field is changed.
         """
-        print(combo, ":", path, ":", node, ":", param)
-
         name = self._model[path][0]
         new_text = self._col.model.get_value(node, 0)
         if name != new_text:
