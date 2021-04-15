@@ -169,10 +169,10 @@ class MainWindow(BaseWindow):
     def set_parameters_modified(self):
         self.set_modified()
         self.reginst_tab.reglist_obj.set_parameters(
-            self.dbase.get_parameters()
+            self.dbase.parameters.get()
         )
         self.reginst_tab.bitfield_obj.set_parameters(
-            self.dbase.get_parameters()
+            self.dbase.parameters.get()
         )
 
     def set_project_modified(self):
@@ -709,10 +709,10 @@ class MainWindow(BaseWindow):
         """Redraws the information in the register list."""
         self.reginst_tab.parameter_list.set_db(self.dbase)
         self.reginst_tab.reglist_obj.set_parameters(
-            self.dbase.get_parameters()
+            self.dbase.parameters.get()
         )
         self.reginst_tab.bitfield_obj.set_parameters(
-            self.dbase.get_parameters()
+            self.dbase.parameters.get()
         )
 
         self.block_tab.redraw()

@@ -61,7 +61,7 @@ class Sdc(ProjectWriter):
                 ):
                     used.add(reginst.set_name)
                     for reg, field in all_fields(dbase):
-                        for i in range(0, reginst.repeat):
+                        for i in range(0, reginst.repeat.resolve()):
                             base = get_signal_info(reg.address, field)[0]
                             for j in range(0, block_inst.repeat):
                                 path = build_format(

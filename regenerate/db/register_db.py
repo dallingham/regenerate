@@ -37,6 +37,7 @@ from .const import OLD_REG_EXT, REG_EXT
 from .export import ExportData
 from .logger import LOGGER
 from .parammap import ParameterData
+from .param_container import ParameterContainer
 
 
 class RegisterDb:
@@ -49,7 +50,7 @@ class RegisterDb:
         self._module = "unnamed_regs"
         self._title = ""
         self._registers = {}
-        self._parameters = []
+        self.parameters = ParameterContainer()
         self.exports: List[ExportData] = []
 
         self.ports = Signals()
@@ -108,7 +109,7 @@ class RegisterDb:
         """Adds the register to the database."""
         self._registers[reg.uuid] = reg
         reg.regset_name = self.set_name
-        reg.set_parameters(self._parameters)
+        reg.set_parameters(self.parameters)
 
     def delete_register(self, reg):
         """Removes the register to the database."""
@@ -121,11 +122,6 @@ class RegisterDb:
         else:
             self.read_json(filename)
 
-    def _setup_parameters(self):
-        resolver = ParameterResolver()
-        for parameter in self._parameters:
-            resolver.add_regset_parameter(self.set_name, parameter)
-
     def read_xml(self, filename: Path):
         """Reads the XML file, loading the databsae."""
 
@@ -134,7 +130,7 @@ class RegisterDb:
             self.set_name = filename.stem
             parser = RegParser(self)
             parser.parse(ifile)
-        self._setup_parameters()
+        self.parameters.setup(self.set_name)
         return self
 
     def read_json(self, filename: Path):
@@ -147,7 +143,7 @@ class RegisterDb:
             self.set_name = filename.stem
             parser = RegParserJSON(self)
             parser.parse(ifile)
-        self._setup_parameters()
+        self.parameters.setup(self.set_name)
         return self
 
     def loads(self, data, filename):
@@ -231,26 +227,10 @@ class RegisterDb:
             if regexp.match(self._registers[i].token)
         ]
 
-    def get_parameters(self):
-        """Returns the parameter list"""
-        return self._parameters
-
-    def add_parameter(self, parameter: ParameterData):
-        """Adds a parameter to the list"""
-        self._parameters.append(parameter)
-
-    def remove_parameter(self, name: str):
-        """Removes a parameter from the list if it exists"""
-        self._parameters = [p for p in self._parameters if p.name != name]
-
-    def set_parameters(self, parameter_list: List[ParameterData]):
-        """Sets the parameter list"""
-        self._parameters = parameter_list
-
     def json(self):
         data = {
             "module": self._module,
-            "parameters": self._parameters,
+            "parameters": self.parameters,
             "title": self._title,
             "ports": self.ports,
             "set_name": self.set_name,
@@ -278,11 +258,8 @@ class RegisterDb:
     def json_decode(self, data):
         self._module = data["module"]
 
-        self._parameters = []
-        for param_data in data["parameters"]:
-            param = ParameterData()
-            param.json_decode(param_data)
-            self._parameters.append(param)
+        self.parameters = ParameterContainer()
+        self.parameters.json_decode(data["parameters"])
         self._title = data["title"]
 
         ports = Signals()

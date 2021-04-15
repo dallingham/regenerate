@@ -19,29 +19,40 @@
 
 from typing import List
 from .parammap import ParameterData
+from .param_resolver import ParameterResolver
 
 
 class ParameterContainer:
     def __init__(self):
         self._parameters: List[ParameterData] = []
 
-    def _setup_parameters(self):
+    def setup(self, set_name):
         resolver = ParameterResolver()
         for parameter in self._parameters:
-            resolver.add_regset_parameter(self.set_name, parameter)
+            resolver.add_regset_parameter(set_name, parameter)
 
-    def get_parameters(self):
+    def get(self):
         """Returns the parameter list"""
         return self._parameters
 
-    def add_parameter(self, parameter: ParameterData):
+    def add(self, parameter: ParameterData):
         """Adds a parameter to the list"""
         self._parameters.append(parameter)
 
-    def remove_parameter(self, name: str):
+    def remove(self, name: str):
         """Removes a parameter from the list if it exists"""
         self._parameters = [p for p in self._parameters if p.name != name]
 
-    def set_parameters(self, parameter_list: List[ParameterData]):
+    def set(self, parameter_list: List[ParameterData]):
         """Sets the parameter list"""
         self._parameters = parameter_list
+
+    def json(self):
+        return [parameter.json() for parameter in self._parameters]
+
+    def json_decode(self, data):
+        self._parameters = []
+        for item_json in data:
+            item = ParameterData()
+            item.json_decode(item_json)
+            self._parameters.append(item)

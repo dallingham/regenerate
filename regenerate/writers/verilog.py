@@ -278,7 +278,7 @@ class Verilog(WriterBase):
         )
 
         parameters = []
-        for para in self._dbase.get_parameters():
+        for para in self._dbase.parameters.get():
             parameters.append((31, 0, para[0], para[1]))
 
         input_signals = build_input_signals(self._dbase, self._cell_info)

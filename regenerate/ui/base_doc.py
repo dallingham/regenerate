@@ -21,6 +21,7 @@
 Handle the module tab
 """
 
+from typing import Dict
 from gi.repository import Gtk, Pango, Gdk
 from regenerate.ui.spell import Spell
 from regenerate.ui.utils import clean_format_if_needed
@@ -48,7 +49,7 @@ class BaseDoc:
         self.add_id = add_btn.connect("clicked", self.add_doc_page)
         self.del_id = del_btn.connect("clicked", self.del_doc_page)
         self.remove_pages()
-        self.name_2_textview = {}
+        self.name_2_textview: Dict[str, PageInfo] = {}
         self.callback = modified
 
     def remove_pages(self):

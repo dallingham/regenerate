@@ -90,7 +90,7 @@ class PrjParameterList:
         """
         if self._prj is not None:
             self._model.clear()
-        for param in self._prj.get_parameters():
+        for param in self._prj.parameters.get():
             self.append(param.name, param.value)
 
     def remove_clicked(self):
@@ -102,7 +102,7 @@ class PrjParameterList:
 
     def add_clicked(self):
         """Add a new parameter, creating an unused name"""
-        current = set({p[0] for p in self._prj.get_parameters()})
+        current = set({p[0] for p in self._prj.parameters.get()})
         name = find_next_free("pParameter", current)
         self._model.new_instance(name, hex(1))
         self._prj.add_parameter(name, hex(1))
@@ -112,7 +112,7 @@ class PrjParameterList:
         """
         Called when the name field is changed.
         """
-        current = set({p[0] for p in self._prj.get_parameters()})
+        current = set({p[0] for p in self._prj.parameters.get()})
 
         name = self._model[path][PrjParameterCol.NAME]
         if name != new_text and new_text not in current:

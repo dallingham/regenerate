@@ -58,7 +58,7 @@ class ProjectWriter:
             if self._prj.get_grouping_list:
                 self._print_groupings(ofile)
 
-            if self._prj.get_parameters():
+            if self._prj.parameters.get():
                 self._print_parameter_list(ofile)
 
             for fname in self._prj.files:
@@ -81,7 +81,7 @@ class ProjectWriter:
             self._prj.modified = True
 
     def _print_parameter_list(self, ofile):
-        plist = self._prj.get_parameters()
+        plist = self._prj.parameters.get()
         if plist:
             ofile.write("  <parameters>\n")
             for (name, value) in plist:

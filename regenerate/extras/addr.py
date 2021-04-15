@@ -70,7 +70,7 @@ def find_addresses(
                         )
                         address_list.append(_reg_addr(register, offset))
             else:
-                for i in range(0, inst.repeat):
+                for i in range(0, inst.repeat.resolve()):
                     if offset_only:
                         offset = (
                             inst.base

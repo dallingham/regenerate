@@ -70,9 +70,7 @@ class ParameterListMdl(Gtk.ListStore):
 
 
 class ParameterList:
-    """
-    Container for the Parameter List control logic.
-    """
+    """Container for the Parameter List control logic."""
 
     def __init__(self, obj, add, remove, callback):
         self._obj = obj
@@ -95,24 +93,24 @@ class ParameterList:
         self.populate()
 
     def populate(self):
-        """
-        Loads the data from the project
-        """
+        """Loads the data from the project"""
+
         if self._db is not None:
             self._model.clear()
-        for param in self._db.get_parameters():
+        for param in self._db.parameters.get():
             self.append(param.name, param.value, param.min_val, param.max_val)
 
     def remove_clicked(self, _obj):
         """Remove the entry"""
+
         name = self.get_selected()
-        self._db.remove_parameter(name)
+        self._db.parameters.remove(name)
         self.remove_selected()
         self._callback()
 
     def add_clicked(self, _obj):
         """Add a new entry, after picking a new name"""
-        current = set({p.name for p in self._db.get_parameters()})
+        current = set({p.name for p in self._db.parameters.get()})
         base = "pParameter"
         index = 0
 
@@ -122,21 +120,19 @@ class ParameterList:
             name = f"{base}{index}"
 
         self._model.new_instance(name, hex(1), hex(0), hex(0xFFFFFFFF))
-        self._db.add_parameter(ParameterData(name, 1, 0, 0xFFFFFFFF))
+        self._db.parameters.add(ParameterData(name, 1, 0, 0xFFFFFFFF))
         self._callback()
 
     def _name_changed(self, _cell, path, new_text, _col):
-        """
-        Called when the name field is changed.
-        """
+        """Called when the name field is changed."""
 
-        current = set({p.name for p in self._db.get_parameters()})
+        current = set({p.name for p in self._db.parameters.get()})
 
         name = self._model[path][ParameterCol.NAME]
         if name != new_text and new_text not in current:
             self._model[path][ParameterCol.NAME] = new_text
-            self._db.remove_parameter(name)
-            self._db.add_parameter(
+            self._db.parameters.remove(name)
+            self._db.parameters.add(
                 ParameterData(
                     new_text,
                     int(self._model[path][ParameterCol.VALUE], 16),
@@ -167,9 +163,9 @@ class ParameterList:
             )
         else:
             self._model[path][ParameterCol.VALUE] = int(new_text, 0)
-            self._db.remove_parameter(name)
+            self._db.parameters.remove(name)
             param = ParameterData(name, value, min_val, max_val)
-            self._db.add_parameter(param)
+            self._db.parameters.add(param)
             self._callback()
 
     def _min_changed(self, _cell, path, new_text, _col):
@@ -191,9 +187,9 @@ class ParameterList:
             )
         else:
             self._model[path][ParameterCol.MIN] = hex(int(new_text, 0))
-            self._db.remove_parameter(name)
+            self._db.parameters.remove(name)
             param = ParameterData(name, value, min_val, max_val)
-            self._db.add_parameter(param)
+            self._db.parameters.add(param)
             self._callback()
 
     def _max_changed(self, _cell, path, new_text, _col):
@@ -215,8 +211,8 @@ class ParameterList:
             )
         else:
             self._model[path][ParameterCol.MAX] = hex(int(new_text, 0))
-            self._db.remove_parameter(name)
-            self._db.add_parameter(
+            self._db.parameters.remove(name)
+            self._db.parameters.add(
                 ParameterData(name, value, min_val, max_val)
             )
             self._callback()
@@ -270,22 +266,19 @@ class ParameterList:
         self._obj.set_model(self._model)
 
     def clear(self):
-        """
-        Clears the data from the list
-        """
+        """Clears the data from the list"""
+
         self._model.clear()
 
     def append(self, name, value, min_val, max_val):
-        """
-        Add the data to the list.
-        """
+        """Add the data to the list."""
+
         obj = ParameterData(name, value, min_val, max_val)
         self._model.append(row=get_row_data(obj))
 
     def get_selected(self):
-        """
-        Removes the selected node from the list
-        """
+        """Removes the selected node from the list"""
+
         (model, node) = self._obj.get_selection().get_selected()
         if node is None:
             return None
@@ -295,9 +288,8 @@ class ParameterList:
         return model.get_value(node, ParameterCol.NAME)
 
     def remove_selected(self):
-        """
-        Removes the selected node from the list
-        """
+        """Removes the selected node from the list"""
+
         select_data = self._obj.get_selection().get_selected()
         if select_data is None or select_data[1] is None:
             return
@@ -315,6 +307,7 @@ class ParameterList:
 
 def get_row_data(map_obj):
     """Return row data from the object"""
+
     return (
         map_obj.name,
         f"0x{map_obj.value:x}",

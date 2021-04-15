@@ -117,7 +117,7 @@ class RegWriter:
     def write_parameter_list(self, ofile):
         """Writes the parameter list"""
 
-        plist = self.dbase.get_parameters()
+        plist = self.dbase.parameters.get()
         if plist:
             ofile.write("  <parameters>\n")
             for (name, value, min_val, max_val) in plist:

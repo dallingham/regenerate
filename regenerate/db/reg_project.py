@@ -42,6 +42,7 @@ from .block_inst import BlockInst
 from .const import REG_EXT, PRJ_EXT, OLD_PRJ_EXT
 from .containers import Container
 from .overrides import Overrides
+from .param_container import ParameterContainer
 
 
 def nested_dict(depth, dict_type):
@@ -77,7 +78,7 @@ class RegProject:
 
         self._filelist: List[Path] = []
 
-        self._parameters: List[ParameterData] = []
+        self.parameters = ParameterContainer()
         self.overrides_list: List[Overrides] = []
         self.address_maps: Dict[str, AddressMap] = {}
 
@@ -534,24 +535,6 @@ class RegProject:
                         ginst.inst = cur
         self._modified = True
 
-    def get_parameters(self):
-        """Returns the parameter list"""
-        return self._parameters
-
-    def add_parameter(self, parameter: ParameterData):
-        """Adds a parameter to the parameter list"""
-        self._parameters.append(parameter)
-
-    def remove_parameter(self, name: str):
-        """Removes a parameter from the parameter list"""
-        self._parameters = [
-            param for param in self._parameters if param.name != name
-        ]
-
-    def set_parameters(self, parameter_list):
-        """Sets the parameter list"""
-        self._parameters = parameter_list
-
     def change_file_suffix(self, original: str, new: str):
         """Changes the suffix of the files in the file list"""
 
@@ -593,7 +576,7 @@ class RegProject:
             "doc_pages",
             "company_name",
             "access_map",
-            "_parameters",
+            "parameters",
             "block_insts",
             "_group_exports",
         )
@@ -656,16 +639,6 @@ class RegProject:
             addr_data.json_decode(addr_data_json)
             self.address_maps[name] = addr_data
 
-        self._parameters = []
-        for param_json in data["parameters"]:
-            param = ParameterData(
-                param_json["name"],
-                param_json["value"],
-                param_json["min_val"],
-                param_json["max_val"],
-            )
-            self._parameters.append(param)
-
         self._group_exports = {}
         for key in data["group_exports"]:
             self._group_exports[key] = []
@@ -699,3 +672,6 @@ class RegProject:
             blk_data = Block()
             blk_data.open(path)
             self.blocks[key] = blk_data
+
+        self.parameters = ParameterContainer()
+        self.parameters.json_decode(data["parameters"])

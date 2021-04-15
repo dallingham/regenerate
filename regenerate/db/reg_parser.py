@@ -161,10 +161,10 @@ class RegParser:
     def end_parameters(self, _attrs):
         """Called at the end of the parameter statement"""
 
-        current_params = set({n.name for n in self.__db.get_parameters()})
+        current_params = set({n.name for n in self.__db.parameters.get()})
         for name in self.found_parameters:
             if name not in current_params:
-                self.__db.add_parameter(ParameterData(name, "1", "0", "4096"))
+                self.__db.parameters.add(ParameterData(name, "1", "0", "4096"))
 
     def start_base(self, attrs):
         """

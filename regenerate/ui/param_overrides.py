@@ -128,7 +128,7 @@ class OverridesList:
         """
         Called when the name field is changed.
         """
-        current = set({p[0] for p in self.prj.get_parameters()})
+        current = set({p[0] for p in self.prj.parameters.get()})
 
         name = self._model[path][PrjParameterCol.BLK]
         if name != new_text and new_text not in current:
@@ -143,7 +143,7 @@ class OverridesList:
         """
         Called when the name field is changed.
         """
-        current = set({p[0] for p in self.prj.get_parameters()})
+        current = set({p[0] for p in self.prj.parameters.get()})
 
         name = self._model[path][PrjParameterCol.REG]
         if name != new_text and new_text not in current:
@@ -249,7 +249,7 @@ def build_possible_overrides(project):
             reginst_name = reginst.inst
             regset_name = reginst.set_name
             regset = project.regsets[regset_name]
-            for param in regset.get_parameters():
+            for param in regset.parameters.get():
                 param_list.append((blkinst_name, reginst_name, param))
     return param_list
 
@@ -263,7 +263,7 @@ def build_overrides_list(project):
             reginst_name = reginst.inst
             regset_name = reginst.set_name
             regset = project.regsets[regset_name]
-            for param in regset.get_parameters():
+            for param in regset.parameters.get():
                 param_list.append(
                     (f"{blkinst_name}.{reginst_name}.{param.name}", param)
                 )

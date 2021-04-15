@@ -272,8 +272,8 @@ class RegSetTab:
 
     def set_parameters_modified(self):
         self.set_modified()
-        self.reglist_obj.set_parameters(self.active.get_parameters())
-        self.bitfield_obj.set_parameters(self.active.get_parameters())
+        self.reglist_obj.set_parameters(self.active.parameters.get())
+        self.bitfield_obj.set_parameters(self.active.parameters.get())
 
     def set_modified(self):
         if not self.skip_changes:
@@ -356,8 +356,8 @@ class RegSetTab:
         if self.active:
             self.module_tabs.change_db(self.active)
             self.parameter_list.set_db(self.active)
-            self.reglist_obj.set_parameters(self.active.get_parameters())
-            self.bitfield_obj.set_parameters(self.active.get_parameters())
+            self.reglist_obj.set_parameters(self.active.parameters.get())
+            self.bitfield_obj.set_parameters(self.active.parameters.get())
             if self.active.array_is_reg:
                 self.widgets.register_notation.set_active(True)
             else:
