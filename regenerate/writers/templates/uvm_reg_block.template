@@ -575,14 +575,18 @@ package {{project.short_name|lower}}_reg_pkg;
            {{group.name|lower}}[i].configure(this);
     {% endif %}
     {% for set in group_maps[group] %}
+        {% if used_maps|length > 1 %}
            {{group.name|lower}}[i].disable_{{set}}_map = disable_{{set}}_map;
+	{% endif %}
     {% endfor %}
            {{group.name|lower}}[i].build();
 
     {% for set in group_maps[group] %}
+        {% if used_maps|length > 1 %}
            if (!disable_{{set}}_map) {{set}}_map.add_submap({{group.name|lower}}[i].{{set}}_map, 'h{{"%x" | format(group.base)}} + (i * 'h{{"%x" | format(group.repeat_offset)}}));
         {% else %}
            {{set}}_map.add_submap({{group.name|lower}}[i].{{set}}_map, 'h{{"%x" | format(group.base)}} + (i * 'h{{"%x" | format(group.repeat_offset)}}));
+	{% endif %}
     {% endfor %}
         end
 

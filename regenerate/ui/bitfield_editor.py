@@ -69,7 +69,6 @@ class BitFieldEditor(BaseWindow):
         self._builder.add_from_file(GLADE_BIT)
         self._top_builder = top_builder
         self._control_obj = self._builder.get_object("control")
-        self._register_obj = self._builder.get_object("name")
         self._output_obj = self._builder.get_object("output")
         self._output_enable_obj = self._builder.get_object("outen")
         self._input_obj = self._builder.get_object("input")
@@ -144,9 +143,6 @@ class BitFieldEditor(BaseWindow):
 
     def _initialize_from_data(self, bit_field):
         """Initializes the dialog's data fields from the object"""
-
-        self._register_obj.set_text(f"<b>{self._register.name}</b>")
-        self._register_obj.set_use_markup(True)
 
         self._set_text("field_name", bit_field.full_field_name())
         self._set_text("type", TYPE_TO_DESCR[bit_field.field_type])
