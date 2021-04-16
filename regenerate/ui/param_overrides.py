@@ -21,9 +21,10 @@ Provides the Address List interface
 """
 
 from gi.repository import Gtk
-from regenerate.ui.columns import EditableColumn, ComboMapColumn
+from regenerate.ui.columns import ReadOnlyColumn, EditableColumn
 from regenerate.db.parammap import ParameterData
 from regenerate.ui.utils import check_hex
+from regenerate.ui.enums import ParameterCol
 
 
 class OverridesListMdl(Gtk.ListStore):
@@ -65,15 +66,18 @@ class OverridesList:
     Container for the Parameter List control logic.
     """
 
-    def __init__(self, obj, find_obj, callback):
+    def __init__(self, obj, add, remove, callback):
         self._obj = obj
         self._col = None
         self.prj = None
+        self.add = add
+        self.remove = remove
         self._model = None
-        self._build_instance_table()
+
+        self._build_table()
         self._obj.set_sensitive(True)
         self._callback = callback
-        find_obj("override_add").connect("clicked", self.add_clicked)
+        self.remove.connect("clicked", self.remove_clicked)
 
     def set_project(self, prj):
         """
@@ -88,91 +92,48 @@ class OverridesList:
         """
         Loads the data from the project
         """
-        overrides = build_overrides_list(self.prj)
-        self._col.update_menu(overrides)
+        self.set_menu()
 
-    #        if self.prj is not None:
-    #            self._model.clear()
-    #            for data in build_possible_overrides(self.prj):
-    #                new_data = (
-    #                    f"{data[0]}.{data[1]}.{data[2].name}",
-    #                    f"0x{data[2].value}",
-    #                    data[2],
-    #                )
-    #                self._model.append(row=new_data)
+    def set_menu(self):
+        self.menu = Gtk.Menu()
+        for override in self.build_overrides_list(self.prj):
+            menu_item = Gtk.MenuItem(override[0])
+            menu_item.connect("activate", self.menu_selected, override)
+            menu_item.show()
+            self.menu.append(menu_item)
+        self.add.set_popup(self.menu)
 
-    def remove_clicked(self):
+    def remove_clicked(self, _obj):
         name = self.get_selected()
-        self.prj.remove_parameter(name)
+        self.prj.parameters.remove(name)
         self.remove_selected()
         self._callback()
 
-    def add_clicked(self, obj):
-        a = build_overrides_list(self.prj)
-        if a:
-            self._model.new_instance(a[0][0], "0x1", a[0][1])
-
-    #        self._callback()
-
-    def _name_changed(self, _combo, path, node, _param):
-        """
-        Called when the name field is changed.
-        """
-        name = self._model[path][0]
-        new_text = self._col.model.get_value(node, 0)
-        if name != new_text:
-            self._model[path][0] = new_text
-            self._callback(True)
-
-    def _blk_changed(self, _cell, path, new_text, _col):
-        """
-        Called when the name field is changed.
-        """
-        current = set({p[0] for p in self.prj.parameters.get()})
-
-        name = self._model[path][PrjParameterCol.BLK]
-        if name != new_text and new_text not in current:
-            self._model[path][PrjParameterCol.BLK] = new_text
-            self.prj.remove_parameter(name)
-            self.prj.add_parameter(
-                new_text, int(self._model[path][PrjParameterCol.VALUE], 16)
-            )
-            self._callback()
-
-    def _reg_changed(self, _cell, path, new_text, _col):
-        """
-        Called when the name field is changed.
-        """
-        current = set({p[0] for p in self.prj.parameters.get()})
-
-        name = self._model[path][PrjParameterCol.REG]
-        if name != new_text and new_text not in current:
-            self._model[path][PrjParameterCol.REG] = new_text
-            self.prj.remove_parameter(name)
-            self.prj.add_parameter(
-                new_text, int(self._model[path][PrjParameterCol.VALUE], 16)
-            )
-            self._callback()
+    def menu_selected(self, _obj, data):
+        label, info = data
+        self._model.new_instance(label, hex(info[1].value), info)
+        self._callback()
 
     def _value_changed(self, _cell, path, new_text, _col):
         """Called when the base address field is changed."""
         if check_hex(new_text) is False:
             return
 
-        name = self._model[path][PrjParameterCol.NAME]
+        name = self._model[path][ParameterCol.NAME]
         value = int(new_text, 16)
 
-        self._model[path][PrjParameterCol.VALUE] = new_text
-        self.prj.remove_parameter(name)
+        self._model[path][ParameterCol.VALUE] = new_text
+        self.prj.parameters.remove(name)
         self.prj.add_parameter(name, value)
         self._callback()
 
-    def _build_instance_table(self):
+    def _build_table(self):
         """
         Builds the columns, adding them to the address map list.
         """
-        self.column = ComboMapColumn(
-            "Parameter", self._name_changed, [], 0, dtype=object
+        self.column = ReadOnlyColumn(
+            "Parameter",
+            0,
         )
         self.column.set_min_width(300)
         self.column.set_sort_column_id(0)
@@ -215,7 +176,7 @@ class OverridesList:
 
         if len(model.get_path(node)) > 1:
             return None
-        return model.get_value(node, PrjParameterCol.NAME)
+        return model.get_value(node, ParameterCol.NAME)
 
     def remove_selected(self):
         """
@@ -231,40 +192,33 @@ class OverridesList:
             # remove group from address map
             pass
         else:
-            _ = model.get_value(node, PrjParameterCol.NAME)
+            _ = model.get_value(node, ParameterCol.NAME)
             model.remove(node)
             self._callback()
+
+    def build_overrides_list(self, project):
+        param_list = []
+        for blkinst in project.block_insts:
+            blkinst_name = blkinst.inst_name
+            block = project.blocks[blkinst.block]
+            for param in block.parameters.get():
+                param_list.append(
+                    (f"{blkinst_name}.{param.name}", (blkinst, param))
+                )
+        return param_list
+
+
+class BlockOverridesList(OverridesList):
+    def build_overrides_list(self, block):
+        param_list = []
+        for reginst in block.regset_insts:
+            regset = block.regsets[reginst.set_name]
+            for param in regset.parameters.get():
+                param_list.append(
+                    (f"{reginst.inst}.{param.name}", (reginst.inst, param))
+                )
+        return param_list
 
 
 def get_row_data(map_obj):
     return (map_obj.name, hex(int(map_obj.value)), map_obj)
-
-
-def build_possible_overrides(project):
-    param_list = []
-    for blkinst in project.block_insts:
-        blkinst_name = blkinst.inst_name
-        block = project.blocks[blkinst.block]
-        for reginst in block.regset_insts:
-            reginst_name = reginst.inst
-            regset_name = reginst.set_name
-            regset = project.regsets[regset_name]
-            for param in regset.parameters.get():
-                param_list.append((blkinst_name, reginst_name, param))
-    return param_list
-
-
-def build_overrides_list(project):
-    param_list = []
-    for blkinst in project.block_insts:
-        blkinst_name = blkinst.inst_name
-        block = project.blocks[blkinst.block]
-        for reginst in block.regset_insts:
-            reginst_name = reginst.inst
-            regset_name = reginst.set_name
-            regset = project.regsets[regset_name]
-            for param in regset.parameters.get():
-                param_list.append(
-                    (f"{blkinst_name}.{reginst_name}.{param.name}", param)
-                )
-    return param_list

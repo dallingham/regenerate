@@ -39,7 +39,10 @@ class TopLevelTab:
         self.blkinst_model = None
         self.project_modified = modified
         self.overrides_list = OverridesList(
-            find_obj("prj_subparam_list"), find_obj, self.overrides_modified
+            find_obj("prj_subparam_list"),
+            find_obj("override_add"),
+            find_obj("override_remove"),
+            self.overrides_modified,
         )
         self.parameter_list = find_obj("prj_param_list")
         self.parameter_list = ParameterList(

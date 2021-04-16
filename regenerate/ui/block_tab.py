@@ -29,6 +29,7 @@ from regenerate.db import RegisterInst, Block, BLK_EXT
 from regenerate.ui.columns import ReadOnlyColumn, EditableColumn
 from regenerate.ui.parameter_list import ParameterList
 from regenerate.ui.base_doc import BaseDoc
+from regenerate.ui.param_overrides import BlockOverridesList
 from regenerate.ui.enums import SelectCol
 from regenerate.ui.module_tab import (
     ModuleText,
@@ -78,6 +79,13 @@ class BlockTab:
             find_obj("remove_block_doc"),
         )
 
+        self.overrides_list = BlockOverridesList(
+            find_obj("block_override_list"),
+            find_obj("block_override_add"),
+            find_obj("block_override_remove"),
+            self.overrides_modified,
+        )
+
         self.parameter_list = find_obj("block_param_list")
         self.parameter_list = ParameterList(
             self.parameter_list,
@@ -100,6 +108,9 @@ class BlockTab:
 
     def clear_flags(self):
         self.block_model.update()
+
+    def overrides_modified(self):
+        self.modified()
 
     def block_selection_changed(self, obj):
         model, node = obj.get_selected()
@@ -282,6 +293,7 @@ class BlockTab:
         self.regmodel = Gtk.ListStore(str, str, str, str, str)
         self.block_regsets.set_model(self.regmodel)
         self.preview.change_block(self.block)
+        self.overrides_list.set_project(self.block)
 
         for regset in self.block.regset_insts:
             self.regmodel.append(
