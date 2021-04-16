@@ -281,10 +281,10 @@ class AddrMapList:
             # remove group from address map
             pass
         else:
-            _ = model.get_value(node, AddrCol.NAME)
+            name = model.get_value(node, AddrCol.NAME)
             model.remove(node)
             self._callback()
-            # self._prj.remove_address_map(name)
+            self._prj.remove_address_map(name)
 
     def add_new_map(self):
         """
