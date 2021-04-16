@@ -2817,12 +2817,42 @@
                             <property name="orientation">vertical</property>
                             <property name="layout_style">start</property>
                             <child>
-                              <object class="GtkButton" id="block_override_add">
-                                <property name="label">gtk-add</property>
+                              <object class="GtkMenuButton" id="block_override_add">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
+                                <property name="focus_on_click">False</property>
                                 <property name="receives_default">True</property>
-                                <property name="use_stock">True</property>
+                                <property name="use_popover">False</property>
+                                <child>
+                                  <object class="GtkBox">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <child>
+                                      <object class="GtkLabel">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
+                                        <property name="label" translatable="yes">Add</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">True</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkImage">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
+                                        <property name="icon_name">pan-down-symbolic</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
+                                  </object>
+                                </child>
                               </object>
                               <packing>
                                 <property name="expand">True</property>
@@ -2872,7 +2902,7 @@
                             <property name="vexpand">True</property>
                             <property name="shadow_type">in</property>
                             <child>
-                              <object class="GtkTreeView" id="blk_subparam_list">
+                              <object class="GtkTreeView" id="block_override_list">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="hexpand">True</property>
@@ -3544,12 +3574,19 @@
                         <property name="orientation">vertical</property>
                         <property name="layout_style">start</property>
                         <child>
-                          <object class="GtkButton" id="override_add">
-                            <property name="label">gtk-add</property>
+                          <object class="GtkMenuButton" id="override_add">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
+                            <property name="focus_on_click">False</property>
                             <property name="receives_default">True</property>
-                            <property name="use_stock">True</property>
+                            <property name="use_popover">False</property>
+                            <child>
+                              <object class="GtkLabel">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">Add</property>
+                              </object>
+                            </child>
                           </object>
                           <packing>
                             <property name="expand">True</property>
