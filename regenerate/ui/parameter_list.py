@@ -80,8 +80,17 @@ class ParameterList:
         self._build_instance_table()
         self._obj.set_sensitive(True)
         self._callback = callback
+        self.remove = remove
         add.connect("clicked", self.add_clicked)
         remove.connect("clicked", self.remove_clicked)
+        obj.get_selection().connect("changed", self.selection_changed)
+
+    def selection_changed(self, obj):
+        _, node = obj.get_selected()
+        if node:
+            self.remove.set_sensitive(True)
+        else:
+            self.remove.set_sensitive(False)
 
     def set_db(self, dbase):
         """
@@ -99,6 +108,7 @@ class ParameterList:
             self._model.clear()
         for param in self._db.parameters.get():
             self.append(param.name, param.value, param.min_val, param.max_val)
+        self.remove.set_sensitive(False)
 
     def remove_clicked(self, _obj):
         """Remove the entry"""
@@ -142,6 +152,8 @@ class ParameterList:
             )
             self._callback()
 
+        self.update_db(name, new_text)
+
     def _value_changed(self, _cell, path, new_text, _col):
         """Called when the base address field is changed."""
         if check_hex(new_text) is False:
@@ -162,7 +174,7 @@ class ParameterList:
                 max_val,
             )
         else:
-            self._model[path][ParameterCol.VALUE] = int(new_text, 0)
+            self._model[path][ParameterCol.VALUE] = f"0x{value:x}"
             self._db.parameters.remove(name)
             param = ParameterData(name, value, min_val, max_val)
             self._db.parameters.add(param)
@@ -236,7 +248,6 @@ class ParameterList:
             True,
             tooltip="Default value of the parameter if it is not overridden",
         )
-        column.set_sort_column_id(ParameterCol.VALUE)
         column.set_min_width(150)
         self._obj.append_column(column)
 
@@ -247,7 +258,6 @@ class ParameterList:
             True,
             tooltip="Minimum value of the parameter",
         )
-        column.set_sort_column_id(ParameterCol.VALUE)
         column.set_min_width(150)
         self._obj.append_column(column)
 
@@ -258,7 +268,6 @@ class ParameterList:
             True,
             tooltip="Maximum value of the parameter",
         )
-        column.set_sort_column_id(ParameterCol.VALUE)
         column.set_min_width(150)
         self._obj.append_column(column)
 
@@ -303,6 +312,16 @@ class ParameterList:
             _ = model.get_value(node, ParameterCol.NAME)
             model.remove(node)
             self._callback()
+
+    def update_db(name, new_text):
+        for reg in self.db.get_all_registers():
+            if reg.dimension_is_param():
+                if reg.dimension_str() == name:
+                    reg.dimension = new_text
+            for field in reg.get_bit_fields():
+                if field.reset_type == ResetType.PARAMETER:
+                    if name == field.reset_parameter:
+                        field.reset_parameter = new_text
 
 
 def get_row_data(map_obj):

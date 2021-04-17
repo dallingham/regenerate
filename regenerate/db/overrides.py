@@ -18,11 +18,11 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 from .parammap import ParameterData
+from .json_base import JSONEncodable
 
 
-class Overrides:
+class Overrides(JSONEncodable):
     def __init__(self):
-        self.blkinst: str = ""
-        self.reginst: str = ""
+        self.path: str = ""
         self.parameter: ParameterData = ParameterData()
         self.value: int = 0

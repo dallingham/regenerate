@@ -33,11 +33,6 @@ from regenerate.ui.columns import (
 from regenerate.ui.enums import BitCol
 
 #
-# Regular expression for detection of valid bit ranges
-#
-VALID_BITS = re.compile(r"""^\s*[\(\[]?(\d+)(\s*[-:]\s*(\d+))?[\)\]]?\s*$""")
-
-#
 # Types conversions
 #
 TYPE2STR = [(t.description, t.type) for t in sorted(TYPES)]
@@ -62,8 +57,6 @@ class BitModel(Gtk.ListStore):
     ListView to provide the data for the bitfields.
     """
 
-    RESET2STR = ("Constant", "Input Port", "Parameter")
-
     def __init__(self):
         """
         Initialize the base class with the object types that we are going to
@@ -77,11 +70,11 @@ class BitModel(Gtk.ListStore):
         node = self.append(
             row=[
                 None,
-                bits(field),
+                str(field.msb),
+                str(field.lsb),
                 field.name,
                 TYPE2STR[field.field_type][0],
                 get_field_reset_data(field),
-                self.RESET2STR[field.reset_type],
                 field.lsb,
                 field,
             ]
@@ -105,16 +98,14 @@ class BitList:
     # Title, Size, Sort, Expand, Monospace
     BIT_COLS = (
         ("", 20, -1, False, False),
-        ("Bits", 100, BitCol.SORT, False, True),
+        ("MSB", 90, -1, False, True),
+        ("LSB", 90, BitCol.SORT, False, True),
         ("Name", 60, BitCol.NAME, True, True),
         ("Type", 300, -1, True, False),
         ("Reset", 160, -1, False, True),
-        ("Reset Type", 105, -1, False, False),
     )
 
-    def __init__(
-        self, obj, selection_changed, modified
-    ):
+    def __init__(self, obj, selection_changed, modified):
         """
         Creates the object, connecting it to the ListView (obj). Three
         callbacks are associated with the object.
@@ -126,8 +117,6 @@ class BitList:
         self.__col = None
         self.__model = None
         self.__modified = modified
-#        self.__infobar = infobar
-#        self.__infobar_label = infobar_label
         self.__build_bitfield_columns()
         self.__obj.get_selection().connect(
             "changed", self.my_selection_changed
@@ -166,8 +155,6 @@ class BitList:
                     i,
                 )
                 self.type_column = column
-            elif i == BitCol.RESET_TYPE:
-                column = ReadOnlyColumn(col[BIT_TITLE], i, col[BIT_MONO])
             elif i == BitCol.ICON:
                 column = Gtk.TreeViewColumn(
                     "", Gtk.CellRendererPixbuf(), stock_id=i
@@ -185,9 +172,13 @@ class BitList:
                 column = EditableColumn(
                     col[BIT_TITLE], self.field_name_edit, i, col[BIT_MONO]
                 )
-            elif i == BitCol.BIT:
+            elif i == BitCol.MSB:
                 column = EditableColumn(
-                    col[BIT_TITLE], self.update_bits, i, col[BIT_MONO]
+                    col[BIT_TITLE], self.update_msb, i, col[BIT_MONO]
+                )
+            elif i == BitCol.LSB:
+                column = EditableColumn(
+                    col[BIT_TITLE], self.update_lsb, i, col[BIT_MONO]
                 )
                 self.__col = column
 
@@ -261,13 +252,11 @@ class BitList:
             field.reset_value = int(new_val, 0)
             field.reset_type = ResetType.NUMERIC
             self.__model[path][col] = reset_value(field)
-            self.__model[path][BitCol.RESET_TYPE] = "Constant"
             self.__modified()
         elif re.match(r"""^[A-Za-z]\w*$""", new_val):
             field.reset_input = new_val
             field.reset_type = ResetType.INPUT
             self.__model[path][BitCol.RESET] = new_val
-            self.__model[path][BitCol.RESET_TYPE] = "Input Port"
             self.__modified()
         else:
             self.show_msg(
@@ -276,12 +265,11 @@ class BitList:
 
     def reset_menu_edit(self, cell, path, node, _col):
         model = cell.get_property("model")
-        new_val = model.get_value(node, 0)
         field = self.__model.get_bitfield_at_path(path)
-        field.reset_parameter = new_val
         field.reset_type = ResetType.PARAMETER
+        new_val = model.get_value(node, 0)
+        field.reset_parameter = new_val
         self.__model[path][BitCol.RESET] = new_val
-        self.__model[path][BitCol.RESET_TYPE] = "Parameter"
         self.__modified()
 
     def field_type_edit(self, cell, path, node, col):
@@ -291,8 +279,8 @@ class BitList:
         and the path tells us the row. So [path][col] is the index into the
         table.
         """
-        field = self.__model.get_bitfield_at_path(path)
         model = cell.get_property("model")
+        field = self.__model.get_bitfield_at_path(path)
         self.__model[path][col] = model.get_value(node, 0)
         self.update_type_info(field, model, path, node)
         self.__modified()
@@ -318,7 +306,7 @@ class BitList:
                 field.name,
             )
 
-    def update_bits(self, _cell, path, new_text, _col):
+    def update_msb(self, _cell, path, new_text, _col):
         """
         Called when the bits column of the BitList is edited. If the new text
         does not match a valid bit combination (determined by the VALID_BITS
@@ -329,34 +317,51 @@ class BitList:
         """
 
         field = self.__model.get_bitfield_at_path(path)
-        match = VALID_BITS.match(new_text)
-        if match:
-            groups = match.groups()
-            stop = int(groups[0])
+        try:
+            stop = int(new_text, 0)
+        except ValueError:
+            return
 
-            start = stop
-            if groups[2]:
-                start = int(groups[2])
+        if self.check_for_overlaps(field, field.lsb, stop) is False:
+            return
 
-            if self.check_for_overlaps(field, start, stop) is False:
-                return
+        if self.check_for_width(field.lsb, stop) is False:
+            return
 
-            if self.check_for_width(start, stop) is False:
-                return
+        if stop != field.msb:
+            field.msb = stop
+            self.__model.register.change_bit_field(field)
+            self.__modified()
 
-            if stop != field.msb or start != field.lsb:
-                field.msb, field.lsb = stop, start
-                self.__model.register.change_bit_field(field)
-                self.__modified()
+        self.__model[path][BitCol.MSB] = f"{field.msb}"
 
-            self.__model[path][BitCol.BIT] = bits(field)
-            self.__model[path][BitCol.SORT] = field.start_position
-        else:
-            self.show_msg(
-                f'"{new_text}" is not a valid bit range. '
-                "It should be a single integer or two integers "
-                "separated by a colon."
-            )
+    def update_lsb(self, _cell, path, new_text, _col):
+        """
+        Called when the bits column of the BitList is edited. If the new text
+        does not match a valid bit combination (determined by the VALID_BITS
+        regular expression, then we do not modifiy the ListStore, which
+        prevents the display from being altered. If it does match, we extract
+        the start or start and stop positions, and alter the model and the
+        corresponding field.
+        """
+
+        field = self.__model.get_bitfield_at_path(path)
+        start = int(new_text, 0)
+
+        if self.check_for_overlaps(field, start, field.msb) is False:
+            return
+
+        if self.check_for_width(start, field.msb) is False:
+            return
+
+        if start != field.lsb:
+            field.lsb = start
+            self.__model.register.change_bit_field(field)
+            self.__modified()
+
+        self.__model[path][BitCol.LSB] = str(field.lsb)
+        self.__model[path][BitCol.MSB] = str(field.msb)
+        self.__model[path][BitCol.SORT] = field.start_position
 
     def show_msg(self, text):
         LOGGER.warning(text)
@@ -399,14 +404,6 @@ class BitList:
                 )
                 return False
         return True
-
-
-def bits(field):
-    "Returns a text representation of the bit field range"
-
-    if field.lsb == field.msb:
-        return f"{field.lsb}"
-    return f"{field.msb}:{field.lsb}"
 
 
 def reset_value(field):

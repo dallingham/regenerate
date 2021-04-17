@@ -21,10 +21,11 @@ Provides the Address List interface
 """
 
 from gi.repository import Gtk
-from regenerate.ui.columns import ReadOnlyColumn, EditableColumn
 from regenerate.db.parammap import ParameterData
+from regenerate.db.overrides import Overrides
+from regenerate.ui.columns import ReadOnlyColumn, EditableColumn
 from regenerate.ui.utils import check_hex
-from regenerate.ui.enums import ParameterCol
+from regenerate.ui.enums import ParameterCol, OverrideCol
 
 
 class OverridesListMdl(Gtk.ListStore):
@@ -78,6 +79,14 @@ class OverridesList:
         self._obj.set_sensitive(True)
         self._callback = callback
         self.remove.connect("clicked", self.remove_clicked)
+        self._obj.get_selection().connect("changed", self.selection_changed)
+
+    def selection_changed(self, obj):
+        _, node = obj.get_selected()
+        if node:
+            self.remove.set_sensitive(True)
+        else:
+            self.remove.set_sensitive(False)
 
     def set_project(self, prj):
         """
@@ -93,15 +102,32 @@ class OverridesList:
         Loads the data from the project
         """
         self.set_menu()
+        for override in self.prj.overrides:
+            self._model.append_instance(override)
 
     def set_menu(self):
+        count = False
         self.menu = Gtk.Menu()
         for override in self.build_overrides_list(self.prj):
+            count = True
             menu_item = Gtk.MenuItem(override[0])
             menu_item.connect("activate", self.menu_selected, override)
             menu_item.show()
             self.menu.append(menu_item)
-        self.add.set_popup(self.menu)
+
+        self.add.set_sensitive(count)
+        self.remove.set_sensitive(count)
+        if count:
+            self.add.set_popup(self.menu)
+            self._obj.set_tooltip_text(None)
+        else:
+            self._obj.set_tooltip_text(
+                "There are no lower level parameters that can be overridden"
+            )
+        if self._model.iter_children():
+            self.remove.set_sensitive(True)
+        else:
+            self.remove.set_sensitive(False)
 
     def remove_clicked(self, _obj):
         name = self.get_selected()
@@ -112,6 +138,11 @@ class OverridesList:
     def menu_selected(self, _obj, data):
         label, info = data
         self._model.new_instance(label, hex(info[1].value), info)
+        override = Overrides()
+        override.path = info[0]
+        override.parameter = info[1].name
+        override.value = info[1].value
+        self.prj.overrides.append(override)
         self._callback()
 
     def _value_changed(self, _cell, path, new_text, _col):
@@ -119,12 +150,10 @@ class OverridesList:
         if check_hex(new_text) is False:
             return
 
-        name = self._model[path][ParameterCol.NAME]
-        value = int(new_text, 16)
+        value = int(new_text, 0)
 
-        self._model[path][ParameterCol.VALUE] = new_text
-        self.prj.parameters.remove(name)
-        self.prj.add_parameter(name, value)
+        self._model[path][OverrideCol.VALUE] = new_text
+        self._model[path][OverrideCol.OBJ].value = value
         self._callback()
 
     def _build_table(self):
@@ -221,4 +250,8 @@ class BlockOverridesList(OverridesList):
 
 
 def get_row_data(map_obj):
-    return (map_obj.name, hex(int(map_obj.value)), map_obj)
+    return (
+        f"{map_obj.path}.{map_obj.parameter}",
+        hex(int(map_obj.value)),
+        map_obj,
+    )

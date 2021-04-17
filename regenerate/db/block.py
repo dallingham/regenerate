@@ -28,6 +28,7 @@ from pathlib import Path
 import os
 import json
 
+from .overrides import Overrides
 from .const import BLK_EXT
 from .register_inst import RegisterInst
 from .register_db import RegisterDb
@@ -63,6 +64,7 @@ class Block(NameBase):
         self._modified = False
         self._filename = Path("")
         self.parameters = ParameterContainer()
+        self.overrides: List[Overrides] = []
 
     @property
     def modified(self) -> bool:
@@ -145,6 +147,15 @@ class Block(NameBase):
         self.parameters = ParameterContainer()
         self.parameters.json_decode(data["parameters"])
 
+        self.overrides = []
+        try:
+            for override in data["overrides"]:
+                item = Overrides()
+                item.json_decode(override)
+                self.overrides.append(item)
+        except KeyError:
+            ...
+
         self.modified = False
 
     def json(self):
@@ -152,6 +163,7 @@ class Block(NameBase):
             "name": self.name,
             "uuid": self.uuid,
             "parameters": self.parameters,
+            "overrides": self.overrides,
             "address_size": f"{self.address_size}",
             "doc_pages": self.doc_pages.json(),
             "description": self.description,

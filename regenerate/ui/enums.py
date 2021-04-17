@@ -50,11 +50,11 @@ class BitCol(IntEnum):
     """BitField columns for the BitField List"""
 
     ICON = 0
-    BIT = 1
-    NAME = 2
-    TYPE = 3
-    RESET = 4
-    RESET_TYPE = 5
+    MSB = 1
+    LSB = 2
+    NAME = 3
+    TYPE = 4
+    RESET = 5
     SORT = 6
     FIELD = 7
 
@@ -145,6 +145,14 @@ class ParameterCol(IntEnum):
     VALUE = 1
     MIN = 2
     MAX = 3
+
+
+class OverrideCol(IntEnum):
+    """Column numbers for the Parameter List"""
+
+    NAME = 0
+    VALUE = 1
+    OBJ = 2
 
 
 class PrjParameterCol(IntEnum):

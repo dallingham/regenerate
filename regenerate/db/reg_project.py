@@ -79,7 +79,7 @@ class RegProject:
         self._filelist: List[Path] = []
 
         self.parameters = ParameterContainer()
-        self.overrides_list: List[Overrides] = []
+        self.overrides: List[Overrides] = []
         self.address_maps: Dict[str, AddressMap] = {}
 
         self.block_insts: List[BlockInst] = []
@@ -577,6 +577,7 @@ class RegProject:
             "company_name",
             "access_map",
             "parameters",
+            "overrides",
             "block_insts",
             "_group_exports",
         )
@@ -675,3 +676,12 @@ class RegProject:
 
         self.parameters = ParameterContainer()
         self.parameters.json_decode(data["parameters"])
+
+        self.overrides = []
+        try:
+            for override in data["overrides"]:
+                item = Overrides()
+                item.json_decode(override)
+                self.overrides.append(item)
+        except KeyError:
+            ...
