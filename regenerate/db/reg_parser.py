@@ -149,7 +149,7 @@ class RegParser:
     def start_parameter(self, attrs):
         """Start a parameter read"""
 
-        self.__db.add_parameter(
+        self.__db.parameters.add(
             ParameterData(
                 attrs["name"],
                 int(attrs["value"], 0),
