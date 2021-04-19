@@ -190,19 +190,19 @@ class MainWindow(BaseWindow):
         self.project_modified(False)
 
     def on_edit_map_clicked(self, _obj):
-        map_name = self.addr_map_list.get_selected()
-        if map_name is None:
+        addr_map = self.addr_map_list.get_selected()
+        if addr_map is None:
             return
 
-        current = self.prj.address_maps[map_name].blocks
+        current = self.prj.address_maps[addr_map.uuid].blocks
 
         new_list = [
-            (blk_inst, blk_inst.inst_name in current)
+            (blk_inst, blk_inst.uuid in current)
             for blk_inst in self.prj.block_insts
         ]
 
         dialog = AddrMapEdit(
-            map_name,
+            addr_map.name,
             new_list,
             self.prj,
             self.top_window,
@@ -211,7 +211,7 @@ class MainWindow(BaseWindow):
 
         new_list = dialog.get_list()
         if new_list is not None:
-            self.prj.set_address_map_block_list(map_name, new_list)
+            self.prj.set_address_map_block_list(addr_map.uuid, new_list)
             self.addr_map_list.set_project(self.prj)
             self.set_project_modified()
 
@@ -909,16 +909,16 @@ def check_address_ranges(project):
 
     for block_inst in project.block_insts:
 
-        block = project.blocks[block_inst.block]
+        block = project.blocks[block_inst.blkid]
 
         for regset_inst in block.regset_insts:
-            regset = block.regsets[regset_inst.set_name]
+            regset = block.regsets[regset_inst.regset_id]
             space = 1 << regset.ports.address_bus_width
             if space > regset_inst.repeat_offset:
                 LOGGER.warning(
                     "%s.%s - %d bits specified for register set (size %x) which is greater than the repeat offset of %x",
-                    block_inst.inst_name,
-                    regset_inst.inst,
+                    block_inst.name,
+                    regset_inst.name,
                     regset.ports.address_bus_width,
                     space,
                     regset_inst.repeat_offset,
@@ -929,11 +929,14 @@ def check_address_ranges(project):
                 (
                     regset_inst.offset,
                     regset_inst.offset
-                    + (regset_inst.repeat * regset_inst.repeat_offset)
+                    + (
+                        regset_inst.repeat.resolve()
+                        * regset_inst.repeat_offset
+                    )
                     - 1,
-                    regset_inst.inst,
+                    regset_inst.name,
                     space,
-                    block_inst.inst_name,
+                    block_inst.name,
                 )
             )
 

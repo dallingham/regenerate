@@ -22,34 +22,35 @@ Holds the infomration for a group. This includes the name, base address,
 HDL path, the repeat count, repeat offset, and the title.
 """
 
+from .name_base import NameBase
 
-class BlockInst:
+
+class BlockInst(NameBase):
     """Basic block instance information."""
 
     def __init__(
         self,
-        inst_name="",
-        block="",
+        name="",
+        blkid="",
         address_base=0,
         hdl_path="",
         repeat=1,
         description="",
     ) -> None:
         """Initialize the group data item."""
-        self.inst_name = inst_name
-        self.block = block
+        super().__init__(name, "")
+        self.blkid = blkid
         self.address_base = address_base
         self.hdl_path = hdl_path
         self.repeat = repeat
         self.description = description
 
     def __repr__(self):
-        return f"BlockInst({self.inst_name}, {self.block})"
+        return f"BlockInst({self.name}, {self.blkid})"
 
     def __hash__(self):
         "Return the ID as the hash for the instance"
-
-        return id(self)
+        return id(self.uuid)
 
     def __ne__(self, other) -> bool:
         """Compare for inequality."""
@@ -59,7 +60,8 @@ class BlockInst:
         """Compare for equality."""
         if (
             other is None
-            or self.inst_name != other.inst_name
+            or self.name != other.name
+            or self.blkid != other.blkid
             or self.address_base != other.address_base
             or self.hdl_path != other.hdl_path
             or self.description != other.description
@@ -69,8 +71,9 @@ class BlockInst:
         return True
 
     def json_decode(self, data) -> None:
-        self.inst_name = data["inst_name"]
-        self.block = data["block"]
+        self.name = data["name"]
+        self.uuid = data["id"]
+        self.blkid = data["blkid"]
         self.address_base = int(data["address_base"], 0)
         self.hdl_path = data["hdl_path"]
         self.description = data["description"]
@@ -78,8 +81,9 @@ class BlockInst:
 
     def json(self):
         return {
-            "inst_name": self.inst_name,
-            "block": self.block,
+            "name": self.name,
+            "id": self.uuid,
+            "blkid": self.blkid,
             "address_base": f"{self.address_base}",
             "hdl_path": self.hdl_path,
             "description": self.description,

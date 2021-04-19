@@ -38,15 +38,16 @@ from .export import ExportData
 from .logger import LOGGER
 from .parammap import ParameterData
 from .param_container import ParameterContainer
+from .name_base import NameBase
 
 
-class RegisterDb:
+class RegisterDb(NameBase):
     """
     Container database for a set of registers.
     """
 
     def __init__(self, filename=None):
-
+        super().__init__("", "")
         self._module = "unnamed_regs"
         self._title = ""
         self._registers = {}
@@ -62,13 +63,16 @@ class RegisterDb:
         self.use_interface = False
         self.overview_text = ""
         self.coverage = True
-        self.set_name = ""
         self._filename = None
         self.modified = False
 
         if filename is not None:
             self.read_db(filename)
             self.filename = Path(filename)
+
+    def __hash__(self):
+        """Provides the hash function so that the object can be hashed"""
+        return hash(self.uuid)
 
     @property
     def filename(self) -> Path:
@@ -108,7 +112,7 @@ class RegisterDb:
     def add_register(self, reg: Register):
         """Adds the register to the database."""
         self._registers[reg.uuid] = reg
-        reg.regset_name = self.set_name
+        reg.regset_name = self.name
         reg.set_parameters(self.parameters)
 
     def delete_register(self, reg):
@@ -127,10 +131,10 @@ class RegisterDb:
 
         LOGGER.info("Reading XML register file %s", str(filename))
         with filename.open("rb") as ifile:
-            self.set_name = filename.stem
+            self.name = filename.stem
             parser = RegParser(self)
             parser.parse(ifile)
-        self.parameters.setup(self.set_name)
+        self.parameters.setup(self.name)
         return self
 
     def read_json(self, filename: Path):
@@ -140,10 +144,10 @@ class RegisterDb:
 
         LOGGER.info("Reading JSON register file %s", str(self.filename))
         with self.filename.open("r") as ifile:
-            self.set_name = filename.stem
+            self.name = filename.stem
             parser = RegParserJSON(self)
             parser.parse(ifile)
-        self.parameters.setup(self.set_name)
+        self.parameters.setup(self.name)
         return self
 
     def loads(self, data, filename):
@@ -151,7 +155,7 @@ class RegisterDb:
 
         filename = Path(filename)
 
-        self.set_name = filename.stem
+        self.name = filename.stem
         ifile = StringIO(data)
         parser = RegParser(self)
         parser.parse(ifile)
@@ -229,11 +233,13 @@ class RegisterDb:
 
     def json(self):
         data = {
+            "name": self.name,
+            "uuid": self._id,
             "module": self._module,
             "parameters": self.parameters,
             "title": self._title,
             "ports": self.ports,
-            "set_name": self.set_name,
+            "name": self.name,
             "array_is_reg": self.array_is_reg,
             "coverage": self.coverage,
             "internal_only": self.internal_only,
@@ -266,7 +272,8 @@ class RegisterDb:
         ports.json_decode(data["ports"])
         self.ports = ports
 
-        self.set_name = data["set_name"]
+        self.name = data["name"]
+        self._id = data["uuid"]
         self.array_is_reg = data["array_is_reg"]
         self.coverage = data["coverage"]
         self.internal_only = data["internal_only"]
@@ -279,7 +286,7 @@ class RegisterDb:
         for reg_json in data["register_inst"]:
             reg = Register()
             reg.json_decode(reg_json)
-            reg.regset_name = self.set_name
+            reg.regset_name = self.name
             self._registers[reg.uuid] = reg
 
         self.exports = []

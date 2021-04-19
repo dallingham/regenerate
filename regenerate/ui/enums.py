@@ -114,6 +114,7 @@ class SelectCol(IntEnum):
 
     ICON = 0
     NAME = 1
+    OBJ = 2
 
 
 class RegCol(IntEnum):

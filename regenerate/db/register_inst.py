@@ -21,9 +21,10 @@
 Manages the instance of a register within a group.
 """
 from .param_val import ParamValue
+from .name_base import NameBase
 
 
-class RegisterInst:
+class RegisterInst(NameBase):
     """Instance information when contained in a group"""
 
     def __init__(
@@ -39,8 +40,8 @@ class RegisterInst:
         array: bool = False,
         single_decode: bool = False,
     ) -> None:
-        self.set_name = rset
-        self.inst = inst
+        super().__init__(inst, "")
+        self.regset_id = rset
         self.offset = offset
         self.repeat = ParamValue(repeat)
         self.repeat_offset = repeat_offset
@@ -49,19 +50,6 @@ class RegisterInst:
         self.no_decode = no_decode
         self.array = array
         self.single_decode = single_decode
-
-    def __eq__(self, other) -> bool:
-        return (
-            self.set_name == other.set_name
-            and self.inst == other.inst
-            and self.offset == other.offset
-            and self.repeat == other.repeat
-            and self.hdl == other.hdl
-            and self.no_uvm == other.no_uvm
-            and self.no_decode == other.no_decode
-            and self.array == other.array
-            and self.single_decode == other.single_decode
-        )
 
     @property
     def single_decode(self) -> bool:
@@ -96,8 +84,9 @@ class RegisterInst:
         self._array = bool(val)
 
     def json_decode(self, data) -> None:
-        self.set_name = data["set_name"]
-        self.inst = data["inst"]
+        self.regset_id = data["regset_id"]
+        self._id = data["uuid"]
+        self.name = data["name"]
         self.offset = data["offset"]
         self.repeat = ParamValue()
         self.repeat.json_decode(data["repeat"])
@@ -109,8 +98,9 @@ class RegisterInst:
 
     def json(self):
         return {
-            "set_name": self.set_name,
-            "inst": self.inst,
+            "regset_id": self.regset_id,
+            "name": self.name,
+            "uuid": self._id,
             "offset": self.offset,
             "repeat": self.repeat,
             "hdl": self.hdl,

@@ -69,9 +69,7 @@ class UVMRegBlockRegisters(ProjectWriter):
         for blk_inst in self._project.block_insts:
             group_maps[
                 blk_inst
-            ] = self._project.get_address_maps_used_by_block(
-                blk_inst.inst_name
-            )
+            ] = self._project.get_address_maps_used_by_block(blk_inst.name)
         return group_maps
 
     def _used_maps(self) -> Set[str]:
@@ -119,11 +117,11 @@ class UVMRegBlockRegisters(ProjectWriter):
         group_maps = self._build_group_maps()
         for blk_inst in self._project.block_insts:
             for regset_inst in self._project.blocks[
-                blk_inst.block
+                blk_inst.blkid
             ].regset_insts:
                 data_set.append(
                     (
-                        self._project.regsets[regset_inst.set_name],
+                        self._project.regsets[regset_inst.regset_id],
                         blk_inst,
                         group_maps[blk_inst],
                     )

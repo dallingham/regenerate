@@ -237,9 +237,7 @@ class CTest(WriterBase):
             width = register.width
             ext = ext_opt[width]
 
-            for addr in find_addresses(
-                self._project, dbase.set_name, register
-            ):
+            for addr in find_addresses(self._project, dbase.name, register):
                 if width == 8:
                     rdata8.append((addr, mask, default))
                 elif width == 16:

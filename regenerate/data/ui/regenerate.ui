@@ -2468,7 +2468,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkNotebook">
+                  <object class="GtkNotebook" id="block_notebook">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <child>
@@ -2495,10 +2495,33 @@
                                 <property name="tooltip_text" translatable="yes">Select a register set to add the the block</property>
                                 <property name="use_popover">False</property>
                                 <child>
-                                  <object class="GtkLabel">
+                                  <object class="GtkBox">
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
-                                    <property name="label" translatable="yes">Add</property>
+                                    <child>
+                                      <object class="GtkLabel">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
+                                        <property name="label" translatable="yes">Add</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">True</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkImage">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
+                                        <property name="icon_name">pan-down-symbolic</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
                                   </object>
                                 </child>
                               </object>
@@ -2891,7 +2914,7 @@
                           </object>
                           <packing>
                             <property name="left_attach">3</property>
-                            <property name="top_attach">3</property>
+                            <property name="top_attach">4</property>
                           </packing>
                         </child>
                         <child>
@@ -2914,7 +2937,7 @@
                           </object>
                           <packing>
                             <property name="left_attach">0</property>
-                            <property name="top_attach">3</property>
+                            <property name="top_attach">4</property>
                             <property name="width">3</property>
                           </packing>
                         </child>
@@ -2947,6 +2970,25 @@
                             <property name="top_attach">2</property>
                             <property name="width">4</property>
                           </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="halign">start</property>
+                            <property name="margin_left">12</property>
+                            <property name="vexpand">False</property>
+                            <property name="label" translatable="yes">Allows the overriding the default values of the parameters in the register sets that this block contains.</property>
+                            <property name="wrap">True</property>
+                          </object>
+                          <packing>
+                            <property name="left_attach">0</property>
+                            <property name="top_attach">3</property>
+                            <property name="width">3</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <placeholder/>
                         </child>
                       </object>
                       <packing>
@@ -3277,7 +3319,7 @@
                             <property name="can_focus">True</property>
                             <property name="margin_left">12</property>
                             <property name="hexpand">True</property>
-                            <property name="vexpand">True</property>
+                            <property name="vexpand">False</property>
                             <property name="shadow_type">in</property>
                             <child>
                               <object class="GtkTreeView" id="address_tree">
@@ -3312,10 +3354,33 @@
                                 <property name="receives_default">True</property>
                                 <property name="use_popover">False</property>
                                 <child>
-                                  <object class="GtkLabel">
+                                  <object class="GtkBox">
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
-                                    <property name="label" translatable="yes">Add</property>
+                                    <child>
+                                      <object class="GtkLabel">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
+                                        <property name="label" translatable="yes">Add</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">True</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkImage">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
+                                        <property name="icon_name">pan-down-symbolic</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
                                   </object>
                                 </child>
                               </object>

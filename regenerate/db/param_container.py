@@ -26,10 +26,10 @@ class ParameterContainer:
     def __init__(self):
         self._parameters: List[ParameterData] = []
 
-    def setup(self, set_name):
+    def setup(self, name):
         resolver = ParameterResolver()
         for parameter in self._parameters:
-            resolver.add_regset_parameter(set_name, parameter)
+            resolver.add_regset_parameter(name, parameter)
 
     def get(self):
         """Returns the parameter list"""
@@ -46,6 +46,12 @@ class ParameterContainer:
     def set(self, parameter_list: List[ParameterData]):
         """Sets the parameter list"""
         self._parameters = parameter_list
+
+    def find(self, name: str) -> ParameterData:
+        for param in self._parameters:
+            if param.name == name:
+                return param
+        return None
 
     def json(self):
         return [parameter.json() for parameter in self._parameters]

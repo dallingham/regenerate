@@ -232,7 +232,7 @@ class AddrMapList:
 
         if len(model.get_path(node)) > 1:
             return None
-        return model.get_value(node, AddrCol.NAME)
+        return model.get_value(node, AddrCol.OBJ)
 
     def remove_selected(self):
         """
@@ -248,10 +248,10 @@ class AddrMapList:
             # remove group from address map
             pass
         else:
-            _ = model.get_value(node, AddrCol.NAME)
+            addr_map = model.get_value(node, AddrCol.OBJ)
             model.remove(node)
             self._callback()
-            self._prj.remove_address_map(name)
+            self._prj.remove_address_map(addr_map.uuid)
 
     def add_new_map(self):
         """

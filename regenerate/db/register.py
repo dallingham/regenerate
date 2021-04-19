@@ -457,7 +457,7 @@ class Register(NameBase):
     def json(self):
         val = {
             "name": self.name,
-            "id": self._id,
+            "uuid": self._id,
             "description": self.description,
             "parameters": self._parameter_list,
             "token": self._token,
@@ -473,7 +473,7 @@ class Register(NameBase):
 
     def json_decode(self, data):
         self.name = data["name"]
-        self._id = data["id"]
+        self._id = data["uuid"]
         self.description = data["description"]
         self._dimension = ParamValue()
         self._dimension.json_decode(data["dimension"])

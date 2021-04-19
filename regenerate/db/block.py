@@ -152,7 +152,15 @@ class Block(NameBase):
             for override in data["overrides"]:
                 item = Overrides()
                 item.json_decode(override)
-                self.overrides.append(item)
+                for regset_inst in self.regset_insts:
+                    if item.path != regset_inst.inst:
+                        continue
+                    regset = self.regsets[regset_inst.set_name]
+                    param = regset.parameters.find(item.temp_name)
+                    if param:
+                        item.parameter = param
+                        self.overrides.append(item)
+                    break
         except KeyError:
             ...
 

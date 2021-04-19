@@ -57,6 +57,7 @@ class BlockTab:
         self.block_size = ModuleHex(
             find_obj("block_size"), "address_size", self.modified
         )
+        self.block_notebook = find_obj("block_notebook")
         self.block_regsets = find_obj("block_regsets")
         self.block_reg_add = find_obj("block_reg_add")
         self.block_reg_remove = find_obj("block_reg_remove")
@@ -102,9 +103,15 @@ class BlockTab:
 
         self.build()
         self.block_reg_remove.connect("clicked", self.on_remove_clicked)
+        self.block_notebook.connect("switch-page", self.page_changed)
+
+    def page_changed(self, obj, page, page_num):
+        if page_num == 1:
+            self.overrides_list.update_display()
 
     def redraw(self):
         self.block_model.update()
+        self.overrides_list.update_display()
 
     def clear_flags(self):
         self.block_model.update()
@@ -115,9 +122,9 @@ class BlockTab:
     def block_selection_changed(self, obj):
         model, node = obj.get_selected()
         if node:
-            block_name = model[node][1]
+            block = model[node][-1]
             self.disable_modified = True
-            self.select_block(block_name)
+            self.select_block(block.uuid)
             self.disable_modified = False
             self.parameter_list.set_db(self.block)
 
@@ -222,8 +229,17 @@ class BlockTab:
     def build_add_regset_menu(self):
         if self.block:
             self.reg_menu = Gtk.Menu()
-            for regset in self.project.regsets:
-                menu_item = Gtk.MenuItem(regset)
+
+            sorted_dict = {
+                key: value
+                for key, value in sorted(
+                    self.project.regsets.items(), key=lambda item: item[1].name
+                )
+            }
+
+            for regset_id in sorted_dict:
+                regset = self.project.regsets[regset_id]
+                menu_item = Gtk.MenuItem(regset.name)
                 menu_item.connect("activate", self.menu_selected, regset)
                 menu_item.show()
                 self.reg_menu.append(menu_item)
@@ -236,7 +252,7 @@ class BlockTab:
         # self.bitfield_obj.set_parameters(self.active.get_parameters())
 
     def find_name_inst_name(self, regset):
-        names = set({rset.inst for rset in self.block.regset_insts})
+        names = set({rset.name for rset in self.block.regset_insts})
 
         if regset not in names:
             new_name = regset
@@ -251,58 +267,62 @@ class BlockTab:
 
     def menu_selected(self, _obj, regset):
 
-        new_name = self.find_name_inst_name(regset)
+        new_name = self.find_name_inst_name(regset.name)
 
-        reginst = RegisterInst(rset=regset, inst=new_name)
-        reg_cont = self.project.regsets[new_name]
+        reginst = RegisterInst(rset=regset.uuid, inst=new_name)
+        reg_cont = self.project.regsets[regset.uuid]
 
         self.block.regset_insts.append(reginst)
-        self.block.regsets[new_name] = reg_cont
+        #        self.block.regsets[reginst.uuid] = reg_cont
 
         self.regmodel.append(
             row=(
-                reginst.set_name,
-                reginst.inst,
+                regset.name,
+                new_name,
                 f"0x{reginst.offset:08x}",
                 f"{reginst.repeat}",
                 reginst.hdl,
+                reginst,
             )
         )
         self.modified()
 
     def on_remove_clicked(self, _obj):
         model, node = self.block_regsets.get_selection().get_selected()
-        inst_name = model[node][1]
+
+        to_be_deleted = model[node][-1]
 
         self.block.regset_insts = [
             regset
             for regset in self.block.regset_insts
-            if regset.inst != inst_name
+            if regset.uuid != to_be_deleted.uuid
         ]
         model.remove(node)
         self.modified()
 
-    def select_block(self, blk_name):
-        self.block = self.project.blocks[blk_name]
+    def select_block(self, blkid):
+        self.block = self.project.blocks[blkid]
 
         self.preview.change_block(self.block)
         self.block_name.change_db(self.block)
         self.block_description.change_db(self.block)
         self.block_size.change_db(self.block)
 
-        self.regmodel = Gtk.ListStore(str, str, str, str, str)
+        self.regmodel = Gtk.ListStore(str, str, str, str, str, object)
         self.block_regsets.set_model(self.regmodel)
         self.preview.change_block(self.block)
         self.overrides_list.set_project(self.block)
 
-        for regset in self.block.regset_insts:
+        for reginst in self.block.regset_insts:
+            regset = self.block.regsets[reginst.regset_id]
             self.regmodel.append(
                 row=(
-                    regset.set_name,
-                    regset.inst,
-                    f"0x{regset.offset:08x}",
-                    f"{regset.repeat}",
-                    regset.hdl,
+                    regset.name,
+                    reginst.name,
+                    f"0x{reginst.offset:08x}",
+                    f"{reginst.repeat}",
+                    reginst.hdl,
+                    reginst,
                 )
             )
         self.modified()
@@ -500,8 +520,16 @@ class BlockSelectList:
     def set_project(self, project):
         self.__model.clear()
         self.project = project
-        for block in sorted(self.project.blocks):
-            self.__model.add_block(self.project.blocks[block])
+
+        sorted_dict = {
+            key: value
+            for key, value in sorted(
+                self.project.blocks.items(), key=lambda item: item[1].name
+            )
+        }
+
+        for blkid in sorted_dict:
+            self.__model.add_block(self.project.blocks[blkid])
 
     def set_model(self, model):
         """Sets the model"""

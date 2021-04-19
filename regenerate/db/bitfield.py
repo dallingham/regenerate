@@ -132,15 +132,10 @@ class BitField(NameBase):
 
         self._reset_value = 0
         self.reset_input = ""
-        self.reset_parameter = ""
+        self.reset_parameter = None
         self.reset_type = ResetType.NUMERIC
 
         self.values: List[Tuple[str, str, str]] = []
-
-    def __hash__(self):
-        """Provides the hash function so that the object can be hashed"""
-
-        return hash(self.uuid)
 
     @staticmethod
     def set_parameters(values) -> None:
@@ -278,7 +273,7 @@ class BitField(NameBase):
     def json(self):
         return {
             "name": self.name,
-            "id": self._id,
+            "uuid": self._id,
             "description": self.description,
             "input_signal": self._input_signal,
             "output_signal": self._output_signal,
@@ -298,7 +293,7 @@ class BitField(NameBase):
 
     def json_decode(self, data):
         self.name = data["name"]
-        self._id = data["id"]
+        self._id = data["uuid"]
         self.description = data["description"]
 
         self._input_signal = data["input_signal"]

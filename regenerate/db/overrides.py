@@ -18,11 +18,24 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 from .parammap import ParameterData
-from .json_base import JSONEncodable
 
 
-class Overrides(JSONEncodable):
+class Overrides:
     def __init__(self):
         self.path: str = ""
         self.parameter: ParameterData = ParameterData()
         self.value: int = 0
+        self.temp_name = ""
+
+    def json(self):
+        return {
+            "path": self.path,
+            "parameter": self.parameter.name,
+            "value": self.value,
+        }
+
+    def json_decode(self, data):
+        self.path = data["path"]
+        self.temp_name = data["parameter"]
+        self.value = data["value"]
+        self.parameter = None

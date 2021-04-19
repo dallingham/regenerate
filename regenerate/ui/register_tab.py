@@ -30,7 +30,7 @@ from regenerate.db.const import REG_EXT, OLD_REG_EXT
 from regenerate.ui.bit_list import BitModel, BitList
 from regenerate.ui.bitfield_editor import BitFieldEditor
 from regenerate.ui.columns import ReadOnlyColumn
-from regenerate.ui.enums import SelectCol, BitCol
+from regenerate.ui.enums import SelectCol, BitCol, RegCol
 from regenerate.ui.module_tab import ModuleTabs
 from regenerate.ui.parameter_list import ParameterList
 from regenerate.ui.reg_description import RegisterDescription
@@ -177,7 +177,7 @@ class RegSetList:
             regset = model.get_value(node, 2)
             for block in self.prj.blocks:
                 for setname in self.prj.blocks[block].regsets:
-                    if setname == regset.set_name:
+                    if setname == regset.name:
                         renderer.set_property("weight", Pango.Weight.NORMAL)
                         return
             renderer.set_property("weight", Pango.Weight.BOLD)
@@ -189,7 +189,6 @@ class RegSetList:
     def select(self, node):
         """Select the specified row"""
 
-        #        self.notebook.set_sensitive(True)
         selection = self.__obj.get_selection()
         if node and selection:
             selection.select_iter(node)
@@ -225,6 +224,8 @@ class RegSetTab:
         self.widgets.reg_notebook.set_sensitive(False)
         self.widgets.reg_notebook.hide()
         self.reg_selected_action.set_sensitive(False)
+
+        self.widgets.notebook.connect("switch-page", self.reg_page_changed)
 
         self.reg_set_obj = RegSetList(
             self.widgets.regset_list, self.regset_sel_changed
@@ -270,6 +271,31 @@ class RegSetTab:
 
         self.clear()
 
+    def reg_page_changed(self, obj, page, page_num):
+        """When the notebook page changes, update any fields that are
+        out of date due to parameter name changes"""
+
+        self.update_size_parameters()
+        self.update_field_parameters()
+
+    def update_field_parameters(self):
+        "Update any displayed parameter names if they have changed"
+        for row in self.bit_model:
+            field = row[BitCol.FIELD]
+            if field.reset_type == ResetType.PARAMETER:
+                if field.reset_parameter != row[BitCol.RESET]:
+                    row[BitCol.RESET] = field.reset_parameter
+
+    def update_size_parameters(self):
+        "Change the reset parameters, updating for any name changes"
+        for row in self.reg_model:
+            reg = row[-1]
+            if (
+                reg.dimension_is_param()
+                and reg.dimension_str != row[RegCol.DIM]
+            ):
+                row[RegCol.DIM] = reg.dimension_str
+
     def set_parameters_modified(self):
         self.set_modified()
         self.reglist_obj.set_parameters(self.active.parameters.get())
@@ -294,7 +320,7 @@ class RegSetTab:
         else:
             self.widgets.reg_notebook.hide()
 
-    def new_regset(self, regset, name):
+    def new_regset(self, regset):
 
         node = self.reg_set_model.add_dbase(regset)
         self.reg_model = RegisterModel()
@@ -318,7 +344,7 @@ class RegSetTab:
             node,
         )
 
-        self.name2status[name] = status
+        self.name2status[regset.uuid] = status
         return node
 
     def array_changed(self, obj):
@@ -337,9 +363,17 @@ class RegSetTab:
     def rebuild_model(self):
         if len(self.project.regsets) != len(self.reg_set_model):
             self.reg_set_model.clear()
-            for set_name in sorted(self.project.regsets):
-                regset = self.project.regsets[set_name]
-                self.new_regset(regset, set_name)
+
+            sorted_dict = {
+                key: value
+                for key, value in sorted(
+                    self.project.regsets.items(), key=lambda item: item[1].name
+                )
+            }
+
+            for rsid in sorted_dict:
+                regset = self.project.regsets[rsid]
+                self.new_regset(regset)
 
     def reg_descript_callback(self, reg):
         self.set_modified()
@@ -377,8 +411,8 @@ class RegSetTab:
     def regset_sel_changed(self, _obj):
         model, node = self.reg_set_obj.get_selected()
         if node:
-            self.active_name = model[node][2].set_name
-            self.active = self.project.regsets[self.active_name]
+            self.active_name = model[node][SelectCol.OBJ].uuid
+            self.active = model[node][SelectCol.OBJ]
         else:
             self.active = None
             self.active_name = ""
@@ -390,7 +424,7 @@ class RegSetTab:
             self.active.reg_select = self.reglist_obj.get_selected_row()
             self.active.bit_select = self.bitfield_obj.get_selected_row()
 
-            status = self.name2status[self.active_name]
+            status = self.name2status[self.active.uuid]
             self.reg_model = status.reg_model
             self.filter_manage.change_filter(status.modelfilter)
             self.modelsort = status.modelsort
@@ -398,7 +432,7 @@ class RegSetTab:
 
             # self.reg_description.set_database(self.active)
 
-            status = self.name2status[self.active_name]
+            status = self.name2status[self.active.uuid]
             self.filter_manage.change_filter(status.modelfilter)
             self.reglist_obj.set_model(status.modelsort)
 

@@ -33,7 +33,6 @@ from .proj_reader_json import ProjectReaderJSON
 from .addrmap import AddressMap
 from .textutils import clean_text
 from .logger import LOGGER
-from .parammap import ParameterData
 from .export import ExportData
 from .doc_pages import DocPages
 from .register_db import RegisterDb
@@ -87,7 +86,6 @@ class RegProject:
 
         self.regsets: Dict[str, RegisterDb] = {}
 
-        self._group_exports = {}
         self.exports = []
 
         self._modified = False
@@ -104,20 +102,20 @@ class RegProject:
         writer = ProjectWriterJSON(self)
         writer.save(self.path.with_suffix(PRJ_EXT))
 
-        for blk_name in self.blocks:
-            blk = self.blocks[blk_name]
+        for blkid in self.blocks:
+            blk = self.blocks[blkid]
             if blk.modified:
                 LOGGER.info(
-                    "Saving block %s - %s", blk_name, str(blk.filename)
+                    "Saving block %s - %s", blk.name, str(blk.filename)
                 )
                 blk.save()
                 blk.modified = False
 
-        for name in self.regsets:
-            reg = self.regsets[name]
+        for regid in self.regsets:
+            reg = self.regsets[regid]
             if reg.modified:
                 LOGGER.info(
-                    "Saving register set %s - %s", name, str(reg.filename)
+                    "Saving register set %s - %s", reg.name, str(reg.filename)
                 )
                 reg.save()
                 reg.modified = False
@@ -138,8 +136,8 @@ class RegProject:
             json_reader.open(name)
 
             for _, block in self.blocks.items():
-                for set_name, reg_set in block.regsets.items():
-                    self.regsets[set_name] = reg_set
+                for _, reg_set in block.regsets.items():
+                    self.regsets[reg_set.uuid] = reg_set
 
     def loads(self, data: str) -> None:
         """Reads XML from a string"""
@@ -147,15 +145,15 @@ class RegProject:
         reader = ProjectReader(self)
         reader.loads(data)
 
-    def remove_block(self, block_name: str):
-        del self.blocks[block_name]
+    def remove_block(self, blk_id: str):
+        del self.blocks[blk_id]
         self.block_insts = [
-            inst for inst in self.block_insts if inst.block != block_name
+            inst for inst in self.block_insts if inst.blk_id != blk_id
         ]
-        for addr_name in self.address_maps:
-            addr_map = self.address_maps[addr_name]
+        for addr_id in self.address_maps:
+            addr_map = self.address_maps[addr_id]
             addr_map.blocks = [
-                amap for amap in addr_map.blocks if amap != block_name
+                map_id for map_id in addr_map.blocks if amap != blk_id
             ]
 
     def append_register_set_to_list(self, name: Union[str, Path]):
@@ -166,7 +164,7 @@ class RegProject:
         regset = RegisterDb()
         regset.modified = True
         regset.read_db(self.path.parent / name)
-        self.regsets[regset.set_name] = regset
+        self.regsets[regset.uuid] = regset
         new_file_path = Path(name).with_suffix(REG_EXT).resolve()
         regset.filename = new_file_path
         self._filelist.append(new_file_path)
@@ -201,9 +199,9 @@ class RegProject:
         """Returns the export project list, returns a read-only tuple"""
         return tuple(self.exports)
 
-    def get_group_exports(self, name: str):
-        """Returns the export group list, returns a read-only tuple"""
-        return tuple(self._group_exports.get(name, []))
+    # def get_group_exports(self, name: str):
+    #     """Returns the export group list, returns a read-only tuple"""
+    #     return tuple(self._group_exports.get(name, []))
 
     def append_to_export_list(
         self, db_path: str, exporter: str, target: str
@@ -245,20 +243,20 @@ class RegProject:
         exp = ExportData(exporter, dest)
         self.exports.append(exp)
 
-    def append_to_group_export_list(
-        self, group: str, exporter: str, dest: str
-    ) -> None:
-        """
-        Adds a export to the group export list. Group exporters operation
-        on the entire group, not just a specific register database (XML file)
+    # def append_to_group_export_list(
+    #     self, group: str, exporter: str, dest: str
+    # ) -> None:
+    #     """
+    #     Adds a export to the group export list. Group exporters operation
+    #     on the entire group, not just a specific register database (XML file)
 
-        path - path to the the register XML file. Converted to a relative path
-        option - the chosen export option (exporter)
-        dest - destination output name
-        """
-        self._modified = True
-        exp = ExportData(exporter, dest)
-        self._group_exports[group].append(exp)
+    #     path - path to the the register XML file. Converted to a relative path
+    #     option - the chosen export option (exporter)
+    #     dest - destination output name
+    #     """
+    #     self._modified = True
+    #     exp = ExportData(exporter, dest)
+    #     self._group_exports[group].append(exp)
 
     def add_to_project_export_list(self, exporter: str, dest: str) -> None:
         """
@@ -273,21 +271,21 @@ class RegProject:
         dest = os.path.relpath(dest, self.path.parent)
         self.exports.append(ExportData(exporter, dest))
 
-    def add_to_group_export_list(
-        self, group: str, exporter: str, dest: str
-    ) -> None:
-        """
-        Adds a export to the group export list. Group exporters operation
-        on the entire group, not just a specific register database (XML file)
+    # def add_to_group_export_list(
+    #     self, group: str, exporter: str, dest: str
+    # ) -> None:
+    #     """
+    #     Adds a export to the group export list. Group exporters operation
+    #     on the entire group, not just a specific register database (XML file)
 
-        path - path to the the register XML file. Converted to a relative path
-        exporter - the chosen export exporter (exporter)
-        dest - destination output name
-        """
-        self._modified = True
-        dest = os.path.relpath(dest, self.path.parent)
-        exp = ExportData(exporter, dest)
-        self._group_exports[group].append(exp)
+    #     path - path to the the register XML file. Converted to a relative path
+    #     exporter - the chosen export exporter (exporter)
+    #     dest - destination output name
+    #     """
+    #     self._modified = True
+    #     dest = os.path.relpath(dest, self.path.parent)
+    #     exp = ExportData(exporter, dest)
+    #     self._group_exports[group].append(exp)
 
     def remove_from_export_list(
         self, path: str, exporter: str, dest: str
@@ -312,16 +310,16 @@ class RegProject:
             if not (exp.exporter == exporter and exp.dest == dest)
         ]
 
-    def remove_from_group_export_list(
-        self, group: str, exporter: str, dest: str
-    ) -> None:
-        """Removes the export from the group export list"""
-        self._modified = True
-        self._group_exports[group] = [
-            exp
-            for exp in self._group_exports[group]
-            if not (exp.exporter == exporter and exp.dest == dest)
-        ]
+    # def remove_from_group_export_list(
+    #     self, group: str, exporter: str, dest: str
+    # ) -> None:
+    #     """Removes the export from the group export list"""
+    #     self._modified = True
+    #     self._group_exports[group] = [
+    #         exp
+    #         for exp in self._group_exports[group]
+    #         if not (exp.exporter == exporter and exp.dest == dest)
+    #     ]
 
     def get_register_set(self) -> List[Path]:
         """
@@ -337,19 +335,17 @@ class RegProject:
         """Returns a list of the existing address maps"""
         return self.address_maps.values()
 
-    def get_blocks_in_address_map(self, name: str) -> List[BlockInst]:
+    def get_blocks_in_address_map(self, map_id: str) -> List[BlockInst]:
         """Returns the address maps associated with the specified group."""
-        addr_map = self.address_maps.get(name)
+        addr_map = self.address_maps.get(map_id)
         blocks = addr_map.blocks
         if blocks:
             blocks = set(blocks)
-            return [
-                inst for inst in self.block_insts if inst.inst_name in blocks
-            ]
+            return [inst for inst in self.block_insts if inst.name in blocks]
         else:
             return self.block_insts
 
-    def get_address_maps_used_by_block(self, name: str):
+    def get_address_maps_used_by_block(self, map_id: str):
         """Returns the address maps associated with the specified group."""
 
         used_in_uvm = set(
@@ -359,70 +355,68 @@ class RegProject:
         return [
             key
             for key in self.address_maps
-            if key in used_in_uvm and name in self.address_maps[key].blocks
+            if key in used_in_uvm and map_id in self.address_maps[key].blocks
         ]
 
     def get_block_from_inst(self, name: str) -> Block:
         return self.blocks[name]
 
-    def change_address_map_name(self, old_name: str, new_name: str) -> None:
+    def change_address_map_name(self, map_id: str, new_name: str) -> None:
         """Changes the name of an address map"""
 
-        self.address_maps[new_name] = self.address_maps[old_name]
-        del self.address_maps[old_name]
+        self.address_maps[map_id].name = new_name
         self._modified = True
 
-    def add_address_map_to_block(
-        self, name: str, block_inst_name: str
-    ) -> bool:
+    def add_address_map_to_block(self, map_id: str, blk_id: str) -> bool:
         """Adds an address map to a group if it does not already exist"""
-        if block_inst_name not in self.address_maps[name].blocks:
-            self.address_maps[name].blocks.append(block_inst_name)
+        if blk_id not in self.address_maps[map_id].blocks:
+            self.address_maps[map_id].blocks.append(blk_id)
             return True
         return False
 
-    def get_address_base(self, name: str):
+    def get_address_base(self, map_id: str):
         """Returns the base address  of the address map"""
-        return self.address_maps[name].base
+        return self.address_maps[map_id].base
 
-    def get_address_fixed(self, name: str):
+    def get_address_fixed(self, map_id: str):
         """Indicates if the specified address map is at a fixed location"""
         return next(
-            (d.fixed for d in self.address_maps.values() if name == d.name),
+            (d.fixed for d in self.address_maps.values() if map_id == d.uuid),
             None,
         )
 
-    def get_address_uvm(self, name: str):
+    def get_address_uvm(self, map_id: str):
         """Indicates if the specified address map is at a fixed location"""
         return next(
-            (d.uvm for d in self.address_maps.values() if name == d.name), None
+            (d.uvm for d in self.address_maps.values() if map_id == d.uuid),
+            None,
         )
 
-    def get_address_width(self, name: str):
+    def get_address_width(self, map_id: str):
         """Returns the width of the address group"""
         for data in self.address_maps.values():
-            if name == data.name:
+            if map_id == data.uuid:
                 return data.width
         LOGGER.error("Address map not found (%s)", name)
         return None
 
     def set_access(
-        self, map_name: str, group_name: str, block_name: str, access
+        self, map_id: str, group_name: str, block_name: str, access
     ):
         """Sets the access mode"""
-        self.access_map[map_name][group_name][block_name] = access
+        self.access_map[map_id][group_name][block_name] = access
 
-    def get_access_items(self, map_name, group_name):
+    def get_access_items(self, map_id, group_name):
         """Gets the access items for the map/group"""
 
-        grp_map = self.access_map[map_name][group_name]
+        grp_map = self.access_map[map_id][group_name]
         return [(key, grp_map[key]) for key in grp_map]
 
-    def get_access(self, map_name, group_name, block_name):
+    def get_access(self, map_id, group_name, block_name):
         """Gets the access mode"""
 
         try:
-            return self.access_map[map_name][group_name][block_name]
+            return self.access_map[map_id][group_name][block_name]
         except KeyError:
             return 0
 
@@ -430,28 +424,21 @@ class RegProject:
         """Sets the specififed address map"""
 
         self._modified = True
-        self.address_maps[addr_map.name] = addr_map
+        self.address_maps[addr_map.uuid] = addr_map
 
-    def set_address_map(self, name, base, width, fixed, uvm):
+    def set_address_map(self, address_map):
         """Sets the specififed address map"""
         self._modified = True
-        new_data = AddressMap(name, base, width, fixed, uvm)
-        self.address_maps[name] = new_data
+        self.address_maps[address_map.uuid] = address_map
 
-    def set_address_map_block_list(self, name: str, new_list: List[str]):
+    def set_address_map_block_list(self, map_id: str, new_list: List[str]):
         """Sets the specififed address map"""
         self._modified = True
-        self.address_maps[name].blocks = new_list
+        self.address_maps[map_id].blocks = new_list
 
-    def remove_address_map(self, name):
+    def remove_address_map(self, map_id):
         """Removes the address map"""
-
-        self._modified = True
-        for i, data in enumerate(self._addr_map_list):
-            if data.name == name:
-                del self._addr_map_list[i]
-                if data.name in self._addr_map_grps:
-                    del self._addr_map_grps[data.name]
+        del self.address_maps[map_id]
 
     @property
     def files(self):
@@ -475,6 +462,9 @@ class RegProject:
         to find the old reference, and replaces it with the new
         reference
         """
+        import traceback
+
+        traceback.print_stack()
 
         # Search access map to find items to replace. We must
         # delete the old entry, and create a new entry. Since
@@ -506,6 +496,9 @@ class RegProject:
         instance in the identified subsystem. Updates the access
         map and the groupings.
         """
+        import traceback
+
+        traceback.print_stack()
 
         # Search access maps for items to rename. Search each
         # map, for instances of the specified subsystem, then
@@ -579,7 +572,6 @@ class RegProject:
             "parameters",
             "overrides",
             "block_insts",
-            "_group_exports",
         )
 
         data = {}
@@ -640,13 +632,13 @@ class RegProject:
             addr_data.json_decode(addr_data_json)
             self.address_maps[name] = addr_data
 
-        self._group_exports = {}
-        for key in data["group_exports"]:
-            self._group_exports[key] = []
-            for item in data["group_exports"][key]:
-                self._group_exports[key].append(
-                    ExportData(item["exporter"], item["target"])
-                )
+        # self._group_exports = {}
+        # for key in data["group_exports"]:
+        #     self._group_exports[key] = []
+        #     for item in data["group_exports"][key]:
+        #         self._group_exports[key].append(
+        #             ExportData(item["exporter"], item["target"])
+        #         )
 
         self.exports = []
         for item in data["exports"]:

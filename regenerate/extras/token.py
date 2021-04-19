@@ -68,16 +68,14 @@ def in_groups(name: str, project: RegProject):
     groups = []
     if name and project:
         for group in project.block_insts:
-            block = project.blocks[group.block]
+            block = project.blocks[group.blkid]
 
-            for regset in [
-                rs for rs in block.regset_insts if rs.set_name == name
-            ]:
+            for regset in [rs for rs in block.regset_insts if rs.name == name]:
                 fmt = DEFAULT_FORMAT
                 groups.append(
                     InstData(
                         group,
-                        regset.set_name,
+                        regset.name,
                         group.address_base,
                         regset.offset,
                         regset.repeat,

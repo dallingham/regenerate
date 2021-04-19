@@ -36,6 +36,6 @@ from .register_db import RegisterDb
 from .proj_reader import ProjectReader
 from .proj_writer import ProjectWriter
 from .addrmap import AddressMap
-from .parammap import ParameterData, PrjParameterData
+from .parammap import ParameterData
 from .enums import *
 from .logger import *

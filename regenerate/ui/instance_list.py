@@ -169,7 +169,7 @@ class InstMdl(Gtk.TreeStore):
         """
         row = build_row_data(
             new_inst.block,
-            new_inst.inst_name,
+            new_inst.name,
             new_inst.address_base,
             new_inst.repeat,
             new_inst.hdl_path,
@@ -265,12 +265,13 @@ class InstanceList:
 
         self.__model.clear()
         for item in blocks:
+            block = self.__project.blocks[item.blkid]
             self.need_subsystem = False
             node = self.__model.append(
                 None,
                 row=build_row_data(
-                    item.inst_name,
-                    item.block,
+                    item.name,
+                    block.name,
                     item.address_base,
                     item.repeat,
                     item.hdl_path,

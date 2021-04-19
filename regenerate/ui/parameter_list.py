@@ -24,6 +24,7 @@ from gi.repository import Gtk
 from regenerate.db import LOGGER, ParameterData
 from regenerate.ui.columns import EditableColumn
 from regenerate.ui.enums import ParameterCol
+from regenerate.db.enums import ResetType
 from regenerate.ui.utils import check_hex
 
 
@@ -34,14 +35,16 @@ class ParameterListMdl(Gtk.ListStore):
     """
 
     def __init__(self):
-        super().__init__(str, str, str, str)
+        super().__init__(str, str, str, str, object)
 
-    def new_instance(self, name, val, min_val, max_val):
+    def new_instance(self, obj):
         """
         Adds a new instance to the model. It is not added to the database until
         either the change_id or change_base is called.
         """
-        node = self.append((name, val, min_val, max_val))
+        node = self.append(
+            (obj.name, hex(obj.value), hex(obj.min_val), hex(obj.max_val), obj)
+        )
         return self.get_path(node)
 
     def append_instance(self, inst):
@@ -50,23 +53,7 @@ class ParameterListMdl(Gtk.ListStore):
 
     def get_values(self):
         """Returns the list of instance tuples from the model."""
-        val_list = []
-        for val in self:
-            if val[0]:
-                try:
-                    def_val = int(val[1], 0)
-                except ValueError:
-                    def_val = 1
-                try:
-                    min_val = int(val[2], 0)
-                except ValueError:
-                    min_val = 0
-                try:
-                    max_val = int(val[3], 0)
-                except ValueError:
-                    max_val = 0xFFFFFFFF
-
-                val_list.append((val[0], def_val, min_val, max_val))
+        return [val[-1] for row in self]
 
 
 class ParameterList:
@@ -107,7 +94,7 @@ class ParameterList:
         if self._db is not None:
             self._model.clear()
         for param in self._db.parameters.get():
-            self.append(param.name, param.value, param.min_val, param.max_val)
+            self.append(param)
         self.remove.set_sensitive(False)
 
     def remove_clicked(self, _obj):
@@ -129,8 +116,10 @@ class ParameterList:
             index = index + 1
             name = f"{base}{index}"
 
-        self._model.new_instance(name, hex(1), hex(0), hex(0xFFFFFFFF))
-        self._db.parameters.add(ParameterData(name, 1, 0, 0xFFFFFFFF))
+        new_item = ParameterData(name, 1, 0, 0xFFFFFFFF)
+
+        self._model.new_instance(new_item)
+        self._db.parameters.add(new_item)
         self._callback()
 
     def _name_changed(self, _cell, path, new_text, _col):
@@ -141,15 +130,7 @@ class ParameterList:
         name = self._model[path][ParameterCol.NAME]
         if name != new_text and new_text not in current:
             self._model[path][ParameterCol.NAME] = new_text
-            self._db.parameters.remove(name)
-            self._db.parameters.add(
-                ParameterData(
-                    new_text,
-                    int(self._model[path][ParameterCol.VALUE], 16),
-                    int(self._model[path][ParameterCol.MIN], 16),
-                    int(self._model[path][ParameterCol.MAX], 16),
-                )
-            )
+            self._model[path][-1].name = new_text
             self._callback()
 
         self.update_db(name, new_text)
@@ -175,9 +156,7 @@ class ParameterList:
             )
         else:
             self._model[path][ParameterCol.VALUE] = f"0x{value:x}"
-            self._db.parameters.remove(name)
-            param = ParameterData(name, value, min_val, max_val)
-            self._db.parameters.add(param)
+            self._model[path][-1] = value
             self._callback()
 
     def _min_changed(self, _cell, path, new_text, _col):
@@ -199,9 +178,7 @@ class ParameterList:
             )
         else:
             self._model[path][ParameterCol.MIN] = hex(int(new_text, 0))
-            self._db.parameters.remove(name)
-            param = ParameterData(name, value, min_val, max_val)
-            self._db.parameters.add(param)
+            self._model[path][-1].min_val = int(new_text, 0)
             self._callback()
 
     def _max_changed(self, _cell, path, new_text, _col):
@@ -223,10 +200,7 @@ class ParameterList:
             )
         else:
             self._model[path][ParameterCol.MAX] = hex(int(new_text, 0))
-            self._db.parameters.remove(name)
-            self._db.parameters.add(
-                ParameterData(name, value, min_val, max_val)
-            )
+            self._model[path][-1].max_val = int(new_text, 0)
             self._callback()
 
     def _build_instance_table(self):
@@ -279,11 +253,10 @@ class ParameterList:
 
         self._model.clear()
 
-    def append(self, name, value, min_val, max_val):
+    def append(self, param):
         """Add the data to the list."""
 
-        obj = ParameterData(name, value, min_val, max_val)
-        self._model.append(row=get_row_data(obj))
+        self._model.append(row=get_row_data(param))
 
     def get_selected(self):
         """Removes the selected node from the list"""
@@ -313,10 +286,10 @@ class ParameterList:
             model.remove(node)
             self._callback()
 
-    def update_db(name, new_text):
-        for reg in self.db.get_all_registers():
+    def update_db(self, name, new_text):
+        for reg in self._db.get_all_registers():
             if reg.dimension_is_param():
-                if reg.dimension_str() == name:
+                if reg.dimension_str == name:
                     reg.dimension = new_text
             for field in reg.get_bit_fields():
                 if field.reset_type == ResetType.PARAMETER:
@@ -332,4 +305,5 @@ def get_row_data(map_obj):
         f"0x{map_obj.value:x}",
         f"0x{map_obj.min_val:x}",
         f"0x{map_obj.max_val:x}",
+        map_obj,
     )

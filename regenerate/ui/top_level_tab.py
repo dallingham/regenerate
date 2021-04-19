@@ -79,14 +79,14 @@ class TopLevelTab:
             self.prj.block_insts = [
                 blkinst
                 for blkinst in self.prj.block_insts
-                if blkinst.inst_name != grp.inst_name
+                if blkinst.name != grp.name
             ]
 
     def build_add_block_menu(self):
         self.blk_menu = Gtk.Menu()
-        for block in self.prj.blocks:
-            menu_item = Gtk.MenuItem(block)
-            menu_item.connect("activate", self.menu_selected, block)
+        for block in self.prj.blocks.values():
+            menu_item = Gtk.MenuItem(block.name)
+            menu_item.connect("activate", self.menu_selected, block.name)
             menu_item.show()
             self.blk_menu.append(menu_item)
             self.top_block_add.set_popup(self.blk_menu)
@@ -95,7 +95,7 @@ class TopLevelTab:
         block_inst = BlockInst()
         block_inst.block = block
 
-        existing_names = set({blk.inst_name for blk in self.prj.block_insts})
+        existing_names = set({blk.name for blk in self.prj.block_insts})
 
         name = block
         count = 0
@@ -106,7 +106,7 @@ class TopLevelTab:
         address_set = set({blk.address_base for blk in self.prj.block_insts})
         max_address = max(address_set) + 0x10000
 
-        block_inst.inst_name = name
+        block_inst.name = name
         block_inst.address_base = max_address
 
         self.prj.block_insts.append(block_inst)

@@ -31,6 +31,7 @@ from .block import Block
 from .block_inst import BlockInst
 from .register_inst import RegisterInst
 from .export import ExportData
+from .addrmap import AddressMap
 
 
 class ProjectReader:
@@ -50,6 +51,10 @@ class ProjectReader:
         self.blocks = {}
         self.block_insts = []
         self.reg_exports = defaultdict(list)
+        self.inst2set = {}
+        self.name2blk = {}
+        self.name2blkinst = {}
+        self.map_groups = {}
 
     def open(self, name):
         """Opens and reads an XML file"""
@@ -150,29 +155,30 @@ class ProjectReader:
     def start_grouping(self, attrs):
         """Called when a grouping tag is found"""
 
-        self._current_blk_inst = BlockInst()
-        self._prj.block_insts.append(self._current_blk_inst)
-
-        self._current_blk_inst.inst_name = attrs["name"]
-        self._current_blk_inst.block = attrs["name"]
-        self._current_blk_inst.address_base = int(attrs["start"], 16)
-
-        self._current_blk_inst.repeat = int(attrs.get("repeat", "1"))
-
-        if attrs["name"] not in self.blocks:
+        if attrs["name"] not in self.name2blk:
             self.new_block = Block(
                 attrs["name"],
                 int(attrs.get("repeat_offset", 0x10000)),
                 attrs.get("title", ""),
             )
-            self.blocks[self.new_block.name] = self.new_block
+            self.blocks[self.new_block.uuid] = self.new_block
+            self.name2blk[self.new_block.name] = self.new_block.uuid
         else:
-            self.new_block = self.blocks[self.new_block.name]
+            self.new_block = self.blocks[self.new_block.uuid]
+
+        self._current_blk_inst = BlockInst(attrs["name"])
+        self.name2blkinst[attrs["name"]] = self._current_blk_inst.uuid
+        self._prj.block_insts.append(self._current_blk_inst)
+
+        self._current_blk_inst.blkid = self.new_block.uuid
+        self._current_blk_inst.address_base = int(attrs["start"], 16)
+        self._current_blk_inst.repeat = int(attrs.get("repeat", "1"))
 
     def start_map(self, attrs):
 
         """Called when a map tag is found"""
         sname = attrs["set"]
+        self.inst2set[attrs["inst"]] = sname
 
         data = RegisterInst(
             sname,
@@ -190,13 +196,16 @@ class ProjectReader:
 
     def start_address_map(self, attrs):
         """Called when an address tag is found"""
-        name = attrs["name"]
-        base = int(attrs.get("base", 0), 16)
-        width = int(attrs.get("width", 4))
-        fixed = bool(int(attrs.get("fixed", 1)))
-        uvm = bool(int(attrs.get("no_uvm", 0)))
-        self._prj.set_address_map(name, base, width, fixed, uvm)
-        self._current_map = attrs["name"]
+        address_map = AddressMap(
+            attrs["name"],
+            int(attrs.get("base", 0), 16),
+            int(attrs.get("width", 4)),
+            bool(int(attrs.get("fixed", 1))),
+            bool(int(attrs.get("no_uvm", 0))),
+        )
+
+        self._prj.set_address_map(address_map)
+        self._current_map = address_map.uuid
         self._current_map_group = None
 
     def end_documentation(self, text):
@@ -221,20 +230,27 @@ class ProjectReader:
         current text string to the current group's docs variable
         """
 
-        self._current_map_group = attrs.get("name")
+        name = attrs.get("name")
 
-        if self._current_map_group == "None":
+        if name == "None":
             return
-        self._prj.add_address_map_to_block(
-            self._current_map, self._current_map_group
-        )
+
+        if self._current_map in self.map_groups:
+            self.map_groups[self._current_map].append(name)
+        else:
+            self.map_groups[self._current_map] = [name]
+
+    #        self._prj.add_address_map_to_block(
+    #            self._current_map, self._current_map_group
+    #        )
 
     def end_map_group(self, text):
         """
         Called when the map_group XML tag ended
         """
+        return
         if self._current_map_group is None:
-            self._prj.add_address_map_group(self._current_map, text)
+            self._prj.add_address_map_to_block(self._current_map, text)
 
     def start_access(self, attrs):
         "Starts the access type"
@@ -263,25 +279,45 @@ class ProjectReader:
     def end_project(self, _text):
         from collections import Counter
 
-        for blk_name in self.blocks:
+        self.reg_map = {}
+        self.reg_id = {}
+        for x in self._prj.regsets:
+            rset = self._prj.regsets[x]
+            self.reg_map[rset.name] = rset.filename
+            self.reg_id[rset.name] = rset.uuid
+
+        for blkid in self.blocks:
 
             counter = Counter()
-            for rset in self.blocks[blk_name].regset_insts:
-                counter[Path(self.reg_map[rset.set_name]).parent] += 1
+            for rset in self.blocks[blkid].regset_insts:
+                try:
+                    counter[Path(self.reg_map[rset.regset_id]).parent] += 1
+                except KeyError:
+                    print(rset.uuid, "not found")
+
+            blk = self.blocks[blkid]
+            blk.modified = True
 
             filename = (
-                Path(counter.most_common(1)[0][0]) / f"{blk_name}{BLK_EXT}"
+                Path(counter.most_common(1)[0][0]) / f"{blk.name}{BLK_EXT}"
             )
             block_dir = Path(self.path.parent).resolve()
             filename = block_dir / filename
 
-            blk = self.blocks[blk_name]
             blk.filename = Path(filename).resolve()
-            blk.modified = True
-            self._prj.blocks[blk_name] = blk
+            self._prj.blocks[blkid] = blk
 
             for reg_inst in blk.regset_insts:
-                name = reg_inst.set_name
-                blk.regsets[name] = self._prj.regsets[name]
-                path = blk.regsets[name].filename
-                blk.regsets[name].exports = self.reg_exports[str(path)]
+                name = self.inst2set[reg_inst.name]
+                uuid = self.reg_id[name]  # self._prj.regsets[name].uuid
+                blk.regsets[uuid] = self._prj.regsets[uuid]
+                path = blk.regsets[uuid].filename
+                reg_inst.regset_id = uuid
+                blk.regsets[uuid].exports = self.reg_exports[str(path)]
+
+        for map_id in self.map_groups:
+            blkinst_list = self.map_groups[map_id]
+            for blkinst_name in blkinst_list:
+                blkinst_id = self.name2blkinst[blkinst_name]
+                if blkinst_id != "":
+                    self._prj.add_address_map_to_block(map_id, blkinst_id)

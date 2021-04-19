@@ -151,7 +151,7 @@ class Build(BaseWindow):
         self.__model.append(
             row=(
                 mod,
-                regset.set_name,
+                regset.name,
                 fmt,
                 rel_dest,
                 cls,
@@ -192,15 +192,13 @@ class Build(BaseWindow):
                 except KeyError:
                     pass
 
-        for group_data in self.__prj.block_insts:
-            for export_data in self.__prj.get_group_exports(
-                group_data.inst_name
-            ):
-                self.__add_group_item_to_list(
-                    "%s (group)" % group_data.int_name,
-                    export_data.exporter,
-                    export_data.target,
-                )
+        # for group_data in self.__prj.block_insts:
+        #     for export_data in self.__prj.get_group_exports(group_data.name):
+        #         self.__add_group_item_to_list(
+        #             "%s (group)" % group_data.name,
+        #             export_data.exporter,
+        #             export_data.target,
+        #         )
 
         for export_data in self.__prj.get_project_exports():
             try:
@@ -349,7 +347,7 @@ class Build(BaseWindow):
             for i in self.__prj.get_register_set()
         ]
 
-        groups = [group.inst_name for group in self.__prj.block_insts]
+        groups = [group.name for group in self.__prj.block_insts]
 
         ExportAssistant(
             self.__prj.short_name,
@@ -373,10 +371,10 @@ class Build(BaseWindow):
             )
             self.__prj.regsets[register_set].modified = True
             self.__add_item_to_list(register_path, exporter, filename)
-        elif self.__mapopt[export_format][MapOpt.REGISTER_SET] == Level.GROUP:
-            self.__prj.add_to_group_export_list(group, exporter, filename)
-            register_path = f"{group} (group)"
-            self.__add_item_to_list(register_path, exporter, filename)
+        # elif self.__mapopt[export_format][MapOpt.REGISTER_SET] == Level.GROUP:
+        #     self.__prj.add_to_group_export_list(group, exporter, filename)
+        #     register_path = f"{group} (group)"
+        #     self.__add_item_to_list(register_path, exporter, filename)
         else:
             register_path = "<project>"
             self.__prj.add_to_project_export_list(exporter, filename)
@@ -440,11 +438,11 @@ def file_needs_rebuilt(local_dest, prj, db_paths):
             try:
                 if (
                     db_file_mtime > dest_mtime
-                    or prj.regsets[regset.set_name].modified
+                    or prj.regsets[regset.name].modified
                 ):
                     mod = True
             except:
-                print(regset.set_name)
+                pass
     return mod
 
 

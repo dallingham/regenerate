@@ -74,6 +74,7 @@ class OverridesList:
         self.add = add
         self.remove = remove
         self._model = None
+        self._used = set()
 
         self._build_table()
         self._obj.set_sensitive(True)
@@ -97,13 +98,31 @@ class OverridesList:
         self._obj.set_sensitive(True)
         self.populate()
 
+    def update_display(self):
+        self.set_menu()
+        for row in self._model:
+            data = row[OverrideCol.OBJ]
+            path = data.path
+            param = data.parameter.name
+            new_name = f"{path}.{param}"
+            if row[OverrideCol.NAME] != new_name:
+                row[OverrideCol.NAME] = new_name
+
     def populate(self):
         """
         Loads the data from the project
         """
-        self.set_menu()
+        self._model.clear()
+        self._used = set()
         for override in self.prj.overrides:
             self._model.append_instance(override)
+            self._used.add(override.parameter.uuid)
+        self.set_menu()
+
+    def build_used(self):
+        self._used = set()
+        for row in self._model:
+            self._used.add(row[-1].uuid)
 
     def set_menu(self):
         count = False
@@ -133,16 +152,19 @@ class OverridesList:
         name = self.get_selected()
         self.prj.parameters.remove(name)
         self.remove_selected()
+        self.set_menu()
         self._callback()
 
     def menu_selected(self, _obj, data):
         label, info = data
-        self._model.new_instance(label, hex(info[1].value), info)
         override = Overrides()
         override.path = info[0]
-        override.parameter = info[1].name
+        override.parameter = info[1]
         override.value = info[1].value
+        self._model.append(row=get_row_data(override))
+        self._used.add(override.parameter.uuid)
         self.prj.overrides.append(override)
+        self.set_menu()
         self._callback()
 
     def _value_changed(self, _cell, path, new_text, _col):
@@ -216,24 +238,22 @@ class OverridesList:
             return
 
         (model, node) = select_data
-        path = model.get_path(node)
-        if len(path) > 1:
-            # remove group from address map
-            pass
-        else:
-            _ = model.get_value(node, ParameterCol.NAME)
-            model.remove(node)
-            self._callback()
+        obj = model.get_value(node, OverrideCol.OBJ)
+        name = f"{obj.path}.{obj.parameter.name}"
+        self._used.remove(obj.parameter.uuid)
+        model.remove(node)
 
     def build_overrides_list(self, project):
+
+        self.build_used()
         param_list = []
         for blkinst in project.block_insts:
-            blkinst_name = blkinst.inst_name
-            block = project.blocks[blkinst.block]
+            blkinst_name = blkinst.name
+            block = project.blocks[blkinst.blkid]
             for param in block.parameters.get():
-                param_list.append(
-                    (f"{blkinst_name}.{param.name}", (blkinst, param))
-                )
+                name = f"{blkinst_name}.{param.name}"
+                if param.uuid not in self._used:
+                    param_list.append((name, (blkinst, param)))
         return param_list
 
 
@@ -241,17 +261,17 @@ class BlockOverridesList(OverridesList):
     def build_overrides_list(self, block):
         param_list = []
         for reginst in block.regset_insts:
-            regset = block.regsets[reginst.set_name]
+            regset = block.regsets[reginst.regset_id]
             for param in regset.parameters.get():
-                param_list.append(
-                    (f"{reginst.inst}.{param.name}", (reginst.inst, param))
-                )
+                name = f"{reginst.name}.{param.name}"
+                if param.uuid not in self._used:
+                    param_list.append((name, (reginst.name, param)))
         return param_list
 
 
 def get_row_data(map_obj):
     return (
-        f"{map_obj.path}.{map_obj.parameter}",
+        f"{map_obj.path}.{map_obj.parameter.name}",
         hex(int(map_obj.value)),
         map_obj,
     )

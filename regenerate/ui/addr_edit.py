@@ -122,21 +122,19 @@ class AddrMapEdit(BaseWindow):
 
         for val in subsystem_list:
             blk_inst, active = val
-            title = blk_inst.inst_name
+            title = blk_inst.name
             top = self.model.append(None, row=(active, title, "", None, None))
-            blk = project.blocks[blk_inst.block]
+            blk = project.blocks[blk_inst.blkid]
             for item in blk.regsets.values():
-                access = project.get_access(
-                    map_name, blk_inst.inst_name, item.set_name
-                )
+                access = project.get_access(map_name, blk_inst.name, item.name)
                 self.model.append(
                     top,
                     row=(
                         True,
-                        item.set_name,
+                        item.name,
                         options[access][0],
                         item,
-                        blk_inst.inst_name,
+                        blk_inst.name,
                     ),
                 )
 

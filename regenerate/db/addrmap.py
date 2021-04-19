@@ -22,9 +22,10 @@ Contains the data in the address map
 """
 
 from typing import List, Union
+from .name_base import NameBase
 
 
-class AddressMap:
+class AddressMap(NameBase):
     """Address map data"""
 
     def __init__(
@@ -35,7 +36,7 @@ class AddressMap:
         fixed: bool = False,
         uvm: bool = False,
     ):
-        self.name: str = name
+        super().__init__(name, "")
         self.base: int = base
         self.width: int = width
         self._fixed: bool = fixed
@@ -58,8 +59,12 @@ class AddressMap:
     def uvm(self, val: Union[int, bool]):
         self._uvm = bool(val)
 
+    def __hash__(self):
+        return hash(self.uuid)
+
     def json_decode(self, data):
         self.name = data["name"]
+        self.uuid = data["uuid"]
         self.base = int(data["base"], 0)
         self.width = data["width"]
         self.fixed = data["fixed"]
@@ -69,6 +74,7 @@ class AddressMap:
     def json(self):
         return {
             "name": self.name,
+            "uuid": self.uuid,
             "base": f"{self.base}",
             "width": self.width,
             "fixed": self.fixed,

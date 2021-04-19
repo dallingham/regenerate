@@ -36,7 +36,7 @@ class Sdc(ProjectWriter):
 
         self.dblist = set()
         for block_inst in project.block_insts:
-            block = project.blocks[block_inst.block]
+            block = project.blocks[block_inst.blkid]
 
             for regset in block.regsets:
                 self.dblist.add(block.regsets[regset])
@@ -51,15 +51,15 @@ class Sdc(ProjectWriter):
     def write_regset(self, dbase):
         for block_inst in self._project.block_insts:
             used = set()
-            block = self._project.blocks[block_inst.block]
+            block = self._project.blocks[block_inst.blkid]
 
             for reginst in block.regset_insts:
                 if (
-                    reginst.set_name == dbase.set_name
-                    and reginst.set_name not in used
+                    reginst.regset_id == dbase.uuid
+                    and reginst.uuid not in used
                     and reginst.hdl
                 ):
-                    used.add(reginst.set_name)
+                    used.add(reginst.uuid)
                     for reg, field in all_fields(dbase):
                         for i in range(0, reginst.repeat.resolve()):
                             base = get_signal_info(reg.address, field)[0]

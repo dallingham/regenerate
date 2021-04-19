@@ -22,10 +22,11 @@ Contains the information for register set parameters and
 project parameters.
 """
 
-from .json_base import JSONEncodable
+from .name_base import NameBase
+import uuid
 
 
-class ParameterData(JSONEncodable):
+class ParameterData(NameBase):
     """Register set parameter data"""
 
     def __init__(
@@ -35,15 +36,34 @@ class ParameterData(JSONEncodable):
         min_val: int = 0,
         max_val: int = 0xFFFF_FFFF,
     ):
-        self.name = name
+        super().__init__(name, "")
         self.value = value
         self.min_val = min_val
         self.max_val = max_val
 
+    def __hash__(self):
+        return hash(self._id)
 
-class PrjParameterData(JSONEncodable):
-    """Project parameter data"""
+    def json(self):
+        return {
+            "uuid": self._id,
+            "name": self.name,
+            "value": self.value,
+            "min_val": self.min_val,
+            "max_val": self.max_val,
+        }
 
-    def __init__(self, name, value):
-        self.name = name
-        self.value = value
+    def json_decode(self, data):
+        self._id = data["uuid"]
+        self.name = data["name"]
+        self.value = data["value"]
+        self.min_val = data["min_val"]
+        self.max_val = data["max_val"]
+
+
+# class PrjParameterData(JSONEncodable):
+#     """Project parameter data"""
+
+#     def __init__(self, name, value):
+#         self.name = name
+#         self.value = value
