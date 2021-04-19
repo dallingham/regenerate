@@ -255,10 +255,11 @@ class BitList:
     def reset_text_edit(self, _cell, path, new_val, col):
         field = self.__model.get_bitfield_at_path(path)
 
+        print(">>>", new_val, int(new_val,0))
         if re.match(r"^(0x)?[a-fA-F0-9]+$", new_val):
-            if self.check_reset(field, int(new_val, 16)) is False:
+            if self.check_reset(field, int(new_val, 0)) is False:
                 return
-            field.reset_value = int(new_val, 16)
+            field.reset_value = int(new_val, 0)
             field.reset_type = ResetType.NUMERIC
             self.__model[path][col] = reset_value(field)
             self.__model[path][BitCol.RESET_TYPE] = "Constant"
@@ -412,8 +413,7 @@ def bits(field):
 def reset_value(field):
     "Returns a string representation of the reset value."
 
-    strval = f"{field.reset_value}"
-    return "0x" + strval.zfill(int(field.width / 4))
+    return f"0x{field.reset_value:04x}"
 
 
 def get_field_reset_data(field):
