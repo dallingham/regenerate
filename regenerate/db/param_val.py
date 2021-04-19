@@ -25,6 +25,7 @@ from .json_base import JSONEncodable
 class ParamValue(JSONEncodable):
     def __init__(self, value=0, is_parameter=False):
         self.is_parameter = is_parameter
+        self.offset = 0
         self.value: Union(int, str) = value
 
     def __repr__(self) -> str:
@@ -41,8 +42,9 @@ class ParamValue(JSONEncodable):
         self.value = value
         self.is_parameter = False
 
-    def set_param(self, value: str) -> None:
+    def set_param(self, value: str, offset: int = 0) -> None:
         self.value = value
+        self.offset = offset
         self.is_parameter = True
 
     def resolve(self, regset_name=None) -> int:
@@ -50,17 +52,18 @@ class ParamValue(JSONEncodable):
             return self.value
 
         resolver = ParameterResolver()
-        return resolver.resolve(self.value, regset=regset_name)
+        return resolver.resolve(self.value, regset=regset_name) + self.offset
 
     def json_decode(self, data):
         self.is_parameter = data["is_parameter"]
+        self.offset = data["offset"]
         if self.is_parameter:
             self.value = data["value"]
         else:
             self.value = int(data["value"], 0)
 
     def json(self):
-        val = {"is_parameter": self.is_parameter}
+        val = {"is_parameter": self.is_parameter, "offset": self.offset}
         if self.is_parameter:
             val["value"] = self.value
         else:
