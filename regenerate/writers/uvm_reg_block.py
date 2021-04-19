@@ -73,7 +73,7 @@ class UVMRegBlockRegisters(ProjectWriter):
         return group_maps
 
     def _used_maps(self) -> Set[str]:
-        return set({addr_map.name for addr_map in self.uvm_address_maps()})
+        return set({addr_map.uuid for addr_map in self.uvm_address_maps()})
 
     def write(self, filename: Path) -> None:
         """

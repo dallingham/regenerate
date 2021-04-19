@@ -397,7 +397,7 @@ class RegProject:
         for data in self.address_maps.values():
             if map_id == data.uuid:
                 return data.width
-        LOGGER.error("Address map not found (%s)", name)
+        LOGGER.error("Address map not found (%s)", map_id)
         return None
 
     def set_access(
