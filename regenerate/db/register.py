@@ -310,7 +310,7 @@ class Register(NameBase):
     @property
     def dimension_str(self) -> str:
         """Returns the dimension as a string, not resolving parameters"""
-        return str(self._dimension)
+        return self._dimension.int_str()
 
     @property
     def token(self) -> str:

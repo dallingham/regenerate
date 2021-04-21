@@ -37,5 +37,6 @@ from .proj_reader import ProjectReader
 from .proj_writer import ProjectWriter
 from .addrmap import AddressMap
 from .parammap import ParameterData
+from .param_val import ParamValue
 from .enums import *
 from .logger import *

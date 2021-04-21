@@ -148,7 +148,7 @@ package {{prj.short_name}}_reg_pkg;
          option.per_instance = 1;
 
            {% for field in reg.get_bit_fields_with_values() %}
-         {{fix_name(field)|upper}}: coverpoint {{field.name|lower}}.value[{{field.msb}}:{{field.lsb}}] {
+         {{fix_name(field)|upper}}: coverpoint {{field.name|lower}}.value[{{field.msb.resolve()}}:{{field.lsb}}] {
                {% for value in field.values %}
             bins {{fix_name(field)}}_{{value.value}} = {'h{{value.value}} };
                {% endfor %}
@@ -163,7 +163,7 @@ package {{prj.short_name}}_reg_pkg;
 
          {% for field in reg.get_bit_fields() %}
            {% if reg.flags.do_not_cover == False and field.values|length == 0 %}
-             {% for i in range(field.lsb, field.msb+1) %}
+             {% for i in range(field.lsb, field.msb.resolve()+1) %}
                {% if field.is_read_only() == 0 %}
          {{fix_name(field)|upper}}_W{{i}}: coverpoint (m_data[{{i}}]) iff (!m_is_read && m_be[{{(i/8)|int}}]);
                {% endif %}

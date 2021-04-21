@@ -46,7 +46,7 @@ def find_addresses(
 
     for inst in found_groups:
         for x_map in x_addr_maps:
-            groups_in_addr_map = project.get_blocks_in_address_map(x_map.name)
+            groups_in_addr_map = project.get_blocks_in_address_map(x_map.uuid)
             if inst.inst in groups_in_addr_map:
                 addr_maps.add(x_map)
 
@@ -61,7 +61,7 @@ def find_addresses(
                     address_list.append(_reg_addr(register, offset))
                 else:
                     for map_name in addr_maps:
-                        map_base = project.get_address_base(map_name.name)
+                        map_base = project.get_address_base(map_name.uuid)
                         offset = (
                             map_base
                             + inst.offset
@@ -81,7 +81,7 @@ def find_addresses(
                         address_list.append(_reg_addr(register, offset))
                     else:
                         for map_name in addr_maps:
-                            base = project.get_address_base(map_name.name)
+                            base = project.get_address_base(map_name.uuid)
                             offset = (
                                 inst.base
                                 + inst.offset

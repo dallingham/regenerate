@@ -23,6 +23,7 @@ from typing import List, Tuple
 from .name_base import NameBase
 from .enums import BitType, ResetType
 from .bit_values import BitValues
+from .param_val import ParamValue
 from .json_base import JSONEncodable
 
 
@@ -123,7 +124,7 @@ class BitField(NameBase):
         self.flags = BitFieldFlags()
 
         self.lsb = start
-        self.msb = stop
+        self.msb = ParamValue(stop)
 
         self._output_signal = ""
         self.output_has_side_effect = False
@@ -178,13 +179,13 @@ class BitField(NameBase):
         """Build the name of the field, including bit positions if needed."""
         if self.width == 1:
             return self.name
-        return f"{self.name}[{self.msb}:{self.lsb}]"
+        return f"{self.name}[{self.msb.value}:{self.lsb}]"
 
     def bit_range(self) -> str:
         """Return the bit range of the field."""
         if self.width == 1:
             return str(self.lsb)
-        return f"[{self.msb}:{self.lsb}]"
+        return f"[{self.msb.value}:{self.lsb}]"
 
     @property
     def reset_value(self) -> int:
@@ -205,12 +206,12 @@ class BitField(NameBase):
         return 0
 
     @property
-    def stop_position(self) -> int:
+    def stop_position(self) -> ParamValue:
         """Return the most significant bit of the field."""
         return self.msb
 
     @stop_position.setter
-    def stop_position(self, value: int):
+    def stop_position(self, value: ParamValue):
         """Set the most significant bit of the field."""
         self.msb = value
 
@@ -227,7 +228,7 @@ class BitField(NameBase):
     @property
     def width(self) -> int:
         """Return the width in bits of the bit field."""
-        return self.msb - self.lsb + 1
+        return self.msb.resolve() - self.lsb + 1
 
     def resolved_output_signal(self) -> str:
         """
@@ -303,7 +304,8 @@ class BitField(NameBase):
         self.use_output_enable = data["use_output_enable"]
         self.field_type = data["field_type"]
         self.lsb = data["lsb"]
-        self.msb = data["msb"]
+        self.msb = ParamValue()
+        self.msb.json_decode(data["msb"])
         self.output_has_side_effect = data["output_has_side_effect"]
         self.output_is_static = data["output_is_static"]
 

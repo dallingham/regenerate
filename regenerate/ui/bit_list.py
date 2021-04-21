@@ -70,7 +70,7 @@ class BitModel(Gtk.ListStore):
         node = self.append(
             row=[
                 None,
-                str(field.msb),
+                field.msb.int_str(),
                 str(field.lsb),
                 field.name,
                 TYPE2STR[field.field_type][0],
@@ -98,11 +98,11 @@ class BitList:
     # Title, Size, Sort, Expand, Monospace
     BIT_COLS = (
         ("", 20, -1, False, False),
-        ("MSB", 90, -1, False, True),
-        ("LSB", 90, BitCol.SORT, False, True),
+        ("MSB", 120, -1, False, True),
+        ("LSB", 80, BitCol.SORT, False, True),
         ("Name", 60, BitCol.NAME, True, True),
         ("Type", 300, -1, True, False),
-        ("Reset", 160, -1, False, True),
+        ("Reset", 130, -1, False, True),
     )
 
     def __init__(self, obj, selection_changed, modified):
@@ -130,6 +130,9 @@ class BitList:
     def set_parameters(self, parameters):
         my_parameters = sorted([(p.name, p.name) for p in parameters])
         self.reset_column.update_menu(my_parameters)
+
+        msb_parameters = sorted([(f"{p.name}-1", p.name) for p in parameters])
+        self.msb_column.update_menu(msb_parameters)
 
     def set_model(self, model):
         "Associates a List Model with the list view."
@@ -173,9 +176,15 @@ class BitList:
                     col[BIT_TITLE], self.field_name_edit, i, col[BIT_MONO]
                 )
             elif i == BitCol.MSB:
-                column = EditableColumn(
-                    col[BIT_TITLE], self.update_msb, i, col[BIT_MONO]
+                column = MyComboMapColumn(
+                    col[BIT_TITLE],
+                    self._msb_menu,
+                    self._msb_text,
+                    [],
+                    i,
+                    col[BIT_MONO],
                 )
+                self.msb_column = column
             elif i == BitCol.LSB:
                 column = EditableColumn(
                     col[BIT_TITLE], self.update_lsb, i, col[BIT_MONO]
@@ -328,12 +337,12 @@ class BitList:
         if self.check_for_width(field.lsb, stop) is False:
             return
 
-        if stop != field.msb:
-            field.msb = stop
+        if stop != field.msb.value:
+            field.msb.set_int(stop)
             self.__model.register.change_bit_field(field)
             self.__modified()
 
-        self.__model[path][BitCol.MSB] = f"{field.msb}"
+        self.__model[path][BitCol.MSB] = f"{field.msb.value}"
 
     def update_lsb(self, _cell, path, new_text, _col):
         """
@@ -348,10 +357,10 @@ class BitList:
         field = self.__model.get_bitfield_at_path(path)
         start = int(new_text, 0)
 
-        if self.check_for_overlaps(field, start, field.msb) is False:
+        if self.check_for_overlaps(field, start, field.msb.resolve()) is False:
             return
 
-        if self.check_for_width(start, field.msb) is False:
+        if self.check_for_width(start, field.msb.resolve()) is False:
             return
 
         if start != field.lsb:
@@ -379,7 +388,7 @@ class BitList:
         return True
 
     def check_reset(self, field, value):
-        maxval = (1 << ((field.msb - field.lsb) + 1)) - 1
+        maxval = (1 << ((field.msb.resolve() - field.lsb) + 1)) - 1
         if value > maxval:
             self.show_msg(
                 "Reset value (0x%x) is greater than the maximum value (0x%x)"
@@ -394,7 +403,7 @@ class BitList:
         used = set()
         for fld in register.get_bit_fields():
             if fld != field:
-                for bit in range(fld.lsb, fld.msb + 1):
+                for bit in range(fld.lsb, fld.msb.resolve() + 1):
                     used.add(bit)
 
         for bit in range(start, stop + 1):
@@ -404,6 +413,47 @@ class BitList:
                 )
                 return False
         return True
+
+    def _msb_menu(self, cell, path, node, _col):
+        """
+        Called when text has been edited. Selects the correct function
+        depending on the edited column
+        """
+        model = cell.get_property("model")
+        field = self.__model[path][-1]
+        field.msb.is_parameter = True
+        field.msb.offset = -1
+        field.msb.value = model.get_value(node, 1)
+        self.__model[path][BitCol.MSB] = model.get_value(node, 0)
+        self.__modified()
+
+    def _msb_text(self, _cell, path, new_text, _col):
+        """
+        Called when text has been edited. Selects the correct function
+        depending on the edited column
+        """
+        field = self.__model[path][-1]
+        new_text = new_text.strip()
+        try:
+            value = int(new_text, 0)
+            if value < 1:
+                LOGGER.warning(
+                    "The dimension for a register must be 1 or greater"
+                )
+                return
+            field.msb.is_parameter = False
+            field.msb.offset = 0
+            field.msb.value = int(new_text, 0)
+        except ValueError:
+            ...
+            # if new_text in self._parameter_names:
+            #     self._reg_update_dim(register, path, new_text)
+            # else:
+            #     LOGGER.warning(
+            #         '"%s" is not a valid dimension. It must be an '
+            #         "integer greater than 1 or a defined parameter",
+            #         new_text,
+            #     )
 
 
 def reset_value(field):

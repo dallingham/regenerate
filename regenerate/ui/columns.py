@@ -225,6 +225,7 @@ class MyComboMapColumn(BaseColumn):
         self.renderer.set_property("model", self._model)
         self.renderer.set_property("has-entry", True)
         self.renderer.set_property("editable", True)
+        self.renderer.set_property("family", "Monospace")
         self.renderer.connect("changed", menu_callback, source_column)
         self.renderer.connect("edited", text_callback, source_column)
 

@@ -158,12 +158,12 @@ def individual_access(field: BitField, reg: Register) -> int:
     for x_field in [
         fld for fld in flds if fld != field and not is_readonly(fld)
     ]:
-        for pos in range(x_field.lsb, x_field.msb + 1):
+        for pos in range(x_field.lsb, x_field.msb.resolve() + 1):
             used_bytes.add(pos // 8)
 
     # loop through the bytes used by the current field, and make sure they
     # do match any of the bytes used by other fields
-    for pos in range(field.lsb, field.msb + 1):
+    for pos in range(field.lsb, field.msb.resolve() + 1):
         if pos // 8 in used_bytes:
             return 0
     return 1

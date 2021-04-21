@@ -36,6 +36,7 @@ from regenerate.db import (
     BitType,
     RegisterDb,
     RegProject,
+    ParamValue,
 )
 from regenerate.writers.writer_base import WriterBase, ExportInfo, ProjectType
 from regenerate.writers.verilog_reg_def import REG
@@ -103,16 +104,16 @@ def reset_value(field: BitField, start: int, stop: int) -> str:
     return "{0}[{1}:{2}]".format(field.reset_parameter, stop, start)
 
 
-def break_into_bytes(start: int, stop: int) -> List[Tuple[int, int]]:
+def break_into_bytes(start: int, stop: ParamValue) -> List[Tuple[int, int]]:
     """
     Return a list of byte boundaries from the start and stop values
     """
     index = start
     data = []
 
-    while index <= stop:
+    while index <= stop.resolve():
         next_boundary = (int(index // 8) + 1) * 8
-        data.append((index, min(stop, next_boundary - 1)))
+        data.append((index, min(stop.resolve(), next_boundary - 1)))
         index = next_boundary
     return data
 
@@ -144,8 +145,8 @@ class Verilog(WriterBase):
     def __init__(self, project: RegProject, dbase: RegisterDb):
         super().__init__(project, dbase)
 
-        self.input_logic = "input       "
-        self.output_logic = "output      "
+        self.input_logic = "input"
+        self.output_logic = "output"
         self.always = "always"
         self.reg_type = "reg"
 
@@ -183,7 +184,7 @@ class Verilog(WriterBase):
         quantities
         """
         start = max(field.lsb, lower)
-        stop = min(field.msb, lower + size - 1)
+        stop = min(field.msb.resolve(), lower + size - 1)
 
         nbytes = int(size // 8)
         address = int(register.address // nbytes) * nbytes
@@ -210,7 +211,9 @@ class Verilog(WriterBase):
                 self._used_types.add(field.field_type)
                 offset = 0
                 for lower in range(0, register.width, size):
-                    if in_range(field.lsb, field.msb, lower, lower + size - 1):
+                    if in_range(
+                        field.lsb, field.msb.resolve(), lower, lower + size - 1
+                    ):
                         data = self._byte_info(
                             field, register, lower, size, offset
                         )
@@ -408,7 +411,7 @@ class SystemVerilog(Verilog):
 
     def __init__(self, project, dbase):
         super().__init__(project, dbase)
-        self.input_logic = "input logic "
+        self.input_logic = "input logic"
         self.output_logic = "output logic"
         self.always = "always_ff"
         self.reg_type = "logic"
@@ -510,15 +513,15 @@ def build_output_signals(dbase, cell_info):
                 root = sig.split("[")
                 wild = sig.split("*")
                 if len(root) == 1:
-                    if field.msb == field.lsb:
+                    if field.msb.resolve() == field.lsb:
                         scalar_ports.append((sig, "", reg.dimension_str))
                     else:
                         dim[sig] = reg.dimension_str
-                        for i in range(field.lsb, field.msb + 1):
+                        for i in range(field.lsb, field.msb.resolve() + 1):
                             array_ports[sig].append(i)
                 elif len(wild) > 1:
                     dim[root[0]] = reg.dimension_str
-                    for i in range(field.lsb, field.msb + 1):
+                    for i in range(field.lsb, field.msb.resolve() + 1):
                         array_ports[root[0]].append(i)
                 else:
                     match = BUS_SLICE.match(sig)
@@ -571,25 +574,25 @@ def build_logic_list(_dbase, word_fields, cell_info):
     for addr in word_fields:
         val = word_fields[addr]
         for (field, _, _, start_pos, stop_pos, _, reg) in val:
-            if field.msb == field.lsb:
+            if field.msb.resolve() == field.lsb:
                 if reg.dimension_is_param():
                     reg_list.append(
                         (
                             reg_field_name(reg, field)
                             + "[%s]" % reg.dimension_str,
-                            "        ",
+                            "",
                         )
                     )
                 else:
                     reg_list.append((reg_field_name(reg, field), "        "))
             else:
-                vect = f"[{stop_pos}:{start_pos}]      "
+                vect = f"[{stop_pos}:{start_pos}]"
                 if reg.dimension_is_param():
                     reg_list.append(
                         (
                             reg_field_name(reg, field)
                             + "[%s]" % reg.dimension_str,
-                            vect[0:8],
+                            vect,
                         )
                     )
                 else:
@@ -606,7 +609,7 @@ def build_logic_list(_dbase, word_fields, cell_info):
                                         reg.dimension_str,
                                     )
                                 ),
-                                "        ",
+                                "",
                             )
                         )
                     else:
@@ -617,7 +620,7 @@ def build_logic_list(_dbase, word_fields, cell_info):
                                         reg_field_name(reg, field), byte[0]
                                     )
                                 ),
-                                "        ",
+                                "",
                             )
                         )
     return reg_list
@@ -630,42 +633,38 @@ def build_input_signals(dbase, cell_info):
             cinfo = cell_info[field.field_type]
             if cinfo.has_control:
                 if reg.dimension_is_param():
-                    name = "{}[{}]".format(
-                        field.control_signal, reg.dimension_str
-                    )
-                    signals.add((name, "        "))
+                    name = f"{field.control_signal}[{reg.dimension_str}]"
+                    signals.add((name, ""))
                 elif reg.dimension > 1:
-                    name = "{}[{}]".format(field.control_signal, reg.dimension)
-                    signals.add((name, "        "))
+                    name = f"{field.control_signal}[{reg.dimension}]"
+                    signals.add((name, ""))
                 else:
-                    signals.add((field.control_signal, "        "))
+                    signals.add((field.control_signal, ""))
             if (
                 cinfo.has_input
                 and field.input_signal
                 and field.input_signal not in signals
             ):
                 if field.width == 1:
-                    vector = "        "
+                    vector = ""
                 else:
-                    vector = "[{}:{}]      ".format(field.msb, field.lsb)
+                    vector = f"[{field.msb.int_str()}:{field.lsb}]"
                 if reg.dimension_is_param():
                     signals.add(
                         (
-                            "{}[{}]".format(
-                                field.input_signal, reg.dimension_str
-                            ),
-                            vector[0:8],
+                            f"{field.input_signal}[{reg.dimension_str}]",
+                            vector,
                         )
                     )
                 elif reg.dimension > 1:
                     signals.add(
                         (
-                            "{}[{}]".format(field.input_signal, reg.dimension),
-                            vector[0:8],
+                            f"{field.input_signal}[{reg.dimension}]",
+                            vector,
                         )
                     )
                 else:
-                    signals.add((field.input_signal, vector[0:8]))
+                    signals.add((field.input_signal, vector))
     return sorted(signals)
 
 
@@ -683,11 +682,9 @@ def build_oneshot_assignments(word_fields, cell_info):
                 else:
                     name = f"{fld.output_signal}_1S"
                 or_list = []
-                for byte in break_into_bytes(fld.lsb, fld.msb):
+                for byte in break_into_bytes(fld.lsb, fld.msb.resolve()):
                     or_list.append(
-                        "r{:x}_{}_{}_1S".format(
-                            reg.address, fld.name.lower(), byte[0]
-                        )
+                        f"r{reg.address:x}_{fld.name.lower()}_{byte[0]}_1S"
                     )
                 assign_list.append((name, " | ".join(or_list)))
     return assign_list
@@ -827,11 +824,11 @@ def make_one_shot(name: str, reg: Register):
     """Builds the one shot signal from the name and dimenstion"""
 
     if reg.dimension_is_param():
-        signal = (f"{name}_1S[{reg.dimension_str}]", "        ")
+        signal = (f"{name}_1S[{reg.dimension_str}]", "")
     elif reg.dimension > 1:
-        signal = (f"{name}_1S[{reg.dimension}]", "        ")
+        signal = (f"{name}_1S[{reg.dimension}]", "")
     else:
-        signal = (f"{name}_1S", "        ")
+        signal = (f"{name}_1S", "")
     return signal
 
 

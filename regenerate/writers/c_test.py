@@ -162,7 +162,7 @@ class CTest(WriterBase):
                 BitType.READ_WRITE_PROTECT_1S,
                 BitType.READ_WRITE_CLR_1S_1,
             ):
-                for i in range(rng.lsb, rng.msb + 1):
+                for i in range(rng.lsb, rng.msb.resolve() + 1):
                     value = value | (1 << i)
         return value
 

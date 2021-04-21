@@ -35,8 +35,21 @@ class ParamValue(JSONEncodable):
 
     def __str__(self) -> str:
         if self.is_parameter:
-            return self.value
+            if self.offset > 0:
+                return f"{self.value}+{self.offset}"
+            if self.offset < 0:
+                return f"{self.value}{self.offset}"
+            return f"{self.value}"
         return f"0x{self.value:x}"
+
+    def int_str(self) -> str:
+        if self.is_parameter:
+            if self.offset > 0:
+                return f"{self.value}+{self.offset}"
+            if self.offset < 0:
+                return f"{self.value}{self.offset}"
+            return f"{self.value}"
+        return f"{self.value:}"
 
     def set_int(self, value: int) -> None:
         self.value = value
