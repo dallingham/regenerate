@@ -575,7 +575,7 @@ class RegSetTab:
         field = BitField()
         field.lsb = next_pos
 
-        field.msb = field.lsb
+        field.msb.set_int(field.lsb)
         field.name = "BIT%d" % field.lsb
         field.output_signal = ""
         if register.share == ShareType.WRITE:

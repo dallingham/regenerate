@@ -221,6 +221,32 @@ class Verilog(WriterBase):
                         offset += size // 8
         return item_list
 
+    def build_register_list(self):
+
+        code_registers = [
+            reg
+            for reg in self._dbase.get_all_registers()
+            if not reg.flags.do_not_generate_code
+        ]
+
+        reglist = []
+        for reg in code_registers:
+            if reg.dimension_is_param():
+                new_reg = copy.copy(reg)
+                reglist.append(new_reg)
+            elif reg.dimension > 1:
+                for i in range(0, reg.dimension):
+                    new_reg = copy.copy(reg)
+                    new_reg.address = reg.address + (i * int(reg.width // 8))
+                    new_reg.dimension = i
+                    reglist.append(new_reg)
+            else:
+                new_reg = copy.copy(reg)
+                new_reg.dimension = -1
+                reglist.append(new_reg)
+
+        return reglist
+
     def write(self, filename: Path):
         """
         Write the data to the file as a SystemVerilog package. This includes
@@ -241,25 +267,7 @@ class Verilog(WriterBase):
 
         template = env.get_template("verilog.template")
 
-        reglist = []
-        for reg in [
-            r
-            for r in self._dbase.get_all_registers()
-            if not r.flags.do_not_generate_code
-        ]:
-            if reg.dimension_is_param():
-                new_reg = copy.copy(reg)
-                reglist.append(new_reg)
-            elif reg.dimension > 1:
-                for i in range(0, reg.dimension):
-                    new_reg = copy.copy(reg)
-                    new_reg.address = reg.address + (i * int(reg.width // 8))
-                    new_reg.dimension = i
-                    reglist.append(new_reg)
-            else:
-                new_reg = copy.copy(reg)
-                new_reg.dimension = -1
-                reglist.append(new_reg)
+        reglist = self.build_register_list()
 
         word_fields = self.__generate_group_list(reglist, self._data_width)
 
@@ -280,9 +288,7 @@ class Verilog(WriterBase):
             else "~"
         )
 
-        parameters = []
-        for para in self._dbase.parameters.get():
-            parameters.append((31, 0, para[0], para[1]))
+        parameters = self._dbase.parameters.get()
 
         input_signals = build_input_signals(self._dbase, self._cell_info)
         standard_ports = build_standard_ports(self._dbase)
@@ -456,15 +462,17 @@ def build_write_address_selects(
     for addr in word_fields:
         rval = addr >> LOWER_BIT[dbase.ports.data_bus_width]
 
+        write_signal = f"write_r{addr:02x}"
+        write_width = (
+            dbase.ports.address_bus_width
+            - LOWER_BIT[dbase.ports.data_bus_width]
+        )
+        write_addr = f"{write_width}'h{rval:x}"
+
         assigns.append(
             (
-                "write_r%02x" % addr,
-                "%d'h%x"
-                % (
-                    dbase.ports.address_bus_width
-                    - LOWER_BIT[dbase.ports.data_bus_width],
-                    rval,
-                ),
+                write_signal,
+                write_addr,
                 word_fields[addr][0][-1],
             )
         )
@@ -480,14 +488,17 @@ def build_read_address_selects(dbase, word_fields, cell_info):
             if not cell_info[field.field_type].has_rd:
                 continue
             lower_bit = LOWER_BIT[dbase.ports.data_bus_width]
+
+            read_signal = f"read_r{addr:02x}"
+            read_addr = "%d'h%x" % (
+                dbase.ports.address_bus_width - lower_bit,
+                addr >> lower_bit,
+            )
+
             assigns.append(
                 (
-                    "read_r%02x" % addr,
-                    "%d'h%x"
-                    % (
-                        dbase.ports.address_bus_width - lower_bit,
-                        addr >> lower_bit,
-                    ),
+                    read_signal,
+                    read_addr,
                     word_fields[addr][0][-1],
                 )
             )
@@ -555,15 +566,14 @@ def build_output_signals(dbase, cell_info):
 def make_scalar(name, vect, dim):
     """Converts the name, vect, and dim into a signal"""
 
-    vect = vect + "         "
     if isinstance(dim, str) or dim > 1:
         try:
             val = int(dim)
             if val > 1:
-                return (f"{name}[{dim}]", vect[0:8])
+                return (f"{name}[{dim}]", vect)
             return (name, vect[0:8])
         except ValueError:
-            return (f"{name}[{dim}]", vect[0:8])
+            return (f"{name}[{dim}]", vect)
     else:
         return (name, vect[0:8])
 
@@ -584,9 +594,9 @@ def build_logic_list(_dbase, word_fields, cell_info):
                         )
                     )
                 else:
-                    reg_list.append((reg_field_name(reg, field), "        "))
+                    reg_list.append((reg_field_name(reg, field), ""))
             else:
-                vect = f"[{stop_pos}:{start_pos}]"
+                vect = f"[{stop_pos}:{start_pos}] "
                 if reg.dimension_is_param():
                     reg_list.append(
                         (

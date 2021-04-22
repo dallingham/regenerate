@@ -16,7 +16,7 @@ module {{db.module_name}}
 {% if parameters|length > 0 %}
    #(
 {%   for p in parameters %}
-    parameter int {{p[2]}} = {{p[3]}}{% if not loop.last %},{% endif %}
+    parameter int {{p.name}} = {{p.value}}{% if not loop.last %},{% endif %}
 
 {%   endfor %}
     )
@@ -32,30 +32,38 @@ module {{db.module_name}}
     {{input_logic}} {{port_width['write_data']}} {{ports['write_data']}},
 {% endif %}
 {% for (signal, vector) in input_signals %}
+  {% if vector == "" %}
+    {{input_logic}} {{signal}},
+  {% else %}
     {{input_logic}} {{vector}} {{signal}},
+  {% endif %}
 {% endfor %}
 {% for (signal, vector) in output_signals %}
+  {% if vector == "" %}
+    {{output_logic}} {{signal}},
+  {% else %}
     {{output_logic}} {{vector}} {{signal}},
+  {% endif %}
 {% endfor %}
 {% if db.use_interface %}
     mgmt_interface.target MGMT
 {% else %}
-    {{output_logic}} {{"[%d:0]"|format(db.ports.data_bus_width-1)}} {{ports['read_data']}},
+    {{output_logic}} {{"[%d:0]" % (db.ports.data_bus_width-1,)}} {{ports['read_data']}},
     {{output_logic}} {{ports['ack']}}
 {% endif %}
    );
 
-   genvar i;
+   genvar i, j;
    
 /*
  * Register Declarations
  */
 {% for r in reg_list %}
-   {{reg_type}} {{r[1]}} {{r[0]}};
+   {{reg_type}} {{r[1]}}{{r[0]}};
 {% endfor %}
-   {{reg_type}}          prev_write;
-   {{reg_type}}          prev_read;
-   {{reg_type}} [{{db.ports.data_bus_width-1}}:0]   mux_rdata;
+   {{reg_type}} prev_write;
+   {{reg_type}} prev_read;
+   {{reg_type}} [{{db.ports.data_bus_width-1}}:0] mux_rdata;
 
 {% for wire_name, comp_list in reg_read_output %}
    wire {{wire_name[1]}} {{wire_name[0]}};
@@ -64,6 +72,7 @@ module {{db.module_name}}
 /*
  * Address Selects
  */
+   wire wr_strb = ~prev_write & {{ports['write_strobe']}};
 {% for data in write_address_selects %}
 {%   if data[2].dimension_is_param() %}
    wire {{data[0]}}[{{data[2].dimension_str}}];
@@ -79,13 +88,14 @@ module {{db.module_name}}
 {%   if data[2].dimension_is_param() %}
    generate
       for (i=0 ; i < {{data[2].dimension_str}}; i++) begin : g_{{data[0]}}
-         assign {{data[0]}}[i] = (~prev_write & {{ports['write_strobe']}}) & ({{ports['addr']}} == ({{data[1]}} + i));
+         assign {{data[0]}}[i] = wr_strb & ({{ports['addr']}} == ({{data[1]}} + i));
       end
    endgenerate
 {%   else %}
-   assign {{data[0]}} = (~prev_write & {{ports['write_strobe']}}) & ({{ports['addr']}} == {{data[1]}});
+   assign {{data[0]}} = wr_strb & ({{ports['addr']}} == {{data[1]}});
 {%   endif %}
 {% endfor %}
+// DNA {{read_address_selects}}
 {% for data in read_address_selects %}
 {%   if data[2].dimension_is_param() %}
    generate
@@ -97,7 +107,6 @@ module {{db.module_name}}
    assign {{data[0]}} = (~prev_read & {{ports['read_strobe']}}) & ({{ports['addr']}} == {{data[1]}});
 {%   endif %}   
 {% endfor %}
-
 
 /*
  * Output Assignments
@@ -124,34 +133,22 @@ module {{db.module_name}}
 /*------------------------------------------------------------------------------
  * Field       : {{field.name}}
  * Type        : {{ci.type_descr}}
-{%     if stop_pos == start_pos %}
- * Bit         : {{start_pos}}
-{% else %}
- * Bits        : {{stop_pos}}:{{start_pos}}
-{% endif %}
+ * MSB         : {{stop_pos}}
+ * LSB         : {{start_pos}}
  * Register    : {{reg.name}}
  * Address     : {{"%08x"|format(reg.address)}}
-{%     if field.reset_type == 0 %}
- * Reset Value : {{field.width}}'h{{"%x"|format(field.reset_value)}}
-{%     elif field.reset_type == 1 %}
- * Reset Value : {{field.reset_input}}
-{%     else %}
- * Reset Value : {{field.reset_value}}
-{%     endif %}
+ * Reset Value : {{field.reset_string()}}
  *------------------------------------------------------------------------------
  */
 {%   if reg.dimension_is_param() %}
 generate
-   for (i = 0; i < {{reg.dimension_str}}; i++) begin : g_r{{"%02x"|format(reg.address)}}
+   for (i = 0; i < {{reg.dimension_str}}; i++) begin : g_r{{"%02x" % reg.address}}
 {%   endif %}
-
 {%   if field.field_type == 0 %}
     assign {{reg_field_name(reg, field)}} = {{full_reset_value(field)}};
-
 {%   elif field.field_type == 1 %}
 {%     if reg.dimension >= 0 %}
     assign {{reg_field_name(reg, field)}} = {{field.input_signal}}[{{reg.dimension}}];
-
 {%     else %}
     assign {{reg_field_name(reg, field)}} = {{field.input_signal}};
 
@@ -174,9 +171,9 @@ generate
       .RSTn   ({{ports['reset']}}),
 {%      if ci.is_read_only == False %}
 {%         if reg.dimension_is_param() %}
-      .WE     (write_r{{"%02x"|format(addr)}}[i]),
+      .WE     (write_r{{"%02x" % addr}}[i]),
 {%         else %}
-      .WE     (write_r{{"%02x"|format(addr)}}),
+      .WE     (write_r{{"%02x" % addr}}),
 {%         endif %}
 {%        if bus_stop == bus_start %}
       .DI     ({{ports['write_data']}}[{{bus_start}}]),
@@ -186,7 +183,7 @@ generate
       .BE     ({{ports['byte_strobe']}}[{{bus_start // 8}}]),
 {%      endif %}
 {%      if ci.has_rd %}
-      .RD     (read_r{{"%02x"|format(addr)}}),
+      .RD     (read_r{{"%02x" % addr}}),
 {%      endif %}
 {%      if ci.has_control %}
 {%        if reg.dimension_is_param() %}
