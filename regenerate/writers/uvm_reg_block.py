@@ -32,6 +32,7 @@ from regenerate.db import (
     Register,
     AddressMap,
     BlockInst,
+    Block,
     TYPES,
 )
 
@@ -66,11 +67,29 @@ class UVMRegBlockRegisters(ProjectWriter):
 
     def _build_group_maps(self) -> Dict[BlockInst, Set[str]]:
         group_maps = {}
-        for blk_inst in self._project.block_insts:
-            group_maps[
-                blk_inst
-            ] = self._project.get_address_maps_used_by_block(blk_inst.name)
+        id2blkinst = {}
+        for blkinst in self._project.block_insts:
+            id2blkinst[blkinst.uuid] = blkinst
+        
+        for map_id in self._project.address_maps:
+            addr_map = self._project.address_maps[map_id]
+
+            for blkid in addr_map.blocks:
+                blkinst = id2blkinst[blkid]
+                if blkinst not in group_maps:
+                    group_maps[blkinst] = set()
+                group_maps[blkinst].add(map_id)
         return group_maps
+        # for blkinst in self._project.block_insts:
+        #     print(blkinst)
+        #     map_list = self._project.get_address_maps_used_by_block(blkinst.blkid)
+        #     print("dna>", blkinst, map_list)
+        #     group_maps[blkinst] = map_list
+        # # for blk_inst in self._project.block_insts:
+        # #     map_list = self._project.get_address_maps_used_by_block(blk_inst.blkid)
+        # #     group_maps[blk_inst] = map_list
+        # #     print(map_list)
+        # return group_maps
 
     def _used_maps(self) -> Set[str]:
         return set({addr_map.name for addr_map in self.uvm_address_maps()})
@@ -115,6 +134,7 @@ class UVMRegBlockRegisters(ProjectWriter):
 
         data_set = []
         group_maps = self._build_group_maps()
+        print('-->', group_maps)
         for blk_inst in self._project.block_insts:
             for regset_inst in self._project.blocks[
                 blk_inst.blkid
@@ -126,6 +146,7 @@ class UVMRegBlockRegisters(ProjectWriter):
                         group_maps[blk_inst],
                     )
                 )
+        print("==>", data_set)
         return data_set
 
     def get_used_databases(self) -> Set[RegisterDb]:

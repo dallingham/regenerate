@@ -88,16 +88,12 @@ class InstMdl(Gtk.TreeStore):
 
         node = self.get_iter(path)
         self.set_value(node, InstCol.INST, text)
+        
+        obj = self.get_value(node, InstCol.OBJ)
+        obj.name = text
+        print(self.project.block_insts)
+        print("Callback", self.callback)
         self.callback()
-
-        if len(path.split(":")) == 1:
-            obj = self.get_value(node, InstCol.OBJ)
-            obj.inst_name = text
-            self.project.change_subsystem_name(old_value, text)
-        else:
-            pnode = self.get_iter(path.split(":")[0])
-            parent = self.get_value(pnode, InstCol.INST)
-            self.project.change_instance_name(parent, old_value, text)
 
     def change_hdl(self, path, text):
         """
@@ -259,28 +255,37 @@ class InstanceList:
 
         if self.__project is None:
             return
-        blocks = sorted(
+        block_insts = sorted(
             self.__project.block_insts, key=lambda x: x.address_base
         )
 
         self.__model.clear()
-        for item in blocks:
-            block = self.__project.blocks[item.blkid]
+        for blk_inst in block_insts:
+            block = self.__project.blocks[blk_inst.blkid]
             self.need_subsystem = False
             node = self.__model.append(
                 None,
                 row=build_row_data(
-                    item.name,
+                    blk_inst.name,
                     block.name,
-                    item.address_base,
-                    item.repeat,
-                    item.hdl_path,
-                    item,
+                    blk_inst.address_base,
+                    blk_inst.repeat,
+                    blk_inst.hdl_path,
+                    blk_inst,
                 ),
             )
 
     def __build_instance_table(self):
         """Build the table, adding the columns"""
+
+        column = EditableColumn(
+            "Block Instance", self.instance_inst_changed, InstCol.INST
+        )
+        column.set_sort_column_id(InstCol.INST)
+        column.set_min_width(200)
+        column.set_resizable(True)
+        self.__obj.append_column(column)
+        self.__col = column
 
         column = EditableColumn(
             "Block Name",
@@ -291,15 +296,6 @@ class InstanceList:
         column.set_min_width(150)
         column.set_resizable(True)
         self.__obj.append_column(column)
-
-        column = EditableColumn(
-            "Block Instance", self.instance_inst_changed, InstCol.INST
-        )
-        column.set_sort_column_id(InstCol.INST)
-        column.set_min_width(200)
-        column.set_resizable(True)
-        self.__obj.append_column(column)
-        self.__col = column
 
         column = EditableColumn(
             "Address base", self.instance_base_changed, InstCol.BASE, True
@@ -340,38 +336,43 @@ class InstanceList:
         Updates the data model when the text value is changed in the model.
         """
         self.inst_changed("change_inst", path, new_text)
+        self.modified_callback()
 
     def instance_base_changed(self, _cell, path, new_text, _col):
         """
         Updates the data model when the text value is changed in the model.
         """
         self.inst_changed("change_base", path, new_text)
+        self.modified_callback()
 
     def instance_format_changed(self, _cell, path, new_text, _col):
         """
         Updates the data model when the text value is changed in the model.
         """
         self.inst_changed("change_format", path, new_text)
+        self.modified_callback()
 
     def instance_hdl_changed(self, _cell, path, new_text, _col):
         """
         Updates the data model when the text value is changed in the model.
         """
         self.inst_changed("change_hdl", path, new_text)
+        self.modified_callback()
 
     def instance_repeat_changed(self, _cell, path, new_text, _col):
         """
         Updates the data model when the text value is changed in the model.
         """
         self.inst_changed("change_repeat", path, new_text)
+        self.modified_callback()
 
 
 def build_row_data(inst, name, offset, rpt, hdl, obj):
     """Build row data from the data"""
 
     row = (
-        inst,
         name,
+        inst,
         "0x{:08x}".format(offset),
         offset,
         "{:d}".format(rpt),

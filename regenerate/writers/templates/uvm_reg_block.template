@@ -279,6 +279,7 @@ package {{prj.short_name}}_reg_pkg;
        {% endif %}
      {% endif %}
    {% endfor %}
+   // {{grp_map}}
    {% for map in grp_map %}
     uvm_reg_map {{grp_map[map].name}}_map;
    {% endfor %}
@@ -525,9 +526,9 @@ package {{prj.short_name}}_reg_pkg;
 {% endfor %}
 
   /* Top level register block */
-  class {{prj.short_name}}__reg_block extends uvm_reg_block;
+  class {{prj.short_name}}_reg_block extends uvm_reg_block;
 
-     `uvm_object_utils({{prj.short_name}}__reg_block)
+     `uvm_object_utils({{prj.short_name}}_reg_block)
 {% for grp in group_maps %}
 {%   if grp.repeat > 1 %}
      {{grp.name}}__blk {{grp.name}}[{{grp.repeat}}];
@@ -612,7 +613,7 @@ package {{prj.short_name}}_reg_pkg;
         lock_model();
      endfunction: build
 
-  endclass : {{prj.short_name}}__reg_block
+  endclass : {{prj.short_name}}_reg_block
 
 endpackage : {{prj.short_name}}_reg_pkg
 

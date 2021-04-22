@@ -345,18 +345,24 @@ class RegProject:
         else:
             return self.block_insts
 
-    def get_address_maps_used_by_block(self, map_id: str):
+    def get_address_maps_used_by_block(self, blk_id: str):
         """Returns the address maps associated with the specified group."""
 
         used_in_uvm = set(
-            {m.name for m in self.address_maps.values() if m.uvm == 0}
+            {m.uuid for m in self.address_maps.values() if m.uvm == 0}
         )
-
-        return [
-            key
-            for key in self.address_maps
-            if key in used_in_uvm and map_id in self.address_maps[key].blocks
-        ]
+        map_list = []
+        for key in self.address_maps:
+            print("**", blk_id, self.address_maps[key].blocks)
+            if key in used_in_uvm and blk_id in self.address_maps[key].blocks:
+                map_list.append(key)
+        return map_list
+                
+        # return [
+        #     key
+        #     for key in self.address_maps
+        #     if key in used_in_uvm and map_id in self.address_maps[key].blocks
+        # ]
 
     def get_block_from_inst(self, name: str) -> Block:
         return self.blocks[name]
@@ -462,32 +468,28 @@ class RegProject:
         to find the old reference, and replaces it with the new
         reference
         """
-        import traceback
-
-        traceback.print_stack()
-
         # Search access map to find items to replace. We must
         # delete the old entry, and create a new entry. Since
         # we cannot delete in the middle of a search, we must save
         # the matches we found. After we identify them, we can
         # delete the items we found.
 
-        to_delete = []
-        for access_map in self.access_map:
-            for subsys in self.access_map[access_map]:
-                if subsys == old:
-                    to_delete.append((access_map, old, cur))
+        # to_delete = []
+        # for access_map in self.access_map:
+        #     for subsys in self.access_map[access_map]:
+        #         if subsys == old:
+        #             to_delete.append((access_map, old, cur))
 
-        for (access_map, nold, ncur) in to_delete:
-            self.access_map[access_map][ncur] = self.access_map[access_map][
-                nold
-            ]
-            del self.access_map[access_map][nold]
+        # for (access_map, nold, ncur) in to_delete:
+        #     self.access_map[access_map][ncur] = self.access_map[access_map][
+        #         nold
+        #     ]
+        #     del self.access_map[access_map][nold]
 
-        # Search groups for items to rename. Just change the name
-        for g_data in self._groupings:
-            if g_data.name == old:
-                g_data.name = cur
+        # # Search groups for items to rename. Just change the name
+        # for g_data in self._groupings:
+        #     if g_data.name == old:
+        #         g_data.name = cur
         self._modified = True
 
     def change_instance_name(self, subsystem, old, cur):
@@ -496,9 +498,6 @@ class RegProject:
         instance in the identified subsystem. Updates the access
         map and the groupings.
         """
-        import traceback
-
-        traceback.print_stack()
 
         # Search access maps for items to rename. Search each
         # map, for instances of the specified subsystem, then
@@ -508,25 +507,25 @@ class RegProject:
         # to be changed, since we cannot alter the dictionary
         # as we search it.
 
-        to_delete = []
-        for access_map in self.access_map:
-            for obj in self.access_map[access_map][subsystem]:
-                if obj == old:
-                    to_delete.append((access_map, subsystem, cur, old))
-
-        for (access_map, subsys, ncur, nold) in to_delete:
-            self.access_map[access_map][subsys][ncur] = self.access_map[
-                access_map
-            ][subsys][nold]
-            del self.access_map[access_map][subsys][nold]
-
-        # Search groups for items to rename
-        for g_data in self._groupings:
-            if g_data.name == subsystem:
-                for ginst in g_data.register_sets:
-                    if ginst.inst == old:
-                        ginst.inst = cur
         self._modified = True
+        # to_delete = []
+        # for access_map in self.access_map:
+        #     for obj in self.access_map[access_map][subsystem]:
+        #         if obj == old:
+        #             to_delete.append((access_map, subsystem, cur, old))
+
+        # for (access_map, subsys, ncur, nold) in to_delete:
+        #     self.access_map[access_map][subsys][ncur] = self.access_map[
+        #         access_map
+        #     ][subsys][nold]
+        #     del self.access_map[access_map][subsys][nold]
+
+        # # Search groups for items to rename
+        # for g_data in self._groupings:
+        #     if g_data.name == subsystem:
+        #         for ginst in g_data.register_sets:
+        #             if ginst.inst == old:
+        #                 ginst.inst = cur
 
     def change_file_suffix(self, original: str, new: str):
         """Changes the suffix of the files in the file list"""
