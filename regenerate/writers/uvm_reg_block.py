@@ -35,6 +35,7 @@ from regenerate.db import (
     AddressMap,
     BlockInst,
     Block,
+    AddressMap,
     TYPES,
 )
 
@@ -102,8 +103,8 @@ class UVMRegBlockRegisters(ProjectWriter):
         # #     print(map_list)
         # return group_maps
 
-    def _used_maps(self) -> Set[str]:
-        return set({addr_map.name for addr_map in self.uvm_address_maps()})
+    def _used_maps(self) -> Set[AddressMap]:
+        return set(self.uvm_address_maps())
 
     def write(self, filename: Path) -> None:
         """
