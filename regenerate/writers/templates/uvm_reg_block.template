@@ -404,12 +404,12 @@ class {{grp.name}}__{{db.name}}__regset extends uvm_reg_block;
 
 
    {% if grp_map|length == 1 %}
-     {% for map in grp_map %}
-      {{prj.address_maps[map].name}}_map = build_address_map("{{prj.address_maps[map].name}}_map", {{8 * prj.get_address_width(map.uuid)}}, s_access_map["{{prj.address_maps[map].name}}"][extract_path(get_full_name())]);
+     {% for mapid in grp_map %}
+      {{prj.address_maps[mapid].name}}_map = build_address_map("{{prj.address_maps[map].name}}_map", {{8 * prj.get_address_width(mapid)}}, s_access_map["{{prj.address_maps[mapid].name}}"][extract_path(get_full_name())]);
      {% endfor %}
    {% else %}
-     {% for map in grp_map %}
-      if (!disable_{{prj.address_maps[map].name}}_map) {{prj.address_maps[map].name}}_map = build_address_map("{{prj.address_maps[map].name}}_map", {{8 * prj.get_address_width(map.uuid)}}, s_access_map["{prj.address_maps[map].name}}"][extract_path(get_full_name())]);
+     {% for mapid in grp_map %}
+      if (!disable_{{prj.address_maps[mapid].name}}_map) {{prj.address_maps[mapid].name}}_map = build_address_map("{{prj.address_maps[mapid].name}}_map", {{8 * prj.get_address_width(mapid)}}, s_access_map["{prj.address_maps[mapid].name}}"][extract_path(get_full_name())]);
      {% endfor %}
    {% endif %}
 
