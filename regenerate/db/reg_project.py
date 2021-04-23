@@ -353,17 +353,10 @@ class RegProject:
         )
         map_list = []
         for key in self.address_maps:
-            print("**", blk_id, self.address_maps[key].blocks)
             if key in used_in_uvm and blk_id in self.address_maps[key].blocks:
                 map_list.append(key)
         return map_list
                 
-        # return [
-        #     key
-        #     for key in self.address_maps
-        #     if key in used_in_uvm and map_id in self.address_maps[key].blocks
-        # ]
-
     def get_block_from_inst(self, name: str) -> Block:
         return self.blocks[name]
 

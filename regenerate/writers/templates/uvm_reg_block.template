@@ -405,15 +405,11 @@ class {{grp.name}}__{{db.name}}__regset extends uvm_reg_block;
 
    {% if grp_map|length == 1 %}
      {% for mapid in grp_map %}
-   // {{map_id}}
-   //
-   {#
-      {{prj.address_maps[mapid].name}}_map = build_address_map("{{prj.address_maps[mapid].name}}_map", {{8 * prj.get_address_width(mapid)}}, s_access_map["{{prj.address_maps[mapid].name}}"][extract_path(get_full_name())]);
-      #}
+      {{prj.address_maps[mapid].name}}_map = build_address_map("{{prj.address_maps[mapid].name}}_map", {{8 * prj.get_address_width(mapid)}}, s_access_map["{{mapid}}"][extract_path(get_full_name())]);
      {% endfor %}
    {% else %}
      {% for mapid in grp_map %}
-      if (!disable_{{prj.address_maps[mapid].name}}_map) {{prj.address_maps[mapid].name}}_map = build_address_map("{{prj.address_maps[mapid].name}}_map", {{8 * prj.get_address_width(mapid)}}, s_access_map["{prj.address_maps[mapid].name}}"][extract_path(get_full_name())]);
+      if (!disable_{{prj.address_maps[mapid].name}}_map) {{prj.address_maps[mapid].name}}_map = build_address_map("{{prj.address_maps[mapid].name}}_map", {{8 * prj.get_address_width(mapid)}}, s_access_map["mapid"][extract_path(get_full_name())]);
      {% endfor %}
    {% endif %}
 
@@ -564,9 +560,10 @@ class {{grp.name}}__{{db.name}}__regset extends uvm_reg_block;
 {% endfor %}
 
 {% for grp in group_maps %}
+// {{grp}} : {{grp.hdl}} :
   {% if grp.repeat <= 1 %}
         {{grp.name}} = {{grp.name}}__blk::type_id::create("{{grp.name}}");
-        {{grp.name}}.configure(this, "{{grp.hdl}}");
+        {{grp.name}}.configure(this, "{{grp.hdl_path}}");
     {% if used_maps|length > 1 %}
       {% for set in group_maps[grp] %}
         {{grp.name}}.disable_{{set}}_map = disable_{{set}}_map;

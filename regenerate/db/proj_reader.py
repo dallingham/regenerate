@@ -173,6 +173,7 @@ class ProjectReader:
         self._current_blk_inst.blkid = self.new_block.uuid
         self._current_blk_inst.address_base = int(attrs["start"], 16)
         self._current_blk_inst.repeat = int(attrs.get("repeat", "1"))
+        self._current_blk_inst.hdl_path = attrs.get("hdl", "")
 
     def start_map(self, attrs):
 
