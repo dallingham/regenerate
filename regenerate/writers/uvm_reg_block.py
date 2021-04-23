@@ -25,6 +25,8 @@ import time
 from pathlib import Path
 from typing import List, Set, Dict
 from jinja2 import Environment
+from collections import namedtuple
+
 from regenerate.db import (
     RegProject,
     RegisterDb,
@@ -38,6 +40,15 @@ from regenerate.db import (
 
 from ..extras.remap import REMAP_NAME
 from .writer_base import ExportInfo, ProjectWriter, ProjectType
+
+GroupData = namedtuple(
+    "GroupData",
+    [
+        "name",
+        "repeat",
+    ],
+)
+
 
 ACCESS_MAP = {}
 for i in TYPES:
@@ -70,7 +81,7 @@ class UVMRegBlockRegisters(ProjectWriter):
         id2blkinst = {}
         for blkinst in self._project.block_insts:
             id2blkinst[blkinst.uuid] = blkinst
-        
+
         for map_id in self._project.address_maps:
             addr_map = self._project.address_maps[map_id]
 
@@ -134,7 +145,7 @@ class UVMRegBlockRegisters(ProjectWriter):
 
         data_set = []
         group_maps = self._build_group_maps()
-        print('-->', group_maps)
+        print(">>>", group_maps)
         for blk_inst in self._project.block_insts:
             for regset_inst in self._project.blocks[
                 blk_inst.blkid
@@ -146,7 +157,7 @@ class UVMRegBlockRegisters(ProjectWriter):
                         group_maps[blk_inst],
                     )
                 )
-        print("==>", data_set)
+        print("-->", data_set)
         return data_set
 
     def get_used_databases(self) -> Set[RegisterDb]:
