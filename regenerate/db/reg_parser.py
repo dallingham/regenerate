@@ -381,16 +381,7 @@ class RegParser:
         Called when the token tag is terminated. The text is the
         register token value.
         """
-        # force the generation of a new ID if a duplicate is found
-
-        if text in self.existing_ids:
-            text = uuid.uuid4().hex
-        self.existing_ids.add(text)
-
-        if self.__field:
-            self.__field.uuid = text
-        else:
-            self.__reg.uuid = text
+        ...
 
     def end_ram_size(self, text):
         """

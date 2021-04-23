@@ -21,7 +21,7 @@
 Provides the base cass for the register and bitfield
 """
 
-import uuid
+import secrets
 from .json_base import JSONEncodable
 
 
@@ -68,7 +68,7 @@ class NameBase(JSONEncodable):
         """Returns the UUID or creates a new unique one if one doesn't exist"""
 
         if not self._id:
-            self._id = uuid.uuid4().hex
+            self._id = secrets.token_hex(6)
         return self._id
 
     @uuid.setter

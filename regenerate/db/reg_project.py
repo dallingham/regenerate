@@ -400,10 +400,11 @@ class RegProject:
 
     def get_address_width(self, map_id: str):
         """Returns the width of the address group"""
-        for data in self.address_maps.values():
-            if map_id == data.uuid:
-                return data.width
-        LOGGER.error("Address map not found (%s)", map_id)
+        try:
+            return self.address_maps[map_id].width
+        except KeyError:
+            LOGGER.error("Address map not found (%s) - valid %s",
+                         map_id, list(self.address_maps.keys()))
         return None
 
     def set_access(
