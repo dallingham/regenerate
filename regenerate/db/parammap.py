@@ -23,7 +23,6 @@ project parameters.
 """
 
 from .name_base import NameBase
-import uuid
 
 
 class ParameterData(NameBase):
@@ -46,7 +45,7 @@ class ParameterData(NameBase):
 
     def json(self):
         return {
-            "uuid": self._id,
+            "uuid": self.uuid,
             "name": self.name,
             "value": self.value,
             "min_val": self.min_val,
@@ -54,16 +53,8 @@ class ParameterData(NameBase):
         }
 
     def json_decode(self, data):
-        self._id = data["uuid"]
+        self.uuid = data["uuid"]
         self.name = data["name"]
         self.value = data["value"]
         self.min_val = data["min_val"]
         self.max_val = data["max_val"]
-
-
-# class PrjParameterData(JSONEncodable):
-#     """Project parameter data"""
-
-#     def __init__(self, name, value):
-#         self.name = name
-#         self.value = value

@@ -459,7 +459,6 @@ class Register(NameBase):
             "name": self.name,
             "uuid": self._id,
             "description": self.description,
-            "parameters": self._parameter_list,
             "token": self._token,
             "address": f"{self.address}",
             "flags": self.flags,
@@ -477,12 +476,6 @@ class Register(NameBase):
         self.description = data["description"]
         self._dimension = ParamValue()
         self._dimension.json_decode(data["dimension"])
-
-        self._parameter_list = []
-        for param_json in data["parameters"]:
-            prm = ParameterData()
-            prm.json_decode(param_json)
-            self._parameter_list.append(prm)
 
         self._token = data["token"]
         self.address = int(data["address"], 0)

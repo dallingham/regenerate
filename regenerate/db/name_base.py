@@ -30,6 +30,8 @@ class NameBase(JSONEncodable):
     Provides the command items between a Register and a BitField
     """
 
+    __slots__ = ("_name", "_id", "description")
+
     def __init__(self, name: str = "", id_val: str = ""):
         self._name = name
         self._id = id_val

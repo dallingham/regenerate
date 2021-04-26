@@ -8,7 +8,7 @@
 //   signals
 // ----------------------------------------------------------------------
 //
-// Copyright 2016 {{db.organization}}. All rights reserved.
+// Copyright {{year}} {{db.organization}}. All rights reserved.
 //
 //
 //
@@ -53,7 +53,7 @@ module {{db.module_name}}
 {% endif %}
    );
 
-   genvar i, j;
+   genvar dim, bitpos;
    
 /*
  * Register Declarations
@@ -95,7 +95,6 @@ module {{db.module_name}}
    assign {{data[0]}} = wr_strb & ({{ports['addr']}} == {{data[1]}});
 {%   endif %}
 {% endfor %}
-// DNA {{read_address_selects}}
 {% for data in read_address_selects %}
 {%   if data[2].dimension_is_param() %}
    generate
@@ -127,140 +126,83 @@ module {{db.module_name}}
 {% endfor %}
    assign {{ports['read_data']}} = mux_rdata;
 
-{% for addr, val in word_fields|dictsort %}
-{%   for (field, start_offset, stop_offset, start_pos, stop_pos, faddr, reg) in val %}
+{% for reg in db.get_all_registers() %}
+{%   for field in reg.get_bit_fields() %}
 {%     set ci = cell_info[field.field_type] %}
+
 /*------------------------------------------------------------------------------
  * Field       : {{field.name}}
  * Type        : {{ci.type_descr}}
- * MSB         : {{stop_pos}}
- * LSB         : {{start_pos}}
+ * MSB         : {{field.msb.int_str()}}
+ * LSB         : {{field.lsb}}
  * Register    : {{reg.name}}
- * Address     : {{"%08x"|format(reg.address)}}
+ * Address     : {{"%08x" % reg.address}}
  * Reset Value : {{field.reset_string()}}
  *------------------------------------------------------------------------------
  */
-{%   if reg.dimension_is_param() %}
+{% set faddr_str = "%02x" % reg.address + "_" + field.name %}
+{%     if reg.dimension_is_param() %}
+{%       set dimval = "[dim]" %}
 generate
-   for (i = 0; i < {{reg.dimension_str}}; i++) begin : g_r{{"%02x" % reg.address}}
-{%   endif %}
-{%   if field.field_type == 0 %}
-    assign {{reg_field_name(reg, field)}} = {{full_reset_value(field)}};
-{%   elif field.field_type == 1 %}
-{%     if reg.dimension >= 0 %}
-    assign {{reg_field_name(reg, field)}} = {{field.input_signal}}[{{reg.dimension}}];
+   for (dim = 0; dim < {{reg.dimension_str}}; dim++) begin : g_r{{"%02x" % reg.address}}
 {%     else %}
-    assign {{reg_field_name(reg, field)}} = {{field.input_signal}};
-
+{%       set dimval = "" %}
 {%     endif %}
-{%   else %}
-{%     for start, stop in break_into_bytes(field.lsb, field.msb) %}
-{%        set reg_start_bit = ((reg.address * 8) % db.ports.data_bus_width) %}
-{%        set bus_start = (start % db.ports.data_bus_width) + reg_start_bit %}
-{%        set bus_stop = (stop % db.ports.data_bus_width) + reg_start_bit %}
+{%     if field.field_type == 0 %}
+    assign {{reg_field_name(reg, field)}}{{dimval}} = {{full_reset_value(field)}};
+{%     elif field.field_type == 1 %}
+    assign {{reg_field_name(reg, field)}}{{dimval}} = {{field.input_signal}}{{dimval}};
+{%     else %}
+{%       if field.msb.is_parameter or field.msb.value > field.lsb %}
+{%          set pos = "[bitpos]" %}
+{%          set wpos = "[bitpos]" %}
+{%          set rval = "pRST%s" % faddr_str %}
+{%          set bytepos = "bitpos >> 3" %}
+localparam bit [{{field.msb.int_str()}}:{{field.lsb}}] {{rval}} = {{field.reset_vstr()}};
+
+generate
+   for (bitpos = {{field.lsb}}; bitpos <= {{field.msb.int_str()}}; bitpos++) begin : g{{faddr_str.lower()}}
+{%       else %}
+{%          set pos = "" %}
+{%          set wpos = "[%d]" % field.lsb %}
+{%          set rval = field.reset_vstr() %}
+{%          set bytepos = "%d" % (field.lsb // 8,) %}
+{%       endif %}      
+{%     set reg_start_bit = ((reg.address * 8) % db.ports.data_bus_width) %}
    {{db.module_name}}_{{ci.name}}_reg
      #(
-{%      if ci.allows_wide %}
-       .WIDTH ({{stop - start + 1}}),
-{%      endif %}
-       .RVAL  ({{reset_value(field, start, stop)}})
+       .RVAL ({{rval}}{{pos}})
        )
-   {{reg_field_name(reg, field)}}_{{start}}
+   {{reg_field_name(reg, field)}}
      (
-      .CLK    ({{ports['clk']}}),
-      .RSTn   ({{ports['reset']}}),
-{%      if ci.is_read_only == False %}
-{%         if reg.dimension_is_param() %}
-      .WE     (write_r{{"%02x" % addr}}[i]),
-{%         else %}
-      .WE     (write_r{{"%02x" % addr}}),
-{%         endif %}
-{%        if bus_stop == bus_start %}
-      .DI     ({{ports['write_data']}}[{{bus_start}}]),
-{%        else %}
-      .DI     ({{ports['write_data']}}[{{bus_stop}}:{{bus_start}}]),
-{%        endif %}
-      .BE     ({{ports['byte_strobe']}}[{{bus_start // 8}}]),
-{%      endif %}
-{%      if ci.has_rd %}
-      .RD     (read_r{{"%02x" % addr}}),
-{%      endif %}
-{%      if ci.has_control %}
-{%        if reg.dimension_is_param() %}
-      .LD     ({{field.control_signal}}[i]),
-{%        elif reg.dimension >= 0 %}
-      .LD     ({{field.control_signal}}[{{reg.dimension}}]),
-{%        else %}
-      .LD     ({{field.control_signal}}),
-{%        endif %}
-{%      endif %}
-{%      if ci.has_input %}
-{%        if stop == start %}
-{%          if reg.dimension_is_param() %}
-{%            if field.lsb == field.msb %}
-      .IN     ({{field.input_signal}}[i]),
-{%            else %}      
-      .IN     ({{field.input_signal}}[i][{{stop}}]),
-{%            endif %}      
-{%          elif reg.dimension >= 0 %}
-{%            if start == stop %}
-{%               if field.lsb == field.msb %}
-      .IN     ({{field.input_signal}}[{{reg.dimension}}]),
-{%               else %}      
-      .IN     ({{field.input_signal}}[{{reg.dimension}}][{{stop}}]),
-{%               endif %}      
-{%            else %}      
-      .IN     ({{field.input_signal}}[{{reg.dimension}}][{{stop}}:{{start}}]),
-{%            endif %}      
-{%          else %}
-{%            if field.lsb == field.msb %}
-      .IN     ({{field.input_signal}}),
-{%            else %}
-      .IN     ({{field.input_signal}}[{{start}}]),
-{%            endif %}
-{%          endif %}
-{%        else %}
-{%          if reg.dimension_is_param() %}
-      .IN     ({{field.input_signal}}[i][{{stop}}:{{start}}]),
-{%          elif reg.dimension >= 0 %}
-      .IN     ({{field.input_signal}}[{{reg.dimension}}][{{stop}}:{{start}}]),
-{%          else %}
-      .IN     ({{field.input_signal}}[{{stop}}:{{start}}]),
-{%          endif %}
-{%        endif %}
-{%      endif %}
-{%      if ci.has_oneshot %}
-      .DO_1S  ({{reg_field_name(reg, field)}}_{{start}}_1S),
-{%      endif %}
-{%      if stop == start %}
-{%        if field.lsb == field.msb %}
-{%           if reg.dimension_is_param() %}
-      .DO     ({{reg_field_name(reg, field)}}[i])
-{%           else %}
-      .DO     ({{reg_field_name(reg, field)}})
-{%           endif %}
-{%        else %}
-{%           if reg.dimension_is_param() %}
-      .DO     ({{reg_field_name(reg, field)}}[i][{{start}}])
-{%           else %}
-      .DO     ({{reg_field_name(reg, field)}}[{{start}}])
-{%           endif %}
-{%        endif %}
-{%      else %}
-{%         if reg.dimension_is_param() %}
-      .DO     ({{reg_field_name(reg, field)}}[i][{{stop}}:{{start}}])
-{%         else %}
-      .DO     ({{reg_field_name(reg, field)}}[{{stop}}:{{start}}])
-{%         endif %}
-{%      endif %}
+      .CLK   ({{ports['clk']}}),
+      .RSTn  ({{ports['reset']}}),
+{%       if ci.is_read_only == False %}
+      .WE    (write_r{{"%02x" % reg.address}}{{dimval}}),
+      .DI    ({{ports['write_data']}}{{wpos}}),
+      .BE    ({{ports['byte_strobe']}}[{{bytepos}}]),
+{%       endif %}
+{%       if ci.has_rd %}
+      .RD    (read_r{{"%02x" % reg.address}}),
+{%       endif %}
+{%       if ci.has_control %}
+      .LD    ({{field.control_signal}}{{dimval}}{{pos}}),
+{%       endif %}
+{%       if ci.has_input %}
+      .IN    ({{field.input_signal}}{{dimval}}{{pos}}),
+{%       endif %}
+{%       if ci.has_oneshot %}
+      .DO_1S ({{reg_field_name(reg, field)}}_1S{{pos}}),
+{%       endif %}
+      .DO    ({{reg_field_name(reg, field)}}{{dimval}}{{pos}})
      );
 
-{%     endfor %}
-{%   if reg.dimension_is_param() %}
+{%     endif %}
+{%     if field.msb.is_parameter or field.msb.value > field.lsb %}
     end
  endgenerate
-{%   endif %}
-{%   endif %}
+{%     endif %}
+
 {%   endfor %}
 {% endfor %}
 
@@ -313,12 +255,10 @@ generate
 {%- endfor %}
 
             end else begin
-	       mux_rdata <= ({{ports['addr']}}[3] : '0 : '1;
+	       mux_rdata <= {{db.ports.data_bus_width}}'h0;
             end
          end
       end
    end
 
 endmodule
-
-

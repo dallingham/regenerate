@@ -93,23 +93,23 @@ class BitField(NameBase):
         "values",
     )
 
-    # __slots__ = (
-    #     "_input_signal",
-    #     "_output_signal",
-    #     "_reset_value",
-    #     "control_signal",
-    #     "field_type",
-    #     "lsb",
-    #     "modified",
-    #     "msb",
-    #     "output_has_side_effect",
-    #     "output_is_static",
-    #     "reset_input",
-    #     "reset_parameter",
-    #     "reset_type",
-    #     "use_output_enable",
-    #     "values",
-    # )
+    __slots__ = (
+        "_input_signal",
+        "_output_signal",
+        "_reset_value",
+        "control_signal",
+        "field_type",
+        "lsb",
+        "modified",
+        "_msb",
+        "output_has_side_effect",
+        "output_is_static",
+        "reset_input",
+        "reset_parameter",
+        "reset_type",
+        "use_output_enable",
+        "values",
+    )
 
     def __init__(self, stop: int = 0, start: int = 0):
         """Initialize the bitfield."""
@@ -150,6 +150,7 @@ class BitField(NameBase):
     @staticmethod
     def set_parameters(values) -> None:
         """Set the parameter value list."""
+        print(">>>", values)
         BitField.PARAMETERS = values
 
     def __eq__(self, other):
@@ -218,6 +219,11 @@ class BitField(NameBase):
         if self.reset_type == ResetType.PARAMETER:
             return self.reset_parameter
         return hex(self._reset_value)
+
+    def reset_vstr(self) -> str:
+        if self.reset_type == ResetType.PARAMETER:
+            return self.reset_parameter
+        return f"'h{self._reset_value}"
 
     @property
     def stop_position(self) -> ParamValue:

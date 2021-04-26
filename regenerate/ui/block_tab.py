@@ -394,7 +394,7 @@ class BlockTab:
         obj = model.get_value(node, 2)
 
         model.remove(node)
-        self.project.remove_block(obj.name)
+        self.project.remove_block(obj.uuid)
         self.block_remove_callback()
         self.project.modified = True
 

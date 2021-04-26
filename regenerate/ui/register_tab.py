@@ -249,8 +249,6 @@ class RegSetTab:
 
         self.bitfield_obj = BitList(
             self.widgets.bitfield_list,
-            #            self.widgets.error_infobar_label,
-            #            self.widgets.error_infobar,
             self.bit_changed,
             self.set_modified,
         )
@@ -739,24 +737,25 @@ class RegSetTab:
         self.skip_changes = True
 
         (store, node) = data
-        base = store.get_value(node, SelectCol.NAME)
+        base = store.get_value(node, SelectCol.OBJ)
         store.remove(node)
-        self.remove_regset_from_project(base)
-        self.remove_regset_from_groups(base)
+        self.remove_regset_from_project(base.uuid)
+        self.remove_regset_from_groups(base.uuid)
         self.set_modified()
         self.skip_changes = old_skip
+        self.reg_set_obj.select_path(0)
 
-    def remove_regset_from_project(self, name):
-        regset = self.project.regsets[name]
+    def remove_regset_from_project(self, uuid):
+        regset = self.project.regsets[uuid]
         self.project.remove_register_set(regset.filename)
-        del self.project.regsets[name]
+        del self.project.regsets[uuid]
 
-    def remove_regset_from_groups(self, name):
+    def remove_regset_from_groups(self, uuid):
         for key, block in self.project.blocks.items():
             new_reglist = [
                 reglist
                 for reglist in block.regset_insts
-                if reglist.set_name != name
+                if reglist.uuid != uuid
             ]
             block.regset_insts = new_reglist
 

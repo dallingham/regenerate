@@ -23,6 +23,7 @@ Actual program. Parses the arguments, and initiates the main window
 import os
 import re
 import copy
+import datetime
 from pathlib import Path
 from collections import namedtuple, defaultdict
 from typing import List, Tuple, TextIO, Set, Dict
@@ -36,7 +37,6 @@ from regenerate.db import (
     BitType,
     RegisterDb,
     RegProject,
-    ParamValue,
 )
 from regenerate.writers.writer_base import WriterBase, ExportInfo, ProjectType
 from regenerate.writers.verilog_reg_def import REG
@@ -102,20 +102,6 @@ def reset_value(field: BitField, start: int, stop: int) -> str:
     if stop == start:
         return field.reset_parameter
     return "{0}[{1}:{2}]".format(field.reset_parameter, stop, start)
-
-
-def break_into_bytes(start: int, stop: ParamValue) -> List[Tuple[int, int]]:
-    """
-    Return a list of byte boundaries from the start and stop values
-    """
-    index = start
-    data = []
-
-    while index <= stop.resolve():
-        next_boundary = (int(index // 8) + 1) * 8
-        data.append((index, min(stop.resolve(), next_boundary - 1)))
-        index = next_boundary
-    return data
 
 
 def in_range(
@@ -211,6 +197,8 @@ class Verilog(WriterBase):
                 self._used_types.add(field.field_type)
                 offset = 0
                 for lower in range(0, register.width, size):
+                    if field.msb.is_parameter:
+                        msb = field.msb.value.max
                     if in_range(
                         field.lsb, field.msb.resolve(), lower, lower + size - 1
                     ):
@@ -308,12 +296,14 @@ class Verilog(WriterBase):
         )
 
         reg_read_output = register_output_definitions(self._dbase, word_fields)
+        print(register_output_definitions2(self._dbase))
 
         # TODO: fix 64 bit registers with 32 bit width
 
         with filename.open("w") as ofile:
             ofile.write(
                 template.render(
+                    year=datetime.datetime.now().date().strftime("%Y"),
                     db=self._dbase,
                     ports=standard_ports,
                     reg_list=reg_list,
@@ -330,7 +320,6 @@ class Verilog(WriterBase):
                     cell_info=self._cell_info,
                     word_fields=word_fields,
                     assign_list=assign_list,
-                    break_into_bytes=break_into_bytes,
                     full_reset_value=full_reset_value,
                     reset_value=reset_value,
                     input_logic=self.input_logic,
@@ -571,11 +560,11 @@ def make_scalar(name, vect, dim):
             val = int(dim)
             if val > 1:
                 return (f"{name}[{dim}]", vect)
-            return (name, vect[0:8])
+            return (name, vect)
         except ValueError:
             return (f"{name}[{dim}]", vect)
     else:
-        return (name, vect[0:8])
+        return (name, vect)
 
 
 def build_logic_list(_dbase, word_fields, cell_info):
@@ -596,7 +585,7 @@ def build_logic_list(_dbase, word_fields, cell_info):
                 else:
                     reg_list.append((reg_field_name(reg, field), ""))
             else:
-                vect = f"[{stop_pos}:{start_pos}] "
+                vect = f"[{field.msb.int_str()}:{field.lsb}] "
                 if reg.dimension_is_param():
                     reg_list.append(
                         (
@@ -606,7 +595,7 @@ def build_logic_list(_dbase, word_fields, cell_info):
                         )
                     )
                 else:
-                    reg_list.append((reg_field_name(reg, field), vect[0:8]))
+                    reg_list.append((reg_field_name(reg, field), vect))
             if cell_info[field.field_type].has_oneshot:
                 for byte in break_into_bytes(start_pos, stop_pos):
                     if reg.dimension_is_param():
@@ -700,6 +689,20 @@ def build_oneshot_assignments(word_fields, cell_info):
     return assign_list
 
 
+def break_into_bytes(start: int, stop: int) -> List[Tuple[int, int]]:
+    """
+    Return a list of byte boundaries from the start and stop values
+    """
+    index = start
+    data = []
+
+    while index <= stop:
+        next_boundary = (int(index // 8) + 1) * 8
+        data.append((index, min(stop, next_boundary - 1)))
+        index = next_boundary
+    return data
+
+
 def build_assignments(word_fields):
 
     assign_list = []
@@ -744,6 +747,20 @@ def build_assignments(word_fields):
     return assign_list
 
 
+def register_output_definitions2(dbase):
+
+    full_list = []
+    reg_share = {0: "_", 1: "_r_"}
+
+    for reg in dbase.get_all_registers():
+
+        last_offset = last = dbase.ports.data_bus_width - 1
+        wire_name = f"r{reg.address:02x}"
+
+        for field in reversed(reg.get_bit_fields()):
+            print(wire_name, field.name, field.lsb, field.msb.int_str())
+
+
 def register_output_definitions(dbase, word_fields):
 
     full_list = []
@@ -751,7 +768,8 @@ def register_output_definitions(dbase, word_fields):
     for addr in word_fields:
         val = word_fields[addr]
 
-        last = dbase.ports.data_bus_width - 1
+        last_offset = last = dbase.ports.data_bus_width - 1
+
         reg = val[0][-1]
         if reg.dimension_is_param():
             wire_name = (

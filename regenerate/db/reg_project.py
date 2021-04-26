@@ -148,12 +148,12 @@ class RegProject:
     def remove_block(self, blk_id: str):
         del self.blocks[blk_id]
         self.block_insts = [
-            inst for inst in self.block_insts if inst.blk_id != blk_id
+            inst for inst in self.block_insts if inst.blkid != blk_id
         ]
         for addr_id in self.address_maps:
             addr_map = self.address_maps[addr_id]
             addr_map.blocks = [
-                map_id for map_id in addr_map.blocks if amap != blk_id
+                map_id for map_id in addr_map.blocks if addr_id != blk_id
             ]
 
     def append_register_set_to_list(self, name: Union[str, Path]):
@@ -180,8 +180,7 @@ class RegProject:
         """Removes the specified register set from the project."""
         self._modified = True
         try:
-            path2remove = os.path.relpath(path, self.path.parent)
-            self._filelist.remove(Path(path2remove).resolve())
+            self._filelist.remove(path)
         except ValueError as msg:
             LOGGER.error(str(msg))
 
@@ -356,7 +355,7 @@ class RegProject:
             if key in used_in_uvm and blk_id in self.address_maps[key].blocks:
                 map_list.append(key)
         return map_list
-                
+
     def get_block_from_inst(self, name: str) -> Block:
         return self.blocks[name]
 
@@ -396,8 +395,11 @@ class RegProject:
         try:
             return self.address_maps[map_id].width
         except KeyError:
-            LOGGER.error("Address map not found (%s) - valid %s",
-                         map_id, list(self.address_maps.keys()))
+            LOGGER.error(
+                "Address map not found (%s) - valid %s",
+                map_id,
+                list(self.address_maps.keys()),
+            )
         return None
 
     def set_access(

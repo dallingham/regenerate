@@ -30,7 +30,15 @@ class ParamValue(JSONEncodable):
 
     def __repr__(self) -> str:
         if self.is_parameter:
-            return f'ParamValue(value="{self.value}", is_parameter=True)'
+            if self.offset == 0:
+                offset = ""
+            elif self.offset > 0:
+                offset = f"+{self.offset}"
+            else:
+                offset = f"{self.offset}"
+            return (
+                f'ParamValue(value="{self.value}{offset}", is_parameter=True)'
+            )
         return f" ParamValue(value=0x{self.value:x}, is_parameter=False)"
 
     def __str__(self) -> str:
@@ -50,6 +58,15 @@ class ParamValue(JSONEncodable):
                 return f"{self.value}{self.offset}"
             return f"{self.value}"
         return f"{self.value:}"
+
+    def int_vstr(self) -> str:
+        if self.is_parameter:
+            if self.offset > 0:
+                return f"{self.value}+{self.offset}"
+            if self.offset < 0:
+                return f"{self.value}{self.offset}"
+            return f"{self.value}"
+        return f"'h{self.value:x}"
 
     def set_int(self, value: int) -> None:
         self.value = value
