@@ -27,6 +27,7 @@ class ParameterContainer:
         self._parameters: List[ParameterData] = []
 
     def setup(self, name):
+        return
         resolver = ParameterResolver()
         for parameter in self._parameters:
             resolver.add_regset_parameter(name, parameter)

@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-from typing import Dict, Tuple
+from typing import Dict, Optional
 
 from .parammap import ParameterData
 
@@ -28,52 +28,67 @@ class ParameterResolver:
             cls.instance = super(ParameterResolver, cls).__new__(cls)
         return cls.instance
 
-    top_params: Dict[str, ParameterData] = {}
-    block_params: Dict[str, ParameterData] = {}
-    regset_params: Dict[str, ParameterData] = {}
-    overrides: Dict[Tuple[str, str], int] = {}
+    top_overrides: Dict[str, Dict[str, "ParamValue"]] = {}
+    reginst_overrides: Dict[str, Dict[str, "ParamValue"]] = {}
 
     def __init__(self):
-        self.def_regset = None
-        self.def_reginst = None
-        self.def_blkinst = None
+        self.blk_inst = ""
+        self.reg_inst = ""
 
-    def default_regset(self, name: str):
-        self.def_regset = name
-
-    def default_reginst(self, name: str):
-        self.def_reginst = name
-
-    def default_blkinst(self, name: str):
-        self.def_blkinst = name
+    def clear(self):
+        self.top_overrides = {}
+        self.reginst_overrides = {}
 
     def __repr__(self):
         return "ParameterResolver()"
 
-    def add_regset_parameter(self, regset: str, data: ParameterData):
-        if regset in self.regset_params:
-            self.regset_params[regset][data.name] = data
+    def add_regset_override(
+        self, reg_inst_id: str, param_id: str, data: "ParamValue"
+    ):
+        if reg_inst_id not in self.reginst_overrides:
+            self.reginst_overrides[reg_inst_id] = {param_id: data}
         else:
-            self.regset_params[regset] = {data.name: data}
+            self.reginst_overrides[reg_inst_id][param_id] = data
 
-    def get_regset_parameters(self, regset: str):
-        return self.regset_params[regset]
+    def add_blockinst_override(
+        self, blk_inst_id: str, param_id: str, data: "ParamValue"
+    ):
+        if blk_inst_id not in self.top_overrides:
+            self.top_overrides[blk_inst_id] = {param_id: data}
+        else:
+            self.top_overrides[blk_inst_id][param_id] = data
+
+    def resolve_reg(
+        self,
+        param: ParameterData,
+    ):
+        if not self.reg_inst:
+            return param.value
+        if (
+            self.reg_inst in self.reginst_overrides
+            and param.uuid in self.reginst_overrides[self.reg_inst]
+        ):
+            return self.reginst_overrides[self.reg_inst][param.uuid]
+        return param.value
+
+    def resolve_blk(
+        self,
+        param: ParameterData,
+    ):
+        if not self.blk_inst:
+            return param.value
+        if (
+            self.blk_inst in self.top_overrides
+            and param.uuid in self.top_overrides[self.blk_inst]
+        ):
+            return self.top_overrides[self.blk_inst][param.uuid]
+        return param.value
 
     def resolve(
         self,
-        pname: str,
-        regset: str = None,
-        reg_inst: str = None,
-        block_inst: str = None,
+        param: ParameterData,
     ):
-        if reg_inst:
-            override = self.overrides.get((regset, pname))
-            if override is not None:
-                return override
-        if regset and regset in self.regset_params:
-            a = self.regset_params[regset][pname]
-            return a.value
-        if self.def_regset and self.def_regset in self.regset_params:
-            b = self.regset_params[self.def_regset][pname]
-            return b.value
-        return 0
+        val = self.resolve_reg(param)
+        if type(val) == int:
+            return val
+        return self.resolve_blk(val.value)

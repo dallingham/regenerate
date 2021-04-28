@@ -22,7 +22,29 @@ Contains the information for register set parameters and
 project parameters.
 """
 
+from typing import Dict
 from .name_base import NameBase
+
+
+class ParameterFinder:
+    def __new__(cls):
+        if not hasattr(cls, "instance"):
+            cls.instance = super(ParameterFinder, cls).__new__(cls)
+        return cls.instance
+
+    data_map: Dict[str, "ParameterData"] = {}
+
+    def __init__(self):
+        ...
+
+    def find(self, uuid):
+        return self.data_map.get(uuid)
+
+    def register(self, parameter: "ParameterData"):
+        self.data_map[parameter.uuid] = parameter
+
+    def dump(self):
+        print(self.data_map)
 
 
 class ParameterData(NameBase):
@@ -39,6 +61,8 @@ class ParameterData(NameBase):
         self.value = value
         self.min_val = min_val
         self.max_val = max_val
+
+        ParameterFinder().register(self)
 
     def __hash__(self):
         return hash(self._id)

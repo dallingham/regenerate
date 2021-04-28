@@ -19,10 +19,10 @@
 
 from typing import Union
 from .param_resolver import ParameterResolver
-from .json_base import JSONEncodable
+from .parammap import ParameterFinder
 
 
-class ParamValue(JSONEncodable):
+class ParamValue:
     def __init__(self, value=0, is_parameter=False):
         self.is_parameter = is_parameter
         self.offset = 0
@@ -77,12 +77,13 @@ class ParamValue(JSONEncodable):
         self.offset = offset
         self.is_parameter = True
 
-    def resolve(self, regset_name=None) -> int:
+    def resolve(self) -> int:
         if not self.is_parameter:
             return self.value
 
         resolver = ParameterResolver()
-        return resolver.resolve(self.value, regset=regset_name) + self.offset
+        finder = ParameterFinder()
+        return resolver.resolve(finder.find(self.value)) + self.offset
 
     def json_decode(self, data):
         self.is_parameter = data["is_parameter"]

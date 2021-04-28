@@ -131,7 +131,7 @@ class BitList:
         my_parameters = sorted([(p.name, p.name) for p in parameters])
         self.reset_column.update_menu(my_parameters)
 
-        msb_parameters = sorted([(f"{p.name}-1", p.name) for p in parameters])
+        msb_parameters = sorted([(f"{p.name}-1", p.uuid) for p in parameters])
         self.msb_column.update_menu(msb_parameters)
 
     def set_model(self, model):
@@ -337,12 +337,12 @@ class BitList:
         if self.check_for_width(field.lsb, stop) is False:
             return
 
-        if stop != field.msb.value:
+        if stop != field.msb.resolve():
             field.msb.set_int(stop)
             self.__model.register.change_bit_field(field)
             self.__modified()
 
-        self.__model[path][BitCol.MSB] = f"{field.msb.value}"
+        self.__model[path][BitCol.MSB] = f"{field.msb.int_str()}"
 
     def update_lsb(self, _cell, path, new_text, _col):
         """
@@ -421,10 +421,10 @@ class BitList:
         """
         model = cell.get_property("model")
         field = self.__model[path][-1]
-        field.msb.is_parameter = True
-        field.msb.offset = -1
-        field.msb.value = model.get_value(node, 1)
-        self.__model[path][BitCol.MSB] = model.get_value(node, 0)
+        descript = model.get_value(node, 0)
+        uuid = model.get_value(node, 1)
+        field.msb.set_param(uuid, -1)
+        self.__model[path][BitCol.MSB] = descript
         self.__modified()
 
     def _msb_text(self, _cell, path, new_text, _col):
