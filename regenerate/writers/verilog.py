@@ -37,6 +37,7 @@ from regenerate.db import (
     BitType,
     RegisterDb,
     RegProject,
+    ParameterFinder,
 )
 from regenerate.writers.writer_base import WriterBase, ExportInfo, ProjectType
 from regenerate.writers.verilog_reg_def import REG
@@ -198,10 +199,11 @@ class Verilog(WriterBase):
                 offset = 0
                 for lower in range(0, register.width, size):
                     if field.msb.is_parameter:
-                        msb = field.msb.value.max
-                    if in_range(
-                        field.lsb, field.msb.resolve(), lower, lower + size - 1
-                    ):
+                        finder = ParameterFinder()
+                        msb = finder.find(field.msb.value)
+                    else:
+                        msb = field.msb.resolve()
+                    if in_range(field.lsb, msb, lower, lower + size - 1):
                         data = self._byte_info(
                             field, register, lower, size, offset
                         )
@@ -573,7 +575,7 @@ def build_logic_list(_dbase, word_fields, cell_info):
     for addr in word_fields:
         val = word_fields[addr]
         for (field, _, _, start_pos, stop_pos, _, reg) in val:
-            if field.msb.resolve() == field.lsb:
+            if not field.msb.is_parameter and field.msb.resolve() == field.lsb:
                 if reg.dimension_is_param():
                     reg_list.append(
                         (
@@ -755,7 +757,13 @@ def register_output_definitions2(dbase):
     for reg in dbase.get_all_registers():
 
         last_offset = last = dbase.ports.data_bus_width - 1
-        wire_name = f"r{reg.address:02x}"
+        if reg.dimension_is_param():
+            wire_name = (
+                f"r{reg.address:02x}[reg.dimension_str]",
+                f"[{last}:0]",
+            )
+        else:
+            wire_name = (f"r{reg.address:02x}", f"[{last}:0]")
 
         for field in reversed(reg.get_bit_fields()):
             print(wire_name, field.name, field.lsb, field.msb.int_str())
@@ -819,6 +827,10 @@ def register_output_definitions(dbase, word_fields):
         if last_offset != 0:
             clist.append("%d'b0" % last_offset)
         full_list.append((wire_name, clist))
+
+    for item in full_list:
+        print(item)
+    print("-----------------------------------------------")
     return full_list
 
 

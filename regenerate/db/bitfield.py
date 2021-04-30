@@ -150,7 +150,6 @@ class BitField(NameBase):
     @staticmethod
     def set_parameters(values) -> None:
         """Set the parameter value list."""
-        print(">>>", values)
         BitField.PARAMETERS = values
 
     def __eq__(self, other):

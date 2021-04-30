@@ -289,7 +289,7 @@ class Register(NameBase):
         Returns the dimension as an integer, resolving the parameter
         value if it exists.
         """
-        return self._dimension.resolve(self.regset_name)
+        return self._dimension.resolve()
 
     @dimension.setter
     def dimension(self, value) -> None:

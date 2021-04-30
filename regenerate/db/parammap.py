@@ -43,6 +43,10 @@ class ParameterFinder:
     def register(self, parameter: "ParameterData"):
         self.data_map[parameter.uuid] = parameter
 
+    def unregister(self, parameter: "ParameterData"):
+        if parameter.uuid in self.data_map:
+            del self.data_map[parameter.uuid]
+
     def dump(self):
         print(self.data_map)
 
@@ -77,8 +81,10 @@ class ParameterData(NameBase):
         }
 
     def json_decode(self, data):
+        ParameterFinder().unregister(self)
         self.uuid = data["uuid"]
         self.name = data["name"]
         self.value = data["value"]
         self.min_val = data["min_val"]
         self.max_val = data["max_val"]
+        ParameterFinder().register(self)

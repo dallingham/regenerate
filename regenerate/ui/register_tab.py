@@ -600,7 +600,7 @@ class RegSetTab:
         field = self.bitfield_obj.select_field()
         if field:
             BitFieldEditor(
-                self.regset,
+                self.active,
                 register,
                 field,
                 self.set_field_modified,
