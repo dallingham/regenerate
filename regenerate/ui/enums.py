@@ -146,6 +146,7 @@ class ParameterCol(IntEnum):
     VALUE = 1
     MIN = 2
     MAX = 3
+    OBJ = 4
 
 
 class OverrideCol(IntEnum):

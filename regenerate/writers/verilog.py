@@ -515,7 +515,9 @@ def build_output_signals(dbase, cell_info):
                 root = sig.split("[")
                 wild = sig.split("*")
                 if len(root) == 1:
-                    if field.msb.resolve() == field.lsb:
+                    if field.msb.is_parameter:
+                        scalar_ports.append((sig, f"[{field.msb.int_str()}:{field.lsb}]", reg.dimension_str))
+                    elif field.msb.resolve() == field.lsb:
                         scalar_ports.append((sig, "", reg.dimension_str))
                     else:
                         dim[sig] = reg.dimension_str
@@ -799,7 +801,7 @@ def register_output_definitions(dbase):
         last = bus_width
         for name, lsb, msb, offset in field_list:
             if msb.is_parameter:
-                local_param = msb
+                local_param = copy.copy(msb)
                 local_param.offset = local_param.offset + 1
                 #                pname = finder.find(local_param.value)
                 new_field_list.append(

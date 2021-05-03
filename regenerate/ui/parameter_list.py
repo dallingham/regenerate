@@ -130,9 +130,8 @@ class ParameterList:
         name = self._model[path][ParameterCol.NAME]
         if name != new_text and new_text not in current:
             self._model[path][ParameterCol.NAME] = new_text
-            self._model[path][-1].name = new_text
             self._callback()
-
+        self._model[path][ParameterCol.OBJ].name = new_text
         self.update_db(name, new_text)
 
     def _value_changed(self, _cell, path, new_text, _col):
@@ -156,7 +155,7 @@ class ParameterList:
             )
         else:
             self._model[path][ParameterCol.VALUE] = f"0x{value:x}"
-            self._model[path][-1] = value
+            self._model[path][ParameterCol.OBJ].value = value
             self._callback()
 
     def _min_changed(self, _cell, path, new_text, _col):
@@ -178,7 +177,7 @@ class ParameterList:
             )
         else:
             self._model[path][ParameterCol.MIN] = hex(int(new_text, 0))
-            self._model[path][-1].min_val = int(new_text, 0)
+            self._model[path][ParameterCol.OBJ].min_val = int(new_text, 0)
             self._callback()
 
     def _max_changed(self, _cell, path, new_text, _col):
@@ -200,7 +199,7 @@ class ParameterList:
             )
         else:
             self._model[path][ParameterCol.MAX] = hex(int(new_text, 0))
-            self._model[path][-1].max_val = int(new_text, 0)
+            self._model[path][ParameterCol.OBJ].max_val = int(new_text, 0)
             self._callback()
 
     def _build_instance_table(self):

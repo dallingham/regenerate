@@ -220,9 +220,10 @@ class BitField(NameBase):
         return hex(self._reset_value)
 
     def reset_vstr(self) -> str:
+        print(">>>", self.name, self._reset_value)
         if self.reset_type == ResetType.PARAMETER:
             return self.reset_parameter
-        return f"'h{self._reset_value}"
+        return f"'h{self._reset_value:x}"
 
     @property
     def stop_position(self) -> ParamValue:
