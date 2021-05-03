@@ -21,8 +21,7 @@ Provides the Address List interface
 """
 
 from gi.repository import Gtk
-from regenerate.db.parammap import ParameterData
-from regenerate.db.overrides import Overrides
+from regenerate.db import ParameterData, Overrides
 from regenerate.ui.columns import ReadOnlyColumn, EditableColumn
 from regenerate.ui.utils import check_hex
 from regenerate.ui.enums import ParameterCol, OverrideCol

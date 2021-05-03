@@ -23,7 +23,7 @@ Project model and list
 
 from gi.repository import Gtk, Gdk
 from regenerate.ui.enums import SelectCol
-from regenerate.db.register_db import RegSetContainer
+from regenerate.db import RegisterDb
 
 
 class ProjectModel(Gtk.ListStore):
@@ -59,7 +59,7 @@ class ProjectModel(Gtk.ListStore):
         self.paths = set()
         self.file_list = {}
 
-    def add_dbase(self, regset: RegSetContainer, modified=False):
+    def add_dbase(self, regset: RegisterDb, modified=False):
         """Add the the database to the model"""
 
         base = regset.filename.stem

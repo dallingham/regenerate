@@ -24,14 +24,14 @@ Manages the reading of the project file (.rprj)
 from io import BytesIO as StringIO
 from pathlib import Path
 from collections import defaultdict
-
 import xml.parsers.expat
-from .const import REG_EXT, BLK_EXT, OLD_REG_EXT
+
+from .address_map import AddressMap
 from .block import Block
 from .block_inst import BlockInst
-from .register_inst import RegisterInst
+from .const import REG_EXT, BLK_EXT, OLD_REG_EXT
 from .export import ExportData
-from .addrmap import AddressMap
+from .register_inst import RegisterInst
 
 
 class ProjectReader:

@@ -23,7 +23,7 @@ from typing import List, Tuple
 from .name_base import NameBase
 from .enums import BitType, ResetType
 from .bit_values import BitValues
-from .param_val import ParamValue
+from .param_value import ParamValue
 from .json_base import JSONEncodable
 
 

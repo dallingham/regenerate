@@ -35,7 +35,6 @@ from .register_db import RegisterDb
 from .doc_pages import DocPages
 from .name_base import NameBase
 from .logger import LOGGER
-from .parammap import ParameterData
 from .param_container import ParameterContainer
 
 
@@ -55,9 +54,6 @@ class Block(NameBase):
         self.description = description
         self.doc_pages = DocPages()
         self.doc_pages.update_page("Overview", "")
-        self.doc_pages.update_page("Architecture", "")
-        self.doc_pages.update_page("Programming Model", "")
-        self.doc_pages.update_page("Additional", "")
 
         self.regset_insts: List[RegisterInst] = []
         self.regsets: Dict[str, RegisterDb] = {}
@@ -153,9 +149,9 @@ class Block(NameBase):
                 item = Overrides()
                 item.json_decode(override)
                 for regset_inst in self.regset_insts:
-                    if item.path != regset_inst.inst:
+                    if item.path != regset_inst.name:
                         continue
-                    regset = self.regsets[regset_inst.set_name]
+                    regset = self.regsets[regset_inst.regset_id]
                     param = regset.parameters.find(item.temp_name)
                     if param:
                         item.parameter = param

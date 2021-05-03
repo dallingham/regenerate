@@ -19,7 +19,7 @@
 
 from typing import Union
 from .param_resolver import ParameterResolver
-from .parammap import ParameterFinder
+from .param_data import ParameterFinder
 
 
 class ParamValue:

@@ -26,8 +26,8 @@ from typing import List, Dict, Optional
 from .name_base import NameBase
 from .enums import ResetType, ShareType
 from .bitfield import BitField
-from .parammap import ParameterData
-from .param_val import ParamValue
+from .param_data import ParameterData
+from .param_value import ParamValue
 
 
 class RegisterFlags:

@@ -21,14 +21,12 @@ Parses the register database, loading the database.
 """
 
 import xml.parsers.expat
-import uuid
-
 from .register import Register
 from .bitfield import BitField
 from .bit_values import BitValues
 from .bitfield_types import ID_TO_TYPE
 from .enums import ResetType
-from .parammap import ParameterData
+from .param_data import ParameterData
 
 
 def cnv_hex(attrs, key, default=0):

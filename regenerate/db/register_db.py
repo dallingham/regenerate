@@ -31,12 +31,12 @@ from typing import Union, List, Optional
 from .register import Register
 from .reg_parser import RegParser
 from .reg_parser_json import RegParserJSON
-from .param_resolver import ParameterResolver
 from .signals import Signals
 from .const import OLD_REG_EXT, REG_EXT
 from .export import ExportData
 from .logger import LOGGER
-from .parammap import ParameterData
+from .param_resolver import ParameterResolver
+from .param_data import ParameterData
 from .param_container import ParameterContainer
 from .name_base import NameBase
 

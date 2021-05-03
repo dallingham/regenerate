@@ -22,7 +22,6 @@ Includes the base instances in the module
 
 from .bitfield import BitField
 from .bitfield_types import *
-from .group_data import GroupData
 from .block import Block
 from .block_inst import BlockInst
 from .register import Register
@@ -30,13 +29,12 @@ from .reg_parser import RegParser
 from .reg_project import RegProject
 from .const import OLD_PRJ_EXT, PRJ_EXT, REG_EXT, BLK_EXT
 from .register_inst import RegisterInst
-from .reg_writer import RegWriter
-from .reg_writer_json import RegWriterJSON
+
 from .register_db import RegisterDb
 from .proj_reader import ProjectReader
-from .proj_writer import ProjectWriter
-from .addrmap import AddressMap
-from .parammap import ParameterData, ParameterFinder
-from .param_val import ParamValue
+from .address_map import AddressMap
+from .param_data import ParameterData, ParameterFinder
+from .param_value import ParamValue
+from .overrides import Overrides
 from .enums import *
 from .logger import *

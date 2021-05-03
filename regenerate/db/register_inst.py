@@ -20,7 +20,7 @@
 """
 Manages the instance of a register within a group.
 """
-from .param_val import ParamValue
+from .param_value import ParamValue
 from .name_base import NameBase
 
 

@@ -22,26 +22,26 @@ RegProject is the container object for a regenerate project
 """
 
 from collections import defaultdict
+from operator import methodcaller
 from pathlib import Path
+import json
 import os.path
 from typing import List, Dict, Union
 import xml.sax.saxutils
 
-from .proj_reader import ProjectReader
-from .proj_writer_json import ProjectWriterJSON
-from .proj_reader_json import ProjectReaderJSON
-from .addrmap import AddressMap
-from .textutils import clean_text
-from .logger import LOGGER
-from .export import ExportData
-from .doc_pages import DocPages
-from .register_db import RegisterDb
+from .address_map import AddressMap
 from .block import Block
 from .block_inst import BlockInst
 from .const import REG_EXT, PRJ_EXT, OLD_PRJ_EXT
 from .containers import Container
+from .doc_pages import DocPages
+from .export import ExportData
+from .logger import LOGGER
 from .overrides import Overrides
 from .param_container import ParameterContainer
+from .proj_reader import ProjectReader
+from .register_db import RegisterDb
+from .textutils import clean_text
 
 
 def nested_dict(depth, dict_type):
@@ -70,8 +70,6 @@ class RegProject:
         self.name = "unnamed"
         self.doc_pages = DocPages()
         self.doc_pages.update_page("Overview", "")
-        self.doc_pages.update_page("Implementation", "")
-        self.doc_pages.update_page("Additional", "")
         self.company_name = ""
         self.access_map = nested_dict(3, int)
 
@@ -83,7 +81,6 @@ class RegProject:
 
         self.block_insts: List[BlockInst] = []
         self.blocks: Dict[str, Block] = {}
-
         self.regsets: Dict[str, RegisterDb] = {}
 
         self.exports = []
@@ -99,8 +96,14 @@ class RegProject:
     def save(self) -> None:
         """Saves the project to the JSON file"""
 
-        writer = ProjectWriterJSON(self)
-        writer.save(self.path.with_suffix(PRJ_EXT))
+        new_path = Path(self.path.with_suffix(PRJ_EXT))
+        Container.block_data_path = str(new_path.parent)
+
+        with new_path.open("w") as ofile:
+            ofile.write(
+                json.dumps(self, default=methodcaller("json"), indent=4)
+            )
+        self.modified = False
 
         for blkid in self.blocks:
             blk = self.blocks[blkid]
@@ -132,8 +135,12 @@ class RegProject:
             xml_reader.open(name)
         else:
             LOGGER.info("Loading JSON project file '%s'", str(self.path))
-            json_reader = ProjectReaderJSON(self)
-            json_reader.open(name)
+
+            with open(name) as ofile:
+                data = ofile.read()
+
+            json_data = json.loads(data)
+            self.json_decode(json_data)
 
             for _, block in self.blocks.items():
                 for _, reg_set in block.regsets.items():
@@ -198,10 +205,6 @@ class RegProject:
         """Returns the export project list, returns a read-only tuple"""
         return tuple(self.exports)
 
-    # def get_group_exports(self, name: str):
-    #     """Returns the export group list, returns a read-only tuple"""
-    #     return tuple(self._group_exports.get(name, []))
-
     def append_to_export_list(
         self, db_path: str, exporter: str, target: str
     ) -> None:
@@ -242,21 +245,6 @@ class RegProject:
         exp = ExportData(exporter, dest)
         self.exports.append(exp)
 
-    # def append_to_group_export_list(
-    #     self, group: str, exporter: str, dest: str
-    # ) -> None:
-    #     """
-    #     Adds a export to the group export list. Group exporters operation
-    #     on the entire group, not just a specific register database (XML file)
-
-    #     path - path to the the register XML file. Converted to a relative path
-    #     option - the chosen export option (exporter)
-    #     dest - destination output name
-    #     """
-    #     self._modified = True
-    #     exp = ExportData(exporter, dest)
-    #     self._group_exports[group].append(exp)
-
     def add_to_project_export_list(self, exporter: str, dest: str) -> None:
         """
         Adds a export to the project export list. Project exporters operation
@@ -269,22 +257,6 @@ class RegProject:
         self._modified = True
         dest = os.path.relpath(dest, self.path.parent)
         self.exports.append(ExportData(exporter, dest))
-
-    # def add_to_group_export_list(
-    #     self, group: str, exporter: str, dest: str
-    # ) -> None:
-    #     """
-    #     Adds a export to the group export list. Group exporters operation
-    #     on the entire group, not just a specific register database (XML file)
-
-    #     path - path to the the register XML file. Converted to a relative path
-    #     exporter - the chosen export exporter (exporter)
-    #     dest - destination output name
-    #     """
-    #     self._modified = True
-    #     dest = os.path.relpath(dest, self.path.parent)
-    #     exp = ExportData(exporter, dest)
-    #     self._group_exports[group].append(exp)
 
     def remove_from_export_list(
         self, path: str, exporter: str, dest: str
@@ -308,17 +280,6 @@ class RegProject:
             for exp in self.exports
             if not (exp.exporter == exporter and exp.dest == dest)
         ]
-
-    # def remove_from_group_export_list(
-    #     self, group: str, exporter: str, dest: str
-    # ) -> None:
-    #     """Removes the export from the group export list"""
-    #     self._modified = True
-    #     self._group_exports[group] = [
-    #         exp
-    #         for exp in self._group_exports[group]
-    #         if not (exp.exporter == exporter and exp.dest == dest)
-    #     ]
 
     def get_register_set(self) -> List[Path]:
         """
@@ -494,34 +455,7 @@ class RegProject:
         instance in the identified subsystem. Updates the access
         map and the groupings.
         """
-
-        # Search access maps for items to rename. Search each
-        # map, for instances of the specified subsystem, then
-        # search for the instance name to be replaced in the
-        # subsystem. Since the object is a tuple, and has to be
-        # replaced instead of altered, we must store the items
-        # to be changed, since we cannot alter the dictionary
-        # as we search it.
-
         self._modified = True
-        # to_delete = []
-        # for access_map in self.access_map:
-        #     for obj in self.access_map[access_map][subsystem]:
-        #         if obj == old:
-        #             to_delete.append((access_map, subsystem, cur, old))
-
-        # for (access_map, subsys, ncur, nold) in to_delete:
-        #     self.access_map[access_map][subsys][ncur] = self.access_map[
-        #         access_map
-        #     ][subsys][nold]
-        #     del self.access_map[access_map][subsys][nold]
-
-        # # Search groups for items to rename
-        # for g_data in self._groupings:
-        #     if g_data.name == subsystem:
-        #         for ginst in g_data.register_sets:
-        #             if ginst.inst == old:
-        #                 ginst.inst = cur
 
     def change_file_suffix(self, original: str, new: str):
         """Changes the suffix of the files in the file list"""
@@ -626,14 +560,6 @@ class RegProject:
             addr_data = AddressMap()
             addr_data.json_decode(addr_data_json)
             self.address_maps[name] = addr_data
-
-        # self._group_exports = {}
-        # for key in data["group_exports"]:
-        #     self._group_exports[key] = []
-        #     for item in data["group_exports"][key]:
-        #         self._group_exports[key].append(
-        #             ExportData(item["exporter"], item["target"])
-        #         )
 
         self.exports = []
         for item in data["exports"]:
