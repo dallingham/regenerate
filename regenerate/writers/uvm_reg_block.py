@@ -136,6 +136,7 @@ class UVMRegBlockRegisters(ProjectWriter):
 
         data_set = []
         group_maps = self._build_group_maps()
+        print(group_maps)
         for blk_inst in self._project.block_insts:
             for regset_inst in self._project.blocks[
                 blk_inst.blkid

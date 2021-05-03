@@ -297,8 +297,8 @@ class Verilog(WriterBase):
             self._dbase, word_fields, self._cell_info
         )
 
-        reg_read_output = register_output_definitions(self._dbase, word_fields)
-        print(register_output_definitions2(self._dbase))
+        #        reg_read_output = register_output_definitions(self._dbase, word_fields)
+        reg_read_output = register_output_definitions(self._dbase)
 
         # TODO: fix 64 bit registers with 32 bit width
 
@@ -749,27 +749,75 @@ def build_assignments(word_fields):
     return assign_list
 
 
-def register_output_definitions2(dbase):
+def register_output_definitions(dbase):
 
     full_list = []
     reg_share = {0: "_", 1: "_r_"}
 
+    bus_width = dbase.ports.data_bus_width
+    bytes_per_reg = bus_width // 8
+    current_group = -1
+    finder = ParameterFinder()
+
     for reg in dbase.get_all_registers():
 
-        last_offset = last = dbase.ports.data_bus_width - 1
-        if reg.dimension_is_param():
-            wire_name = (
-                f"r{reg.address:02x}[reg.dimension_str]",
-                f"[{last}:0]",
+        current_offset = reg.address % bytes_per_reg
+        base_addr = (reg.address // bytes_per_reg) * bytes_per_reg
+
+        if base_addr // bytes_per_reg != current_group:
+            if reg.dimension_is_param():
+                wire_name = (
+                    f"r{base_addr:02x}[reg.dimension_str]",
+                    f"[{bus_width-1}:0]",
+                )
+            else:
+                wire_name = (f"r{base_addr:02x}", f"[{bus_width-1}:0]")
+
+            field_list = []
+            full_list.append((wire_name, field_list))
+            current_group = base_addr // bytes_per_reg
+
+        for field in reg.get_bit_fields():
+            share = reg_share[reg.share]
+
+            field_list.append(
+                (
+                    f"r{reg.address:02x}{share}{field.name.lower()}",
+                    field.lsb,
+                    field.msb,
+                    current_offset * 8,
+                )
             )
-        else:
-            wire_name = (f"r{reg.address:02x}", f"[{last}:0]")
 
-        for field in reversed(reg.get_bit_fields()):
-            print(wire_name, field.name, field.lsb, field.msb.int_str())
+    new_list = []
+
+    for wire_name, field_list in full_list:
+        field_list.reverse()
+
+        new_field_list = []
+        new_list.append((wire_name, new_field_list))
+        last = bus_width
+        for name, lsb, msb, offset in field_list:
+            if msb.is_parameter:
+                local_param = msb
+                local_param.offset = local_param.offset + 1
+                #                pname = finder.find(local_param.value)
+                new_field_list.append(
+                    f"{{({last-offset}-{local_param.int_str()}){{1'b0}}}}"
+                )
+            else:
+                if (last - offset - msb.value) > 1:
+                    new_field_list.append(f"{last-offset-msb.value-1}'b0")
+
+            new_field_list.append(name)
+            last = lsb + offset
+        if last != 0:
+            new_field_list.append(f"{last-0}'b0")
+
+    return new_list
 
 
-def register_output_definitions(dbase, word_fields):
+def register_output_definitions2(dbase, word_fields):
 
     full_list = []
 
@@ -792,7 +840,7 @@ def register_output_definitions(dbase, word_fields):
         clist = []
 
         val = reversed(val)
-        last_offset = 63
+        last_offset = 64
 
         for (field, start_offset, _, start_pos, stop_pos, _, reg) in val:
 
@@ -828,9 +876,6 @@ def register_output_definitions(dbase, word_fields):
             clist.append("%d'b0" % last_offset)
         full_list.append((wire_name, clist))
 
-    for item in full_list:
-        print(item)
-    print("-----------------------------------------------")
     return full_list
 
 
