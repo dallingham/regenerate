@@ -32,7 +32,7 @@ class Xdc(ProjectWriter):
     """
 
     def __init__(self, project):
-        super().__init__(project, None)
+        super().__init__(project)
         self._offset = 0
         self.dblist = [dbase[1] for dbase in project.regsets.items()]
         self._ofile = None
@@ -103,32 +103,36 @@ class Xdc(ProjectWriter):
 
         name2db = {}
         for db in self.dblist:
-            name2db[db.set_name] = db
+            name2db[db.name] = db
 
         with filename.open("w") as of:
             self.write_header(of)
-            for group in self._project.get_grouping_list():
-                of.write("#\n# %s group\n#\n\n" % group.name)
-                for group_inst in group.register_sets:
-                    dbase = name2db[group_inst.set]
+            for blk_inst in self._project.block_insts:
+                block = self._project.blocks[blk_inst.blkid]
+                
+                of.write("#\n# %s group\n#\n\n" % blk_inst.name)
+
+                for regset_inst in block.regset_insts:
+                    dbase = block.regsets[regset_inst.regset_id]
+                    
                     ports = self.get_static_ports(dbase)
                     of.write(
                         "# %s - %s\n\n"
-                        % (dbase.set_name, dbase.descriptive_title)
+                        % (dbase.name, dbase.descriptive_title)
                     )
                     for (addr, field) in ports:
                         if field.is_constant():
                             continue
                         signal_name = field.name
-                        if group_inst.repeat > 1:
+                        if regset_inst.repeat.resolve() > 1:
                             for i in range(0, group_inst.repeat):
                                 hdl = ""
-                                if group.hdl != "":
-                                    hdl = "%s/" % group.hdl.replace(
+                                if blk_inst.hdl_path != "":
+                                    hdl = "%s/" % blk_inst.hdl_path.replace(
                                         ".", "/"
                                     ).replace("]/", "].")
-                                if group_inst.hdl != "":
-                                    hdl = hdl + "%s/" % group_inst.hdl.replace(
+                                if regset_inst.hdl != "":
+                                    hdl = hdl + "%s/" % regset_inst.hdl.replace(
                                         ".", "/"
                                     ).replace("]/", "].")
                                     hdl = hdl % i
@@ -142,12 +146,12 @@ class Xdc(ProjectWriter):
                                 )
                         else:
                             hdl = ""
-                            if group.hdl != "":
-                                hdl = "%s/" % group.hdl.replace(
+                            if blk_inst.hdl_path != "":
+                                hdl = "%s/" % blk_inst.hdl_path.replace(
                                     ".", "/"
                                 ).replace("]/", "].")
-                            if group_inst.hdl != "":
-                                hdl = hdl + "%s/" % group_inst.hdl.replace(
+                            if regset_inst.hdl != "":
+                                hdl = hdl + "%s/" % regset_inst.hdl.replace(
                                     ".", "/"
                                 ).replace("]/", "].")
                             of.write(
