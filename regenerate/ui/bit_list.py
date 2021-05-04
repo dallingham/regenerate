@@ -28,7 +28,6 @@ from regenerate.ui.columns import (
     EditableColumn,
     MyComboMapColumn,
     SwitchComboMapColumn,
-    ReadOnlyColumn,
 )
 from regenerate.ui.enums import BitCol
 

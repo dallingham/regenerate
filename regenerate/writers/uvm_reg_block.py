@@ -78,7 +78,7 @@ class UVMRegBlockRegisters(ProjectWriter):
         return [d for d in self._project.get_address_maps() if not d.uvm]
 
     def _build_group_maps(self) -> Dict[BlockInst, Set[str]]:
-        group_maps = {}
+        group_maps: Dict[BlockInst, Set[str]] = {}
         id2blkinst = {}
         for blkinst in self._project.block_insts:
             id2blkinst[blkinst.uuid] = blkinst
@@ -136,8 +136,9 @@ class UVMRegBlockRegisters(ProjectWriter):
 
         data_set = []
         group_maps = self._build_group_maps()
-        print(group_maps)
         for blk_inst in self._project.block_insts:
+            if blk_inst not in group_maps:
+                continue
             for regset_inst in self._project.blocks[
                 blk_inst.blkid
             ].regset_insts:

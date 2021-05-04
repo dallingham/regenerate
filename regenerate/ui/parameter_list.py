@@ -130,8 +130,8 @@ class ParameterList:
         name = self._model[path][ParameterCol.NAME]
         if name != new_text and new_text not in current:
             self._model[path][ParameterCol.NAME] = new_text
+            self._model[path][ParameterCol.OBJ].name = new_text
             self._callback()
-        self._model[path][ParameterCol.OBJ].name = new_text
         self.update_db(name, new_text)
 
     def _value_changed(self, _cell, path, new_text, _col):

@@ -298,6 +298,7 @@ class RegSetTab:
         self.set_modified()
         self.reglist_obj.set_parameters(self.active.parameters.get())
         self.bitfield_obj.set_parameters(self.active.parameters.get())
+        self.selected_reg_changed(None)
 
     def set_modified(self):
         if not self.skip_changes:
