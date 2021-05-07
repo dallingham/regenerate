@@ -36,6 +36,7 @@ from .doc_pages import DocPages
 from .name_base import NameBase
 from .logger import LOGGER
 from .param_container import ParameterContainer
+from .regset_finder import RegsetFinder
 
 
 class Block(NameBase):
@@ -50,6 +51,7 @@ class Block(NameBase):
         """Initialize the group data item."""
 
         super().__init__(name)
+        self.finder = RegsetFinder()
         self.address_size = address_size
         self.description = description
         self.doc_pages = DocPages()
@@ -136,8 +138,12 @@ class Block(NameBase):
         self.regsets = {}
         for key, item in data["regsets"].items():
             filename = Path(self._filename.parent / item["filename"]).resolve()
-            regset = RegisterDb()
-            regset.read_json(filename)
+
+            regset = self.finder.find_by_file(filename)
+            if not regset:
+                regset = RegisterDb()
+                regset.read_json(filename)
+                self.finder.register(regset)
             self.regsets[key] = regset
 
         self.parameters = ParameterContainer()

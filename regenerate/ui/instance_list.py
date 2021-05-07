@@ -88,11 +88,9 @@ class InstMdl(Gtk.TreeStore):
 
         node = self.get_iter(path)
         self.set_value(node, InstCol.INST, text)
-        
+
         obj = self.get_value(node, InstCol.OBJ)
         obj.name = text
-        print(self.project.block_insts)
-        print("Callback", self.callback)
         self.callback()
 
     def change_hdl(self, path, text):

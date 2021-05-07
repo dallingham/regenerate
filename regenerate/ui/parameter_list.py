@@ -47,13 +47,9 @@ class ParameterListMdl(Gtk.ListStore):
         )
         return self.get_path(node)
 
-    def append_instance(self, inst):
-        """Adds the specified instance to the InstanceList"""
-        return self.append(row=get_row_data(inst))
-
-    def get_values(self):
-        """Returns the list of instance tuples from the model."""
-        return [val[-1] for row in self]
+    # def get_values(self):
+    #     """Returns the list of instance tuples from the model."""
+    #     return [val[-1] for row in self]
 
 
 class ParameterList:
@@ -94,6 +90,7 @@ class ParameterList:
         if self._db is not None:
             self._model.clear()
         for param in self._db.parameters.get():
+            print("populate", self._db.name, param, param.uuid)
             self.append(param)
         self.remove.set_sensitive(False)
 
@@ -131,6 +128,12 @@ class ParameterList:
         if name != new_text and new_text not in current:
             self._model[path][ParameterCol.NAME] = new_text
             self._model[path][ParameterCol.OBJ].name = new_text
+            print(
+                "MODIFIED",
+                self._db.name,
+                self._model[path][ParameterCol.OBJ],
+                self._model[path][ParameterCol.OBJ].uuid,
+            )
             self._callback()
         self.update_db(name, new_text)
 

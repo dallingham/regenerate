@@ -42,6 +42,7 @@ from .param_container import ParameterContainer
 from .proj_reader import ProjectReader
 from .register_db import RegisterDb
 from .textutils import clean_text
+from .regset_finder import RegsetFinder
 
 
 def nested_dict(depth, dict_type):
@@ -72,7 +73,7 @@ class RegProject:
         self.doc_pages.update_page("Overview", "")
         self.company_name = ""
         self.access_map = nested_dict(3, int)
-
+        self.finder = RegsetFinder()
         self._filelist: List[Path] = []
 
         self.parameters = ParameterContainer()
@@ -168,12 +169,18 @@ class RegProject:
 
         self._modified = True
 
-        regset = RegisterDb()
-        regset.modified = True
-        regset.read_db(self.path.parent / name)
-        self.regsets[regset.uuid] = regset
+        filename = self.path.parent / name
         new_file_path = Path(name).with_suffix(REG_EXT).resolve()
-        regset.filename = new_file_path
+
+        regset = self.finder.find_by_file(new_file_path)
+        if not regset:
+            regset = RegisterDb()
+            regset.modified = True
+            regset.read_db(self.path.parent / name)
+            regset.filename = new_file_path
+            self.finder.regsiter(regset)
+
+        self.regsets[regset.uuid] = regset
         self._filelist.append(new_file_path)
 
     def add_register_set(self, path: str) -> None:

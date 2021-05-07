@@ -124,6 +124,7 @@ class OverridesList:
             self._used.add(row[-1].uuid)
 
     def set_menu(self):
+        print("SET MENU", self.build_overrides_list(self.prj))
         count = False
         self.menu = Gtk.Menu()
         for override in self.build_overrides_list(self.prj):
@@ -243,13 +244,13 @@ class OverridesList:
         model.remove(node)
 
     def build_overrides_list(self, project):
-
         self.build_used()
         param_list = []
         for blkinst in project.block_insts:
             blkinst_name = blkinst.name
             block = project.blocks[blkinst.blkid]
             for param in block.parameters.get():
+                print("OVERRIDE", param, param.uuid)
                 name = f"{blkinst_name}.{param.name}"
                 if param.uuid not in self._used:
                     param_list.append((name, (blkinst, param)))
@@ -262,6 +263,7 @@ class BlockOverridesList(OverridesList):
         for reginst in block.regset_insts:
             regset = block.regsets[reginst.regset_id]
             for param in regset.parameters.get():
+                print("PARAM", regset.name, param, param.uuid)
                 name = f"{reginst.name}.{param.name}"
                 if param.uuid not in self._used:
                     param_list.append((name, (reginst.name, param)))
