@@ -31,6 +31,7 @@ from .const import OLD_PRJ_EXT, PRJ_EXT, REG_EXT, BLK_EXT
 from .register_inst import RegisterInst
 
 from .register_db import RegisterDb
+from .param_resolver import ParameterResolver
 from .proj_reader import ProjectReader
 from .address_map import AddressMap
 from .param_data import ParameterData, ParameterFinder

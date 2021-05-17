@@ -49,13 +49,14 @@ package {{prj.short_name}}_reg_pkg;
     *-------------------------------------------------------------------------
     */
 
-{% for db in dblist %}
-
+{% for regset_inst in dblist %}
+  {% set db = prj.regsets[regset_inst.regset_id] %}
+  {{ resolver.set_reginst(regset_inst.uuid) }}
   {%- if db.coverage %}
   
-   class {{db.name}}_reg_access_wrapper extends uvm_object;
+   class {{regset_inst.name}}_reg_access_wrapper extends uvm_object;
 
-      `uvm_object_utils({{db.name}}_reg_access_wrapper)
+      `uvm_object_utils({{regset_inst.name}}_reg_access_wrapper)
 
       static int s_num = 0;
 
@@ -65,7 +66,7 @@ package {{prj.short_name}}_reg_pkg;
          option.name = name;
 
          READ_ADDR: coverpoint addr iff (is_read) {
-            {% for reg in db.get_all_registers()|remove_no_uvm %}
+            {% for reg in db.get_all_registers() | remove_no_uvm %}
               {% if reg.flags.do_not_cover == False and reg.is_completely_write_only() == False %}
                 {% if reg.dimension > 1 %}
            bins r_{{fix_reg(reg)}} = { {% for i in range(0, reg.dimension) %}'h{{ '%x' % (reg.address + (i * (reg.width // 8)),) }}{% if not loop.last %}, {% endif %}{% endfor %} };
@@ -77,7 +78,7 @@ package {{prj.short_name}}_reg_pkg;
          }
 
          WRITE_ADDR: coverpoint addr iff (!is_read) {
-            {% for reg in db.get_all_registers()|remove_no_uvm %}
+            {% for reg in db.get_all_registers() | remove_no_uvm %}
               {% if reg.is_completely_read_only() == False %}
                 {% if reg.flags.do_not_cover == False and reg.is_completely_read_only() == False %}
                   {% if reg.dimension > 1 %}
@@ -92,7 +93,7 @@ package {{prj.short_name}}_reg_pkg;
 
       endgroup : cov_addr
 
-      function new(string name = "{{db.name}}_reg_access_wrapper");
+      function new(string name = "{{regset_inst.name}}_reg_access_wrapper");
          cov_addr = new($sformatf("%s_%0d", name, s_num++));
       endfunction : new
 
@@ -100,27 +101,27 @@ package {{prj.short_name}}_reg_pkg;
          cov_addr.sample(offset, is_read);
       endfunction: sample
 
-   endclass : {{db.name}}_reg_access_wrapper
+   endclass : {{regset_inst.name}}_reg_access_wrapper
   {% endif %}
 
-  {% for reg in db.get_all_registers()|remove_no_uvm %}
+  {% for reg in db.get_all_registers() | remove_no_uvm %}
     {% if reg.ram_size %}
       {% set num_bytes = reg.width // 8 %}
-   class mem_{{db.name}}_{{fix_reg(reg)}} extends uvm_mem;
+   class mem_{{regset_inst.name}}_{{fix_reg(reg)}} extends uvm_mem;
 
-      `uvm_object_utils(mem_{{db.name}}_{{fix_reg(reg)}})
+      `uvm_object_utils(mem_{{regset_inst.name}}_{{fix_reg(reg)}})
 
-      function new (string name = "mem_{{db.name}}_{{fix_reg(reg)}}");
+      function new (string name = "mem_{{regset_inst.name}}_{{fix_reg(reg)}}");
          super.new(name, {{reg.ram_size // num_bytes}}, {{reg.width}}, "RW", build_coverage(UVM_NO_COVERAGE));
       endfunction : new
 
-   endclass : mem_{{db.name}}_{{fix_reg(reg)}}
+   endclass : mem_{{regset_inst.name}}_{{fix_reg(reg)}}
 
     {% else %}
 
-   class reg_{{db.name}}_{{fix_reg(reg)}} extends uvm_reg;
+   class reg_{{regset_inst.name}}_{{fix_reg(reg)}} extends uvm_reg;
 
-      `uvm_object_utils(reg_{{db.name}}_{{fix_reg(reg)}})
+      `uvm_object_utils(reg_{{regset_inst.name}}_{{fix_reg(reg)}})
 
      {% for field in reg.get_bit_fields() %}
       rand uvm_reg_field {{fix_name(field)}};
@@ -252,7 +253,7 @@ package {{prj.short_name}}_reg_pkg;
       {% endif %}
       endfunction : build
 
-   endclass : reg_{{db.name}}_{{fix_reg(reg)}}
+   endclass : reg_{{regset_inst.name}}_{{fix_reg(reg)}}
     {% endif %}
    {% endfor %}
 {% endfor %}

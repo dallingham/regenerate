@@ -29,10 +29,15 @@ class ParameterResolver:
 
     top_overrides: Dict[str, Dict[str, "ParamValue"]] = {}
     reginst_overrides: Dict[str, Dict[str, "ParamValue"]] = {}
+    blk_inst = ""
+    reg_inst = ""
 
     def __init__(self):
-        self.blk_inst = ""
-        self.reg_inst = ""
+        ...
+
+    def set_reginst(self, name):
+        self.reg_inst = name
+        return ""
 
     def clear(self):
         self.top_overrides = {}
@@ -67,7 +72,8 @@ class ParameterResolver:
             self.reg_inst in self.reginst_overrides
             and param.uuid in self.reginst_overrides[self.reg_inst]
         ):
-            return self.reginst_overrides[self.reg_inst][param.uuid]
+            val = self.reginst_overrides[self.reg_inst][param.uuid]
+            return val
         return param.value
 
     def resolve_blk(
@@ -83,11 +89,9 @@ class ParameterResolver:
             return self.top_overrides[self.blk_inst][param.uuid]
         return param.value
 
-    def resolve(
-        self,
-        param: ParameterData,
-    ):
+    def resolve(self, param: ParameterData):
         val = self.resolve_reg(param)
         if type(val) == int:
             return val
-        return self.resolve_blk(val.value)
+        new_val = self.resolve_blk(val)
+        return new_val

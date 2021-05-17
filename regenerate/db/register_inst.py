@@ -22,6 +22,7 @@ Manages the instance of a register within a group.
 """
 from .param_value import ParamValue
 from .name_base import NameBase
+from .overrides import Overrides
 
 
 class RegisterInst(NameBase):
@@ -50,6 +51,11 @@ class RegisterInst(NameBase):
         self.no_decode = no_decode
         self.array = array
         self.single_decode = single_decode
+
+    def __hash__(self):
+        """Provides the hash function so that the object can be hashed"""
+
+        return hash(self.uuid)
 
     @property
     def single_decode(self) -> bool:

@@ -90,7 +90,7 @@ class ParameterList:
         if self._db is not None:
             self._model.clear()
         for param in self._db.parameters.get():
-            print("populate", self._db.name, param, param.uuid)
+            print("populate", self._db.name, param)
             self.append(param)
         self.remove.set_sensitive(False)
 
@@ -301,7 +301,6 @@ class ParameterList:
 
 def get_row_data(map_obj):
     """Return row data from the object"""
-
     return (
         map_obj.name,
         f"0x{map_obj.value:x}",

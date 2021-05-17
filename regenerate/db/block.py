@@ -36,6 +36,7 @@ from .doc_pages import DocPages
 from .name_base import NameBase
 from .logger import LOGGER
 from .param_container import ParameterContainer
+from .param_resolver import ParameterResolver
 from .regset_finder import RegsetFinder
 
 
@@ -150,21 +151,25 @@ class Block(NameBase):
         self.parameters.json_decode(data["parameters"])
 
         self.overrides = []
+        resolver = ParameterResolver()
         try:
             for override in data["overrides"]:
                 item = Overrides()
                 item.json_decode(override)
                 for regset_inst in self.regset_insts:
-                    if item.path != regset_inst.name:
+                    if item.path != regset_inst.uuid:
                         continue
                     regset = self.regsets[regset_inst.regset_id]
-                    param = regset.parameters.find(item.temp_name)
-                    if param:
-                        item.parameter = param
-                        self.overrides.append(item)
+                    self.overrides.append(item)
                     break
         except KeyError:
             ...
+
+        for override in self.overrides:
+            print(override)
+            resolver.add_regset_override(
+                override.path, override.parameter, override.value
+            )
 
         self.modified = False
 

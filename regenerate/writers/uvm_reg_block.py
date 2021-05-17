@@ -30,6 +30,8 @@ from collections import namedtuple
 from regenerate.db import (
     RegProject,
     RegisterDb,
+    RegisterInst,
+    ParameterResolver,
     BitField,
     Register,
     AddressMap,
@@ -119,6 +121,7 @@ class UVMRegBlockRegisters(ProjectWriter):
             ofile.write(
                 template.render(
                     prj=self._project,
+                    resolver=ParameterResolver(),
                     dblist=used_dbs,
                     individual_access=individual_access,
                     ACCESS_MAP=ACCESS_MAP,
@@ -151,11 +154,11 @@ class UVMRegBlockRegisters(ProjectWriter):
                 )
         return data_set
 
-    def get_used_databases(self) -> Set[RegisterDb]:
+    def get_used_databases(self) -> Set[RegisterInst]:
 
         grp_set = set()
         for blk in self._project.blocks.values():
-            for db in blk.regsets.values():
+            for db in blk.regset_insts:
                 grp_set.add(db)
         return grp_set
 

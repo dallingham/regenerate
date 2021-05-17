@@ -65,8 +65,10 @@ class ParameterData(NameBase):
         self.value = value
         self.min_val = min_val
         self.max_val = max_val
-        print("Init", self, self.uuid)
         ParameterFinder().register(self)
+
+    def __repr__(self):
+        return f"ParameterData(name={self.name}, id={self.uuid}, value={self.value})"
 
     def __hash__(self):
         return hash(self._id)

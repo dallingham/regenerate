@@ -178,7 +178,7 @@ class RegProject:
             regset.modified = True
             regset.read_db(self.path.parent / name)
             regset.filename = new_file_path
-            self.finder.regsiter(regset)
+            self.finder.register(regset)
 
         self.regsets[regset.uuid] = regset
         self._filelist.append(new_file_path)

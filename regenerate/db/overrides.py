@@ -17,25 +17,29 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-from .param_data import ParameterData
+from .param_data import ParameterData, ParameterFinder
 
 
 class Overrides:
     def __init__(self):
+        self.finder = ParameterFinder()
         self.path: str = ""
-        self.parameter: ParameterData = ParameterData()
+        self.parameter: str = ""
         self.value: int = 0
         self.temp_name = ""
+
+    def __repr__(self):
+        param = self.finder.find(self.parameter)
+        return f"Overrides(path={self.path}, parameter={param.name}, value={self.value})"
 
     def json(self):
         return {
             "path": self.path,
-            "parameter": self.parameter.name,
+            "parameter": self.parameter,
             "value": self.value,
         }
 
     def json_decode(self, data):
         self.path = data["path"]
-        self.temp_name = data["parameter"]
+        self.parameter = data["parameter"]
         self.value = data["value"]
-        self.parameter = None

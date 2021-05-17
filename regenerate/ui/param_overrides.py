@@ -21,7 +21,7 @@ Provides the Address List interface
 """
 
 from gi.repository import Gtk
-from regenerate.db import ParameterData, Overrides
+from regenerate.db import ParameterData, Overrides, ParameterFinder
 from regenerate.ui.columns import ReadOnlyColumn, EditableColumn
 from regenerate.ui.utils import check_hex
 from regenerate.ui.enums import ParameterCol, OverrideCol
@@ -44,9 +44,9 @@ class OverridesListMdl(Gtk.ListStore):
         node = self.append((name, value, obj))
         return self.get_path(node)
 
-    def append_instance(self, inst):
+    def append_instance(self, path, inst):
         """Adds the specified instance to the InstanceList"""
-        return self.append(row=get_row_data(inst))
+        return self.append(row=get_row_data(path, inst))
 
     def get_values(self):
         """Returns the list of instance tuples from the model."""
@@ -67,6 +67,7 @@ class OverridesList:
     """
 
     def __init__(self, obj, add, remove, callback):
+        self.finder = ParameterFinder()
         self._obj = obj
         self._col = None
         self.prj = None
@@ -101,7 +102,7 @@ class OverridesList:
         self.set_menu()
         for row in self._model:
             data = row[OverrideCol.OBJ]
-            path = data.path
+            path = self.prj.reginst[data.path].name
             param = data.parameter.name
             new_name = f"{path}.{param}"
             if row[OverrideCol.NAME] != new_name:
@@ -114,8 +115,12 @@ class OverridesList:
         self._model.clear()
         self._used = set()
         for override in self.prj.overrides:
-            self._model.append_instance(override)
-            self._used.add(override.parameter.uuid)
+            path = ""
+            for inst in self.prj.regset_insts:
+                if inst.uuid == override.path:
+                    path = inst.name
+            self._model.append_instance(path, override)
+            self._used.add(override.parameter)
         self.set_menu()
 
     def build_used(self):
@@ -124,7 +129,6 @@ class OverridesList:
             self._used.add(row[-1].uuid)
 
     def set_menu(self):
-        print("SET MENU", self.build_overrides_list(self.prj))
         count = False
         self.menu = Gtk.Menu()
         for override in self.build_overrides_list(self.prj):
@@ -156,13 +160,13 @@ class OverridesList:
         self._callback()
 
     def menu_selected(self, _obj, data):
-        label, info = data
+        _, info = data
         override = Overrides()
-        override.path = info[0]
-        override.parameter = info[1]
+        override.path = info[0].uuid
+        override.parameter = info[1].uuid
         override.value = info[1].value
-        self._model.append(row=get_row_data(override))
-        self._used.add(override.parameter.uuid)
+        self._model.append(row=get_row_data(info[0].name, override))
+        self._used.add(override.parameter)
         self.prj.overrides.append(override)
         self.set_menu()
         self._callback()
@@ -250,7 +254,6 @@ class OverridesList:
             blkinst_name = blkinst.name
             block = project.blocks[blkinst.blkid]
             for param in block.parameters.get():
-                print("OVERRIDE", param, param.uuid)
                 name = f"{blkinst_name}.{param.name}"
                 if param.uuid not in self._used:
                     param_list.append((name, (blkinst, param)))
@@ -263,16 +266,31 @@ class BlockOverridesList(OverridesList):
         for reginst in block.regset_insts:
             regset = block.regsets[reginst.regset_id]
             for param in regset.parameters.get():
-                print("PARAM", regset.name, param, param.uuid)
                 name = f"{reginst.name}.{param.name}"
                 if param.uuid not in self._used:
-                    param_list.append((name, (reginst.name, param)))
+                    param_list.append((name, (reginst, param)))
         return param_list
 
+    def update_display(self):
+        self.set_menu()
+        for row in self._model:
+            data = row[OverrideCol.OBJ]
+            path = ""
+            for inst in self.prj.regset_insts:
+                if inst.uuid == data.path:
+                    path = inst.name
 
-def get_row_data(map_obj):
-    return (
-        f"{map_obj.path}.{map_obj.parameter.name}",
+            param = data.parameter
+            new_name = f"{path}.{self.finder.find(param).name}"
+            if row[OverrideCol.NAME] != new_name:
+                row[OverrideCol.NAME] = new_name
+
+
+def get_row_data(path, map_obj):
+    finder = ParameterFinder()
+    data = (
+        f"{path}.{finder.find(map_obj.parameter).name}",
         hex(int(map_obj.value)),
         map_obj,
     )
+    return data
