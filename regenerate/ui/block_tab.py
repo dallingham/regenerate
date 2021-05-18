@@ -246,8 +246,7 @@ class BlockTab:
             self.block_reg_add.set_popup(self.reg_menu)
 
     def set_parameters_modified(self):
-        ...
-        # self.set_modified()
+        self.modified()
         # self.reglist_obj.set_parameters(self.active.get_parameters())
         # self.bitfield_obj.set_parameters(self.active.get_parameters())
 

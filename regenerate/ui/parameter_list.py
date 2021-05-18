@@ -21,7 +21,7 @@ Provides the Address List interface
 """
 
 from gi.repository import Gtk
-from regenerate.db import LOGGER, ParameterData
+from regenerate.db import LOGGER, ParameterData, Block
 from regenerate.ui.columns import EditableColumn
 from regenerate.ui.enums import ParameterCol
 from regenerate.db.enums import ResetType
@@ -90,7 +90,6 @@ class ParameterList:
         if self._db is not None:
             self._model.clear()
         for param in self._db.parameters.get():
-            print("populate", self._db.name, param)
             self.append(param)
         self.remove.set_sensitive(False)
 
@@ -128,12 +127,6 @@ class ParameterList:
         if name != new_text and new_text not in current:
             self._model[path][ParameterCol.NAME] = new_text
             self._model[path][ParameterCol.OBJ].name = new_text
-            print(
-                "MODIFIED",
-                self._db.name,
-                self._model[path][ParameterCol.OBJ],
-                self._model[path][ParameterCol.OBJ].uuid,
-            )
             self._callback()
         self.update_db(name, new_text)
 
@@ -289,14 +282,15 @@ class ParameterList:
             self._callback()
 
     def update_db(self, name, new_text):
-        for reg in self._db.get_all_registers():
-            if reg.dimension_is_param():
-                if reg.dimension_str == name:
-                    reg.dimension = new_text
-            for field in reg.get_bit_fields():
-                if field.reset_type == ResetType.PARAMETER:
-                    if name == field.reset_parameter:
-                        field.reset_parameter = new_text
+        if type(self._db) != Block:
+            for reg in self._db.get_all_registers():
+                if reg.dimension_is_param():
+                    if reg.dimension_str == name:
+                        reg.dimension = new_text
+                for field in reg.get_bit_fields():
+                    if field.reset_type == ResetType.PARAMETER:
+                        if name == field.reset_parameter:
+                            field.reset_parameter = new_text
 
 
 def get_row_data(map_obj):
