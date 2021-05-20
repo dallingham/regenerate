@@ -293,7 +293,7 @@ class BitField(NameBase):
     def json(self):
         return {
             "name": self.name,
-            "uuid": self._id,
+            "uuid": self.uuid,
             "description": self.description,
             "input_signal": self._input_signal,
             "output_signal": self._output_signal,
@@ -313,7 +313,7 @@ class BitField(NameBase):
 
     def json_decode(self, data):
         self.name = data["name"]
-        self._id = data["uuid"]
+        self.uuid = data["uuid"]
         self.description = data["description"]
 
         self._input_signal = data["input_signal"]

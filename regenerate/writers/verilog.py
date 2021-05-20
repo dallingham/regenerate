@@ -222,16 +222,16 @@ class Verilog(WriterBase):
         reglist = []
         for reg in code_registers:
             if reg.dimension_is_param():
-                new_reg = copy.copy(reg)
+                new_reg = copy.deepcopy(reg)
                 reglist.append(new_reg)
             elif reg.dimension > 1:
                 for i in range(0, reg.dimension):
-                    new_reg = copy.copy(reg)
+                    new_reg = copy.deepcopy(reg)
                     new_reg.address = reg.address + (i * int(reg.width // 8))
                     new_reg.dimension = i
                     reglist.append(new_reg)
             else:
-                new_reg = copy.copy(reg)
+                new_reg = copy.deepcopy(reg)
                 new_reg.dimension = -1
                 reglist.append(new_reg)
 
@@ -516,7 +516,13 @@ def build_output_signals(dbase, cell_info):
                 wild = sig.split("*")
                 if len(root) == 1:
                     if field.msb.is_parameter:
-                        scalar_ports.append((sig, f"[{field.msb.int_str()}:{field.lsb}]", reg.dimension_str))
+                        scalar_ports.append(
+                            (
+                                sig,
+                                f"[{field.msb.int_str()}:{field.lsb}]",
+                                reg.dimension_str,
+                            )
+                        )
                     elif field.msb.resolve() == field.lsb:
                         scalar_ports.append((sig, "", reg.dimension_str))
                     else:
