@@ -19,7 +19,7 @@
 
 """Provides the definition of a Bit Field."""
 
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 from .name_base import NameBase
 from .enums import BitType, ResetType
 from .bit_values import BitValues
@@ -138,12 +138,25 @@ class BitField(NameBase):
 
         self.values: List[Tuple[str, str, str]] = []
 
+    def __repr__(self):
+        name = self.name
+        msb = self.msb
+        lsb = self.lsb
+        ftype = str(self.field_type)
+        return (
+            f"BitField(name={name}, msb={msb}, lsb={lsb}, field_type={ftype})"
+        )
+
     @property
     def msb(self):
+        "Returns the MSB"
+
         return self._msb
 
     @msb.setter
     def msb(self, value: ParamValue):
+        "Sets the MSB"
+
         assert type(value) != int
         self._msb = value
 
@@ -214,12 +227,12 @@ class BitField(NameBase):
             return 1
         return 0
 
-    def reset_string(self) -> str:
+    def reset_string(self) -> Optional[str]:
         if self.reset_type == ResetType.PARAMETER:
             return self.reset_parameter
         return hex(self._reset_value)
 
-    def reset_vstr(self) -> str:
+    def reset_vstr(self) -> Optional[str]:
         if self.reset_type == ResetType.PARAMETER:
             return self.reset_parameter
         return f"'h{self._reset_value:x}"

@@ -37,10 +37,10 @@ class AddressMap(NameBase):
         uvm: bool = False,
     ):
         super().__init__(name, "")
-        self.base: int = base
-        self.width: int = width
-        self._fixed: bool = fixed
-        self._uvm: bool = uvm
+        self.base = base
+        self.width = width
+        self._fixed = fixed
+        self._uvm = uvm
         self.blocks: List[str] = []
 
     @property

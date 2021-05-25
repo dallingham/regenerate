@@ -17,34 +17,46 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""
+Register finder singleton
+"""
+
 from typing import Dict
+from .register_db import RegisterDb
 
 
 class RegsetFinder:
+    "Singleton to allow the searching for register set by name or id"
+
+    idmap: Dict[str, Dict[str, RegisterDb]] = {}
+    filemap: Dict[str, Dict[str, RegisterDb]] = {}
+
     def __new__(cls):
         if not hasattr(cls, "instance"):
             cls.instance = super(RegsetFinder, cls).__new__(cls)
         return cls.instance
 
-    idmap: Dict[str, Dict[str, "RegisterDb"]] = {}
-    filemap: Dict[str, Dict[str, "RegisterDb"]] = {}
-
     def __init__(self):
         ...
 
     def clear(self):
+        "Clear the internal maps"
         self.idmap = {}
         self.filemap = {}
 
     def __repr__(self):
+        "Display string"
         return "RegsetFinder()"
 
     def find_by_id(self, uuid: str):
+        "Find the register set by UUID"
         return self.idmap.get(uuid)
 
     def find_by_file(self, filename: str):
+        "Find the register set by the filename"
         return self.filemap.get(str(filename))
 
-    def register(self, db: "RegisterDb") -> None:
+    def register(self, db: RegisterDb) -> None:
+        "Map the register set by filename and uuid"
         self.filemap[str(db.filename)] = db
         self.idmap[db.uuid] = db

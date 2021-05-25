@@ -201,6 +201,13 @@ class Register(NameBase):
         self.regset_name = None
         self.share = ShareType.NONE
 
+    def __repr__(self):
+        name = self.name
+        address = self.address
+        width = self.width
+        dim = self.dimension
+        return f"Register(name={name}, address={address}, width={width}, dimension={dim})"
+
     def __hash__(self):
         """Provides the hash function so that the object can be hashed"""
 

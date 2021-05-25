@@ -35,8 +35,6 @@ from .signals import Signals
 from .const import OLD_REG_EXT, REG_EXT
 from .export import ExportData
 from .logger import LOGGER
-from .param_resolver import ParameterResolver
-from .param_data import ParameterData
 from .param_container import ParameterContainer
 from .name_base import NameBase
 

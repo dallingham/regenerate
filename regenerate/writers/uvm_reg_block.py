@@ -24,19 +24,17 @@ UVM register generation
 import time
 from pathlib import Path
 from typing import List, Set, Dict
-from jinja2 import Environment
 from collections import namedtuple
+
+from jinja2 import Environment
 
 from regenerate.db import (
     RegProject,
-    RegisterDb,
     RegisterInst,
     ParameterResolver,
     BitField,
     Register,
-    AddressMap,
     BlockInst,
-    Block,
     AddressMap,
     TYPES,
 )

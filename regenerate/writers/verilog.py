@@ -81,7 +81,7 @@ def full_reset_value(field: BitField) -> str:
     """returns the full reset value for the entire field"""
 
     if field.reset_type == ResetType.NUMERIC:
-        return "{0}'h{1:0x}".format(field.width, field.reset_value)
+        return f"{field.width}'h{field.reset_value:0x}"
     if field.reset_type == ResetType.INPUT:
         return field.reset_input
     return field.reset_parameter
@@ -99,10 +99,10 @@ def reset_value(field: BitField, start: int, stop: int) -> str:
     if field.reset_type == ResetType.INPUT:
         if stop == start:
             return field.reset_input
-        return "{0}[{1}:{2}]".format(field.reset_input, stop, start)
+        return f"{field.reset_input}[{stop}:{start}]"
     if stop == start:
         return field.reset_parameter
-    return "{0}[{1}:{2}]".format(field.reset_parameter, stop, start)
+    return f"{field.reset_parameter}[{stop}:{start}]"
 
 
 def in_range(
@@ -347,10 +347,10 @@ class Verilog(WriterBase):
         if text_list:
             if precede_blank:
                 ofile.write("\n")
-            ofile.write("/*{0}\n * ".format(border_string))
+            ofile.write(f"/*{border_string}\n * ")
             ofile.write("\n * ".join(text_list))
             if border:
-                text = "\n *{0}".format(border_string)
+                text = f"\n *{border_string}"
                 ofile.write(text.rstrip())
             ofile.write("\n */\n")
 

@@ -17,16 +17,22 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""
+Provides an object that can either be an integer or a parameter
+"""
+
 from typing import Union
 from .param_resolver import ParameterResolver
 from .param_data import ParameterFinder
 
 
 class ParamValue:
+    "A value that can be either an integer or a parameter"
+
     def __init__(self, value=0, is_parameter=False):
         self.is_parameter = is_parameter
         self.offset = 0
-        self.value: Union(int, str) = value
+        self.value: Union[int, str] = value
 
     def __repr__(self) -> str:
         if self.is_parameter:
@@ -52,6 +58,8 @@ class ParamValue:
         return f"0x{self.value:x}"
 
     def int_str(self) -> str:
+        "Prints the parameter with integers in decimal format"
+
         if self.is_parameter:
             pval = ParameterFinder().find(self.value)
             if self.offset > 0:
@@ -62,6 +70,8 @@ class ParamValue:
         return f"{self.value:}"
 
     def int_vstr(self) -> str:
+        "Prints the parameter with integers in Verilog hex format"
+
         if self.is_parameter:
             pval = ParameterFinder().find(self.value)
             if self.offset > 0:
@@ -81,6 +91,8 @@ class ParamValue:
         self.is_parameter = True
 
     def resolve(self) -> int:
+        "Map the parameter to an integer file, resolving references"
+
         if not self.is_parameter:
             return self.value
 
@@ -89,6 +101,8 @@ class ParamValue:
         return resolver.resolve(finder.find(self.value)) + self.offset
 
     def json_decode(self, data):
+        "Decode from a JSON compatible dictionary"
+
         self.is_parameter = data["is_parameter"]
         self.offset = data["offset"]
         if self.is_parameter:
@@ -97,6 +111,8 @@ class ParamValue:
             self.value = int(data["value"], 0)
 
     def json(self):
+        "Convert to JSON compatible dictionary"
+
         val = {"is_parameter": self.is_parameter, "offset": self.offset}
         if self.is_parameter:
             val["value"] = self.value
