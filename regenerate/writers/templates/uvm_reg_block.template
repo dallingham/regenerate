@@ -299,19 +299,21 @@ package {{prj.short_name}}_reg_pkg;
    *
    *--------------------------------------------------------------------------
    */
-{% for db, grp, grp_map in db_grp_maps %}
+{% for db, regset_inst, grp, grp_map, tag in db_grp_maps %}
+
+// {{db}} {{regset_inst}} {{grp}} {{grp_map}} {{tag}}
 
 class {{grp.name}}__{{db.name}}__regset extends uvm_reg_block;
     `uvm_object_utils({{grp.name}}__{{db.name}}__regset)
 
    {% for reg in db.get_all_registers()|remove_no_uvm %}
      {% if reg.ram_size %}
-    mem_{{db.name}}_{{fix_reg(reg)}} {{fix_reg(reg)}};
+    mem_{{regset_inst.name}}_{{fix_reg(reg)}} {{fix_reg(reg)}};
      {% else %}
        {% if reg.dimension > 1 %}
-    rand reg_{{db.name}}_{{fix_reg(reg)}} {{fix_reg(reg)}}[{{reg.dimension}}];
+    rand reg_{{regset_inst.name}}_{{fix_reg(reg)}} {{fix_reg(reg)}}[{{reg.dimension}}];
        {% else %}
-    rand reg_{{db.name}}_{{fix_reg(reg)}} {{fix_reg(reg)}};
+    rand reg_{{regset_inst.name}}_{{fix_reg(reg)}} {{fix_reg(reg)}};
        {% endif %}
      {% endif %}
    {% endfor %}
@@ -324,10 +326,10 @@ class {{grp.name}}__{{db.name}}__regset extends uvm_reg_block;
    {% endfor %}
 
    {% if db.coverage %}
-    {{db.name}}_reg_access_wrapper {{db.name}}_access_cg;
+    {{regset_inst.name}}_reg_access_wrapper {{regset_inst.name}}_access_cg;
    {% endif %}
 
-    function new(string name = "{{grp.name}}__{{db.name}}__regset");
+    function new(string name = "{{grp.name}}__{{regset_inst.name}}__regset");
        super.new(name, build_coverage(UVM_CVR_ADDR_MAP));
        add_coverage(build_coverage(UVM_CVR_ADDR_MAP));
     endfunction

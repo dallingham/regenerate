@@ -135,6 +135,7 @@ class UVMRegBlockRegisters(ProjectWriter):
 
     def get_db_groups(self):
 
+        used = set()
         data_set = []
         group_maps = self._build_group_maps()
         for blk_inst in self._project.block_insts:
@@ -143,13 +144,21 @@ class UVMRegBlockRegisters(ProjectWriter):
             for regset_inst in self._project.blocks[
                 blk_inst.blkid
             ].regset_insts:
-                data_set.append(
-                    (
-                        self._project.regsets[regset_inst.regset_id],
-                        blk_inst,
-                        group_maps[blk_inst],
+                db = self._project.regsets[regset_inst.regset_id]
+
+                tag = (db.uuid, regset_inst.uuid, blk_inst.uuid)
+                if tag not in used:
+                    data_set.append(
+                        (
+                            db,
+                            regset_inst,
+                            blk_inst,
+                            group_maps[blk_inst],
+                            tag
+                        )
                     )
-                )
+                    used.add(tag)
+
         return data_set
 
     def get_used_databases(self) -> Set[RegisterInst]:
