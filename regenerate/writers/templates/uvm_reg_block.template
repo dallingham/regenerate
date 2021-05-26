@@ -374,7 +374,7 @@ package {{project.short_name|lower}}_reg_pkg;
          {{fix_reg(register)}}[i].configure(this);
          {{fix_reg(register)}}[i].build();
 {%       for field in register.get_bit_fields() %}
-         {{fix_reg(register)}}[i].add_hdl_path_slice($sformatf("r%02x{{mode}}{fix_name(field)}}", {{register.address}} + (i * {{register.width / 8}})), {{field.lsb}}, {{field.width}});
+         {{fix_reg(register)}}[i].add_hdl_path_slice($sformatf("r%02x{{mode}}{{fix_name(field)}}", {{register.address}} + (i * {{register.width / 8}})), {{field.lsb}}, {{field.width}});
 {%       endfor %}
       end
 {%     else %}

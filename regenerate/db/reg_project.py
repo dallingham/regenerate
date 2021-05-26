@@ -135,7 +135,8 @@ class RegProject:
         the filename, and does not actually keep a reference to the RegisterDb.
         """
         self._modified = True
-        path = os.path.relpath(path, self.path.parent)
+        p = Path(self.path)
+        path = os.path.relpath(path, p.parent)
         self.append_register_set_to_list(path)
 
     def remove_register_set(self, path: str) -> None:

@@ -210,7 +210,7 @@ def write_signal_info(ofile, field):
         f'      <signal enb="{int(field.use_output_enable)}" '
         f'static="{int(field.output_is_static)}">'
     )
-    ofile.write("{field.output_signal}</signal>\n")
+    ofile.write(f"{field.output_signal}</signal>\n")
 
 
 def write_reset_type(ofile, field):
