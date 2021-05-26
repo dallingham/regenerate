@@ -375,15 +375,14 @@ class BlockTab:
                 name = Path(filename)
                 blk = Block()
                 blk.open(name)
-                blk.filename = name
                 blk.modified = True
 
                 self.project.blocks[blk.name] = blk
-                node = self.block_model.add_block(blk)
+                self.block_model.add_block(blk)
 
-        for regset in blk.regsets:
-            if regset not in self.project.regsets:
-                self.project.regsets[regset] = blk.regsets[regset]
+                for regset in blk.regsets:
+                    if regset not in self.project.regsets:
+                        self.project.regsets[regset] = blk.regsets[regset]
 
         choose.destroy()
         self.project.modified = True

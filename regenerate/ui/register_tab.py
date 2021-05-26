@@ -19,7 +19,7 @@
 
 import os
 
-from typing import Dict
+from typing import Dict, Optional
 from pathlib import Path
 
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango
@@ -259,9 +259,8 @@ class RegSetTab:
             self.reg_descript_callback,
         )
 
-        self.active = None
-        self.active_name = ""
-        self.project = None
+        self.active: Optional[RegisterDb] = None
+        self.project: Optional[RegProject] = None
         self.name2status: Dict[str, RegSetStatus] = {}
 
         self.widgets.filter_obj.set_placeholder_text("Signal Filter")
@@ -410,11 +409,9 @@ class RegSetTab:
     def regset_sel_changed(self, _obj):
         model, node = self.reg_set_obj.get_selected()
         if node:
-            self.active_name = model[node][SelectCol.OBJ].uuid
             self.active = model[node][SelectCol.OBJ]
         else:
             self.active = None
-            self.active_name = ""
 
         old_skip = self.skip_changes
         self.skip_changes = True
@@ -429,7 +426,7 @@ class RegSetTab:
             self.modelsort = status.modelsort
             self.node = status.node
 
-            # self.reg_description.set_database(self.active)
+            self.reg_description.set_database(self.active)
 
             status = self.name2status[self.active.uuid]
             self.filter_manage.change_filter(status.modelfilter)
@@ -445,12 +442,6 @@ class RegSetTab:
             self.widgets.selected_regset.set_text(text)
             self.widgets.selected_regset.set_use_markup(True)
             self.widgets.selected_regset.set_ellipsize(Pango.EllipsizeMode.END)
-            # if self.active.reg_select:
-            #     for row in self.active.reg_select:
-            #         self.reglist_obj.select_row(row)
-            # if self.active.bit_select:
-            #     for row in self.active.bit_select:
-            #         self.bitfield_obj.select_row(row)
             self.redraw()
             self.enable_registers(True)
         else:
@@ -646,7 +637,7 @@ class RegSetTab:
 
     def update_bit_count(self):
         if self.active:
-            text = "%d" % self.active.total_bits()
+            text = f"{self.active.total_bits()}"
         else:
             text = ""
         self.widgets.reg_count.set_text(text)
@@ -657,7 +648,6 @@ class RegSetTab:
         else:
             warn = False
         self.widgets.mod_descr_warn.set_property("visible", warn)
-        #    if not self.loading_project:
 
     def on_no_sharing_toggled(self, obj):
         if obj.get_active():
@@ -776,8 +766,8 @@ class RegSetTab:
         dbase.filename = name
         dbase.modified = True
 
-        self.project.regsets[dbase.set_name] = container
-        node = self.new_regset(dbase, name.stem)
+        self.project.regsets[dbase.set_name] = dbase
+        node = self.new_regset(dbase)
         self.reg_set_obj.select(node)
 
         # self.set_project_modified()
@@ -831,11 +821,9 @@ class RegSetTab:
                 dbase.modified = True
 
                 self.project.regsets[dbase.set_name] = dbase
-                node = self.new_regset(dbase, name.stem)
+                node = self.new_regset(dbase)
                 self.reg_set_obj.select(node)
                 # self.set_project_modified()
-                # self.infobar_reveal(False)
-            # self.reginst_model.load_icons()
         choose.destroy()
 
     def create_open_selector(self, title, mime_name=None, mime_regex=None):

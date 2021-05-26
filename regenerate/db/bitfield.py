@@ -28,14 +28,12 @@ from .json_base import JSONEncodable
 
 
 def clean_signal(name: str) -> str:
-    """Remove white space from a string, replacing them with underscores."""
+    "Remove white space from a string, replacing them with underscores."
     return "_".join(name.strip().split())
 
 
 class BitFieldFlags(JSONEncodable):
-    """
-    Flags for the bit field
-    """
+    "Flags for the bit field"
 
     def __init__(self):
         self.is_error_field: bool = False
@@ -139,13 +137,12 @@ class BitField(NameBase):
         self.values: List[Tuple[str, str, str]] = []
 
     def __repr__(self):
+        "Returns the string representation"
         name = self.name
         msb = self.msb
         lsb = self.lsb
         ftype = str(self.field_type)
-        return (
-            f"BitField(name={name}, msb={msb}, lsb={lsb}, field_type={ftype})"
-        )
+        return f"BitField(name={name}, id={self.uuid} msb={msb}, lsb={lsb}, field_type={ftype})"
 
     @property
     def msb(self):
@@ -228,38 +225,40 @@ class BitField(NameBase):
         return 0
 
     def reset_string(self) -> Optional[str]:
+        "Returns the reset value as a string"
         if self.reset_type == ResetType.PARAMETER:
             return self.reset_parameter
         return hex(self._reset_value)
 
     def reset_vstr(self) -> Optional[str]:
+        "Returns the reset value as a string in verilog format"
         if self.reset_type == ResetType.PARAMETER:
             return self.reset_parameter
         return f"'h{self._reset_value:x}"
 
     @property
     def stop_position(self) -> ParamValue:
-        """Return the most significant bit of the field."""
+        "Return the most significant bit of the field."
         return self.msb
 
     @stop_position.setter
     def stop_position(self, value: ParamValue):
-        """Set the most significant bit of the field."""
+        "Set the most significant bit of the field."
         self.msb = value
 
     @property
     def start_position(self) -> int:
-        """Return the least significant bit of the field."""
+        "Return the least significant bit of the field."
         return self.lsb
 
     @start_position.setter
     def start_position(self, value: int):
-        """Set the least significant bit of the field."""
+        "Set the least significant bit of the field."
         self.lsb = value
 
     @property
     def width(self) -> int:
-        """Return the width in bits of the bit field."""
+        "Return the width in bits of the bit field."
         return self.msb.resolve() - self.lsb + 1
 
     def resolved_output_signal(self) -> str:
@@ -290,20 +289,22 @@ class BitField(NameBase):
 
     @output_signal.setter
     def output_signal(self, output: str) -> None:
-        """Set the output signal associated with the bit range."""
+        "Set the output signal associated with the bit range."
         self._output_signal = clean_signal(output)
 
     @property
     def input_signal(self) -> str:
-        """Get the name of the input signal, if it exists."""
+        "Get the name of the input signal, if it exists."
         return self._input_signal
 
     @input_signal.setter
     def input_signal(self, signal: str) -> None:
-        """Set the name of the input signal."""
+        "Set the name of the input signal."
         self._input_signal = clean_signal(signal)
 
     def json(self):
+        "Converts the object to a JSON compatible dictionary"
+
         return {
             "name": self.name,
             "uuid": self.uuid,
@@ -325,6 +326,8 @@ class BitField(NameBase):
         }
 
     def json_decode(self, data):
+        "Decodes the JSON compatible dictionary into the object"
+
         self.name = data["name"]
         self.uuid = data["uuid"]
         self.description = data["description"]

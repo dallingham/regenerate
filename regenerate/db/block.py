@@ -112,8 +112,10 @@ class Block(NameBase):
             return False
         return True
 
-    def open(self, name):
-        self._filename = Path(name)
+    def open(self, name: Path):
+        "Opens the filename and loads the object"
+
+        self._filename = name
 
         LOGGER.info("Reading block file %s", str(self._filename))
 
