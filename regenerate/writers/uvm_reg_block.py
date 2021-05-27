@@ -90,7 +90,7 @@ class UVMRegBlockRegisters(ProjectWriter):
                 blkinst = id2blkinst[blkid]
                 if blkinst not in group_maps:
                     group_maps[blkinst] = set()
-                group_maps[blkinst].add(map_id)
+                group_maps[blkinst].add(addr_map)
         return group_maps
 
     def _used_maps(self) -> Set[AddressMap]:
@@ -144,6 +144,7 @@ class UVMRegBlockRegisters(ProjectWriter):
             for regset_inst in self._project.blocks[
                 blk_inst.blkid
             ].regset_insts:
+                print(regset_inst)
                 db = self._project.regsets[regset_inst.regset_id]
 
                 tag = (db.uuid, regset_inst.uuid, blk_inst.uuid)

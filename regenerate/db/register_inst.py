@@ -57,6 +57,9 @@ class RegisterInst(NameBase):
 
         return hash(self.uuid)
 
+    def __repr__(self):
+        return f"RegisterInst(name={self.name}, uuid={self.uuid})"
+    
     @property
     def single_decode(self) -> bool:
         return self._single_decode
