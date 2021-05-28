@@ -20,7 +20,7 @@
 Base class for windows, setting the icons
 """
 
-import os
+from pathlib import Path
 from regenerate.settings.paths import INSTALL_PATH
 
 
@@ -37,8 +37,8 @@ class BaseWindow:
     def configure(self, obj):
         """Sets the icon image to the passed object"""
         try:
-            image = os.path.join(INSTALL_PATH, "media", "flop.svg")
-            obj.set_icon_from_file(image)
+            image = Path(INSTALL_PATH) / "media" / "flop.svg"
+            obj.set_icon_from_file(str(image))
         except:
-            image = os.path.join(INSTALL_PATH, "media", "flop.png")
-            obj.set_icon_from_file(image)
+            image = Path(INSTALL_PATH) / "media" / "flop.png"
+            obj.set_icon_from_file(str(image))

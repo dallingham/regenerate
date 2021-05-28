@@ -24,9 +24,16 @@ from pathlib import Path
 
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango
 from regenerate.settings.paths import INSTALL_PATH
-from regenerate.db import Register, BitField, LOGGER, RegisterDb
-from regenerate.db.enums import ShareType, ResetType
-from regenerate.db.const import REG_EXT, OLD_REG_EXT
+from regenerate.db import (
+    Register,
+    BitField,
+    LOGGER,
+    RegisterDb,
+    ShareType,
+    ResetType,
+    REG_EXT,
+    OLD_REG_EXT,
+)
 from regenerate.ui.bit_list import BitModel, BitList
 from regenerate.ui.bitfield_editor import BitFieldEditor
 from regenerate.ui.columns import ReadOnlyColumn
@@ -146,8 +153,8 @@ class RegSetList:
         self.__build_prj_window()
 
         self.factory = Gtk.IconFactory()
-        filename = os.path.join(INSTALL_PATH, "media", "ModifiedIcon.png")
-        pixbuf = GdkPixbuf.Pixbuf.new_from_file(filename)
+        filename = Path(INSTALL_PATH) / "media" / "ModifiedIcon.png"
+        pixbuf = GdkPixbuf.Pixbuf.new_from_file(str(filename))
         iconset = Gtk.IconSet(pixbuf)
         self.factory.add("out-of-date", iconset)
         self.factory.add_default()
