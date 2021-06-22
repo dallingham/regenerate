@@ -21,13 +21,14 @@ Includes the base instances in the module
 """
 
 from .bitfield import BitField
+from .bit_values import BitValues
 from .bitfield_types import *
 from .block import Block
 from .block_inst import BlockInst
 from .register import Register
 from .reg_parser import RegParser
 from .reg_project import RegProject
-from .const import OLD_PRJ_EXT, PRJ_EXT, REG_EXT, BLK_EXT
+from .const import OLD_PRJ_EXT, PRJ_EXT, REG_EXT, BLK_EXT, OLD_REG_EXT
 from .register_inst import RegisterInst
 
 from .register_db import RegisterDb

@@ -22,8 +22,8 @@ Provides both the GTK ListStore and ListView for the bit fields.
 
 import re
 from gi.repository import Gtk
-from regenerate.db import TYPES, LOGGER
-from regenerate.db.enums import ResetType
+
+from regenerate.db import TYPES, LOGGER, ResetType
 from regenerate.ui.columns import (
     EditableColumn,
     MyComboMapColumn,
@@ -66,6 +66,7 @@ class BitModel(Gtk.ListStore):
 
     def append_field(self, field):
         "Adds the field to the model, filling out the fields in the model."
+
         node = self.append(
             row=[
                 None,
