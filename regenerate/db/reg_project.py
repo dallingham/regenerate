@@ -45,6 +45,33 @@ from .textutils import clean_text
 from .regset_finder import RegsetFinder
 
 
+def default_path_resolver(project, name: str):
+    filename = project.path.parent / name
+    new_file_path = Path(name).with_suffix(REG_EXT).resolve()
+    return filename, new_file_path;
+
+
+class RegReader:
+
+    def __init__(self, project):
+        self.project = project
+
+    def resolve_path(self, name: str):
+        filename = self.project.path.parent / name
+        new_file_path = Path(name).with_suffix(REG_EXT).resolve()
+        return filename, new_file_path;
+
+    def read_regset(self, filename, new_path):
+        regset = RegisterDb()
+        regset.modified = True
+        regset.read_db(self.project.path.parent / filename)
+        regset.filename = new_path
+        return regset
+
+    def read_block(self, filename, new_path):
+        return None
+    
+
 def nested_dict(depth, dict_type):
     """Builds a nested dictionary"""
     if depth == 1:
@@ -75,6 +102,7 @@ class RegProject:
         self.access_map = nested_dict(3, int)
         self.finder = RegsetFinder()
         self._filelist: List[Path] = []
+        self.reader_class = None
 
         self.parameters = ParameterContainer()
         self.overrides: List[Overrides] = []
@@ -140,19 +168,37 @@ class RegProject:
             with open(name) as ofile:
                 data = ofile.read()
 
-            json_data = json.loads(data)
-            self.json_decode(json_data)
+            self.json_loads(data)
 
-            for _, block in self.blocks.items():
-                for _, reg_set in block.regsets.items():
-                    self.regsets[reg_set.uuid] = reg_set
+            
+    def xml_loads(self, data: str) -> None:
+        self.loads(data)
 
+        
+    def json_loads(self, data: str) -> None:
+        print('>A')
+        json_data = json.loads(data)
+        print('>B')
+        self.json_decode(json_data)
+        print('>C')
+
+        for _, block in self.blocks.items():
+            print(block)
+            for _, reg_set in block.regsets.items():
+                print(reg_set)
+                self.regsets[reg_set.uuid] = reg_set
+        print("done")
+        
     def loads(self, data: str) -> None:
         """Reads XML from a string"""
 
         reader = ProjectReader(self)
         reader.loads(data)
-
+        
+        for _, block in self.blocks.items():
+            for _, reg_set in block.regsets.items():
+                self.regsets[reg_set.uuid] = reg_set
+        
     def remove_block(self, blk_id: str):
         del self.blocks[blk_id]
         self.block_insts = [
@@ -164,21 +210,31 @@ class RegProject:
                 map_id for map_id in addr_map.blocks if addr_id != blk_id
             ]
 
+
     def append_register_set_to_list(self, name: Union[str, Path]):
         """Adds a register set"""
 
         self._modified = True
 
-        filename = self.path.parent / name
-        new_file_path = Path(name).with_suffix(REG_EXT).resolve()
+        if self.reader_class is None:
+            rdr = RegReader(self)
+        else:
+            rdr = self.reader_class
+        
+        try:
+            filename, new_file_path = rdr.resolve_path(name)
+        except Exception as msg:
+            print("Name", str(msg))
+            return
 
-        regset = self.finder.find_by_file(new_file_path)
-        if not regset:
-            regset = RegisterDb()
-            regset.modified = True
-            regset.read_db(self.path.parent / name)
-            regset.filename = new_file_path
-            self.finder.register(regset)
+        try:
+            regset = self.finder.find_by_file(filename)
+            if not regset:
+                regset = rdr.read_regset(filename, new_file_path)
+                self.finder.register(regset)
+        except Exception as msg:
+            print("Read", str(msg))
+            return
 
         self.regsets[regset.uuid] = regset
         self._filelist.append(new_file_path)
@@ -475,18 +531,23 @@ class RegProject:
             new_list.append(new_name.resolve())
         self._filelist = new_list
 
-    def blocks_containing_regset(self, regset_name: str):
+    def blocks_containing_regset(self, regset_id: str):
+
+        lst = []
+        for blk in self.blocks:
+            rsets = self.blocks[blk].regsets
+            
         return [
             self.blocks[blk]
             for blk in self.blocks
-            if regset_name in self.blocks[blk].regsets.keys()
+            if regset_id in self.blocks[blk].regsets
         ]
 
     def instances_of_block(self, block: Block):
         return [
             blk_inst
             for blk_inst in self.block_insts
-            if blk_inst.block == block.name
+            if blk_inst.blkid == block.uuid
         ]
 
     @property
@@ -546,7 +607,12 @@ class RegProject:
     def json_decode(self, data):
         """Convert the JSON data back classes"""
 
-        Container.block_data_path = self.path.parent
+        try:
+            Container.block_data_path = self.path.parent
+            skip = False
+        except:
+            Container.block_data_path = ""
+            skip = True
 
         self.short_name = data["short_name"]
         self.name = data["name"]
@@ -558,9 +624,10 @@ class RegProject:
         self.block_insts = data["block_insts"]
         self._filelist = []
 
-        for path in data["filelist"]:
-            full_path = Path(self.path.parent / Path(path)).resolve()
-            self._filelist.append(os.path.relpath(full_path, self.path.parent))
+        if not skip:
+            for path in data["filelist"]:
+                full_path = Path(self.path.parent / Path(path)).resolve()
+                self._filelist.append(os.path.relpath(full_path, self.path.parent))
 
         self.address_maps = {}
         for name, addr_data_json in data["address_maps"].items():
@@ -568,18 +635,19 @@ class RegProject:
             addr_data.json_decode(addr_data_json)
             self.address_maps[name] = addr_data
 
-        self.exports = []
-        for item in data["exports"]:
-            exporter = item["exporter"]
-            target = self.path.parent / item["target"]
+        if not skip:
+            self.exports = []
+            for item in data["exports"]:
+                exporter = item["exporter"]
+                target = self.path.parent / item["target"]
+                
+                exp_data = ExportData(
+                    exporter,
+                    str(target.resolve()),
+                )
+                exp_data.options = item["options"]
 
-            exp_data = ExportData(
-                exporter,
-                str(target.resolve()),
-            )
-            exp_data.options = item["options"]
-
-            self.exports.append(exp_data)
+                self.exports.append(exp_data)
 
         self.block_insts = []
         for blk_inst_data_json in data["block_insts"]:
@@ -589,9 +657,16 @@ class RegProject:
 
         self.blocks = {}
         for key in data["blocks"]:
-            path = self.path.parent / data["blocks"][key]["filename"]
             blk_data = Block()
-            blk_data.open(path)
+            base_path = data["blocks"][key]["filename"]
+
+            if self.reader_class:
+                rdr = self.reader_class
+                blk_data = rdr.read_block(base_path, base_path)
+            else:
+                path = self.path.parent / base_path
+                blk_data.open(path)
+                
             self.blocks[key] = blk_data
 
         self.parameters = ParameterContainer()

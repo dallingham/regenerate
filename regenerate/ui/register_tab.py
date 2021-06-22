@@ -762,11 +762,11 @@ class RegSetTab:
 
         dbase = RegisterDb()
         dbase.module_name = name.stem
-        dbase.set_name = name.stem
+        dbase.name = name.stem
         dbase.filename = name
         dbase.modified = True
 
-        self.project.regsets[dbase.set_name] = dbase
+        self.project.regsets[dbase.name] = dbase
         node = self.new_regset(dbase)
         self.reg_set_obj.select(node)
 
@@ -820,7 +820,7 @@ class RegSetTab:
                 dbase.filename = name
                 dbase.modified = True
 
-                self.project.regsets[dbase.set_name] = dbase
+                self.project.regsets[dbase.name] = dbase
                 node = self.new_regset(dbase)
                 self.reg_set_obj.select(node)
                 # self.set_project_modified()
@@ -871,7 +871,7 @@ class RegSetTab:
 
         if reg:
             SummaryWindow(
-                self.widgets, reg, self.active.set_name, self.project
+                self.widgets, reg, self.active.name, self.project, self.active
             )
 
 

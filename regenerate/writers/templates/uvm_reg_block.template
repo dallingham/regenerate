@@ -318,10 +318,10 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
    {% endfor %}
 
    {% for map in grp_map %}
-    uvm_reg_map {{grp_map[map].name}}_map;
+    uvm_reg_map {{map.name}}_map;
    {% endfor %}
    {% for map in grp_map %}
-    bit disable_{{grp_map[map].name}}_map = 1'b0;
+    bit disable_{{map.name}}_map = 1'b0;
    {% endfor %}
    
    {% if db.coverage %}
@@ -452,11 +452,11 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
    {% if grp_map|length == 1 %}
      {% for map in grp_map %}
 
-      {{grp_map[map].name}}_map = build_address_map("{{grp_map[map].name}}_map", {{8 * prj.get_address_width(grp_name[map].uuid)}}, s_access_map["{{grp_name[map].uuid}}"][extract_path(get_full_name())]);
+      {{map.name}}_map = build_address_map("{{map.name}}_map", {{8 * prj.get_address_width(map.uuid)}}, s_access_map["{{map.uuid}}"][extract_path(get_full_name())]);
      {% endfor %}
    {% else %}
      {% for map in grp_map %}
-      if (!disable_{{grp_map[map].name}}_map) {{grp_map[map].name}}_map = build_address_map("{{grp_map[map].name}}_map", {{8 * prj.get_address_width(grp_map[map].uuid)}}, s_access_map["{{grp_map[map].uuid}}"][extract_path(get_full_name())]);
+      if (!disable_{{map.name}}_map) {{map.name}}_map = build_address_map("{{map.name}}_map", {{8 * prj.get_address_width(map.uuid)}}, s_access_map["{{map.uuid}}"][extract_path(get_full_name())]);
      {% endfor %}
 
    {% endif %}
@@ -482,7 +482,8 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
    *--------------------------------------------------------------------------
    */
 {% for grp in group_maps %}
-  class {{grp.name}}__blk extends uvm_reg_block;
+
+   class {{grp.name}}__blk extends uvm_reg_block;
 
      `uvm_object_utils({{grp.name}}__blk)
 
@@ -496,10 +497,10 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
   {% endfor %}
 
   {% for item in group_maps[grp] %}
-     uvm_reg_map {{group_maps[item].name}}_map;
+     uvm_reg_map {{item.name}}_map;
   {% endfor %}
   {% for map in group_maps[grp] %}
-     bit disable_{{group_maps[map].name}}_map = 1'b0;
+     bit disable_{{map.name}}_map = 1'b0;
   {% endfor %}
 
      function new(string name = "{{grp.name}}__blk");
@@ -508,14 +509,14 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
 
      function void build();
   {% if group_maps[grp]|length > 1 %}
-    {% for mapid in group_maps[grp] %}
-        if (!disable_{{group_maps[mapid].name}}_map) begin
-           {{group_maps[mapid].name}}_map = create_map("{{group_maps[mapid].name}}_map", 0, {{prj.get_address_width(mapid)}}, UVM_LITTLE_ENDIAN);
+    {% for map in group_maps[grp] %}
+        if (!disable_{{map.name}}_map) begin
+           {{map.name}}_map = create_map("{{map.name}}_map", 0, {{prj.get_address_width(map.uuid)}}, UVM_LITTLE_ENDIAN);
         end
     {% endfor %}
   {% else %}
-    {% for mapid in group_maps[grp] %}
-        {{group_maps[mapid].name}}_map = create_map("{{group_maps[mapid].name}}_map", 0, {{prj.get_address_width(mapid)}}, UVM_LITTLE_ENDIAN);
+    {% for map in group_maps[grp] %}
+        {{map.name}}_map = create_map("{{map.name}}_map", 0, {{prj.get_address_width(map.uuid)}}, UVM_LITTLE_ENDIAN);
     {% endfor %}
   {% endif %}
 
@@ -531,17 +532,17 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
       {% endif %}
       
       {% for item in group_maps[grp] %}
-           {{regset_inst.name}}[i].disable_{{group_maps[item].name}}_map = disable_{{group_maps[item].name}}_map;
+           {{regset_inst.name}}[i].disable_{{item.name}}_map = disable_{{item.name}}_map;
       {% endfor %}
       
            {{regset_inst.name}}[i].build();
       {% for item in group_maps[grp] %}
         {% if group_maps[grp]| length > 1 %}
-           if (!disable_{{group_maps[item].name}}_map) begin
-              {{group_maps[item].name}}_map.add_submap({{regset_inst.name}}[i].{{group_maps[item].name}}_map, 'h{{"%x" % regset_inst.offset}} + (i * 'h{{"%x" % (2 ** regset.ports.address_bus_width,)}}));
+           if (!disable_{{item.name}}_map) begin
+              {{item.name}}_map.add_submap({{regset_inst.name}}[i].{{item.name}}_map, 'h{{"%x" % regset_inst.offset}} + (i * 'h{{"%x" % (2 ** regset.ports.address_bus_width,)}}));
            end
         {% else %}
-           {{group_maps[item].name}}_map.add_submap({{regset_inst.name}}[i].{{group_maps[item].name}}_map, 'h{{"%x" % regset_inst.offset}} + (i * 'h{{"%x" % (2 ** regset.ports.address_bus_width,)}}));
+           {{item.name}}_map.add_submap({{regset_inst.name}}[i].{{item.name}}_map, 'h{{"%x" % regset_inst.offset}} + (i * 'h{{"%x" % (2 ** regset.ports.address_bus_width,)}}));
         {% endif %}
         {% if regset.no_uvm %}
            uvm_resource_db#(bit)::set(
@@ -558,15 +559,15 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
         {{regset_inst.name}}.configure(this, "{{regset_inst.hdl}}");
 	
       {% for item in group_maps[grp] %}
-        {{regset_inst.name}}.disable_{{group_maps[item].name}}_map = disable_{{groups_maps[item].name}}_map;
+        {{regset_inst.name}}.disable_{{item.name}}_map = disable_{{item.name}}_map;
       {% endfor %}
       
         {{regset_inst.name}}.build();
       {% for item in group_maps[grp] %}
         {% if group_maps[grp]| length > 1 %}
-        if (!disable_{{group_maps[item].name}}_map) {{group_maps[item].name}}_map.add_submap({{regset_inst.name}}.{{group_maps[item].name}}_map, 'h{{"%x" % regset_inst.offset}});
+        if (!disable_{{item.name}}_map) {{item.name}}_map.add_submap({{regset_inst.name}}.{{item.name}}_map, 'h{{"%x" % regset_inst.offset}});
         {% else %}
-        {{group_maps[item].name}}_map.add_submap({{regset_inst.name}}.{{group_maps[item].name}}_map, 'h{{"%x" % regset_inst.offset}});
+        {{item.name}}_map.add_submap({{regset_inst.name}}.{{item.name}}_map, 'h{{"%x" % regset_inst.offset}});
         {% endif %}
         {% if regset.no_uvm %}
         uvm_resource_db#(bit)::set(
@@ -623,17 +624,17 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
         {{grp.name}}.configure(this, "{{grp.hdl_path}}");
     {% if used_maps|length > 1 %}
       {% for set in group_maps[grp] %}
-        {{grp.name}}.disable_{{set}}_map = disable_{{set}}_map;
+        {{grp.name}}.disable_{{set.name}}_map = disable_{{set.name}}_map;
       {% endfor %}
     {% endif %}
         {{grp.name}}.build();
 
     {% if used_maps|length > 1 %}
-      {%- for mset in used_maps -%}
+      {%- for mset in group_maps[grp] %}
         if (!disable_{{mset.name}}_map) {{mset.name}}_map.add_submap({{grp.name}}.{{mset.name}}_map, 'h{{"%x" % grp.address_base}});
       {% endfor %}
     {%- else -%}
-      {% for mset in used_maps %}
+      {% for mset in group_maps[grp] %}
         {{mset.name}}_map.add_submap({{grp.name}}.{{mset.name}}_map, 'h{{"%x" % grp.address_base}});
       {% endfor %}
 
@@ -642,19 +643,19 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
 
         foreach ({{grp.name}}[i]) begin
            {{grp.name}}[i] = new($sformatf("{{grp.name}}[%0d]", i));
-    {% if grp.hdl != "" %}
+    {% if grp.hdl %}
            {{grp.name}}[i].configure(this, $sformatf("{{grp.hdl}}", i));
     {% else %}
            {{grp.name}}[i].configure(this);
     {% endif %}
-    {% for set in group_maps[grp] %}
-           {{grp.name}}[i].disable_{{set}}_map = disable_{{set}}_map;
+    {% for map in group_maps[grp] %}
+           {{grp.name}}[i].disable_{{map.name}}_map = disable_{{map.name}}_map;
     {% endfor %}
            {{grp.name}}[i].build();
 
-    {% for mset in group_maps[grp] %}
+    {% for map in group_maps[grp] %}
       {% set addr_size = prj.blocks[grp.blkid].address_size %}
-           if (!disable_{{mset}}_map) {{mset}}_map.add_submap({{grp.name}}[i].{{mset}}_map, 'h{{"%x" % grp.address_base}} + (i * 'h{{"%x" % addr_size}}));
+           if (!disable_{{map.name}}_map) {{map.name}}_map.add_submap({{grp.name}}[i].{{map.name}}_map, 'h{{"%x" % grp.address_base}} + (i * 'h{{"%x" % addr_size}}));
     {% endfor %}
         end
 

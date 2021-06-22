@@ -583,6 +583,8 @@ def build_logic_list(_dbase, word_fields, cell_info):
     for addr in word_fields:
         val = word_fields[addr]
         for (field, _, _, start_pos, stop_pos, _, reg) in val:
+            name = reg_field_name(reg, field)
+            dim = reg.dimension_str
             if not field.msb.is_parameter and field.msb.resolve() == field.lsb:
                 if reg.dimension_is_param():
                     reg_list.append(
@@ -607,31 +609,20 @@ def build_logic_list(_dbase, word_fields, cell_info):
                 else:
                     reg_list.append((reg_field_name(reg, field), vect))
             if cell_info[field.field_type].has_oneshot:
-                for byte in break_into_bytes(start_pos, stop_pos):
-                    if reg.dimension_is_param():
-                        reg_list.append(
-                            (
-                                (
-                                    "{}_{}_1S[{}]".format(
-                                        reg_field_name(reg, field),
-                                        byte[0],
-                                        reg.dimension_str,
-                                    )
-                                ),
-                                "",
-                            )
+                if reg.dimension_is_param():
+                    reg_list.append(
+                        (
+                            f"{name}_1S[{dim}]",
+                            f"[{stop_pos}:{start_pos}]",
                         )
-                    else:
-                        reg_list.append(
-                            (
-                                (
-                                    "{}_{}_1S".format(
-                                        reg_field_name(reg, field), byte[0]
-                                    )
-                                ),
-                                "",
-                            )
-                        )
+                    )
+                else:
+                    reg_list.append(
+                        (
+                            f"{name}_1S",
+                            f"[{stop_pos}:{start_pos}]",
+                        ),
+                    )
     return reg_list
 
 
@@ -690,12 +681,8 @@ def build_oneshot_assignments(word_fields, cell_info):
                     name = f"{fld.output_signal}_1S[{reg.dimension}]"
                 else:
                     name = f"{fld.output_signal}_1S"
-                or_list = []
-                for byte in break_into_bytes(fld.lsb, fld.msb.resolve()):
-                    or_list.append(
-                        f"r{reg.address:x}_{fld.name.lower()}_{byte[0]}_1S"
-                    )
-                assign_list.append((name, " | ".join(or_list)))
+                value = f"(|r{reg.address:x}_{fld.name.lower()}_1S)"
+                assign_list.append((name, value))
     return assign_list
 
 

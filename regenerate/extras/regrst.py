@@ -232,7 +232,6 @@ class RegisterRst:
     def __init__(
         self,
         register: Register,
-        regset_name=None,
         project=None,
         inst=None,
         highlight=None,
@@ -251,7 +250,8 @@ class RegisterRst:
         self._reg = register
         self._highlight = highlight
         self._prj = project
-        self._regset_name = regset_name
+        self._regset_id = dbase.uuid
+        self._regset_name = dbase.name
         self._show_defines = show_defines
         self._show_uvm = show_uvm
         self._group = group
@@ -263,7 +263,7 @@ class RegisterRst:
         if dbase is None:
             self.reglist = set()
         else:
-            self.reglist = set({reg.name for reg in dbase.get_all_registers()})
+            self.reglist = set({reg for reg in dbase.get_all_registers()})
 
         if decode:
             try:
@@ -312,17 +312,37 @@ class RegisterRst:
 
     def refname(self, reg_name: str) -> str:
         """Create a cross reference name from the register"""
+        if self._group:
+            gname = self._group.name
+        else:
+            gname = ""
+
+        if self._inst:
+            iname = self._inst.name
+        else:
+            iname = ""
+            
         return "%s-%s-%s" % (
-            norm_name(self._inst),
-            norm_name(self._group),
+            norm_name(iname),
+            norm_name(gname),
             norm_name(reg_name),
         )
 
     def field_ref(self, name: str) -> str:
         """Create a cross reference name from the field"""
+        if self._group:
+            gname = self._group.name
+        else:
+            gname = ""
+            
+        if self._inst:
+            iname = self._inst.name
+        else:
+            iname = ""
+
         return "%s-%s-%s-%s" % (
-            norm_name(self._inst),
-            norm_name(self._group),
+            norm_name(iname),
+            norm_name(self.gname),
             norm_name(self._reg.name),
             norm_name(name),
         )
@@ -398,16 +418,17 @@ class RegisterRst:
         extra_text = []
 
         for field in reversed(self._reg.get_bit_fields()):
-            if field.msb != last_index:
-                display_reserved(ofile, last_index, field.msb + 1)
+            msb = field.msb.resolve()
+            if msb != last_index:
+                display_reserved(ofile, last_index, msb + 1)
 
             if field.width == 1:
                 ofile.write("   * - %02d\n" % field.lsb)
             else:
-                ofile.write("   * - %02d:%02d\n" % (field.msb, field.lsb))
+                ofile.write("   * - %02d:%02d\n" % (msb, field.lsb))
 
             if self._decode:
-                val = (self._decode & mask(field.msb, field.lsb)) >> field.lsb
+                val = (self._decode & mask(msb, field.lsb)) >> field.lsb
                 if val != field.reset_value:
                     ofile.write("     - :resetvalue:`0x%x`\n" % val)
                 else:
@@ -507,7 +528,7 @@ class RegisterRst:
             ofile = StringIO()
             ret_str = True
 
-        regset_blocks = self._prj.blocks_containing_regset(self._regset_name)
+        regset_blocks = self._prj.blocks_containing_regset(self._regset_id)
 
         block_inst_list = []
         for blk in regset_blocks:
@@ -515,9 +536,10 @@ class RegisterRst:
 
         addr_maps_regset_is_in = {}
         for addr_map in self._prj.get_address_maps():
+            
             for blk_inst in block_inst_list:
-                if blk_inst.inst_name in addr_map.blocks:
-                    addr_maps_regset_is_in[addr_map.name] = addr_map
+                if blk_inst.uuid in addr_map.blocks:
+                    addr_maps_regset_is_in[addr_map.uuid] = addr_map
 
         registers = self.find_registers(block_inst_list)
         names = self.expand_register_list(registers)
@@ -692,8 +714,8 @@ class RegisterRst:
         ) + self.html_from_text(text)
 
     def reg_addr(self, blk_inst, brpt, regset_inst, rrpt):
-        blk = self._prj.blocks[blk_inst.block]
-        regset = self._prj.regsets[regset_inst.set_name]
+        blk = self._prj.blocks[blk_inst.blkid]
+        regset = self._prj.regsets[regset_inst.regset_id]
         rset_width = 1 << regset.ports.address_bus_width
 
         val = (
@@ -709,11 +731,11 @@ class RegisterRst:
     def find_registers(self, block_inst_list):
         registers = []
         for blk_inst in block_inst_list:
-            block = self._prj.blocks[blk_inst.block]
+            block = self._prj.blocks[blk_inst.blkid]
             regset_list = [
                 rs
                 for rs in block.regset_insts
-                if rs.set_name == self._regset_name
+                if rs.regset_id == self._regset_id
             ]
             registers.append((blk_inst, regset_list))
         return registers
@@ -722,13 +744,13 @@ class RegisterRst:
         rtoken = self._reg.token.lower()
         names = []
         for (blk_inst, regset_list) in registers:
-            bname = blk_inst.inst_name
+            bname = blk_inst.name
             if blk_inst.repeat > 1:
                 for idx in range(0, blk_inst.repeat):
                     for regset in regset_list:
-                        rname = regset.inst
-                        if regset.repeat > 1:
-                            for ridx in range(0, regset.repeat):
+                        rname = regset.name
+                        if regset.repeat.resolve() > 1:
+                            for ridx in range(0, regset.repeat.resolve()):
                                 names.append(
                                     (
                                         f"{bname}[{idx}].{rname}[{ridx}].{rtoken}",
@@ -746,9 +768,9 @@ class RegisterRst:
                             )
             else:
                 for regset in regset_list:
-                    rname = regset.inst
-                    if regset.repeat > 1:
-                        for ridx in range(0, regset.repeat):
+                    rname = regset.name
+                    if regset.repeat.resolve() > 1:
+                        for ridx in range(0, regset.repeat.resolve()):
                             names.append(
                                 (
                                     f"{bname}.{rname}[{ridx}].{rtoken}",

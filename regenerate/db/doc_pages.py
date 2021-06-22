@@ -35,7 +35,7 @@ class DocPages:
         return list(self.pages.keys())
 
     def get_page(self, name: str):
-        return self.pages[name]
+        return self.pages.get(name)
 
     def json(self):
         return self.pages

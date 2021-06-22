@@ -174,8 +174,9 @@ generate
 {%            set bytepos = "(bitpos >> 3)+%d" % byte_offset %}
 {%            set wpos = "[bitpos+%d]" % (byte_offset * 8,) %}
 {%          endif %}
-// {{field.msb}}, {{field.msb.is_parameter}}, {{field.msb.offset}}, {{field.msb.value}}
+
 localparam bit [{{field.msb.int_str()}}:{{field.lsb}}] {{rval}} = {{field.reset_vstr()}};
+
            {% set generate = 1 %}
 generate
    for (bitpos = {{field.lsb}}; bitpos <= {{field.msb.int_str()}}; bitpos++) begin : g{{faddr_str.lower()}}
@@ -204,17 +205,16 @@ generate
       .RD    (read_r{{"%02x" % reg.address}}),
 {%       endif %}
 {%       if ci.has_control %}
-      .LD    ({{field.control_signal}}{{dimval}}{{pos}}),
+      .LD    ({{field.control_signal}}{{dimval}}),
 {%       endif %}
 {%       if ci.has_input %}
       .IN    ({{field.input_signal}}{{dimval}}{{pos}}),
 {%       endif %}
 {%       if ci.has_oneshot %}
-      .DO_1S ({{reg_field_name(reg, field)}}_{{field.lsb}}_1S{{pos}}),
+      .DO_1S ({{reg_field_name(reg, field)}}_1S{{pos}}),
 {%       endif %}
       .DO    ({{reg_field_name(reg, field)}}{{dimval}}{{pos}})
      );
-
 {%     endif %}
 {%     if field.field_type == 0 or field.msb.is_parameter or field.msb.value > field.lsb %}
 {% if generate == 1 %}    
@@ -222,7 +222,6 @@ generate
  endgenerate
 {% endif %}
 {%     endif %}
-
 
 {%   endfor %}
 {% endfor %}

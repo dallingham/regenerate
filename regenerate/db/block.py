@@ -137,10 +137,10 @@ class Block(NameBase):
             ginst = RegisterInst()
             ginst.json_decode(rset)
             self.regset_insts.append(ginst)
-
+            
         self.regsets = {}
         for key, item in data["regsets"].items():
-            filename = Path(self._filename.parent / item["filename"]).resolve()
+            filename = Path(self._filename.parent / item["filename"])
 
             regset = self.finder.find_by_file(filename)
             if not regset:
@@ -168,7 +168,6 @@ class Block(NameBase):
             ...
 
         for override in self.overrides:
-            print(override)
             resolver.add_regset_override(
                 override.path, override.parameter, override.value
             )

@@ -275,7 +275,7 @@ class Register(NameBase):
 
         bit = set()
         for field in self._bit_fields.values():
-            for val in range(field.lsb, field.msb + 1):
+            for val in range(field.lsb, field.msb.resolve() + 1):
                 bit.add(val)
         lbits = sorted(list(bit))
 

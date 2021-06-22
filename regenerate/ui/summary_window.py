@@ -34,7 +34,7 @@ class SummaryWindow(BaseWindow):
     container = None
     button = None
 
-    def __init__(self, widgets, reg, regset_name, project):
+    def __init__(self, widgets, reg, regset_name, project, dbase):
 
         super().__init__()
 
@@ -53,7 +53,7 @@ class SummaryWindow(BaseWindow):
             SummaryWindow.window.show()
 
         reg_info = regenerate.extras.RegisterRst(
-            reg, regset_name, project, show_uvm=True
+            reg, project=project, show_uvm=True, dbase=dbase
         )
         text = reg_info.html_css()
         SummaryWindow.wkit.show_html(text)

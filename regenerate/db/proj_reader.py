@@ -71,7 +71,6 @@ class ProjectReader:
     def loads(self, data):
         """Loads the data from a text string"""
         self.path = "<string>"
-
         ofile = StringIO(data)
 
         parser = xml.parsers.expat.ParserCreate()
@@ -119,21 +118,27 @@ class ProjectReader:
     def start_registerset(self, attrs):
         """Called when a registerset tag is found"""
         self._current = attrs["name"]
-        reg_path = self.path.parent / self._current
-        reg_path_str = str(reg_path.resolve())
-        reg_path_xml = str(reg_path.with_suffix(OLD_REG_EXT).resolve())
+        if str(self.path) == "<string>":
+            reg_path = Path(self._current)
+            reg_path_str = reg_path
+            reg_path_xml = reg_path
+        else:
+            reg_path = self.path.parent / self._current
+            reg_path_str = str(reg_path.resolve())
+            reg_path_xml = str(reg_path.with_suffix(OLD_REG_EXT).resolve())
         self._prj.append_register_set_to_list(reg_path_xml)
         self.reg_map[reg_path.stem] = reg_path_str
-
+        
     def start_export(self, attrs):
         """Called when an export tag is found"""
 
-        db_path = self.path.parent / Path(self._current).with_suffix(REG_EXT)
-        db_path_str = str(db_path.resolve())
-        target = Path(self.path.parent) / attrs["path"]
-        self.reg_exports[db_path_str].append(
-            ExportData(attrs["option"], str(target.resolve()))
-        )
+        if str(self.path) != "<string>":
+            db_path = self.path.parent / Path(self._current).with_suffix(REG_EXT)
+            db_path_str = str(db_path.resolve())
+            target = Path(self.path.parent) / attrs["path"]
+            self.reg_exports[db_path_str].append(
+                ExportData(attrs["option"], str(target.resolve()))
+            )
 
     def start_group_export(self, attrs):
         """Called when an group_export tag is found"""
@@ -147,11 +152,12 @@ class ProjectReader:
     def start_project_export(self, attrs):
         """Called when a project_export tag is found"""
 
-        target = Path(self.path.parent) / attrs["path"]
-        self._prj.append_to_project_export_list(
-            attrs["option"], str(target.resolve())
-        )
-
+        if str(self.path) != "<string>":
+            target = Path(self.path.parent) / attrs["path"]
+            self._prj.append_to_project_export_list(
+                attrs["option"], str(target.resolve())
+            )
+            
     def start_grouping(self, attrs):
         """Called when a grouping tag is found"""
 
@@ -299,13 +305,15 @@ class ProjectReader:
             blk = self.blocks[blkid]
             blk.modified = True
 
-            filename = (
-                Path(counter.most_common(1)[0][0]) / f"{blk.name}{BLK_EXT}"
-            )
-            block_dir = Path(self.path.parent).resolve()
-            filename = block_dir / filename
-
-            blk.filename = Path(filename).resolve()
+            if str(self.path) != "<string>":
+                filename = (
+                    Path(counter.most_common(1)[0][0]) / f"{blk.name}{BLK_EXT}"
+                )
+                block_dir = Path(self.path.parent).resolve()
+                filename = block_dir / filename
+                
+                blk.filename = Path(filename).resolve()
+                
             self._prj.blocks[blkid] = blk
 
             for reg_inst in blk.regset_insts:
