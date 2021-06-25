@@ -68,10 +68,13 @@ class ProjectReader:
             parser.ParseFile(ofile)
         self._prj.modified = True
 
-    def loads(self, data):
+    def loads(self, data, path):
         """Loads the data from a text string"""
-        self.path = "<string>"
-        ofile = StringIO(data)
+        self.path = Path(path)
+        try:
+            ofile = StringIO(data)
+        except Exception as msg:
+            print("ERR", str(msg))
 
         parser = xml.parsers.expat.ParserCreate()
         parser.StartElementHandler = self.startElement
@@ -113,21 +116,14 @@ class ProjectReader:
         self._prj.name = attrs["name"]
         self._prj.short_name = attrs.get("short_name", "")
         self._prj.company_name = attrs.get("company_name", "")
-        self.reg_map = {}
 
     def start_registerset(self, attrs):
         """Called when a registerset tag is found"""
         self._current = attrs["name"]
-        if str(self.path) == "<string>":
-            reg_path = Path(self._current)
-            reg_path_str = reg_path
-            reg_path_xml = reg_path
-        else:
-            reg_path = self.path.parent / self._current
-            reg_path_str = str(reg_path.resolve())
-            reg_path_xml = str(reg_path.with_suffix(OLD_REG_EXT).resolve())
+        reg_path = self.path.parent / self._current
+        reg_path_str = str(reg_path.resolve())
+        reg_path_xml = str(reg_path.with_suffix(OLD_REG_EXT).resolve())
         self._prj.append_register_set_to_list(reg_path_xml)
-        self.reg_map[reg_path.stem] = reg_path_str
         
     def start_export(self, attrs):
         """Called when an export tag is found"""
@@ -286,11 +282,9 @@ class ProjectReader:
     def end_project(self, _text):
         from collections import Counter
 
-        self.reg_map = {}
         self.reg_id = {}
         for x in self._prj.regsets:
             rset = self._prj.regsets[x]
-            self.reg_map[rset.name] = rset.filename
             self.reg_id[rset.name] = rset.uuid
 
         for blkid in self.blocks:
@@ -298,7 +292,7 @@ class ProjectReader:
             counter = Counter()
             for rset in self.blocks[blkid].regset_insts:
                 try:
-                    counter[Path(self.reg_map[rset.regset_id]).parent] += 1
+                    counter[Path(self.reg_id[rset.regset_id]).parent] += 1
                 except KeyError:
                     print(rset.uuid, "not found")
 

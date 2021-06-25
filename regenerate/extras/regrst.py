@@ -280,20 +280,21 @@ class RegisterRst:
         """
         return CSS + self.html(text)
 
-    def restructured_text(self, text: str = "") -> str:
+    def restructured_text(self, text: str = "", use_regs=True) -> str:
         """
         Returns the definition of the register in RestructuredText format
         """
         ofile = StringIO()
         used = set()
-        for reg in self.reglist:
-            if reg.name not in used:
-                used.add(reg.name)
-                if self._inst and self._group:
-                    url = "/".join(
-                        (self._group, self._inst, reg.token.lower())
-                    )
-                    ofile.write(".. _`{0}`: {1}\n\n".format(reg.name, url))
+        if use_regs:
+            for reg in self.reglist:
+                if reg.name not in used:
+                    used.add(reg.name)
+                    if self._inst and self._group:
+                        url = "/".join(
+                            (self._group, self._inst, reg.token.lower())
+                        )
+                        ofile.write(".. _`{0}`: {1}\n\n".format(reg.name, url))
 
         ofile.write("\n\n")
         self.str_title(ofile)
@@ -313,12 +314,12 @@ class RegisterRst:
     def refname(self, reg_name: str) -> str:
         """Create a cross reference name from the register"""
         if self._group:
-            gname = self._group.name
+            gname = self._group
         else:
             gname = ""
 
         if self._inst:
-            iname = self._inst.name
+            iname = self._inst
         else:
             iname = ""
             

@@ -440,7 +440,7 @@ class BitFieldEditor(BaseWindow):
         new_text = new_text.strip()
 
         start = self.bit_field.lsb
-        stop = self.bit_field.msb
+        stop = self.bit_field.msb.resolve()
         maxval = (2 ** (stop - start + 1)) - 1
 
         try:

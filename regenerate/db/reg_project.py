@@ -29,6 +29,7 @@ import os.path
 from typing import List, Dict, Union
 import xml.sax.saxutils
 
+from .data_reader import FileReader
 from .address_map import AddressMap
 from .block import Block
 from .block_inst import BlockInst
@@ -50,27 +51,6 @@ def default_path_resolver(project, name: str):
     new_file_path = Path(name).with_suffix(REG_EXT).resolve()
     return filename, new_file_path;
 
-
-class RegReader:
-
-    def __init__(self, project):
-        self.project = project
-
-    def resolve_path(self, name: str):
-        filename = self.project.path.parent / name
-        new_file_path = Path(name).with_suffix(REG_EXT).resolve()
-        return filename, new_file_path;
-
-    def read_regset(self, filename, new_path):
-        regset = RegisterDb()
-        regset.modified = True
-        regset.read_db(self.project.path.parent / filename)
-        regset.filename = new_path
-        return regset
-
-    def read_block(self, filename, new_path):
-        return None
-    
 
 def nested_dict(depth, dict_type):
     """Builds a nested dictionary"""
@@ -160,8 +140,9 @@ class RegProject:
 
         if self.path.suffix == OLD_PRJ_EXT:
             LOGGER.info("Loading XML project file '%s'", str(self.path))
-            xml_reader = ProjectReader(self)
-            xml_reader.open(name)
+            with self.path.open("rb") as ofile:
+                data = ofile.read()
+            self.loads(data, str(self.path))
         else:
             LOGGER.info("Loading JSON project file '%s'", str(self.path))
 
@@ -170,34 +151,29 @@ class RegProject:
 
             self.json_loads(data)
 
-            
-    def xml_loads(self, data: str) -> None:
-        self.loads(data)
-
+    def xml_loads(self, data: bytes, name: str) -> None:
+        self.loads(data, name)
         
     def json_loads(self, data: str) -> None:
-        print('>A')
         json_data = json.loads(data)
-        print('>B')
         self.json_decode(json_data)
-        print('>C')
 
+        print(self.blocks.items())
         for _, block in self.blocks.items():
-            print(block)
             for _, reg_set in block.regsets.items():
-                print(reg_set)
                 self.regsets[reg_set.uuid] = reg_set
-        print("done")
         
-    def loads(self, data: str) -> None:
+    def loads(self, data: bytes, name: str) -> None:
         """Reads XML from a string"""
 
         reader = ProjectReader(self)
-        reader.loads(data)
+        reader.loads(data, name)
+        self.path = name
         
         for _, block in self.blocks.items():
             for _, reg_set in block.regsets.items():
                 self.regsets[reg_set.uuid] = reg_set
+        
         
     def remove_block(self, blk_id: str):
         del self.blocks[blk_id]
@@ -217,7 +193,7 @@ class RegProject:
         self._modified = True
 
         if self.reader_class is None:
-            rdr = RegReader(self)
+            rdr = FileReader(self.path)
         else:
             rdr = self.reader_class
         
@@ -230,7 +206,13 @@ class RegProject:
         try:
             regset = self.finder.find_by_file(filename)
             if not regset:
-                regset = rdr.read_regset(filename, new_file_path)
+                regset = RegisterDb()
+                if Path(filename).suffix == ".xml":
+                    data = rdr.read_bytes(filename)
+                    regset.loads(data, filename)
+                else:
+                    data = rdr.read(filename)
+                    regset.json_loads(data)
                 self.finder.register(regset)
         except Exception as msg:
             print("Read", str(msg))
@@ -659,10 +641,22 @@ class RegProject:
         for key in data["blocks"]:
             blk_data = Block()
             base_path = data["blocks"][key]["filename"]
+            print("BasePath", base_path)
 
             if self.reader_class:
                 rdr = self.reader_class
-                blk_data = rdr.read_block(base_path, base_path)
+                text = rdr.read_bytes(base_path)
+                json_data = json.loads(text)
+                blk_data.filename, _ = self.reader_class.resolve_path(base_path)
+                print(self.reader_class.__class__, type(self.reader_class.__class__))
+                blk_data.reader_class = self.reader_class.__class__(
+                    base_path,
+                    self.reader_class.repo,
+                    self.reader_class.rtl_id
+                )
+                print("FILE1", blk_data.filename)
+                blk_data.json_decode(json_data)
+                print("FILE2", blk_data.filename)
             else:
                 path = self.path.parent / base_path
                 blk_data.open(path)

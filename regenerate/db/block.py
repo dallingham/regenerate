@@ -28,6 +28,7 @@ from pathlib import Path
 import os
 import json
 
+from .data_reader import FileReader
 from .overrides import Overrides
 from .const import BLK_EXT
 from .register_inst import RegisterInst
@@ -57,7 +58,8 @@ class Block(NameBase):
         self.description = description
         self.doc_pages = DocPages()
         self.doc_pages.update_page("Overview", "")
-
+        self.reader_class = None
+        
         self.regset_insts: List[RegisterInst] = []
         self.regsets: Dict[str, RegisterDb] = {}
         self._modified = False
@@ -145,7 +147,15 @@ class Block(NameBase):
             regset = self.finder.find_by_file(filename)
             if not regset:
                 regset = RegisterDb()
-                regset.read_json(filename)
+                if self.reader_class is None:
+                    rdr = FileReader(filename)
+                else:
+                    rdr = self.reader_class
+
+                print(">>>>>", filename)
+                json_data = json.loads(rdr.read_bytes(filename))
+                regset.filename = filename
+                regset.json_decode(json_data)
                 self.finder.register(regset)
             self.regsets[key] = regset
 
