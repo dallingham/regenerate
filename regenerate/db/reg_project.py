@@ -49,7 +49,7 @@ from .regset_finder import RegsetFinder
 def default_path_resolver(project, name: str):
     filename = project.path.parent / name
     new_file_path = Path(name).with_suffix(REG_EXT).resolve()
-    return filename, new_file_path;
+    return filename, new_file_path
 
 
 def nested_dict(depth, dict_type):
@@ -153,28 +153,26 @@ class RegProject:
 
     def xml_loads(self, data: bytes, name: str) -> None:
         self.loads(data, name)
-        
+
     def json_loads(self, data: str) -> None:
         json_data = json.loads(data)
         self.json_decode(json_data)
 
-        print(self.blocks.items())
         for _, block in self.blocks.items():
             for _, reg_set in block.regsets.items():
                 self.regsets[reg_set.uuid] = reg_set
-        
+
     def loads(self, data: bytes, name: str) -> None:
         """Reads XML from a string"""
 
         reader = ProjectReader(self)
         reader.loads(data, name)
         self.path = name
-        
+
         for _, block in self.blocks.items():
             for _, reg_set in block.regsets.items():
                 self.regsets[reg_set.uuid] = reg_set
-        
-        
+
     def remove_block(self, blk_id: str):
         del self.blocks[blk_id]
         self.block_insts = [
@@ -186,7 +184,6 @@ class RegProject:
                 map_id for map_id in addr_map.blocks if addr_id != blk_id
             ]
 
-
     def append_register_set_to_list(self, name: Union[str, Path]):
         """Adds a register set"""
 
@@ -196,7 +193,7 @@ class RegProject:
             rdr = FileReader(self.path)
         else:
             rdr = self.reader_class
-        
+
         try:
             filename, new_file_path = rdr.resolve_path(name)
         except Exception as msg:
@@ -518,7 +515,7 @@ class RegProject:
         lst = []
         for blk in self.blocks:
             rsets = self.blocks[blk].regsets
-            
+
         return [
             self.blocks[blk]
             for blk in self.blocks
@@ -609,7 +606,9 @@ class RegProject:
         if not skip:
             for path in data["filelist"]:
                 full_path = Path(self.path.parent / Path(path)).resolve()
-                self._filelist.append(os.path.relpath(full_path, self.path.parent))
+                self._filelist.append(
+                    os.path.relpath(full_path, self.path.parent)
+                )
 
         self.address_maps = {}
         for name, addr_data_json in data["address_maps"].items():
@@ -622,7 +621,7 @@ class RegProject:
             for item in data["exports"]:
                 exporter = item["exporter"]
                 target = self.path.parent / item["target"]
-                
+
                 exp_data = ExportData(
                     exporter,
                     str(target.resolve()),
@@ -641,18 +640,20 @@ class RegProject:
         for key in data["blocks"]:
             blk_data = Block()
             base_path = data["blocks"][key]["filename"]
-            print("BasePath", base_path)
 
             if self.reader_class:
                 rdr = self.reader_class
                 text = rdr.read_bytes(base_path)
                 json_data = json.loads(text)
-                blk_data.filename, _ = self.reader_class.resolve_path(base_path)
-                print(self.reader_class.__class__, type(self.reader_class.__class__))
+                blk_data.filename, _ = self.reader_class.resolve_path(
+                    base_path
+                )
+                print(
+                    self.reader_class.__class__,
+                    type(self.reader_class.__class__),
+                )
                 blk_data.reader_class = self.reader_class.__class__(
-                    base_path,
-                    self.reader_class.repo,
-                    self.reader_class.rtl_id
+                    base_path, self.reader_class.repo, self.reader_class.rtl_id
                 )
                 print("FILE1", blk_data.filename)
                 blk_data.json_decode(json_data)
@@ -660,7 +661,7 @@ class RegProject:
             else:
                 path = self.path.parent / base_path
                 blk_data.open(path)
-                
+
             self.blocks[key] = blk_data
 
         self.parameters = ParameterContainer()

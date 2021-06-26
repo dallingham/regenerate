@@ -368,8 +368,7 @@ class BitList:
             self.__model.register.change_bit_field(field)
             self.__modified()
 
-        self.__model[path][BitCol.LSB] = str(field.lsb)
-        self.__model[path][BitCol.MSB] = str(field.msb)
+        self.__model[path][BitCol.LSB] = f"{field.lsb}"
         self.__model[path][BitCol.SORT] = field.start_position
 
     def show_msg(self, text):
@@ -444,16 +443,9 @@ class BitList:
             field.msb.is_parameter = False
             field.msb.offset = 0
             field.msb.value = int(new_text, 0)
+            self.__model[path][BitCol.MSB] = f"{field.msb.value}"
         except ValueError:
             ...
-            # if new_text in self._parameter_names:
-            #     self._reg_update_dim(register, path, new_text)
-            # else:
-            #     LOGGER.warning(
-            #         '"%s" is not a valid dimension. It must be an '
-            #         "integer greater than 1 or a defined parameter",
-            #         new_text,
-            #     )
 
 
 def reset_value(field):

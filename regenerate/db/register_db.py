@@ -127,7 +127,6 @@ class RegisterDb(NameBase):
     def read_xml(self, filename: Path):
         """Reads the XML file, loading the databsae."""
 
-        print("Reading", filename)
         LOGGER.info("Reading XML register file %s", str(filename))
         with filename.open("rb") as ifile:
             self.name = filename.stem

@@ -59,7 +59,7 @@ class Block(NameBase):
         self.doc_pages = DocPages()
         self.doc_pages.update_page("Overview", "")
         self.reader_class = None
-        
+
         self.regset_insts: List[RegisterInst] = []
         self.regsets: Dict[str, RegisterDb] = {}
         self._modified = False
@@ -139,7 +139,7 @@ class Block(NameBase):
             ginst = RegisterInst()
             ginst.json_decode(rset)
             self.regset_insts.append(ginst)
-            
+
         self.regsets = {}
         for key, item in data["regsets"].items():
             filename = Path(self._filename.parent / item["filename"])
@@ -152,7 +152,6 @@ class Block(NameBase):
                 else:
                     rdr = self.reader_class
 
-                print(">>>>>", filename)
                 json_data = json.loads(rdr.read_bytes(filename))
                 regset.filename = filename
                 regset.json_decode(json_data)
