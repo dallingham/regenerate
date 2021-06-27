@@ -90,7 +90,7 @@ class Spyglass(ProjectWriter):
             for dbase in self.dblist:
                 ports = self.get_static_ports(dbase)
                 if ports:
-                    of.write("\n\ncurrent_design %s\n\n" % dbase.module_name)
+                    of.write("\n\ncurrent_design %s\n\n" % dbase.name)
                     for field in ports:
                         signal_name = self._build_name(field)
                         of.write("quasi_static -name %s\n" % signal_name)

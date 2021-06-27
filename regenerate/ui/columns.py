@@ -129,7 +129,7 @@ class EditableColumn(BaseColumn):
 
 class ReadOnlyColumn(BaseColumn):
     """
-    A TreeViewColumn that has editable cells. The callback and listmodel
+    A TreeViewColumn that has no editable cells. The callback and listmodel
     columns are passed and used to create the CellRenderer.
     """
 
@@ -144,14 +144,15 @@ class ReadOnlyColumn(BaseColumn):
     ):
 
         self.renderer = Gtk.CellRendererText()
-        self.renderer.set_property("ellipsize", Pango.EllipsizeMode.END)
-        if monospace:
-            self.renderer.set_property("family", "Monospace")
-
         super().__init__(
             title, self.renderer, markup=source_column, tooltip=tooltip
         )
+
         self.renderer.set_property("editable", False)
+        self.renderer.set_property("ellipsize", Pango.EllipsizeMode.END)
+
+        if monospace:
+            self.renderer.set_property("family", "Monospace")
 
         if visible_callback:
             self.set_cell_data_func(self.renderer, visible_callback)
@@ -175,19 +176,20 @@ class ComboMapColumn(BaseColumn):
     ):
 
         self.renderer = Gtk.CellRendererCombo()
+        super().__init__(
+            title, self.renderer, tooltip=tooltip, text=source_column
+        )
+
         self.model = Gtk.ListStore(str, dtype)
         for item in data_list:
             self.model.append(row=item)
+
         self.renderer.set_property("text-column", 0)
         self.renderer.set_property("model", self.model)
         self.renderer.set_property("has-entry", False)
         self.renderer.set_property("editable", True)
         if callback:
             self.renderer.connect("changed", callback, source_column)
-
-        super().__init__(
-            title, self.renderer, tooltip=tooltip, text=source_column
-        )
 
         if visible_callback:
             self.set_cell_data_func(self.renderer, visible_callback)
@@ -200,7 +202,7 @@ class ComboMapColumn(BaseColumn):
             self.model.append(row=item)
 
 
-class MyComboMapColumn(BaseColumn):
+class MenuEditColumn(BaseColumn):
     """
     A TreeViewColumn that has a menu of options. The callback and listmodel
     columns are passed and used to create the CellRenderer.

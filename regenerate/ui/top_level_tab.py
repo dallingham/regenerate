@@ -58,6 +58,9 @@ class TopLevelTab:
     def overrides_modified(self):
         self.project_modified(True)
 
+    def update(self):
+        self.blkinst_list.update()
+
     def change_project(self, prj):
         self.prj = prj
         self.blkinst_model = InstMdl(prj)

@@ -81,7 +81,7 @@ class CDefines(WriterBase):
                 name = full_token(
                     data.group,
                     reg.token,
-                    self._dbase.module_name,
+                    self._dbase.name,
                     i,
                     data.format,
                 )
@@ -92,7 +92,7 @@ class CDefines(WriterBase):
                 )
         else:
             name = full_token(
-                data.group, reg.token, self._dbase.module_name, -1, data.format
+                data.group, reg.token, self._dbase.name, -1, data.format
             )
             self._ofile.write(
                 "#define %-30s (*((volatile %s)0x%x))\n"
@@ -113,7 +113,7 @@ class CDefines(WriterBase):
 
             if len(addr_maps) > 0:
                 base = self._project.get_address_base(addr_maps[0].name)
-                for data in in_groups(self._dbase.module_name, self._project):
+                for data in in_groups(self._dbase.name, self._project):
                     for register in self._dbase.get_all_registers():
                         self.write_def(register, data, base)
                     self._ofile.write("\n")

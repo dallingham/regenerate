@@ -1,5 +1,5 @@
 // Author: {{db.owner}}
-// Block: {{db.module_name}}
+// Block: {{db.name}}
 //
 // ----------------------------------------------------------------------
 // Functional Description
@@ -12,7 +12,7 @@
 //
 //
 //
-module {{db.module_name}}
+module {{db.name}}
 {% if parameters|length > 0 %}
    #(
 {%   for p in parameters %}
@@ -188,7 +188,7 @@ generate
 {%          set wpos = "[%d]" % (field.lsb + byte_offset * 8,) %}
 {%       endif %}      
 {%     set reg_start_bit = ((reg.address * 8) % db.ports.data_bus_width) %}
-   {{db.module_name}}_{{ci.name}}_reg
+   {{db.name}}_{{ci.name}}_reg
      #(
        .RVAL ({{rval}}{{pos}})
        )

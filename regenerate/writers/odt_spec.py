@@ -227,7 +227,7 @@ class OdtSpec(WriterBase):
         text = text.replace("&lt;/b&gt;", "</text:span>")
         if new_id:
             hashid = hashlib.md5(
-                "%s-%s" % (self._dbase.module_name, new_id)
+                "%s-%s" % (self._dbase.name, new_id)
             ).hexdigest()
             self.cnt.write(
                 '<text:bookmark-start text:name="__RefHeading__%s"/>' % hashid
@@ -358,9 +358,7 @@ class OdtSpec(WriterBase):
                 self._write_register_table(reg)
 
     def _write_register_reference(self, reg, new_id):
-        hashid = hashlib.md5(
-            "%s-%s" % (self._dbase.module_name, new_id)
-        ).hexdigest()
+        hashid = hashlib.md5("%s-%s" % (self._dbase.name, new_id)).hexdigest()
         self.cnt.write('<text:p text:stype-name="Default">See section ')
         self.cnt.write(
             '<text:bookmark-ref text:reference-format="number-all-superior" '
@@ -511,7 +509,7 @@ class OdtSpec(WriterBase):
             addr_rng[rng.name] = (rng[1], rng[2])
 
         for my_db in self.dblist:
-            db[my_db.module_name] = my_db
+            db[my_db.name] = my_db
 
             for inst in my_db.instances:
                 name = find_range(inst[1], addr_rng)
@@ -533,7 +531,7 @@ class OdtSpec(WriterBase):
                 if self._dbase.descriptive_title:
                     title = self._dbase.descriptive_title
                 else:
-                    title = self._dbase.module_name
+                    title = self._dbase.name
                 self.__write_register_set(title, self._dbase)
 
         self.cnt.write(TAIL)

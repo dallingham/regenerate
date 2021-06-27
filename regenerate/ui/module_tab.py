@@ -414,7 +414,7 @@ class ModuleTabs:
         ]
 
         item_list = [
-            ("module", "module_name", ModuleWord, "Missing module name"),
+            ("regset_name", "name", ModuleWord, "Missing register set name"),
             (
                 "owner",
                 "owner",
@@ -505,9 +505,9 @@ class ModuleTabs:
         if self.dbase.descriptive_title == "":
             warn = True
             msgs.append("No title was provided for the register set.")
-        if self.dbase.module_name == "":
+        if self.dbase.name == "":
             warn = True
-            msgs.append("No module name was provided.")
+            msgs.append("No register set name was provided.")
         self.icon.set_property("visible", warn)
         self.icon.set_tooltip_text("\n".join(msgs))
         self.set_modified()

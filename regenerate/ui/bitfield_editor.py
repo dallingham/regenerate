@@ -117,9 +117,7 @@ class BitFieldEditor(BaseWindow):
         self.top_window = self.builder.get_object("editfield")
         self.top_window.set_transient_for(parent)
         self.top_window.set_title(
-            "Edit Bit Field - [{0:02x}] {1}".format(
-                register.address, register.name
-            )
+            f"Edit Bit Field - [{register.address:02x}] {register.name}"
         )
         self.configure(self.top_window)
         self.top_window.show_all()
@@ -134,7 +132,7 @@ class BitFieldEditor(BaseWindow):
             be_level = "" if self.dbase.ports.byte_strobe_active_level else "~"
 
             name_map = {
-                "MODULE": self.dbase.module_name,
+                "MODULE": self.dbase.name,
                 "BE_LEVEL": be_level,
                 "RESET_CONDITION": condition,
                 "RESET_EDGE": edge,
@@ -262,9 +260,7 @@ class BitFieldEditor(BaseWindow):
             or self.value_model[last][1]
             or self.value_model[last][2]
         ):
-            new_val = (
-                "" if largest >= max_values else "{0:x}".format(largest + 1)
-            )
+            new_val = "" if largest >= max_values else f"{(largest+1):x}"
             node = self.value_model.append(row=(new_val, "", ""))
             path = self.value_model.get_path(node)
         else:

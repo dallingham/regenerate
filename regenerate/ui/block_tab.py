@@ -132,13 +132,13 @@ class BlockTab:
         self.modified()
 
     def build(self):
-        column = ReadOnlyColumn("Register Set", 0)
+        column = EditableColumn("Instance", self.instance_changed, 1)
         self.block_regsets.append_column(column)
         column.set_min_width(175)
         column.set_expand(False)
         column.set_resizable(True)
 
-        column = EditableColumn("Instance", self.instance_changed, 1)
+        column = ReadOnlyColumn("Register Set", 0)
         self.block_regsets.append_column(column)
         column.set_min_width(175)
         column.set_expand(False)
@@ -169,6 +169,7 @@ class BlockTab:
         if self.disable_modified:
             return
 
+        self.block_obj.update_data()
         model, node = self.block_obj.get_selected()
         if node:
             model[node][SelectCol.ICON] = Gtk.STOCK_EDIT
@@ -179,8 +180,8 @@ class BlockTab:
         self.regmodel[int(path)][col] = new_text
 
         for rset in self.block.regset_insts:
-            if rset.inst == old_text:
-                rset.inst = new_text
+            if rset.name == old_text:
+                rset.name = new_text
                 self.modified()
 
     def offset_changed(self, _cell, path, new_text, col):
@@ -189,7 +190,7 @@ class BlockTab:
             self.regmodel[int(path)][col] = f"0x{int(new_text,0):08x}"
             self.block.modified = True
             for rset in self.block.regset_insts:
-                if rset.inst == reg_name:
+                if rset.name == reg_name:
                     rset.offset = int(new_text, 0)
                     self.modified()
         except ValueError:
@@ -201,7 +202,7 @@ class BlockTab:
             self.regmodel[int(path)][col] = f"{int(new_text)}"
             self.block.modified = True
             for rset in self.block.regset_insts:
-                if rset.inst == reg_name:
+                if rset.name == reg_name:
                     rset.repeat = int(new_text)
             self.modified()
         except ValueError:
@@ -212,7 +213,7 @@ class BlockTab:
         self.regmodel[int(path)][col] = new_text
         self.block.modified = True
         for rset in self.block.regset_insts:
-            if rset.inst == reg_name:
+            if rset.name == reg_name:
                 rset.hdl = new_text
         self.modified()
 
@@ -514,6 +515,10 @@ class BlockSelectList:
         self.factory.add("out-of-date", iconset)
         self.factory.add_default()
         self.project = None
+
+    def update_data(self):
+        for row in self.__model:
+            row[1] = row[2].name
 
     def set_project(self, project):
         self.__model.clear()

@@ -69,7 +69,7 @@ class WriterBase:
 
     def _set_values_init(self, dbase: RegisterDb, _instance_name=None) -> None:
         self._comments = dbase.overview_text
-        self._module = dbase.module_name
+        self._module = dbase.name
         self._clock = dbase.ports.clock_name
         self._addr = dbase.ports.address_bus_name
         self._addr_width = dbase.ports.address_bus_width

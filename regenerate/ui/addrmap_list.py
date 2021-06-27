@@ -133,7 +133,7 @@ class AddrMapList:
             )
         else:
             name = self._model[path][AddrCol.NAME]
-            self._prj.change_address_map_name(name, new_text)
+            self._prj.change_address_map_name(map_obj.uuid, new_text)
             self._model[path][AddrCol.NAME] = new_text
             self._callback()
 
@@ -297,7 +297,7 @@ def get_row_data(map_obj):
     """Builds the data for the table row"""
     return (
         map_obj.name,
-        "0x{:08x}".format(map_obj.base),
+        f"0x{map_obj.base:08x}",
         get_flags(map_obj),
         INT2SIZE[map_obj.width],
         map_obj,

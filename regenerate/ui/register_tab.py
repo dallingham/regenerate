@@ -69,7 +69,6 @@ class RegSetWidgets:
         self.no_sharing = find_obj("no_sharing")
         self.read_access = find_obj("read_access")
         self.write_access = find_obj("write_access")
-        self.selected_regset = find_obj("selected_dbase")
         self.filter_obj = find_obj("filter")
         self.reg_count = find_obj("reg_count")
         self.mod_descr_warn = find_obj("mod_descr_warn")
@@ -310,6 +309,11 @@ class RegSetTab:
         if not self.skip_changes:
             self.active.modified = True
             self.reg_set_model.set_markup(self.node, True)
+
+            # update register set names in the register model
+            for row in self.reg_set_model:
+                row[1] = row[-1].name
+
             self.modified_callback()
 
     def enable_registers(self, value):
@@ -442,19 +446,11 @@ class RegSetTab:
             self.bit_model = status.bit_model
             self.bitfield_obj.set_model(self.bit_model)
 
-            text = "<b>%s - %s</b>" % (
-                self.active.module_name,
-                self.active.descriptive_title,
-            )
-            self.widgets.selected_regset.set_text(text)
-            self.widgets.selected_regset.set_use_markup(True)
-            self.widgets.selected_regset.set_ellipsize(Pango.EllipsizeMode.END)
             self.redraw()
             self.enable_registers(True)
         else:
             self.active = None
             self.dbase = None
-            self.widgets.selected_regset.set_text("")
             self.reglist_obj.set_model(None)
             self.enable_registers(False)
         self.skip_changes = old_skip
@@ -768,7 +764,6 @@ class RegSetTab:
         name = Path(name).with_suffix(REG_EXT)
 
         dbase = RegisterDb()
-        dbase.module_name = name.stem
         dbase.name = name.stem
         dbase.filename = name
         dbase.modified = True

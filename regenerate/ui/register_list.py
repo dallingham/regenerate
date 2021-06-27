@@ -25,7 +25,7 @@ from gi.repository import Gtk
 from regenerate.ui.columns import (
     EditableColumn,
     ComboMapColumn,
-    MyComboMapColumn,
+    MenuEditColumn,
 )
 from regenerate.ui.error_dialogs import ErrorMsg
 from regenerate.db import LOGGER
@@ -326,7 +326,7 @@ class RegisterList:
         for (i, col) in enumerate(self._COLS):
             if col.type == RegColType.COMBO:
                 if col.title == "Dimension":
-                    column = MyComboMapColumn(
+                    column = MenuEditColumn(
                         col.title,
                         self._dimension_menu,
                         self._dimension_text,

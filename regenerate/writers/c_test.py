@@ -249,21 +249,21 @@ class CTest(WriterBase):
 
         cfile.write("\n")
 
-        self.write_protos(cfile, rdata8, dbase.module_name, "8")
-        self.write_protos(cfile, rdata16, dbase.module_name, "16")
-        self.write_protos(cfile, rdata32, dbase.module_name, "32")
-        self.write_protos(cfile, rdata64, dbase.module_name, "64")
+        self.write_protos(cfile, rdata8, dbase.name, "8")
+        self.write_protos(cfile, rdata16, dbase.name, "16")
+        self.write_protos(cfile, rdata32, dbase.name, "32")
+        self.write_protos(cfile, rdata64, dbase.name, "64")
 
         cfile.write("\n")
         cfile.write("uint32\n")
-        cfile.write("check_{0} (msgptr func)\n".format(dbase.module_name))
+        cfile.write("check_{0} (msgptr func)\n".format(dbase.name))
         cfile.write("{\n")
         cfile.write("  uint32 val;\n\n")
 
-        self.write_call(cfile, rdata8, dbase.module_name, "8")
-        self.write_call(cfile, rdata16, dbase.module_name, "16")
-        self.write_call(cfile, rdata32, dbase.module_name, "32")
-        self.write_call(cfile, rdata64, dbase.module_name, "64")
+        self.write_call(cfile, rdata8, dbase.name, "8")
+        self.write_call(cfile, rdata16, dbase.name, "16")
+        self.write_call(cfile, rdata32, dbase.name, "32")
+        self.write_call(cfile, rdata64, dbase.name, "64")
         cfile.write("  return 0;\n}\n\n")
 
         if rdata8:
@@ -272,7 +272,7 @@ class CTest(WriterBase):
                 self.write_function(
                     cfile,
                     rdata8[index:MAX_REGS],
-                    dbase.module_name,
+                    dbase.name,
                     "8",
                     letter,
                     "",
@@ -285,7 +285,7 @@ class CTest(WriterBase):
                 self.write_function(
                     cfile,
                     rdata16[index:MAX_REGS],
-                    dbase.module_name,
+                    dbase.name,
                     "16",
                     letter,
                     "",
@@ -298,7 +298,7 @@ class CTest(WriterBase):
                 self.write_function(
                     cfile,
                     rdata32[index : index + MAX_REGS],
-                    dbase.module_name,
+                    dbase.name,
                     "32",
                     letter,
                     "",
@@ -311,7 +311,7 @@ class CTest(WriterBase):
                 self.write_function(
                     cfile,
                     rdata64[index : index + MAX_REGS],
-                    dbase.module_name,
+                    dbase.name,
                     "64",
                     letter,
                     "64",

@@ -357,6 +357,7 @@ class MainWindow(BaseWindow):
         self.block_tab.build_add_regset_menu()
         self.reginst_tab.update_display()
         self.block_tab.redraw()
+        self.top_level_tab.update()
 
     def on_notebook_switch_page(self, _obj, _page, page_num):
         if page_num == 1:
@@ -518,7 +519,7 @@ class MainWindow(BaseWindow):
             self.prj.path = filename
             self.top_level_tab.change_project(self.prj)
             self.prj.name = filename.stem
-            self.clear()
+            # self.clear()
             self.prj.save()
 
             self.block_tab.clear_flags()

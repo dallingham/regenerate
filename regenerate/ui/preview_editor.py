@@ -61,7 +61,7 @@ class PreviewEditor:
         if self.__use_reg and self.__active_db:
             data = []
             for reg in self.__active_db.get_all_registers():
-                data.append(".. _`{0}`: /".format(reg.name))
+                data.append(f".. _`{reg.name}`: /")
             text = text + "\n\n" + "\n".join(data)
 
         self.__webkit.show_html(html_string(text))

@@ -23,7 +23,7 @@ Instance List and Model
 
 import re
 from gi.repository import Gtk, GObject
-from regenerate.ui.columns import EditableColumn
+from regenerate.ui.columns import EditableColumn, ReadOnlyColumn
 from regenerate.db import RegisterInst, LOGGER
 from regenerate.ui.enums import InstCol
 
@@ -111,16 +111,16 @@ class InstMdl(Gtk.TreeStore):
         """
 
         node = self.get_iter(path)
-        # try:
-        #     self.set_value(node, InstCol.SORT, int(text, 0))
-        #     self.set_value(node, InstCol.BASE, "0x{:08x}".format(int(text, 0)))
-        #     self.callback()
-        # except AttributeError:
-        #     LOGGER.warning('Illegal base address: "%s"', text)
+        try:
+            self.set_value(node, InstCol.SORT, int(text, 0))
+            self.set_value(node, InstCol.BASE, f"0x{int(text, 0):08x}")
+            self.callback()
+        except AttributeError:
+            LOGGER.warning('Illegal base address: "%s"', text)
 
-        self.set_value(node, InstCol.SORT, int(text, 0))
-        self.set_value(node, InstCol.BASE, "0x{:08x}".format(int(text, 0)))
-        self.callback()
+        # self.set_value(node, InstCol.SORT, int(text, 0))
+        # self.set_value(node, InstCol.BASE, "0x{:08x}".format(int(text, 0)))
+        # self.callback()
 
         obj = self.get_value(node, InstCol.OBJ)
         if obj:
@@ -202,6 +202,16 @@ class InstanceList:
         self.__obj.set_model(model)
         self.__model = model
         self.__model.callback = self.modified_callback
+
+    def update(self):
+        for row in self.__model:
+            item = row[InstCol.OBJ]
+            row[InstCol.ID] = self.__project.blocks[item.blkid].name
+            row[InstCol.INST] = item.name
+            row[InstCol.BASE] = f"{item.address_base:x}"
+            row[InstCol.SORT] = item.address_base
+            row[InstCol.RPT] = f"{item.repeat}"
+            row[InstCol.HDL] = item.hdl_path
 
     def get_groups(self):
         """Get the groups that are currently in the list"""
@@ -285,9 +295,8 @@ class InstanceList:
         self.__obj.append_column(column)
         self.__col = column
 
-        column = EditableColumn(
+        column = ReadOnlyColumn(
             "Block Name",
-            self.instance_id_changed,
             InstCol.ID,
         )
         column.set_sort_column_id(InstCol.ID)
@@ -371,9 +380,9 @@ def build_row_data(inst, name, offset, rpt, hdl, obj):
     row = (
         name,
         inst,
-        "0x{:08x}".format(offset),
+        f"0x{offset:08x}",
         offset,
-        "{:d}".format(rpt),
+        f"{rpt:d}",
         hdl,
         obj,
     )

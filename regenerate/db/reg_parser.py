@@ -131,7 +131,7 @@ class RegParser:
         Called when the module tag is first encounterd. Pulls off the ID tag
         if it exists, and pulls out the description
         """
-        self.__db.module_name = attrs["name"]
+        self.__db.name = attrs["name"]
         if "owner" in attrs:
             self.__db.owner = attrs["owner"]
         if "organization" in attrs:

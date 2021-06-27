@@ -46,7 +46,6 @@ class RegisterDb(NameBase):
 
     def __init__(self, filename=None):
         super().__init__("", "")
-        self._module = "unnamed_regs"
         self._title = ""
         self._registers = {}
         self.parameters = ParameterContainer()
@@ -171,20 +170,6 @@ class RegisterDb(NameBase):
             LOGGER.error(str(msg))
 
     @property
-    def module_name(self) -> str:
-        """
-        Gets _module, which is accessed via the module_name property
-        """
-        return self._module
-
-    @module_name.setter
-    def module_name(self, name: str):
-        """
-        Sets _module, which is accessed via the module_name property
-        """
-        self._module = name.replace(" ", "_")
-
-    @property
     def descriptive_title(self) -> str:
         """
         Gets _title, which is accessed via the descriptive_title property
@@ -234,7 +219,6 @@ class RegisterDb(NameBase):
         data = {
             "name": self.name,
             "uuid": self._id,
-            "module": self._module,
             "parameters": self.parameters,
             "title": self._title,
             "ports": self.ports,
@@ -261,8 +245,6 @@ class RegisterDb(NameBase):
         return data
 
     def json_decode(self, data):
-        self._module = data["module"]
-
         self.parameters = ParameterContainer()
         self.parameters.json_decode(data["parameters"])
         self._title = data["title"]

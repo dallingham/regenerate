@@ -13,7 +13,7 @@
         <{{scope}}:memoryMap>
             <{{scope}}:name>default</{{scope}}:name>
                 <{{scope}}:addressBlock>
-                    <{{scope}}:name>{{db.module_name|e}}</{{scope}}:name>
+                    <{{scope}}:name>{{db.name|e}}</{{scope}}:name>
                     <{{scope}}:baseAddress>0x0</{{scope}}:baseAddress>
                     <{{scope}}:range {{scope}}:format="long">{{db.address_size_in_bytes()}}</{{scope}}:range>
                     <{{scope}}:width>{{db.data_bus_width}}</{{scope}}:width>

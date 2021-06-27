@@ -47,9 +47,7 @@ class HelpWindow(BaseWindow):
             with open(fname) as ifile:
                 data = ifile.read()
         except IOError as msg:
-            data = "Help file '{}' could not be found\n{}".format(
-                fname, str(msg)
-            )
+            data = f"Help file '{fname}' could not be found\n{str(msg)}"
 
         if HelpWindow.window is None:
             HelpWindow.window = builder.get_object("help_win")

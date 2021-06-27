@@ -26,7 +26,7 @@ from gi.repository import Gtk
 from regenerate.db import TYPES, LOGGER, ResetType
 from regenerate.ui.columns import (
     EditableColumn,
-    MyComboMapColumn,
+    MenuEditColumn,
     SwitchComboMapColumn,
 )
 from regenerate.ui.enums import BitCol
@@ -163,7 +163,7 @@ class BitList:
                     "", Gtk.CellRendererPixbuf(), stock_id=i
                 )
             elif i == BitCol.RESET:
-                column = MyComboMapColumn(
+                column = MenuEditColumn(
                     col[BIT_TITLE],
                     self.reset_menu_edit,
                     self.reset_text_edit,
@@ -176,7 +176,7 @@ class BitList:
                     col[BIT_TITLE], self.field_name_edit, i, col[BIT_MONO]
                 )
             elif i == BitCol.MSB:
-                column = MyComboMapColumn(
+                column = MenuEditColumn(
                     col[BIT_TITLE],
                     self._msb_menu,
                     self._msb_text,
