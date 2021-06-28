@@ -31,6 +31,7 @@ from regenerate.db import (
     RegisterDb,
     ShareType,
     ResetType,
+    RegProject,
     REG_EXT,
     OLD_REG_EXT,
 )
@@ -273,6 +274,12 @@ class RegSetTab:
         self.filter_manage = FilterManager(self.widgets.filter_obj)
 
         self.clear()
+
+    def filter_visible(self, visible):
+        if visible:
+            self.widgets.filter_obj.show()
+        else:
+            self.widgets.filter_obj.hide()
 
     def reg_page_changed(self, obj, page, page_num):
         """When the notebook page changes, update any fields that are

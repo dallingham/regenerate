@@ -472,7 +472,6 @@
                 <property name="can_focus">False</property>
                 <child>
                   <object class="GtkSearchEntry" id="filter">
-                    <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="hexpand">True</property>
                     <property name="primary_icon_name">edit-find-symbolic</property>
@@ -2595,10 +2594,11 @@
                             <property name="vexpand">False</property>
                             <property name="label" translatable="yes">Block Name:</property>
                             <property name="use_markup">True</property>
+                            <property name="xalign">0</property>
                           </object>
                           <packing>
                             <property name="left_attach">0</property>
-                            <property name="top_attach">0</property>
+                            <property name="top_attach">1</property>
                           </packing>
                         </child>
                         <child>
@@ -2615,7 +2615,7 @@
                           </object>
                           <packing>
                             <property name="left_attach">0</property>
-                            <property name="top_attach">1</property>
+                            <property name="top_attach">0</property>
                           </packing>
                         </child>
                         <child>
@@ -2649,7 +2649,7 @@
                           </object>
                           <packing>
                             <property name="left_attach">1</property>
-                            <property name="top_attach">0</property>
+                            <property name="top_attach">1</property>
                           </packing>
                         </child>
                         <child>
@@ -2665,7 +2665,7 @@
                           </object>
                           <packing>
                             <property name="left_attach">1</property>
-                            <property name="top_attach">1</property>
+                            <property name="top_attach">0</property>
                             <property name="width">4</property>
                           </packing>
                         </child>
@@ -2693,7 +2693,7 @@
                           </object>
                           <packing>
                             <property name="left_attach">5</property>
-                            <property name="top_attach">1</property>
+                            <property name="top_attach">0</property>
                           </packing>
                         </child>
                         <child>

@@ -353,11 +353,12 @@ class MainWindow(BaseWindow):
         submenu.show()
         menu.set_submenu(submenu)
 
-    def on_main_notebook_switch_page(self, _obj, _page, _page_num):
+    def on_main_notebook_switch_page(self, _obj, _page, page_num):
         self.block_tab.build_add_regset_menu()
         self.reginst_tab.update_display()
         self.block_tab.redraw()
         self.top_level_tab.update()
+        self.reginst_tab.filter_visible(page_num == 0)
 
     def on_notebook_switch_page(self, _obj, _page, page_num):
         if page_num == 1:
