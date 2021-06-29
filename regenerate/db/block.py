@@ -101,11 +101,12 @@ class Block(NameBase):
         """Compare for inequality."""
         return not self.__eq__(other)
 
-    def __eq__(self, other: "Block") -> bool:
+    def __eq__(self, other: object) -> bool:
         """Compare for equality."""
+        if not isinstance(other, Block):
+            return NotImplemented
         if (
-            other is None
-            or self.name != other.name
+            self.name != other.name
             or self.uuid != other.uuid
             or self.description != other.description
             or self.address_size != other.address_size

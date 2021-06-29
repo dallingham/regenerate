@@ -32,6 +32,7 @@ from regenerate.db import (
     ShareType,
     ResetType,
     RegProject,
+    BitType,
     REG_EXT,
     OLD_REG_EXT,
 )
@@ -576,7 +577,7 @@ class RegSetTab:
         field.lsb = next_pos
 
         field.msb.set_int(field.lsb)
-        field.name = "BIT%d" % field.lsb
+        field.name = f"BIT{field.lsb}"
         field.output_signal = ""
         if register.share == ShareType.WRITE:
             field.field_type = BitType.WRITE_ONLY

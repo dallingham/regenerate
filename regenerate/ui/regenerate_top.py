@@ -62,7 +62,7 @@ TYPE_ENB = {}
 for data_type in TYPES:
     TYPE_ENB[data_type.type] = (data_type.input, data_type.control)
 
-DEF_MIME = "*" + PRJ_EXT
+DEF_MIME = f"*{PRJ_EXT}"
 
 
 class MainWindow(BaseWindow):
@@ -383,7 +383,7 @@ class MainWindow(BaseWindow):
         """
         ...
 
-    def clear_modified(self, prj=None):
+    def clear_modified(self, _prj=None):
         """
         Clears the modified tag in the status bar.
         """

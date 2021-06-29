@@ -18,44 +18,45 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 from pathlib import Path
+from typing import Tuple
+
 from .const import REG_EXT
 
-class DataReader:
 
+class DataReader:
     def __init__(self, top_path):
         self.path = top_path
 
-    def resolve_path(self):
-        return path
+    def resolve_path(self, name: str) -> Tuple[Path, Path]:
+        return Path(self.path), Path(self.path)
 
-    def read(self, path) -> str:
+    def read(self, filename: str) -> str:
         return ""
-    
-    def read_bytes(self, path) -> bytes:
-        return bytes("")
+
+    def read_bytes(self, filename: str) -> bytes:
+        return b""
 
 
 class FileReader(DataReader):
+    "Provides the standard file based reader"
 
     def __init__(self, top_path):
-        super(FileReader, self).__init__(top_path)
+        super().__init__(top_path)
 
-
-    def resolve_path(self, name: str):
+    def resolve_path(self, name: str) -> Tuple[Path, Path]:
+        "Resolves the relative path into a full path"
         filename = Path(self.path).parent / name
         new_file_path = Path(filename).with_suffix(REG_EXT).resolve()
-        return filename, new_file_path;
+        return filename, new_file_path
 
-    def read(self, filename):
+    def read(self, filename: str) -> str:
         fullpath = Path(self.path) / filename
         with fullpath.open() as ofile:
             data = ofile.read()
         return data
 
-    def read_bytes(self, filename):
+    def read_bytes(self, filename: str) -> bytes:
         fullpath = Path(self.path) / filename
         with fullpath.open("rb") as ofile:
             data = ofile.read()
         return data
-    
-    
