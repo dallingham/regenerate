@@ -25,6 +25,7 @@ class DocPages:
         self.pages = {}
 
     def update_page(self, name: str, text: str):
+        print(f"Page {name} updated")
         self.pages[name] = text
 
     def remove_page(self, name: str):

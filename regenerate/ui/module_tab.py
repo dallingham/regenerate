@@ -589,17 +589,24 @@ class ProjectDoc(BaseDoc):
     ):
         super().__init__(notebook, modified, add_btn, del_btn)
         self.project = None
+        self.changing = False
 
     def set_project(self, project: RegProject):
         """Change the database so the preview window can resolve references"""
-        self.remove_pages()
+        self.changing = True
+        
         self.project = project
+        self.remove_pages()
 
         for page in project.doc_pages.get_page_names():
             self.add_page(page, self.project.doc_pages.get_page(page))
 
+        self.changing = False
+
     def remove_page_from_doc(self, title):
-        self.project.doc_pages.remove_page(title)
+        if not self.changing:
+            self.project.doc_pages.remove_page(title)
 
     def update_page_from_doc(self, title, text):
-        self.project.doc_pages.update_page(title, text)
+        if not self.changing:
+            self.project.doc_pages.update_page(title, text)

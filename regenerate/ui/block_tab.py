@@ -310,7 +310,6 @@ class BlockTab:
 
         self.regmodel = Gtk.ListStore(str, str, str, str, str, object)
         self.block_regsets.set_model(self.regmodel)
-        self.preview.change_block(self.block)
         self.overrides_list.set_project(self.block)
 
         for reginst in self.block.regset_insts:
@@ -582,16 +581,21 @@ class BlockDoc(BaseDoc):
     ):
         super().__init__(notebook, modified, add_btn, del_btn)
         self.block = None
+        self.changing = False
 
     def change_block(self, block: Block):
         self.block = block
-        self.remove_pages()
 
+        self.changing = True
+        self.remove_pages()
         for page in block.doc_pages.get_page_names():
-            self.add_page(page, self.block.doc_pages.get_page(page))
+            text = self.block.doc_pages.get_page(page)
+            self.add_page(page, text)
+        self.changing = False
 
     def remove_page_from_doc(self, title):
         self.block.doc_pages.remove_page(title)
 
     def update_page_from_doc(self, title, text):
-        self.block.doc_pages.update_page(title, text)
+        if not self.changing:
+            self.block.doc_pages.update_page(title, text)
