@@ -198,7 +198,7 @@ class Register(NameBase):
         self.address = address
         self.ram_size = 0
         self.width = width
-        self.regset_name = None
+        self.regset_name: Optional[str] = None
         self.share = ShareType.NONE
 
     def __repr__(self):
