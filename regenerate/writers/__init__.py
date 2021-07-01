@@ -101,7 +101,7 @@ for module in MODULES:
         except AttributeError:
             continue
         except SyntaxError as msg:
-            print("Could not import %s (%s)" % (fullpath, str(msg)))
+            print(f"Could not import {fullpath} ({str(msg)})")
             continue
     else:
-        print('Could not import the "%s" module' % module[0])
+        print(f'Could not import the "{module[0]}" module')

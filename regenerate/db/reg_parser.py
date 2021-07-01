@@ -374,13 +374,6 @@ class RegParser:
         except ValueError:
             self.__reg.dimension = "1"
 
-    def end_uuid(self, text):
-        """
-        Called when the token tag is terminated. The text is the
-        register token value.
-        """
-        ...
-
     def end_ram_size(self, text):
         """
         Called when the token tag is terminated. The text is the

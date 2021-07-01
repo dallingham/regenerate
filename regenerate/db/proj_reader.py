@@ -43,6 +43,7 @@ class ProjectReader:
         self._prj = project
         self._current_group = None
         self._token_list = []
+        self.reg_id = {}
         self._current = ""
         self._current_map = ""
         self._current_access = 0
@@ -121,15 +122,16 @@ class ProjectReader:
         """Called when a registerset tag is found"""
         self._current = attrs["name"]
         reg_path = self.path.parent / self._current
-        reg_path_str = str(reg_path.resolve())
         reg_path_xml = str(reg_path.with_suffix(OLD_REG_EXT).resolve())
         self._prj.append_register_set_to_list(reg_path_xml)
-        
+
     def start_export(self, attrs):
         """Called when an export tag is found"""
 
         if str(self.path) != "<string>":
-            db_path = self.path.parent / Path(self._current).with_suffix(REG_EXT)
+            db_path = self.path.parent / Path(self._current).with_suffix(
+                REG_EXT
+            )
             db_path_str = str(db_path.resolve())
             target = Path(self.path.parent) / attrs["path"]
             self.reg_exports[db_path_str].append(
@@ -139,11 +141,11 @@ class ProjectReader:
     def start_group_export(self, attrs):
         """Called when an group_export tag is found"""
         return
-        dest = attrs["dest"]
-        option = attrs["option"]
-        self._prj.append_to_group_export_list(
-            self._current_group.name, dest, option
-        )
+        # dest = attrs["dest"]
+        # option = attrs["option"]
+        # self._prj.append_to_group_export_list(
+        #     self._current_group.name, dest, option
+        # )
 
     def start_project_export(self, attrs):
         """Called when a project_export tag is found"""
@@ -153,7 +155,7 @@ class ProjectReader:
             self._prj.append_to_project_export_list(
                 attrs["option"], str(target.resolve())
             )
-            
+
     def start_grouping(self, attrs):
         """Called when a grouping tag is found"""
 
@@ -247,13 +249,13 @@ class ProjectReader:
     #            self._current_map, self._current_map_group
     #        )
 
-    def end_map_group(self, text):
+    def end_map_group(self, _text):
         """
         Called when the map_group XML tag ended
         """
         return
-        if self._current_map_group is None:
-            self._prj.add_address_map_to_block(self._current_map, text)
+        # if self._current_map_group is None:
+        #     self._prj.add_address_map_to_block(self._current_map, text)
 
     def start_access(self, attrs):
         "Starts the access type"
@@ -283,8 +285,7 @@ class ProjectReader:
         from collections import Counter
 
         self.reg_id = {}
-        for x in self._prj.regsets:
-            rset = self._prj.regsets[x]
+        for rset in self._prj.regsets.values():
             self.reg_id[rset.name] = rset.uuid
 
         for blkid in self.blocks:
@@ -305,9 +306,9 @@ class ProjectReader:
                 )
                 block_dir = Path(self.path.parent).resolve()
                 filename = block_dir / filename
-                
+
                 blk.filename = Path(filename).resolve()
-                
+
             self._prj.blocks[blkid] = blk
 
             for reg_inst in blk.regset_insts:
@@ -322,5 +323,5 @@ class ProjectReader:
             blkinst_list = self.map_groups[map_id]
             for blkinst_name in blkinst_list:
                 blkinst_id = self.name2blkinst[blkinst_name]
-                if blkinst_id != "":
+                if blkinst_id:
                     self._prj.add_address_map_to_block(map_id, blkinst_id)

@@ -144,19 +144,12 @@ class UVMRegBlockRegisters(ProjectWriter):
             for regset_inst in self._project.blocks[
                 blk_inst.blkid
             ].regset_insts:
-                print(regset_inst)
                 db = self._project.regsets[regset_inst.regset_id]
 
                 tag = (db.uuid, regset_inst.uuid, blk_inst.uuid)
                 if tag not in used:
                     data_set.append(
-                        (
-                            db,
-                            regset_inst,
-                            blk_inst,
-                            group_maps[blk_inst],
-                            tag
-                        )
+                        (db, regset_inst, blk_inst, group_maps[blk_inst], tag)
                     )
                     used.add(tag)
 

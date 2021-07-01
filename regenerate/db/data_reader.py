@@ -24,16 +24,16 @@ from .const import REG_EXT
 
 
 class DataReader:
-    def __init__(self, top_path):
+    def __init__(self, top_path: Path):
         self.path = top_path
 
-    def resolve_path(self, name: str) -> Tuple[Path, Path]:
+    def resolve_path(self, name: Path) -> Tuple[Path, Path]:
         return Path(self.path), Path(self.path)
 
-    def read(self, filename: str) -> str:
+    def read(self, filename: Path) -> str:
         return ""
 
-    def read_bytes(self, filename: str) -> bytes:
+    def read_bytes(self, filename: Path) -> bytes:
         return b""
 
 
@@ -43,20 +43,20 @@ class FileReader(DataReader):
     def __init__(self, top_path):
         super().__init__(top_path)
 
-    def resolve_path(self, name: str) -> Tuple[Path, Path]:
+    def resolve_path(self, name: Path) -> Tuple[Path, Path]:
         "Resolves the relative path into a full path"
-        filename = Path(self.path).parent / name
-        new_file_path = Path(filename).with_suffix(REG_EXT).resolve()
+        filename = self.path.parent / name
+        new_file_path = filename.with_suffix(REG_EXT).resolve()
         return filename, new_file_path
 
-    def read(self, filename: str) -> str:
+    def read(self, filename: Path) -> str:
         fullpath = Path(self.path) / filename
         with fullpath.open() as ofile:
             data = ofile.read()
         return data
 
-    def read_bytes(self, filename: str) -> bytes:
-        fullpath = Path(self.path) / filename
+    def read_bytes(self, filename: Path) -> bytes:
+        fullpath = self.path / filename
         with fullpath.open("rb") as ofile:
             data = ofile.read()
         return data

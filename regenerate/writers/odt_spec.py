@@ -428,7 +428,7 @@ class OdtSpec(WriterBase):
             self.end_row()
 
         if last_index > 0:
-            self.print_reserved("%d:0" % last_index)
+            self.print_reserved("f{last_index:0}")
         elif last_index == 0:
             self.print_reserved("0")
 

@@ -145,7 +145,7 @@ class Block(NameBase):
         for key, item in data["regsets"].items():
             filename = Path(self._filename.parent / item["filename"])
 
-            regset = self.finder.find_by_file(filename)
+            regset = self.finder.find_by_file(str(filename))
             if not regset:
                 regset = RegisterDb()
                 if self.reader_class is None:

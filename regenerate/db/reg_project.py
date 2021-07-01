@@ -140,16 +140,14 @@ class RegProject:
 
         if self.path.suffix == OLD_PRJ_EXT:
             LOGGER.info("Loading XML project file '%s'", str(self.path))
-            with self.path.open("rb") as ofile:
-                data = ofile.read()
-            self.loads(data, str(self.path))
+
+            with self.path.open("rb") as xfile:
+                self.loads(xfile.read(), str(self.path))
         else:
             LOGGER.info("Loading JSON project file '%s'", str(self.path))
 
-            with open(name) as ofile:
-                data = ofile.read()
-
-            self.json_loads(data)
+            with open(str(self.path)) as jfile:
+                self.json_loads(jfile.read())
 
     def xml_loads(self, data: bytes, name: str) -> None:
         self.loads(data, name)
@@ -208,7 +206,7 @@ class RegProject:
                     data = rdr.read_bytes(filename)
                     regset.loads(data, filename)
                 else:
-                    data = rdr.read(filename)
+                    data = rdr.read_bytes(filename)
                     regset.json_loads(data)
                 self.finder.register(regset)
         except Exception as msg:
@@ -229,7 +227,7 @@ class RegProject:
         """Removes the specified register set from the project."""
         self._modified = True
         try:
-            self._filelist.remove(path)
+            self._filelist.remove(Path(path))
         except ValueError as msg:
             LOGGER.error(str(msg))
 
@@ -511,11 +509,6 @@ class RegProject:
         self._filelist = new_list
 
     def blocks_containing_regset(self, regset_id: str):
-
-        lst = []
-        for blk in self.blocks:
-            rsets = self.blocks[blk].regsets
-
         return [
             self.blocks[blk]
             for blk in self.blocks
