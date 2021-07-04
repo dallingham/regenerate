@@ -19,7 +19,7 @@
 
 """Provides the definition of a Bit Field."""
 
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict, Any
 from .name_base import NameBase
 from .enums import BitType, ResetType
 from .bit_values import BitValues
@@ -36,11 +36,15 @@ class BitFieldFlags(JSONEncodable):
     "Flags for the bit field"
 
     def __init__(self):
+        "Initialize the flags"
+
         self.is_error_field: bool = False
         self.can_randomize: bool = False
         self.volatile: bool = False
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
+        "Check for equality"
+
         return (
             self.is_error_field == other.is_error_field
             and self.can_randomize == other.can_randomize
@@ -111,6 +115,7 @@ class BitField(NameBase):
 
     def __init__(self, stop: int = 0, start: int = 0):
         """Initialize the bitfield."""
+
         super().__init__("", "")
         self.modified = False
 
@@ -302,7 +307,7 @@ class BitField(NameBase):
         "Set the name of the input signal."
         self._input_signal = clean_signal(signal)
 
-    def json(self):
+    def json(self) -> Dict[str, Any]:
         "Converts the object to a JSON compatible dictionary"
 
         return {
@@ -325,7 +330,7 @@ class BitField(NameBase):
             "values": self.values,
         }
 
-    def json_decode(self, data):
+    def json_decode(self, data: Dict[str, Any]) -> None:
         "Decodes the JSON compatible dictionary into the object"
 
         self.name = data["name"]

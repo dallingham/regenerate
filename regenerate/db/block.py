@@ -22,7 +22,7 @@ Holds the information for a group. This includes the name, base address,
 HDL path, the repeat count, repeat offset, and the title.
 """
 
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Any
 from operator import methodcaller
 from pathlib import Path
 import os
@@ -62,28 +62,24 @@ class Block(NameBase):
 
         self.regset_insts: List[RegisterInst] = []
         self.regsets: Dict[str, RegisterDb] = {}
-        self._modified = False
+        self.modified = False
         self._filename = Path("")
         self.parameters = ParameterContainer()
         self.overrides: List[Overrides] = []
 
     @property
-    def modified(self) -> bool:
-        return self._modified
-
-    @modified.setter
-    def modified(self, val: bool) -> None:
-        self._modified = val
-
-    @property
     def filename(self) -> Path:
+        "Returns the filename as a path"
         return self._filename
 
     @filename.setter
     def filename(self, value: Union[str, Path]) -> None:
+        "Sets the filename, converting to a path, and fixing the suffix"
+
         self._filename = Path(value).with_suffix(BLK_EXT)
 
-    def save(self):
+    def save(self) -> None:
+        "Save the file as a JSON file"
         try:
             data = self.json()
             with self._filename.open("w") as ofile:
@@ -115,7 +111,7 @@ class Block(NameBase):
             return False
         return True
 
-    def open(self, name: Path):
+    def open(self, name: Path) -> None:
         "Opens the filename and loads the object"
 
         self._filename = name
@@ -126,7 +122,7 @@ class Block(NameBase):
             data = ofile.read()
         self.json_decode(json.loads(data))
 
-    def json_decode(self, data) -> None:
+    def json_decode(self, data: Dict[str, Any]) -> None:
         """Compare for equality."""
         self.name = data["name"]
         self.uuid = data["uuid"]
@@ -184,7 +180,7 @@ class Block(NameBase):
 
         self.modified = False
 
-    def json(self):
+    def json(self) -> Dict[str, Any]:
         data = {
             "name": self.name,
             "uuid": self.uuid,

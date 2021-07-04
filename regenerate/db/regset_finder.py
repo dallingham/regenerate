@@ -28,8 +28,8 @@ from .register_db import RegisterDb
 class RegsetFinder:
     "Singleton to allow the searching for register set by name or id"
 
-    idmap: Dict[str, Dict[str, RegisterDb]] = {}
-    filemap: Dict[str, Dict[str, RegisterDb]] = {}
+    idmap: Dict[str, RegisterDb] = {}
+    filemap: Dict[str, RegisterDb] = {}
 
     def __new__(cls):
         if not hasattr(cls, "instance"):
@@ -56,7 +56,7 @@ class RegsetFinder:
         "Find the register set by the filename"
         return self.filemap.get(str(filename))
 
-    def register(self, db: RegisterDb) -> None:
+    def register(self, regset: RegisterDb) -> None:
         "Map the register set by filename and uuid"
-        self.filemap[str(db.filename)] = db
-        self.idmap[db.uuid] = db
+        self.filemap[str(regset.filename)] = regset
+        self.idmap[regset.uuid] = regset

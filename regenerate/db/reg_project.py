@@ -26,14 +26,14 @@ from operator import methodcaller
 from pathlib import Path
 import json
 import os.path
-from typing import List, Dict, Union
+from typing import List, Dict, ValuesView
 import xml.sax.saxutils
 
 from .data_reader import FileReader
 from .address_map import AddressMap
 from .block import Block
 from .block_inst import BlockInst
-from .const import REG_EXT, PRJ_EXT, OLD_PRJ_EXT
+from .const import REG_EXT, PRJ_EXT, OLD_PRJ_EXT, OLD_REG_EXT
 from .containers import Container
 from .doc_pages import DocPages
 from .export import ExportData
@@ -44,12 +44,6 @@ from .proj_reader import ProjectReader
 from .register_db import RegisterDb
 from .textutils import clean_text
 from .regset_finder import RegsetFinder
-
-
-def default_path_resolver(project, name: str):
-    filename = project.path.parent / name
-    new_file_path = Path(name).with_suffix(REG_EXT).resolve()
-    return filename, new_file_path
 
 
 def nested_dict(depth, dict_type):
@@ -100,12 +94,12 @@ class RegProject:
             self.path = Path(path)
             self.open(self.path)
         else:
-            self.path = None
+            self.path = Path(".")
 
     def save(self) -> None:
         """Saves the project to the JSON file"""
 
-        new_path = Path(self.path.with_suffix(PRJ_EXT))
+        new_path = Path(self.path).with_suffix(PRJ_EXT)
         Container.block_data_path = str(new_path.parent)
 
         with new_path.open("w") as ofile:
@@ -150,9 +144,13 @@ class RegProject:
                 self.json_loads(jfile.read())
 
     def xml_loads(self, data: bytes, name: str) -> None:
+        "Load the XML data from the passed string"
+
         self.loads(data, name)
 
     def json_loads(self, data: str) -> None:
+        "Loads the JSON data from the passed string"
+
         json_data = json.loads(data)
         self.json_decode(json_data)
 
@@ -165,13 +163,15 @@ class RegProject:
 
         reader = ProjectReader(self)
         reader.loads(data, name)
-        self.path = name
+        self.path = Path(name)
 
         for _, block in self.blocks.items():
             for _, reg_set in block.regsets.items():
                 self.regsets[reg_set.uuid] = reg_set
 
-    def remove_block(self, blk_id: str):
+    def remove_block(self, blk_id: str) -> None:
+        "Removes a block from the database"
+
         del self.blocks[blk_id]
         self.block_insts = [
             inst for inst in self.block_insts if inst.blkid != blk_id
@@ -182,8 +182,8 @@ class RegProject:
                 map_id for map_id in addr_map.blocks if addr_id != blk_id
             ]
 
-    def append_register_set_to_list(self, name: Union[str, Path]):
-        """Adds a register set"""
+    def append_register_set_to_list(self, name: Path) -> None:
+        "Adds a register set"
 
         self._modified = True
 
@@ -192,31 +192,23 @@ class RegProject:
         else:
             rdr = self.reader_class
 
-        try:
-            filename, new_file_path = rdr.resolve_path(name)
-        except Exception as msg:
-            print("Name", str(msg))
-            return
+        filename, new_file_path = rdr.resolve_path(name)
 
-        try:
-            regset = self.finder.find_by_file(filename)
-            if not regset:
-                regset = RegisterDb()
-                if Path(filename).suffix == ".xml":
-                    data = rdr.read_bytes(filename)
-                    regset.loads(data, filename)
-                else:
-                    data = rdr.read_bytes(filename)
-                    regset.json_loads(data)
-                self.finder.register(regset)
-        except Exception as msg:
-            print("Read", str(msg))
-            return
+        regset = self.finder.find_by_file(filename)
+        if not regset:
+            regset = RegisterDb()
+            if Path(filename).suffix == OLD_REG_EXT:
+                data = rdr.read_bytes(filename)
+                regset.loads(data, filename)
+            else:
+                data = rdr.read_bytes(filename)
+                regset.json_loads(data)
+            self.finder.register(regset)
 
         self.regsets[regset.uuid] = regset
         self._filelist.append(new_file_path)
 
-    def add_register_set(self, path: str) -> None:
+    def add_register_set(self, path: Path) -> None:
         """
         Adds a new register set to the project. Note that this only records
         the filename, and does not actually keep a reference to the RegisterDb.
@@ -225,6 +217,7 @@ class RegProject:
 
     def remove_register_set(self, path: str) -> None:
         """Removes the specified register set from the project."""
+
         self._modified = True
         try:
             self._filelist.remove(Path(path))
@@ -331,21 +324,24 @@ class RegProject:
         base = self.path.parent
         return [Path(base / i).resolve() for i in self._filelist]
 
-    def get_address_maps(self):
+    def get_address_maps(self) -> ValuesView[AddressMap]:
         """Returns a list of the existing address maps"""
         return self.address_maps.values()
 
     def get_blocks_in_address_map(self, map_id: str) -> List[BlockInst]:
         """Returns the address maps associated with the specified group."""
         addr_map = self.address_maps.get(map_id)
-        blocks = addr_map.blocks
-        if blocks:
-            blocks = set(blocks)
-            return [inst for inst in self.block_insts if inst.name in blocks]
-        else:
-            return self.block_insts
+        if addr_map:
+            blocks = addr_map.blocks
+            if blocks:
+                return [
+                    blk_inst
+                    for blk_inst in self.block_insts
+                    if blk_inst.name in set(blocks)
+                ]
+        return self.block_insts
 
-    def get_address_maps_used_by_block(self, blk_id: str):
+    def get_address_maps_used_by_block(self, blk_id: str) -> List[str]:
         """Returns the address maps associated with the specified group."""
 
         used_in_uvm = set(
@@ -356,9 +352,6 @@ class RegProject:
             if key in used_in_uvm and blk_id in self.address_maps[key].blocks:
                 map_list.append(key)
         return map_list
-
-    def get_block_from_inst(self, name: str) -> Block:
-        return self.blocks[name]
 
     def change_address_map_name(self, map_id: str, new_name: str) -> None:
         """Changes the name of an address map"""
@@ -401,7 +394,7 @@ class RegProject:
                 map_id,
                 list(self.address_maps.keys()),
             )
-        return None
+        return 16
 
     def set_access(
         self, map_id: str, group_name: str, block_name: str, access
@@ -458,45 +451,6 @@ class RegProject:
         """Clears the modified flag"""
         self._modified = bool(value)
 
-    def change_subsystem_name(self, old, cur):
-        """
-        Changes the name of a subsystem from 'old' to 'cur'.
-        Searches through the access maps the group definitions
-        to find the old reference, and replaces it with the new
-        reference
-        """
-        # Search access map to find items to replace. We must
-        # delete the old entry, and create a new entry. Since
-        # we cannot delete in the middle of a search, we must save
-        # the matches we found. After we identify them, we can
-        # delete the items we found.
-
-        # to_delete = []
-        # for access_map in self.access_map:
-        #     for subsys in self.access_map[access_map]:
-        #         if subsys == old:
-        #             to_delete.append((access_map, old, cur))
-
-        # for (access_map, nold, ncur) in to_delete:
-        #     self.access_map[access_map][ncur] = self.access_map[access_map][
-        #         nold
-        #     ]
-        #     del self.access_map[access_map][nold]
-
-        # # Search groups for items to rename. Just change the name
-        # for g_data in self._groupings:
-        #     if g_data.name == old:
-        #         g_data.name = cur
-        self._modified = True
-
-    def change_instance_name(self, subsystem, old, cur):
-        """
-        Changes the register set instance name for a particular
-        instance in the identified subsystem. Updates the access
-        map and the groupings.
-        """
-        self._modified = True
-
     def change_file_suffix(self, original: str, new: str):
         """Changes the suffix of the files in the file list"""
 
@@ -509,6 +463,7 @@ class RegProject:
         self._filelist = new_list
 
     def blocks_containing_regset(self, regset_id: str):
+        "Find all the blocks that contain the register set id"
         return [
             self.blocks[blk]
             for blk in self.blocks
@@ -516,6 +471,7 @@ class RegProject:
         ]
 
     def instances_of_block(self, block: Block):
+        "Return all the instances of a block"
         return [
             blk_inst
             for blk_inst in self.block_insts
@@ -524,6 +480,8 @@ class RegProject:
 
     @property
     def documentation(self) -> str:
+        "Backward compatible method torn the first doc string"
+
         page_names = self.doc_pages.get_page_names()
         if page_names:
             return self.doc_pages.get_page(page_names[0])
@@ -641,16 +599,10 @@ class RegProject:
                 blk_data.filename, _ = self.reader_class.resolve_path(
                     base_path
                 )
-                print(
-                    self.reader_class.__class__,
-                    type(self.reader_class.__class__),
-                )
                 blk_data.reader_class = self.reader_class.__class__(
                     base_path, self.reader_class.repo, self.reader_class.rtl_id
                 )
-                print("FILE1", blk_data.filename)
                 blk_data.json_decode(json_data)
-                print("FILE2", blk_data.filename)
             else:
                 path = self.path.parent / base_path
                 blk_data.open(path)

@@ -26,7 +26,7 @@ import re
 from operator import methodcaller
 from io import BytesIO as StringIO
 from pathlib import Path
-from typing import Union, List, Optional
+from typing import Union, List, Optional, Dict
 
 from .register import Register
 from .reg_parser import RegParser
@@ -47,7 +47,7 @@ class RegisterDb(NameBase):
     def __init__(self, filename=None):
         super().__init__("", "")
         self._title = ""
-        self._registers = {}
+        self._registers: Dict[str, Register] = {}
         self.parameters = ParameterContainer()
         self.exports: List[ExportData] = []
 
@@ -73,13 +73,20 @@ class RegisterDb(NameBase):
 
     @property
     def filename(self) -> Path:
+        "Returns the filename as a Path"
+
         return self._filename
 
     @filename.setter
     def filename(self, value: Union[str, Path]) -> None:
+        """
+        Sets the filename, converting it to a path, and setting the new suffix
+        name
+        """
+
         self._filename = Path(value).with_suffix(REG_EXT)
 
-    def total_bits(self):
+    def total_bits(self) -> int:
         """Returns bits in register"""
         bits = 0
         for key in self._registers:
@@ -88,7 +95,7 @@ class RegisterDb(NameBase):
                 bits += field.width
         return bits
 
-    def get_keys(self):
+    def get_keys(self) -> List[str]:
         """Returns the register keys, which is the address of the register"""
         return [
             a.uuid
@@ -99,25 +106,25 @@ class RegisterDb(NameBase):
         """Returns the register keys, which is the address of the register"""
         return iter(sorted(self._registers.values(), key=lambda a: a.address))
 
-    def get_register(self, key: str):
+    def get_register(self, key: str) -> Optional[Register]:
         """
         Returns the register from the specified key, which should be the
         address.
         """
         return self._registers.get(key)
 
-    def add_register(self, reg: Register):
+    def add_register(self, reg: Register) -> None:
         """Adds the register to the database."""
         self._registers[reg.uuid] = reg
         reg.regset_name = self.name
         reg.set_parameters(self.parameters)
 
-    def delete_register(self, reg):
+    def delete_register(self, reg: Register) -> None:
         """Removes the register to the database."""
         del self._registers[reg.uuid]
 
-    def read_db(self, filename: Path):
-
+    def read_db(self, filename: Path) -> None:
+        "Loads either from XML or JSON depending on the extension"
         if filename.suffix == OLD_REG_EXT:
             self.read_xml(filename)
         else:
@@ -160,6 +167,7 @@ class RegisterDb(NameBase):
         return self
 
     def save(self):
+        "Save the data to the specified file as a JSON file"
         try:
             data = self.json()
             with self.filename.open("w") as ofile:
@@ -177,7 +185,7 @@ class RegisterDb(NameBase):
         return self._title
 
     @descriptive_title.setter
-    def descriptive_title(self, name: str):
+    def descriptive_title(self, name: str) -> None:
         """
         Sets _title, which is accessed via the descriptive_title property
         """
@@ -197,7 +205,7 @@ class RegisterDb(NameBase):
                 return self._registers[i]
         return None
 
-    def find_registers_by_name_regexp(self, name: str):
+    def find_registers_by_name_regexp(self, name: str) -> List[Register]:
         """Finds a register with the given name, or None if not found"""
         regexp = re.compile(name)
         return [
@@ -222,7 +230,6 @@ class RegisterDb(NameBase):
             "parameters": self.parameters,
             "title": self._title,
             "ports": self.ports,
-            "name": self.name,
             "array_is_reg": self.array_is_reg,
             "coverage": self.coverage,
             "internal_only": self.internal_only,

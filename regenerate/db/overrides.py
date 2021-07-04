@@ -17,10 +17,13 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-from .param_data import ParameterData, ParameterFinder
+from typing import Dict, Any
+from .param_data import ParameterFinder
 
 
 class Overrides:
+    "Stores the override information"
+
     def __init__(self):
         self.finder = ParameterFinder()
         self.path: str = ""
@@ -28,18 +31,23 @@ class Overrides:
         self.value: int = 0
         self.temp_name = ""
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         param = self.finder.find(self.parameter)
+
         return f"Overrides(path={self.path}, parameter={param.name}, value={self.value})"
 
-    def json(self):
+    def json(self) -> Dict[str, Any]:
+        "Convert data to a dict for JSON export"
+
         return {
             "path": self.path,
             "parameter": self.parameter,
             "value": self.value,
         }
 
-    def json_decode(self, data):
+    def json_decode(self, data: Dict[str, Any]) -> None:
+        "Load the object from JSON data"
+
         self.path = data["path"]
         self.parameter = data["parameter"]
         self.value = data["value"]

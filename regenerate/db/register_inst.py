@@ -20,9 +20,10 @@
 """
 Manages the instance of a register within a group.
 """
+from typing import Union, Dict, Any
+
 from .param_value import ParamValue
 from .name_base import NameBase
-from .overrides import Overrides
 
 
 class RegisterInst(NameBase):
@@ -57,42 +58,55 @@ class RegisterInst(NameBase):
 
         return hash(self.uuid)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"RegisterInst(name={self.name}, uuid={self.uuid})"
-    
+
     @property
     def single_decode(self) -> bool:
+        "Returns the single decode flag"
         return self._single_decode
 
     @single_decode.setter
-    def single_decode(self, val) -> None:
+    def single_decode(self, val: Union[bool, int]) -> None:
+        "Sets the single decode flag, converting to boolean"
         self._single_decode = bool(val)
 
     @property
     def no_uvm(self) -> bool:
+        "Returns the no_uvm flag"
         return self._no_uvm
 
     @no_uvm.setter
-    def no_uvm(self, val) -> None:
+    def no_uvm(self, val: Union[bool, int]) -> None:
+        "Sets the no_uvm flag, converting to a boolen"
+
         self._no_uvm = bool(val)
 
     @property
     def no_decode(self) -> bool:
+        "Returns the no_decode flag"
+
         return self._no_decode
 
     @no_decode.setter
-    def no_decode(self, val) -> None:
+    def no_decode(self, val: Union[bool, int]) -> None:
+        "Sets the no_decode flag, converting to a boolen"
+
         self._no_decode = bool(val)
 
     @property
     def array(self) -> bool:
+        "Returns the array flag"
+
         return self._array
 
     @array.setter
-    def array(self, val) -> None:
+    def array(self, val: Union[int, bool]) -> None:
+        "Sets the array flag, converting to a boolen"
+
         self._array = bool(val)
 
-    def json_decode(self, data) -> None:
+    def json_decode(self, data: Dict[str, Any]) -> None:
         self.regset_id = data["regset_id"]
         self._id = data["uuid"]
         self.name = data["name"]
@@ -105,7 +119,7 @@ class RegisterInst(NameBase):
         self.array = data["array"]
         self.single_decode = data["single_decode"]
 
-    def json(self):
+    def json(self) -> Dict[str, Any]:
         return {
             "regset_id": self.regset_id,
             "name": self.name,

@@ -22,6 +22,7 @@ Holds the infomration for a group. This includes the name, base address,
 HDL path, the repeat count, repeat offset, and the title.
 """
 
+from typing import Dict, Any
 from .name_base import NameBase
 
 
@@ -45,7 +46,7 @@ class BlockInst(NameBase):
         self.repeat = repeat
         self.description = description
 
-    def __repr__(self):
+    def __repr__(self) -> None:
         return f"BlockInst({self.name}, {self.blkid})"
 
     def __hash__(self):
@@ -70,7 +71,7 @@ class BlockInst(NameBase):
             return False
         return True
 
-    def json_decode(self, data) -> None:
+    def json_decode(self, data: Dict[str, Any]) -> None:
         self.name = data["name"]
         self.uuid = data["id"]
         self.blkid = data["blkid"]
@@ -79,7 +80,7 @@ class BlockInst(NameBase):
         self.description = data["description"]
         self.repeat = data["repeat"]
 
-    def json(self):
+    def json(self) -> Dict[str, Any]:
         return {
             "name": self.name,
             "id": self.uuid,

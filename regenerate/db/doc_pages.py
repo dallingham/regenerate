@@ -17,28 +17,43 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-from .json_base import JSONEncodable
+"""
+Manages document pages, which are simply name to string dictionaries.
+"""
+
+from typing import Dict, Any
 
 
 class DocPages:
+    """
+    Manages the documenation pages, allowing pages to be updated,
+    deleted, or interated over.
+    """
+
     def __init__(self):
-        self.pages = {}
+        self.pages: Dict[str, str] = {}
 
     def update_page(self, name: str, text: str):
+        "Adds or updates the page specified by the name"
         self.pages[name] = text
 
     def remove_page(self, name: str):
+        "Removes the page with the specified name"
         if name in self.pages:
             del self.pages[name]
 
     def get_page_names(self):
+        "Returns a list of the page names"
         return list(self.pages.keys())
 
     def get_page(self, name: str):
+        "Get the page associated with the name"
         return self.pages.get(name)
 
     def json(self):
+        "Convert to a dictionary for JSON"
         return self.pages
 
-    def json_decode(self, data):
+    def json_decode(self, data: Dict[str, Any]):
+        "Decode the JSON data"
         self.pages = data

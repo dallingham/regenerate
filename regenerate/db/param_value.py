@@ -82,10 +82,12 @@ class ParamValue:
         return f"'h{self.value:x}"
 
     def set_int(self, value: int) -> None:
+        "Set the value as an integer value"
         self.value = value
         self.is_parameter = False
 
     def set_param(self, value: str, offset: int = 0) -> None:
+        "Set the parameter as parameter"
         self.value = value
         self.offset = offset
         self.is_parameter = True

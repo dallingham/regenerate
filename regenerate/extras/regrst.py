@@ -322,7 +322,7 @@ class RegisterRst:
             iname = self._inst
         else:
             iname = ""
-            
+
         return "%s-%s-%s" % (
             norm_name(iname),
             norm_name(gname),
@@ -335,7 +335,7 @@ class RegisterRst:
             gname = self._group.name
         else:
             gname = ""
-            
+
         if self._inst:
             iname = self._inst.name
         else:
@@ -343,7 +343,7 @@ class RegisterRst:
 
         return "%s-%s-%s-%s" % (
             norm_name(iname),
-            norm_name(self.gname),
+            norm_name(gname),
             norm_name(self._reg.name),
             norm_name(name),
         )
@@ -537,7 +537,7 @@ class RegisterRst:
 
         addr_maps_regset_is_in = {}
         for addr_map in self._prj.get_address_maps():
-            
+
             for blk_inst in block_inst_list:
                 if blk_inst.uuid in addr_map.blocks:
                     addr_maps_regset_is_in[addr_map.uuid] = addr_map

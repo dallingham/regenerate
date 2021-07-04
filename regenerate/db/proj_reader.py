@@ -21,9 +21,10 @@
 Manages the reading of the project file (.rprj)
 """
 
-from io import BytesIO as StringIO
+from io import BytesIO
+from collections import Counter, defaultdict
 from pathlib import Path
-from collections import defaultdict
+from typing import List, Dict
 import xml.parsers.expat
 
 from .address_map import AddressMap
@@ -32,6 +33,7 @@ from .block_inst import BlockInst
 from .const import REG_EXT, BLK_EXT, OLD_REG_EXT
 from .export import ExportData
 from .register_inst import RegisterInst
+from .logger import LOGGER
 
 
 class ProjectReader:
@@ -40,22 +42,22 @@ class ProjectReader:
     """
 
     def __init__(self, project):
-        self._prj = project
-        self._current_group = None
-        self._token_list = []
-        self.reg_id = {}
-        self._current = ""
-        self._current_map = ""
-        self._current_access = 0
-        self._current_map_group = None
+        self.prj = project
+        self.current_group = None
+        self.current = ""
+        self.current_map = ""
+        self.current_access = 0
+        self.current_map_group = None
         self.path = ""
-        self.blocks = {}
-        self.block_insts = []
+        self.token_list: List[str] = []
+        self.id_to_block: Dict[str, Block] = {}
+        self.block_insts: List[BlockInst] = []
         self.reg_exports = defaultdict(list)
-        self.inst2set = {}
-        self.name2blk = {}
-        self.name2blkinst = {}
-        self.map_groups = {}
+        self.name_to_blk_id: Dict[str, str] = {}
+        self.name_to_blkinst_id: Dict[str, str] = {}
+        self.map_id_to_name: Dict[str, str] = {}
+        self.new_block = None
+        self.current_blk_inst = None
 
     def open(self, name):
         """Opens and reads an XML file"""
@@ -67,28 +69,25 @@ class ProjectReader:
             parser.EndElementHandler = self.endElement
             parser.CharacterDataHandler = self.characters
             parser.ParseFile(ofile)
-        self._prj.modified = True
+        self.prj.modified = True
 
     def loads(self, data, path):
         """Loads the data from a text string"""
         self.path = Path(path)
-        try:
-            ofile = StringIO(data)
-        except Exception as msg:
-            print("ERR", str(msg))
+        ofile = BytesIO(data)
 
         parser = xml.parsers.expat.ParserCreate()
         parser.StartElementHandler = self.startElement
         parser.EndElementHandler = self.endElement
         parser.CharacterDataHandler = self.characters
         parser.ParseFile(ofile)
-        self._prj.modified = True
+        self.prj.modified = True
 
     def startElement(self, tag, attrs):
         """
         Called every time an XML element begins
         """
-        self._token_list = []
+        self.token_list = []
         mname = "start_" + tag
         if hasattr(self, mname):
             method = getattr(self, mname)
@@ -98,7 +97,7 @@ class ProjectReader:
         """
         Called every time an XML element end
         """
-        text = "".join(self._token_list)
+        text = "".join(self.token_list)
         mname = "end_" + tag
         if hasattr(self, mname):
             method = getattr(self, mname)
@@ -110,80 +109,66 @@ class ProjectReader:
         in how it is called, so we must collect the information for assembly
         later.
         """
-        self._token_list.append(data)
+        self.token_list.append(data)
 
     def start_project(self, attrs):
         """Called when a project tag is found"""
-        self._prj.name = attrs["name"]
-        self._prj.short_name = attrs.get("short_name", "")
-        self._prj.company_name = attrs.get("company_name", "")
+        self.prj.name = attrs["name"]
+        self.prj.short_name = attrs.get("short_name", "")
+        self.prj.company_name = attrs.get("company_name", "")
 
     def start_registerset(self, attrs):
         """Called when a registerset tag is found"""
-        self._current = attrs["name"]
-        reg_path = self.path.parent / self._current
-        reg_path_xml = str(reg_path.with_suffix(OLD_REG_EXT).resolve())
-        self._prj.append_register_set_to_list(reg_path_xml)
+        self.current = attrs["name"]
+        reg_path = self.path.parent / self.current
+        reg_path_xml = reg_path.with_suffix(OLD_REG_EXT).resolve()
+        self.prj.append_register_set_to_list(reg_path_xml)
 
     def start_export(self, attrs):
         """Called when an export tag is found"""
 
-        if str(self.path) != "<string>":
-            db_path = self.path.parent / Path(self._current).with_suffix(
-                REG_EXT
-            )
-            db_path_str = str(db_path.resolve())
-            target = Path(self.path.parent) / attrs["path"]
-            self.reg_exports[db_path_str].append(
-                ExportData(attrs["option"], str(target.resolve()))
-            )
-
-    def start_group_export(self, attrs):
-        """Called when an group_export tag is found"""
-        return
-        # dest = attrs["dest"]
-        # option = attrs["option"]
-        # self._prj.append_to_group_export_list(
-        #     self._current_group.name, dest, option
-        # )
+        db_path = self.path.parent / Path(self.current).with_suffix(REG_EXT)
+        db_path_str = str(db_path.resolve())
+        target = Path(self.path.parent) / attrs["path"]
+        self.reg_exports[db_path_str].append(
+            ExportData(attrs["option"], str(target.resolve()))
+        )
 
     def start_project_export(self, attrs):
         """Called when a project_export tag is found"""
 
-        if str(self.path) != "<string>":
-            target = Path(self.path.parent) / attrs["path"]
-            self._prj.append_to_project_export_list(
-                attrs["option"], str(target.resolve())
-            )
+        target = Path(self.path.parent) / attrs["path"]
+        self.prj.append_to_project_export_list(
+            attrs["option"], str(target.resolve())
+        )
 
     def start_grouping(self, attrs):
         """Called when a grouping tag is found"""
 
-        if attrs["name"] not in self.name2blk:
+        if attrs["name"] not in self.name_to_blk_id:
             self.new_block = Block(
                 attrs["name"],
                 int(attrs.get("repeat_offset", 0x10000)),
                 attrs.get("title", ""),
             )
-            self.blocks[self.new_block.uuid] = self.new_block
-            self.name2blk[self.new_block.name] = self.new_block.uuid
+            self.id_to_block[self.new_block.uuid] = self.new_block
+            self.name_to_blk_id[self.new_block.name] = self.new_block.uuid
         else:
-            self.new_block = self.blocks[self.new_block.uuid]
+            self.new_block = self.id_to_block[self.new_block.uuid]
 
-        self._current_blk_inst = BlockInst(attrs["name"])
-        self.name2blkinst[attrs["name"]] = self._current_blk_inst.uuid
-        self._prj.block_insts.append(self._current_blk_inst)
+        self.current_blk_inst = BlockInst(attrs["name"])
+        self.name_to_blkinst_id[attrs["name"]] = self.current_blk_inst.uuid
+        self.prj.block_insts.append(self.current_blk_inst)
 
-        self._current_blk_inst.blkid = self.new_block.uuid
-        self._current_blk_inst.address_base = int(attrs["start"], 16)
-        self._current_blk_inst.repeat = int(attrs.get("repeat", "1"))
-        self._current_blk_inst.hdl_path = attrs.get("hdl", "")
+        self.current_blk_inst.blkid = self.new_block.uuid
+        self.current_blk_inst.address_base = int(attrs["start"], 16)
+        self.current_blk_inst.repeat = int(attrs.get("repeat", "1"))
+        self.current_blk_inst.hdl_path = attrs.get("hdl", "")
 
     def start_map(self, attrs):
-
         """Called when a map tag is found"""
+
         sname = attrs["set"]
-        self.inst2set[attrs["inst"]] = sname
 
         data = RegisterInst(
             sname,
@@ -209,24 +194,24 @@ class ProjectReader:
             bool(int(attrs.get("no_uvm", 0))),
         )
 
-        self._prj.set_address_map(address_map)
-        self._current_map = address_map.uuid
-        self._current_map_group = None
+        self.prj.set_address_map(address_map)
+        self.current_map = address_map.uuid
+        self.current_map_group = None
 
     def end_documentation(self, text):
         """
         Called when the documentation XML tag is encountered. Assigns the
         current text string to the documentation variable
         """
-        self._prj.doc_pages.update_page("Overview", text)
+        self.prj.doc_pages.update_page("Overview", text)
 
     def end_overview(self, text):
         """
         Called when the overview XML tag is encountered. Assigns the
         current text string to the current group's docs variable
         """
-        if self._current_group:
-            self._current_group.docs = text
+        if self.current_group:
+            self.current_group.docs = text
         self.new_block.doc_pages.update_page("Overview", text)
 
     def start_map_group(self, attrs):
@@ -240,88 +225,121 @@ class ProjectReader:
         if name == "None":
             return
 
-        if self._current_map in self.map_groups:
-            self.map_groups[self._current_map].append(name)
+        if self.current_map in self.map_id_to_name:
+            self.map_id_to_name[self.current_map].append(name)
         else:
-            self.map_groups[self._current_map] = [name]
-
-    #        self._prj.add_address_map_to_block(
-    #            self._current_map, self._current_map_group
-    #        )
-
-    def end_map_group(self, _text):
-        """
-        Called when the map_group XML tag ended
-        """
-        return
-        # if self._current_map_group is None:
-        #     self._prj.add_address_map_to_block(self._current_map, text)
+            self.map_id_to_name[self.current_map] = [name]
 
     def start_access(self, attrs):
         "Starts the access type"
 
-        self._current_access = int(attrs.get("type", "0"))
+        self.current_access = int(attrs.get("type", "0"))
 
     def end_access(self, text):
         "Ends the access type"
 
-        self._prj.set_access(
-            self._current_map,
-            self._current_map_group,
+        self.prj.set_access(
+            self.current_map,
+            self.current_map_group,
             text,
-            self._current_access,
+            self.current_access,
         )
 
     def start_parameter(self, attrs):
         "Starts a parameter"
 
-        self._prj.add_parameter(attrs["name"], int(attrs["value"]))
-
-    def end_parameters(self, _attrs):
-        "Ends a parameter"
-        ...
+        self.prj.add_parameter(attrs["name"], int(attrs["value"]))
 
     def end_project(self, _text):
-        from collections import Counter
+        """
+        Called when the project file has been loaded. At this point, we need
+        to do some cleanup. This includes:
 
-        self.reg_id = {}
-        for rset in self._prj.regsets.values():
-            self.reg_id[rset.name] = rset.uuid
+         * Fixing the register instance reference IDs
+         * Creating a file path for the block files, since there was no
+           original file.
+         * Cleaning up the address maps
+        """
 
-        for blkid in self.blocks:
+        self.fix_reginst_ids()
 
-            counter = Counter()
-            for rset in self.blocks[blkid].regset_insts:
-                try:
-                    counter[Path(self.reg_id[rset.regset_id]).parent] += 1
-                except KeyError:
-                    print(rset.uuid, "not found")
+        for blkid in self.id_to_block:
 
-            blk = self.blocks[blkid]
+            blk = self.id_to_block[blkid]
             blk.modified = True
+            blk.filename = self.guess_block_path(blk)
 
-            if str(self.path) != "<string>":
-                filename = (
-                    Path(counter.most_common(1)[0][0]) / f"{blk.name}{BLK_EXT}"
-                )
-                block_dir = Path(self.path.parent).resolve()
-                filename = block_dir / filename
-
-                blk.filename = Path(filename).resolve()
-
-            self._prj.blocks[blkid] = blk
+            self.prj.blocks[blkid] = blk
 
             for reg_inst in blk.regset_insts:
-                name = self.inst2set[reg_inst.name]
-                uuid = self.reg_id[name]  # self._prj.regsets[name].uuid
-                blk.regsets[uuid] = self._prj.regsets[uuid]
+                uuid = reg_inst.regset_id
+                blk.regsets[uuid] = self.prj.regsets[uuid]
                 path = blk.regsets[uuid].filename
-                reg_inst.regset_id = uuid
                 blk.regsets[uuid].exports = self.reg_exports[str(path)]
 
-        for map_id in self.map_groups:
-            blkinst_list = self.map_groups[map_id]
+        self.connect_address_maps()
+
+    def guess_block_path(self, blk: Block) -> Path:
+        """
+        Make the best guess at a path for the block file.
+        """
+        counter = self.build_path_counter(blk.uuid)
+        most_common = counter.most_common(1)[0][0]
+        filename = Path(most_common) / f"{blk.name}{BLK_EXT}"
+        block_dir = Path(self.path.parent).resolve()
+        filename = block_dir / filename
+
+        return filename.resolve()
+
+    def connect_address_maps(self):
+        """
+        Connect the block instances to the address maps. The map to
+        block instance names were found during parsing. Now they just
+        need to be converted to references.
+        """
+        for map_id, blkinst_list in self.map_id_to_name.items():
             for blkinst_name in blkinst_list:
-                blkinst_id = self.name2blkinst[blkinst_name]
-                if blkinst_id:
-                    self._prj.add_address_map_to_block(map_id, blkinst_id)
+                blkinst_id = self.name_to_blkinst_id[blkinst_name]
+                self.prj.add_address_map_to_block(map_id, blkinst_id)
+
+    def build_path_counter(self, blkid: str) -> Counter:
+        """
+        When importing from RPRJ files, we do not have block files, so
+        we need to figure out where the block file should go. So we look
+        at the path names of the register files that in are the block and
+        pick the directory where we have the most register files associated
+        with that block.
+        """
+
+        counter: Counter = Counter()
+        for rset_inst in self.id_to_block[blkid].regset_insts:
+            try:
+                regset = self.prj.regsets[rset_inst.regset_id]
+                regset_dir = regset.filename.parent
+                counter[regset_dir] += 1
+            except KeyError:
+                LOGGER.error(
+                    "Register set with id %s referenced in instace %s in block %s not found",
+                    rset_inst.regset_id,
+                    rset_inst.name,
+                    self.id_to_block[blkid],
+                )
+
+        return counter
+
+    def fix_reginst_ids(self) -> None:
+        """
+        Regsets are referenced in the XML project file before they are
+        defined, so we don't have the UUIDs for these to build a cross
+        reference. Instead, the block name is temporarily stored in the
+        uuid file while parsing. When we are done with the parsing, we
+        have to go back and convert those names to the real UUIDs.
+        """
+
+        name2id = {
+            regset.name: regset.uuid for regset in self.prj.regsets.values()
+        }
+
+        for blk in self.id_to_block.values():
+            for reg_inst in blk.regset_insts:
+                reg_inst.regset_id = name2id[reg_inst.regset_id]

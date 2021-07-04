@@ -21,6 +21,8 @@
 Provides the bit values for a bit field
 """
 
+from typing import Dict, Any
+
 
 class BitValues:
     """
@@ -37,14 +39,16 @@ class BitValues:
         self.token: str = ""
         self.description: str = ""
 
-    def json_decode(self, data):
+    def json_decode(self, data: Dict[str, Any]) -> None:
         """Converts the json data into a BitValue"""
 
         self.value = int(data["value"], 0)
         self.token = data["token"]
         self.description = data["description"]
 
-    def json(self):
+    def json(self) -> Dict[str, Any]:
+        "Convert BitValue into a Dict for JSON encoding"
+
         return {
             "value": f"{self.value}",
             "token": self.token,

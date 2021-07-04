@@ -27,8 +27,8 @@ class ParameterResolver:
             cls.instance = super(ParameterResolver, cls).__new__(cls)
         return cls.instance
 
-    top_overrides: Dict[str, Dict[str, "ParamValue"]] = {}
-    reginst_overrides: Dict[str, Dict[str, "ParamValue"]] = {}
+    top_overrides = {}
+    reginst_overrides = {}
     blk_inst = ""
     reg_inst = ""
 
@@ -46,17 +46,13 @@ class ParameterResolver:
     def __repr__(self):
         return "ParameterResolver()"
 
-    def add_regset_override(
-        self, reg_inst_id: str, param_id: str, data: "ParamValue"
-    ):
+    def add_regset_override(self, reg_inst_id: str, param_id: str, data):
         if reg_inst_id not in self.reginst_overrides:
             self.reginst_overrides[reg_inst_id] = {param_id: data}
         else:
             self.reginst_overrides[reg_inst_id][param_id] = data
 
-    def add_blockinst_override(
-        self, blk_inst_id: str, param_id: str, data: "ParamValue"
-    ):
+    def add_blockinst_override(self, blk_inst_id: str, param_id: str, data):
         if blk_inst_id not in self.top_overrides:
             self.top_overrides[blk_inst_id] = {param_id: data}
         else:

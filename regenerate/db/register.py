@@ -301,7 +301,7 @@ class Register(NameBase):
     @dimension.setter
     def dimension(self, value) -> None:
         """Sets the dimension as a string"""
-        if type(value) == int:
+        if isinstance(value, int):
             self._dimension.set_int(value)
         else:
             try:
@@ -311,8 +311,8 @@ class Register(NameBase):
                 self._dimension.set_param(value)
 
     def dimension_value(self):
-        a = self._dimension.resolve()
-        return a
+        "Returns the dimension valued with parameters resolved"
+        return self._dimension.resolve()
 
     @property
     def dimension_str(self) -> str:

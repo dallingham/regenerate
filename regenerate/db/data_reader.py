@@ -24,16 +24,28 @@ from .const import REG_EXT
 
 
 class DataReader:
+    """
+    Base class for reading data. Allows different sources to be used instead
+    of just files. Allows for applications to provide their own custom
+    data readers (e.g. git instead of files)
+    """
+
     def __init__(self, top_path: Path):
         self.path = top_path
 
-    def resolve_path(self, name: Path) -> Tuple[Path, Path]:
+    def resolve_path(self, _name: Path) -> Tuple[Path, Path]:
+        """
+        Convert the specified path into something that makes sense to the
+        specific data reader.
+        """
         return Path(self.path), Path(self.path)
 
-    def read(self, filename: Path) -> str:
+    def read(self, _filename: Path) -> str:
+        "Read ASCII data"
         return ""
 
-    def read_bytes(self, filename: Path) -> bytes:
+    def read_bytes(self, _filename: Path) -> bytes:
+        "Read binary data"
         return b""
 
 
@@ -45,17 +57,22 @@ class FileReader(DataReader):
 
     def resolve_path(self, name: Path) -> Tuple[Path, Path]:
         "Resolves the relative path into a full path"
+
         filename = self.path.parent / name
         new_file_path = filename.with_suffix(REG_EXT).resolve()
         return filename, new_file_path
 
     def read(self, filename: Path) -> str:
+        "Read ASCII data"
+
         fullpath = Path(self.path) / filename
         with fullpath.open() as ofile:
             data = ofile.read()
         return data
 
     def read_bytes(self, filename: Path) -> bytes:
+        "Read binary data"
+
         fullpath = self.path / filename
         with fullpath.open("rb") as ofile:
             data = ofile.read()

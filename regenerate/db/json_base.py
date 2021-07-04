@@ -22,6 +22,9 @@ Provides a simple JSON encode/decode function for use with very
 simple classes.
 """
 
+from typing import Dict, Any
+from .logger import LOGGER
+
 
 class JSONEncodable:
     """
@@ -35,17 +38,16 @@ class JSONEncodable:
     of classes.
     """
 
-    def json(self):
+    def json(self) -> Dict[str, Any]:
         """Converts the local variables to a dictionary"""
 
-        data = vars(self)
-        return data
+        return vars(self)
 
-    def json_decode(self, data):
+    def json_decode(self, data: Dict[str, Any]) -> None:
         """Converts the dictionary back into local variables"""
 
         try:
             for key in data:
                 self.__setattr__(key, data[key])
         except ValueError:
-            print("Value failed >>>>", data)
+            LOGGER.error("JSON tag (%s) did not map to a variable", key)

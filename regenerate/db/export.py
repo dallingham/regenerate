@@ -20,7 +20,7 @@
 """
 Provides the export rules for the builder
 """
-from typing import Dict
+from typing import Dict, Any
 from .json_base import JSONEncodable
 
 
@@ -35,14 +35,15 @@ class ExportData(JSONEncodable):
         self.target: str = str(target)
         self.options: Dict[str, str] = {}
 
-    def json(self):
+    def json(self) -> Dict[str, Any]:
+        "Convert object into a Dict for json export"
         return {
             "exporter": self.exporter,
             "target": str(self.target),
             "options": self.options,
         }
 
-    def json_decode(self, data):
+    def json_decode(self, data: Dict[str, Any]) -> None:
         """Convert JSON data back into an ExportData instance"""
         self.exporter = data["exporter"]
         self.target = str(data["target"])

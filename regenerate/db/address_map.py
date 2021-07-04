@@ -21,7 +21,7 @@
 Contains the data in the address map
 """
 
-from typing import List, Union
+from typing import List, Union, Dict, Any
 from .name_base import NameBase
 
 
@@ -45,24 +45,36 @@ class AddressMap(NameBase):
 
     @property
     def fixed(self) -> bool:
+        "Return the fixed flag"
+
         return self._fixed
 
     @fixed.setter
     def fixed(self, val: Union[bool, int]) -> None:
+        "Set the fixed flag, converting to boolean type"
+
         self._fixed = bool(val)
 
     @property
     def uvm(self) -> bool:
+        "Returns the UVM flag"
+
         return self._uvm
 
     @uvm.setter
     def uvm(self, val: Union[int, bool]):
+        "Sets the UVM flag, converting to a boolean type"
+
         self._uvm = bool(val)
 
     def __hash__(self):
+        "Use the UUID hsa the hash value bash"
+
         return hash(self.uuid)
 
-    def json_decode(self, data):
+    def json_decode(self, data: Dict[str, Any]) -> None:
+        "Convert the incoming JSON data to the class variables"
+
         self.name = data["name"]
         self.uuid = data["uuid"]
         self.base = int(data["base"], 0)
@@ -71,7 +83,9 @@ class AddressMap(NameBase):
         self.uvm = data["uvm"]
         self.blocks = data["block_insts"]
 
-    def json(self):
+    def json(self) -> Dict[str, Any]:
+        "Encode the class variables into a dictionary for JSON encoding"
+
         return {
             "name": self.name,
             "uuid": self.uuid,
