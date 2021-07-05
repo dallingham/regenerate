@@ -22,7 +22,7 @@ Provides the register description. Contains the general information about the
 register, including the list of bit fields.
 """
 
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 from .name_base import NameBase
 from .enums import ResetType, ShareType
 from .bitfield import BitField
@@ -130,7 +130,8 @@ class RegisterFlags:
         """
         self._do_not_cover = bool(val)
 
-    def json(self):
+    def json(self) -> Dict[str, Any]:
+        "Convert the object to a JSON compatible dictionary"
         return {
             "do_not_use_uvm": self._do_not_use_uvm,
             "do_not_generate_code": self._do_not_generate_code,
@@ -139,7 +140,8 @@ class RegisterFlags:
             "hide": self._hide,
         }
 
-    def json_decode(self, data):
+    def json_decode(self, data: Dict[str, Any]) -> None:
+        "Load the object from JSON data"
         self._do_not_use_uvm = data["do_not_use_uvm"]
         self._do_not_generate_code = data["do_not_generate_code"]
         self._do_not_cover = data["do_not_cover"]
@@ -201,7 +203,7 @@ class Register(NameBase):
         self.regset_name: Optional[str] = None
         self.share = ShareType.NONE
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         name = self.name
         address = self.address
         width = self.width
@@ -254,7 +256,7 @@ class Register(NameBase):
 
         bit_list = [0] * self.width
         for field in self._bit_fields.values():
-            for val in range(field.lsb, field.msb + 1):
+            for val in range(field.lsb, field.msb.resolve() + 1):
                 bit_list[val] = 1
         for pos in range(0, self.width):
             if bit_list[pos] == 0:
@@ -262,7 +264,7 @@ class Register(NameBase):
 
         bit_set = set()
         for field in self._bit_fields.values():
-            for val in range(field.lsb, field.msb + 1):
+            for val in range(field.lsb, field.msb.resolve() + 1):
                 bit_set.add(val)
         all_bits = set(range(0, self.width))
         sorted_bits = sorted(list(bit_set.difference(all_bits)))
@@ -453,7 +455,7 @@ class Register(NameBase):
         val = 0
         for key in self._bit_fields:
             field = self._bit_fields[key]
-            for i in range(field.lsb, field.msb + 1):
+            for i in range(field.lsb, field.msb.resolve() + 1):
                 val |= 1 << i
         return val
 

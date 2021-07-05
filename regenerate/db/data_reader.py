@@ -52,7 +52,7 @@ class DataReader:
 class FileReader(DataReader):
     "Provides the standard file based reader"
 
-    def __init__(self, top_path):
+    def __init__(self, top_path: Path):
         super().__init__(top_path)
 
     def resolve_path(self, name: Path) -> Tuple[Path, Path]:

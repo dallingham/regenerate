@@ -22,11 +22,15 @@ Contains the information for register set parameters and
 project parameters.
 """
 
-from typing import Dict
+from typing import Dict, Any
 from .name_base import NameBase
 
 
 class ParameterFinder:
+    """
+    Finds a parameter in the project based on its UUID.
+    """
+
     def __new__(cls):
         if not hasattr(cls, "instance"):
             cls.instance = super(ParameterFinder, cls).__new__(cls)
@@ -34,20 +38,21 @@ class ParameterFinder:
 
     data_map: Dict[str, "ParameterData"] = {}
 
-    def __init__(self):
-        ...
-
-    def find(self, uuid):
+    def find(self, uuid: str) -> "ParameterData":
+        "Look up the UUID in the data map, returning None if not found"
         return self.data_map.get(uuid)
 
-    def register(self, parameter: "ParameterData"):
+    def register(self, parameter: "ParameterData") -> None:
+        "Registers the parameter with the system"
         self.data_map[parameter.uuid] = parameter
 
-    def unregister(self, parameter: "ParameterData"):
+    def unregister(self, parameter: "ParameterData") -> None:
+        "Removes the parameter with the system"
         if parameter.uuid in self.data_map:
             del self.data_map[parameter.uuid]
 
     def dump(self):
+        "Dumps the data map to stdout"
         print(self.data_map)
 
 
@@ -73,7 +78,9 @@ class ParameterData(NameBase):
     def __hash__(self):
         return hash(self._id)
 
-    def json(self):
+    def json(self) -> Dict[str, Any]:
+        "Converts the object to a dict for JSON serialization"
+
         return {
             "uuid": self.uuid,
             "name": self.name,
@@ -82,7 +89,9 @@ class ParameterData(NameBase):
             "max_val": self.max_val,
         }
 
-    def json_decode(self, data):
+    def json_decode(self, data: Dict[str, Any]) -> None:
+        "Converts a JSON dict into the object"
+
         ParameterFinder().unregister(self)
         self.uuid = data["uuid"]
         self.name = data["name"]

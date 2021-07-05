@@ -60,12 +60,11 @@ def duplicate_register(dbase: RegisterDb, reg: Register) -> Register:
     changing the register description, signals, and token based on the original
     register.
     """
-    reglist = set({dbase.get_register(key).name for key in dbase.get_keys()})
-    deflist = set({dbase.get_register(key).token for key in dbase.get_keys()})
+    reglist = {reg.name for reg in dbase.get_all_registers()}
+    deflist = {reg.token for reg in dbase.get_all_registers()}
+
     signals = build_signal_set(dbase)
-
     new_name = build_new_name(reg.name, reglist)
-
     def_name = build_new_name(reg.token, deflist)
     if not def_name:
         def_name = build_define(new_name)
@@ -77,9 +76,12 @@ def duplicate_register(dbase: RegisterDb, reg: Register) -> Register:
     for key in reg.get_bit_field_keys():
         fld = reg.get_bit_field(key)
         nfld = new_reg.get_bit_field(key)
-        nfld.input_signal = signal_from_source(fld.input_signal, signals)
-        nfld.output_signal = signal_from_source(fld.output_signal, signals)
-        nfld.control_signal = signal_from_source(fld.control_signal, signals)
+        if fld and nfld:
+            nfld.input_signal = signal_from_source(fld.input_signal, signals)
+            nfld.output_signal = signal_from_source(fld.output_signal, signals)
+            nfld.control_signal = signal_from_source(
+                fld.control_signal, signals
+            )
 
     new_reg.address = calculate_next_address(dbase, reg.width)
     new_reg.name = new_name
@@ -112,18 +114,18 @@ def calculate_next_address(dbase: RegisterDb, width: int) -> int:
     keys = dbase.get_keys()
     if keys:
         last_reg = dbase.get_register(keys[-1])
-        dim = max(last_reg.dimension, 1)
-        byte_width = last_reg.width >> 3
-        addr = last_reg.address + (dim * byte_width)
-        byte_width = width >> 3
-        if addr % byte_width != 0:
-            addr += addr % byte_width
-    else:
-        addr = 0
-    return addr
+        if last_reg:
+            dim = max(last_reg.dimension, 1)
+            byte_width = last_reg.width >> 3
+            addr = last_reg.address + (dim * byte_width)
+            byte_width = width >> 3
+            if addr % byte_width != 0:
+                addr += addr % byte_width
+            return addr
+    return 0
 
 
-def signal_from_source(source_name: str, existing_list: List[str]) -> str:
+def signal_from_source(source_name: str, existing_list: Set[str]) -> str:
     """
     Builds a copy of a signal name. The existing list contains the names
     that have already been used. The build_new_name is calleded to try to
@@ -138,7 +140,7 @@ def signal_from_source(source_name: str, existing_list: List[str]) -> str:
     return ""
 
 
-def build_new_name(name: str, reglist: List[str]) -> str:
+def build_new_name(name: str, reglist: Set[str]) -> str:
     """Build a new name from a existing name, making sure it is
     similar, but unique"""
 
@@ -150,6 +152,6 @@ def build_new_name(name: str, reglist: List[str]) -> str:
             index += 1
         return "".join([groups[0], str(index), groups[2]])
     index = 2
-    while "%s %d" % (name, index) in reglist:
+    while "{name} {index}" in reglist:
         index += 1
-    return "%s %d" % (name, index)
+    return "{name} {index}"

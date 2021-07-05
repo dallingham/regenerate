@@ -18,16 +18,17 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 import os
+from pathlib import Path
 
 
 class project_path_not_found(Exception):
     pass
 
 
-__regenerate_data_directory__ = '../data/'
+__regenerate_data_directory__ = "../data/"
 
 
-def getdatapath():
+def getdatapath() -> Path:
     """Retrieve regenerate data path
 
     This path is by default <regenerate_lib_path>/../data/ in trunk
@@ -36,23 +37,24 @@ def getdatapath():
     """
 
     # get pathname absolute or relative
-    if __regenerate_data_directory__.startswith('/'):
+    if __regenerate_data_directory__.startswith("/"):
         pathname = __regenerate_data_directory__
     else:
-        pathname = os.path.join(os.path.dirname(__file__),
-                                __regenerate_data_directory__)
+        pathname = os.path.join(
+            os.path.dirname(__file__), __regenerate_data_directory__
+        )
 
-    return os.path.abspath(pathname)
+    return Path(os.path.abspath(pathname))
 
 
 INSTALL_PATH = getdatapath()
-GLADE_TOP = os.path.join(INSTALL_PATH, "ui", "regenerate.ui")
-GLADE_GTXT = os.path.join(INSTALL_PATH, "ui", "group_text.ui")
-GLADE_BIT = os.path.join(INSTALL_PATH, "ui", "bitfield.ui")
-GLADE_CHK = os.path.join(INSTALL_PATH, "ui", "check.ui")
-GLADE_PROP = os.path.join(INSTALL_PATH, "ui", "properties.ui")
-GLADE_PREF = os.path.join(INSTALL_PATH, "ui", "preferences.ui")
-GLADE_GRP = os.path.join(INSTALL_PATH, "ui", "groupings.ui")
-ODTFILE = os.path.join(INSTALL_PATH, "extra", "template.odt")
-USERODTFILE = os.path.join(INSTALL_PATH, "..", "site_local", "template.odt")
-HELP_PATH = os.path.join(INSTALL_PATH, "help")
+GLADE_TOP = INSTALL_PATH / "ui" / "regenerate.ui"
+GLADE_GTXT = INSTALL_PATH / "ui" / "group_text.ui"
+GLADE_BIT = INSTALL_PATH / "ui" / "bitfield.ui"
+GLADE_CHK = INSTALL_PATH / "ui" / "check.ui"
+GLADE_PROP = INSTALL_PATH / "ui" / "properties.ui"
+GLADE_PREF = INSTALL_PATH / "ui" / "preferences.ui"
+GLADE_GRP = INSTALL_PATH / "ui" / "groupings.ui"
+ODTFILE = INSTALL_PATH / "extra" / "template.odt"
+USERODTFILE = INSTALL_PATH / ".." / "site_local" / "template.odt"
+HELP_PATH = INSTALL_PATH / "help"

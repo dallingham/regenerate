@@ -17,7 +17,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-from typing import Dict
 from .param_data import ParameterData
 
 
@@ -35,9 +34,8 @@ class ParameterResolver:
     def __init__(self):
         ...
 
-    def set_reginst(self, name):
+    def set_reginst(self, name: str) -> None:
         self.reg_inst = name
-        return ""
 
     def clear(self):
         self.top_overrides = {}
@@ -46,22 +44,23 @@ class ParameterResolver:
     def __repr__(self):
         return "ParameterResolver()"
 
-    def add_regset_override(self, reg_inst_id: str, param_id: str, data):
+    def add_regset_override(
+        self, reg_inst_id: str, param_id: str, data
+    ) -> None:
         if reg_inst_id not in self.reginst_overrides:
             self.reginst_overrides[reg_inst_id] = {param_id: data}
         else:
             self.reginst_overrides[reg_inst_id][param_id] = data
 
-    def add_blockinst_override(self, blk_inst_id: str, param_id: str, data):
+    def add_blockinst_override(
+        self, blk_inst_id: str, param_id: str, data
+    ) -> None:
         if blk_inst_id not in self.top_overrides:
             self.top_overrides[blk_inst_id] = {param_id: data}
         else:
             self.top_overrides[blk_inst_id][param_id] = data
 
-    def resolve_reg(
-        self,
-        param: ParameterData,
-    ):
+    def resolve_reg(self, param: ParameterData) -> int:
         if not self.reg_inst:
             return param.value
         if (
@@ -75,7 +74,7 @@ class ParameterResolver:
     def resolve_blk(
         self,
         param: ParameterData,
-    ):
+    ) -> int:
         if not self.blk_inst:
             return param.value
         if (
@@ -85,9 +84,9 @@ class ParameterResolver:
             return self.top_overrides[self.blk_inst][param.uuid]
         return param.value
 
-    def resolve(self, param: ParameterData):
+    def resolve(self, param: ParameterData) -> int:
         val = self.resolve_reg(param)
-        if type(val) == int:
+        if isinstance(val, int):
             return val
         new_val = self.resolve_blk(val)
         return new_val

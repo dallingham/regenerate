@@ -26,11 +26,12 @@ class ParameterContainer:
     def __init__(self):
         self._parameters: List[ParameterData] = []
 
-    def setup(self, name):
+    def setup(self, name: str):
         return
-        resolver = ParameterResolver()
-        for parameter in self._parameters:
-            resolver.add_regset_parameter(name, parameter)
+
+    # resolver = ParameterResolver()
+    # for parameter in self._parameters:
+    #     resolver.add_regset_parameter(name, parameter)
 
     def get(self):
         """Returns the parameter list"""

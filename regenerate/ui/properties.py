@@ -19,7 +19,7 @@
 
 from gi.repository import GObject, Gtk
 from regenerate.settings.paths import GLADE_PROP
-from columns import EditableColumn
+from .columns import EditableColumn
 
 
 class Properties:

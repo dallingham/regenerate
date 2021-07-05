@@ -157,14 +157,13 @@ class RstDoc(ProjectWriter):
                     for reg in db.get_all_registers():
                         rst = RegisterRst(
                             reg,
-                            regset.set,
                             self.project,
                             inst=regset.inst,
                             show_defines=True,
                             show_uvm=True,
                             group=group.name,
                             maxlines=25,
-                            db=db,
+                            dbase=db,
                         )
                         f.write(rst.restructured_text())
                     f.write("\n\n")

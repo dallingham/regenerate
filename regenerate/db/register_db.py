@@ -21,9 +21,7 @@ Provides the container database for a set of registers.
 """
 
 import os
-import json
 import re
-from operator import methodcaller
 from io import BytesIO as StringIO
 from pathlib import Path
 from typing import Union, List, Optional, Dict
@@ -37,6 +35,7 @@ from .export import ExportData
 from .logger import LOGGER
 from .param_container import ParameterContainer
 from .name_base import NameBase
+from .utils import save_json
 
 
 class RegisterDb(NameBase):
@@ -168,14 +167,7 @@ class RegisterDb(NameBase):
 
     def save(self):
         "Save the data to the specified file as a JSON file"
-        try:
-            data = self.json()
-            with self.filename.open("w") as ofile:
-                ofile.write(
-                    json.dumps(data, default=methodcaller("json"), indent=4)
-                )
-        except FileNotFoundError as msg:
-            LOGGER.error(str(msg))
+        save_json(self.json(), self.filename)
 
     @property
     def descriptive_title(self) -> str:

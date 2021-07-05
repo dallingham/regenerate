@@ -96,7 +96,7 @@ class ParamValue:
         "Map the parameter to an integer file, resolving references"
 
         if not self.is_parameter:
-            return self.value
+            return self.value if isinstance(self.value, int) else 0
 
         resolver = ParameterResolver()
         finder = ParameterFinder()

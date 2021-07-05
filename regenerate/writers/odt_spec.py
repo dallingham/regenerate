@@ -33,8 +33,8 @@ from xml.sax.saxutils import escape
 from cStringIO import StringIO
 
 from regenerate.settings.paths import ODTFILE, USERODTFILE
-from regenerate.writers.writer_base import WriterBase, ExportInfo
-from regenerate.db import BitField, RegisterDb
+from regenerate.writers.writer_base import WriterBase
+from regenerate.db import RegisterDb
 from regenerate.db.enums import ResetType
 
 TYPE_MAP = ["R", "R/W", "W1C", "W1S", "WO"]

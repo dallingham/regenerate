@@ -324,6 +324,9 @@ class CTest(WriterBase):
         """
         address_maps = self._project.get_address_maps()
 
+        if self._dbase is None:
+            return
+
         with filename.open("w") as cfile:
 
             if address_maps:

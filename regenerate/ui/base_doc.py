@@ -21,8 +21,9 @@
 Handle the module tab
 """
 
-from typing import Dict
+from typing import Dict, Optional
 from gi.repository import Gtk, Pango, Gdk
+from regenerate.db import RegProject
 from regenerate.ui.spell import Spell
 from regenerate.ui.utils import clean_format_if_needed
 from regenerate.ui.preview_editor import PreviewEditor
@@ -45,7 +46,7 @@ class BaseDoc:
     ):
         self.pango_font = Pango.FontDescription("monospace")
         self.notebook = notebook
-        self.project = None
+        self.project: Optional[RegProject] = None
         self.add_id = add_btn.connect("clicked", self.add_doc_page)
         self.del_id = del_btn.connect("clicked", self.del_doc_page)
         self.remove_pages()

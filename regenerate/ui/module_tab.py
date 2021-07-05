@@ -22,6 +22,7 @@ Handle the module tab
 """
 
 import string
+from typing import Optional
 from gi.repository import GObject, Gtk, Pango, Gdk
 
 from regenerate.db import RegProject
@@ -588,13 +589,12 @@ class ProjectDoc(BaseDoc):
         del_btn: Gtk.Button,
     ):
         super().__init__(notebook, modified, add_btn, del_btn)
-        self.project = None
         self.changing = False
 
     def set_project(self, project: RegProject):
         """Change the database so the preview window can resolve references"""
         self.changing = True
-        
+
         self.project = project
         self.remove_pages()
 

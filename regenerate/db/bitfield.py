@@ -17,9 +17,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Provides the definition of a Bit Field."""
+"""
+Provides the definition of a Bit Field.
+"""
 
-from typing import List, Tuple, Optional, Dict, Any
+from typing import List, Optional, Dict, Any
 from .name_base import NameBase
 from .enums import BitType, ResetType
 from .bit_values import BitValues
@@ -136,10 +138,10 @@ class BitField(NameBase):
 
         self._reset_value = 0
         self.reset_input = ""
-        self.reset_parameter = None
+        self.reset_parameter = ""
         self.reset_type = ResetType.NUMERIC
 
-        self.values: List[Tuple[str, str, str]] = []
+        self.values: List[BitValues] = []
 
     def __repr__(self):
         "Returns the string representation"
@@ -150,7 +152,7 @@ class BitField(NameBase):
         return f"BitField(name={name}, id={self.uuid} msb={msb}, lsb={lsb}, field_type={ftype})"
 
     @property
-    def msb(self):
+    def msb(self) -> ParamValue:
         "Returns the MSB"
 
         return self._msb
@@ -159,7 +161,6 @@ class BitField(NameBase):
     def msb(self, value: ParamValue):
         "Sets the MSB"
 
-        assert type(value) != int
         self._msb = value
 
     @staticmethod
@@ -280,7 +281,7 @@ class BitField(NameBase):
             index = f"{self.lsb}"
         else:
             index = f"{self.msb}:{self.lsb}"
-        return "%s%s%s" % (nlist[0], index, nlist[1])
+        return f"{nlist[0]}{index}{nlist[1]}"
 
     @property
     def output_signal(self) -> str:
@@ -351,7 +352,12 @@ class BitField(NameBase):
 
         self._reset_value = int(data["reset_value"], 0)
         self.reset_input = data["reset_input"]
-        self.reset_parameter = data["reset_parameter"]
+        rst_param = data["reset_parameter"]
+        if rst_param is None:
+            self.reset_parameter = ""
+        else:
+            self.reset_parameter = rst_param
+
         self.reset_type = data["reset_type"]
 
         self.values = []

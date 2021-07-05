@@ -24,7 +24,7 @@ Instance List and Model
 import re
 from gi.repository import Gtk, GObject
 from regenerate.ui.columns import EditableColumn, ReadOnlyColumn
-from regenerate.db import RegisterInst, LOGGER
+from regenerate.db import RegisterInst, LOGGER, BlockInst
 from regenerate.ui.enums import InstCol
 
 
@@ -156,13 +156,13 @@ class InstMdl(Gtk.TreeStore):
         if obj:
             obj.repeat = int(text)
 
-    def add_instance(self, new_inst):
+    def add_instance(self, block_name: str, new_inst: BlockInst):
         """
         Adds a new instance to the model. It is not added to the database until
         either the change_id or change_base is called.
         """
         row = build_row_data(
-            new_inst.block,
+            block_name,
             new_inst.name,
             new_inst.address_base,
             new_inst.repeat,

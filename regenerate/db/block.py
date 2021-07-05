@@ -23,7 +23,6 @@ HDL path, the repeat count, repeat offset, and the title.
 """
 
 from typing import List, Dict, Union, Any
-from operator import methodcaller
 from pathlib import Path
 import os
 import json
@@ -39,6 +38,7 @@ from .logger import LOGGER
 from .param_container import ParameterContainer
 from .param_resolver import ParameterResolver
 from .regset_finder import RegsetFinder
+from .utils import save_json
 
 
 class Block(NameBase):
@@ -80,14 +80,7 @@ class Block(NameBase):
 
     def save(self) -> None:
         "Save the file as a JSON file"
-        try:
-            data = self.json()
-            with self._filename.open("w") as ofile:
-                ofile.write(
-                    json.dumps(data, default=methodcaller("json"), indent=4)
-                )
-        except FileNotFoundError as msg:
-            LOGGER.error(str(msg))
+        save_json(self.json(), self._filename)
 
     def __hash__(self):
         "Return the ID as the hash for the instance"
@@ -196,7 +189,7 @@ class Block(NameBase):
         for name in self.regsets:
             new_path = os.path.relpath(
                 self.regsets[name].filename,
-                self._filename.parent,  # Container.block_data_path,
+                self._filename.parent,
             )
             data["regsets"][name] = {
                 "filename": new_path,

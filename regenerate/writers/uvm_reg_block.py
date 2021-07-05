@@ -33,6 +33,7 @@ from regenerate.db import (
     RegisterInst,
     ParameterResolver,
     BitField,
+    AddressMap,
     Register,
     BlockInst,
     AddressMap,
@@ -77,8 +78,8 @@ class UVMRegBlockRegisters(ProjectWriter):
 
         return [d for d in self._project.get_address_maps() if not d.uvm]
 
-    def _build_group_maps(self) -> Dict[BlockInst, Set[str]]:
-        group_maps: Dict[BlockInst, Set[str]] = {}
+    def _build_group_maps(self) -> Dict[BlockInst, Set[AddressMap]]:
+        group_maps: Dict[BlockInst, Set[AddressMap]] = {}
         id2blkinst = {}
         for blkinst in self._project.block_insts:
             id2blkinst[blkinst.uuid] = blkinst

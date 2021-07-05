@@ -23,8 +23,7 @@ Actual program. Parses the arguments, and initiates the main window
 import os
 from pathlib import Path
 
-from regenerate.db import BitField
-from rgeneerate.db.enums import BitType
+from regenerate.db import BitType
 from regenerate.writers.writer_base import WriterBase
 from jinja2 import Template
 
@@ -90,11 +89,9 @@ class SpiritWriter(WriterBase):
         container blocks.
         """
 
-        template_file = os.path.join(
-            os.path.dirname(__file__), "templates", "ipxact.templ"
-        )
+        template_file = Path(__file__).parent / "templates" / "ipxact.templ"
 
-        with open(template_file) as ifile:
+        with template_file.open() as ifile:
             template = Template(
                 ifile.read(), trim_blocks=True, lstrip_blocks=True
             )

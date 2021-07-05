@@ -46,7 +46,7 @@ class BlockInst(NameBase):
         self.repeat = repeat
         self.description = description
 
-    def __repr__(self) -> None:
+    def __repr__(self) -> str:
         return f"BlockInst({self.name}, {self.blkid})"
 
     def __hash__(self):

@@ -30,10 +30,10 @@ DEFAULT_FORMAT = "%(G)s_%(S)s%(D)s_%(R)s"
 
 
 def full_token(
-    group_name: str, reg_name: str, set_name: str, index: str, fmt_string: str
+    group_name: str, reg_name: str, set_name: str, index: int, fmt_string: str
 ):
 
-    index_str = "%d" % index if index >= 0 else ""
+    index_str = f"{index}" if index >= 0 else ""
 
     name_data = {
         "G": group_name.upper(),

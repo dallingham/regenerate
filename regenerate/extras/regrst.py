@@ -24,6 +24,7 @@ HTML is supported now.
 
 import re
 import sys
+from typing import Set
 
 from regenerate.db import TYPE_TO_SIMPLE_TYPE, Register
 from regenerate.extras.token import full_token, in_groups, uvm_name
@@ -285,7 +286,7 @@ class RegisterRst:
         Returns the definition of the register in RestructuredText format
         """
         ofile = StringIO()
-        used = set()
+        used: Set[str] = set()
         if use_regs:
             for reg in self.reglist:
                 if reg.name not in used:

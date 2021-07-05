@@ -18,25 +18,23 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
-Containers for data groups, modified flags, and file paths
+Common utility functions
 """
 
+from typing import Dict, Any
 from pathlib import Path
+import json
+from operator import methodcaller
 
-from .utils import save_json
+from .logger import LOGGER
 
 
-class Container:
-
-    block_data_path = ""
-    regset_data_path = ""
-
-    def __init__(self):
-        self._filename = Path("")
-        self.modified = False
-
-    def _save_data(self, data):
-        save_json(data, self._filename)
-
-    def save(self):
-        ...
+def save_json(data: Dict[str, Any], path: Path):
+    "Saves the data to the specifed file in JSON format"
+    try:
+        with path.open("w") as ofile:
+            ofile.write(
+                json.dumps(data, default=methodcaller("json"), indent=4)
+            )
+    except FileNotFoundError as msg:
+        LOGGER.error(str(msg))

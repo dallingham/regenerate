@@ -21,7 +21,7 @@ Provides the edit dialog that allows the user to edit the bit field
 information.
 """
 
-from typing import List, Tuple
+from typing import List, Tuple, Callable
 
 from gi.repository import Gtk
 from regenerate.db import BlockInst, RegProject
@@ -41,17 +41,40 @@ class AddrMapEdit(BaseWindow):
         subsystem_list: List[Tuple[BlockInst, bool]],
         project: RegProject,
         parent: Gtk.Window,
-        callback,
+        callback: Callable,
     ):
 
         super().__init__()
         self.project = project
         self.callback = callback
+        self.cb_list: List[str] = []
+        self.map_name = map_name
+        self.options = [
+            ("Full Access", 0),
+            ("Read Only", 1),
+            ("Write Only", 2),
+            ("No Access", 3),
+        ]
+
+        dialog = self.build_dialog(parent)
+        self.populate(subsystem_list)
+
+        response = dialog.run()
+
+        if response == Gtk.ResponseType.REJECT:
+            self.cb_list = []
+        else:
+            self.cb_list = [row[1] for row in self.model if row[0]]
+        dialog.destroy()
+
+    def build_dialog(self, parent: Gtk.Window):
+        "Builds the dialog window"
 
         label = Gtk.Label(
-            f'Select subsystems for the "{map_name}" address map'
+            f'Select subsystems for the "{self.map_name}" address map'
         )
         label.set_padding(6, 6)
+        label.show()
 
         dialog = Gtk.Dialog(
             "Address Map Subsystem Selection",
@@ -71,8 +94,6 @@ class AddrMapEdit(BaseWindow):
         dialog.set_default_size(580, 320)
         dialog.set_transient_for(parent)
         self.configure(dialog)
-
-        label.show()
 
         scrolled_window = Gtk.ScrolledWindow()
         scrolled_window.set_policy(
@@ -99,17 +120,10 @@ class AddrMapEdit(BaseWindow):
         col.set_min_width(200)
         self.view.append_column(col)
 
-        options = [
-            ("Full Access", 0),
-            ("Read Only", 1),
-            ("Write Only", 2),
-            ("No Access", 3),
-        ]
-
         col = ComboMapColumn(
             "Access Method",
             self._access_changed,
-            options,
+            self.options,
             2,
             visible_callback=self.visible_callback,
         )
@@ -117,36 +131,30 @@ class AddrMapEdit(BaseWindow):
         self.view.append_column(col)
 
         scrolled_window.add(self.view)
+        return dialog
 
-        self.cb_list = []
+    def populate(self, subsystem_list: List[Tuple[BlockInst, bool]]):
+        "Populate the model with the subsystem information"
 
         for val in subsystem_list:
             blk_inst, active = val
             title = blk_inst.name
             top = self.model.append(None, row=(active, title, "", None, None))
-            blk = project.blocks[blk_inst.blkid]
+            blk = self.project.blocks[blk_inst.blkid]
             for item in blk.regsets.values():
-                access = project.get_access(map_name, blk_inst.name, item.name)
+                access = self.project.get_access(
+                    self.map_name, blk_inst.name, item.name
+                )
                 self.model.append(
                     top,
                     row=(
                         True,
                         item.name,
-                        options[access][0],
+                        self.options[access][0],
                         item,
                         blk_inst.name,
                     ),
                 )
-
-        self.map_name = map_name
-
-        response = dialog.run()
-
-        if response == Gtk.ResponseType.REJECT:
-            self.cb_list = None
-        else:
-            self.cb_list = [row[1] for row in self.model if row[0]]
-        dialog.destroy()
 
     def visible_callback(self, _column, cell, model, *obj):
         """Determines if the cell is visible"""
@@ -179,7 +187,7 @@ class AddrMapEdit(BaseWindow):
         )
         self.callback()
 
-    def get_list(self):
+    def get_list(self) -> List[str]:
         """Return the callback list"""
 
         return self.cb_list

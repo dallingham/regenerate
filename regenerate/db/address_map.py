@@ -68,7 +68,7 @@ class AddressMap(NameBase):
         self._uvm = bool(val)
 
     def __hash__(self):
-        "Use the UUID hsa the hash value bash"
+        "Use the UUID as the hash value source"
 
         return hash(self.uuid)
 

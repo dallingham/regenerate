@@ -23,6 +23,7 @@ Project model and list
 
 import os
 from pathlib import Path
+from typing import Optional
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango
 from regenerate.settings.paths import INSTALL_PATH
 from regenerate.db import RegisterInst, Block, BLK_EXT
@@ -580,7 +581,7 @@ class BlockDoc(BaseDoc):
         del_btn: Gtk.Button,
     ):
         super().__init__(notebook, modified, add_btn, del_btn)
-        self.block = None
+        self.block: Optional[Block] = None
         self.changing = False
 
     def change_block(self, block: Block):
@@ -593,9 +594,10 @@ class BlockDoc(BaseDoc):
             self.add_page(page, text)
         self.changing = False
 
-    def remove_page_from_doc(self, title):
-        self.block.doc_pages.remove_page(title)
+    def remove_page_from_doc(self, title: str):
+        if self.block is not None:
+            self.block.doc_pages.remove_page(title)
 
-    def update_page_from_doc(self, title, text):
-        if not self.changing:
+    def update_page_from_doc(self, title: str, text: str):
+        if not self.changing and self.block is not None:
             self.block.doc_pages.update_page(title, text)

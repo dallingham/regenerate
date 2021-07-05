@@ -21,7 +21,7 @@
 Manages document pages, which are simply name to string dictionaries.
 """
 
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional
 
 
 class DocPages:
@@ -33,27 +33,27 @@ class DocPages:
     def __init__(self):
         self.pages: Dict[str, str] = {}
 
-    def update_page(self, name: str, text: str):
+    def update_page(self, name: str, text: str) -> None:
         "Adds or updates the page specified by the name"
         self.pages[name] = text
 
-    def remove_page(self, name: str):
+    def remove_page(self, name: str) -> None:
         "Removes the page with the specified name"
         if name in self.pages:
             del self.pages[name]
 
-    def get_page_names(self):
+    def get_page_names(self) -> List[str]:
         "Returns a list of the page names"
         return list(self.pages.keys())
 
-    def get_page(self, name: str):
+    def get_page(self, name: str) -> Optional[str]:
         "Get the page associated with the name"
         return self.pages.get(name)
 
-    def json(self):
+    def json(self) -> Dict[str, Any]:
         "Convert to a dictionary for JSON"
         return self.pages
 
-    def json_decode(self, data: Dict[str, Any]):
+    def json_decode(self, data: Dict[str, Any]) -> None:
         "Decode the JSON data"
         self.pages = data

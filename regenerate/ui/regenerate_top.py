@@ -84,7 +84,7 @@ class MainWindow(BaseWindow):
         self.register = None
 
         self.builder = Gtk.Builder()
-        self.builder.add_from_file(GLADE_TOP)
+        self.builder.add_from_file(str(GLADE_TOP))
 
         self.setup_main_window()
         self.build_actions()
@@ -861,13 +861,13 @@ class MainWindow(BaseWindow):
         )
         box.set_authors(["Donald N. Allingham"])
         try:
-            with open(os.path.join(INSTALL_PATH, "LICENSE.txt")) as ifile:
+            with open(INSTALL_PATH / "LICENSE.txt") as ifile:
                 data = ifile.read()
                 box.set_license(data)
         except IOError:
             pass
-        fname = os.path.join(INSTALL_PATH, "media", "flop.svg")
-        box.set_logo(GdkPixbuf.Pixbuf.new_from_file(fname))
+        fname = INSTALL_PATH / "media" / "flop.svg"
+        box.set_logo(GdkPixbuf.Pixbuf.new_from_file(str(fname)))
         box.run()
         box.destroy()
 
