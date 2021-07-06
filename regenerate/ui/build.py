@@ -362,12 +362,11 @@ class Build(BaseWindow):
         """
         exporter = self.__mapopt[export_format][MapOpt.ID]
         if self.__mapopt[export_format][MapOpt.REGISTER_SET] == Level.BLOCK:
-            register_path = self.__base2path[register_set]
-            self.__prj.regsets[register_set].regset.exports.append(
+            self.__prj.regsets[register_set].exports.append(
                 ExportData(exporter, filename)
             )
             self.__prj.regsets[register_set].modified = True
-            self.__add_item_to_list(register_path, exporter, filename)
+            self.__add_item_to_list(register_set, exporter, filename)
         # elif self.__mapopt[export_format][MapOpt.REGISTER_SET] == Level.GROUP:
         #     self.__prj.add_to_group_export_list(group, exporter, filename)
         #     register_path = f"{group} (group)"
@@ -375,7 +374,7 @@ class Build(BaseWindow):
         else:
             register_path = "<project>"
             self.__prj.add_to_project_export_list(exporter, filename)
-            self.__add_item_to_list(register_path, exporter, filename)
+            self.__add_item_to_list(register_set, exporter, filename)
 
     def on_remove_build_clicked(self, _obj):
         """
