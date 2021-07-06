@@ -320,7 +320,7 @@ class ProjectReader:
                 counter[regset_dir] += 1
             except KeyError:
                 LOGGER.error(
-                    "Register set with id %s referenced in instace %s in block %s not found",
+                    "Register set with id %s referenced in instance %s in block %s not found",
                     rset_inst.regset_id,
                     rset_inst.name,
                     self.id_to_block[blkid],
@@ -343,4 +343,4 @@ class ProjectReader:
 
         for blk in self.id_to_block.values():
             for reg_inst in blk.regset_insts:
-                reg_inst.regset_id = name2id[reg_inst.regset_id]
+                reg_inst.regset_id = name2id[reg_inst.name]

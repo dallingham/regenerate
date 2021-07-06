@@ -89,7 +89,6 @@ class RegParser:
         """
         Parses the specified input file.
         """
-        print(input_file, type(input_file))
         parser = xml.parsers.expat.ParserCreate()
         parser.StartElementHandler = self.start_element
         parser.EndElementHandler = self.end_element
