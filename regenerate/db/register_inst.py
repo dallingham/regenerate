@@ -53,11 +53,6 @@ class RegisterInst(NameBase):
         self.array = array
         self.single_decode = single_decode
 
-    def __hash__(self):
-        """Provides the hash function so that the object can be hashed"""
-
-        return hash(self.uuid)
-
     def __repr__(self) -> str:
         return f"RegisterInst(name={self.name}, uuid={self.uuid})"
 

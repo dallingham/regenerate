@@ -82,10 +82,6 @@ class Block(NameBase):
         "Save the file as a JSON file"
         save_json(self.json(), self._filename)
 
-    def __hash__(self):
-        "Return the ID as the hash for the instance"
-        return id(self.uuid)
-
     def __ne__(self, other) -> bool:
         """Compare for inequality."""
         return not self.__eq__(other)

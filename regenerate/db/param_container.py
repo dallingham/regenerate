@@ -19,14 +19,15 @@
 
 from typing import List
 from .param_data import ParameterData
-from .param_resolver import ParameterResolver
+
+# from .param_resolver import ParameterResolver
 
 
 class ParameterContainer:
     def __init__(self):
         self._parameters: List[ParameterData] = []
 
-    def setup(self, name: str):
+    def setup(self, _name: str):
         return
 
     # resolver = ParameterResolver()

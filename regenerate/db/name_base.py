@@ -78,3 +78,7 @@ class NameBase(JSONEncodable):
         """Sets the UUID"""
 
         self._id = value
+
+    def __hash__(self) -> int:
+        "Return the ID as the hash for the instance"
+        return id(self.uuid)

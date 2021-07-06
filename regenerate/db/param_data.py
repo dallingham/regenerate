@@ -22,7 +22,7 @@ Contains the information for register set parameters and
 project parameters.
 """
 
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from .name_base import NameBase
 
 
@@ -38,7 +38,7 @@ class ParameterFinder:
 
     data_map: Dict[str, "ParameterData"] = {}
 
-    def find(self, uuid: str) -> "ParameterData":
+    def find(self, uuid: str) -> Optional["ParameterData"]:
         "Look up the UUID in the data map, returning None if not found"
         return self.data_map.get(uuid)
 
@@ -51,7 +51,7 @@ class ParameterFinder:
         if parameter.uuid in self.data_map:
             del self.data_map[parameter.uuid]
 
-    def dump(self):
+    def dump(self) -> None:
         "Dumps the data map to stdout"
         print(self.data_map)
 
@@ -72,11 +72,8 @@ class ParameterData(NameBase):
         self.max_val = max_val
         ParameterFinder().register(self)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"ParameterData(name={self.name}, id={self.uuid}, value={self.value})"
-
-    def __hash__(self):
-        return hash(self._id)
 
     def json(self) -> Dict[str, Any]:
         "Converts the object to a dict for JSON serialization"

@@ -49,27 +49,23 @@ class BlockInst(NameBase):
     def __repr__(self) -> str:
         return f"BlockInst({self.name}, {self.blkid})"
 
-    def __hash__(self):
-        "Return the ID as the hash for the instance"
-        return id(self.uuid)
-
     def __ne__(self, other) -> bool:
         """Compare for inequality."""
         return not self.__eq__(other)
 
-    def __eq__(self, other) -> bool:
-        """Compare for equality."""
-        if (
-            other is None
-            or self.name != other.name
-            or self.blkid != other.blkid
-            or self.address_base != other.address_base
-            or self.hdl_path != other.hdl_path
-            or self.description != other.description
-            or self.repeat != other.repeat
-        ):
-            return False
-        return True
+    # def __eq__(self, other) -> bool:
+    #     """Compare for equality."""
+    #     if (
+    #         other is None
+    #         or self.name != other.name
+    #         or self.blkid != other.blkid
+    #         or self.address_base != other.address_base
+    #         or self.hdl_path != other.hdl_path
+    #         or self.description != other.description
+    #         or self.repeat != other.repeat
+    #     ):
+    #         return False
+    #     return True
 
     def json_decode(self, data: Dict[str, Any]) -> None:
         self.name = data["name"]

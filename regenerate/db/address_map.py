@@ -67,11 +67,6 @@ class AddressMap(NameBase):
 
         self._uvm = bool(val)
 
-    def __hash__(self):
-        "Use the UUID as the hash value source"
-
-        return hash(self.uuid)
-
     def json_decode(self, data: Dict[str, Any]) -> None:
         "Convert the incoming JSON data to the class variables"
 

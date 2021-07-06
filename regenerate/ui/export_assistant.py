@@ -26,21 +26,29 @@ class TextCombo(Gtk.ComboBox):
     def __init__(self):
         super().__init__()
 
-        self.model = Gtk.ListStore(str)
+        self.model = Gtk.ListStore(str, str)
         cell = Gtk.CellRendererText()
         self.pack_start(cell, True)
         self.add_attribute(cell, "text", 0)
         self.set_model(self.model)
         self.set_active(0)
 
-    def append_text(self, item):
-        self.model.append(row=[item])
+    def append_text(self, item, value=""):
+        self.model.append(row=[item, value])
         self.set_active(0)
 
     def get_active_text(self):
         node = self.get_active_iter()
         try:
             val = self.model.get_value(node, 0)
+        except:
+            val = None
+        return val
+
+    def get_active_value(self):
+        node = self.get_active_iter()
+        try:
+            val = self.model.get_value(node, 1)
         except:
             val = None
         return val
@@ -135,9 +143,10 @@ class ExportAssistant(Gtk.Assistant):
         model = self.export_combo.get_model()
         sel_fmt = model.get_value(self.export_combo.get_active_iter(), 0)
 
-        sel_set = self.register_combo.get_active_text()
+        sel_set = self.register_combo.get_active_value()
         sel_grp = self.group_combo.get_active_text()
 
+        print(">", sel_set)
         if filename:
             self.save_callback(filename, sel_fmt, sel_set, sel_grp)
         self.emit("delete_event", Gdk.Event(Gdk.EventType.NOTHING))
@@ -215,7 +224,7 @@ class ExportAssistant(Gtk.Assistant):
         self.register_combo = TextCombo()
         self.register_combo.show()
         for item in register_sets:
-            self.register_combo.append_text(item)
+            self.register_combo.append_text(item[0], item[1])
         table.attach(
             self.register_combo, 1, 2, 1, 2, 0, Gtk.AttachOptions.EXPAND
         )

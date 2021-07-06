@@ -204,13 +204,13 @@ class BitField(NameBase):
         """Build the name of the field, including bit positions if needed."""
         if self.width == 1:
             return self.name
-        return f"{self.name}[{self.msb.value}:{self.lsb}]"
+        return f"{self.name}[{self.msb.resolve()}:{self.lsb}]"
 
     def bit_range(self) -> str:
         """Return the bit range of the field."""
         if self.width == 1:
             return str(self.lsb)
-        return f"[{self.msb.value}:{self.lsb}]"
+        return f"[{self.msb.resolve()}:{self.lsb}]"
 
     @property
     def reset_value(self) -> int:

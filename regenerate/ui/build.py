@@ -342,10 +342,7 @@ class Build(BaseWindow):
             ]
         )
 
-        reglist = [
-            os.path.splitext(os.path.basename(i))[0]
-            for i in self.__prj.get_register_set()
-        ]
+        reglist = [(i.name, i.uuid) for i in self.__prj.regsets.values()]
 
         groups = [group.name for group in self.__prj.block_insts]
 

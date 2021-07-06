@@ -210,7 +210,7 @@ class Register(NameBase):
         dim = self.dimension
         return f"Register(name={name}, address={address}, width={width}, dimension={dim})"
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Provides the hash function so that the object can be hashed"""
 
         return hash(self.uuid)
@@ -312,7 +312,7 @@ class Register(NameBase):
             except ValueError:
                 self._dimension.set_param(value)
 
-    def dimension_value(self):
+    def dimension_value(self) -> int:
         "Returns the dimension valued with parameters resolved"
         return self._dimension.resolve()
 
@@ -463,7 +463,7 @@ class Register(NameBase):
         """Sets the parameter list"""
         self._parameter_list = parameter_list
 
-    def json(self):
+    def json(self) -> Dict[str, Any]:
         val = {
             "name": self.name,
             "uuid": self._id,
@@ -479,7 +479,7 @@ class Register(NameBase):
         val["dimension"] = self._dimension
         return val
 
-    def json_decode(self, data):
+    def json_decode(self, data: Dict[str, Any]) -> None:
         self.name = data["name"]
         self._id = data["uuid"]
         self.description = data["description"]

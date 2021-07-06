@@ -200,7 +200,7 @@ class Verilog(WriterBase):
                 for lower in range(0, register.width, size):
                     if field.msb.is_parameter:
                         finder = ParameterFinder()
-                        msb = finder.find(field.msb.value)
+                        msb = finder.find(field.msb.resolve())
                     else:
                         msb = field.msb.resolve()
                     if in_range(field.lsb, msb, lower, lower + size - 1):
@@ -801,8 +801,8 @@ def register_output_definitions(dbase):
                     f"{{({last-offset}-{local_param.int_str()}){{1'b0}}}}"
                 )
             else:
-                if (last - offset - msb.value) > 1:
-                    new_field_list.append(f"{last-offset-msb.value-1}'b0")
+                if (last - offset - msb.resolve()) > 1:
+                    new_field_list.append(f"{last-offset-msb.resolve()-1}'b0")
 
             new_field_list.append(name)
             last = lsb + offset

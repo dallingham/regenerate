@@ -24,7 +24,7 @@ Manages the reading of the project file (.rprj)
 from io import BytesIO
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import List, Dict
+from typing import List, Dict, Union
 import xml.parsers.expat
 
 from .address_map import AddressMap
@@ -48,19 +48,20 @@ class ProjectReader:
         self.current_map = ""
         self.current_access = 0
         self.current_map_group = None
-        self.path = ""
+        self.path = Path(".")
         self.token_list: List[str] = []
         self.id_to_block: Dict[str, Block] = {}
         self.block_insts: List[BlockInst] = []
-        self.reg_exports = defaultdict(list)
+        self.reg_exports: Dict[str, List[ExportData]] = defaultdict(list)
         self.name_to_blk_id: Dict[str, str] = {}
         self.name_to_blkinst_id: Dict[str, str] = {}
-        self.map_id_to_name: Dict[str, str] = {}
-        self.new_block = None
-        self.current_blk_inst = None
+        self.map_id_to_name: Dict[str, List[str]] = {}
+        self.new_block = Block()
+        self.current_blk_inst = BlockInst()
 
-    def open(self, name):
+    def open(self, name: Union[str, Path]) -> None:
         """Opens and reads an XML file"""
+
         self.path = Path(name).resolve()
 
         with self.path.open("rb") as ofile:
@@ -71,7 +72,7 @@ class ProjectReader:
             parser.ParseFile(ofile)
         self.prj.modified = True
 
-    def loads(self, data, path):
+    def loads(self, data: bytes, path: Union[str, Path]) -> None:
         """Loads the data from a text string"""
         self.path = Path(path)
         ofile = BytesIO(data)
@@ -83,7 +84,7 @@ class ProjectReader:
         parser.ParseFile(ofile)
         self.prj.modified = True
 
-    def startElement(self, tag, attrs):
+    def startElement(self, tag: str, attrs: Dict[str, str]) -> None:
         """
         Called every time an XML element begins
         """
@@ -93,7 +94,7 @@ class ProjectReader:
             method = getattr(self, mname)
             method(attrs)
 
-    def endElement(self, tag):
+    def endElement(self, tag: str) -> None:
         """
         Called every time an XML element end
         """
@@ -103,7 +104,7 @@ class ProjectReader:
             method = getattr(self, mname)
             method(text)
 
-    def characters(self, data):
+    def characters(self, data: str) -> None:
         """
         Called with segments of the character data. This is not predictable
         in how it is called, so we must collect the information for assembly
@@ -111,20 +112,20 @@ class ProjectReader:
         """
         self.token_list.append(data)
 
-    def start_project(self, attrs):
+    def start_project(self, attrs: Dict[str, str]) -> None:
         """Called when a project tag is found"""
         self.prj.name = attrs["name"]
         self.prj.short_name = attrs.get("short_name", "")
         self.prj.company_name = attrs.get("company_name", "")
 
-    def start_registerset(self, attrs):
+    def start_registerset(self, attrs: Dict[str, str]) -> None:
         """Called when a registerset tag is found"""
         self.current = attrs["name"]
         reg_path = self.path.parent / self.current
         reg_path_xml = reg_path.with_suffix(OLD_REG_EXT).resolve()
         self.prj.append_register_set_to_list(reg_path_xml)
 
-    def start_export(self, attrs):
+    def start_export(self, attrs: Dict[str, str]) -> None:
         """Called when an export tag is found"""
 
         db_path = self.path.parent / Path(self.current).with_suffix(REG_EXT)
@@ -134,7 +135,7 @@ class ProjectReader:
             ExportData(attrs["option"], str(target.resolve()))
         )
 
-    def start_project_export(self, attrs):
+    def start_project_export(self, attrs: Dict[str, str]) -> None:
         """Called when a project_export tag is found"""
 
         target = Path(self.path.parent) / attrs["path"]
@@ -142,7 +143,7 @@ class ProjectReader:
             attrs["option"], str(target.resolve())
         )
 
-    def start_grouping(self, attrs):
+    def start_grouping(self, attrs: Dict[str, str]) -> None:
         """Called when a grouping tag is found"""
 
         if attrs["name"] not in self.name_to_blk_id:
@@ -165,7 +166,7 @@ class ProjectReader:
         self.current_blk_inst.repeat = int(attrs.get("repeat", "1"))
         self.current_blk_inst.hdl_path = attrs.get("hdl", "")
 
-    def start_map(self, attrs):
+    def start_map(self, attrs: Dict[str, str]) -> None:
         """Called when a map tag is found"""
 
         sname = attrs["set"]
@@ -177,19 +178,19 @@ class ProjectReader:
             int(attrs["repeat"]),
             int(attrs["repeat_offset"]),
             attrs.get("hdl", ""),
-            int(attrs.get("no_uvm", "0")),
-            int(attrs.get("no_decode", "0")),
-            int(attrs.get("array", "0")),
-            int(attrs.get("single_decode", "0")),
+            bool(attrs.get("no_uvm", "0")),
+            bool(attrs.get("no_decode", "0")),
+            bool(attrs.get("array", "0")),
+            bool(attrs.get("single_decode", "0")),
         )
         self.new_block.regset_insts.append(data)
 
-    def start_address_map(self, attrs):
+    def start_address_map(self, attrs: Dict[str, str]) -> None:
         """Called when an address tag is found"""
         address_map = AddressMap(
             attrs["name"],
-            int(attrs.get("base", 0), 16),
-            int(attrs.get("width", 4)),
+            int(attrs.get("base", "0"), 16),
+            int(attrs.get("width", "4")),
             bool(int(attrs.get("fixed", 1))),
             bool(int(attrs.get("no_uvm", 0))),
         )
@@ -198,14 +199,14 @@ class ProjectReader:
         self.current_map = address_map.uuid
         self.current_map_group = None
 
-    def end_documentation(self, text):
+    def end_documentation(self, text: str) -> None:
         """
         Called when the documentation XML tag is encountered. Assigns the
         current text string to the documentation variable
         """
         self.prj.doc_pages.update_page("Overview", text)
 
-    def end_overview(self, text):
+    def end_overview(self, text: str) -> None:
         """
         Called when the overview XML tag is encountered. Assigns the
         current text string to the current group's docs variable
@@ -214,7 +215,7 @@ class ProjectReader:
             self.current_group.docs = text
         self.new_block.doc_pages.update_page("Overview", text)
 
-    def start_map_group(self, attrs):
+    def start_map_group(self, attrs: Dict[str, str]) -> None:
         """
         Called when the map_group XML tag is encountered. Assigns the
         current text string to the current group's docs variable
@@ -222,7 +223,7 @@ class ProjectReader:
 
         name = attrs.get("name")
 
-        if name == "None":
+        if name == "None" or name is None:
             return
 
         if self.current_map in self.map_id_to_name:
@@ -230,12 +231,12 @@ class ProjectReader:
         else:
             self.map_id_to_name[self.current_map] = [name]
 
-    def start_access(self, attrs):
+    def start_access(self, attrs: Dict[str, str]) -> None:
         "Starts the access type"
 
         self.current_access = int(attrs.get("type", "0"))
 
-    def end_access(self, text):
+    def end_access(self, text: str) -> None:
         "Ends the access type"
 
         self.prj.set_access(
@@ -245,12 +246,12 @@ class ProjectReader:
             self.current_access,
         )
 
-    def start_parameter(self, attrs):
+    def start_parameter(self, attrs: Dict[str, str]) -> None:
         "Starts a parameter"
 
         self.prj.add_parameter(attrs["name"], int(attrs["value"]))
 
-    def end_project(self, _text):
+    def end_project(self, _text: str) -> None:
         """
         Called when the project file has been loaded. At this point, we need
         to do some cleanup. This includes:
@@ -291,7 +292,7 @@ class ProjectReader:
 
         return filename.resolve()
 
-    def connect_address_maps(self):
+    def connect_address_maps(self) -> None:
         """
         Connect the block instances to the address maps. The map to
         block instance names were found during parsing. Now they just

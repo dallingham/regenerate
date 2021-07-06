@@ -24,7 +24,7 @@ import os
 import re
 from io import BytesIO as StringIO
 from pathlib import Path
-from typing import Union, List, Optional, Dict
+from typing import Union, List, Optional, Dict, Iterator, Any
 
 from .register import Register
 from .reg_parser import RegParser
@@ -66,10 +66,6 @@ class RegisterDb(NameBase):
             self.read_db(filename)
             self.filename = Path(filename)
 
-    def __hash__(self):
-        """Provides the hash function so that the object can be hashed"""
-        return hash(self.uuid)
-
     @property
     def filename(self) -> Path:
         "Returns the filename as a Path"
@@ -101,7 +97,7 @@ class RegisterDb(NameBase):
             for a in sorted(self._registers.values(), key=lambda a: a.address)
         ]
 
-    def get_all_registers(self):
+    def get_all_registers(self) -> Iterator[Register]:
         """Returns the register keys, which is the address of the register"""
         return iter(sorted(self._registers.values(), key=lambda a: a.address))
 
@@ -165,7 +161,7 @@ class RegisterDb(NameBase):
         parser.parse(ifile)
         return self
 
-    def save(self):
+    def save(self) -> None:
         "Save the data to the specified file as a JSON file"
         save_json(self.json(), self.filename)
 
@@ -206,7 +202,7 @@ class RegisterDb(NameBase):
             if regexp.match(self._registers[i].name)
         ]
 
-    def find_registers_by_token_regexp(self, name: str):
+    def find_registers_by_token_regexp(self, name: str) -> List[Register]:
         """Finds a register with the given name, or None if not found"""
         regexp = re.compile(name)
         return [
@@ -215,7 +211,7 @@ class RegisterDb(NameBase):
             if regexp.match(self._registers[i].token)
         ]
 
-    def json(self):
+    def json(self) -> Dict[str, Any]:
         data = {
             "name": self.name,
             "uuid": self._id,
@@ -243,7 +239,7 @@ class RegisterDb(NameBase):
 
         return data
 
-    def json_decode(self, data):
+    def json_decode(self, data: Dict[str, Any]) -> None:
         self.parameters = ParameterContainer()
         self.parameters.json_decode(data["parameters"])
         self._title = data["title"]
@@ -272,9 +268,9 @@ class RegisterDb(NameBase):
         self.exports = []
         for exp_json in data["exports"]:
             exp = ExportData()
-            exp.target = Path(
-                self.filename.parent / exp_json["target"]
-            ).resolve()
+            exp.target = str(
+                Path(self.filename.parent / exp_json["target"]).resolve()
+            )
             exp.options = exp_json["options"]
             exp.exporter = exp_json["exporter"]
 

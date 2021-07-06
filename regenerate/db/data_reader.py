@@ -17,6 +17,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""
+Provides a base class for data access routines, allowing abstractions
+other than simple file based reading.
+"""
+
 from pathlib import Path
 from typing import Tuple
 
@@ -51,9 +56,6 @@ class DataReader:
 
 class FileReader(DataReader):
     "Provides the standard file based reader"
-
-    def __init__(self, top_path: Path):
-        super().__init__(top_path)
 
     def resolve_path(self, name: Path) -> Tuple[Path, Path]:
         "Resolves the relative path into a full path"

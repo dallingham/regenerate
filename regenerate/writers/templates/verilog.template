@@ -164,7 +164,7 @@ generate
 {%     elif field.field_type == 1 %}
     assign {{reg_field_name(reg, field)}}{{dimval}} = {{field.input_signal}}{{dimval}};
 {%     else %}
-{%       if field.msb.is_parameter or field.msb.value > field.lsb %}
+{%       if field.msb.is_parameter or field.msb.resolve() > field.lsb %}
 {%          set pos = "[bitpos]" %}
 {%          set rval = "pRST%s" % faddr_str %}
 {%          if byte_offset == 0 %}
@@ -216,7 +216,7 @@ generate
       .DO    ({{reg_field_name(reg, field)}}{{dimval}}{{pos}})
      );
 {%     endif %}
-{%     if field.field_type == 0 or field.msb.is_parameter or field.msb.value > field.lsb %}
+{%     if field.field_type == 0 or field.msb.is_parameter or field.msb.resolve() > field.lsb %}
 {% if generate == 1 %}    
     end
  endgenerate

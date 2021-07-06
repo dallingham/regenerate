@@ -26,7 +26,7 @@ from operator import methodcaller
 from pathlib import Path
 import json
 import os.path
-from typing import List, Dict, ValuesView
+from typing import List, Dict, ValuesView, Any, Optional, Union
 import xml.sax.saxutils
 
 from .data_reader import FileReader
@@ -46,7 +46,7 @@ from .textutils import clean_text
 from .regset_finder import RegsetFinder
 
 
-def nested_dict(depth, dict_type):
+def nested_dict(depth: int, dict_type):
     """Builds a nested dictionary"""
     if depth == 1:
         return defaultdict(dict_type)
@@ -66,7 +66,7 @@ class RegProject:
     and exports (register set and entire project exports), and address maps.
     """
 
-    def __init__(self, path=None):
+    def __init__(self, path: Optional[Path] = None):
 
         self.short_name = "unnamed"
         self.name = "unnamed"
@@ -86,7 +86,7 @@ class RegProject:
         self.blocks: Dict[str, Block] = {}
         self.regsets: Dict[str, RegisterDb] = {}
 
-        self.exports = []
+        self.exports: List[ExportData] = []
 
         self._modified = False
 
@@ -126,7 +126,7 @@ class RegProject:
                 reg.save()
                 reg.modified = False
 
-    def open(self, name: str) -> None:
+    def open(self, name: Union[str, Path]) -> None:
         """Opens and reads a project file. The project could be in either
         the legacy XML format or the current JSON format"""
 
@@ -238,32 +238,32 @@ class RegProject:
         """Returns the export project list, returns a read-only tuple"""
         return tuple(self.exports)
 
-    def append_to_export_list(
-        self, db_path: str, exporter: str, target: str
-    ) -> None:
-        """
-        For internal use only.
+    # def _append_to_export_list(
+    #     self, db_path: str, exporter: str, target: str
+    # ) -> None:
+    #     """
+    #     For internal use only.
 
-        Adds an export to the export list. The exporter will only operation
-        on the specified register database (XML file).
+    #     Adds an export to the export list. The exporter will only operation
+    #     on the specified register database (XML file).
 
-        path - path to the the register XML file. Converted to a relative path
-        exporter - the chosen exporter
-        dest - destination output name
-        """
+    #     path - path to the the register XML file. Converted to a relative path
+    #     exporter - the chosen exporter
+    #     dest - destination output name
+    #     """
 
-        full_db_path = self.path.parent / db_path
-        full_target_path = self.path.parent / target
+    #     full_db_path = self.path.parent / db_path
+    #     full_target_path = self.path.parent / target
 
-        full_db_str = str(full_db_path.with_suffix(REG_EXT).resolve())
-        full_target_str = str(full_target_path.resolve())
+    #     full_db_str = str(full_db_path.with_suffix(REG_EXT).resolve())
+    #     full_target_str = str(full_target_path.resolve())
 
-        self._modified = True
-        exp = ExportData(exporter, full_target_str)
-        if full_db_str in self.exports:
-            self.exports[full_db_str].append(exp)
-        else:
-            self.exports[full_db_str] = [exp]
+    #     self._modified = True
+    #     exp = ExportData(exporter, full_target_str)
+    #     if full_db_str in self.exports:
+    #         self.exports[full_db_str].append(exp)
+    #     else:
+    #         self.exports[full_db_str] = [exp]
 
     def append_to_project_export_list(self, exporter: str, dest: str) -> None:
         """
@@ -462,7 +462,7 @@ class RegProject:
             new_list.append(new_name.resolve())
         self._filelist = new_list
 
-    def blocks_containing_regset(self, regset_id: str):
+    def blocks_containing_regset(self, regset_id: str) -> List[Block]:
         "Find all the blocks that contain the register set id"
         return [
             self.blocks[blk]
@@ -470,7 +470,7 @@ class RegProject:
             if regset_id in self.blocks[blk].regsets
         ]
 
-    def instances_of_block(self, block: Block):
+    def instances_of_block(self, block: Block) -> List[BlockInst]:
         "Return all the instances of a block"
         return [
             blk_inst
@@ -487,7 +487,7 @@ class RegProject:
             return self.doc_pages.get_page(page_names[0])
         return ""
 
-    def json(self):
+    def json(self) -> Dict[str, Any]:
         """Convert the data into a JSON compatible dict"""
 
         json_keys = (
@@ -534,7 +534,7 @@ class RegProject:
 
         return data
 
-    def json_decode(self, data):
+    def json_decode(self, data: Dict[str, Any]) -> None:
         """Convert the JSON data back classes"""
 
         try:
