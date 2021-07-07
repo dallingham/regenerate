@@ -194,7 +194,7 @@ class RegProject:
 
         filename, new_file_path = rdr.resolve_path(name)
 
-        regset = self.finder.find_by_file(filename)
+        regset = self.finder.find_by_file(str(filename))
         if not regset:
             regset = RegisterDb()
             if Path(filename).suffix == OLD_REG_EXT:
@@ -202,7 +202,7 @@ class RegProject:
                 regset.loads(data, filename)
             else:
                 data = rdr.read_bytes(filename)
-                regset.json_loads(data)
+                regset.json_decode(json.loads(data))
             self.finder.register(regset)
 
         self.regsets[regset.uuid] = regset
@@ -291,18 +291,6 @@ class RegProject:
         dest = os.path.relpath(dest, self.path.parent)
         self.exports.append(ExportData(exporter, dest))
 
-    def remove_from_export_list(
-        self, path: str, exporter: str, dest: str
-    ) -> None:
-        """Removes the export from the export list"""
-        self._modified = True
-        path = os.path.relpath(path, self.path.parent)
-        self.exports[str(path)] = [
-            exp
-            for exp in self.exports[str(path)]
-            if not (exp.exporter == exporter and exp.dest == dest)
-        ]
-
     def remove_from_project_export_list(
         self, exporter: str, dest: str
     ) -> None:
@@ -311,7 +299,7 @@ class RegProject:
         self.exports = [
             exp
             for exp in self.exports
-            if not (exp.exporter == exporter and exp.dest == dest)
+            if not (exp.exporter == exporter and exp.target == dest)
         ]
 
     def get_register_set(self) -> List[Path]:
@@ -484,7 +472,9 @@ class RegProject:
 
         page_names = self.doc_pages.get_page_names()
         if page_names:
-            return self.doc_pages.get_page(page_names[0])
+            page = self.doc_pages.get_page(page_names[0])
+            if page:
+                return page
         return ""
 
     def json(self) -> Dict[str, Any]:
@@ -538,7 +528,7 @@ class RegProject:
         """Convert the JSON data back classes"""
 
         try:
-            Container.block_data_path = self.path.parent
+            Container.block_data_path = str(self.path.parent)
             skip = False
         except:
             Container.block_data_path = ""
@@ -546,9 +536,8 @@ class RegProject:
 
         self.short_name = data["short_name"]
         self.name = data["name"]
-        doc_pages = DocPages()
-        doc_pages.json_decode(data["doc_pages"])
-        self.doc_pages = doc_pages
+        self.doc_pages = DocPages()
+        self.doc_pages.json_decode(data["doc_pages"])
         self.company_name = data["company_name"]
         self.access_map = data["access_map"]
         self.block_insts = data["block_insts"]
@@ -558,7 +547,7 @@ class RegProject:
             for path in data["filelist"]:
                 full_path = Path(self.path.parent / Path(path)).resolve()
                 self._filelist.append(
-                    os.path.relpath(full_path, self.path.parent)
+                    Path(os.path.relpath(full_path, self.path.parent))
                 )
 
         self.address_maps = {}

@@ -343,4 +343,7 @@ class ProjectReader:
 
         for blk in self.id_to_block.values():
             for reg_inst in blk.regset_insts:
-                reg_inst.regset_id = name2id[reg_inst.name]
+                if reg_inst.name in name2id:
+                    reg_inst.regset_id = name2id[reg_inst.name]
+                else:
+                    reg_inst.regset_id = name2id[reg_inst.regset_id]

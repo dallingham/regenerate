@@ -21,7 +21,7 @@
 Register finder singleton
 """
 
-from typing import Dict
+from typing import Dict, Optional
 from .register_db import RegisterDb
 
 
@@ -44,15 +44,15 @@ class RegsetFinder:
         self.idmap = {}
         self.filemap = {}
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         "Display string"
         return "RegsetFinder()"
 
-    def find_by_id(self, uuid: str):
+    def find_by_id(self, uuid: str) -> Optional[RegisterDb]:
         "Find the register set by UUID"
         return self.idmap.get(uuid)
 
-    def find_by_file(self, filename: str):
+    def find_by_file(self, filename: str) -> Optional[RegisterDb]:
         "Find the register set by the filename"
         return self.filemap.get(str(filename))
 

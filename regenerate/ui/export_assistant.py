@@ -146,7 +146,6 @@ class ExportAssistant(Gtk.Assistant):
         sel_set = self.register_combo.get_active_value()
         sel_grp = self.group_combo.get_active_text()
 
-        print(">", sel_set)
         if filename:
             self.save_callback(filename, sel_fmt, sel_set, sel_grp)
         self.emit("delete_event", Gdk.Event(Gdk.EventType.NOTHING))

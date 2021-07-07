@@ -35,6 +35,9 @@ class ExportData(JSONEncodable):
         self.target: str = str(target)
         self.options: Dict[str, str] = {}
 
+    def __repr__(self) -> str:
+        return f"ExportData(exporter={self.exporter}, target={self.target})"
+
     def json(self) -> Dict[str, Any]:
         "Convert object into a Dict for json export"
         return {

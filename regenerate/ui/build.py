@@ -386,11 +386,13 @@ class Build(BaseWindow):
 
         exporter = self.__mapopt[data[BuildCol.FORMAT]][MapOpt.ID]
         filename = data[BuildCol.DEST]
-        if data[BuildCol.DBASE]:
-            register_path = self.__base2path[data[BuildCol.BASE]]
-            self.__prj.remove_from_export_list(
-                register_path, exporter, filename
-            )
+        dbase = data[BuildCol.DBASE]
+        if dbase:
+            dbase.exports = [
+                export
+                for export in dbase.exports
+                if export.exporter != exporter and export.target != filename
+            ]
         else:
             self.__prj.remove_from_project_export_list(exporter, filename)
         self.__model.remove(sel[1])
@@ -411,7 +413,7 @@ def base_and_modtime(dbase_full_path):
     try:
         db_file_mtime = os.path.getmtime(dbase_full_path)
         return (base, db_file_mtime)
-    except OSError as msg:
+    except OSError:
         return (base, 0)
 
 

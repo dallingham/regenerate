@@ -66,6 +66,9 @@ class RegisterDb(NameBase):
             self.read_db(filename)
             self.filename = Path(filename)
 
+    def __repr__(self) -> str:
+        return f"RegisterDb(name={self.name}, uuid={self.uuid})"
+
     @property
     def filename(self) -> Path:
         "Returns the filename as a Path"

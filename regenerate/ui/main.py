@@ -26,8 +26,9 @@ Actual program. Parses the arguments, and initiates the main window
 import os
 import sys
 import logging
-import gi
 from pathlib import Path
+
+import gi
 
 gi.require_version("Gtk", "3.0")
 gi.require_version("Pango", "1.0")
@@ -35,7 +36,7 @@ from gi.repository import Gtk
 
 from regenerate.ui.regenerate_top import MainWindow
 from regenerate.settings import ini
-from regenerate.db import LOGGER
+
 
 def run_gui(args):
     """
@@ -43,13 +44,10 @@ def run_gui(args):
     """
 
     edit = MainWindow()
-    print(args.project_file)
     if args.project_file:
         try:
             full_file = str(Path(args.project_file).resolve())
-            edit.open_project(
-                full_file, f"file://{full_file}"
-            )
+            edit.open_project(full_file, f"file://{full_file}")
         except IOError as msg:
             sys.stderr.write("regenerate: error: could not project file: ")
             sys.stderr.write("%s\n" % str(msg))

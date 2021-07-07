@@ -20,7 +20,7 @@
 """
 Provides the signals for a module
 """
-
+from typing import Dict, Any
 from regenerate.settings import rules
 
 DEF_CLK_NAME = "CLK"
@@ -73,40 +73,40 @@ class Signals:
         self.data_bus_width = 32
         self.address_bus_width = 12
 
-    def address_size_in_bytes(self):
+    def address_size_in_bytes(self) -> int:
         """Returns the address size in bytes"""
         return 1 << self.address_bus_width
 
     @property
-    def write_data_name(self):
+    def write_data_name(self) -> str:
         """
         Gets _write_data, which is accessed via the write_data_name property
         """
         return self._write_data
 
     @write_data_name.setter
-    def write_data_name(self, name):
+    def write_data_name(self, name: str) -> None:
         """
         Sets _write_data, which is accessed via the write_data_name property
         """
         self._write_data = name.strip()
 
     @property
-    def read_data_name(self):
+    def read_data_name(self) -> str:
         """
         Gets _read_data, which is accessed via the read_data_name property
         """
         return self._read_data
 
     @read_data_name.setter
-    def read_data_name(self, name):
+    def read_data_name(self, name: str) -> None:
         """
         Sets _read_data, which is accessed via the read_data_name property
         """
         self._read_data = name.strip()
 
     @property
-    def write_strobe_name(self):
+    def write_strobe_name(self) -> str:
         """
         Gets _write_strobe, which is accessed via the write_strobe_name
         property
@@ -114,7 +114,7 @@ class Signals:
         return self._write_strobe
 
     @write_strobe_name.setter
-    def write_strobe_name(self, name):
+    def write_strobe_name(self, name: str) -> None:
         """
         Sets _write_strobe, which is accessed via the write_strobe_name
         property
@@ -122,21 +122,21 @@ class Signals:
         self._write_strobe = name.strip()
 
     @property
-    def acknowledge_name(self):
+    def acknowledge_name(self) -> str:
         """
         Gets _ack, which is accessed via the acknowledge_name property
         """
         return self._ack
 
     @acknowledge_name.setter
-    def acknowledge_name(self, name):
+    def acknowledge_name(self, name: str) -> None:
         """
         Sets _ack, which is accessed via the acknowledge_name property
         """
         self._ack = name.strip()
 
     @property
-    def read_strobe_name(self):
+    def read_strobe_name(self) -> str:
         """
         Gets _read_strobe, which is accessed via the read_strobe_name
         property
@@ -144,7 +144,7 @@ class Signals:
         return self._read_strobe
 
     @read_strobe_name.setter
-    def read_strobe_name(self, name):
+    def read_strobe_name(self, name: str) -> None:
         """
         Sets _read_strobe, which is accessed via the read_strobe_name
         property
@@ -152,62 +152,62 @@ class Signals:
         self._read_strobe = name.strip()
 
     @property
-    def address_bus_name(self):
+    def address_bus_name(self) -> str:
         """
         Gets _addr, which is accessed via the address_bus_name property
         """
         return self._addr
 
     @address_bus_name.setter
-    def address_bus_name(self, name):
+    def address_bus_name(self, name: str) -> None:
         """
         Sets _addr, which is accessed via the address_bus_name property
         """
         self._addr = name.strip()
 
     @property
-    def byte_strobe_name(self):
+    def byte_strobe_name(self) -> str:
         """
         Gets _be, which is accessed via the byte_strobe_name property
         """
         return self._be
 
     @byte_strobe_name.setter
-    def byte_strobe_name(self, name):
+    def byte_strobe_name(self, name: str) -> None:
         """
         Sets _be, which is accessed via the byte_strobe_named property
         """
         self._be = name.strip()
 
     @property
-    def clock_name(self):
+    def clock_name(self) -> str:
         """
         Gets _clock, which is accessed via the clock_name property
         """
         return self._clock
 
     @clock_name.setter
-    def clock_name(self, name):
+    def clock_name(self, name: str) -> None:
         """
         Sets _clock, which is accessed via the clock_name property
         """
         self._clock = name.strip()
 
     @property
-    def reset_name(self):
+    def reset_name(self) -> str:
         """
         Gets _reset, which is accessed via the reset_name property
         """
         return self._reset
 
     @reset_name.setter
-    def reset_name(self, name):
+    def reset_name(self, name: str) -> None:
         """
         Sets _reset, which is accessed via the reset_name property
         """
         self._reset = name.strip()
 
-    def json(self):
+    def json(self) -> Dict[str, Any]:
         """Converts the data into a dictionary used for JSON"""
 
         return {
@@ -226,7 +226,7 @@ class Signals:
             "address_bus_width": self.address_bus_width,
         }
 
-    def json_decode(self, data):
+    def json_decode(self, data: Dict[str, Any]) -> None:
         """Converts JSON data back into a Signal"""
 
         self._clock = data["clock"]
