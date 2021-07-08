@@ -51,7 +51,6 @@ package {{prj.short_name}}_reg_pkg;
 
 {% for regset_inst in dblist %}
   {% set db = prj.regsets[regset_inst.regset_id] %}
-  {{ resolver.set_reginst(regset_inst.uuid) }}
   {%- if db.coverage %}
   
    class {{regset_inst.name}}_reg_access_wrapper extends uvm_object;

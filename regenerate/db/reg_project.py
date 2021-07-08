@@ -204,9 +204,12 @@ class RegProject:
                 data = rdr.read_bytes(filename)
                 regset.json_decode(json.loads(data))
             self.finder.register(regset)
-
+            self.new_register_set(regset, new_file_path)
+            
+    def new_register_set(self, regset: RegisterDb, path: Path) -> None:
         self.regsets[regset.uuid] = regset
-        self._filelist.append(new_file_path)
+        self._filelist.append(path)
+        print(self.regsets, self._filelist)
 
     def add_register_set(self, path: Path) -> None:
         """
@@ -215,14 +218,17 @@ class RegProject:
         """
         self.append_register_set_to_list(path)
 
-    def remove_register_set(self, path: str) -> None:
+    def remove_register_set(self, uuid: str) -> None:
         """Removes the specified register set from the project."""
 
         self._modified = True
+        regset = self.regsets[uuid]
+        del self.regsets[uuid]
+        
         try:
-            self._filelist.remove(Path(path))
+            self._filelist.remove(regset.filename)
         except ValueError as msg:
-            LOGGER.error(str(msg))
+            ...
 
     def get_exports(self, path: str):
         """

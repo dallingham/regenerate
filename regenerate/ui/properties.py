@@ -30,7 +30,7 @@ class Properties:
     def __init__(self, project):
         self.__project = project
         self.__builder = Gtk.Builder()
-        self.__builder.add_from_file(GLADE_PROP)
+        self.__builder.add_from_file(str(GLADE_PROP))
         self.__properties = self.__builder.get_object("properties")
 
         self.__builder.get_object("short_name").set_text(project.short_name)

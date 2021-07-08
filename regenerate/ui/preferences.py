@@ -31,7 +31,7 @@ class Preferences:
 
     def __init__(self, parent):
         self.__builder = Gtk.Builder()
-        self.__builder.add_from_file(GLADE_PREF)
+        self.__builder.add_from_file(str(GLADE_PREF))
         self.__properties = self.__builder.get_object("preferences")
 
         value = bool(int(ini.get("user", "load_last_project", 0)))

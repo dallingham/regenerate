@@ -274,7 +274,7 @@ class BlockTab:
         reg_cont = self.project.regsets[regset.uuid]
 
         self.block.regset_insts.append(reginst)
-        #        self.block.regsets[reginst.uuid] = reg_cont
+        self.block.regsets[regset.uuid] = reg_cont
 
         self.regmodel.append(
             row=(
@@ -339,14 +339,15 @@ class BlockTab:
             if filename.suffix != BLK_EXT:
                 filename = filename.with_suffix(BLK_EXT)
 
-            self.blk = Block()
-            self.blk.filename = filename
-            self.blk.name = Path(filename).stem
+            self.block = Block()
+            self.block.filename = filename
+            self.block.name = Path(filename).stem
 
-            self.project.blocks[self.blk.name] = self.blk
-            node = self.block_model.add_block(self.blk)
+            self.project.blocks[self.block.uuid] = self.block
+            node = self.block_model.add_block(self.block)
+            self.block_obj.select(node)
 
-            # self.project_modified(False)
+            self.modified()
             # if self.recent_manager:
             #     self.recent_manager.add_item(f"file:///{str(filename)}")
             # self.find_obj("save_btn").set_sensitive(True)
@@ -378,7 +379,7 @@ class BlockTab:
                 blk.open(name)
                 blk.modified = True
 
-                self.project.blocks[blk.name] = blk
+                self.project.blocks[blk.uuid] = blk
                 self.block_model.add_block(blk)
 
                 for regset in blk.regsets:

@@ -747,12 +747,10 @@ class RegSetTab:
         self.skip_changes = old_skip
         self.reg_set_obj.select_path(0)
 
-    def remove_regset_from_project(self, uuid):
-        regset = self.project.regsets[uuid]
-        self.project.remove_register_set(regset.filename)
-        del self.project.regsets[uuid]
+    def remove_regset_from_project(self, uuid: str):
+        self.project.remove_register_set(uuid)
 
-    def remove_regset_from_groups(self, uuid):
+    def remove_regset_from_groups(self, uuid: str):
         for key, block in self.project.blocks.items():
             new_reglist = [
                 reglist
@@ -776,7 +774,7 @@ class RegSetTab:
         dbase.filename = name
         dbase.modified = True
 
-        self.project.regsets[dbase.name] = dbase
+        self.project.new_register_set(dbase, name)
         node = self.new_regset(dbase)
         self.reg_set_obj.select(node)
 
@@ -830,7 +828,7 @@ class RegSetTab:
                 dbase.filename = name
                 dbase.modified = True
 
-                self.project.regsets[dbase.name] = dbase
+                self.project.new_register_set(dbase, name)
                 node = self.new_regset(dbase)
                 self.reg_set_obj.select(node)
                 # self.set_project_modified()
