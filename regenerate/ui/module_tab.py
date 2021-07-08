@@ -23,7 +23,7 @@ Handle the module tab
 
 import string
 
-from gi.repository import GObject, Gtk, Pango, Gdk
+from gi.repository import GObject, Gtk, Pango, Gdk, GtkSource
 
 from regenerate.db import RegProject, LOGGER
 from regenerate.ui.spell import Spell
@@ -309,8 +309,12 @@ class ModuleDoc:
     def __init__(self, text_view, web_view, db_name, modified, use_reg=True):
         pango_font = Pango.FontDescription("monospace")
 
-        self.text_view = text_view
+        self.text_view = GtkSource.View()
+        self.text_view.show()
+        manager = GtkSource.LanguageManager()
         self.buf = self.text_view.get_buffer()
+        self.buf.set_language(manager.get_language("rst"))
+        text_view.add(self.text_view)
         self.callback = modified
 
         self.text_view.modify_font(pango_font)
@@ -483,7 +487,7 @@ class ModuleTabs:
                 self.top_object_list.append(obj)
 
         self.preview = ModuleDoc(
-            find_obj("overview"),
+            find_obj("scroll_text"),
             find_obj("scroll_webkit"),
             "overview_text",
             self.after_modified,
