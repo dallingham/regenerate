@@ -24,7 +24,6 @@ from gi.repository import Gtk
 from regenerate.db import LOGGER, AddressMap
 from regenerate.ui.columns import (
     EditableColumn,
-    ToggleColumn,
     ComboMapColumn,
     ReadOnlyColumn,
 )
@@ -75,7 +74,7 @@ class AddrMapMdl(Gtk.ListStore):
 
     def get_values(self):
         """Returns the list of instance tuples from the model."""
-        return [(val[0], int(val[1], 16)) for val in self if val[0]]
+        return [(val[0], int(val[1], 0)) for val in self if val[0]]
 
 
 class AddrMapList:
@@ -142,17 +141,16 @@ class AddrMapList:
         Called when the base address field is changed.
         """
         try:
-            _ = int(new_text, 16)
+            _ = int(new_text, 0)
         except ValueError:
             LOGGER.error('Illegal address: "%s"', new_text)
             return
 
         if new_text:
             obj = self.get_obj(path)
-            base = self._model[path][AddrCol.BASE]
 
-            obj.base = int(base, 16)
-            self._model[path][AddrCol.BASE] = new_text
+            obj.base = int(new_text, 0)
+            self._model[path][AddrCol.BASE] = f"0x{obj.base:08x}"
             self._callback()
 
     def _width_changed(self, cell, path, node, col):

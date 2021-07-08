@@ -115,7 +115,7 @@ class InstMdl(Gtk.TreeStore):
             self.set_value(node, InstCol.SORT, int(text, 0))
             self.set_value(node, InstCol.BASE, f"0x{int(text, 0):08x}")
             self.callback()
-        except AttributeError:
+        except ValueError:
             LOGGER.warning('Illegal base address: "%s"', text)
 
         # self.set_value(node, InstCol.SORT, int(text, 0))

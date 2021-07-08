@@ -22,10 +22,10 @@ Handle the module tab
 """
 
 import string
-from typing import Optional
+
 from gi.repository import GObject, Gtk, Pango, Gdk
 
-from regenerate.db import RegProject
+from regenerate.db import RegProject, LOGGER
 from regenerate.ui.spell import Spell
 from regenerate.ui.utils import clean_format_if_needed
 from regenerate.ui.preview_editor import PreviewEditor
@@ -270,16 +270,20 @@ class ModuleHex(ModuleValid):
             placeholder=placeholder,
         )
 
-    def on_change(self, obj):
+    def on_change(self, obj) -> None:
         """Called on the change event"""
 
         if self.dbase:
-            if obj.get_text():
-                int_val = int(obj.get_text(), 0)
-            else:
-                int_val = 0
-            setattr(self.dbase, self.dbname, int_val)
-            self.modified()
+            try:
+                text = obj.get_text()
+                if text:
+                    int_val = int(text, 0)
+                else:
+                    int_val = 0
+                setattr(self.dbase, self.dbname, int_val)
+                self.modified()
+            except ValueError:
+                LOGGER.error("Invalid number (%s). Possible missing 0x", text)
 
     def change_db(self, dbase):
         """Change the database"""
