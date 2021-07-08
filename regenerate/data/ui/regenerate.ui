@@ -624,7 +624,7 @@
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
-                            <property name="tooltip_text" translatable="yes">Add an existing register set to the project</property>
+                            <property name="tooltip_text" translatable="yes">Create a new register set and add it to the project</property>
                             <signal name="clicked" handler="on_new_register_set_activate" swapped="no"/>
                             <child>
                               <object class="GtkImage">
@@ -647,7 +647,7 @@
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
-                            <property name="tooltip_text" translatable="yes">Create a new register set and add it to the project</property>
+                            <property name="tooltip_text" translatable="yes">Add an existing register set to the project</property>
                             <signal name="clicked" handler="on_add_register_set_activate" swapped="no"/>
                             <child>
                               <object class="GtkImage">
@@ -1120,16 +1120,11 @@
                                         <property name="position">100</property>
                                         <property name="position_set">True</property>
                                         <child>
-                                          <object class="GtkScrolledWindow" id="scrolledwindow4">
+                                          <object class="GtkScrolledWindow" id="scroll_reg_text">
                                             <property name="visible">True</property>
                                             <property name="can_focus">True</property>
                                             <child>
-                                              <object class="GtkTextView" id="register_description">
-                                                <property name="visible">True</property>
-                                                <property name="can_focus">True</property>
-                                                <property name="wrap_mode">word</property>
-                                                <property name="buffer">register_description_buffer</property>
-                                              </object>
+                                              <placeholder/>
                                             </child>
                                           </object>
                                           <packing>
@@ -2453,7 +2448,7 @@
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
-                            <property name="tooltip_text" translatable="yes">Create a new block</property>
+                            <property name="tooltip_text" translatable="yes">Create a new block and add it to the project</property>
                             <child>
                               <object class="GtkImage">
                                 <property name="visible">True</property>
@@ -2473,7 +2468,7 @@
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
-                            <property name="tooltip_text" translatable="yes">Import an existing block</property>
+                            <property name="tooltip_text" translatable="yes">Add an existing block and add it to the project</property>
                             <child>
                               <object class="GtkImage">
                                 <property name="visible">True</property>

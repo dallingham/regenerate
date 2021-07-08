@@ -58,7 +58,7 @@ class RegSetWidgets:
         self.reglist = find_obj("register_list")
         self.regset_list = find_obj("project_list")
         self.notebook = find_obj("module_notebook")
-        self.descript = find_obj("register_description")
+        self.descript = find_obj("scroll_reg_text")
         self.regset_preview = find_obj("scroll_reg_webkit")
         self.descript_warn = find_obj("reg_descr_warn")
         self.bit_warn = find_obj("reg_bit_warn")

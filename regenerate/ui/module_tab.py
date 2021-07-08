@@ -23,14 +23,14 @@ Handle the module tab
 
 import string
 
-from gi.repository import GObject, Gtk, Pango, Gdk, GtkSource
+from gi.repository import GObject, Gtk, Gdk
 
 from regenerate.db import RegProject, LOGGER
 from regenerate.ui.spell import Spell
 from regenerate.ui.utils import clean_format_if_needed
 from regenerate.ui.preview_editor import PreviewEditor
 from regenerate.ui.base_doc import BaseDoc
-
+from .textview import RstEditor
 
 class ModuleWidth:
     """Connects a database value to a selector."""
@@ -307,23 +307,19 @@ class ModuleDoc:
     """
 
     def __init__(self, text_view, web_view, db_name, modified, use_reg=True):
-        pango_font = Pango.FontDescription("monospace")
 
-        self.text_view = GtkSource.View()
-        self.text_view.show()
-        manager = GtkSource.LanguageManager()
-        self.buf = self.text_view.get_buffer()
-        self.buf.set_language(manager.get_language("rst"))
-        text_view.add(self.text_view)
-        self.callback = modified
+        editor = RstEditor()
+        editor.show()
+        text_view.add(editor)
+        Spell(editor)
 
-        self.text_view.modify_font(pango_font)
+        self.buf = editor.get_buffer()
         self.buf.connect("changed", self.on_changed)
 
-        Spell(self.text_view)
         self.preview = PreviewEditor(self.buf, web_view, use_reg)
         self.db_name = db_name
         self.dbase = None
+        self.callback = modified
 
     def preview_enable(self):
         """Enables the preview window"""

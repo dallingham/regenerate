@@ -19,11 +19,11 @@
 Register description management
 """
 
-from gi.repository import Pango, Gdk
+from gi.repository import Gdk
 from regenerate.ui.spell import Spell
 from regenerate.ui.utils import clean_format_if_needed
 from regenerate.ui.preview_editor import PreviewEditor
-
+from .textview import RstEditor
 
 class RegisterDescription:
     """
@@ -36,18 +36,19 @@ class RegisterDescription:
     """
 
     def __init__(self, text_view, web_view, change_callback):
-        pango_font = Pango.FontDescription("monospace")
 
-        self.text_view = text_view
-        self.buf = self.text_view.get_buffer()
-        self.reg = None
-        self.callback = change_callback
+        editor = RstEditor()
+        editor.show()
+        text_view.add(editor)
+        Spell(editor)
 
-        self.text_view.modify_font(pango_font)
+        self.buf = editor.get_buffer()
         self.buf.connect("changed", self.changed)
 
-        Spell(self.text_view)
+        self.reg = None
+
         self.preview = PreviewEditor(self.buf, web_view)
+        self.callback = change_callback
 
     def preview_enable(self):
         """Enables the preview window"""

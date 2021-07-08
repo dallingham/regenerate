@@ -584,6 +584,7 @@ class BlockDoc(BaseDoc):
         super().__init__(notebook, modified, add_btn, del_btn)
         self.block: Optional[Block] = None
         self.changing = False
+        print(notebook)
 
     def change_block(self, block: Block):
         self.block = block

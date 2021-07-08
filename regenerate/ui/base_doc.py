@@ -22,12 +22,12 @@ Handle the module tab
 """
 
 from typing import Dict, Optional
-from gi.repository import Gtk, Pango, Gdk
+from gi.repository import Gtk, Gdk
 from regenerate.db import RegProject
 from regenerate.ui.spell import Spell
 from regenerate.ui.utils import clean_format_if_needed
 from regenerate.ui.preview_editor import PreviewEditor
-
+from .textview import RstEditor
 
 class PageInfo:
     def __init__(self, handler, textbuf, name):
@@ -44,7 +44,6 @@ class BaseDoc:
         add_btn: Gtk.Button,
         del_btn: Gtk.Button,
     ):
-        self.pango_font = Pango.FontDescription("monospace")
         self.notebook = notebook
         self.project: Optional[RegProject] = None
         self.add_id = add_btn.connect("clicked", self.add_doc_page)
@@ -111,7 +110,8 @@ class BaseDoc:
         paned.add2(scrolled_window2)
         paned.set_position(300)
 
-        text = Gtk.TextView()
+        text = RstEditor()
+        text.show()
         buf = text.get_buffer()
         scrolled_window.add(text)
 
@@ -120,7 +120,6 @@ class BaseDoc:
 
         page = self.notebook.append_page(paned, Gtk.Label(name))
 
-        text.modify_font(self.pango_font)
         text.set_margin_left(10)
         text.set_margin_right(10)
         text.set_margin_top(10)
