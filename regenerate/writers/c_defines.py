@@ -24,12 +24,11 @@ import os
 
 from typing import Optional, TextIO
 from pathlib import Path
+
 from .writer_base import WriterBase, ExportInfo, ProjectType
 from ..extras import full_token, in_groups
 from ..extras.token import InstData
-from ..db.reg_project import RegProject
-from ..db.register_db import RegisterDb
-from ..db.register import Register
+from regenerate.db import RegProject, RegisterDb, Register
 
 HEADER = [
     "/*------------------------------------------------------------------\n",
@@ -66,37 +65,23 @@ class CDefines(WriterBase):
         super().__init__(project, dbase)
         self._ofile = Optional[TextIO]
 
-    def write_def(self, reg: Register, data: InstData, base: int) -> None:
+    def write_def(self, reg: Register, blk_name: str, reg_name: str, base: int) -> None:
         """
         Writes the definition in the format of:
 
         #define register (address)
         """
         assert self._ofile is not None
-        assert self._dbase is not None
 
-        address = reg.address + base + data.base
-        if data.repeat > 1:
-            for i in range(0, data.repeat):
-                name = full_token(
-                    data.group,
-                    reg.token,
-                    self._dbase.name,
-                    i,
-                    data.format,
-                )
-                address += i * data.roffset
+        address = reg.address + base
+        if reg.dimension > 1:
+            for i in range(0, reg.dimension):
                 self._ofile.write(
-                    "#define %-30s (*((volatile %s)0x%x))\n"
-                    % (name, REG_TYPE[reg.width], address)
+                    f"#define {blk_name.upper()}__{reg_name.upper()}__{reg.token}{{i}} (*((volatile {REG_TYPE[reg.width]})0x{(address + (i * reg.width)):x}))\n"
                 )
         else:
-            name = full_token(
-                data.group, reg.token, self._dbase.name, -1, data.format
-            )
             self._ofile.write(
-                "#define %-30s (*((volatile %s)0x%x))\n"
-                % (name, REG_TYPE[reg.width], address)
+                f"#define {blk_name.upper()}__{reg_name.upper()}__{reg.token} (*((volatile {REG_TYPE[reg.width]})0x{address:x}))\n"
             )
 
     def write(self, filename: Path) -> None:
@@ -110,13 +95,28 @@ class CDefines(WriterBase):
             self.write_header(self._ofile, "".join(HEADER))
 
             addr_maps = self._project.get_address_maps()
-
             if len(addr_maps) > 0:
-                base = self._project.get_address_base(addr_maps[0].name)
-                for data in in_groups(self._dbase.name, self._project):
-                    for register in self._dbase.get_all_registers():
-                        self.write_def(register, data, base)
-                    self._ofile.write("\n")
+                maps = list(addr_maps)
+                base = self._project.get_address_base(maps[0].uuid)
+            else:
+                base = 0
+
+            for blkinst in self._project.block_insts:
+                blk_base = blkinst.address_base
+                block = self._project.blocks[blkinst.blkid]
+
+                for reginst in block.regset_insts:
+                    reg_base = reginst.offset
+                    regset = block.regsets[reginst.regset_id]
+                    if regset.uuid == self._dbase.uuid:
+                        for register in regset.get_all_registers():
+                            self.write_def(
+                                register,
+                                blkinst.name,
+                                reginst.name,
+                                base + blk_base + reg_base
+                            )
+                        self._ofile.write("\n")                    
 
             for line in TRAILER:
                 self._ofile.write("%s\n" % line.replace("$M$", self._module))

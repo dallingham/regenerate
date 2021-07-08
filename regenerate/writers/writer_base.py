@@ -125,10 +125,7 @@ class WriterBase:
 
         user = get_username()
 
-        if self._module == "":
-            module = "I_forgot_to_give_the_module_a_name"
-        else:
-            module = self._module
+        module = self._dbase.name
 
         fixed = self._filename.upper().replace(".", "_")
         line = line.replace("$M$", module)
