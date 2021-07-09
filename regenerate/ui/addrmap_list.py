@@ -20,8 +20,9 @@
 Provides the Address List interface
 """
 
+from typing import Callable, Optional
 from gi.repository import Gtk
-from regenerate.db import LOGGER, AddressMap
+from regenerate.db import LOGGER, AddressMap, RegProject
 from regenerate.ui.columns import (
     EditableColumn,
     ComboMapColumn,
@@ -59,39 +60,20 @@ class AddrMapMdl(Gtk.ListStore):
     def __init__(self):
         super().__init__(str, str, str, str, object)
 
-    def new_instance(self):
-        """
-        Adds a new instance to the model. It is not added to the database until
-        either the change_id or change_base is called.
-        """
-        new_obj = AddressMap("new_map", 0, 8, False, False)
-        node = self.append(None, row=get_row_data(new_obj))
-        return self.get_path(node)
-
-    def append_instance(self, inst):
-        """Adds the specified instance to the InstanceList"""
-        self.append(None, row=get_row_data(inst))
-
-    def get_values(self):
-        """Returns the list of instance tuples from the model."""
-        return [(val[0], int(val[1], 0)) for val in self if val[0]]
-
 
 class AddrMapList:
-    """
-    Container for the Address Map control logic.
-    """
+    "Container for the Address Map control logic."
 
-    def __init__(self, obj, callback):
+    def __init__(self, obj: Gtk.TreeView, callback: Callable):
         self._obj = obj
-        self._col = None
-        self._prj = None
-        self._model = None
+        self._col: Optional[EditableColumn] = None
+        self._prj: Optional[RegProject] = None
+        self._model: Optional[AddrMapMdl] = None
         self._build_instance_table()
         self._obj.set_sensitive(False)
         self._callback = callback
 
-    def set_project(self, project):
+    def set_project(self, project: RegProject) -> None:
         """
         Sets the project for the address map, and repopulates the list
         from the project.
@@ -100,26 +82,37 @@ class AddrMapList:
         self._obj.set_sensitive(True)
         self.populate()
 
-    def populate(self):
+    def populate(self) -> None:
         """
         Loads the data from the project
         """
-        if self._prj is not None:
-            self._model.clear()
-            for base in self._prj.get_address_maps():
-                if base.width not in INT2SIZE:
-                    LOGGER.error(
-                        'Illegal width (%0d) for address map "%s"',
-                        base.width,
-                        base.name,
-                    )
-                    base.width = 4
-                self._model.append(row=get_row_data(base))
+        if self._prj is None or self._model is None:
+            return
 
-    def _name_changed(self, _cell, path, new_text, _col):
+        self._model.clear()
+        for base in self._prj.get_address_maps():
+            if base.width not in INT2SIZE:
+                LOGGER.error(
+                    'Illegal width (%0d) for address map "%s"',
+                    base.width,
+                    base.name,
+                )
+                base.width = 4
+            self._model.append(row=get_row_data(base))
+
+    def _name_changed(
+        self,
+        _cell: Gtk.CellRendererText,
+        path: str,
+        new_text: str,
+        _col: AddrCol,
+    ) -> None:
         """
         Called when the name field is changed.
         """
+
+        if self._prj is None or self._model is None:
+            return
 
         map_obj = self.get_obj(path)
         if map_obj.name == new_text:
@@ -136,10 +129,19 @@ class AddrMapList:
             self._model[path][AddrCol.NAME] = new_text
             self._callback()
 
-    def _base_changed(self, _cell, path, new_text, _col):
+    def _base_changed(
+        self,
+        _cell: Gtk.CellRendererText,
+        path: str,
+        new_text: str,
+        col: AddrCol,
+    ) -> None:
         """
         Called when the base address field is changed.
         """
+        if self._prj is None or self._model is None:
+            return
+
         try:
             _ = int(new_text, 0)
         except ValueError:
@@ -153,11 +155,20 @@ class AddrMapList:
             self._model[path][AddrCol.BASE] = f"0x{obj.base:08x}"
             self._callback()
 
-    def _width_changed(self, cell, path, node, col):
+    def _width_changed(
+        self,
+        cell: Gtk.CellRendererText,
+        path: str,
+        node: Gtk.TreeIter,
+        col: AddrCol,
+    ) -> None:
         """
         Called with the modified toggle is changed. Toggles the value in
         the internal list.
         """
+
+        if self._model is None:
+            return
 
         model = cell.get_property("model")
         self._model[path][col] = model.get_value(node, 0)
@@ -166,7 +177,7 @@ class AddrMapList:
         obj.width = width
         self._callback()
 
-    def _build_instance_table(self):
+    def _build_instance_table(self) -> None:
         """
         Builds the columns, adding them to the address map list.
         """
@@ -207,18 +218,9 @@ class AddrMapList:
         self._model = AddrMapMdl()
         self._obj.set_model(self._model)
 
-    def clear(self):
-        """
-        Clears the data from the list
-        """
+    def clear(self) -> None:
+        "Clears the data from the list"
         self._model.clear()
-
-    def append(self, base, addr, fixed, uvm, width, _access):
-        """
-        Add the data to the list.
-        """
-        obj = AddressMap(base, addr, width, fixed, uvm)
-        self._model.append(row=get_row_data(obj))
 
     def get_selected(self):
         """
@@ -256,6 +258,9 @@ class AddrMapList:
         Creates a new address map and adds it to the project. Uses default
         data, and sets the first field to start editing.
         """
+        if self._col is None:
+            return
+
         name = self._create_new_map_name()
         obj = AddressMap(name, 0, 8, False, False)
         node = self._model.append(row=get_row_data(obj))

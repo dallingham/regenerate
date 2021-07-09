@@ -106,6 +106,16 @@ class BlockTab:
         self.block_reg_remove.connect("clicked", self.on_remove_clicked)
         self.block_notebook.connect("switch-page", self.page_changed)
 
+    def clear(self):
+        self.block_model = BlockSelectModel()
+        self.block_obj.set_model(self.block_model)
+        self.regmodel = Gtk.ListStore(str, str, str, str, str, object)
+        self.block_regsets.set_model(self.regmodel)
+        self.block_name.change_db(None)
+        self.block_description.change_db(None)
+        self.block_size.change_db(None)
+        self.preview.change_block(None)
+
     def page_changed(self, obj, page, page_num):
         if page_num == 1:
             self.overrides_list.update_display()
@@ -197,7 +207,7 @@ class BlockTab:
         except ValueError:
             ...
 
-    def repeat_changed(self, cell, path, new_text, col):
+    def repeat_changed(self, _cell, path, new_text, col):
         try:
             reg_name = self.regmodel[int(path)][0]
             self.regmodel[int(path)][col] = f"{int(new_text)}"
@@ -219,6 +229,7 @@ class BlockTab:
         self.modified()
 
     def set_project(self, project):
+        self.clear()
         self.disable_modified = True
         self.project = project
         key_list = project.blocks.keys()
@@ -320,7 +331,7 @@ class BlockTab:
                     regset.name,
                     reginst.name,
                     f"0x{reginst.offset:08x}",
-                    f"{reginst.repeat}",
+                    reginst.repeat.int_str(),
                     reginst.hdl,
                     reginst,
                 )
@@ -584,16 +595,16 @@ class BlockDoc(BaseDoc):
         super().__init__(notebook, modified, add_btn, del_btn)
         self.block: Optional[Block] = None
         self.changing = False
-        print(notebook)
 
-    def change_block(self, block: Block):
+    def change_block(self, block: Optional[Block]):
         self.block = block
 
         self.changing = True
         self.remove_pages()
-        for page in block.doc_pages.get_page_names():
-            text = self.block.doc_pages.get_page(page)
-            self.add_page(page, text)
+        if self.block:
+            for page in block.doc_pages.get_page_names():
+                text = self.block.doc_pages.get_page(page)
+                self.add_page(page, text)
         self.changing = False
 
     def remove_page_from_doc(self, title: str):

@@ -118,13 +118,10 @@ class InstMdl(Gtk.TreeStore):
         except ValueError:
             LOGGER.warning('Illegal base address: "%s"', text)
 
-        # self.set_value(node, InstCol.SORT, int(text, 0))
-        # self.set_value(node, InstCol.BASE, "0x{:08x}".format(int(text, 0)))
-        # self.callback()
-
         obj = self.get_value(node, InstCol.OBJ)
         if obj:
             obj.address_base = int(text, 16)
+        self.callback()
 
     def change_repeat(self, path, text):
         """
@@ -208,7 +205,7 @@ class InstanceList:
             item = row[InstCol.OBJ]
             row[InstCol.ID] = self.__project.blocks[item.blkid].name
             row[InstCol.INST] = item.name
-            row[InstCol.BASE] = f"{item.address_base:x}"
+            row[InstCol.BASE] = f"0x{item.address_base:x}"
             row[InstCol.SORT] = item.address_base
             row[InstCol.RPT] = f"{item.repeat}"
             row[InstCol.HDL] = item.hdl_path

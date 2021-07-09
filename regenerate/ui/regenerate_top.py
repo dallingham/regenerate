@@ -520,7 +520,6 @@ class MainWindow(BaseWindow):
             self.prj.path = filename
             self.top_level_tab.change_project(self.prj)
             self.prj.name = filename.stem
-            # self.clear()
             self.prj.save()
 
             self.block_tab.clear_flags()
@@ -615,13 +614,9 @@ class MainWindow(BaseWindow):
     def update_display(self):
         old_skip = self.skip_changes
         self.skip_changes = True
-        if self.reg_model:
-            self.reg_model.clear()
-            for key in self.dbase.get_keys():
-                register = self.dbase.get_register(key)
-                self.reg_model.append_register(register)
-                self.reginst_tab.set_register_warn_flags(register)
         self.redraw()
+        self.reginst_tab.redraw()
+        self.block_tab.redraw()
         self.skip_changes = old_skip
 
     def on_save_clicked(self, _obj):
@@ -916,16 +911,16 @@ def check_address_ranges(project):
         for regset_inst in block.regset_insts:
             regset = block.regsets[regset_inst.regset_id]
             space = 1 << regset.ports.address_bus_width
-            if space > regset_inst.repeat_offset:
-                LOGGER.warning(
-                    "%s.%s - %d bits specified for register set (size %x) which is greater than the repeat offset of %x",
-                    block_inst.name,
-                    regset_inst.name,
-                    regset.ports.address_bus_width,
-                    space,
-                    regset_inst.repeat_offset,
-                )
-                return False
+            # if space > regset_inst.repeat_offset:
+            #     LOGGER.warning(
+            #         "%s.%s - %d bits specified for register set (size %x) which is greater than the repeat offset of %x",
+            #         block_inst.name,
+            #         regset_inst.name,
+            #         regset.ports.address_bus_width,
+            #         space,
+            #         regset_inst.repeat_offset,
+            #     )
+            #     return False
 
             glist.append(
                 (

@@ -378,7 +378,10 @@ class RegSetTab:
         self.reg_set_obj.select_path(0)
 
     def rebuild_model(self):
-        if len(self.project.regsets) != len(self.reg_set_model):
+        if (
+            len(self.project.regsets) != len(self.reg_set_model)
+            or len(self.project.regsets) == 0
+        ):
             self.reg_set_model.clear()
 
             sorted_dict = {
@@ -413,6 +416,9 @@ class RegSetTab:
                 self.widgets.register_notation.set_active(True)
             else:
                 self.widgets.array_notation.set_active(True)
+        else:
+            self.module_tabs.change_db(None)
+
         self.rebuild_model()
 
         self.update_bit_count()
