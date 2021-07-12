@@ -715,6 +715,7 @@
                           <object class="GtkPaned" id="vpaned">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
+                            <property name="margin_top">6</property>
                             <property name="orientation">vertical</property>
                             <property name="position">350</property>
                             <property name="position_set">True</property>
@@ -722,6 +723,7 @@
                               <object class="GtkGrid">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
+                                <property name="margin_top">6</property>
                                 <property name="margin_bottom">6</property>
                                 <child>
                                   <object class="GtkScrolledWindow" id="scrolledwindow1">
@@ -838,9 +840,13 @@
                                     <property name="halign">start</property>
                                     <property name="margin_left">24</property>
                                     <property name="margin_right">6</property>
+                                    <property name="margin_top">6</property>
                                     <property name="vexpand">False</property>
                                     <property name="label" translatable="yes">Description:</property>
                                     <property name="xalign">0</property>
+                                    <attributes>
+                                      <attribute name="weight" value="bold"/>
+                                    </attributes>
                                   </object>
                                   <packing>
                                     <property name="left_attach">0</property>
@@ -857,6 +863,9 @@
                                     <property name="vexpand">False</property>
                                     <property name="label" translatable="yes">Register set name:</property>
                                     <property name="xalign">0</property>
+                                    <attributes>
+                                      <attribute name="weight" value="bold"/>
+                                    </attributes>
                                   </object>
                                   <packing>
                                     <property name="left_attach">0</property>
@@ -867,7 +876,7 @@
                                   <object class="GtkEntry" id="title">
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
-                                    <property name="margin_top">9</property>
+                                    <property name="margin_top">6</property>
                                     <property name="margin_bottom">3</property>
                                     <property name="hexpand">True</property>
                                     <property name="invisible_char">●</property>
@@ -1553,8 +1562,11 @@
                                   <object class="GtkLabel" id="label22">
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
-                                    <property name="label" translatable="yes">Owner</property>
+                                    <property name="label" translatable="yes">Owner:</property>
                                     <property name="xalign">0</property>
+                                    <attributes>
+                                      <attribute name="weight" value="bold"/>
+                                    </attributes>
                                   </object>
                                   <packing>
                                     <property name="left_attach">0</property>
@@ -1584,8 +1596,11 @@
                                   <object class="GtkLabel" id="label39">
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
-                                    <property name="label" translatable="yes">Organization</property>
+                                    <property name="label" translatable="yes">Organization:</property>
                                     <property name="xalign">0</property>
+                                    <attributes>
+                                      <attribute name="weight" value="bold"/>
+                                    </attributes>
                                   </object>
                                   <packing>
                                     <property name="left_attach">0</property>
@@ -1618,8 +1633,11 @@
                                     <property name="can_focus">False</property>
                                     <property name="margin_top">3</property>
                                     <property name="margin_bottom">3</property>
-                                    <property name="label" translatable="yes">Register bits</property>
+                                    <property name="label" translatable="yes">Register bits:</property>
                                     <property name="xalign">0</property>
+                                    <attributes>
+                                      <attribute name="weight" value="bold"/>
+                                    </attributes>
                                   </object>
                                   <packing>
                                     <property name="left_attach">0</property>
@@ -1643,8 +1661,11 @@
                                   <object class="GtkLabel" id="label38">
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
-                                    <property name="label" translatable="yes">Array notation</property>
+                                    <property name="label" translatable="yes">Array notation:</property>
                                     <property name="xalign">0</property>
+                                    <attributes>
+                                      <attribute name="weight" value="bold"/>
+                                    </attributes>
                                   </object>
                                   <packing>
                                     <property name="left_attach">0</property>
@@ -1953,8 +1974,11 @@
                                 <property name="can_focus">False</property>
                                 <property name="margin_left">18</property>
                                 <property name="margin_right">6</property>
-                                <property name="label" translatable="yes">Address width</property>
+                                <property name="label" translatable="yes">Address width:</property>
                                 <property name="xalign">0</property>
+                                <attributes>
+                                  <attribute name="weight" value="bold"/>
+                                </attributes>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
@@ -1980,8 +2004,11 @@
                                 <property name="can_focus">False</property>
                                 <property name="margin_left">18</property>
                                 <property name="margin_right">6</property>
-                                <property name="label" translatable="yes">Address bus</property>
+                                <property name="label" translatable="yes">Address bus:</property>
                                 <property name="xalign">0</property>
+                                <attributes>
+                                  <attribute name="weight" value="bold"/>
+                                </attributes>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
@@ -2009,8 +2036,11 @@
                                 <property name="can_focus">False</property>
                                 <property name="margin_left">18</property>
                                 <property name="margin_right">6</property>
-                                <property name="label" translatable="yes">Acknowledge	</property>
+                                <property name="label" translatable="yes">Acknowledge:	</property>
                                 <property name="xalign">0</property>
+                                <attributes>
+                                  <attribute name="weight" value="bold"/>
+                                </attributes>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
@@ -2038,8 +2068,11 @@
                                 <property name="can_focus">False</property>
                                 <property name="margin_left">18</property>
                                 <property name="margin_right">6</property>
-                                <property name="label" translatable="yes">Read strobe</property>
+                                <property name="label" translatable="yes">Read strobe:</property>
                                 <property name="xalign">0</property>
+                                <attributes>
+                                  <attribute name="weight" value="bold"/>
+                                </attributes>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
@@ -2067,8 +2100,11 @@
                                 <property name="can_focus">False</property>
                                 <property name="margin_left">18</property>
                                 <property name="margin_right">6</property>
-                                <property name="label" translatable="yes">Write strobe</property>
+                                <property name="label" translatable="yes">Write strobe:</property>
                                 <property name="xalign">0</property>
+                                <attributes>
+                                  <attribute name="weight" value="bold"/>
+                                </attributes>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
@@ -2096,8 +2132,11 @@
                                 <property name="can_focus">False</property>
                                 <property name="margin_left">18</property>
                                 <property name="margin_right">6</property>
-                                <property name="label" translatable="yes">Byte enables</property>
+                                <property name="label" translatable="yes">Byte enables:</property>
                                 <property name="xalign">0</property>
+                                <attributes>
+                                  <attribute name="weight" value="bold"/>
+                                </attributes>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
@@ -2139,8 +2178,11 @@
                                 <property name="can_focus">False</property>
                                 <property name="margin_left">18</property>
                                 <property name="margin_right">6</property>
-                                <property name="label" translatable="yes">Read data</property>
+                                <property name="label" translatable="yes">Read data:</property>
                                 <property name="xalign">0</property>
+                                <attributes>
+                                  <attribute name="weight" value="bold"/>
+                                </attributes>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
@@ -2168,8 +2210,11 @@
                                 <property name="can_focus">False</property>
                                 <property name="margin_left">18</property>
                                 <property name="margin_right">6</property>
-                                <property name="label" translatable="yes">Write data</property>
+                                <property name="label" translatable="yes">Write data:</property>
                                 <property name="xalign">0</property>
+                                <attributes>
+                                  <attribute name="weight" value="bold"/>
+                                </attributes>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
@@ -2197,8 +2242,11 @@
                                 <property name="can_focus">False</property>
                                 <property name="margin_left">18</property>
                                 <property name="margin_right">6</property>
-                                <property name="label" translatable="yes">Reset</property>
+                                <property name="label" translatable="yes">Reset:</property>
                                 <property name="xalign">0</property>
+                                <attributes>
+                                  <attribute name="weight" value="bold"/>
+                                </attributes>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
@@ -2240,8 +2288,11 @@
                                 <property name="can_focus">False</property>
                                 <property name="margin_left">18</property>
                                 <property name="margin_right">6</property>
-                                <property name="label" translatable="yes">Clock</property>
+                                <property name="label" translatable="yes">Clock:</property>
                                 <property name="xalign">0</property>
+                                <attributes>
+                                  <attribute name="weight" value="bold"/>
+                                </attributes>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
@@ -2268,8 +2319,11 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="margin_left">18</property>
-                                <property name="label" translatable="yes">Data bus width</property>
+                                <property name="label" translatable="yes">Data bus width:</property>
                                 <property name="xalign">0</property>
+                                <attributes>
+                                  <attribute name="weight" value="bold"/>
+                                </attributes>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
@@ -2656,8 +2710,10 @@
                             <property name="hexpand">False</property>
                             <property name="vexpand">False</property>
                             <property name="label" translatable="yes">Block Name:</property>
-                            <property name="use_markup">True</property>
                             <property name="xalign">0</property>
+                            <attributes>
+                              <attribute name="weight" value="bold"/>
+                            </attributes>
                           </object>
                           <packing>
                             <property name="left_attach">0</property>
@@ -2673,8 +2729,10 @@
                             <property name="hexpand">False</property>
                             <property name="vexpand">False</property>
                             <property name="label" translatable="yes">Description:</property>
-                            <property name="use_markup">True</property>
                             <property name="xalign">0</property>
+                            <attributes>
+                              <attribute name="weight" value="bold"/>
+                            </attributes>
                           </object>
                           <packing>
                             <property name="left_attach">0</property>
@@ -2690,8 +2748,10 @@
                             <property name="hexpand">False</property>
                             <property name="vexpand">False</property>
                             <property name="label" translatable="yes">Address Space Size:</property>
-                            <property name="use_markup">True</property>
                             <property name="xalign">0</property>
+                            <attributes>
+                              <attribute name="weight" value="bold"/>
+                            </attributes>
                           </object>
                           <packing>
                             <property name="left_attach">0</property>
@@ -3216,6 +3276,9 @@
                             <property name="margin_left">24</property>
                             <property name="label" translatable="yes">Description:</property>
                             <property name="xalign">0</property>
+                            <attributes>
+                              <attribute name="weight" value="bold"/>
+                            </attributes>
                           </object>
                           <packing>
                             <property name="left_attach">0</property>
@@ -3248,6 +3311,9 @@
                             <property name="margin_left">24</property>
                             <property name="label" translatable="yes">Code name:</property>
                             <property name="xalign">0</property>
+                            <attributes>
+                              <attribute name="weight" value="bold"/>
+                            </attributes>
                           </object>
                           <packing>
                             <property name="left_attach">0</property>
@@ -3279,6 +3345,9 @@
                             <property name="margin_left">24</property>
                             <property name="label" translatable="yes">Company/Organization:</property>
                             <property name="xalign">0</property>
+                            <attributes>
+                              <attribute name="weight" value="bold"/>
+                            </attributes>
                           </object>
                           <packing>
                             <property name="left_attach">0</property>
