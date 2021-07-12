@@ -47,7 +47,7 @@ class AddrMapEdit(BaseWindow):
         super().__init__()
         self.project = project
         self.callback = callback
-        self.cb_list: List[str] = []
+        self.cb_list: Optional[List[str]] = None
         self.map_name = map_name
         self.options = [
             ("Full Access", 0),
@@ -61,10 +61,9 @@ class AddrMapEdit(BaseWindow):
 
         response = dialog.run()
 
-        if response == Gtk.ResponseType.REJECT:
-            self.cb_list = []
-        else:
-            self.cb_list = [row[1] for row in self.model if row[0]]
+        if response != Gtk.ResponseType.REJECT:
+            self.cb_list = [row[4].uuid for row in self.model if row[0]]
+
         dialog.destroy()
 
     def build_dialog(self, parent: Gtk.Window):
@@ -103,7 +102,7 @@ class AddrMapEdit(BaseWindow):
         box.pack_end(scrolled_window, True, True, 12)
 
         self.view = Gtk.TreeView()
-        self.model = Gtk.TreeStore(bool, str, str, object, str)
+        self.model = Gtk.TreeStore(bool, str, str, object, object)
         self.view.set_model(self.model)
 
         self.view.show()
@@ -139,7 +138,7 @@ class AddrMapEdit(BaseWindow):
         for val in subsystem_list:
             blk_inst, active = val
             title = blk_inst.name
-            top = self.model.append(None, row=(active, title, "", None, None))
+            top = self.model.append(None, row=(active, title, "", None, blk_inst))
             blk = self.project.blocks[blk_inst.blkid]
             for item in blk.regsets.values():
                 access = self.project.get_access(
@@ -152,7 +151,7 @@ class AddrMapEdit(BaseWindow):
                         item.name,
                         self.options[access][0],
                         item,
-                        blk_inst.name,
+                        blk_inst,
                     ),
                 )
 
@@ -190,4 +189,8 @@ class AddrMapEdit(BaseWindow):
     def get_list(self) -> List[str]:
         """Return the callback list"""
 
+        print(self.cb_list)
+        import traceback
+        traceback.print_stack()
+        
         return self.cb_list

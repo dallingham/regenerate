@@ -22,7 +22,6 @@ module that is used to remember paths for exporters.
 """
 
 from configparser import ConfigParser, NoSectionError, NoOptionError
-from typing import SupportsInt, SupportsIndex, Union, Optional
 import os
 
 PARSER = ConfigParser()
