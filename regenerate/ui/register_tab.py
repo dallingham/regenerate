@@ -83,6 +83,9 @@ class RegSetWidgets:
         self.array_notation = find_obj("array_notation")
         self.add_regset_param = find_obj("add_regset_param")
         self.remove_regset_param = find_obj("remove_regset_param")
+        self.new_regset_button = find_obj("new_regset_button")
+        self.add_regset_button = find_obj("add_regset_button")
+        self.remove_regset_button = find_obj("remove_regset_button")
 
 
 class RegSetStatus:
@@ -233,7 +236,7 @@ class RegSetTab:
         self.widgets.reg_notebook.hide()
         self.reg_selected_action.set_sensitive(False)
 
-        self.widgets.notebook.connect("switch-page", self.reg_page_changed)
+        self.connect_signals()
 
         self.reg_set_obj = RegSetList(
             self.widgets.regset_list, self.regset_sel_changed
@@ -275,6 +278,20 @@ class RegSetTab:
         self.filter_manage = FilterManager(self.widgets.filter_obj)
 
         self.clear()
+
+    def connect_signals(self) -> None:
+        "Connect signals to the elements"
+
+        self.widgets.notebook.connect("switch-page", self.reg_page_changed)
+        self.widgets.add_regset_button.connect(
+            "clicked", self.add_regset_callback
+        )
+        self.widgets.remove_regset_button.connect(
+            "clicked", self.remove_regset_callback
+        )
+        self.widgets.new_regset_button.connect(
+            "clicked", self.new_regset_callback
+        )
 
     def filter_visible(self, visible):
         if visible:
@@ -732,7 +749,7 @@ class RegSetTab:
     def bit_changed(self, _obj):
         self.field_selected_action.set_sensitive(True)
 
-    def on_remove_register_set_activate(self, _obj):
+    def remove_regset_callback(self, _obj: Gtk.Button):
         """
         GTK callback that creates a file open selector using the
         create_selector method, then runs the dialog, and calls the
@@ -754,10 +771,14 @@ class RegSetTab:
         self.reg_set_obj.select_path(0)
 
     def remove_regset_from_project(self, uuid: str):
-        self.project.remove_register_set(uuid)
+        if self.project:
+            self.project.remove_register_set(uuid)
 
     def remove_regset_from_groups(self, uuid: str):
-        for key, block in self.project.blocks.items():
+        if self.project is None:
+            return
+
+        for block in self.project.blocks.values():
             new_reglist = [
                 reglist
                 for reglist in block.regset_insts
@@ -765,7 +786,7 @@ class RegSetTab:
             ]
             block.regset_insts = new_reglist
 
-    def new_register_set(self, _obj):
+    def new_regset_callback(self, _obj: Gtk.Button):
         """
         Creates a new database, and initializes the interface.
         """
@@ -813,7 +834,7 @@ class RegSetTab:
         choose.destroy()
         return name
 
-    def add_register_set(self, obj):
+    def add_regset_callback(self, _obj: Gtk.Button) -> None:
         """
         GTK callback that creates a file open selector using the
         create_selector method, then runs the dialog, and calls the

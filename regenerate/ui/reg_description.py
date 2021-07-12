@@ -19,11 +19,16 @@
 Register description management
 """
 
-from gi.repository import Gdk
-from regenerate.ui.spell import Spell
-from regenerate.ui.utils import clean_format_if_needed
-from regenerate.ui.preview_editor import PreviewEditor
+from typing import Callable, Optional
+from gi.repository import Gdk, Gtk
+
+from regenerate.db import Register
+
 from .textview import RstEditor
+from .spell import Spell
+from .utils import clean_format_if_needed
+from .preview_editor import PreviewEditor
+
 
 class RegisterDescription:
     """
@@ -35,8 +40,12 @@ class RegisterDescription:
     the system as modified.
     """
 
-    def __init__(self, text_view, web_view, change_callback):
-
+    def __init__(
+        self,
+        text_view: Gtk.ScrolledWindow,
+        web_view: Gtk.ScrolledWindow,
+        change_callback: Callable,
+    ):
         editor = RstEditor()
         editor.show()
         text_view.add(editor)
@@ -45,25 +54,17 @@ class RegisterDescription:
         self.buf = editor.get_buffer()
         self.buf.connect("changed", self.changed)
 
-        self.reg = None
+        self.reg: Optional[Register] = None
 
         self.preview = PreviewEditor(self.buf, web_view)
         self.callback = change_callback
-
-    def preview_enable(self):
-        """Enables the preview window"""
-        self.preview.enable()
-
-    def preview_disable(self):
-        """Disables the preview window"""
-        self.preview.disable()
 
     def set_database(self, dbase):
         """Change the database so the preview window can resolve references"""
         self.preview.set_dbase(dbase)
         self.set_register(None)
 
-    def set_register(self, reg):
+    def set_register(self, reg: Register):
         """Change the register, and update the description"""
         self.reg = reg
         if reg is None:

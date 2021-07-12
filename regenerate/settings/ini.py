@@ -22,14 +22,18 @@ module that is used to remember paths for exporters.
 """
 
 from configparser import ConfigParser, NoSectionError, NoOptionError
-from typing import Optional
+from typing import SupportsInt, SupportsIndex, Union, Optional
 import os
 
 PARSER = ConfigParser()
 FILENAME = os.path.expanduser("~/.regenerate")
 
 
-def get(section: str, option: str, default=None) -> Optional[str]:
+def get(
+    section,
+    option: str,
+    default=None,
+):
     """
     Gets the value from the config file, returning the default if not found.
     """

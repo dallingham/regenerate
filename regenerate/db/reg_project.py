@@ -205,8 +205,10 @@ class RegProject:
                 regset.json_decode(json.loads(data))
             self.finder.register(regset)
             self.new_register_set(regset, new_file_path)
-            
+
     def new_register_set(self, regset: RegisterDb, path: Path) -> None:
+        "Stores the register set and its path"
+
         self.regsets[regset.uuid] = regset
         self._filelist.append(path)
         print(self.regsets, self._filelist)
@@ -224,11 +226,11 @@ class RegProject:
         self._modified = True
         regset = self.regsets[uuid]
         del self.regsets[uuid]
-        
+
         try:
             self._filelist.remove(regset.filename)
-        except ValueError as msg:
-            ...
+        except ValueError:
+            LOGGER.debug("Failed removing %s from filelist", regset.filename)
 
     def get_exports(self, path: str):
         """
@@ -243,33 +245,6 @@ class RegProject:
     def get_project_exports(self):
         """Returns the export project list, returns a read-only tuple"""
         return tuple(self.exports)
-
-    # def _append_to_export_list(
-    #     self, db_path: str, exporter: str, target: str
-    # ) -> None:
-    #     """
-    #     For internal use only.
-
-    #     Adds an export to the export list. The exporter will only operation
-    #     on the specified register database (XML file).
-
-    #     path - path to the the register XML file. Converted to a relative path
-    #     exporter - the chosen exporter
-    #     dest - destination output name
-    #     """
-
-    #     full_db_path = self.path.parent / db_path
-    #     full_target_path = self.path.parent / target
-
-    #     full_db_str = str(full_db_path.with_suffix(REG_EXT).resolve())
-    #     full_target_str = str(full_target_path.resolve())
-
-    #     self._modified = True
-    #     exp = ExportData(exporter, full_target_str)
-    #     if full_db_str in self.exports:
-    #         self.exports[full_db_str].append(exp)
-    #     else:
-    #         self.exports[full_db_str] = [exp]
 
     def append_to_project_export_list(self, exporter: str, dest: str) -> None:
         """
@@ -507,7 +482,7 @@ class RegProject:
 
         data["filelist"] = [
             os.path.relpath(Path(fname).with_suffix(REG_EXT), self.path.parent)
-            for fname in self._filelist
+            for fname in set(self._filelist)
         ]
         data["address_maps"] = self.address_maps
 

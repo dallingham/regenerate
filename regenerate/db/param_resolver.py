@@ -46,6 +46,8 @@ class ParameterResolver:
         ...
 
     def set_reginst(self, name: str) -> None:
+        "Sets the instance name"
+
         self.reg_inst = name
 
     def clear(self) -> None:

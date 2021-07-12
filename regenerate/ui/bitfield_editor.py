@@ -24,8 +24,13 @@ information.
 
 #  Standard imports
 
+from typing import Callable
+
 from gi.repository import Gtk, Gdk, Pango
 from regenerate.db import (
+    RegisterDb,
+    Register,
+    BitField,
     TYPE_TO_ID,
     TYPE_TO_DESCR,
     TYPE_TO_ENABLE,
@@ -56,9 +61,14 @@ class BitFieldEditor(BaseWindow):
     """Bit field editing class."""
 
     def __init__(
-        self, dbase, register, bit_field, modified_func, top_builder, parent
+        self,
+        dbase: RegisterDb,
+        register: Register,
+        bit_field: BitField,
+        modified_func: Callable,
+        top_builder,
+        parent: Gtk.Window,
     ):
-
         super().__init__()
 
         self.dbase = dbase
@@ -100,7 +110,7 @@ class BitFieldEditor(BaseWindow):
         self.configure_window(register, parent)
         self.parent = parent
 
-    def setup_description(self, pango_font):
+    def setup_description(self, pango_font: Pango.FontDescription) -> None:
         """
         Finds the bitfield description object, sets the font to a monospace
         font, and attaches the spell checker to the buffere
@@ -109,7 +119,7 @@ class BitFieldEditor(BaseWindow):
         descr.modify_font(pango_font)
         self.spell = Spell(descr)
 
-    def configure_window(self, register, parent):
+    def configure_window(self, register: Register, parent: Gtk.Window) -> None:
         """
         Sets up the dialog window, setting the title, parent,
         and window icon
@@ -122,7 +132,7 @@ class BitFieldEditor(BaseWindow):
         self.configure(self.top_window)
         self.top_window.show_all()
 
-    def build_register_text(self, bit_field):
+    def build_register_text(self, bit_field: BitField) -> str:
         """Returns the type of the verilog instantiation of the type"""
         try:
             edge = (
@@ -142,7 +152,7 @@ class BitFieldEditor(BaseWindow):
             text = ""
         return text
 
-    def initialize_from_data(self, bit_field):
+    def initialize_from_data(self, bit_field: BitField) -> None:
         """Initializes the dialog's data fields from the object"""
 
         self.set_text("field_name", bit_field.full_field_name())

@@ -220,7 +220,8 @@ class AddrMapList:
 
     def clear(self) -> None:
         "Clears the data from the list"
-        self._model.clear()
+        if self._model:
+            self._model.clear()
 
     def get_selected(self):
         """

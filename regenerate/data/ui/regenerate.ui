@@ -618,14 +618,13 @@
                         <property name="can_focus">False</property>
                         <property name="layout_style">expand</property>
                         <child>
-                          <object class="GtkButton">
+                          <object class="GtkButton" id="new_regset_button">
                             <property name="use_action_appearance">False</property>
                             <property name="related_action">new_set_action</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
                             <property name="tooltip_text" translatable="yes">Create a new register set and add it to the project</property>
-                            <signal name="clicked" handler="on_new_register_set_activate" swapped="no"/>
                             <child>
                               <object class="GtkImage">
                                 <property name="visible">True</property>
@@ -641,14 +640,13 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkButton">
+                          <object class="GtkButton" id="add_regset_button">
                             <property name="use_action_appearance">False</property>
                             <property name="related_action">add_set_action</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
                             <property name="tooltip_text" translatable="yes">Add an existing register set to the project</property>
-                            <signal name="clicked" handler="on_add_register_set_activate" swapped="no"/>
                             <child>
                               <object class="GtkImage">
                                 <property name="visible">True</property>
@@ -664,14 +662,13 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkButton">
+                          <object class="GtkButton" id="remove_regset_button">
                             <property name="use_action_appearance">False</property>
                             <property name="related_action">remove_set_action</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
                             <property name="tooltip_text" translatable="yes">Remove the selected register set from the project</property>
-                            <signal name="clicked" handler="on_remove_register_set_activate" swapped="no"/>
                             <child>
                               <object class="GtkImage">
                                 <property name="visible">True</property>

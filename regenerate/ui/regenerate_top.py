@@ -29,7 +29,7 @@ import xml
 import os
 from pathlib import Path
 
-from typing import List
+from typing import List, Union, Optional
 from gi.repository import Gtk, GdkPixbuf, Gdk
 from regenerate import PROGRAM_VERSION, PROGRAM_NAME
 from regenerate.db import (
@@ -51,7 +51,7 @@ from regenerate.ui.block_tab import BlockTab
 from regenerate.ui.build import Build
 from regenerate.ui.error_dialogs import ErrorMsg, Question
 from regenerate.ui.help_window import HelpWindow
-from regenerate.ui.module_tab import ProjectTabs
+from regenerate.ui.project_tab import ProjectTabs
 from regenerate.ui.preferences import Preferences
 from regenerate.ui.register_tab import RegSetTab
 from regenerate.ui.status_logger import StatusHandler
@@ -107,20 +107,20 @@ class MainWindow(BaseWindow):
         self.builder.connect_signals(self)
         self.build_import_menu()
 
-    def check_subsystem_addresses(self):
+    def check_subsystem_addresses(self) -> bool:
         if check_address_ranges(self.prj):
             self.set_project_modified()
             return True
         return False
 
-    def setup_main_window(self):
+    def setup_main_window(self) -> None:
         self.top_window = self.find_obj("regenerate")
         self.configure(self.top_window)
         self.status_obj = self.find_obj("statusbar")
         remove_default_handler()
         LOGGER.addHandler(StatusHandler(self.status_obj))
 
-    def setup_recent_menu(self):
+    def setup_recent_menu(self) -> None:
         """Setup the recent files management system"""
 
         self.recent_manager = Gtk.RecentManager.get_default()
@@ -130,7 +130,7 @@ class MainWindow(BaseWindow):
     def find_obj(self, name):
         return self.builder.get_object(name)
 
-    def on_addrmap_cursor_changed(self, obj):
+    def on_addrmap_cursor_changed(self, obj: Gtk.TreeView) -> None:
         """Called when the row of the treeview changes."""
 
         mdl, node = obj.get_selection().get_selected()
@@ -144,7 +144,7 @@ class MainWindow(BaseWindow):
             ebtn.set_sensitive(False)
             rbtn.set_sensitive(False)
 
-    def setup_project(self):
+    def setup_project(self) -> None:
         self.project_tabs = ProjectTabs(
             self.builder, self.set_project_modified
         )
@@ -166,7 +166,7 @@ class MainWindow(BaseWindow):
             self.find_obj("address_tree"), self.set_project_modified
         )
 
-    def set_parameters_modified(self):
+    def set_parameters_modified(self) -> None:
         self.set_modified()
         self.reginst_tab.reglist_obj.set_parameters(
             self.dbase.parameters.get()
@@ -175,14 +175,14 @@ class MainWindow(BaseWindow):
             self.dbase.parameters.get()
         )
 
-    def set_project_modified(self):
+    def set_project_modified(self) -> None:
         self.project_modified(True)
 
-    def project_modified(self, value: bool):
+    def project_modified(self, value: bool) -> None:
         self.set_title(value)
         self.prj.modified = value
 
-    def load_project_tab(self):
+    def load_project_tab(self) -> None:
         self.top_notebook.set_sensitive(True)
         self.block_tab.set_project(self.prj)
         self.project_tabs.change_db(self.prj)
@@ -215,38 +215,38 @@ class MainWindow(BaseWindow):
             self.addr_map_list.set_project(self.prj)
             self.set_project_modified()
 
-    def on_block_select_changed(self, _obj):
+    def on_block_select_changed(self, _obj: Gtk.TreeSelection) -> None:
         if self.top_level_tab.blkinst_list.get_selected_instance():
             self.builder.get_object("instance_delete_btn").set_sensitive(True)
         else:
             self.builder.get_object("instance_delete_btn").set_sensitive(False)
 
-    def on_addr_map_help_clicked(self, _obj):
+    def on_addr_map_help_clicked(self, _obj: Gtk.Button) -> None:
         "Display the address map help"
         HelpWindow(self.builder, "addr_map_help.rst")
 
-    def on_param_help_clicked(self, _obj):
+    def on_param_help_clicked(self, _obj: Gtk.Button) -> None:
         """Display the parameter help"""
         HelpWindow(self.builder, "parameter_help.rst")
 
-    def on_prj_param_help_clicked(self, _obj):
+    def on_prj_param_help_clicked(self, _obj: Gtk.Button) -> None:
         """Display the project parameter help"""
         HelpWindow(self.builder, "prj_parameter_help.rst")
 
-    def on_remove_map_clicked(self, _obj):
+    def on_remove_map_clicked(self, _obj: Gtk.Button) -> None:
         """Remove the selected map with clicked"""
         self.project_modified(True)
         self.addr_map_list.remove_selected()
 
-    def on_add_map_clicked(self, _obj):
+    def on_add_map_clicked(self, _obj: Gtk.Button) -> None:
         """Add a new map when clicked"""
         self.addr_map_list.add_new_map()
 
-    def on_help_action_activate(self, _obj):
+    def on_help_action_activate(self, _obj: Gtk.Action) -> None:
         """Display the help window"""
         HelpWindow(self.builder, "regenerate_help.rst")
 
-    def restore_position_and_size(self):
+    def restore_position_and_size(self) -> None:
         "Restore the desired position and size from the user's config file"
 
         height = int(ini.get("user", "height", 0))
@@ -263,14 +263,16 @@ class MainWindow(BaseWindow):
         if block_hpos:
             self.find_obj("bpaned").set_position(block_hpos)
 
-    def build_group(self, group_name: str, action_names: List[str]):
+    def build_group(
+        self, group_name: str, action_names: List[str]
+    ) -> Gtk.ActionGroup:
         group = Gtk.ActionGroup(group_name)
         for name in action_names:
             group.add_action(self.find_obj(name))
         group.set_sensitive(False)
         return group
 
-    def build_actions(self):
+    def build_actions(self) -> None:
         """
         Builds the action groups. These groups are used to control which
         buttons/functions are active at any given time. The groups are:
@@ -308,35 +310,24 @@ class MainWindow(BaseWindow):
         self.db_selected = self.build_group("database_selected", db_acn)
         self.field_selected = self.build_group("field_selected", fld_acn)
 
-    def on_filter_icon_press(self, obj, icon, event):
-        if icon == Gtk.EntryIconPosition.SECONDARY:
-            if event.type == Gdk.EventType.BUTTON_PRESS:
-                obj.set_text("")
-        elif icon == Gtk.EntryIconPositon.PRIMARY:
-            if event.type == Gdk.EventType.BUTTON_PRESS:
-                menu = self.find_obj("filter_menu")
-                menu.popup(
-                    None, None, None, 1, 0, Gtk.get_current_event_time()
-                )
-
-    def on_summary_action_activate(self, _obj):
+    def on_summary_action_activate(self, _obj: Gtk.Action) -> None:
         """Displays the summary window"""
         self.reginst_tab.show_summary()
 
-    def on_build_action_activate(self, _obj):
+    def on_build_action_activate(self, _obj: Gtk.Action) -> None:
         Build(self.prj)
 
-    def on_user_preferences_activate(self, _obj):
+    def on_user_preferences_activate(self, _obj: Gtk.Action) -> None:
         Preferences(self.top_window)
 
-    def on_delete_instance_clicked(self, _obj):
+    def on_delete_instance_clicked(self, _obj: Gtk.Button) -> None:
         self.top_level_tab.delete_blkinst()
 
-    def on_add_instance_clicked(self, _obj):
+    def on_add_instance_clicked(self, _obj: Gtk.Button) -> None:
         self.top_level_tab.blkinst_list.new_instance()
         self.project_modified(True)
 
-    def build_import_menu(self):
+    def build_import_menu(self) -> None:
         """
         Builds the export menu from the items in writers.IMPORTERS. The export
         menu is extracted from the glade description, the submenu is built,
@@ -353,14 +344,21 @@ class MainWindow(BaseWindow):
         submenu.show()
         menu.set_submenu(submenu)
 
-    def on_main_notebook_switch_page(self, _obj, _page, page_num):
+    def on_main_notebook_switch_page(
+        self, _obj: Gtk.Notebook, _page: Gtk.Paned, page_num: int
+    ) -> None:
+        "Called when the Top/Block/Registers tab is changed"
         self.block_tab.build_add_regset_menu()
         self.reginst_tab.update_display()
         self.block_tab.redraw()
         self.top_level_tab.update()
         self.reginst_tab.filter_visible(page_num == 0)
 
-    def on_notebook_switch_page(self, _obj, _page, page_num):
+    def on_notebook_switch_page(
+        self, _obj: Gtk.Notebook, _page: Gtk.Box, page_num: int
+    ) -> None:
+        "Called when the notebook page on the register tab is changed"
+
         if page_num == 1:
             self.reginst_tab.update_bit_count()
         if self.reginst_tab.get_selected_register():
@@ -375,7 +373,7 @@ class MainWindow(BaseWindow):
         """
         self.reginst_tab.selected_reg_changed(_obj)
 
-    def set_modified(self):
+    def set_modified(self) -> None:
         """
         Indicates that the database has been modified. The modified
         value is set, and the status bar is updated with an appropriate
@@ -383,42 +381,51 @@ class MainWindow(BaseWindow):
         """
         ...
 
-    def clear_modified(self, _prj=None):
+    def clear_modified(self, _prj=None) -> None:
         """
         Clears the modified tag in the status bar.
         """
         ...
 
-    def on_no_sharing_toggled(self, obj):
+    def on_no_sharing_toggled(self, obj: Gtk.RadioButton) -> None:
+        "Called when the sharing button is toggled"
         self.reginst_tab.on_no_sharing_toggled(obj)
 
-    def on_read_access_toggled(self, obj):
+    def on_read_access_toggled(self, obj: Gtk.RadioButton) -> None:
         self.reginst_tab.on_read_access_toggled(obj)
 
-    def on_write_access_toggled(self, obj):
+    def on_write_access_toggled(self, obj) -> None:
         self.reginst_tab.on_write_access_toggled(obj)
 
-    def on_add_bit_action_activate(self, _obj):
+    def on_add_bit_action_activate(self, _obj: Gtk.Action) -> None:
         self.reginst_tab.add_bit()
 
-    def on_edit_field_clicked(self, _obj):
+    def on_edit_field_clicked(self, _obj: Gtk.Button) -> None:
         self.reginst_tab.edit_bit()
 
-    def on_remove_bit_action_activate(self, _obj):
+    def on_remove_bit_action_activate(self, _obj: Gtk.Action) -> None:
         self.reginst_tab.remove_bit()
 
-    def on_duplicate_register_action_activate(self, _obj):
+    def on_duplicate_register_action_activate(self, _obj: Gtk.Action) -> None:
         """
         Makes a copy of the current register, modifying the address, and
         changing name and token
         """
         self.reginst_tab.duplicate_register()
 
-    def create_file_selector(self, title, m_name, m_regex, action, icon):
+    def create_file_selector(
+        self,
+        title: str,
+        m_name: Optional[str],
+        m_regex: Optional[Union[str, List[str]]],
+        action: Gtk.FileChooserAction,
+        icon: str,
+    ) -> Gtk.FileChooserDialog:
         """
         Creates a file save selector, using the mime type and regular
         expression to control the selector.
         """
+
         choose = Gtk.FileChooserDialog(
             title,
             self.top_window,
@@ -432,7 +439,7 @@ class MainWindow(BaseWindow):
         )
 
         choose.set_current_folder(os.curdir)
-        if m_name:
+        if m_name and m_regex:
             mime_filter = Gtk.FileFilter()
             mime_filter.set_name(m_name)
             if type(m_regex) == str:
@@ -445,7 +452,9 @@ class MainWindow(BaseWindow):
         choose.show()
         return choose
 
-    def create_save_selector(self, title, mime_name=None, mime_regex=None):
+    def create_save_selector(
+        self, title: str, mime_name=None, mime_regex=None
+    ) -> Gtk.FileChooserDialog:
         """
         Creates a file save selector, using the mime type and regular
         expression to control the selector.
@@ -458,7 +467,9 @@ class MainWindow(BaseWindow):
             Gtk.STOCK_SAVE,
         )
 
-    def create_open_selector(self, title, mime_name=None, mime_regex=None):
+    def create_open_selector(
+        self, title: str, mime_name=None, mime_regex=None
+    ) -> Gtk.FileChooserDialog:
         """
         Creates a file save selector, using the mime type and regular
         expression to control the selector.
@@ -470,12 +481,6 @@ class MainWindow(BaseWindow):
             Gtk.FileChooserAction.OPEN,
             Gtk.STOCK_OPEN,
         )
-
-    def on_add_register_set_activate(self, _obj):
-        self.reginst_tab.add_register_set(_obj)
-
-    def on_remove_register_set_activate(self, _obj):
-        self.reginst_tab.on_remove_register_set_activate(_obj)
 
     def get_new_filename(self):
         """
@@ -522,6 +527,7 @@ class MainWindow(BaseWindow):
             self.prj.name = filename.stem
             self.prj.save()
 
+            self.reginst_tab.change_project(self.prj)
             self.block_tab.clear_flags()
 
             self.project_modified(False)
@@ -607,9 +613,6 @@ class MainWindow(BaseWindow):
         self.prj_loaded.set_sensitive(True)
         self.loading_project = False
         self.skip_changes = False
-
-    def on_new_register_set_activate(self, _obj):
-        self.reginst_tab.new_register_set(_obj)
 
     def update_display(self):
         old_skip = self.skip_changes

@@ -21,6 +21,7 @@ Base class for windows, setting the icons
 """
 
 from pathlib import Path
+from gi.repository import Gtk
 from regenerate.settings.paths import INSTALL_PATH
 
 
@@ -34,7 +35,7 @@ class BaseWindow:
     def __init__(self):
         pass
 
-    def configure(self, obj):
+    def configure(self, obj: Gtk.Window) -> None:
         """Sets the icon image to the passed object"""
         try:
             image = Path(INSTALL_PATH) / "media" / "flop.svg"

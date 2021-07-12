@@ -23,6 +23,7 @@ Provides an object that can either be an integer or a parameter
 
 from .param_resolver import ParameterResolver
 from .param_data import ParameterFinder
+from .enums import ParamFunc
 
 
 class ParamValue:
@@ -31,6 +32,7 @@ class ParamValue:
     def __init__(self, value=0, is_parameter=False):
         self.is_parameter = is_parameter
         self.offset = 0
+        self.func = ParamFunc.NONE
         self.int_value: int = value
         self.txt_value: str = ""
 
@@ -114,6 +116,7 @@ class ParamValue:
 
         self.is_parameter = data["is_parameter"]
         self.offset = data["offset"]
+        self.func = ParamFunc(data.get("func", 0))
         if self.is_parameter:
             self.txt_value = data["value"]
             self.int_value = 0
@@ -129,4 +132,5 @@ class ParamValue:
             val["value"] = self.txt_value
         else:
             val["value"] = f"{self.int_value}"
+        val["func"] = int(self.func)
         return val

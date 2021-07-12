@@ -66,8 +66,8 @@ class ProjectReader:
 
         with self.path.open("rb") as ofile:
             parser = xml.parsers.expat.ParserCreate()
-            parser.StartElementHandler = self.startElement
-            parser.EndElementHandler = self.endElement
+            parser.StartElementHandler = self.start_element
+            parser.EndElementHandler = self.end_element
             parser.CharacterDataHandler = self.characters
             parser.ParseFile(ofile)
         self.prj.modified = True
@@ -78,13 +78,13 @@ class ProjectReader:
         ofile = BytesIO(data)
 
         parser = xml.parsers.expat.ParserCreate()
-        parser.StartElementHandler = self.startElement
-        parser.EndElementHandler = self.endElement
+        parser.StartElementHandler = self.start_element
+        parser.EndElementHandler = self.end_element
         parser.CharacterDataHandler = self.characters
         parser.ParseFile(ofile)
         self.prj.modified = True
 
-    def startElement(self, tag: str, attrs: Dict[str, str]) -> None:
+    def start_element(self, tag: str, attrs: Dict[str, str]) -> None:
         """
         Called every time an XML element begins
         """
@@ -94,7 +94,7 @@ class ProjectReader:
             method = getattr(self, mname)
             method(attrs)
 
-    def endElement(self, tag: str) -> None:
+    def end_element(self, tag: str) -> None:
         """
         Called every time an XML element end
         """

@@ -21,7 +21,7 @@ Provides the Address List interface
 """
 
 from gi.repository import Gtk
-from regenerate.db import PrjParameterData
+from regenerate.db import ParameterData
 from regenerate.ui.columns import EditableColumn
 from regenerate.ui.enums import PrjParameterCol
 from regenerate.ui.utils import find_next_free, check_hex
@@ -172,7 +172,7 @@ class PrjParameterList:
         """
         Add the data to the list.
         """
-        obj = PrjParameterData(name, value)
+        obj = ParameterData(name, value)
         self._model.append(row=get_row_data(obj))
 
     def get_selected(self):

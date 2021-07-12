@@ -32,10 +32,10 @@ from regenerate.ui.parameter_list import ParameterList
 from regenerate.ui.base_doc import BaseDoc
 from regenerate.ui.param_overrides import BlockOverridesList
 from regenerate.ui.enums import SelectCol
-from regenerate.ui.module_tab import (
-    ModuleText,
-    ModuleWord,
-    ModuleHex,
+from regenerate.ui.entry import (
+    EntryText,
+    EntryWord,
+    EntryHex,
 )
 
 
@@ -43,19 +43,19 @@ class BlockTab:
     def __init__(self, find_obj, block_remove_callback):
 
         self.block_remove_callback = block_remove_callback
-        self.block_name = ModuleWord(
+        self.block_name = EntryWord(
             find_obj("block_name"),
             "name",
             self.modified,
             "Enter the block name",
         )
-        self.block_description = ModuleText(
+        self.block_description = EntryText(
             find_obj("block_description"),
             "description",
             self.modified,
             "Enter the block description",
         )
-        self.block_size = ModuleHex(
+        self.block_size = EntryHex(
             find_obj("block_size"), "address_size", self.modified
         )
         self.block_notebook = find_obj("block_notebook")
@@ -601,10 +601,11 @@ class BlockDoc(BaseDoc):
 
         self.changing = True
         self.remove_pages()
-        if self.block:
+        if block:
             for page in block.doc_pages.get_page_names():
-                text = self.block.doc_pages.get_page(page)
-                self.add_page(page, text)
+                text = block.doc_pages.get_page(page)
+                if text is not None:
+                    self.add_page(page, text)
         self.changing = False
 
     def remove_page_from_doc(self, title: str):

@@ -17,6 +17,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""
+Top level tags
+"""
+
 from typing import Callable, Optional
 
 from gi.repository import Gtk
@@ -29,6 +33,8 @@ from regenerate.ui.parameter_list import ParameterList
 
 
 class TopLevelTab:
+    "Top level tabs"
+
     def __init__(
         self,
         find_obj: Callable,
@@ -56,19 +62,24 @@ class TopLevelTab:
             self.parameter_list,
             find_obj("top_param_add"),
             find_obj("top_param_remove"),
-            self.plist_modified,
+            self.param_list_modified,
         )
 
-    def plist_modified(self) -> None:
+    def param_list_modified(self) -> None:
+        "Callback to set the modified flag when the parameter list is modified"
         self.project_modified(True)
 
     def overrides_modified(self) -> None:
+        "Callback to set the modified flag when the overrides have modified"
         self.project_modified(True)
 
     def update(self) -> None:
+        "Update the block instance list"
         self.blkinst_list.update()
 
     def change_project(self, prj: RegProject) -> None:
+        "Change the project, updating the displays"
+
         self.prj = prj
         self.blkinst_model = InstMdl(prj)
         self.blkinst_list.set_model(self.blkinst_model)

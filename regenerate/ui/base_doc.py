@@ -20,23 +20,37 @@
 """
 Handle the module tab
 """
-
+import abc
 from typing import Dict, Optional
-from gi.repository import Gtk, Gdk
+from gi.repository import Gtk, Gdk, GtkSource
 from regenerate.db import RegProject
 from regenerate.ui.spell import Spell
 from regenerate.ui.utils import clean_format_if_needed
 from regenerate.ui.preview_editor import PreviewEditor
 from .textview import RstEditor
 
+
 class PageInfo:
-    def __init__(self, handler, textbuf, name):
+    "Holds the textbuffer"
+
+    def __init__(self, handler: int, textbuf: GtkSource.Buffer, name: str):
         self.handler = handler
         self.textbuf = textbuf
         self.name = name
 
 
 class BaseDoc:
+    """
+    Connects a set of SourceViews to pages in the passed notebook. The initial
+    notebook should be empty. Connects the buttons to add or delete pages
+    from the set.
+
+    This is an abstract class, and must be derived from in order to be able to
+    be used.
+    """
+
+    __metaclass__ = abc.ABCMeta
+
     def __init__(
         self,
         notebook: Gtk.Notebook,
@@ -46,18 +60,27 @@ class BaseDoc:
     ):
         self.notebook = notebook
         self.project: Optional[RegProject] = None
-        self.add_id = add_btn.connect("clicked", self.add_doc_page)
-        self.del_id = del_btn.connect("clicked", self.del_doc_page)
+        self.preview: Optional[PreviewEditor] = None
+        self.add_id = add_btn.connect(
+            "clicked", self._add_notebook_page_callback
+        )
+        self.del_id = del_btn.connect(
+            "clicked", self._delete_notebook_page_callback
+        )
         self.remove_pages()
-        self.name_2_textview: Dict[str, PageInfo] = {}
+        self.page_map: Dict[str, PageInfo] = {}
         self.callback = modified
 
-    def remove_pages(self):
+    def remove_pages(self) -> None:
+        "Removes all pages from the notebook"
+
         page_count = self.notebook.get_n_pages()
         for _ in range(0, page_count):
             self.notebook.remove_page(0)
 
-    def add_doc_page(self, _obj):
+    def _add_notebook_page_callback(self, _obj: Gtk.Button) -> None:
+        "GTK callback to adds page to the notebook"
+
         dialog = Gtk.Dialog(
             "New Documentation Category",
             None,
@@ -89,55 +112,68 @@ class BaseDoc:
             self.callback()
         dialog.destroy()
 
-    def del_doc_page(self, _obj):
+    def _delete_notebook_page_callback(self, _obj: Gtk.Button) -> None:
+        "GTK callback to deletes a page from the notebook"
+
         page = self.notebook.get_current_page()
         self.notebook.remove_page(page)
-        info = self.name_2_textview[page]
+        info = self.page_map[page]
 
         for i in range(page + 1, self.notebook.get_n_pages()):
-            self.name_2_textview[i] = self.name_2_textview[i + 1]
-        del self.name_2_textview[self.notebook.get_n_pages()]
+            self.page_map[i] = self.page_map[i + 1]
+        del self.page_map[self.notebook.get_n_pages()]
         self.remove_page_from_doc(info.name)
         self.callback()
 
-    def add_page(self, name, data):
+    def add_page(self, name: str, data: str) -> None:
+        """
+        Adds a page and creates a restructuredText editor associated with their
+        page name.
+        """
+
         paned = Gtk.VPaned()
-
-        scrolled_window = Gtk.ScrolledWindow()
-        paned.add1(scrolled_window)
-
-        scrolled_window2 = Gtk.ScrolledWindow()
-        paned.add2(scrolled_window2)
         paned.set_position(300)
 
-        text = RstEditor()
-        text.show()
-        buf = text.get_buffer()
-        scrolled_window.add(text)
+        edit_window = Gtk.ScrolledWindow()
+        paned.add1(edit_window)
 
-        self.preview = PreviewEditor(buf, scrolled_window2, False)
+        text_editor = self._create_text_editor()
+        edit_window.add(text_editor)
+
+        text_buffer = text_editor.get_buffer()
+        text_buffer.set_text(data)
+        handler = text_buffer.connect("changed", self._text_changed_callback)
+        Spell(text_buffer)
+
+        preview_window = Gtk.ScrolledWindow()
+        paned.add2(preview_window)
+        self.preview = PreviewEditor(text_buffer, preview_window, False)
         paned.show_all()
 
         page = self.notebook.append_page(paned, Gtk.Label(name))
+        self.page_map[page] = PageInfo(handler, text_buffer, name)
 
-        text.set_margin_left(10)
-        text.set_margin_right(10)
-        text.set_margin_top(10)
-        text.set_margin_bottom(10)
+    def _create_text_editor(self) -> RstEditor:
+        "Create the text editor and configure it"
 
-        handler = buf.connect("changed", self.on_changed)
+        text_editor = RstEditor()
+        text_editor.set_margin_left(10)
+        text_editor.set_margin_right(10)
+        text_editor.set_margin_top(10)
+        text_editor.set_margin_bottom(10)
+        text_editor.show()
+        return text_editor
 
-        self.name_2_textview[page] = PageInfo(handler, buf, name)
+    def _text_changed_callback(self, obj: GtkSource.Buffer):
+        """
+        A change to the text occurred. Grab the text, update the data and
+        update the display.
+        """
 
-        Spell(buf)
-        buf.set_text(data)
-
-    def on_changed(self, obj):
-        """A change to the text occurred"""
         new_text = obj.get_text(
             obj.get_start_iter(), obj.get_end_iter(), False
         )
-        info = self.name_2_textview[self.notebook.get_current_page()]
+        info = self.page_map[self.notebook.get_current_page()]
 
         self.update_page_from_doc(info.name, new_text)
         self.callback()
@@ -150,8 +186,18 @@ class BaseDoc:
             return True
         return False
 
-    def remove_page_from_doc(self, title):
-        ...
+    @abc.abstractmethod
+    def remove_page_from_doc(self, _title: str) -> None:
+        """
+        Removes a page from the class. Must be overriden by the derived
+        class.
+        """
+        return
 
-    def update_page_from_doc(self, title, text):
-        ...
+    @abc.abstractmethod
+    def update_page_from_doc(self, _title: str, _text: str) -> None:
+        """
+        Adds/Updates a page from the class. Must be overriden by the derived
+        class.
+        """
+        return

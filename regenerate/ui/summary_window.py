@@ -34,7 +34,7 @@ class SummaryWindow(BaseWindow):
     container = None
     button = None
 
-    def __init__(self, widgets, reg, regset_name, project, dbase):
+    def __init__(self, widgets, reg, _regset_name, project, dbase):
 
         super().__init__()
 

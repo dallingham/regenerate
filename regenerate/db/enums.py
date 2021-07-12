@@ -70,6 +70,21 @@ class OneShot(IntEnum):
     ON_TOGGLE = 4
 
 
+class ParamFunc(IntEnum):
+    """
+    Function modifier for parameters.
+
+    LOG2 - log2(Parameter)
+    POW2 - 2^(Parameter)
+    POW2M1 - 2^(Parameter-1)
+    """
+
+    NONE = 0
+    LOG2 = 1
+    POW2 = 2
+    POW2M1 = 3
+
+
 class ResetType(IntEnum):
     "Reset type"
 
