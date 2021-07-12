@@ -34,7 +34,7 @@ def save_json(data: Dict[str, Any], path: Path):
     try:
         with path.open("w") as ofile:
             ofile.write(
-                json.dumps(data, default=methodcaller("json"), indent=4)
+                json.dumps(data, default=methodcaller("json"))
             )
     except FileNotFoundError as msg:
         LOGGER.error(str(msg))

@@ -104,7 +104,7 @@ class RegProject:
 
         with new_path.open("w") as ofile:
             ofile.write(
-                json.dumps(self, default=methodcaller("json"), indent=4)
+                json.dumps(self, default=methodcaller("json"))
             )
         self.modified = False
 
