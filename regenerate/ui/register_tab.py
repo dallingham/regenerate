@@ -86,6 +86,11 @@ class RegSetWidgets:
         self.new_regset_button = find_obj("new_regset_button")
         self.add_regset_button = find_obj("add_regset_button")
         self.remove_regset_button = find_obj("remove_regset_button")
+        self.add_field_button = find_obj("add_field")
+        self.remove_field_button = find_obj("delete_field")
+        self.edit_field_button = find_obj("edit_field")
+        self.copy_reg_button = find_obj("copy_reg_button")
+        self.preview_button = find_obj("preview_button")
 
 
 class RegSetStatus:
@@ -291,6 +296,32 @@ class RegSetTab:
         )
         self.widgets.new_regset_button.connect(
             "clicked", self.new_regset_callback
+        )
+        self.widgets.add_field_button.connect(
+            "clicked",
+            self.add_bit_callback,
+        )
+        self.widgets.remove_field_button.connect(
+            "clicked",
+            self.remove_bit_callback,
+        )
+        self.widgets.edit_field_button.connect(
+            "clicked",
+            self.edit_bit_callback,
+        )
+        self.widgets.copy_reg_button.connect(
+            "clicked", self.duplicate_register_callback
+        )
+        self.widgets.no_sharing.connect("toggled", self.on_no_sharing_toggled)
+        self.widgets.read_access.connect(
+            "toggled", self.on_read_access_toggled
+        )
+        self.widgets.write_access.connect(
+            "toggled", self.on_write_access_toggled
+        )
+        self.widgets.preview_button.connect(
+            "clicked",
+            self.show_summary,
         )
 
     def filter_visible(self, visible):
@@ -588,7 +619,7 @@ class RegSetTab:
             self.set_register_warn_flags(register)
             self.set_modified()
 
-    def add_bit(self):
+    def add_bit_callback(self, _obj: Gtk.Button):
         register = self.get_selected_register()
         next_pos = register.find_next_unused_bit()
 
@@ -611,7 +642,7 @@ class RegSetTab:
         self.set_modified()
         self.set_register_warn_flags(register)
 
-    def remove_bit(self):
+    def remove_bit_callback(self, _obj: Gtk.Button):
         register = self.get_selected_register()
         row = self.bitfield_obj.get_selected_row()
         field = self.bit_model.get_bitfield_at_path(row[0])
@@ -621,7 +652,7 @@ class RegSetTab:
         self.set_register_warn_flags(register)
         self.set_modified()
 
-    def edit_bit(self):
+    def edit_bit_callback(self, _obj: Gtk.Button):
         register = self.get_selected_register()
         field = self.bitfield_obj.select_field()
         if field:
@@ -737,7 +768,7 @@ class RegSetTab:
                 cnt += 1
         return cnt > 1
 
-    def duplicate_register(self):
+    def duplicate_register_callback(self, _obj: Gtk.Button):
         reg = self.get_selected_register()
         if reg:
             reg_copy = duplicate_register(self.active, reg)
@@ -901,7 +932,7 @@ class RegSetTab:
         choose.show()
         return choose
 
-    def show_summary(self):
+    def show_summary(self, _obj: Gtk.Button) -> None:
         reg = self.get_selected_register()
 
         if reg:

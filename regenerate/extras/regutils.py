@@ -152,6 +152,6 @@ def build_new_name(name: str, reglist: Set[str]) -> str:
             index += 1
         return "".join([groups[0], str(index), groups[2]])
     index = 2
-    while "{name} {index}" in reglist:
+    while f"{name} {index}" in reglist:
         index += 1
-    return "{name} {index}"
+    return f"{name} {index}"

@@ -310,10 +310,6 @@ class MainWindow(BaseWindow):
         self.db_selected = self.build_group("database_selected", db_acn)
         self.field_selected = self.build_group("field_selected", fld_acn)
 
-    def on_summary_action_activate(self, _obj: Gtk.Action) -> None:
-        """Displays the summary window"""
-        self.reginst_tab.show_summary()
-
     def on_build_action_activate(self, _obj: Gtk.Action) -> None:
         Build(self.prj)
 
@@ -366,13 +362,6 @@ class MainWindow(BaseWindow):
         else:
             self.reg_selected.set_sensitive(False)
 
-    def selected_reg_changed(self, _obj):
-        """
-        GTK callback that checks the selected objects, and then enables the
-        appropriate buttons on the interface.
-        """
-        self.reginst_tab.selected_reg_changed(_obj)
-
     def set_modified(self) -> None:
         """
         Indicates that the database has been modified. The modified
@@ -386,32 +375,6 @@ class MainWindow(BaseWindow):
         Clears the modified tag in the status bar.
         """
         ...
-
-    def on_no_sharing_toggled(self, obj: Gtk.RadioButton) -> None:
-        "Called when the sharing button is toggled"
-        self.reginst_tab.on_no_sharing_toggled(obj)
-
-    def on_read_access_toggled(self, obj: Gtk.RadioButton) -> None:
-        self.reginst_tab.on_read_access_toggled(obj)
-
-    def on_write_access_toggled(self, obj) -> None:
-        self.reginst_tab.on_write_access_toggled(obj)
-
-    def on_add_bit_action_activate(self, _obj: Gtk.Action) -> None:
-        self.reginst_tab.add_bit()
-
-    def on_edit_field_clicked(self, _obj: Gtk.Button) -> None:
-        self.reginst_tab.edit_bit()
-
-    def on_remove_bit_action_activate(self, _obj: Gtk.Action) -> None:
-        self.reginst_tab.remove_bit()
-
-    def on_duplicate_register_action_activate(self, _obj: Gtk.Action) -> None:
-        """
-        Makes a copy of the current register, modifying the address, and
-        changing name and token
-        """
-        self.reginst_tab.duplicate_register()
 
     def create_file_selector(
         self,

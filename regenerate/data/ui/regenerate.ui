@@ -779,9 +779,8 @@
                                       </packing>
                                     </child>
                                     <child>
-                                      <object class="GtkButton">
+                                      <object class="GtkButton" id="copy_reg_button">
                                         <property name="label">gtk-copy</property>
-                                        <property name="related_action">duplicate_register_action</property>
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="receives_default">True</property>
@@ -795,10 +794,8 @@
                                       </packing>
                                     </child>
                                     <child>
-                                      <object class="GtkButton">
+                                      <object class="GtkButton" id="preview_button">
                                         <property name="label" translatable="yes">Preview</property>
-                                        <property name="use_action_appearance">False</property>
-                                        <property name="related_action">summary_action</property>
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="receives_default">True</property>
@@ -989,7 +986,6 @@
                                             <child>
                                               <object class="GtkButton" id="add_field">
                                                 <property name="label">gtk-add</property>
-                                                <property name="related_action">add_bit_action</property>
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="receives_default">True</property>
@@ -1026,7 +1022,6 @@
                                             <child>
                                               <object class="GtkButton" id="delete_field">
                                                 <property name="label">gtk-remove</property>
-                                                <property name="related_action">remove_bit_action</property>
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="receives_default">True</property>
@@ -1364,7 +1359,6 @@
                                             <property name="margin_bottom">6</property>
                                             <property name="draw_indicator">True</property>
                                             <property name="group">no_sharing</property>
-                                            <signal name="toggled" handler="on_write_access_toggled" swapped="no"/>
                                           </object>
                                           <packing>
                                             <property name="left_attach">0</property>
