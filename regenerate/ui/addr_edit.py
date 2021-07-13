@@ -189,8 +189,4 @@ class AddrMapEdit(BaseWindow):
     def get_list(self) -> List[str]:
         """Return the callback list"""
 
-        print(self.cb_list)
-        import traceback
-        traceback.print_stack()
-        
         return self.cb_list

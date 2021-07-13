@@ -383,7 +383,7 @@ class RegSetTab:
 
             self.modified_callback()
 
-    def enable_registers(self, value):
+    def enable_registers(self, value: bool) -> None:
         """
         Enables UI items when a database has been loaded. This includes
         enabling the register window, the register related buttons, and
@@ -396,7 +396,7 @@ class RegSetTab:
         else:
             self.widgets.reg_notebook.hide()
 
-    def new_regset(self, regset):
+    def new_regset(self, regset: RegisterDb) -> Gtk.TreeIter:
 
         node = self.reg_set_model.add_dbase(regset)
         self.reg_model = RegisterModel()
@@ -952,7 +952,7 @@ class RegSetTab:
     def show_preview_callback(self, _obj: Gtk.Button) -> None:
         reg = self.get_selected_register()
 
-        if reg:
+        if reg and self.active:
             SummaryWindow(
                 self.widgets, reg, self.active.name, self.project, self.active
             )
