@@ -266,11 +266,7 @@ class MainWindow(BaseWindow):
     def build_group(
         self, group_name: str, action_names: List[str]
     ) -> Gtk.ActionGroup:
-        group = Gtk.ActionGroup(group_name)
-        for name in action_names:
-            group.add_action(self.find_obj(name))
-        group.set_sensitive(False)
-        return group
+        return Gtk.ActionGroup(group_name)
 
     def build_actions(self) -> None:
         """

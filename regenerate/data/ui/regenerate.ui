@@ -2,19 +2,6 @@
 <!-- Generated with glade 3.22.2 -->
 <interface>
   <requires lib="gtk+" version="3.12"/>
-  <object class="GtkAction" id="add_bit_action">
-    <property name="label">_Add Bit Field</property>
-    <property name="short_label">_Add</property>
-    <property name="stock_id">gtk-add</property>
-    <signal name="activate" handler="on_add_bit_action_activate" swapped="no"/>
-  </object>
-  <object class="GtkAction" id="add_register_action">
-    <property name="label">_Add Register</property>
-    <property name="short_label">_Add</property>
-    <property name="stock_id">gtk-add</property>
-    <property name="icon_name">list-add</property>
-    <signal name="activate" handler="on_add_register_action_activate" swapped="no"/>
-  </object>
   <object class="GtkAction" id="add_set_action">
     <property name="label" translatable="yes">Add Register Set</property>
     <property name="short_label" translatable="yes">Add Set</property>
@@ -36,17 +23,6 @@
     <property name="short_label">Build</property>
     <property name="stock_id">gtk-convert</property>
     <signal name="activate" handler="on_build_action_activate" swapped="no"/>
-  </object>
-  <object class="GtkAction" id="duplicate_register_action">
-    <property name="label">_Duplicate Register</property>
-    <property name="short_label">_Duplicate</property>
-    <property name="stock_id">gtk-copy</property>
-    <signal name="activate" handler="on_duplicate_register_action_activate" swapped="no"/>
-  </object>
-  <object class="GtkAction" id="edit_bit_action">
-    <property name="label">_Edit Bit Field</property>
-    <property name="short_label">_Edit</property>
-    <property name="stock_id">gtk-edit</property>
   </object>
   <object class="GtkAction" id="help_action">
     <property name="label" translatable="yes">Help</property>
@@ -178,19 +154,6 @@
   </object>
   <object class="GtkTextBuffer" id="register_description_buffer"/>
   <object class="GtkTextBuffer" id="register_text_buffer"/>
-  <object class="GtkAction" id="remove_bit_action">
-    <property name="label">_Remove Bit Action</property>
-    <property name="short_label">_Remove</property>
-    <property name="stock_id">gtk-remove</property>
-    <signal name="activate" handler="on_remove_bit_action_activate" swapped="no"/>
-  </object>
-  <object class="GtkAction" id="remove_register_action">
-    <property name="label">_Remove Register</property>
-    <property name="short_label">_Remove</property>
-    <property name="stock_id">gtk-remove</property>
-    <property name="icon_name">list-remove</property>
-    <signal name="activate" handler="on_remove_register_action_activate" swapped="no"/>
-  </object>
   <object class="GtkAction" id="remove_set_action">
     <property name="label" translatable="yes">Remove Register Set</property>
     <property name="short_label" translatable="yes">Remove Set</property>
@@ -204,12 +167,6 @@
     <property name="label" translatable="yes">Save Project</property>
     <property name="short_label" translatable="yes">Save</property>
     <property name="stock_id">gtk-save</property>
-  </object>
-  <object class="GtkAction" id="summary_action">
-    <property name="label" translatable="yes">Display Register Summary</property>
-    <property name="tooltip" translatable="yes">Displays a summary of the selected register</property>
-    <property name="stock_id">gtk-file</property>
-    <signal name="activate" handler="on_summary_action_activate" swapped="no"/>
   </object>
   <object class="GtkWindow" id="summary_window">
     <property name="can_focus">False</property>
@@ -538,6 +495,7 @@
               <object class="GtkSeparatorToolItem">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="draw">False</property>
               </object>
               <packing>
                 <property name="expand">True</property>
@@ -763,9 +721,8 @@
                                     <property name="orientation">vertical</property>
                                     <property name="layout_style">start</property>
                                     <child>
-                                      <object class="GtkButton">
+                                      <object class="GtkButton" id="add_register_button">
                                         <property name="label">gtk-add</property>
-                                        <property name="related_action">add_register_action</property>
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="receives_default">True</property>
@@ -809,9 +766,8 @@
                                       </packing>
                                     </child>
                                     <child>
-                                      <object class="GtkButton">
+                                      <object class="GtkButton" id="remove_register_button">
                                         <property name="label">gtk-remove</property>
-                                        <property name="related_action">remove_register_action</property>
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="receives_default">True</property>
@@ -1004,14 +960,12 @@
                                             <child>
                                               <object class="GtkButton" id="edit_field">
                                                 <property name="label">gtk-edit</property>
-                                                <property name="related_action">edit_bit_action</property>
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="receives_default">True</property>
                                                 <property name="tooltip_text" translatable="yes">Edit the selected bit field</property>
                                                 <property name="use_underline">True</property>
                                                 <property name="use_stock">True</property>
-                                                <signal name="clicked" handler="on_edit_field_clicked" swapped="no"/>
                                               </object>
                                               <packing>
                                                 <property name="expand">True</property>
@@ -1325,7 +1279,6 @@
                                             <property name="margin_bottom">6</property>
                                             <property name="active">True</property>
                                             <property name="draw_indicator">True</property>
-                                            <signal name="toggled" handler="on_no_sharing_toggled" swapped="no"/>
                                           </object>
                                           <packing>
                                             <property name="left_attach">0</property>
@@ -1342,7 +1295,6 @@
                                             <property name="margin_bottom">6</property>
                                             <property name="draw_indicator">True</property>
                                             <property name="group">no_sharing</property>
-                                            <signal name="toggled" handler="on_read_access_toggled" swapped="no"/>
                                           </object>
                                           <packing>
                                             <property name="left_attach">0</property>

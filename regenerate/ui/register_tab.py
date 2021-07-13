@@ -91,6 +91,8 @@ class RegSetWidgets:
         self.edit_field_button = find_obj("edit_field")
         self.copy_reg_button = find_obj("copy_reg_button")
         self.preview_button = find_obj("preview_button")
+        self.add_reg_button = find_obj("add_register_button")
+        self.remove_reg_button = find_obj("remove_register_button")
 
 
 class RegSetStatus:
@@ -312,19 +314,28 @@ class RegSetTab:
         self.widgets.copy_reg_button.connect(
             "clicked", self.duplicate_register_callback
         )
-        self.widgets.no_sharing.connect("toggled", self.on_no_sharing_toggled)
+        self.widgets.no_sharing.connect("toggled", self.no_sharing_toggle_callback)
         self.widgets.read_access.connect(
-            "toggled", self.on_read_access_toggled
+            "toggled", self.read_access_toggle_callback
         )
         self.widgets.write_access.connect(
-            "toggled", self.on_write_access_toggled
+            "toggled", self.write_access_toggle_callback
         )
         self.widgets.preview_button.connect(
             "clicked",
-            self.show_summary,
+            self.show_preview_callback,
         )
+        self.widgets.add_reg_button.connect(
+            "clicked",
+            self.add_register_callback,
+        )
+        self.widgets.remove_reg_button.connect(
+            "clicked",
+            self.remove_register_callback,
+        )
+        
 
-    def filter_visible(self, visible):
+    def filter_visible(self, visible: bool) -> None:
         if visible:
             self.widgets.filter_obj.show()
         else:
@@ -596,7 +607,10 @@ class RegSetTab:
         else:
             self.widgets.write_access.set_active(True)
 
-    def remove_register(self):
+    def remove_register_callback(self, _obj: Gtk.Button) -> None:
+        self.remove_register()
+            
+    def remove_register(self) -> None:
         row = self.reglist_obj.get_selected_position()
         reg = self.get_selected_register()
         if reg:
@@ -605,7 +619,10 @@ class RegSetTab:
             self.reglist_obj.select_row(row)
             self.set_modified()
 
-    def new_register(self):
+    def add_register_callback(self, _obj: Gtk.Button) -> None:
+        self.new_register()
+            
+    def new_register(self) -> None:
         register = Register()
         dbase = self.active
         register.width = dbase.ports.data_bus_width
@@ -714,7 +731,7 @@ class RegSetTab:
             warn = False
         self.widgets.mod_descr_warn.set_property("visible", warn)
 
-    def on_no_sharing_toggled(self, obj):
+    def no_sharing_toggle_callback(self, obj):
         if obj.get_active():
             register = self.get_selected_register()
 
@@ -729,7 +746,7 @@ class RegSetTab:
                 self.set_modified()
             self.bitfield_obj.set_mode(register.share)
 
-    def on_read_access_toggled(self, obj):
+    def read_access_toggle_callback(self, obj):
         if obj.get_active():
             register = self.get_selected_register()
 
@@ -745,7 +762,7 @@ class RegSetTab:
                 LOGGER.error("All bits in the register must be read only")
             self.bitfield_obj.set_mode(register.share)
 
-    def on_write_access_toggled(self, obj):
+    def write_access_toggle_callback(self, obj):
         if obj.get_active():
             register = self.get_selected_register()
 
@@ -932,7 +949,7 @@ class RegSetTab:
         choose.show()
         return choose
 
-    def show_summary(self, _obj: Gtk.Button) -> None:
+    def show_preview_callback(self, _obj: Gtk.Button) -> None:
         reg = self.get_selected_register()
 
         if reg:
