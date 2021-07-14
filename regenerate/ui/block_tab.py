@@ -220,11 +220,11 @@ class BlockTab:
             ...
 
     def hdl_path_changed(self, _cell, path, new_text, col):
-        reg_name = self.regmodel[int(path)][0]
+        reg_inst = self.regmodel[int(path)][-1]
         self.regmodel[int(path)][col] = new_text
         self.block.modified = True
         for rset in self.block.regset_insts:
-            if rset.name == reg_name:
+            if rset.uuid == reg_inst.uuid:
                 rset.hdl = new_text
         self.modified()
 

@@ -525,9 +525,13 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
         for (int i = 0; i < {{regset_inst.repeat.resolve()}}; i++) begin
            {{regset_inst.name}}[i] = new($sformatf("{{regset_inst.name}}[%0d]", i));
       {% if regset_inst.hdl: %}
+      	 {% if '%' in regset_inst.hdl %}
            {{regset_inst.name}}[i].configure(this, $sformatf("{{regset_inst.hdl}}", i));
+	 {% else %}
+           {{regset_inst.name}}[i].configure(this, "{{regset_inst.hdl}}");
+	 {% endif %}
       {% else %}
-           {{regset_inst.name}}[i].configure(this, "");
+           {{regset_inst.name}}[i].configure(this);
       {% endif %}
       
       {% for item in group_maps[grp] %}
@@ -554,6 +558,7 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
       {% endfor %}
         end
     {% else %}
+    //DNA {{regset_inst.name}} {{regset_inst.hdl}}
         {{regset_inst.name}} = new("{{regset_inst.name}}");
         {{regset_inst.name}}.configure(this, "{{regset_inst.hdl}}");
 	
@@ -642,8 +647,12 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
 
         foreach ({{grp.name}}[i]) begin
            {{grp.name}}[i] = new($sformatf("{{grp.name}}[%0d]", i));
-    {% if grp.hdl %}
-           {{grp.name}}[i].configure(this, $sformatf("{{grp.hdl}}", i));
+    {% if grp.hdl_path %}
+      {% if '%' in grp.hdl_path %}
+           {{grp.name}}[i].configure(this, $sformatf("{{grp.hdl_path}}", i));
+      {% else %}
+           {{grp.name}}[i].configure(this, "{{grp.hdl_path}}");
+      {% endif %}
     {% else %}
            {{grp.name}}[i].configure(this);
     {% endif %}
