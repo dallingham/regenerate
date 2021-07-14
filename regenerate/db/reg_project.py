@@ -209,7 +209,6 @@ class RegProject:
 
         self.regsets[regset.uuid] = regset
         self._filelist.append(path)
-        print(self.regsets, self._filelist)
 
     def add_register_set(self, path: Path) -> None:
         """

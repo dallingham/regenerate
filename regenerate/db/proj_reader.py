@@ -204,7 +204,7 @@ class ProjectReader:
         Called when the documentation XML tag is encountered. Assigns the
         current text string to the documentation variable
         """
-        self.prj.doc_pages.update_page("Overview", text)
+        self.prj.doc_pages.update_page("Overview", text, ["Confidential"])
 
     def end_overview(self, text: str) -> None:
         """
@@ -213,7 +213,7 @@ class ProjectReader:
         """
         if self.current_group:
             self.current_group.docs = text
-        self.new_block.doc_pages.update_page("Overview", text)
+        self.new_block.doc_pages.update_page("Overview", text, ["Confidential"])
 
     def start_map_group(self, attrs: Dict[str, str]) -> None:
         """
@@ -340,10 +340,16 @@ class ProjectReader:
         name2id = {
             regset.name: regset.uuid for regset in self.prj.regsets.values()
         }
+        for rset in self.prj.regsets.values():
+            name2id[rset.filename.stem] = rset.uuid
+            
 
         for blk in self.id_to_block.values():
             for reg_inst in blk.regset_insts:
                 if reg_inst.name in name2id:
                     reg_inst.regset_id = name2id[reg_inst.name]
-                else:
+                elif reg_inst.regset_id in name2id:
                     reg_inst.regset_id = name2id[reg_inst.regset_id]
+                else:
+                    LOGGER.error("Could not find mapping for %s", reg_inst.regset_id)
+                        

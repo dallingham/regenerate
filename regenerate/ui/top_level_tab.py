@@ -18,7 +18,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
-Top level tags
+Top level tabxs
 """
 
 from typing import Callable, Optional
@@ -26,10 +26,10 @@ from typing import Callable, Optional
 from gi.repository import Gtk
 
 from regenerate.db import BlockInst, RegProject, Block
-from regenerate.ui.instance_list import InstMdl, InstanceList
-from regenerate.ui.enums import InstCol
-from regenerate.ui.param_overrides import OverridesList
-from regenerate.ui.parameter_list import ParameterList
+from .instance_list import InstMdl, InstanceList
+from .enums import InstCol
+from .param_overrides import OverridesList
+from .parameter_list import ParameterList
 
 
 class TopLevelTab:
