@@ -21,7 +21,7 @@
 Manages document pages, which are simply name to string dictionaries.
 """
 
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 
 
 class DocPages:
@@ -31,11 +31,11 @@ class DocPages:
     """
 
     def __init__(self):
-        self.pages: Dict[str, str] = {}
+        self.pages: Dict[str, Tuple[str, List[str]]] = {}
 
-    def update_page(self, name: str, text: str) -> None:
+    def update_page(self, name: str, text: str, tags: List[str]) -> None:
         "Adds or updates the page specified by the name"
-        self.pages[name] = text
+        self.pages[name] = (text, tags)
 
     def remove_page(self, name: str) -> None:
         "Removes the page with the specified name"
@@ -46,7 +46,7 @@ class DocPages:
         "Returns a list of the page names"
         return list(self.pages.keys())
 
-    def get_page(self, name: str) -> Optional[str]:
+    def get_page(self, name: str) -> Optional[Tuple[str, List[str]]]:
         "Get the page associated with the name"
         return self.pages.get(name)
 
@@ -56,4 +56,9 @@ class DocPages:
 
     def json_decode(self, data: Dict[str, Any]) -> None:
         "Decode the JSON data"
-        self.pages = data
+        self.pages = {}
+        for page in data:
+            if type(data[page]) == str:
+                self.pages[page] = (data[page], ["Confidential"])
+            else:
+                self.pages[page] = (data[page][0], data[page][1])

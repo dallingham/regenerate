@@ -57,7 +57,7 @@ class Block(NameBase):
         self.address_size = address_size
         self.description = description
         self.doc_pages = DocPages()
-        self.doc_pages.update_page("Overview", "")
+        self.doc_pages.update_page("Overview", "", ["Confidential"])
         self.reader_class = None
 
         self.regset_insts: List[RegisterInst] = []

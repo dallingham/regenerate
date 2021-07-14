@@ -71,7 +71,7 @@ class RegProject:
         self.short_name = "unnamed"
         self.name = "unnamed"
         self.doc_pages = DocPages()
-        self.doc_pages.update_page("Overview", "")
+        self.doc_pages.update_page("Overview", "", ["Confidential"])
         self.company_name = ""
         self.access_map = nested_dict(3, int)
         self.finder = RegsetFinder()
@@ -103,9 +103,7 @@ class RegProject:
         Container.block_data_path = str(new_path.parent)
 
         with new_path.open("w") as ofile:
-            ofile.write(
-                json.dumps(self, default=methodcaller("json"))
-            )
+            ofile.write(json.dumps(self, default=methodcaller("json")))
         self.modified = False
 
         for blkid in self.blocks:
@@ -455,7 +453,7 @@ class RegProject:
         if page_names:
             page = self.doc_pages.get_page(page_names[0])
             if page:
-                return page
+                return page[0]
         return ""
 
     def json(self) -> Dict[str, Any]:

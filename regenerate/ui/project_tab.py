@@ -22,10 +22,9 @@ Handle the module tab
 """
 
 from gi.repository import Gtk, Gdk
-from typing import Callable
+from typing import Callable, List
 
 from regenerate.db import RegProject
-from regenerate.ui.utils import clean_format_if_needed
 from regenerate.ui.base_doc import BaseDoc
 from .entry import EntryText, EntryWord
 
@@ -117,6 +116,8 @@ class ProjectDoc(BaseDoc):
         if not self.changing and self.project:
             self.project.doc_pages.remove_page(title)
 
-    def update_page_from_doc(self, title: str, text: str) -> None:
+    def update_page_from_doc(
+        self, title: str, text: str, tags: List[str]
+    ) -> None:
         if not self.changing and self.project:
-            self.project.doc_pages.update_page(title, text)
+            self.project.doc_pages.update_page(title, text, tags)

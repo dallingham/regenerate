@@ -21,7 +21,7 @@ Provides the edit dialog that allows the user to edit the bit field
 information.
 """
 
-from typing import List, Tuple, Callable
+from typing import List, Tuple, Callable, Optional
 
 from gi.repository import Gtk
 from regenerate.db import BlockInst, RegProject
@@ -138,7 +138,9 @@ class AddrMapEdit(BaseWindow):
         for val in subsystem_list:
             blk_inst, active = val
             title = blk_inst.name
-            top = self.model.append(None, row=(active, title, "", None, blk_inst))
+            top = self.model.append(
+                None, row=(active, title, "", None, blk_inst)
+            )
             blk = self.project.blocks[blk_inst.blkid]
             for item in blk.regsets.values():
                 access = self.project.get_access(
@@ -186,7 +188,7 @@ class AddrMapEdit(BaseWindow):
         )
         self.callback()
 
-    def get_list(self) -> List[str]:
+    def get_list(self) -> Optional[List[str]]:
         """Return the callback list"""
 
         return self.cb_list

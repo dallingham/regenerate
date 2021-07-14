@@ -314,7 +314,9 @@ class RegSetTab:
         self.widgets.copy_reg_button.connect(
             "clicked", self.duplicate_register_callback
         )
-        self.widgets.no_sharing.connect("toggled", self.no_sharing_toggle_callback)
+        self.widgets.no_sharing.connect(
+            "toggled", self.no_sharing_toggle_callback
+        )
         self.widgets.read_access.connect(
             "toggled", self.read_access_toggle_callback
         )
@@ -333,7 +335,6 @@ class RegSetTab:
             "clicked",
             self.remove_register_callback,
         )
-        
 
     def filter_visible(self, visible: bool) -> None:
         if visible:
@@ -609,11 +610,11 @@ class RegSetTab:
 
     def remove_register_callback(self, _obj: Gtk.Button) -> None:
         self.remove_register()
-            
+
     def remove_register(self) -> None:
         row = self.reglist_obj.get_selected_position()
         reg = self.get_selected_register()
-        if reg:
+        if reg and self.active:
             self.reglist_obj.delete_selected_node()
             self.active.delete_register(reg)
             self.reglist_obj.select_row(row)
@@ -621,13 +622,14 @@ class RegSetTab:
 
     def add_register_callback(self, _obj: Gtk.Button) -> None:
         self.new_register()
-            
+
     def new_register(self) -> None:
-        register = Register()
         dbase = self.active
-        register.width = dbase.ports.data_bus_width
-        register.address = calculate_next_address(dbase, register.width)
-        self.insert_new_register(register)
+        if dbase:
+            register = Register()
+            register.width = dbase.ports.data_bus_width
+            register.address = calculate_next_address(dbase, register.width)
+            self.insert_new_register(register)
 
     def insert_new_register(self, register):
         if self.widgets.notebook.get_current_page() == 0:
@@ -672,7 +674,7 @@ class RegSetTab:
     def edit_bit_callback(self, _obj: Gtk.Button):
         register = self.get_selected_register()
         field = self.bitfield_obj.select_field()
-        if field:
+        if field and self.active:
             BitFieldEditor(
                 self.active,
                 register,
@@ -787,7 +789,7 @@ class RegSetTab:
 
     def duplicate_register_callback(self, _obj: Gtk.Button):
         reg = self.get_selected_register()
-        if reg:
+        if reg and self.active:
             reg_copy = duplicate_register(self.active, reg)
             self.reglist_obj.add_new_register(reg_copy)
             self.active.add_register(reg_copy)
@@ -839,7 +841,7 @@ class RegSetTab:
         Creates a new database, and initializes the interface.
         """
         name = self.get_new_filename()
-        if not name:
+        if not name or not self.project:
             return
 
         name = Path(name).with_suffix(REG_EXT)
@@ -898,14 +900,15 @@ class RegSetTab:
         if response == Gtk.ResponseType.OK:
             for filename in choose.get_filenames():
 
-                name = Path(filename)
-                dbase = RegisterDb(name)
-                dbase.filename = name
-                dbase.modified = True
+                if self.project:
+                    name = Path(filename)
+                    dbase = RegisterDb(name)
+                    dbase.filename = name
+                    dbase.modified = True
 
-                self.project.new_register_set(dbase, name)
-                node = self.new_regset(dbase)
-                self.reg_set_obj.select(node)
+                    self.project.new_register_set(dbase, name)
+                    node = self.new_regset(dbase)
+                    self.reg_set_obj.select(node)
                 # self.set_project_modified()
         choose.destroy()
 

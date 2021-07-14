@@ -23,7 +23,7 @@ Project model and list
 
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango
 from regenerate.settings.paths import INSTALL_PATH
 from regenerate.db import RegisterInst, Block, BLK_EXT
@@ -612,6 +612,6 @@ class BlockDoc(BaseDoc):
         if self.block is not None:
             self.block.doc_pages.remove_page(title)
 
-    def update_page_from_doc(self, title: str, text: str):
+    def update_page_from_doc(self, title: str, text: str, tags: List[str]):
         if not self.changing and self.block is not None:
-            self.block.doc_pages.update_page(title, text)
+            self.block.doc_pages.update_page(title, text, tags)

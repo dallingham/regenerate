@@ -21,7 +21,7 @@
 Handle the module tab
 """
 import abc
-from typing import Dict, Optional
+from typing import Dict, Optional, List, Tuple, Callable
 from gi.repository import Gtk, Gdk, GtkSource
 from regenerate.db import RegProject
 from regenerate.ui.spell import Spell
@@ -33,7 +33,14 @@ from .textview import RstEditor
 class PageInfo:
     "Holds the textbuffer"
 
-    def __init__(self, handler: int, textbuf: GtkSource.Buffer, name: str):
+    def __init__(
+        self,
+        handler: int,
+        textbuf: GtkSource.Buffer,
+        name: str,
+        tags: List[str],
+    ):
+        self.tags = tags
         self.handler = handler
         self.textbuf = textbuf
         self.name = name
@@ -54,7 +61,7 @@ class BaseDoc:
     def __init__(
         self,
         notebook: Gtk.Notebook,
-        modified,
+        modified: Callable,
         add_btn: Gtk.Button,
         del_btn: Gtk.Button,
     ):
@@ -68,7 +75,7 @@ class BaseDoc:
             "clicked", self._delete_notebook_page_callback
         )
         self.remove_pages()
-        self.page_map: Dict[str, PageInfo] = {}
+        self.page_map: List[PageInfo] = []
         self.callback = modified
 
     def remove_pages(self) -> None:
@@ -107,8 +114,8 @@ class BaseDoc:
         res = dialog.run()
         if res == Gtk.ResponseType.ACCEPT:
             title = name.get_text()
-            self.add_page(title, "")
-            self.update_page_from_doc(title, "")
+            self.add_page(title, ("", ["Confidential"]))
+            self.update_page_from_doc(title, "", ["Confidential"])
             self.callback()
         dialog.destroy()
 
@@ -125,7 +132,7 @@ class BaseDoc:
         self.remove_page_from_doc(info.name)
         self.callback()
 
-    def add_page(self, name: str, data: str) -> None:
+    def add_page(self, name: str, data: Tuple[str, List[str]]) -> None:
         """
         Adds a page and creates a restructuredText editor associated with their
         page name.
@@ -141,7 +148,7 @@ class BaseDoc:
         edit_window.add(text_editor)
 
         text_buffer = text_editor.get_buffer()
-        text_buffer.set_text(data)
+        text_buffer.set_text(data[0])
         handler = text_buffer.connect("changed", self._text_changed_callback)
         Spell(text_buffer)
 
@@ -151,7 +158,7 @@ class BaseDoc:
         paned.show_all()
 
         page = self.notebook.append_page(paned, Gtk.Label(name))
-        self.page_map[page] = PageInfo(handler, text_buffer, name)
+        self.page_map.append(PageInfo(handler, text_buffer, name, data[1]))
 
     def _create_text_editor(self) -> RstEditor:
         "Create the text editor and configure it"
@@ -161,6 +168,7 @@ class BaseDoc:
         text_editor.set_margin_right(10)
         text_editor.set_margin_top(10)
         text_editor.set_margin_bottom(10)
+        text_editor.connect("key_press_event", self.on_key_press_event)
         text_editor.show()
         return text_editor
 
@@ -175,10 +183,10 @@ class BaseDoc:
         )
         info = self.page_map[self.notebook.get_current_page()]
 
-        self.update_page_from_doc(info.name, new_text)
+        self.update_page_from_doc(info.name, new_text, info.tags)
         self.callback()
 
-    def on_key_press_event(self, obj, event):
+    def on_key_press_event(self, obj: RstEditor, event: Gdk.EventKey) -> bool:
         """Look for the F12 key"""
         if event.keyval == Gdk.KEY_F12:
             if clean_format_if_needed(obj):
@@ -195,7 +203,9 @@ class BaseDoc:
         return
 
     @abc.abstractmethod
-    def update_page_from_doc(self, _title: str, _text: str) -> None:
+    def update_page_from_doc(
+        self, _title: str, _text: str, tags: List[str]
+    ) -> None:
         """
         Adds/Updates a page from the class. Must be overriden by the derived
         class.
