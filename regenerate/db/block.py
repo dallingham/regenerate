@@ -67,6 +67,9 @@ class Block(NameBase):
         self.parameters = ParameterContainer()
         self.overrides: List[Overrides] = []
 
+    def get_regset_insts(self) -> List[RegisterInst]:
+        return self.regset_insts
+        
     @property
     def filename(self) -> Path:
         "Returns the filename as a path"

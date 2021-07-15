@@ -23,7 +23,7 @@ Provides both the GTK ListStore and ListView for the bit fields.
 import re
 from gi.repository import Gtk
 
-from regenerate.db import TYPES, LOGGER, ResetType
+from regenerate.db import TYPES, LOGGER, ResetType, ParamValue 
 from regenerate.ui.columns import (
     EditableColumn,
     MenuEditColumn,
@@ -401,7 +401,7 @@ class BitList:
 
         used = set()
         for fld in register.get_bit_fields():
-            if fld != field:
+            if fld.uuid != field.uuid:
                 for bit in range(fld.lsb, fld.msb.resolve() + 1):
                     used.add(bit)
 
@@ -442,8 +442,9 @@ class BitList:
                 return
             field.msb.is_parameter = False
             field.msb.offset = 0
-            field.msb.value = int(new_text, 0)
-            self.__model[path][BitCol.MSB] = f"{field.msb.value}"
+            
+            field.msb.set_int(int(new_text, 0))
+            self.__model[path][BitCol.MSB] = f"{field.msb.int_str()}"
         except ValueError:
             ...
 
