@@ -43,7 +43,7 @@ class InstMdl(Gtk.TreeStore):
 
     def __null_callback(self):
         """Does nothing, should be overridden"""
-        pass
+        return
 
     def change_id(self, path, text):
         """
@@ -226,7 +226,7 @@ class InstanceList:
                         self.col_value(child, InstCol.INST),
                         self.col_value(child, InstCol.SORT),
                         int(self.col_value(child, InstCol.RPT)),
-                        int(self.col_value(child, InstCol.OFF), 16),
+                        int(self.col_value(child, InstCol.BASE), 16),
                         self.col_value(child, InstCol.HDL),
                         cobj.no_uvm,
                         cobj.no_decode,
@@ -268,7 +268,7 @@ class InstanceList:
         for blk_inst in block_insts:
             block = self.__project.blocks[blk_inst.blkid]
             self.need_subsystem = False
-            node = self.__model.append(
+            self.__model.append(
                 None,
                 row=build_row_data(
                     blk_inst.name,

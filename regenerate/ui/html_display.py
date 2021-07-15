@@ -52,9 +52,6 @@ except ValueError:
 class HtmlDisplay(webkit.WebView):
     """Wrapper interface for WebKit"""
 
-    def __init__(self):
-        super().__init__()
-
     def show_html(self, data):
         """Shows the HTML using either Webkit 4.0 or 3.0"""
 

@@ -213,7 +213,9 @@ class ProjectReader:
         """
         if self.current_group:
             self.current_group.docs = text
-        self.new_block.doc_pages.update_page("Overview", text, ["Confidential"])
+        self.new_block.doc_pages.update_page(
+            "Overview", text, ["Confidential"]
+        )
 
     def start_map_group(self, attrs: Dict[str, str]) -> None:
         """
@@ -342,7 +344,6 @@ class ProjectReader:
         }
         for rset in self.prj.regsets.values():
             name2id[rset.filename.stem] = rset.uuid
-            
 
         for blk in self.id_to_block.values():
             for reg_inst in blk.regset_insts:
@@ -351,5 +352,6 @@ class ProjectReader:
                 elif reg_inst.regset_id in name2id:
                     reg_inst.regset_id = name2id[reg_inst.regset_id]
                 else:
-                    LOGGER.error("Could not find mapping for %s", reg_inst.regset_id)
-                        
+                    LOGGER.error(
+                        "Could not find mapping for %s", reg_inst.regset_id
+                    )

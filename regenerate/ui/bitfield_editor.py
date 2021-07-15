@@ -47,7 +47,7 @@ from regenerate.ui.highlight import highlight_text
 from regenerate.writers.verilog_reg_def import REG
 
 
-def modified(func):
+def modified(func: Callable):
     """Decorator to set modified values"""
 
     def modify_value(self, obj):
@@ -186,65 +186,65 @@ class BitFieldEditor(BaseWindow):
 
         self.control_obj.set_text(self.bit_field.control_signal)
 
-    def on_help_clicked(self, _obj):
+    def on_help_clicked(self, _obj: Gtk.Button) -> None:
         "Display the help window"
         HelpWindow(self.top_builder, "bitfield_value_help.rst")
 
-    def on_property_help_clicked(self, _obj):
+    def on_property_help_clicked(self, _obj: Gtk.Button) -> None:
         "Display the help window"
         HelpWindow(self.top_builder, "bitfield_signal_prop_help.rst")
 
-    def on_signal_help_clicked(self, _obj):
+    def on_signal_help_clicked(self, _obj: Gtk.Button) -> None:
         "Display the help window"
         HelpWindow(self.top_builder, "bitfield_signal_help.rst")
 
-    def _set_field_value(self, val, obj):
+    def _set_field_value(self, val: str, obj) -> None:
         "Sets the field value"
         setattr(self.bit_field, val, obj.get_active())
 
-    def _set_flag_value(self, val, obj):
+    def _set_flag_value(self, val: str, obj) -> None:
         "Sets the field value"
         setattr(self.bit_field.flag, val, obj.get_active())
 
     @modified
-    def on_output_changed(self, obj):
+    def on_output_changed(self, obj: Gtk.Entry) -> None:
         "Called with the output signal changed"
         self.bit_field.output_signal = obj.get_text()
         self.check_data()
 
     @modified
-    def on_input_changed(self, obj):
+    def on_input_changed(self, obj: Gtk.Entry) -> None:
         "Called with the input signal changed"
         self.bit_field.input_signal = obj.get_text()
         self.check_data()
 
     @modified
-    def on_volatile_changed(self, obj):
+    def on_volatile_changed(self, obj: Gtk.ToggleButton) -> None:
         "Called with the volatile flag changed"
         self._set_flag_value("volatile", obj)
 
     @modified
-    def on_random_toggled(self, obj):
+    def on_random_toggled(self, obj: Gtk.ToggleButton) -> None:
         "Called with the random flag changed"
         self._set_flag_value("can_randomize", obj)
 
     @modified
-    def on_error_bit_toggled(self, obj):
+    def on_error_bit_toggled(self, obj: Gtk.ToggleButton) -> None:
         "Called with the error field flag changed"
         self._set_flag_value("is_error_field", obj)
 
     @modified
-    def on_static_toggled(self, obj):
+    def on_static_toggled(self, obj: Gtk.ToggleButton) -> None:
         "Called with the static flag changed"
         self._set_field_value("output_is_static", obj)
 
     @modified
-    def on_control_changed(self, obj):
+    def on_control_changed(self, obj: Gtk.Entry) -> None:
         "Called with the control signal changed"
         self.bit_field.control_signal = obj.get_text()
         self.check_data()
 
-    def on_add_clicked(self, _obj):
+    def on_add_clicked(self, _obj: Gtk.Button) -> None:
         """
         Called with the add button is clicked. Search the existing values
         in the list, finding the next highest value to use as the default.

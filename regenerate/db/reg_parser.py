@@ -214,6 +214,7 @@ class RegParser:
         self.__reg = Register()
         self.__reg.flags.do_not_generate_code = cnv_bool(attrs, "nocode")
         self.__reg.flags.do_not_test = cnv_bool(attrs, "dont_test")
+        self.__reg.flags.do_not_reset_test = self.__reg.flags.do_not_test
         self.__reg.flags.do_not_cover = cnv_bool(attrs, "dont_cover")
         self.__reg.flags.do_not_use_uvm = cnv_bool(attrs, "dont_use_uvm")
         self.__reg.flags.hide = cnv_bool(attrs, "hide")

@@ -21,7 +21,7 @@
 Handle the module tab
 """
 import abc
-from typing import Dict, Optional, List, Tuple, Callable
+from typing import Optional, List, Tuple, Callable
 from gi.repository import Gtk, Gdk, GtkSource
 from regenerate.db import RegProject
 from regenerate.ui.spell import Spell
@@ -157,7 +157,7 @@ class BaseDoc:
         self.preview = PreviewEditor(text_buffer, preview_window, False)
         paned.show_all()
 
-        page = self.notebook.append_page(paned, Gtk.Label(name))
+        self.notebook.append_page(paned, Gtk.Label(name))
         self.page_map.append(PageInfo(handler, text_buffer, name, data[1]))
 
     def _create_text_editor(self) -> RstEditor:

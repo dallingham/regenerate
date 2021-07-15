@@ -58,7 +58,7 @@ class DocPages:
         "Decode the JSON data"
         self.pages = {}
         for page in data:
-            if type(data[page]) == str:
+            if isinstance(data[page], str):
                 self.pages[page] = (data[page], ["Confidential"])
             else:
                 self.pages[page] = (data[page][0], data[page][1])

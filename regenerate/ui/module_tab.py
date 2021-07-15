@@ -21,8 +21,9 @@
 Handle the module tab
 """
 
-from gi.repository import Gtk, Gdk
 from typing import Callable, List
+
+from gi.repository import Gdk
 
 from regenerate.ui.utils import clean_format_if_needed
 from regenerate.ui.preview_editor import PreviewEditor

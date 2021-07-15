@@ -124,7 +124,6 @@ class AddrMapList:
                 '"%s" has already been used as an address map name', new_text
             )
         else:
-            name = self._model[path][AddrCol.NAME]
             self._prj.change_address_map_name(map_obj.uuid, new_text)
             self._model[path][AddrCol.NAME] = new_text
             self._callback()
@@ -134,7 +133,7 @@ class AddrMapList:
         _cell: Gtk.CellRendererText,
         path: str,
         new_text: str,
-        col: AddrCol,
+        _col: AddrCol,
     ) -> None:
         """
         Called when the base address field is changed.

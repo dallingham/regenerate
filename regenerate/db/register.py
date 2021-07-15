@@ -22,7 +22,7 @@ Provides the register description. Contains the general information about the
 register, including the list of bit fields.
 """
 
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Any, Union
 from .name_base import NameBase
 from .enums import ResetType, ShareType
 from .bitfield import BitField
@@ -40,6 +40,7 @@ class RegisterFlags:
         "_do_not_generate_code",
         "_do_not_cover",
         "_do_not_test",
+        "_do_not_reset_test",
         "_hide",
     )
 
@@ -48,7 +49,18 @@ class RegisterFlags:
         self._do_not_generate_code = False
         self._do_not_cover = False
         self._do_not_test = False
+        self._do_not_reset_test = False
         self._hide = False
+
+    def __str__(self) -> str:
+        return (
+            f"RegisterFlags(uvm={self._do_not_use_uvm}, "
+            f"code={self._do_not_generate_code},"
+            f"cover={self._do_not_cover},"
+            f"test={self._do_not_test},"
+            f"reset={self._do_not_reset_test},"
+            f"hide={self._hide})"
+        )
 
     @property
     def hide(self) -> bool:
@@ -59,7 +71,7 @@ class RegisterFlags:
         return self._hide
 
     @hide.setter
-    def hide(self, val: bool) -> None:
+    def hide(self, val: Union[int, bool]) -> None:
         """
         Sets the __hide flag. This cannot be accessed directly, but only
         via the property 'hide'
@@ -75,7 +87,7 @@ class RegisterFlags:
         return self._do_not_generate_code
 
     @do_not_generate_code.setter
-    def do_not_generate_code(self, val: bool) -> None:
+    def do_not_generate_code(self, val: Union[int, bool]) -> None:
         """
         Sets the __do_not_generate_code flag. This cannot be accessed
         directly, but only via the property 'do_not_generate_code'
@@ -91,7 +103,7 @@ class RegisterFlags:
         return self._do_not_use_uvm
 
     @do_not_use_uvm.setter
-    def do_not_use_uvm(self, val: bool) -> None:
+    def do_not_use_uvm(self, val: Union[int, bool]) -> None:
         """
         Sets the __do_not_use_uvm flag. This cannot be accessed
         directly, but only via the property 'do_not_use_uvm'
@@ -107,12 +119,29 @@ class RegisterFlags:
         return self._do_not_test
 
     @do_not_test.setter
-    def do_not_test(self, val: bool) -> None:
+    def do_not_test(self, val: Union[int, bool]) -> None:
         """
         Sets the __do_not_test flag. This cannot be accessed
         directly, but only via the property 'do_not_test'
         """
         self._do_not_test = bool(val)
+
+    @property
+    def do_not_reset_test(self) -> bool:
+        """
+        Returns the value of the _do_not_reset_test flag. This
+        cannot be accessed directly, but only via the property
+        'do_not_reset_test'
+        """
+        return self._do_not_reset_test
+
+    @do_not_reset_test.setter
+    def do_not_reset_test(self, val: Union[int, bool]) -> None:
+        """
+        Sets the __do_not_reset_test flag. This cannot be accessed
+        directly, but only via the property 'do_not_reset_test'
+        """
+        self._do_not_reset_test = bool(val)
 
     @property
     def do_not_cover(self) -> bool:
@@ -123,7 +152,7 @@ class RegisterFlags:
         return self._do_not_cover
 
     @do_not_cover.setter
-    def do_not_cover(self, val: bool) -> None:
+    def do_not_cover(self, val: Union[int, bool]) -> None:
         """
         Sets the __do_not_cover flag. This cannot be accessed
         directly, but only via the property 'do_not_cover'
@@ -137,6 +166,7 @@ class RegisterFlags:
             "do_not_generate_code": self._do_not_generate_code,
             "do_not_cover": self._do_not_cover,
             "do_not_test": self._do_not_test,
+            "do_not_reset_test": self._do_not_reset_test,
             "hide": self._hide,
         }
 
@@ -146,6 +176,9 @@ class RegisterFlags:
         self._do_not_generate_code = data["do_not_generate_code"]
         self._do_not_cover = data["do_not_cover"]
         self._do_not_test = data["do_not_test"]
+        self._do_not_reset_test = data.get(
+            "do_not_reset_test", self._do_not_test
+        )
         self._hide = data["hide"]
 
 
@@ -409,7 +442,7 @@ class Register(NameBase):
         Indicates if no reset test should be done on the register.
         If any field is a don't test, then we won't test the register
         """
-        if self.flags.do_not_test:
+        if self.flags.do_not_reset_test:
             return True
         for key in self._bit_fields:
             if self._bit_fields[key].reset_type != ResetType.NUMERIC:

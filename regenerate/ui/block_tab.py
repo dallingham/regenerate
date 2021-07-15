@@ -116,7 +116,7 @@ class BlockTab:
         self.block_size.change_db(None)
         self.preview.change_block(None)
 
-    def page_changed(self, obj, page, page_num):
+    def page_changed(self, _obj, _page, page_num) -> None:
         if page_num == 1:
             self.overrides_list.update_display()
 
@@ -473,10 +473,6 @@ class BlockSelectModel(Gtk.ListStore):
         Gdk.threads_init()
         self.file_list = {}
         self.paths = set()
-
-    def set_modified(self):
-        model, node = self.block_obj.get_selected()
-        model[node][SelectCol.ICON] = Gtk.STOCK_EDIT
 
     def load_icons(self):
         """Clear paths and the file list"""

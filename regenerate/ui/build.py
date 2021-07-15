@@ -140,8 +140,6 @@ class Build(BaseWindow):
         timestamps.
         """
         regset = self.__prj.regsets[regset_name]
-        filename = regset.filename
-        (base, _) = base_and_modtime(filename)
         local_dest = os.path.join(os.path.dirname(self.__prj.path), dest)
         mod = file_needs_rebuilt(local_dest, self.__prj, [regset_name])
         self.__modlist.append(mod)
@@ -355,7 +353,7 @@ class Build(BaseWindow):
             self.__build_top,
         )
 
-    def add_callback(self, filename, export_format, register_set, group):
+    def add_callback(self, filename, export_format, register_set, _group):
         """
         Called when a item has been added to the builder, and is used
         to add the new item to the list view.
@@ -372,7 +370,6 @@ class Build(BaseWindow):
         #     register_path = f"{group} (group)"
         #     self.__add_item_to_list(register_path, exporter, filename)
         else:
-            register_path = "<project>"
             self.__prj.add_to_project_export_list(exporter, filename)
             self.__add_item_to_list(register_set, exporter, filename)
 
@@ -431,7 +428,7 @@ def file_needs_rebuilt(local_dest, prj, db_paths):
     else:
         for regset_name in db_paths:
             regset = prj.regsets[regset_name]
-            (base, db_file_mtime) = base_and_modtime(regset.filename)
+            (_, db_file_mtime) = base_and_modtime(regset.filename)
             dest_mtime = os.path.getmtime(local_dest)
             try:
                 if (

@@ -264,7 +264,7 @@ class MainWindow(BaseWindow):
             self.find_obj("bpaned").set_position(block_hpos)
 
     def build_group(
-        self, group_name: str, action_names: List[str]
+        self, group_name: str, _action_names: List[str]
     ) -> Gtk.ActionGroup:
         return Gtk.ActionGroup(group_name)
 
@@ -401,7 +401,7 @@ class MainWindow(BaseWindow):
         if m_name and m_regex:
             mime_filter = Gtk.FileFilter()
             mime_filter.set_name(m_name)
-            if type(m_regex) == str:
+            if isinstance(m_regex, str):
                 mime_filter.add_pattern(m_regex)
             else:
                 for val in m_regex:
@@ -738,8 +738,9 @@ class MainWindow(BaseWindow):
 
     def button_toggle(self, attr, obj):
         reg = self.reginst_tab.get_selected_register()
+        state = obj.get_active()
         if reg:
-            setattr(reg.flags, attr, obj.get_active())
+            setattr(reg.flags, attr, state)
             self.reginst_tab.set_modified()
 
     def on_no_rtl_toggled(self, obj):
@@ -750,6 +751,9 @@ class MainWindow(BaseWindow):
 
     def on_no_test_toggled(self, obj):
         self.button_toggle("do_not_test", obj)
+
+    def on_no_reset_test_toggled(self, obj):
+        self.button_toggle("do_not_reset_test", obj)
 
     def on_no_cover_toggled(self, obj):
         self.button_toggle("do_not_cover", obj)

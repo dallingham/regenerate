@@ -21,11 +21,12 @@
 Handle the module tab
 """
 
-from gi.repository import Gtk, Gdk
 from typing import Callable, List
 
+from gi.repository import Gtk
+
 from regenerate.db import RegProject
-from regenerate.ui.base_doc import BaseDoc
+from .base_doc import BaseDoc
 from .entry import EntryText, EntryWord
 
 

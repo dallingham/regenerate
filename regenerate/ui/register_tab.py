@@ -66,6 +66,7 @@ class RegSetWidgets:
         self.no_rtl = find_obj("no_rtl")
         self.no_uvm = find_obj("no_uvm")
         self.no_test = find_obj("no_test")
+        self.no_reset_test = find_obj("no_reset_test")
         self.no_cover = find_obj("no_cover")
         self.hide_doc = find_obj("hide_doc")
         self.no_sharing = find_obj("no_sharing")
@@ -588,6 +589,7 @@ class RegSetTab:
             self.widgets.no_rtl.set_active(reg.flags.do_not_generate_code)
             self.widgets.no_uvm.set_active(reg.flags.do_not_use_uvm)
             self.widgets.no_test.set_active(reg.flags.do_not_test)
+            self.widgets.no_reset_test.set_active(reg.flags.do_not_reset_test)
             self.widgets.no_cover.set_active(reg.flags.do_not_cover)
             self.widgets.hide_doc.set_active(reg.flags.hide)
 

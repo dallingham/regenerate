@@ -35,8 +35,8 @@ gi.require_version("Pango", "1.0")
 gi.require_version("GtkSource", "3.0")
 from gi.repository import Gtk
 
-from .regenerate_top import MainWindow
 from regenerate.settings import ini
+from .regenerate_top import MainWindow
 
 
 def run_gui(args):
