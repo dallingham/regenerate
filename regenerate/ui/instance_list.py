@@ -21,11 +21,13 @@
 Instance List and Model
 """
 
+from typing import Callable, Optional, Tuple
 import re
 from gi.repository import Gtk, GObject
-from regenerate.ui.columns import EditableColumn, ReadOnlyColumn
-from regenerate.db import RegisterInst, LOGGER, BlockInst
-from regenerate.ui.enums import InstCol
+from regenerate.db import RegisterInst, LOGGER, BlockInst, RegProject
+
+from .columns import EditableColumn, ReadOnlyColumn
+from .enums import InstCol
 
 
 class InstMdl(Gtk.TreeStore):
@@ -34,66 +36,18 @@ class InstMdl(Gtk.TreeStore):
     symbolic ID name and the base address.
     """
 
-    def __init__(self, project):
+    def __init__(self, project: RegProject):
 
         super().__init__(str, str, str, GObject.TYPE_UINT64, str, str, object)
 
         self.callback = self.__null_callback
         self.project = project
 
-    def __null_callback(self):
+    def __null_callback(self) -> None:
         """Does nothing, should be overridden"""
         return
 
-    def change_id(self, path, text):
-        """
-        Called when the ID of an instance has been edited in the InstanceList
-        """
-        node = self.get_iter(path)
-        self.set_value(node, InstCol.ID, text)
-        self.callback()
-
-    def change_inst(self, path, text):
-        """
-        Called when the ID of an instance has been edited in the InstanceList
-        """
-
-        # get the previous value, bail if it is the same as the new value
-
-        iter2 = self.get_iter(path)
-        old_value = self.get_value(iter2, InstCol.INST)
-        if old_value == text:
-            return
-
-        items = set([])
-        for row in self:
-            items.add(row[InstCol.INST])
-
-        if text in items:
-            LOGGER.warning(
-                '"%s" has already been used as a subsystem name', text
-            )
-            return
-
-        if re.match(r"^[A-Za-z_][A-Za-z0-9_]\[.*\]+$", text):
-            LOGGER.warning(
-                "Array notation not valid. "
-                "Use the repeat/repeat count to create arrays"
-            )
-            return
-
-        if not re.match(r"^[A-Za-z_][A-Za-z0-9_]+$", text):
-            LOGGER.warning("{text} is not a valid subsystem name")
-            return
-
-        node = self.get_iter(path)
-        self.set_value(node, InstCol.INST, text)
-
-        obj = self.get_value(node, InstCol.OBJ)
-        obj.name = text
-        self.callback()
-
-    def change_hdl(self, path, text):
+    def change_hdl(self, path: str, text: str) -> None:
         """
         Called when the ID of an instance has been edited in the InstanceList
         """
@@ -104,7 +58,7 @@ class InstMdl(Gtk.TreeStore):
         if obj:
             obj.hdl_path = text
 
-    def change_base(self, path, text):
+    def change_base(self, path: str, text: str) -> None:
         """
         Called when the base address of an instance has been edited in the
         InstanceList
@@ -123,7 +77,7 @@ class InstMdl(Gtk.TreeStore):
             obj.address_base = int(text, 16)
         self.callback()
 
-    def change_repeat(self, path, text):
+    def change_repeat(self, path: str, text: str) -> None:
         """
         Called when the base address of an instance has been edited in the
         InstanceList
@@ -153,7 +107,7 @@ class InstMdl(Gtk.TreeStore):
         if obj:
             obj.repeat = int(text)
 
-    def add_instance(self, block_name: str, new_inst: BlockInst):
+    def add_instance(self, block_name: str, new_inst: BlockInst) -> None:
         """
         Adds a new instance to the model. It is not added to the database until
         either the change_id or change_base is called.
@@ -167,99 +121,59 @@ class InstMdl(Gtk.TreeStore):
             new_inst,
         )
 
-        node = self.append(None, row=row)
+        self.append(None, row=row)
         self.callback()
-        return (self.get_path(node), new_inst)
 
 
 class InstanceList:
     """Instance list"""
 
-    def __init__(self, obj, callback):
+    def __init__(self, obj: Gtk.TreeView, callback: Callable):
         self.__obj = obj
-        self.__col = None
-        self.__project = None
-        self.__model = None
+        self.__project: Optional[RegProject] = None
+        self.__model: Optional[InstMdl] = None
         self.__build_instance_table()
         self.__obj.set_sensitive(False)
         self.modified_callback = callback
         self.need_subsystem = True
         self.need_regset = True
 
-    def set_project(self, project):
+    def set_project(self, project: RegProject) -> None:
         """Set the project object for the instance list"""
 
         self.__project = project
         self.__obj.set_sensitive(True)
         self.populate()
 
-    def set_model(self, model):
+    def set_model(self, model: InstMdl) -> None:
         """Set the model object for the instance list"""
 
         self.__obj.set_model(model)
         self.__model = model
         self.__model.callback = self.modified_callback
 
-    def update(self):
-        for row in self.__model:
-            item = row[InstCol.OBJ]
-            row[InstCol.ID] = self.__project.blocks[item.blkid].name
-            row[InstCol.INST] = item.name
-            row[InstCol.BASE] = f"0x{item.address_base:x}"
-            row[InstCol.SORT] = item.address_base
-            row[InstCol.RPT] = f"{item.repeat}"
-            row[InstCol.HDL] = item.hdl_path
+    def update(self) -> None:
+        if self.__project and self.__model:
+            for row in self.__model:
+                item = row[InstCol.OBJ]
+                row[InstCol.ID] = self.__project.blocks[item.blkid].name
+                row[InstCol.INST] = item.name
+                row[InstCol.BASE] = f"0x{item.address_base:x}"
+                row[InstCol.SORT] = item.address_base
+                row[InstCol.RPT] = f"{item.repeat}"
+                row[InstCol.HDL] = item.hdl_path
 
-    def get_groups(self):
-        """Get the groups that are currently in the list"""
-
-        tree_iter = self.__model.get_iter_first()
-        while tree_iter is not None:
-            current_group = self.__model.get_value(tree_iter, InstCol.OBJ)
-
-            child = self.__model.iter_children(tree_iter)
-            while child:
-                cobj = self.col_value(child, InstCol.OBJ)
-                current_group.regset_insts.append(
-                    RegisterInst(
-                        self.col_value(child, InstCol.ID),
-                        self.col_value(child, InstCol.INST),
-                        self.col_value(child, InstCol.SORT),
-                        int(self.col_value(child, InstCol.RPT)),
-                        int(self.col_value(child, InstCol.BASE), 16),
-                        self.col_value(child, InstCol.HDL),
-                        cobj.no_uvm,
-                        cobj.no_decode,
-                        cobj.array,
-                        cobj.single_decode,
-                    )
-                )
-                child = self.__model.iter_next(child)
-            tree_iter = self.__model.iter_next(tree_iter)
-
-    def col_value(self, node, col):
-        """Get the value at the particular node and column"""
-
-        return self.__model.get_value(node, col)
-
-    def new_instance(self):
-        """Create a new empty instance in the list/model"""
-
-        pos, grp = self.__model.new_instance()
-        self.__project.get_grouping_list().append(grp)
-        self.__obj.set_cursor(pos, self.__col, start_editing=True)
-        self.need_subsystem = False
-
-    def get_selected_instance(self):
+    def get_selected_instance(self) -> Tuple[InstMdl, Gtk.TreeIter]:
         """Get the selected instance"""
 
         return self.__obj.get_selection().get_selected()
 
-    def populate(self):
+    def populate(self) -> None:
         """Fill the list from the project"""
 
-        if self.__project is None:
+        if self.__project is None or self.__model is None:
             return
+
         block_insts = sorted(
             self.__project.block_insts, key=lambda x: x.address_base
         )
@@ -280,7 +194,7 @@ class InstanceList:
                 ),
             )
 
-    def __build_instance_table(self):
+    def __build_instance_table(self) -> None:
         """Build the table, adding the columns"""
 
         column = EditableColumn(
@@ -290,7 +204,6 @@ class InstanceList:
         column.set_min_width(200)
         column.set_resizable(True)
         self.__obj.append_column(column)
-        self.__col = column
 
         column = ReadOnlyColumn(
             "Block Name",
@@ -324,63 +237,104 @@ class InstanceList:
         column.set_resizable(True)
         self.__obj.append_column(column)
 
-    def instance_id_changed(self, _cell, _path, _new_text, _col):
-        """
-        Updates the data model when the text value is changed in the model.
-        """
-        LOGGER.warning("Subsystem name cannot be changed")
-
-    def inst_changed(self, attr, path, new_text):
+    def inst_changed(self, attr: str, path: str, text: str) -> None:
         """Called with the instance name changed"""
 
-        getattr(self.__model, attr)(path, new_text)
+        getattr(self.__model, attr)(path, text)
 
-    def instance_inst_changed(self, _cell, path, new_text, _col):
+    def instance_inst_changed(
+        self, _cell: Gtk.CellRendererText, path: str, text: str, _col: InstCol
+    ) -> None:
         """
         Updates the data model when the text value is changed in the model.
         """
-        self.inst_changed("change_inst", path, new_text)
+
+        if self.__model is None:
+            return
+
+        node = self.__model.get_iter(path)
+        if text == self.__model.get_value(node, InstCol.INST):
+            return
+
+        items = set(row[InstCol.INST] for row in self.__model)
+
+        if text in items:
+            LOGGER.warning(
+                '"%s" has already been used as a block instance name', text
+            )
+            return
+
+        if re.match(r"^[A-Za-z_][A-Za-z0-9_]\[.*\]+$", text):
+            LOGGER.warning(
+                "Array notation not valid. "
+                "Use the repeat/repeat count to create arrays"
+            )
+            return
+
+        if not re.match(r"^[A-Za-z_][A-Za-z0-9_]+$", text):
+            LOGGER.warning("'%s' is not a valid block instance name", text)
+            return
+
+        self.__model.set_value(node, InstCol.INST, text)
+
+        obj = self.__model.get_value(node, InstCol.OBJ)
+        obj.name = text
+
         self.modified_callback()
 
-    def instance_base_changed(self, _cell, path, new_text, _col):
+    def instance_base_changed(
+        self, _cell: Gtk.CellRendererText, path: str, text: str, _col: InstCol
+    ) -> None:
         """
         Updates the data model when the text value is changed in the model.
         """
-        self.inst_changed("change_base", path, new_text)
+        self.inst_changed("change_base", path, text)
         self.modified_callback()
 
-    def instance_format_changed(self, _cell, path, new_text, _col):
+    def instance_format_changed(
+        self, _cell: Gtk.CellRendererText, path: str, text: str, _col: InstCol
+    ) -> None:
         """
         Updates the data model when the text value is changed in the model.
         """
-        self.inst_changed("change_format", path, new_text)
+        self.inst_changed("change_format", path, text)
         self.modified_callback()
 
-    def instance_hdl_changed(self, _cell, path, new_text, _col):
+    def instance_hdl_changed(
+        self, _cell: Gtk.CellRendererText, path: str, text: str, _col: InstCol
+    ) -> None:
         """
         Updates the data model when the text value is changed in the model.
         """
-        self.inst_changed("change_hdl", path, new_text)
+        self.inst_changed("change_hdl", path, text.strip())
         self.modified_callback()
 
-    def instance_repeat_changed(self, _cell, path, new_text, _col):
+    def instance_repeat_changed(
+        self, _cell: Gtk.CellRendererText, path: str, text: str, _col: InstCol
+    ) -> None:
         """
         Updates the data model when the text value is changed in the model.
         """
-        self.inst_changed("change_repeat", path, new_text)
+        self.inst_changed("change_repeat", path, text)
         self.modified_callback()
 
 
-def build_row_data(inst, name, offset, rpt, hdl, obj):
+def build_row_data(
+    inst_name: str,
+    blk_name: str,
+    offset: int,
+    rpt: int,
+    hdl: str,
+    obj: BlockInst,
+) -> Tuple[str, str, str, int, str, str, BlockInst]:
     """Build row data from the data"""
 
-    row = (
-        name,
-        inst,
+    return (
+        blk_name,
+        inst_name,
         f"0x{offset:08x}",
         offset,
         f"{rpt:d}",
         hdl,
         obj,
     )
-    return row
