@@ -302,8 +302,11 @@ class RegisterList:
         Returns the node of the selected row
         """
         (model, node) = self._selection.get_selected()
-        path = model.get_path(node)
-        return path
+        if model and node:
+            path = model.get_path(node)
+            return path
+        else:
+            return None
 
     def delete_selected_node(self):
         """

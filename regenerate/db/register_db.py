@@ -52,6 +52,7 @@ class RegisterDb(NameBase):
 
         self.ports = Signals()
 
+        self.memory = False
         self.array_is_reg = False
         self.internal_only = False
         self.owner = ""
@@ -221,6 +222,7 @@ class RegisterDb(NameBase):
             "parameters": self.parameters,
             "title": self._title,
             "ports": self.ports,
+            "memory": self.memory,
             "array_is_reg": self.array_is_reg,
             "coverage": self.coverage,
             "internal_only": self.internal_only,
@@ -254,6 +256,7 @@ class RegisterDb(NameBase):
         self.name = data["name"]
         self._id = data["uuid"]
         self.array_is_reg = data["array_is_reg"]
+        self.memory = data.get('memory', False)
         self.coverage = data["coverage"]
         self.internal_only = data["internal_only"]
         self.organization = data["organization"]

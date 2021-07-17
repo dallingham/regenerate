@@ -827,16 +827,9 @@ class RegSetTab:
             self.project.remove_register_set(uuid)
 
     def remove_regset_from_groups(self, uuid: str):
-        if self.project is None:
-            return
-
-        for block in self.project.blocks.values():
-            new_reglist = [
-                reglist
-                for reglist in block.regset_insts
-                if reglist.uuid != uuid
-            ]
-            block.regset_insts = new_reglist
+        if self.project:
+            for block in self.project.blocks.values():
+                block.remove_register_set(uuid)
 
     def new_regset_callback(self, _obj: Gtk.Button):
         """

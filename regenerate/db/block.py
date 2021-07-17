@@ -69,6 +69,19 @@ class Block(NameBase):
 
     def get_regset_insts(self) -> List[RegisterInst]:
         return self.regset_insts
+
+    def get_regsets_dict(self) -> Dict[int, RegisterDb]:
+        return self.regsets
+
+    def remove_register_set(self, uuid: int) -> None:
+        if uuid in self.regsets:
+            del self.regsets[uuid]
+        print(">>", self.regset_insts)
+        self.regset_insts = [
+            inst for inst in self.regset_insts if inst.regset_id != uuid
+        ]
+        print("<<", self.regset_insts)
+        
         
     @property
     def filename(self) -> Path:
@@ -131,8 +144,10 @@ class Block(NameBase):
 
         self.regsets = {}
         for key, item in data["regsets"].items():
-            filename = Path(self._filename.parent / item["filename"])
+            filename = Path(self._filename.parent / item["filename"]).resolve()
 
+            print(filename)
+            
             regset = self.finder.find_by_file(str(filename))
             if not regset:
                 regset = RegisterDb()
