@@ -111,6 +111,7 @@ class FilterField(IntEnum):
 
 
 class SelectCol(IntEnum):
+    "Select Column for the SelectModel"
 
     ICON = 0
     NAME = 1

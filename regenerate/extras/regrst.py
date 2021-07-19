@@ -226,9 +226,7 @@ def norm_name(text: str) -> str:
 
 
 class RegisterRst:
-    """
-    Produces documentation from a register definition
-    """
+    "Produces documentation from a register definition"
 
     def __init__(
         self,
@@ -264,7 +262,7 @@ class RegisterRst:
         if dbase is None:
             self.reglist = set()
         else:
-            self.reglist = set({reg for reg in dbase.get_all_registers()})
+            self.reglist = set(list(dbase.get_all_registers()))
 
         if decode:
             try:
@@ -276,15 +274,13 @@ class RegisterRst:
         self._db = dbase
 
     def html_css(self, text: str = "") -> str:
-        """
-        Returns the definition with the basic, default CSS provided
-        """
+        "Returns the definition with the basic, default CSS provided"
+
         return CSS + self.html(text)
 
     def restructured_text(self, text: str = "", use_regs=True) -> str:
-        """
-        Returns the definition of the register in RestructuredText format
-        """
+        "Returns the definition of the register in RestructuredText format"
+
         ofile = StringIO()
         used: Set[str] = set()
         if use_regs:
@@ -295,7 +291,9 @@ class RegisterRst:
                         url = "/".join(
                             (self._group, self._inst, reg.token.lower())
                         )
-                        ofile.write(".. _`{0}`: {1}\n\n".format(reg.name, url))
+                    else:
+                        url = f"./{reg.token.lower()}"
+                    ofile.write(f".. _`{reg.name}`: {url}\n\n")
 
         ofile.write("\n\n")
         self.str_title(ofile)

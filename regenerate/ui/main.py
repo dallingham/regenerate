@@ -27,6 +27,7 @@ import os
 import sys
 import logging
 from pathlib import Path
+from argparse import ArgumentParser
 
 import gi
 
@@ -62,22 +63,13 @@ def run_gui(args):
     # allows us to get around it. Fortunately, Linux doesn't appear to be
     # broken in the same way.
 
-    if os.name == "nt":
-        from gi.repository import GObject
-
-        GObject.threads_init()
-        Gtk.threads_enter()
-        Gtk.main()
-        Gtk.threads_leave()
-    else:
-        Gtk.main()
+    Gtk.main()
 
 
 def main():
     """
     main program
     """
-    from argparse import ArgumentParser
 
     parser = ArgumentParser(
         description="Manages the registers in an ASIC or FPGA design"

@@ -44,18 +44,19 @@ from regenerate.db import (
 from regenerate.importers import IMPORTERS
 from regenerate.settings import ini
 from regenerate.settings.paths import GLADE_TOP, INSTALL_PATH
-from regenerate.ui.addr_edit import AddrMapEdit
-from regenerate.ui.addrmap_list import AddrMapList
-from regenerate.ui.base_window import BaseWindow
-from regenerate.ui.block_tab import BlockTab
-from regenerate.ui.build import Build
-from regenerate.ui.error_dialogs import ErrorMsg, Question
-from regenerate.ui.help_window import HelpWindow
-from regenerate.ui.project_tab import ProjectTabs
-from regenerate.ui.preferences import Preferences
-from regenerate.ui.register_tab import RegSetTab
-from regenerate.ui.status_logger import StatusHandler
-from regenerate.ui.top_level_tab import TopLevelTab
+
+from .addr_edit import AddrMapEdit
+from .addrmap_list import AddrMapList
+from .base_window import BaseWindow
+from .block_tab import BlockTab
+from .build import Build
+from .error_dialogs import ErrorMsg, Question
+from .help_window import HelpWindow
+from .project_tab import ProjectTabs
+from .preferences import Preferences
+from .register_tab import RegSetTab
+from .status_logger import StatusHandler
+from .top_level_tab import TopLevelTab
 
 
 TYPE_ENB = {}
@@ -108,12 +109,15 @@ class MainWindow(BaseWindow):
         self.build_import_menu()
 
     def check_subsystem_addresses(self) -> bool:
+        "Checks the address ranges"
         if check_address_ranges(self.prj):
             self.set_project_modified()
             return True
         return False
 
     def setup_main_window(self) -> None:
+        "Sets up the main window and set up the status bar"
+
         self.top_window = self.find_obj("regenerate")
         self.configure(self.top_window)
         self.status_obj = self.find_obj("statusbar")
@@ -128,6 +132,7 @@ class MainWindow(BaseWindow):
         self.find_obj("open_btn").set_menu(self.create_recent_menu())
 
     def find_obj(self, name):
+        "Convenience function to find an object"
         return self.builder.get_object(name)
 
     def on_addrmap_cursor_changed(self, obj: Gtk.TreeView) -> None:
@@ -145,13 +150,15 @@ class MainWindow(BaseWindow):
             rbtn.set_sensitive(False)
 
     def setup_project(self) -> None:
+        "Sets up the project, register, and block tabs"
+
         self.project_tabs = ProjectTabs(
             self.builder, self.set_project_modified
         )
 
-        self.reginst_tab = RegSetTab(
+        self.regset_tab = RegSetTab(
             self.find_obj,
-            self.set_modified,
+            self.set_project_modified,
             self.db_selected,
             self.reg_selected,
             self.field_selected,
@@ -167,18 +174,18 @@ class MainWindow(BaseWindow):
         )
 
     def set_parameters_modified(self) -> None:
-        self.set_modified()
-        self.reginst_tab.reglist_obj.set_parameters(
-            self.dbase.parameters.get()
-        )
-        self.reginst_tab.bitfield_obj.set_parameters(
+        self.set_project_modified()
+        self.regset_tab.reglist_obj.set_parameters(self.dbase.parameters.get())
+        self.regset_tab.bitfield_obj.set_parameters(
             self.dbase.parameters.get()
         )
 
     def set_project_modified(self) -> None:
+        "Sets the project modified flag"
         self.project_modified(True)
 
     def project_modified(self, value: bool) -> None:
+        "Sets the modified flag and changes the title bar"
         self.set_title(value)
         self.prj.modified = value
 
@@ -187,6 +194,7 @@ class MainWindow(BaseWindow):
         self.block_tab.set_project(self.prj)
         self.project_tabs.change_db(self.prj)
         self.addr_map_list.set_project(self.prj)
+        self.regset_tab.change_project(self.prj)
         self.project_modified(False)
 
     def on_edit_map_clicked(self, _obj):
@@ -312,13 +320,6 @@ class MainWindow(BaseWindow):
     def on_user_preferences_activate(self, _obj: Gtk.Action) -> None:
         Preferences(self.top_window)
 
-    def on_delete_instance_clicked(self, _obj: Gtk.Button) -> None:
-        self.top_level_tab.delete_blkinst()
-
-    def on_add_instance_clicked(self, _obj: Gtk.Button) -> None:
-        self.top_level_tab.blkinst_list.new_instance()
-        self.project_modified(True)
-
     def build_import_menu(self) -> None:
         """
         Builds the export menu from the items in writers.IMPORTERS. The export
@@ -341,10 +342,10 @@ class MainWindow(BaseWindow):
     ) -> None:
         "Called when the Top/Block/Registers tab is changed"
         self.block_tab.build_add_regset_menu()
-        self.reginst_tab.update_display()
+        self.regset_tab.update_display()
         self.block_tab.redraw()
         self.top_level_tab.update()
-        self.reginst_tab.filter_visible(page_num == 0)
+        self.regset_tab.filter_visible(page_num == 0)
 
     def on_notebook_switch_page(
         self, _obj: Gtk.Notebook, _page: Gtk.Box, page_num: int
@@ -352,25 +353,11 @@ class MainWindow(BaseWindow):
         "Called when the notebook page on the register tab is changed"
 
         if page_num == 1:
-            self.reginst_tab.update_bit_count()
-        if self.reginst_tab.get_selected_register():
+            self.regset_tab.update_bit_count()
+        if self.regset_tab.get_selected_register():
             self.reg_selected.set_sensitive(page_num == 0)
         else:
             self.reg_selected.set_sensitive(False)
-
-    def set_modified(self) -> None:
-        """
-        Indicates that the database has been modified. The modified
-        value is set, and the status bar is updated with an appropriate
-        message.
-        """
-        ...
-
-    def clear_modified(self, _prj=None) -> None:
-        """
-        Clears the modified tag in the status bar.
-        """
-        ...
 
     def create_file_selector(
         self,
@@ -441,32 +428,6 @@ class MainWindow(BaseWindow):
             Gtk.STOCK_OPEN,
         )
 
-    def get_new_filename(self):
-        """
-        Opens up a file selector, and returns the selected file. The
-        selected file is added to the recent manager.
-        """
-        name = None
-        choose = Gtk.FileChooserDialog(
-            "New",
-            None,  # self.top_window,
-            Gtk.FileChooserAction.SAVE,
-            (
-                Gtk.STOCK_CANCEL,
-                Gtk.ResponseType.CANCEL,
-                Gtk.STOCK_SAVE,
-                Gtk.ResponseType.OK,
-            ),
-        )
-        choose.set_current_folder(os.curdir)
-        choose.show()
-
-        response = choose.run()
-        if response == Gtk.ResponseType.OK:
-            name = choose.get_filename()
-        choose.destroy()
-        return name
-
     def on_new_project_clicked(self, _obj):
 
         choose = self.create_save_selector(
@@ -486,15 +447,15 @@ class MainWindow(BaseWindow):
             self.prj.name = filename.stem
             self.prj.save()
 
-            self.reginst_tab.change_project(self.prj)
+            self.regset_tab.change_project(self.prj)
             self.block_tab.clear_flags()
+            self.load_project_tab()
 
             self.project_modified(False)
             if self.recent_manager:
                 self.recent_manager.add_item(f"file:///{str(filename)}")
             self.find_obj("save_btn").set_sensitive(True)
             self.prj_loaded.set_sensitive(True)
-            self.load_project_tab()
         choose.destroy()
 
     def on_open_action_activate(self, _obj):
@@ -529,7 +490,7 @@ class MainWindow(BaseWindow):
 
     def open_project(self, filename, uri):
         self.loading_project = True
-        self.reginst_tab.clear()
+        self.regset_tab.clear()
 
         try:
             self.prj = RegProject(filename)
@@ -560,7 +521,7 @@ class MainWindow(BaseWindow):
 
         ini.set("user", "last_project", str(filepath.resolve()))
 
-        self.reginst_tab.change_project(self.prj)
+        self.regset_tab.change_project(self.prj)
 
         if self.recent_manager and uri:
             self.recent_manager.add_item(uri)
@@ -577,7 +538,7 @@ class MainWindow(BaseWindow):
         old_skip = self.skip_changes
         self.skip_changes = True
         self.redraw()
-        self.reginst_tab.redraw()
+        self.regset_tab.redraw()
         self.block_tab.redraw()
         self.skip_changes = old_skip
 
@@ -598,7 +559,7 @@ class MainWindow(BaseWindow):
             self.prj.save()
             self.project_modified(False)
             self.block_tab.clear_flags()
-            self.reginst_tab.reg_set_model.update()
+            self.regset_tab.reg_set_model.update()
         except IOError as msg:
             os.rename(backup_path, current_path)
             ErrorMsg(
@@ -607,7 +568,7 @@ class MainWindow(BaseWindow):
                 self.top_window,
             )
 
-        self.reginst_tab.update_display()
+        self.regset_tab.update_display()
         self.block_tab.redraw()
 
     def exit(self):
@@ -660,22 +621,20 @@ class MainWindow(BaseWindow):
         try:
             importer.import_data(name)
             self.update_display()
-            self.set_modified()
+            self.set_project_modified()
         except IOError as msg:
             ErrorMsg("Could not create %s " % name, str(msg), self.top_window)
 
     def redraw(self):
         """Redraws the information in the register list."""
-        self.reginst_tab.parameter_list.set_db(self.dbase)
-        self.reginst_tab.reglist_obj.set_parameters(
-            self.dbase.parameters.get()
-        )
-        self.reginst_tab.bitfield_obj.set_parameters(
+        self.regset_tab.parameter_list.set_db(self.dbase)
+        self.regset_tab.reglist_obj.set_parameters(self.dbase.parameters.get())
+        self.regset_tab.bitfield_obj.set_parameters(
             self.dbase.parameters.get()
         )
 
         self.block_tab.redraw()
-        self.reginst_tab.update_display()
+        self.regset_tab.update_display()
         self.set_description_warn_flag()
 
     def delete_block_callback(self):
@@ -726,22 +685,22 @@ class MainWindow(BaseWindow):
         """
         Deletes the selected object (either a register or a bit range)
         """
-        self.reginst_tab.remove_register()
+        self.regset_tab.remove_register()
 
     def set_db_value(self, attr, val):
         if self.dbase:
             setattr(self.dbase, attr, val)
-        self.reginst_tab.set_modified()
+        self.regset_tab.set_modified()
 
     def on_array_changed(self, obj):
-        self.reginst_tab.array_changed(obj)
+        self.regset_tab.array_changed(obj)
 
     def button_toggle(self, attr, obj):
-        reg = self.reginst_tab.get_selected_register()
+        reg = self.regset_tab.get_selected_register()
         state = obj.get_active()
         if reg:
             setattr(reg.flags, attr, state)
-            self.reginst_tab.set_modified()
+            self.regset_tab.set_modified()
 
     def on_no_rtl_toggled(self, obj):
         self.button_toggle("do_not_generate_code", obj)
@@ -766,7 +725,7 @@ class MainWindow(BaseWindow):
         Adds a new register, seeding the address with the next available
         address
         """
-        self.reginst_tab.new_register()
+        self.regset_tab.new_register()
 
     def cb_open_recent(self, chooser):
         """
@@ -877,16 +836,6 @@ def check_address_ranges(project):
         for regset_inst in block.regset_insts:
             regset = block.regsets[regset_inst.regset_id]
             space = 1 << regset.ports.address_bus_width
-            # if space > regset_inst.repeat_offset:
-            #     LOGGER.warning(
-            #         "%s.%s - %d bits specified for register set (size %x) which is greater than the repeat offset of %x",
-            #         block_inst.name,
-            #         regset_inst.name,
-            #         regset.ports.address_bus_width,
-            #         space,
-            #         regset_inst.repeat_offset,
-            #     )
-            #     return False
 
             glist.append(
                 (

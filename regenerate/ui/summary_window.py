@@ -21,6 +21,8 @@
 Provides the summary window
 """
 
+from gi.repository import Gtk, Gdk
+
 import regenerate.extras
 from regenerate.ui.base_window import BaseWindow
 from regenerate.ui.html_display import HtmlDisplay
@@ -58,16 +60,16 @@ class SummaryWindow(BaseWindow):
         text = reg_info.html_css()
         SummaryWindow.wkit.show_html(text)
 
-    def destroy(self, _obj):
+    def destroy(self, _obj: Gtk.Window):
         """Hide the window on the destroy event"""
-        SummaryWindow.window.hide()
+        self.window.hide()
         return True
 
-    def delete(self, _obj, _event):
+    def delete(self, _obj: Gtk.Window, _event: Gdk.Event):
         """Hide the window on the delete event"""
-        SummaryWindow.window.hide()
+        self.window.hide()
         return True
 
-    def hide(self, _obj):
+    def hide(self, _obj: Gtk.Button):
         """Hide the window"""
-        SummaryWindow.window.hide()
+        self.window.hide()

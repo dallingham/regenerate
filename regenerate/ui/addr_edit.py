@@ -110,7 +110,7 @@ class AddrMapEdit(BaseWindow):
             "Enabled",
             self._enable_changed,
             0,
-            visible_callback=self.visible_callback2,
+            visible_callback=self.enable_visible_callback,
         )
 
         self.view.append_column(col)
@@ -124,7 +124,7 @@ class AddrMapEdit(BaseWindow):
             self._access_changed,
             self.options,
             2,
-            visible_callback=self.visible_callback,
+            visible_callback=self.access_visible_callback,
         )
 
         self.view.append_column(col)
@@ -157,13 +157,13 @@ class AddrMapEdit(BaseWindow):
                     ),
                 )
 
-    def visible_callback(self, _column, cell, model, *obj):
+    def access_visible_callback(self, _column, cell, model, *obj):
         """Determines if the cell is visible"""
 
         node = obj[0]
         cell.set_property("visible", len(model.get_path(node)) != 1)
 
-    def visible_callback2(self, _column, cell, model, *obj):
+    def enable_visible_callback(self, _column, cell, model, *obj):
         """Determines if the cell is visible"""
 
         node = obj[0]

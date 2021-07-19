@@ -65,6 +65,18 @@ class TopLevelTab:
             self.param_list_modified,
         )
 
+        self.connect_signals(find_obj)
+
+    def connect_signals(self, find_obj: Callable):
+        "Connect the signals to the widgets"
+        find_obj("instance_delete_btn").connect(
+            "clicked", self.delete_instance_callback
+        )
+
+    def delete_instance_callback(self, _obj: Gtk.Button) -> None:
+        "Delete the selected block instance"
+        self.delete_blkinst()
+
     def param_list_modified(self) -> None:
         "Callback to set the modified flag when the parameter list is modified"
         self.project_modified(True)

@@ -22,16 +22,12 @@ Provides the editing interface to the register table
 
 from collections import namedtuple
 from gi.repository import Gtk
-from regenerate.ui.columns import (
-    EditableColumn,
-    ComboMapColumn,
-    MenuEditColumn,
-)
-from regenerate.ui.error_dialogs import ErrorMsg
-from regenerate.db import LOGGER
-from regenerate.db.enums import ShareType
+from regenerate.db import LOGGER, Register, ShareType
 from regenerate.extras.regutils import build_define
-from regenerate.ui.enums import RegCol, RegColType
+
+from .columns import EditableColumn, ComboMapColumn, MenuEditColumn
+from .error_dialogs import ErrorMsg
+from .enums import RegCol, RegColType
 
 BAD_TOKENS = " /-@!#$%^&*()+=|{}[]:\"';\\,.?"
 
@@ -123,7 +119,7 @@ class RegisterModel(Gtk.ListStore):
         super().__init__(str, str, str, str, str, str, int, str, object)
         self.reg2path = {}
 
-    def append_register(self, register):
+    def append_register(self, register: Register) -> str:
         """
         Adds a new row in the ListStore for the specified register,
         filling in the data from the register into the appropriate
@@ -152,7 +148,7 @@ class RegisterModel(Gtk.ListStore):
         self.reg2path[register] = path
         return path
 
-    def delete_register(self, register):
+    def delete_register(self, register: Register) -> None:
         """
         Adds a new row in the ListStore for the specified register,
         filling in the data from the register into the appropriate
@@ -170,21 +166,21 @@ class RegisterModel(Gtk.ListStore):
             if self.reg2path[reg] > old_path:
                 self.reg2path[reg] = Gtk.TreePath(self.reg2path[reg][0] - 1)
 
-    def set_tooltip(self, reg, msg):
+    def set_tooltip(self, reg: Register, msg: str) -> None:
         """
         Sets the tooltip for the register.
         """
         path = self.get_path_from_register(reg)
         self[path][RegCol.TOOLTIP] = msg
 
-    def get_register_at_path(self, path):
+    def get_register_at_path(self, path: str) -> Register:
         """
         Given a path (row) in the ListStore, we return the corresponding
         Register.
         """
         return self[path][RegCol.OBJ]
 
-    def set_warning_for_register(self, register, flag):
+    def set_warning_for_register(self, register: Register, flag: bool) -> None:
         """
         Sets the warning icon for the register in the table
         """
@@ -194,14 +190,14 @@ class RegisterModel(Gtk.ListStore):
         else:
             self[path][RegCol.ICON] = None
 
-    def get_path_from_register(self, register):
+    def get_path_from_register(self, register: Register) -> str:
         """
         Given a path (row) in the ListStore, we return the corresponding
         Register.
         """
         return self.reg2path[register]
 
-    def set_address_at_path(self, path, addr, length):
+    def set_address_at_path(self, path: str, addr: int, length: int) -> None:
         """
         Sets the address for a register, but also sets the corresponding
         value for the sort columns.
@@ -221,9 +217,7 @@ ColDef = namedtuple(
 
 
 class RegisterList:
-    """
-    Provides the interface to the register table
-    """
+    "Provides the interface to the register table"
 
     _COLS = (  # Title,   Size, Column, Expand, Type, Monospace
         ColDef("", 30, RegCol.ICON, False, RegColType.ICON, False, None),
@@ -282,6 +276,8 @@ class RegisterList:
         self._parameter_names = set()
 
     def set_parameters(self, parameters):
+        "Sets the parameters"
+
         self._parameter_names = set({(p.name, p.name) for p in parameters})
         self.dim_column.update_menu(sorted(list(self._parameter_names)))
 
@@ -305,8 +301,7 @@ class RegisterList:
         if model and node:
             path = model.get_path(node)
             return path
-        else:
-            return None
+        return None
 
     def delete_selected_node(self):
         """
@@ -374,16 +369,15 @@ class RegisterList:
         self._obj.set_tooltip_column(RegCol.TOOLTIP)
 
     def set_model(self, model):
-        """
-        Sets the active model.
-        """
+        "Sets the active model."
+
         self._obj.set_model(model)
         if model:
             self._model = model.get_model().get_model()
         else:
             self._model = None
 
-    def add_new_register(self, register):
+    def add_new_register(self, register: Register) -> str:
         """
         Addes a new register to the model and set it to edit the
         default column
@@ -403,7 +397,7 @@ class RegisterList:
                 return store.get_value(node, RegCol.OBJ)
         return None
 
-    def _ram_update_addr(self, reg, path, text):
+    def _ram_update_addr(self, reg: Register, path: str, text: str):
         """
         Updates the address associated with a RAM address
         """
@@ -424,7 +418,7 @@ class RegisterList:
                 "your database and report this error.",
             )
 
-    def _reg_update_addr(self, reg, path, text):
+    def _reg_update_addr(self, reg: Register, path: str, text: str) -> None:
         """
         Updates the address associated with a register address
         """
@@ -444,7 +438,7 @@ class RegisterList:
                 "your database and report this error.",
             )
 
-    def _reg_update_name(self, reg, path, text):
+    def _reg_update_name(self, reg: Register, path: str, text: str) -> None:
         """
         Updates the name associated with the register. Called after the text
         has been edited
@@ -460,7 +454,7 @@ class RegisterList:
             reg.token = value
             self._set_modified()
 
-    def _reg_update_dim(self, reg, path, text):
+    def _reg_update_dim(self, reg: Register, path: str, text: str) -> None:
         """
         Updates the name associated with the register. Called after the text
         has been edited
@@ -520,57 +514,58 @@ class RegisterList:
                 return False
         return True
 
-    def _handle_edited_address(self, register, path, new_text):
+    def _handle_edited_address(
+        self, register: Register, path: str, text: str
+    ) -> None:
         """
         Called when an address in the table has changed
         """
         try:
-            if ":" in new_text:
-                self._handle_ram_address(register, path, new_text)
+            if ":" in text:
+                self._handle_ram_address(register, path, text)
             else:
-                self._handle_reg_address(register, path, new_text)
+                self._handle_reg_address(register, path, text)
         except ValueError:
             LOGGER.warning(
                 'Address %0x was not changed: invalid value "%s"',
                 register.address,
-                new_text,
+                text,
             )
 
-    def _handle_ram_address(self, register, path, new_text):
+    def _handle_ram_address(
+        self, register: Register, path: str, text: str
+    ) -> None:
         """
         Called when the RAM address in the table has changed
         """
-        if self._new_address_is_not_used(new_text, path):
-            self._ram_update_addr(register, path, new_text)
+        if self._new_address_is_not_used(text, path):
+            self._ram_update_addr(register, path, text)
         else:
             ErrorMsg(
                 "Address already used",
                 "The address %0x is already used by another register"
-                % int(new_text, 16),
+                % int(text, 16),
             )
 
-    def _check_address_align(self, address, width):
-        align = width >> 3
-        return address % align == 0
+    def _handle_reg_address(
+        self, register: Register, path: str, text: str
+    ) -> None:
+        "Called when the register address in the table has changed"
 
-    def _handle_reg_address(self, register, path, new_text):
-        """
-        Called when the register address in the table has changed
-        """
-        address = int(new_text, 16)
-        if not self._check_address_align(address, register.width):
+        address = int(text, 16)
+        if not check_address_align(address, register.width):
             ErrorMsg(
                 "Address does not match register width",
                 "The address %04x is not aligned to a %d bit boundary"
                 % (address, register.width),
             )
-        elif not self._new_address_is_not_used(new_text, path):
+        elif not self._new_address_is_not_used(text, path):
             ErrorMsg(
                 "Address already used",
                 "%0x is already used by another register" % address,
             )
         else:
-            self._reg_update_addr(register, path, new_text)
+            self._reg_update_addr(register, path, text)
 
     def _text_edited(self, cell, path, new_text, col):
         """
@@ -609,7 +604,7 @@ class RegisterList:
             else:
                 LOGGER.warning(
                     '"%s" is not a valid dimension. It must be an '
-                    "integer greater than 1 or a defined parameter",
+                    "integer greater than 0 or a defined parameter",
                     new_text,
                 )
 
@@ -624,14 +619,13 @@ class RegisterList:
         self._reg_update_dim(register, path, new_value)
 
     def _combo_edited(self, cell, path, node, col):
-        """
-        Called when the combo box in the table has been altered
-        """
+        "Called when the combo box in the table has been altered"
+
         model = cell.get_property("model")
         register = self._model.get_register_at_path(path)
 
         new_width = model.get_value(node, 1)
-        if not self._check_address_align(register.address, new_width):
+        if not check_address_align(register.address, new_width):
             ErrorMsg(
                 "Address does not match register width",
                 "The address %04x is not aligned to a %d bit boundary"
@@ -641,3 +635,10 @@ class RegisterList:
             self._model[path][col] = model.get_value(node, 0)
             register.width = new_width
             self._set_modified()
+
+
+def check_address_align(address: int, width: int) -> bool:
+    "Returns True if the address is aligned"
+
+    align = width >> 3
+    return address % align == 0

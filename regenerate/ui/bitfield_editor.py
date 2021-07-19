@@ -204,7 +204,7 @@ class BitFieldEditor(BaseWindow):
 
     def _set_flag_value(self, val: str, obj) -> None:
         "Sets the field value"
-        setattr(self.bit_field.flag, val, obj.get_active())
+        setattr(self.bit_field.flags, val, obj.get_active())
 
     @modified
     def on_output_changed(self, obj: Gtk.Entry) -> None:

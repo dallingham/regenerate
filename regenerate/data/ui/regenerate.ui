@@ -3479,7 +3479,6 @@
                                 <property name="receives_default">True</property>
                                 <property name="tooltip_text" translatable="yes">Removes the selected block from the top</property>
                                 <property name="use_stock">True</property>
-                                <signal name="clicked" handler="on_delete_instance_clicked" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="expand">True</property>

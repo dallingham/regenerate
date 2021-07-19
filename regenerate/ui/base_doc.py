@@ -107,8 +107,9 @@ class BaseDoc:
         name = Gtk.Entry()
         name.set_activates_default(True)
 
-        dialog.vbox.pack_start(label, False, False, 6)
-        dialog.vbox.pack_start(name, False, False, 6)
+        vbox = dialog.vbox
+        vbox.pack_start(label, False, False, 6)
+        vbox.pack_start(name, False, False, 6)
 
         dialog.show_all()
         res = dialog.run()

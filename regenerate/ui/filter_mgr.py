@@ -21,7 +21,6 @@
 Manages the search filter
 """
 
-from regenerate.db import LOGGER
 from regenerate.ui.enums import FilterField
 
 
@@ -71,13 +70,9 @@ class FilterManager:
 
         if self._text == "":
             return True
-        try:
-            search_text = self._text.upper()
-            for i in self._fields:
-                text = model.get_value(node, i).upper()
-                if text.find(search_text) != -1:
-                    return True
-            return False
-        except:
-            LOGGER.error("Error filtering")
-            return False
+        search_text = self._text.upper()
+        for i in self._fields:
+            text = model.get_value(node, i).upper()
+            if text.find(search_text) != -1:
+                return True
+        return False

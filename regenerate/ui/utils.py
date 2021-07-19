@@ -21,6 +21,9 @@
 Cleans the code select if needed.
 """
 
+import os
+from gi.repository import Gtk
+
 from regenerate.db import LOGGER
 
 
@@ -61,3 +64,31 @@ def check_hex(new_text):
     except ValueError:
         LOGGER.warning('Illegal hexidecimal value: "%s"', new_text)
         return False
+
+
+def get_new_filename():
+    """
+    Opens up a file selector, and returns the selected file. The
+    selected file is added to the recent manager.
+    """
+
+    name = None
+    choose = Gtk.FileChooserDialog(
+        "New",
+        None,
+        Gtk.FileChooserAction.SAVE,
+        (
+            Gtk.STOCK_CANCEL,
+            Gtk.ResponseType.CANCEL,
+            Gtk.STOCK_SAVE,
+            Gtk.ResponseType.OK,
+        ),
+    )
+    choose.set_current_folder(os.curdir)
+    choose.show()
+
+    response = choose.run()
+    if response == Gtk.ResponseType.OK:
+        name = choose.get_filename()
+    choose.destroy()
+    return name

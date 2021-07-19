@@ -398,9 +398,10 @@ class RegProject:
         self._modified = True
         self.address_maps[map_id].blocks = new_list
 
-    def remove_address_map(self, map_id):
+    def remove_address_map(self, map_id: str) -> None:
         """Removes the address map"""
-        del self.address_maps[map_id]
+        if map_id in self.address_maps:
+            del self.address_maps[map_id]
 
     @property
     def files(self):

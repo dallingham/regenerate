@@ -21,12 +21,14 @@
 Handle the module tab
 """
 
-from typing import Callable, List
+from typing import Callable, List, Optional
 
-from gi.repository import Gdk
+from gi.repository import Gdk, Gtk, GtkSource
 
-from regenerate.ui.utils import clean_format_if_needed
-from regenerate.ui.preview_editor import PreviewEditor
+from regenerate.db import RegisterDb
+
+from .utils import clean_format_if_needed
+from .preview_editor import PreviewEditor
 from .entry import (
     EntryWidth,
     EntryBool,
@@ -48,7 +50,14 @@ class ModuleDoc:
     the system as modified.
     """
 
-    def __init__(self, text_view, web_view, db_name, modified, use_reg=True):
+    def __init__(
+        self,
+        text_view: Gtk.ScrolledWindow,
+        web_view: Gtk.ScrolledWindow,
+        db_name: str,
+        modified: Callable,
+        use_reg: bool = True,
+    ):
 
         editor = RstEditor()
         editor.show()
@@ -57,13 +66,14 @@ class ModuleDoc:
 
         self.buf = editor.get_buffer()
         self.buf.connect("changed", self.on_changed)
+        editor.connect("key-press-event", self.on_key_press_event)
 
         self.preview = PreviewEditor(self.buf, web_view, use_reg)
         self.db_name = db_name
-        self.dbase = None
+        self.dbase: Optional[RegisterDb] = None
         self.callback = modified
 
-    def change_db(self, dbase):
+    def change_db(self, dbase: RegisterDb):
         """Change the database so the preview window can resolve references"""
 
         self.dbase = dbase
@@ -71,7 +81,7 @@ class ModuleDoc:
             self.buf.set_text(getattr(self.dbase, self.db_name))
         self.preview.set_dbase(self.dbase)
 
-    def on_changed(self, _obj):
+    def on_changed(self, _obj: GtkSource.Buffer):
         """A change to the text occurred"""
 
         if self.dbase:
@@ -81,7 +91,7 @@ class ModuleDoc:
             setattr(self.dbase, self.db_name, new_text)
             self.callback()
 
-    def on_key_press_event(self, obj, event):
+    def on_key_press_event(self, obj: RstEditor, event: Gdk.EventKey):
         """Look for the F12 key"""
 
         if event.keyval == Gdk.KEY_F12:
@@ -92,6 +102,8 @@ class ModuleDoc:
 
 
 class ModuleTabs:
+    "Manages the data on the Module/Regset tabs"
+
     def __init__(self, find_obj: Callable, modified: Callable):
 
         port_list = [
@@ -226,6 +238,8 @@ class ModuleTabs:
         self.icon = find_obj("mod_def_warn")
 
     def change_db(self, dbase) -> None:
+        "Changes the register set to a new register set"
+
         self.dbase = dbase
         if dbase:
             for obj in self.port_object_list:
@@ -241,6 +255,7 @@ class ModuleTabs:
             self.preview.change_db(None)
 
     def after_modified(self) -> None:
+        "Called after modification to set visible properties"
 
         warn = False
         msgs: List[str] = []

@@ -18,56 +18,54 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
-Project model and list
+Provides a common Gtk.TreeModel for the register and block tabs
 """
 
-from gi.repository import Gtk, Gdk
-from regenerate.ui.enums import SelectCol
-from regenerate.db import RegisterDb
+from typing import Union
+
+from gi.repository import Gtk
+from regenerate.db import Block, RegisterDb
+
+from .enums import SelectCol
 
 
-class ProjectModel(Gtk.ListStore):
-    """
-    Provides the model for the project list
-    """
+class SelectModel(Gtk.ListStore):
+    "Provides the model for the select lists"
 
     def __init__(self):
-        super().__init__(str, str)
+        "Model consists of ICON, DISPLAY, OBJECT"
 
-        Gdk.threads_init()
+        super().__init__(str, str, object)
+
         self.file_list = {}
         self.paths = set()
 
+    def update(self):
+        "Update the EDIT flag"
+
+        for row in self:
+            if row[SelectCol.OBJ].modified:
+                row[SelectCol.ICON] = Gtk.STOCK_EDIT
+            else:
+                row[SelectCol.ICON] = ""
+
     def set_markup(self, node, modified):
         """Sets the icon if the project has been modified"""
+
         if modified:
             icon = Gtk.STOCK_EDIT
         else:
             icon = None
         self.set_value(node, SelectCol.ICON, icon)
 
-    def is_not_saved(self):
-        """True if the project is not saved"""
-
-        for item in self:
-            if item[SelectCol.ICON] != "":
-                return True
-        return False
-
-    def load_icons(self):
-        """Clear paths and the file list"""
-        self.paths = set()
-        self.file_list = {}
-
-    def add_dbase(self, regset: RegisterDb, modified=False):
+    def add(self, obj: Union[Block, RegisterDb], modified=False):
         """Add the the database to the model"""
 
-        base = regset.filename.stem
-        if modified:
-            node = self.append(row=[Gtk.STOCK_EDIT, base])
+        if modified or obj.modified:
+            node = self.append(row=[Gtk.STOCK_EDIT, obj.name, obj])
         else:
-            node = self.append(row=["", base])
+            node = self.append(row=["", obj.name, obj])
 
-        self.file_list[str(regset.filename)] = node
-        self.paths.add(regset.filename.parent)
+        self.file_list[str(obj.filename)] = node
+        self.paths.add(obj.filename.parent)
         return node

@@ -92,9 +92,9 @@ class ParamValue:
         self.int_value = value
         self.is_parameter = False
 
-    def set_param(self, value: str, offset: int = 0) -> None:
+    def set_param(self, uuid: str, offset: int = 0) -> None:
         "Set the parameter as parameter"
-        self.txt_value = value
+        self.txt_value = uuid
         self.offset = offset
         self.is_parameter = True
 
