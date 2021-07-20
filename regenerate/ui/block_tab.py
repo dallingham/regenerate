@@ -447,9 +447,6 @@ class BlockTab:
 
             self.modified()
             self.project.modified = True
-            # if self.recent_manager:
-            #     self.recent_manager.add_item(f"file:///{str(filename)}")
-            # self.find_obj("save_btn").set_sensitive(True)
 
     def add_block_clicked(self, _obj):
         """
