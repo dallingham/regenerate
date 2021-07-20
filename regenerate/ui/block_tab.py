@@ -84,6 +84,8 @@ class BlockTab:
             self.after_modified,
             find_obj("add_block_doc"),
             find_obj("remove_block_doc"),
+            find_obj("block_undo"),
+            find_obj("block_redo"),
         )
 
         self.overrides_list = BlockOverridesList(
@@ -571,12 +573,18 @@ class BlockDoc(BaseDoc):
         modified,
         add_btn: Gtk.Button,
         del_btn: Gtk.Button,
+        undo_btn: Gtk.Button,
+        redo_btn: Gtk.Button,
     ):
-        super().__init__(notebook, modified, add_btn, del_btn)
+        super().__init__(
+            notebook, modified, add_btn, del_btn, undo_btn, redo_btn
+        )
         self.block: Optional[Block] = None
         self.changing = False
 
-    def change_block(self, block: Optional[Block], project: Optional[RegProject]):
+    def change_block(
+            self, block: Optional[Block], project: Optional[RegProject]
+    ):
         self.block = block
 
         self.changing = True

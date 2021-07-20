@@ -72,6 +72,8 @@ class ProjectTabs:
             self.after_modified,
             builder.get_object("add_top_doc"),
             builder.get_object("del_top_doc"),
+            builder.get_object("top_undo"),
+            builder.get_object("top_redo"),
         )
 
         self.dbase = None
@@ -95,8 +97,10 @@ class ProjectDoc(BaseDoc):
         modified,
         add_btn: Gtk.Button,
         del_btn: Gtk.Button,
+        undo_btn: Gtk.Button,
+        redo_btn: Gtk.Button,
     ):
-        super().__init__(notebook, modified, add_btn, del_btn)
+        super().__init__(notebook, modified, add_btn, del_btn, undo_btn, redo_btn)
         self.changing = False
 
     def set_project(self, project: RegProject) -> None:

@@ -66,11 +66,9 @@ class PreviewEditor:
             links = []
             for key, data in self.links.items():
                 links.append(f".. _`{key}`: /{data[0]}/{data[1]}/{data[2]}")
-            print("\n".join(links))
             text = text + "\n\n" + "\n".join(links)
 
         self.__webkit.show_html(html_string(text))
-        print(text)
 
     def set_project(self, project: Optional[RegProject]):
         """Sets the database"""

@@ -63,6 +63,8 @@ class BaseDoc:
         modified: Callable,
         add_btn: Gtk.Button,
         del_btn: Gtk.Button,
+        undo_btn: Optional[Gtk.Button] = None,
+        redo_btn: Optional[Gtk.Button] = None,
     ):
         self.notebook = notebook
         self.project: Optional[RegProject] = None
@@ -73,11 +75,30 @@ class BaseDoc:
         self.del_id = del_btn.connect(
             "clicked", self._delete_notebook_page_callback
         )
+        if undo_btn:
+            self.undo_id = undo_btn.connect(
+                "clicked", self._undo
+            )
+        if redo_btn:
+            self.redo_id = redo_btn.connect(
+                "clicked", self._redo
+            )
         self.remove_pages()
         self.page_map: List[PageInfo] = []
         self.callback = modified
         self.links = {}
 
+
+    def _undo(self, _obj: Gtk.Button) -> None:
+        info = self.page_map[self.notebook.get_current_page()]
+        if info.textbuf.can_undo():
+            info.textbuf.undo()
+
+    def _redo(self, _obj: Gtk.Button) -> None:
+        info = self.page_map[self.notebook.get_current_page()]
+        if info.textbuf.can_redo():
+            info.textbuf.redo()
+        
     def remove_pages(self) -> None:
         "Removes all pages from the notebook"
 
