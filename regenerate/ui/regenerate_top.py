@@ -452,11 +452,17 @@ class MainWindow(BaseWindow):
             self.load_project_tab()
 
             self.project_modified(False)
-            if self.recent_manager:
-                self.recent_manager.add_item(f"file:///{str(filename)}")
+            self.add_recent(str(filename.resolve()))
             self.find_obj("save_btn").set_sensitive(True)
             self.prj_loaded.set_sensitive(True)
         choose.destroy()
+
+    def add_recent(self, path: str):
+        "Adds the path th the recent manager. Must be an absolute path"
+
+        if self.recent_manager:
+            name = f"file://{path}"
+            self.recent_manager.add_item(name)
 
     def on_open_action_activate(self, _obj):
 
@@ -470,8 +476,7 @@ class MainWindow(BaseWindow):
         choose.destroy()
         if response == Gtk.ResponseType.OK:
             self.open_project(filename, uri)
-            if self.recent_manager:
-                self.recent_manager.add_item(f"file:///{str(filename)}")
+            self.add_recent(Path(filename).resolve())
 
     def set_busy_cursor(self, value):
         """
@@ -523,8 +528,7 @@ class MainWindow(BaseWindow):
 
         self.regset_tab.change_project(self.prj)
 
-        if self.recent_manager and uri:
-            self.recent_manager.add_item(uri)
+        self.add_recent(str(filepath.resolve()))
         self.find_obj("save_btn").set_sensitive(True)
 
         self.set_title(False)
