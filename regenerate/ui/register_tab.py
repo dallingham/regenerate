@@ -440,7 +440,7 @@ class RegSetTab:
     def redraw(self):
         """Redraws the information in the register list."""
         if self.regset:
-            self.module_tabs.change_db(self.regset)
+            self.module_tabs.change_db(self.regset, self.project)
             self.parameter_list.set_db(self.regset)
             self.reglist_obj.set_parameters(self.regset.parameters.get())
             self.bitfield_obj.set_parameters(self.regset.parameters.get())
@@ -449,7 +449,7 @@ class RegSetTab:
             else:
                 self.widgets.array_notation.set_active(True)
         else:
-            self.module_tabs.change_db(None)
+            self.module_tabs.change_db(None, None)
 
         self.rebuild_model()
 

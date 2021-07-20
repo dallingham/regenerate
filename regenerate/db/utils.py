@@ -38,3 +38,15 @@ def save_json(data: Dict[str, Any], path: Path):
             )
     except FileNotFoundError as msg:
         LOGGER.error(str(msg))
+
+
+def get_register_paths(project):
+    name2path = {}
+    
+    for blk_inst in project.get_block_instances():
+        block = project.get_block_from_block_inst(blk_inst)
+        for reg_inst in block.get_regset_insts():
+            regset = block.get_regset_from_reg_inst(reg_inst)
+            for reg in regset.get_all_registers():
+                name2path[reg.name] = (blk_inst.name, reg_inst.name, reg.token.lower())
+    return name2path

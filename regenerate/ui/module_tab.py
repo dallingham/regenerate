@@ -25,7 +25,7 @@ from typing import Callable, List, Optional
 
 from gi.repository import Gdk, Gtk, GtkSource
 
-from regenerate.db import RegisterDb
+from regenerate.db import RegisterDb, RegProject
 
 from .utils import clean_format_if_needed
 from .preview_editor import PreviewEditor
@@ -73,13 +73,13 @@ class ModuleDoc:
         self.dbase: Optional[RegisterDb] = None
         self.callback = modified
 
-    def change_db(self, dbase: RegisterDb):
+    def change_db(self, dbase: RegisterDb, project: Optional[RegProject] = None):
         """Change the database so the preview window can resolve references"""
 
         self.dbase = dbase
         if self.dbase:
             self.buf.set_text(getattr(self.dbase, self.db_name))
-        self.preview.set_dbase(self.dbase)
+        self.preview.set_project(project)
 
     def on_changed(self, _obj: GtkSource.Buffer):
         """A change to the text occurred"""
@@ -237,7 +237,7 @@ class ModuleTabs:
         self.set_modified = modified
         self.icon = find_obj("mod_def_warn")
 
-    def change_db(self, dbase) -> None:
+    def change_db(self, dbase, project) -> None:
         "Changes the register set to a new register set"
 
         self.dbase = dbase
@@ -246,13 +246,13 @@ class ModuleTabs:
                 obj.change_db(dbase.ports)
             for obj in self.top_object_list:
                 obj.change_db(dbase)
-            self.preview.change_db(dbase)
+            self.preview.change_db(dbase, project)
         else:
             for obj in self.port_object_list:
                 obj.change_db(None)
             for obj in self.top_object_list:
                 obj.change_db(None)
-            self.preview.change_db(None)
+            self.preview.change_db(None, None)
 
     def after_modified(self) -> None:
         "Called after modification to set visible properties"

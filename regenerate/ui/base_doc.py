@@ -45,7 +45,6 @@ class PageInfo:
         self.textbuf = textbuf
         self.name = name
 
-
 class BaseDoc:
     """
     Connects a set of SourceViews to pages in the passed notebook. The initial
@@ -77,6 +76,7 @@ class BaseDoc:
         self.remove_pages()
         self.page_map: List[PageInfo] = []
         self.callback = modified
+        self.links = {}
 
     def remove_pages(self) -> None:
         "Removes all pages from the notebook"
@@ -84,6 +84,7 @@ class BaseDoc:
         page_count = self.notebook.get_n_pages()
         for _ in range(0, page_count):
             self.notebook.remove_page(0)
+        self.page_map = []
 
     def _add_notebook_page_callback(self, _obj: Gtk.Button) -> None:
         "GTK callback to adds page to the notebook"
@@ -183,7 +184,6 @@ class BaseDoc:
             obj.get_start_iter(), obj.get_end_iter(), False
         )
         info = self.page_map[self.notebook.get_current_page()]
-
         self.update_page_from_doc(info.name, new_text, info.tags)
         self.callback()
 

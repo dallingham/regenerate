@@ -119,7 +119,7 @@ class BlockTab:
         self.block_name.change_db(None)
         self.block_description.change_db(None)
         self.block_size.change_db(None)
-        self.preview.change_block(None)
+        self.preview.change_block(None, None)
 
     def page_changed(
         self, _obj: Gtk.Notebook, _page: Gtk.Grid, page_num: int
@@ -150,6 +150,7 @@ class BlockTab:
             self.select_block(block.uuid)
             self.disable_modified = False
             self.parameter_list.set_db(self.block)
+            self.preview.change_block(self.block, self.project)
 
     def after_modified(self) -> None:
         self.modified()
@@ -397,7 +398,7 @@ class BlockTab:
     def select_block(self, blkid):
         self.block = self.project.blocks[blkid]
 
-        self.preview.change_block(self.block)
+        self.preview.change_block(self.block, self.project)
         self.block_name.change_db(self.block)
         self.block_description.change_db(self.block)
         self.block_size.change_db(self.block)
@@ -578,7 +579,7 @@ class BlockDoc(BaseDoc):
         self.block: Optional[Block] = None
         self.changing = False
 
-    def change_block(self, block: Optional[Block]):
+    def change_block(self, block: Optional[Block], project: Optional[RegProject]):
         self.block = block
 
         self.changing = True

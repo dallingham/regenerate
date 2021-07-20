@@ -61,7 +61,7 @@ class RegisterDescription:
 
     def set_database(self, dbase):
         """Change the database so the preview window can resolve references"""
-        self.preview.set_dbase(dbase)
+        self.preview.set_project(None)
         self.set_register(None)
 
     def set_register(self, reg: Register):

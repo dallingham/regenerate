@@ -280,6 +280,12 @@ class RegProject:
             if not (exp.exporter == exporter and exp.target == dest)
         ]
 
+    def get_block_instances(self):
+        return self.block_insts
+
+    def get_block_from_block_inst(self, blk_inst: BlockInst) -> Block:
+        return self.blocks[blk_inst.blkid]
+    
     def get_register_set(self) -> List[Path]:
         """
         Returns the register databases (XML files) referenced by the project

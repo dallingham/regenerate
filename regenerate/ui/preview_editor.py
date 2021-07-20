@@ -22,6 +22,10 @@ changes to the buffer cause an update on the webkit display, after the
 text is converted from restructuredText to HTML.
 """
 
+from typing import Optional
+from regenerate.db import RegisterDb, RegProject
+from regenerate.db.utils import get_register_paths
+
 from regenerate.ui.preview import html_string
 from regenerate.ui.html_display import HtmlDisplay
 
@@ -44,8 +48,8 @@ class PreviewEditor:
         self.__text_buffer.connect("changed", self._changed)
         self.__update = False
         self.__adjust = self.__container.get_vadjustment()
-        self.__active_db = None
         self.__use_reg = use_reg
+        self.links = {}
         self.enable()
 
     def __update_text(self):
@@ -58,19 +62,24 @@ class PreviewEditor:
             self.__text_buffer.get_end_iter(),
             False,
         )
-        if self.__use_reg and self.__active_db:
-            data = []
-            for reg in self.__active_db.get_all_registers():
-                data.append(f".. _`{reg.name}`: /")
-            text = text + "\n\n" + "\n".join(data)
+        if self.__use_reg:
+            links = []
+            for key, data in self.links.items():
+                links.append(f".. _`{key}`: /{data[0]}/{data[1]}/{data[2]}")
+            print("\n".join(links))
+            text = text + "\n\n" + "\n".join(links)
 
         self.__webkit.show_html(html_string(text))
+        print(text)
 
-    def set_dbase(self, dbase):
+    def set_project(self, project: Optional[RegProject]):
         """Sets the database"""
 
-        self.__active_db = dbase
-
+        if project:
+            self.links = get_register_paths(project)
+        else:
+            self.links = {}
+        
     def enable(self):
         """
         Enables updating and display of the webkit display
