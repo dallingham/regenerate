@@ -134,6 +134,7 @@ class BlockTab:
         self.block_model.update()
         if self.block:
             self.set_parameters(self.block.parameters.get())
+            self.overrides_list.set_parameters(self.block.parameters.get())
         self.overrides_list.update_display()
 
     def clear_flags(self) -> None:
@@ -342,6 +343,7 @@ class BlockTab:
         "Sets the parameters"
 
         self._parameter_names = set({(p.name, p.uuid) for p in parameters})
+        self.overrides_list.set_parameters(parameters)
         self.repeat_col.update_menu(sorted(list(self._parameter_names)))
 
     def set_parameters_modified(self):
@@ -583,7 +585,7 @@ class BlockDoc(BaseDoc):
         self.changing = False
 
     def change_block(
-            self, block: Optional[Block], project: Optional[RegProject]
+        self, block: Optional[Block], project: Optional[RegProject]
     ):
         self.block = block
 

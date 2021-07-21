@@ -23,6 +23,7 @@ Manages overriding parameter values from a lower level.
 
 from typing import Dict, Any
 from .param_data import ParameterFinder
+from .param_value import ParamValue
 
 
 class Overrides:
@@ -32,7 +33,7 @@ class Overrides:
         self.finder = ParameterFinder()
         self.path: str = ""
         self.parameter: str = ""
-        self.value: int = 0
+        self.value = ParamValue()
         self.temp_name = ""
 
     def __repr__(self) -> str:
@@ -54,4 +55,8 @@ class Overrides:
 
         self.path = data["path"]
         self.parameter = data["parameter"]
-        self.value = data["value"]
+        val = data["value"]
+        if isinstance(val, ParamValue):
+            self.value = val
+        else:
+            self.value = ParamValue(val)

@@ -22,7 +22,7 @@ Provides the Address List interface
 
 from gi.repository import Gtk
 from regenerate.db import ParameterData, Overrides, ParameterFinder
-from regenerate.ui.columns import ReadOnlyColumn, EditableColumn
+from regenerate.ui.columns import ReadOnlyColumn, MenuEditColumn
 from regenerate.ui.utils import check_hex
 from regenerate.ui.enums import ParameterCol, OverrideCol
 
@@ -195,18 +195,38 @@ class OverridesList:
         self._obj.append_column(self.column)
         self._col = self.column
 
-        column = EditableColumn(
+        self.menu_column = MenuEditColumn(
             "Value",
-            self._value_changed,
+            self._value_menu_callback,
+            self._value_edit_callback,
+            [],
             1,
-            True,
             tooltip="Value of the parameter",
         )
-        column.set_min_width(150)
-        self._obj.append_column(column)
+        self.menu_column.set_min_width(150)
+        self._obj.append_column(self.menu_column)
 
         self._model = OverridesListMdl()
         self._obj.set_model(self._model)
+
+    def _value_menu_callback(
+        self,
+        cell: Gtk.CellRendererCombo,
+        path: str,
+        node: Gtk.TreeIter,
+        col: int,
+    ):
+
+        model = cell.get_property("model")
+        new_text = model.get_value(node, 0)
+        new_uuid = model.get_value(node, 1)
+
+        override = self._model[int(path)][OverrideCol.OBJ]
+        override.value.set_param(new_uuid)
+        self._model[int(path)][col] = new_text
+
+    def _value_edit_callback(self, _cell, path, new_val, col):
+        print("Edit Callback")
 
     def clear(self):
         """
@@ -243,9 +263,12 @@ class OverridesList:
 
         (model, node) = select_data
         obj = model.get_value(node, OverrideCol.OBJ)
-        name = f"{obj.path}.{obj.parameter.name}"
         self._used.remove(obj.parameter.uuid)
         model.remove(node)
+
+    def set_parameters(self, parameters):
+        my_parameters = sorted([(p.name, p.uuid) for p in parameters])
+        self.menu_column.update_menu(my_parameters)
 
     def build_overrides_list(self, project):
         self.build_used()
@@ -290,7 +313,7 @@ def get_row_data(path, map_obj):
     finder = ParameterFinder()
     data = (
         f"{path}.{finder.find(map_obj.parameter).name}",
-        hex(int(map_obj.value)),
+        str(map_obj.value),
         map_obj,
     )
     return data
