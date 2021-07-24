@@ -221,11 +221,11 @@ class Verilog(WriterBase):
 
         reglist = []
         for reg in code_registers:
-            if reg.dimension_is_param():
+            if reg.dimension.is_parameter:
                 new_reg = copy.deepcopy(reg)
                 reglist.append(new_reg)
-            elif reg.dimension > 1:
-                for i in range(0, reg.dimension):
+            elif reg.dimension.resolve() > 1:
+                for i in range(0, reg.dimension.resolve()):
                     new_reg = copy.deepcopy(reg)
                     new_reg.address = reg.address + (i * int(reg.width // 8))
                     new_reg.dimension = i

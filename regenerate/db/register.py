@@ -187,7 +187,7 @@ class Register(NameBase):
 
     __slots__ = (
         "_bit_fields",
-        "_dimension",
+        "dimension",
         "_parameter_list",
         "_token",
         "address",
@@ -203,7 +203,7 @@ class Register(NameBase):
         "width",
         "_token",
         "flags",
-        "_dimension",
+        "dimension",
     )
 
     _array_compare = (
@@ -217,14 +217,14 @@ class Register(NameBase):
         "ram_size",
         "width",
         "_token",
-        "_dimension",
+        "dimension",
     )
 
     def __init__(self, address: int = 0, width: int = 32, name: str = ""):
 
         super().__init__(name, "")
 
-        self._dimension = ParamValue(1)
+        self.dimension = ParamValue(1)
         self._token = ""
         self._bit_fields: Dict[int, BitField] = {}
         self._parameter_list: List[ParameterData] = []
@@ -319,40 +319,6 @@ class Register(NameBase):
                 return self.find_first_unused_bit()
             return lbits[-1] + 1
         return 0
-
-    def dimension_is_param(self) -> bool:
-        """Determines if the dimension is an int or parameter"""
-
-        return self._dimension.is_parameter
-
-    @property
-    def dimension(self) -> int:
-        """
-        Returns the dimension as an integer, resolving the parameter
-        value if it exists.
-        """
-        return self._dimension.resolve()
-
-    @dimension.setter
-    def dimension(self, value) -> None:
-        """Sets the dimension as a string"""
-        if isinstance(value, int):
-            self._dimension.set_int(value)
-        else:
-            try:
-                intval = int(value, 0)
-                self._dimension.set_int(intval)
-            except ValueError:
-                self._dimension.set_param(value)
-
-    def dimension_value(self) -> int:
-        "Returns the dimension valued with parameters resolved"
-        return self._dimension.resolve()
-
-    @property
-    def dimension_str(self) -> str:
-        """Returns the dimension as a string, not resolving parameters"""
-        return self._dimension.int_str()
 
     @property
     def token(self) -> str:
@@ -509,15 +475,15 @@ class Register(NameBase):
             "width": self.width,
             "bitfields": [field for index, field in self._bit_fields.items()],
         }
-        val["dimension"] = self._dimension
+        val["dimension"] = self.dimension.json()
         return val
 
     def json_decode(self, data: Dict[str, Any]) -> None:
         self.name = data["name"]
         self._id = data["uuid"]
         self.description = data["description"]
-        self._dimension = ParamValue()
-        self._dimension.json_decode(data["dimension"])
+        self.dimension = ParamValue()
+        self.dimension.json_decode(data["dimension"])
 
         self._token = data["token"]
         self.address = int(data["address"], 0)

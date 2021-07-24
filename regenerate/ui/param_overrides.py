@@ -21,7 +21,7 @@ Provides the Address List interface
 """
 
 from gi.repository import Gtk
-from regenerate.db import ParameterData, Overrides, ParameterFinder
+from regenerate.db import ParameterData, Overrides, ParameterFinder, ParamValue
 from regenerate.ui.columns import ReadOnlyColumn, MenuEditColumn
 from regenerate.ui.utils import check_hex
 from regenerate.ui.enums import ParameterCol, OverrideCol
@@ -161,10 +161,13 @@ class OverridesList:
 
     def menu_selected(self, _obj, data):
         _, info = data
+        print(data)
         override = Overrides()
         override.path = info[0].uuid
         override.parameter = info[1].uuid
-        override.value = info[1].value
+        print(">>", info[1].value)
+        override.value = ParamValue()
+        override.value.set_param(info[1].uuid)
         self._model.append(row=get_row_data(info[0].name, override))
         self._used.add(override.parameter)
         self.prj.overrides.append(override)
@@ -222,6 +225,7 @@ class OverridesList:
         new_uuid = model.get_value(node, 1)
 
         override = self._model[int(path)][OverrideCol.OBJ]
+        print(type(override.value))
         override.value.set_param(new_uuid)
         self._model[int(path)][col] = new_text
 

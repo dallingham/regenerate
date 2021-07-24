@@ -48,11 +48,10 @@ package {{prj.short_name}}_reg_pkg;
     *
     *-------------------------------------------------------------------------
     */
-
 {% for regset_inst in dblist %}
+  {{- resolver.set_reginst(regset_inst.uuid) or '' -}}
   {% set db = prj.regsets[regset_inst.regset_id] %}
   {%- if db.coverage %}
-  
    class {{regset_inst.name}}_reg_access_wrapper extends uvm_object;
 
       `uvm_object_utils({{regset_inst.name}}_reg_access_wrapper)
@@ -67,8 +66,8 @@ package {{prj.short_name}}_reg_pkg;
          READ_ADDR: coverpoint addr iff (is_read) {
             {% for reg in db.get_all_registers() | remove_no_uvm %}
               {% if reg.flags.do_not_cover == False and reg.is_completely_write_only() == False %}
-                {% if reg.dimension > 1 %}
-           bins r_{{fix_reg(reg)}} = { {% for i in range(0, reg.dimension) %}'h{{ '%x' % (reg.address + (i * (reg.width // 8)),) }}{% if not loop.last %}, {% endif %}{% endfor %} };
+                {% if reg.dimension.resolve() > 1 %}
+           bins r_{{fix_reg(reg)}} = { {% for i in range(0, reg.dimension.resolve()) %}'h{{ '%x' % (reg.address + (i * (reg.width // 8)),) }}{% if not loop.last %}, {% endif %}{% endfor %} };
                 {% else %}
            bins r_{{fix_reg(reg)}} = { 'h{{ '%x' % reg.address }} };
                 {% endif %}
@@ -80,8 +79,8 @@ package {{prj.short_name}}_reg_pkg;
             {% for reg in db.get_all_registers() | remove_no_uvm %}
               {% if reg.is_completely_read_only() == False %}
                 {% if reg.flags.do_not_cover == False and reg.is_completely_read_only() == False %}
-                  {% if reg.dimension > 1 %}
-           bins w_{{fix_reg(reg)}} = { {% for i in range(0, reg.dimension) %}'h{{ '%x' % (reg.address + (i * (reg.width // 8)),) }}{% if not loop.last %}, {% endif %}{% endfor %} };
+                  {% if reg.dimension.resolve() > 1 %}
+           bins w_{{fix_reg(reg)}} = { {% for i in range(0, reg.dimension.resolve()) %}'h{{ '%x' % (reg.address + (i * (reg.width // 8)),) }}{% if not loop.last %}, {% endif %}{% endfor %} };
                   {% else %}
            bins w_{{fix_reg(reg)}} = { 'h{{ '%x' % reg.address }} };
                   {% endif %}
@@ -322,8 +321,8 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
      {% if reg.ram_size %}
     mem_{{regset_inst.name}}_{{fix_reg(reg)}} {{fix_reg(reg)}};
      {% else %}
-       {% if reg.dimension > 1 %}
-    rand reg_{{regset_inst.name}}_{{fix_reg(reg)}} {{fix_reg(reg)}}[{{reg.dimension}}];
+       {% if reg.dimension.resolve() > 1 %}
+    rand reg_{{regset_inst.name}}_{{fix_reg(reg)}} {{fix_reg(reg)}}[{{reg.dimension.resolve()}}];
        {% else %}
     rand reg_{{regset_inst.name}}_{{fix_reg(reg)}} {{fix_reg(reg)}};
        {% endif %}
@@ -389,8 +388,8 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
        {% if reg.ram_size %}
           rmap.add_mem({{fix_reg(reg)}}, 'h{{"%04x" % reg.address}}, access_mode("{{mode}}", force_mode));
       {% else %}
-         {% if reg.dimension > 1 %}
-           {% for i in range(0, reg.dimension) %}
+         {% if reg.dimension.resolve() > 1 %}
+           {% for i in range(0, reg.dimension.resolve()) %}
           rmap.add_reg({{fix_reg(reg)}}[{{i}}], 'h{{"%04x" % (reg.address + (i * (reg.width // 8)),)}}, access_mode("{{mode}}", force_mode));
            {% endfor %}
          {% else %}
@@ -442,7 +441,7 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
       {{fix_reg(reg)}} = new("{{fix_reg(reg)}}");
       {{fix_reg(reg)}}.configure(this);
 {%   else %}
-{%     if reg.dimension > 1 %}
+{%     if reg.dimension.resolve() > 1 %}
       foreach ({{fix_reg(reg)}}[i]) begin
          {{fix_reg(reg)}}[i] = new("{{fix_reg(reg)}}");
          {{fix_reg(reg)}}[i].configure(this);

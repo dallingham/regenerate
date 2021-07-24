@@ -179,7 +179,6 @@ class Block(NameBase):
             ...
 
         for override in self.overrides:
-            print(override)
             resolver.add_regset_override(
                 override.path, override.parameter, override.value
             )

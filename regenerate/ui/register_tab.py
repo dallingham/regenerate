@@ -327,10 +327,10 @@ class RegSetTab:
         for row in self.reg_model:
             reg = row[-1]
             if (
-                reg.dimension_is_param()
-                and reg.dimension_str != row[RegCol.DIM]
+                reg.dimension.is_parameter
+                and reg.dimension.int_str() != row[RegCol.DIM]
             ):
-                row[RegCol.DIM] = reg.dimension_str
+                row[RegCol.DIM] = reg.dimension.int_str()
 
     def set_parameters_modified(self):
         self.set_modified()
