@@ -266,29 +266,38 @@ package {{prj.short_name}}_reg_pkg;
 	    .val(1),
 	    .accessor(this)
 	 );
-      {% elif reg.flags.do_not_test %}
+      {% else %}
+         {% if reg.flags.do_not_test %}
+	 // Dont bit bash
          uvm_resource_db #(bit)::set(
 	    .scope({"REG::", get_full_name()}),
 	    .name("NO_REG_BIT_BASH_TEST"),
 	    .val(1),
 	    .accessor(this)
 	 );
-      {% elif reg.flags.do_not_reset_test  %}
+         uvm_resource_db #(bit)::set(
+	    .scope({"REG::", get_full_name()}),
+	    .name("NO_REG_ACCESS_TEST"),
+	    .val(1),
+	    .accessor(this)
+	 );
+	 {% endif %}
+         {% if reg.flags.do_not_reset_test  %}
          uvm_resource_db #(bit)::set(
 	    .scope({"REG::", get_full_name()}),
 	    .name("NO_REG_HW_RESET_TEST"),
 	    .val(1),
 	    .accessor(this)
 	 );
-      {% elif reg.strict_volatile()%}
-         {% if reg.loose_volatile() %}
+         {% elif reg.strict_volatile() %}
+           {% if reg.loose_volatile() %}
          uvm_resource_db #(bit)::set(
 	    .scope({"REG::", get_full_name()}),
 	    .name("NO_REG_HW_RESET_TEST"),
 	    .val(1),
 	    .accessor(this)
 	 );
-         {% else %}
+           {% else %}
          if ({{prj.short_name}}_reg_pkg::s_relaxed_volatile == 1'b0) begin
             uvm_resource_db #(bit)::set(
 	       .scope({"REG::", get_full_name()}),
@@ -297,7 +306,8 @@ package {{prj.short_name}}_reg_pkg;
 	       .accessor(this)
 	    );
          end
-         {% endif %}
+           {% endif %}
+	 {% endif %}
       {% endif %}
       endfunction : build
 
