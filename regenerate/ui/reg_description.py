@@ -59,9 +59,9 @@ class RegisterDescription:
         self.preview = PreviewEditor(self.buf, web_view)
         self.callback = change_callback
 
-    def set_database(self, dbase):
+    def set_project(self, project):
         """Change the database so the preview window can resolve references"""
-        self.preview.set_project(None)
+        self.preview.set_project(project)
         self.set_register(None)
 
     def set_register(self, reg: Register):

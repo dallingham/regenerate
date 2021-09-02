@@ -23,7 +23,7 @@ Project model and list
 
 import os
 from pathlib import Path
-from typing import Optional, List, Callable
+from typing import Optional, List, Callable, Set
 from gi.repository import Gtk, GdkPixbuf, Pango
 from regenerate.settings.paths import INSTALL_PATH
 from regenerate.db import RegisterInst, Block, BLK_EXT, LOGGER, RegProject
@@ -70,7 +70,7 @@ class BlockTab:
         self.project: Optional[RegProject] = None
         self.block: Optional[Block] = None
         self.disable_modified = True
-        self._parameter_names = set()
+        self._parameter_names: Set[str] = set()
 
         self.block_obj = BlockSelectList(
             find_obj("block_select_list"), self.block_selection_changed
@@ -194,7 +194,7 @@ class BlockTab:
         column.set_resizable(True)
 
     def modified(self) -> None:
-        if self.disable_modified:
+        if self.disable_modified or self.block is None:
             return
 
         self.block_obj.update_data()
@@ -207,6 +207,9 @@ class BlockTab:
         self, _cell: Gtk.CellRendererText, path: str, text: str, col: int
     ) -> None:
         "Called when the instance name changed for a register instance"
+
+        if self.block is None:
+            return
 
         old_text = self.regmodel[int(path)][col]
         self.regmodel[int(path)][col] = text
@@ -246,6 +249,9 @@ class BlockTab:
     ) -> None:
         "Called with the repeat value changes due to the menu selection"
 
+        if self.block is None:
+            return
+
         model = cell.get_property("model")
         new_text = model.get_value(node, 0)
         new_uuid = model.get_value(node, 1)
@@ -263,6 +269,9 @@ class BlockTab:
         self, _cell: Gtk.CellRendererCombo, path: str, new_text: str, col: int
     ) -> None:
         "Called with the repeat value changes due to text being edited"
+
+        if self.block is None:
+            return
 
         try:
             value = int(new_text, 0)

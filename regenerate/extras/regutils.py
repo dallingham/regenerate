@@ -115,7 +115,7 @@ def calculate_next_address(dbase: RegisterDb, width: int) -> int:
     if keys:
         last_reg = dbase.get_register(keys[-1])
         if last_reg:
-            dim = max(last_reg.dimension, 1)
+            dim = max(last_reg.dimension.resolve(), 1)
             byte_width = last_reg.width >> 3
             addr = last_reg.address + (dim * byte_width)
             byte_width = width >> 3

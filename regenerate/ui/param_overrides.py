@@ -21,7 +21,13 @@ Provides the Address List interface
 """
 
 from gi.repository import Gtk
-from regenerate.db import ParameterData, Overrides, ParameterFinder, ParamValue
+from regenerate.db import (
+    RegProject,
+    Overrides,
+    ParameterFinder,
+    ParamValue,
+    LOGGER,
+)
 from regenerate.ui.columns import ReadOnlyColumn, MenuEditColumn
 from regenerate.ui.utils import check_hex
 from regenerate.ui.enums import ParameterCol, OverrideCol
@@ -129,20 +135,32 @@ class OverridesList:
             self._used.add(row[-1].uuid)
 
     def set_menu(self):
-        count = False
-        self.menu = Gtk.Menu()
-        for override in self.build_overrides_list(self.prj):
-            count = True
+        count = 0
+        menu = Gtk.Menu()
+        override_list, total = self.build_overrides_list(self.prj)
+        for override in override_list:
+            count = count + 1
             menu_item = Gtk.MenuItem(override[0])
             menu_item.connect("activate", self.menu_selected, override)
             menu_item.show()
-            self.menu.append(menu_item)
+            menu.append(menu_item)
 
         self.add.set_sensitive(count)
         self.remove.set_sensitive(count)
-        if count:
-            self.add.set_popup(self.menu)
-            self._obj.set_tooltip_text(None)
+        if count > 0:
+            self.add.set_popup(menu)
+
+        if total > 0:
+            if count == 0:
+                self._obj.set_tooltip_text(
+                    "There are no additional lower level parameters that "
+                    "can be overridden"
+                )
+            else:
+                self._obj.set_tooltip_text(
+                    "Lower level parameters can be overridding by selecting "
+                    "the parameter from the Add button"
+                )
         else:
             self._obj.set_tooltip_text(
                 "There are no lower level parameters that can be overridden"
@@ -165,7 +183,6 @@ class OverridesList:
         override = Overrides()
         override.path = info[0].uuid
         override.parameter = info[1].uuid
-        print(">>", info[1].value)
         override.value = ParamValue()
         override.value.set_param(info[1].uuid)
         self._model.append(row=get_row_data(info[0].name, override))
@@ -225,12 +242,27 @@ class OverridesList:
         new_uuid = model.get_value(node, 1)
 
         override = self._model[int(path)][OverrideCol.OBJ]
-        print(type(override.value))
         override.value.set_param(new_uuid)
         self._model[int(path)][col] = new_text
+        self._callback()
 
-    def _value_edit_callback(self, _cell, path, new_val, col):
-        print("Edit Callback")
+    def _value_edit_callback(self, _cell, path, new_text, col):
+
+        try:
+            value = int(new_text, 0)
+        except ValueError:
+            LOGGER.warning(
+                '"%s" is not a valid parameter value. It must be an '
+                "integer greater than 0 or a defined parameter",
+                new_text,
+            )
+            return
+
+        row = int(path)
+        override = self._model[row][OverrideCol.OBJ]
+        override.value.set_int(value)
+        self._model[row][col] = f"0x{value:x}"
+        self._callback()
 
     def clear(self):
         """
@@ -238,12 +270,12 @@ class OverridesList:
         """
         self._model.clear()
 
-    def append(self, name, value, max_val, min_val):
-        """
-        Add the data to the list.
-        """
-        obj = ParameterData(name, value, min_val, max_val)
-        self._model.append(row=get_row_data(obj))
+    # def append(self, name, value, max_val, min_val):
+    #     """
+    #     Add the data to the list.
+    #     """
+    #     obj = ParameterData(name, value, min_val, max_val)
+    #     self._model.append(row=get_row_data(obj))
 
     def get_selected(self):
         """
@@ -274,29 +306,33 @@ class OverridesList:
         my_parameters = sorted([(p.name, p.uuid) for p in parameters])
         self.menu_column.update_menu(my_parameters)
 
-    def build_overrides_list(self, project):
+    def build_overrides_list(self, project: RegProject):
+        total = 0
         self.build_used()
         param_list = []
         for blkinst in project.block_insts:
             blkinst_name = blkinst.name
             block = project.blocks[blkinst.blkid]
             for param in block.parameters.get():
+                total += 1
                 name = f"{blkinst_name}.{param.name}"
                 if param.uuid not in self._used:
                     param_list.append((name, (blkinst, param)))
-        return param_list
+        return param_list, total
 
 
 class BlockOverridesList(OverridesList):
     def build_overrides_list(self, block):
+        total = 0
         param_list = []
         for reginst in block.regset_insts:
             regset = block.regsets[reginst.regset_id]
             for param in regset.parameters.get():
+                total += 1
                 name = f"{reginst.name}.{param.name}"
                 if param.uuid not in self._used:
                     param_list.append((name, (reginst, param)))
-        return param_list
+        return param_list, total
 
     def update_display(self):
         self.set_menu()

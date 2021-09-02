@@ -45,6 +45,7 @@ class PageInfo:
         self.textbuf = textbuf
         self.name = name
 
+
 class BaseDoc:
     """
     Connects a set of SourceViews to pages in the passed notebook. The initial
@@ -76,18 +77,13 @@ class BaseDoc:
             "clicked", self._delete_notebook_page_callback
         )
         if undo_btn:
-            self.undo_id = undo_btn.connect(
-                "clicked", self._undo
-            )
+            self.undo_id = undo_btn.connect("clicked", self._undo)
         if redo_btn:
-            self.redo_id = redo_btn.connect(
-                "clicked", self._redo
-            )
+            self.redo_id = redo_btn.connect("clicked", self._redo)
         self.remove_pages()
         self.page_map: List[PageInfo] = []
         self.callback = modified
         self.links = {}
-
 
     def _undo(self, _obj: Gtk.Button) -> None:
         info = self.page_map[self.notebook.get_current_page()]
@@ -98,7 +94,7 @@ class BaseDoc:
         info = self.page_map[self.notebook.get_current_page()]
         if info.textbuf.can_redo():
             info.textbuf.redo()
-        
+
     def remove_pages(self) -> None:
         "Removes all pages from the notebook"
 

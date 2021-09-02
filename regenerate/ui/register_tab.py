@@ -375,8 +375,9 @@ class RegSetTab:
         self.reglist_obj.set_model(self.modelsort)
 
         for key in regset.get_keys():
-            register = regset.get_register(key)
-            self.reg_model.append_register(register)
+            reg = regset.get_register(key)
+            if reg:
+                self.reg_model.append_register(reg)
 
         bit_model = BitModel()
 
@@ -483,7 +484,7 @@ class RegSetTab:
             self.modelsort = status.modelsort
             self.node = status.node
 
-            self.reg_description.set_database(self.regset)
+            self.reg_description.set_project(self.project)
 
             status = self.name2status[self.regset.uuid]
             self.filter_manage.change_filter(status.modelfilter)

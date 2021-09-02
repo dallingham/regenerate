@@ -74,8 +74,8 @@ module {{db.name}}
  */
    wire wr_strb = ~prev_write & {{ports['write_strobe']}};
 {% for data in write_address_selects %}
-{%   if data[2].dimension_is_param() %}
-   wire {{data[0]}}[{{data[2].dimension_str}}];
+{%   if data[2].dimension.is_parameter %}
+   wire {{data[0]}}[{{data[2].dimension.param_name()}}];
 {%-   else %}
    wire {{data[0]}};
 {%-   endif %}   
@@ -85,9 +85,9 @@ module {{db.name}}
 {% endfor %}
 
 {% for data in write_address_selects %}
-{%   if data[2].dimension_is_param() %}
+{%   if data[2].dimension.is_parameter %}
    generate
-      for (i=0 ; i < {{data[2].dimension_str}}; i++) begin : g_{{data[0]}}
+      for (i=0 ; i < {{data[2].dimension.param_name()}}; i++) begin : g_{{data[0]}}
          assign {{data[0]}}[i] = wr_strb & ({{ports['addr']}} == ({{data[1]}} + i));
       end
       // 1
@@ -97,9 +97,9 @@ module {{db.name}}
 {%   endif %}
 {% endfor %}
 {% for data in read_address_selects %}
-{%   if data[2].dimension_is_param() %}
+{%   if data[2].dimension.is_parameter %}
    generate
-      for (i=0 ; i < {{data[2].dimension_str}}; i++) begin : g_{{data[0]}}
+      for (i=0 ; i < {{data[2].dimension.param_name()}}; i++) begin : g_{{data[0]}}
          assign {{data[0]}}[i] = (~prev_read & {{ports['read_strobe']}}) & ({{ports['addr']}} == ({{data[1]}} + i));
       end
       // 2
@@ -152,10 +152,10 @@ module {{db.name}}
 {%   set byte_off_str = "" %}
 {% endif %}
 {% set faddr_str = "%02x" % reg.address + "_" + field.name %}
-{%     if reg.dimension_is_param() %}
+{%     if reg.dimension.is_parameter %}
 {%       set dimval = "[dim]" %}
 generate 
-   for (dim = 0; dim < {{reg.dimension_str}}; dim++) begin : g_r{{"%02x" % reg.address}}
+   for (dim = 0; dim < {{reg.dimension.param_name()}}; dim++) begin : g_r{{"%02x" % reg.address}}
 {%     else %}
 {%       set dimval = "" %}
 {%     endif %}

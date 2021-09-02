@@ -62,14 +62,17 @@ class SummaryWindow(BaseWindow):
 
     def destroy(self, _obj: Gtk.Window):
         """Hide the window on the destroy event"""
-        self.window.hide()
+        if self.window:
+            self.window.hide()
         return True
 
     def delete(self, _obj: Gtk.Window, _event: Gdk.Event):
         """Hide the window on the delete event"""
-        self.window.hide()
+        if self.window:
+            self.window.hide()
         return True
 
     def hide(self, _obj: Gtk.Button):
         """Hide the window"""
-        self.window.hide()
+        if self.window:
+            self.window.hide()

@@ -73,7 +73,9 @@ class ModuleDoc:
         self.dbase: Optional[RegisterDb] = None
         self.callback = modified
 
-    def change_db(self, dbase: RegisterDb, project: Optional[RegProject] = None):
+    def change_db(
+        self, dbase: RegisterDb, project: Optional[RegProject] = None
+    ):
         """Change the database so the preview window can resolve references"""
 
         self.dbase = dbase
@@ -252,7 +254,6 @@ class ModuleTabs:
                 obj.change_db(None)
             for obj in self.top_object_list:
                 obj.change_db(None)
-            self.preview.change_db(None, None)
 
     def after_modified(self) -> None:
         "Called after modification to set visible properties"

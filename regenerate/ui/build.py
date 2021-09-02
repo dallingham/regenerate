@@ -22,20 +22,22 @@ keeps track of when an output file should be rebuilt.
 """
 
 import os
+from typing import Tuple, Dict, Type, List, NamedTuple
 from pathlib import Path
+from collections import namedtuple
 
 from gi.repository import Gtk
 from regenerate.settings.paths import INSTALL_PATH
-from regenerate.db.export import ExportData
-from regenerate.ui.base_window import BaseWindow
-from regenerate.ui.columns import EditableColumn, ToggleColumn
-from regenerate.ui.error_dialogs import ErrorMsg
-from regenerate.ui.export_assistant import ExportAssistant
-from regenerate.ui.enums import (
+from regenerate.db import RegProject, RegisterDb, ExportData
+from regenerate.writers import WriterBase
+
+from .base_window import BaseWindow
+from .columns import EditableColumn, ToggleColumn
+from .error_dialogs import ErrorMsg
+from .export_assistant import ExportAssistant
+from .enums import (
     Level,
     BuildCol,
-    MapOpt,
-    OptMap,
 )
 from regenerate.writers import (
     EXPORTERS,
@@ -45,17 +47,25 @@ from regenerate.writers import (
 )
 
 
+class ExportInfo(NamedTuple):
+    name: str
+    cls: WriterBase
+    level: Level
+
+
 class Build(BaseWindow):
     """
     Builder interface. Allows the user to control exporters, building rules
     as to what should be built.
     """
 
-    def __init__(self, project):
+    def __init__(self, project: RegProject):
         super().__init__()
 
         self.__prj = project
-        self.__modlist = []
+        self.__modlist: List[bool] = []
+        self.__mapopt: Dict[str, ExportInfo] = {}
+        self.__optmap: Dict[str, ExportInfo] = {}
 
         self.__base2path = {}
         for item in self.__prj.get_register_set():
@@ -66,7 +76,7 @@ class Build(BaseWindow):
         self.__build_export_maps()
         self.__populate()
 
-    def __build_export_maps(self):
+    def __build_export_maps(self) -> None:
         """
         Builds the maps used to map options. The __optmap maps an internal
         Type Identifier to:
@@ -79,16 +89,21 @@ class Build(BaseWindow):
 
         """
         self.__optmap = {}
-        self.__mapopt = {}
-        for level, export_list in enumerate(
-            [EXPORTERS, GRP_EXPORTERS, PRJ_EXPORTERS]
-        ):
+        for level, export_list in [
+            (Level.BLOCK, EXPORTERS),
+            (Level.GROUP, GRP_EXPORTERS),
+            (Level.PROJECT, PRJ_EXPORTERS),
+        ]:
             for item in export_list:
                 value = f"{item.type[0]} ({item.type[1]})"
-                self.__optmap[item.id] = (value, item.obj_class, level)
-                self.__mapopt[value] = (item.id, item.obj_class, level)
+                self.__optmap[item.id] = ExportInfo(
+                    value, item.obj_class, level
+                )
+                self.__mapopt[value] = ExportInfo(
+                    item.id, item.obj_class, level
+                )
 
-    def __build_interface(self, parent):
+    def __build_interface(self, parent: Gtk.Window) -> None:
         """
         Builds the interface from the glade description, connects the signals,
         and creates the data models to load into the system.
@@ -106,18 +121,21 @@ class Build(BaseWindow):
         self.__build_top.set_transient_for(parent)
         self.__build_top.show_all()
 
-    def __add_item_to_list(self, full_path, exporter, dest):
+    def __add_item_to_list(
+        self, full_path: str, exporter: str, dest: str
+    ) -> None:
         """
         Adds the item to the list view.
         """
-        if self.__optmap[exporter][OptMap.REGISTER_SET] == Level.BLOCK:
+
+        if self.__optmap[exporter].level == Level.BLOCK:
             self.__add_dbase_item_to_list(full_path, exporter, dest)
-        elif self.__optmap[exporter][OptMap.REGISTER_SET] == Level.GROUP:
+        elif self.__optmap[exporter].level == Level.GROUP:
             self.__add_group_item_to_list(full_path, exporter, dest)
         else:
             self.__add_prj_item_to_list(exporter, dest)
 
-    def __add_prj_item_to_list(self, exporter, dest):
+    def __add_prj_item_to_list(self, exporter: str, dest: str) -> None:
         """
         Adds a target to the list that is dependent on the entire project.
         This is similar to adding a target that is dependent on a single
@@ -128,12 +146,22 @@ class Build(BaseWindow):
 
         mod = file_needs_rebuilt(local_dest, self.__prj, self.__prj.regsets)
         self.__modlist.append(mod)
-        (fmt, cls, _) = self.__optmap[exporter]
+        info = self.__optmap[exporter]
         self.__model.append(
-            row=[mod, "<project>", fmt, dest, cls, None, ProjectType.PROJECT]
+            row=[
+                mod,
+                "<project>",
+                info.name,
+                dest,
+                info.cls,
+                None,
+                ProjectType.PROJECT,
+            ]
         )
 
-    def __add_dbase_item_to_list(self, regset_name: str, exporter, dest):
+    def __add_dbase_item_to_list(
+        self, regset_name: str, exporter: str, dest: str
+    ) -> None:
         """
         Adds the specific item to the build list. We have to check to see
         if the file needs rebuilt, depending on modification flags a file
@@ -141,24 +169,26 @@ class Build(BaseWindow):
         """
         regset = self.__prj.regsets[regset_name]
         local_dest = os.path.join(os.path.dirname(self.__prj.path), dest)
-        mod = file_needs_rebuilt(local_dest, self.__prj, [regset_name])
+        mod = file_needs_rebuilt(local_dest, self.__prj, self.__prj.regsets)
         self.__modlist.append(mod)
-        (fmt, cls, _) = self.__optmap[exporter]
+        info = self.__optmap[exporter]
         rel_dest = dest
 
         self.__model.append(
             row=(
                 mod,
                 regset.name,
-                fmt,
+                info.name,
                 rel_dest,
-                cls,
+                info.cls,
                 regset,
                 ProjectType.REGSET,
             )
         )
 
-    def __add_group_item_to_list(self, group_name, exporter, dest):
+    def __add_group_item_to_list(
+        self, group_name: str, exporter: str, dest: str
+    ) -> None:
         """
         Adds the specific item to the build list. We have to check to see
         if the file needs rebuilt, depending on modification flags a file
@@ -167,12 +197,20 @@ class Build(BaseWindow):
         # mod = file_needs_rebuilt(local_dest, self.__dbmap, [dbase_full_path])
         mod = True
         self.__modlist.append(mod)
-        (fmt, cls, _) = self.__optmap[exporter]
+        info = self.__optmap[exporter]
         self.__model.append(
-            row=(mod, group_name, fmt, dest, cls, None, ProjectType.BLOCK)
+            row=(
+                mod,
+                group_name,
+                info.name,
+                dest,
+                info.cls,
+                None,
+                ProjectType.BLOCK,
+            )
         )
 
-    def __populate(self):
+    def __populate(self) -> None:
         """
         Populate the display with the items stored in the project's
         export list.
@@ -206,7 +244,9 @@ class Build(BaseWindow):
             except KeyError:
                 pass
 
-    def toggle_callback(self, _cell, path, _source):
+    def toggle_callback(
+        self, _cell: Gtk.CellRendererToggle, path: str, _source: BuildCol
+    ) -> None:
         """
         Called with the modified toggle is changed. Toggles the value in
         the internal list.
@@ -215,29 +255,32 @@ class Build(BaseWindow):
             BuildCol.MODIFIED
         ]
 
-    def register_set_callback(self, cell, path, node, _col):
-        """
-        Called when the register set is changed. The combo_box_model is
-        attached to the cell that caused the change (on the 'model'
-        property). The data is then copied out of the combo_box_model and
-        into the database.
-        """
-        combo_box_model = cell.get_property("model")
-        self.__model[path][BuildCol.DBASE] = combo_box_model[node][1]
-        self.__model[path][BuildCol.BASE] = combo_box_model[node][0]
+    # def register_set_callback(self, cell, path, node, _col):
+    #     """
+    #     Called when the register set is changed. The combo_box_model is
+    #     attached to the cell that caused the change (on the 'model'
+    #     property). The data is then copied out of the combo_box_model and
+    #     into the database.
+    #     """
+    #     print(type(cell), type(path), type(node), type(_col))
 
-    def format_callback(self, cell, path, node, _col):
-        """
-        Called when the format is changed. The combo_box_model is
-        attached to the cell that caused the change (on the 'model'
-        property). The data is then copied out of the combo_box_model and
-        into the database.
-        """
-        combo_box_model = cell.get_property("model")
-        self.__model[path][BuildCol.CLASS] = combo_box_model[node][1]
-        self.__model[path][BuildCol.FORMAT] = combo_box_model[node][0]
+    #     combo_box_model = cell.get_property("model")
+    #     self.__model[path][BuildCol.DBASE] = combo_box_model[node][1]
+    #     self.__model[path][BuildCol.BASE] = combo_box_model[node][0]
 
-    def __add_columns(self):
+    # def format_callback(self, cell, path, node, _col):
+    #     """
+    #     Called when the format is changed. The combo_box_model is
+    #     attached to the cell that caused the change (on the 'model'
+    #     property). The data is then copied out of the combo_box_model and
+    #     into the database.
+    #     """
+    #     print(type(cell), type(path), type(node), type(_col))
+    #     combo_box_model = cell.get_property("model")
+    #     self.__model[path][BuildCol.CLASS] = combo_box_model[node][1]
+    #     self.__model[path][BuildCol.FORMAT] = combo_box_model[node][0]
+
+    def __add_columns(self) -> None:
         """
         Adds the columns to the builder list.
         """
@@ -268,7 +311,7 @@ class Build(BaseWindow):
             menu = self.__builder.get_object("menu")
             menu.popup(None, None, None, 1, 0, Gtk.get_current_event_time())
 
-    def on_select_all_activate(self, _obj):
+    def on_select_all_activate(self, _obj) -> None:
         """
         Called with the menu item has been selected to select all
         targets for rebuild. Simply sets all the modified flags to True.
@@ -276,7 +319,7 @@ class Build(BaseWindow):
         for item in self.__model:
             item[BuildCol.MODIFIED] = True
 
-    def on_unselect_all_activate(self, _obj):
+    def on_unselect_all_activate(self, _obj) -> None:
         """
         Called with the menu item has been selected to unselect all
         targets for rebuild. Simply sets all the modified flags to False.
@@ -284,7 +327,7 @@ class Build(BaseWindow):
         for item in self.__model:
             item[BuildCol.MODIFIED] = False
 
-    def on_select_ood_activate(self, _obj):
+    def on_select_ood_activate(self, _obj) -> None:
         """
         Called when the menu item has been selected to select all out of
         data targets for rebuild. We have already determined this from
@@ -294,7 +337,7 @@ class Build(BaseWindow):
         for (count, item) in enumerate(self.__model):
             item[BuildCol.MODIFIED] = self.__modlist[count]
 
-    def on_run_build_clicked(self, _obj):
+    def on_run_build_clicked(self, _obj) -> None:
         """
         Called when the build button is pressed.
         """
@@ -320,7 +363,7 @@ class Build(BaseWindow):
             except IOError as msg:
                 ErrorMsg("Error running exporter", str(msg))
 
-    def on_add_build_clicked(self, _obj):
+    def on_add_build_clicked(self, _obj: Gtk.Button) -> None:
         """
         Brings up the export assistant, to help the user build a new rule
         to add to the builder.
@@ -353,35 +396,42 @@ class Build(BaseWindow):
             self.__build_top,
         )
 
-    def add_callback(self, filename, export_format, register_set, _group):
+    def add_callback(
+        self, filename: str, export_format: str, regset_id: str, _group: str
+    ) -> None:
         """
         Called when a item has been added to the builder, and is used
         to add the new item to the list view.
         """
-        exporter = self.__mapopt[export_format][MapOpt.ID]
-        if self.__mapopt[export_format][MapOpt.REGISTER_SET] == Level.BLOCK:
-            self.__prj.regsets[register_set].exports.append(
+
+        exporter = self.__mapopt[export_format].name
+        if self.__mapopt[export_format].level == Level.BLOCK:
+            self.__prj.regsets[regset_id].exports.append(
                 ExportData(exporter, filename)
             )
-            self.__prj.regsets[register_set].modified = True
-            self.__add_item_to_list(register_set, exporter, filename)
+            self.__prj.regsets[regset_id].modified = True
+            self.__add_item_to_list(regset_id, exporter, filename)
         # elif self.__mapopt[export_format][MapOpt.REGISTER_SET] == Level.GROUP:
         #     self.__prj.add_to_group_export_list(group, exporter, filename)
         #     register_path = f"{group} (group)"
         #     self.__add_item_to_list(register_path, exporter, filename)
         else:
             self.__prj.add_to_project_export_list(exporter, filename)
-            self.__add_item_to_list(register_set, exporter, filename)
+            self.__add_item_to_list(regset_id, exporter, filename)
 
-    def on_remove_build_clicked(self, _obj):
+    def on_remove_build_clicked(self, _obj: Gtk.Button):
         """
         Called when the user had opted to delete an existing rule.
         Deletes the selected rule.
         """
-        sel = self.__build_list.get_selection().get_selected()
-        data = sel[0][sel[1]]
+        store, node = self.__build_list.get_selection().get_selected()
+        if node is None:
+            return
 
-        exporter = self.__mapopt[data[BuildCol.FORMAT]][MapOpt.ID]
+        data = store[node]
+
+        fmt = data[BuildCol.FORMAT]
+        exporter = self.__mapopt[fmt].name
         filename = data[BuildCol.DEST]
         dbase = data[BuildCol.DBASE]
         if dbase:
@@ -392,21 +442,21 @@ class Build(BaseWindow):
             ]
         else:
             self.__prj.remove_from_project_export_list(exporter, filename)
-        self.__model.remove(sel[1])
+        self.__model.remove(node)
 
-    def on_close_clicked(self, _obj):
+    def on_close_clicked(self, _obj: Gtk.Button):
         """
         Closes the builder.
         """
         self.__build_top.destroy()
 
 
-def base_and_modtime(dbase_full_path):
+def base_and_modtime(dbase_full_path: Path):
     """
     Returns the base name of the register set, along with the modification
     time of the associated file.
     """
-    base = os.path.splitext(os.path.basename(dbase_full_path))[0]
+    base = dbase_full_path.stem
     try:
         db_file_mtime = os.path.getmtime(dbase_full_path)
         return (base, db_file_mtime)
@@ -414,7 +464,9 @@ def base_and_modtime(dbase_full_path):
         return (base, 0)
 
 
-def file_needs_rebuilt(local_dest, prj, db_paths):
+def file_needs_rebuilt(
+    local_dest: str, prj: RegProject, db_paths: Dict[str, RegisterDb]
+) -> bool:
     """
     Returns True if the associated database has been modified since the
     local_dest file has been last modified. If the destination file does
@@ -441,5 +493,7 @@ def file_needs_rebuilt(local_dest, prj, db_paths):
     return mod
 
 
-def exp_type_fmt(item):
+def exp_type_fmt(item: Tuple[str, str]) -> str:
+    "Export format type"
+
     return f"{item[0]} ({item[1]})"

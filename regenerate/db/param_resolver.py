@@ -101,7 +101,10 @@ class ParameterResolver:
         if not self.blk_inst:
             if param.is_parameter:
                 new_param = ParameterFinder().find(param.txt_value)
-                return new_param.value
+                if new_param:
+                    return new_param.value
+                else:
+                    return 0
             return param.int_value
         if (
             self.blk_inst in self.top_overrides
