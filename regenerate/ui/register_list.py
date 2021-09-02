@@ -135,7 +135,7 @@ class RegisterModel(Gtk.ListStore):
             addr,
             register.name,
             register.token,
-            register.dimension_str,
+            register.dimension.int_str(),
             self.STR2BIT[register.width],
             register.address,
             None,
@@ -278,7 +278,7 @@ class RegisterList:
     def set_parameters(self, parameters):
         "Sets the parameters"
 
-        self._parameter_names = set({(p.name, p.name) for p in parameters})
+        self._parameter_names = set({(p.name, p.uuid) for p in parameters})
         self.dim_column.update_menu(sorted(list(self._parameter_names)))
 
     def get_selected_row(self):
@@ -456,11 +456,12 @@ class RegisterList:
 
     def _reg_update_dim(self, reg: Register, path: str, text: str) -> None:
         """
-        Updates the name associated with the register. Called after the text
+        Updates the dimension associated with the register. Called after the text
         has been edited
         """
-        if text != reg.dimension_str:
-            reg.dimension = text
+        print(">>>>>>", path, text)
+        if text != reg.dimension.int_str():
+            reg.dimension.set_int(int(text, 0))
             self._set_modified()
         self._model[path][RegCol.DIM] = text
 
@@ -492,7 +493,7 @@ class RegisterList:
                 continue
             reg = data[-1]
             start = reg.address
-            stop = reg.address + (reg.dimension * (reg.width >> 3))
+            stop = reg.address + (reg.dimension.resolve() * (reg.width >> 3))
             for i in range(start, stop):
                 if reg.share == ShareType.READ:
                     ro_list.add(i)
@@ -578,8 +579,8 @@ class RegisterList:
             self._handle_edited_address(register, path, new_text)
         elif col == RegCol.NAME:
             self._reg_update_name(register, path, new_text)
-        elif col == RegCol.DIM:
-            self._reg_update_dim(register, path, new_text)
+        # elif col == RegCol.DIM:
+        #     self._reg_update_dim(register, path, new_text)
         elif col == RegCol.DEFINE:
             self._reg_update_define(register, path, new_text, cell)
 
@@ -588,6 +589,7 @@ class RegisterList:
         Called when text has been edited. Selects the correct function
         depending on the edited column
         """
+        print("DIM TEXT")
         register = self._model.get_register_at_path(path)
         new_text = new_text.strip()
         try:
@@ -613,10 +615,18 @@ class RegisterList:
         Called when text has been edited. Selects the correct function
         depending on the edited column
         """
+        print("DIM MENU")
         model = cell.get_property("model")
         register = self._model.get_register_at_path(path)
-        new_value = model.get_value(node, 1)
-        self._reg_update_dim(register, path, new_value)
+        uuid = model.get_value(node, 1)
+        name = model.get_value(node, 0)
+        print("NEW VALUE0", model.get_value(node, 0))
+        print("NEW VALUE1", model.get_value(node, 1))
+        register.dimension.set_param(uuid)
+        self._model[path][RegCol.DIM] = name
+        self._set_modified()
+
+    #        self._reg_update_dim(register, path, new_value)
 
     def _combo_edited(self, cell, path, node, col):
         "Called when the combo box in the table has been altered"

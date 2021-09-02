@@ -25,6 +25,7 @@ values based of the default value and any overrides.
 from typing import Dict
 
 from .param_data import ParameterData
+from .param_data import ParameterFinder
 
 
 class ParameterResolver:
@@ -94,11 +95,17 @@ class ParameterResolver:
             return val
         return param.value
 
-    def resolve_blk(self, param: ParameterData) -> int:
+    def resolve_blk(self, param) -> int:
         "Resolve a parameter looking for overrides"
 
         if not self.blk_inst:
-            return param.value
+            if param.is_parameter:
+                new_param = ParameterFinder().find(param.txt_value)
+                if new_param:
+                    return new_param.value
+                else:
+                    return 0
+            return param.int_value
         if (
             self.blk_inst in self.top_overrides
             and param.uuid in self.top_overrides[self.blk_inst]

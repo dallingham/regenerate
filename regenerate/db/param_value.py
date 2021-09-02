@@ -57,7 +57,14 @@ class ParamValue:
                     return f"{pval.name}{self.offset}"
                 return f"{pval.name}"
             return ""
-        return f"0x{self.int_value:x}"
+        return self.int_str()
+
+    def param_name(self):
+        if self.is_parameter:
+            pval = ParameterFinder().find(self.txt_value)
+            return pval.name
+        else:
+            return ""
 
     def int_str(self) -> str:
         "Prints the parameter with integers in decimal format"
@@ -127,10 +134,13 @@ class ParamValue:
     def json(self):
         "Convert to JSON compatible dictionary"
 
-        val = {"is_parameter": self.is_parameter, "offset": self.offset}
+        val = {
+            "is_parameter": self.is_parameter,
+            "offset": self.offset,
+            "func": int(self.func),
+        }
         if self.is_parameter:
             val["value"] = self.txt_value
         else:
             val["value"] = f"{self.int_value}"
-        val["func"] = int(self.func)
         return val

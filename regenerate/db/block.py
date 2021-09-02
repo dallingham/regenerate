@@ -75,7 +75,7 @@ class Block(NameBase):
 
     def get_regset_from_reg_inst(self, reg_inst: RegisterInst) -> RegisterDb:
         return self.regsets[reg_inst.regset_id]
-    
+
     def remove_register_set(self, uuid: str) -> None:
         if uuid in self.regsets:
             del self.regsets[uuid]

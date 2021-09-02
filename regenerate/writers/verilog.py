@@ -221,18 +221,18 @@ class Verilog(WriterBase):
 
         reglist = []
         for reg in code_registers:
-            if reg.dimension_is_param():
+            if reg.dimension.is_parameter:
                 new_reg = copy.deepcopy(reg)
                 reglist.append(new_reg)
-            elif reg.dimension > 1:
-                for i in range(0, reg.dimension):
+            elif reg.dimension.resolve() > 1:
+                for i in range(0, reg.dimension.resolve()):
                     new_reg = copy.deepcopy(reg)
                     new_reg.address = reg.address + (i * int(reg.width // 8))
-                    new_reg.dimension = i
+                    new_reg.dimension.set_int(i)
                     reglist.append(new_reg)
             else:
                 new_reg = copy.deepcopy(reg)
-                new_reg.dimension = -1
+                new_reg.dimension.set_int(-1)
                 reglist.append(new_reg)
 
         return reglist
@@ -520,17 +520,19 @@ def build_output_signals(dbase, cell_info):
                             (
                                 sig,
                                 f"[{field.msb.int_str()}:{field.lsb}]",
-                                reg.dimension_str,
+                                reg.dimension.param_name(),
                             )
                         )
                     elif field.msb.resolve() == field.lsb:
-                        scalar_ports.append((sig, "", reg.dimension_str))
+                        scalar_ports.append(
+                            (sig, "", reg.dimension.param_name())
+                        )
                     else:
-                        dim[sig] = reg.dimension_str
+                        dim[sig] = reg.dimension.param_name()
                         for i in range(field.lsb, field.msb.resolve() + 1):
                             array_ports[sig].append(i)
                 elif len(wild) > 1:
-                    dim[root[0]] = reg.dimension_str
+                    dim[root[0]] = reg.dimension.param_name()
                     for i in range(field.lsb, field.msb.resolve() + 1):
                         array_ports[root[0]].append(i)
                 else:
@@ -544,7 +546,7 @@ def build_output_signals(dbase, cell_info):
                     match = BIT_SLICE.match(sig)
                     if match:
                         grp = match.groups()
-                        dim[grp[0]] = reg.dimension_str
+                        dim[grp[0]] = reg.dimension.param_name()
                         array_ports[grp[0]].append(int(grp[1]))
                         continue
 
@@ -584,13 +586,13 @@ def build_logic_list(_dbase, word_fields, cell_info):
         val = word_fields[addr]
         for (field, _, _, start_pos, stop_pos, _, reg) in val:
             name = reg_field_name(reg, field)
-            dim = reg.dimension_str
+            dim = reg.dimension.param_name()
             if not field.msb.is_parameter and field.msb.resolve() == field.lsb:
-                if reg.dimension_is_param():
+                if reg.dimension.is_parameter:
                     reg_list.append(
                         (
                             reg_field_name(reg, field)
-                            + "[%s]" % reg.dimension_str,
+                            + "[%s]" % reg.dimension.param_name(),
                             "",
                         )
                     )
@@ -598,18 +600,18 @@ def build_logic_list(_dbase, word_fields, cell_info):
                     reg_list.append((reg_field_name(reg, field), ""))
             else:
                 vect = f"[{field.msb.int_str()}:{field.lsb}] "
-                if reg.dimension_is_param():
+                if reg.dimension.is_parameter:
                     reg_list.append(
                         (
                             reg_field_name(reg, field)
-                            + "[%s]" % reg.dimension_str,
+                            + "[%s]" % reg.dimension.param_name(),
                             vect,
                         )
                     )
                 else:
                     reg_list.append((reg_field_name(reg, field), vect))
             if cell_info[field.field_type].has_oneshot:
-                if reg.dimension_is_param():
+                if reg.dimension.is_parameter:
                     reg_list.append(
                         (
                             f"{name}_1S[{dim}]",
@@ -632,11 +634,13 @@ def build_input_signals(dbase, cell_info):
         for field in reg.get_bit_fields():
             cinfo = cell_info[field.field_type]
             if cinfo.has_control:
-                if reg.dimension_is_param():
-                    name = f"{field.control_signal}[{reg.dimension_str}]"
+                if reg.dimension.is_parameter:
+                    name = (
+                        f"{field.control_signal}[{reg.dimension.param_name()}]"
+                    )
                     signals.add((name, ""))
-                elif reg.dimension > 1:
-                    name = f"{field.control_signal}[{reg.dimension}]"
+                elif reg.dimension.resolve() > 1:
+                    name = f"{field.control_signal}[{reg.dimension.resolve()}]"
                     signals.add((name, ""))
                 else:
                     signals.add((field.control_signal, ""))
@@ -649,17 +653,17 @@ def build_input_signals(dbase, cell_info):
                     vector = ""
                 else:
                     vector = f"[{field.msb.int_str()}:{field.lsb}]"
-                if reg.dimension_is_param():
+                if reg.dimension.is_parameter:
                     signals.add(
                         (
-                            f"{field.input_signal}[{reg.dimension_str}]",
+                            f"{field.input_signal}[{reg.dimension.param_name()}]",
                             vector,
                         )
                     )
-                elif reg.dimension > 1:
+                elif reg.dimension.resolve() > 1:
                     signals.add(
                         (
-                            f"{field.input_signal}[{reg.dimension}]",
+                            f"{field.input_signal}[{reg.dimension.resolve()}]",
                             vector,
                         )
                     )
@@ -677,8 +681,8 @@ def build_oneshot_assignments(word_fields, cell_info):
         for (fld, _, _, _, _, _, reg) in val:
             if cell_info[fld.field_type][3]:
 
-                if reg.dimension > 1:
-                    name = f"{fld.output_signal}_1S[{reg.dimension}]"
+                if reg.dimension.resolve() > 1:
+                    name = f"{fld.output_signal}_1S[{reg.dimension.resolve()}]"
                 else:
                     name = f"{fld.output_signal}_1S"
                 value = f"(|r{reg.address:x}_{fld.name.lower()}_1S)"
@@ -714,19 +718,19 @@ def build_assignments(word_fields):
             else:
                 mode = "_w_"
             if fld.use_output_enable and fld.output_signal != "":
-                if reg.dimension_is_param():
+                if reg.dimension.is_parameter:
                     assign_list.append(
                         (
                             fld.output_signal,
                             "r%02x%s%s"
                             % (reg.address, mode, fld.name.lower()),
-                            reg.dimension_str,
+                            reg.dimension.param_name(),
                         )
                     )
-                elif reg.dimension != -1:
+                elif reg.dimension.resolve() != -1:
                     assign_list.append(
                         (
-                            f"{fld.output_signal}[{reg.dimension}]",
+                            f"{fld.output_signal}[{reg.dimension.resolve()}]",
                             "r%02x%s%s"
                             % (reg.address, mode, fld.name.lower()),
                             "",
@@ -760,9 +764,9 @@ def register_output_definitions(dbase):
         base_addr = (reg.address // bytes_per_reg) * bytes_per_reg
 
         if base_addr // bytes_per_reg != current_group:
-            if reg.dimension_is_param():
+            if reg.dimension.is_parameter:
                 wire_name = (
-                    f"r{base_addr:02x}[reg.dimension_str]",
+                    f"r{base_addr:02x}[reg.dimension.param_name()]",
                     f"[{bus_width-1}:0]",
                 )
             else:
@@ -822,9 +826,9 @@ def register_output_definitions2(dbase, word_fields):
         last_offset = last = dbase.ports.data_bus_width - 1
 
         reg = val[0][-1]
-        if reg.dimension_is_param():
+        if reg.dimension.is_parameter:
             wire_name = (
-                "r%02x[%s]" % (addr, reg.dimension_str),
+                "r%02x[%s]" % (addr, reg.dimension.param_name()),
                 "[%d:0]" % (dbase.ports.data_bus_width - 1,),
             )
         else:
@@ -903,10 +907,10 @@ def build_standard_ports(dbase):
 def make_one_shot(name: str, reg: Register):
     """Builds the one shot signal from the name and dimenstion"""
 
-    if reg.dimension_is_param():
-        signal = (f"{name}_1S[{reg.dimension_str}]", "")
-    elif reg.dimension > 1:
-        signal = (f"{name}_1S[{reg.dimension}]", "")
+    if reg.dimension.is_parameter:
+        signal = (f"{name}_1S[{reg.dimension.param_name()}]", "")
+    elif reg.dimension.resolve() > 1:
+        signal = (f"{name}_1S[{reg.dimension.resolve()}]", "")
     else:
         signal = (f"{name}_1S", "")
     return signal

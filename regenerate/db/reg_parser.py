@@ -29,6 +29,7 @@ from .bit_values import BitValues
 from .bitfield_types import ID_TO_TYPE
 from .enums import ResetType, ShareType
 from .param_data import ParameterData
+from .param_value import ParamValue
 
 
 def cnv_hex(attrs: Dict[str, str], key: str, default: int = 0) -> int:
@@ -367,10 +368,8 @@ class RegParser:
         Called when the token tag is terminated. The text is the
         register token value.
         """
-        try:
-            self.__reg.dimension = text
-        except ValueError:
-            self.__reg.dimension = "1"
+        self.__reg.dimension = ParamValue()
+        self.__reg.dimension.set_int(int(text))
 
     def end_ram_size(self, text: str) -> None:
         """

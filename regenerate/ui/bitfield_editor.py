@@ -198,11 +198,11 @@ class BitFieldEditor(BaseWindow):
         "Display the help window"
         HelpWindow(self.top_builder, "bitfield_signal_help.rst")
 
-    def _set_field_value(self, val: str, obj) -> None:
+    def _set_field_value(self, val: str, obj: Gtk.CheckButton) -> None:
         "Sets the field value"
         setattr(self.bit_field, val, obj.get_active())
 
-    def _set_flag_value(self, val: str, obj) -> None:
+    def _set_flag_value(self, val: str, obj: Gtk.CheckButton) -> None:
         "Sets the field value"
         setattr(self.bit_field.flags, val, obj.get_active())
 
@@ -281,17 +281,17 @@ class BitFieldEditor(BaseWindow):
         self.modified()
 
     @modified
-    def on_remove_clicked(self, _obj):
+    def on_remove_clicked(self, _obj: Gtk.Button) -> None:
         "Called with the remove button is clicked"
         self.value_model.remove(self.model_selection.get_selected()[1])
         self.update_values()
 
     @modified
-    def on_side_effect_toggled(self, obj):
+    def on_side_effect_toggled(self, obj: Gtk.CheckButton) -> None:
         "Called with the side effect flag toggled"
         self.bit_field.output_has_side_effect = obj.get_active()
 
-    def update_values(self):
+    def update_values(self) -> None:
         "Update the bit field values from the model"
         self.bit_field.values = [
             (val[0], val[1], val[2]) for val in self.value_model
@@ -305,7 +305,7 @@ class BitFieldEditor(BaseWindow):
             self.bit_field.values.append(bfval)
 
     @modified
-    def on_output_enable_toggled(self, obj):
+    def on_output_enable_toggled(self, obj: Gtk.CheckButton) -> None:
         """
         Enables the output field based on the output enable field
         """
@@ -314,39 +314,41 @@ class BitFieldEditor(BaseWindow):
         self.output_obj.set_sensitive(obj.get_active())
         self.check_data()
 
-    def on_descr_key_press_event(self, obj, event):
+    def on_descr_key_press_event(
+        self, text_view: Gtk.TextView, event: Gdk.EventKey
+    ) -> bool:
         """
         Called on a double click event. If we detect a double click with
         the first button, we call the edit_register method.
         """
         if event.keyval == Gdk.KEY_F12:
-            if clean_format_if_needed(obj):
+            if clean_format_if_needed(text_view):
                 self.modified()
             return True
         return False
 
-    def on_destroy_event(self, _obj):
+    def on_destroy_event(self, _obj: Gtk.Dialog) -> None:
         """On destroy, detach the spell checker"""
         self.spell.detach()
 
-    def on_delete_event(self, _obj, _event):
+    def on_delete_event(self, _obj: Gtk.Dialog, _event: Gdk.EventType) -> None:
         """On delete, detach the spell checker"""
         self.spell.detach()
 
-    def on_close_clicked(self, _obj):
+    def on_close_clicked(self, _obj: Gtk.Button) -> None:
         """
         Saves the data from the interface to the internal BitField structure
         """
         self.top_window.destroy()
 
     @modified
-    def _description_changed(self, obj):
+    def _description_changed(self, obj: Gtk.TextBuffer) -> None:
         "Called with the description changes"
         self.bit_field.description = obj.get_text(
             obj.get_start_iter(), obj.get_end_iter(), False
         )
 
-    def check_data(self):
+    def check_data(self) -> None:
         "Checks the input signal validity"
         input_error = False
         output_error = False
@@ -359,19 +361,19 @@ class BitFieldEditor(BaseWindow):
         if output_error is False:
             clear_error(self.output_obj)
 
-    def set_active(self, name, value):
+    def set_active(self, name: str, value: bool) -> None:
         "Set the active flag"
         self.builder.get_object(name).set_active(value)
 
-    def get_active(self, name):
+    def get_active(self, name: str) -> bool:
         "Get the active flag"
         return self.builder.get_object(name).get_active()
 
-    def set_text(self, name, value):
+    def set_text(self, name: str, value: str) -> None:
         "Set the text"
         self.builder.get_object(name).set_text(value)
 
-    def build_values_list(self):
+    def build_values_list(self) -> None:
         """
         Builds the columns associated with the list view
         """

@@ -20,7 +20,7 @@
 Provides the Address List interface
 """
 
-from typing import Callable, Optional
+from typing import Callable, Optional, Tuple
 from gi.repository import Gtk
 from regenerate.db import LOGGER, AddressMap, RegProject
 from regenerate.ui.columns import (
@@ -222,10 +222,8 @@ class AddrMapList:
         if self._model:
             self._model.clear()
 
-    def get_selected(self):
-        """
-        Removes the selected node from the list
-        """
+    def get_selected(self) -> Optional[AddressMap]:
+        "Removes the selected node from the list"
         (model, node) = self._obj.get_selection().get_selected()
         if node is None:
             return None
@@ -234,12 +232,12 @@ class AddrMapList:
             return None
         return model.get_value(node, AddrCol.OBJ)
 
-    def remove_selected(self):
+    def remove_selected(self) -> None:
         """
         Removes the selected node from the list
         """
         select_data = self._obj.get_selection().get_selected()
-        if select_data is None or select_data[1] is None:
+        if select_data is None or select_data[1] is None or self._prj is None:
             return
 
         (model, node) = select_data
@@ -253,12 +251,12 @@ class AddrMapList:
             self._callback()
             self._prj.remove_address_map(addr_map.uuid)
 
-    def add_new_map(self):
+    def add_new_map(self) -> None:
         """
         Creates a new address map and adds it to the project. Uses default
         data, and sets the first field to start editing.
         """
-        if self._col is None:
+        if self._col is None or self._prj is None or self._model is None:
             return
 
         name = self._create_new_map_name()
@@ -270,8 +268,11 @@ class AddrMapList:
         self._prj.add_or_replace_address_map(obj)
         self._obj.set_cursor(path, self._col, start_editing=True)
 
-    def _create_new_map_name(self):
+    def _create_new_map_name(self) -> str:
         """Creates a new map, finding an unused name"""
+        if self._prj is None:
+            return ""
+
         template = "NewMap"
         index = 0
         current_maps = set({i.name for i in self._prj.get_address_maps()})
@@ -287,7 +288,7 @@ class AddrMapList:
         return self._model[row][AddrCol.OBJ]
 
 
-def get_flags(map_obj):
+def get_flags(map_obj: AddressMap) -> str:
     flag_str = []
     if map_obj.fixed:
         flag_str.append("fixed address")
@@ -296,7 +297,7 @@ def get_flags(map_obj):
     return ", ".join(flag_str)
 
 
-def get_row_data(map_obj):
+def get_row_data(map_obj: AddressMap) -> Tuple[str, str, str, str, AddressMap]:
     """Builds the data for the table row"""
     return (
         map_obj.name,

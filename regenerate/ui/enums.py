@@ -79,22 +79,6 @@ class BuildCol(IntEnum):
     TYPE = 6
 
 
-class MapOpt(IntEnum):
-    """Positions for Exporter information in the report exporter map"""
-
-    ID = 0
-    CLASS = 1
-    REGISTER_SET = 2
-
-
-class OptMap(IntEnum):
-    """Option map"""
-
-    DESCRIPTION = 0
-    CLASS = 1
-    REGISTER_SET = 2
-
-
 class DbMap(IntEnum):
     """Database column map"""
 

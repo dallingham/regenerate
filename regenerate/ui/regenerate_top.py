@@ -493,7 +493,7 @@ class MainWindow(BaseWindow):
             while Gtk.events_pending():
                 Gtk.main_iteration()
 
-    def open_project(self, filename, uri):
+    def open_project(self, filename, _uri):
         self.loading_project = True
         self.regset_tab.clear()
 
