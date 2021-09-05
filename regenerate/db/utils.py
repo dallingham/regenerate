@@ -21,7 +21,7 @@
 Common utility functions
 """
 
-from typing import Dict, Any
+from typing import Dict, Any, Tuple
 from pathlib import Path
 import json
 from operator import methodcaller
@@ -33,20 +33,26 @@ def save_json(data: Dict[str, Any], path: Path):
     "Saves the data to the specifed file in JSON format"
     try:
         with path.open("w") as ofile:
-            ofile.write(
-                json.dumps(data, default=methodcaller("json"))
-            )
+            ofile.write(json.dumps(data, default=methodcaller("json")))
     except FileNotFoundError as msg:
         LOGGER.error(str(msg))
 
 
-def get_register_paths(project):
+def get_register_paths(
+    project: "RegProject",
+) -> Dict[str, Tuple[str, str, str]]:
+    "Builds the (blk_inst, reg_inst, reg_name) tuple for each register"
+
     name2path = {}
-    
+
     for blk_inst in project.get_block_instances():
         block = project.get_block_from_block_inst(blk_inst)
         for reg_inst in block.get_regset_insts():
             regset = block.get_regset_from_reg_inst(reg_inst)
             for reg in regset.get_all_registers():
-                name2path[reg.name] = (blk_inst.name, reg_inst.name, reg.token.lower())
+                name2path[reg.name] = (
+                    blk_inst.name,
+                    reg_inst.name,
+                    reg.token.lower(),
+                )
     return name2path

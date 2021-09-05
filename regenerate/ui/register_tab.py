@@ -807,11 +807,11 @@ class RegSetTab:
         """
         Creates a new database, and initializes the interface.
         """
-        name = get_new_filename()
-        if not name or not self.project:
+        name_str = get_new_filename()
+        if not name_str or not self.project:
             return
 
-        name = Path(name).with_suffix(REG_EXT)
+        name = Path(name_str).with_suffix(REG_EXT)
 
         dbase = RegisterDb()
         dbase.name = name.stem

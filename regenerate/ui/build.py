@@ -22,14 +22,19 @@ keeps track of when an output file should be rebuilt.
 """
 
 import os
-from typing import Tuple, Dict, Type, List, NamedTuple
+from typing import Tuple, Dict, List, NamedTuple
 from pathlib import Path
-from collections import namedtuple
 
 from gi.repository import Gtk
 from regenerate.settings.paths import INSTALL_PATH
 from regenerate.db import RegProject, RegisterDb, ExportData
-from regenerate.writers import WriterBase
+from regenerate.writers import (
+    WriterBase,
+    EXPORTERS,
+    PRJ_EXPORTERS,
+    GRP_EXPORTERS,
+    ProjectType,
+)
 
 from .base_window import BaseWindow
 from .columns import EditableColumn, ToggleColumn
@@ -39,15 +44,11 @@ from .enums import (
     Level,
     BuildCol,
 )
-from regenerate.writers import (
-    EXPORTERS,
-    PRJ_EXPORTERS,
-    GRP_EXPORTERS,
-    ProjectType,
-)
 
 
 class ExportInfo(NamedTuple):
+    "Holds the information for exporters"
+
     name: str
     cls: WriterBase
     level: Level

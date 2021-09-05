@@ -21,9 +21,11 @@ Provides both the GTK ListStore and ListView for the bit fields.
 """
 
 import re
+from enum import IntEnum
+from typing import Optional, Callable
 from gi.repository import Gtk
 
-from regenerate.db import TYPES, LOGGER, ResetType
+from regenerate.db import TYPES, LOGGER, ResetType, BitField
 from regenerate.ui.columns import (
     EditableColumn,
     MenuEditColumn,
@@ -47,7 +49,12 @@ for data_type in TYPES:
     TYPE_ENB[data_type.type] = (data_type.input, data_type.control)
 
 
-(BIT_TITLE, BIT_SIZE, BIT_SORT, BIT_EXPAND, BIT_MONO) = range(5)
+class BitModelCol(IntEnum):
+    TITLE = 0
+    SIZE = 1
+    SORT = 2
+    EXPAND = 3
+    MONO = 4
 
 
 class BitModel(Gtk.ListStore):
@@ -64,7 +71,7 @@ class BitModel(Gtk.ListStore):
         super().__init__(str, str, str, str, str, str, int, object)
         self.register = None
 
-    def append_field(self, field):
+    def append_field(self, field: BitField):
         "Adds the field to the model, filling out the fields in the model."
 
         node = self.append(
@@ -81,7 +88,7 @@ class BitModel(Gtk.ListStore):
         )
         return self.get_path(node)
 
-    def get_bitfield_at_path(self, path):
+    def get_bitfield_at_path(self, path: str):
         """
         Returns the field object associated with a ListModel path.
         """
@@ -105,7 +112,7 @@ class BitList:
         ("Reset", 130, -1, False, True),
     )
 
-    def __init__(self, obj, selection_changed, modified):
+    def __init__(self, obj, selection_changed: Callable, modified: Callable):
         """
         Creates the object, connecting it to the ListView (obj). Three
         callbacks are associated with the object.
@@ -115,7 +122,7 @@ class BitList:
         """
         self.__obj = obj
         self.__col = None
-        self.__model = None
+        self.__model: Optional[BitModel] = None
         self.__modified = modified
         self.__build_bitfield_columns()
         self.__obj.get_selection().connect(
@@ -124,7 +131,6 @@ class BitList:
         self.selection_changed = selection_changed
 
     def my_selection_changed(self, obj):
-        self.clear_msg()
         self.selection_changed(obj)
 
     def set_parameters(self, parameters):
@@ -150,7 +156,7 @@ class BitList:
         for (i, col) in enumerate(self.BIT_COLS):
             if i == BitCol.TYPE:
                 column = SwitchComboMapColumn(
-                    col[BIT_TITLE],
+                    col[BitModelCol.TITLE],
                     self.field_type_edit,
                     TYPE2STR,
                     RO2STR,
@@ -164,7 +170,7 @@ class BitList:
                 )
             elif i == BitCol.RESET:
                 column = MenuEditColumn(
-                    col[BIT_TITLE],
+                    col[BitModelCol.TITLE],
                     self.reset_menu_edit,
                     self.reset_text_edit,
                     [],
@@ -173,28 +179,34 @@ class BitList:
                 self.reset_column = column
             elif i == BitCol.NAME:
                 column = EditableColumn(
-                    col[BIT_TITLE], self.field_name_edit, i, col[BIT_MONO]
+                    col[BitModelCol.TITLE],
+                    self.field_name_edit,
+                    i,
+                    col[BitModelCol.MONO],
                 )
             elif i == BitCol.MSB:
                 column = MenuEditColumn(
-                    col[BIT_TITLE],
+                    col[BitModelCol.TITLE],
                     self._msb_menu,
                     self._msb_text,
                     [],
                     i,
-                    col[BIT_MONO],
+                    col[BitModelCol.MONO],
                 )
                 self.msb_column = column
             elif i == BitCol.LSB:
                 column = EditableColumn(
-                    col[BIT_TITLE], self.update_lsb, i, col[BIT_MONO]
+                    col[BitModelCol.TITLE],
+                    self.update_lsb,
+                    i,
+                    col[BitModelCol.MONO],
                 )
                 self.__col = column
 
-            if col[BIT_SORT] >= 0:
-                column.set_sort_column_id(col[BIT_SORT])
-            column.set_min_width(col[BIT_SIZE])
-            column.set_expand(col[BIT_EXPAND])
+            if col[BitModelCol.SORT] >= 0:
+                column.set_sort_column_id(col[BitModelCol.SORT])
+            column.set_min_width(col[BitModelCol.SIZE])
+            column.set_expand(col[BitModelCol.EXPAND])
             column.set_resizable(True)
             self.__obj.append_column(column)
 
@@ -220,16 +232,20 @@ class BitList:
                 return store.get_value(node, BitCol.FIELD)
         return None
 
-    def add_new_field(self, field):
+    def add_new_field(self, field: BitField):
         "Adds a new field to the model, and sets editing to begin"
-        path = self.__model.append_field(field)
-        self.__obj.set_cursor(path, self.__col, start_editing=True)
+        if self.__model:
+            path = self.__model.append_field(field)
+            self.__obj.set_cursor(path, self.__col, start_editing=True)
 
-    def field_name_edit(self, _cell, path, new_text, _col):
+    def field_name_edit(self, _cell, path, new_text, _col) -> None:
         """
         Primary callback when a text field is edited in the BitList. Based off
         the column, we pass it to a function to handle the data.
         """
+
+        if self.__model is None:
+            return
 
         field = self.__model.get_bitfield_at_path(path)
         if new_text != field.name:
@@ -246,13 +262,15 @@ class BitList:
                 self.__model[path][BitCol.NAME] = new_text
                 field.name = new_text
                 self.__modified()
-                self.clear_msg()
             else:
                 self.show_msg(
                     '"%s" has already been used as a field name' % new_text
                 )
 
-    def reset_text_edit(self, _cell, path, new_val, col):
+    def reset_text_edit(self, _cell, path, new_val, col) -> None:
+        if self.__model is None:
+            return
+
         field = self.__model.get_bitfield_at_path(path)
 
         if re.match(r"^(0x)?[a-fA-F0-9]+$", new_val):
@@ -272,29 +290,39 @@ class BitList:
                 f'"{new_val}" is not a valid constant, parameter, or signal name'
             )
 
-    def reset_menu_edit(self, cell, path, node, _col):
+    def reset_menu_edit(self, cell, path, node, _col) -> None:
+        if self.__model is None:
+            return
+
         model = cell.get_property("model")
         field = self.__model.get_bitfield_at_path(path)
         field.reset_type = ResetType.PARAMETER
         new_val = model.get_value(node, 0)
         field.reset_parameter = new_val
-        self.__model[path][BitCol.RESET] = new_val
-        self.__modified()
 
-    def field_type_edit(self, cell, path, node, col):
+        if self.__model:
+            self.__model[path][BitCol.RESET] = new_val
+            self.__modified()
+
+    def field_type_edit(self, cell, path, node, col) -> None:
         """
         The callback function that occurs whenever a combo entry is altered
         in the BitList. The 'col' value tells us which column was selected,
         and the path tells us the row. So [path][col] is the index into the
         table.
         """
-        model = cell.get_property("model")
-        field = self.__model.get_bitfield_at_path(path)
-        self.__model[path][col] = model.get_value(node, 0)
-        self.update_type_info(field, model, path, node)
-        self.__modified()
+        if self.__model:
+            model = cell.get_property("model")
+            field = self.__model.get_bitfield_at_path(path)
+            self.__model[path][col] = model.get_value(node, 0)
+            self.update_type_info(field, model, path, node)
+            self.__modified()
 
-    def update_type_info(self, field, model, _path, node):
+    def update_type_info(self, field: BitField, model, _path, node):
+
+        if self.__model is None:
+            return
+
         field.field_type = model.get_value(node, 1)
 
         if not field.output_signal:
@@ -325,6 +353,9 @@ class BitList:
         corresponding field.
         """
 
+        if self.__model is None:
+            return
+
         field = self.__model.get_bitfield_at_path(path)
         try:
             stop = int(new_text, 0)
@@ -354,6 +385,9 @@ class BitList:
         corresponding field.
         """
 
+        if self.__model is None:
+            return
+
         field = self.__model.get_bitfield_at_path(path)
         start = int(new_text, 0)
 
@@ -371,22 +405,22 @@ class BitList:
         self.__model[path][BitCol.LSB] = f"{field.lsb}"
         self.__model[path][BitCol.SORT] = field.start_position
 
-    def show_msg(self, text):
+    def show_msg(self, text: str) -> None:
         LOGGER.warning(text)
 
-    def clear_msg(self):
-        pass
+    def check_for_width(self, _start: int, stop: int) -> bool:
+        if self.__model is None:
+            return False
 
-    def check_for_width(self, _start, stop):
-        register = self.__model.register
-        if stop >= register.width:
+        reg = self.__model.register
+        if stop >= reg.width:
             self.show_msg(
-                f"Bit position ({stop}) is greater than register width ({register.width})"
+                f"Bit position ({stop}) is greater than register width ({reg.width})"
             )
             return False
         return True
 
-    def check_reset(self, field, value):
+    def check_reset(self, field: BitField, value: int) -> bool:
         maxval = (1 << ((field.msb.resolve() - field.lsb) + 1)) - 1
         if value > maxval:
             self.show_msg(
@@ -396,7 +430,12 @@ class BitList:
             return False
         return True
 
-    def check_for_overlaps(self, field, start, stop):
+    def check_for_overlaps(
+        self, field: BitField, start: int, stop: int
+    ) -> bool:
+        if self.__model is None:
+            return False
+
         register = self.__model.register
 
         used = set()
@@ -413,11 +452,14 @@ class BitList:
                 return False
         return True
 
-    def _msb_menu(self, cell, path, node, _col):
+    def _msb_menu(self, cell, path, node, _col) -> None:
         """
         Called when text has been edited. Selects the correct function
         depending on the edited column
         """
+        if self.__model is None:
+            return
+
         model = cell.get_property("model")
         field = self.__model[path][-1]
         descript = model.get_value(node, 0)
@@ -426,11 +468,14 @@ class BitList:
         self.__model[path][BitCol.MSB] = descript
         self.__modified()
 
-    def _msb_text(self, _cell, path, new_text, _col):
+    def _msb_text(self, _cell, path, new_text, _col) -> None:
         """
         Called when text has been edited. Selects the correct function
         depending on the edited column
         """
+        if self.__model is None:
+            return
+
         field = self.__model[path][-1]
         new_text = new_text.strip()
         try:
@@ -449,13 +494,13 @@ class BitList:
             ...
 
 
-def reset_value(field):
+def reset_value(field: BitField) -> str:
     "Returns a string representation of the reset value."
 
     return f"0x{field.reset_value:04x}"
 
 
-def get_field_reset_data(field):
+def get_field_reset_data(field: BitField) -> str:
     "Converts the fields reset value/type into a displayable value."
 
     if field.reset_type == ResetType.NUMERIC:

@@ -23,7 +23,7 @@ text is converted from restructuredText to HTML.
 """
 
 from typing import Optional
-from regenerate.db import RegisterDb, RegProject
+from regenerate.db import RegProject
 from regenerate.db.utils import get_register_paths
 
 from regenerate.ui.preview import html_string
@@ -77,7 +77,7 @@ class PreviewEditor:
             self.links = get_register_paths(project)
         else:
             self.links = {}
-        
+
     def enable(self):
         """
         Enables updating and display of the webkit display

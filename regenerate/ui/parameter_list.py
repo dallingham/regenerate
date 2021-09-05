@@ -89,8 +89,8 @@ class ParameterList:
 
         if self._db is not None:
             self._model.clear()
-        for param in self._db.parameters.get():
-            self.append(param)
+            for param in self._db.parameters.get():
+                self.append(param)
         self.remove.set_sensitive(False)
 
     def remove_clicked(self, _obj):

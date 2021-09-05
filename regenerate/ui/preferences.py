@@ -29,31 +29,22 @@ from regenerate.settings import ini
 class Preferences:
     """Manage the preferences"""
 
-    def __init__(self, parent):
-        self.__builder = Gtk.Builder()
-        self.__builder.add_from_file(str(GLADE_PREF))
-        self.__properties = self.__builder.get_object("preferences")
+    def __init__(self, parent: Gtk.Window):
+        self._builder = Gtk.Builder()
+        self._builder.add_from_file(str(GLADE_PREF))
+        self._properties = self._builder.get_object("preferences")
 
         value = bool(int(ini.get("user", "load_last_project", 0)))
-        self.__builder.get_object("load_last_project").set_active(value)
+        self._builder.get_object("load_last_project").set_active(value)
 
-        value = ini.get("user", "column_width", "80")
-        self.__builder.get_object("column_width").set_value(float(value))
+        self._builder.connect_signals(self)
+        self._properties.set_transient_for(parent)
+        self._properties.show()
 
-        self.__builder.connect_signals(self)
-        self.__properties.set_transient_for(parent)
-        self.__properties.show()
-
-    def on_load_last_project_toggled(self, obj):
+    def on_load_last_project_toggled(self, obj) -> None:
         """Called to load the last project"""
-
         ini.set("user", "load_last_project", int(bool(obj.get_active())))
 
-    def on_column_width_value_changed(self, obj):
-        """Called when the width value changed"""
-        ini.set("user", "column_width", obj.get_value_as_int())
-
-    def on_close_button_clicked(self, _obj):
+    def on_close_button_clicked(self, _obj) -> None:
         """Close the window"""
-
-        self.__properties.destroy()
+        self._properties.destroy()

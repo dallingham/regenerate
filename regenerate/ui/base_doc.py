@@ -30,6 +30,45 @@ from regenerate.ui.preview_editor import PreviewEditor
 from .textview import RstEditor
 
 
+class DeleteVerify(Gtk.MessageDialog):
+    """
+    Question message dialog box
+    """
+
+    DISCARD = -1
+    CANCEL = -2
+
+    def __init__(self, parent=None):
+
+        super().__init__(
+            parent,
+            Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT,
+            Gtk.MessageType.QUESTION,
+        )
+
+        self.set_markup(
+            f'<span weight="bold" size="larger">Delete Page</span>'
+        )
+        self.format_secondary_markup(
+            f"Do you wish to permanently delete this page?"
+        )
+        self.add_button("Delete Page", self.DISCARD)
+        self.add_button(Gtk.STOCK_CANCEL, self.CANCEL)
+        self.set_default_response(self.CANCEL)
+        if parent is not None:
+            self.set_transient_for(parent)
+        self.show_all()
+
+    def run_dialog(self):
+        """
+        Runs the dialog box, calls the appropriate callback,
+        then destroys the window
+        """
+        status = self.run()
+        self.destroy()
+        return status
+
+
 class PageInfo:
     "Holds the textbuffer"
 
@@ -142,6 +181,12 @@ class BaseDoc:
         "GTK callback to deletes a page from the notebook"
 
         page = self.notebook.get_current_page()
+
+        dialog = DeleteVerify()
+        status = dialog.run_dialog()
+        if status == DeleteVerify.CANCEL:
+            return
+
         self.notebook.remove_page(page)
         info = self.page_map[page]
 

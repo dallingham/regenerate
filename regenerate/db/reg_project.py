@@ -34,7 +34,8 @@ from .address_map import AddressMap
 from .block import Block
 from .block_inst import BlockInst
 from .const import REG_EXT, PRJ_EXT, OLD_PRJ_EXT, OLD_REG_EXT
-from .containers import Container
+
+# from .containers import Container
 from .doc_pages import DocPages
 from .export import ExportData
 from .logger import LOGGER
@@ -100,7 +101,7 @@ class RegProject:
         """Saves the project to the JSON file"""
 
         new_path = Path(self.path).with_suffix(PRJ_EXT)
-        Container.block_data_path = str(new_path.parent)
+        self.block_data_path = str(new_path.parent)
 
         with new_path.open("w") as ofile:
             ofile.write(json.dumps(self, default=methodcaller("json")))
@@ -285,7 +286,7 @@ class RegProject:
 
     def get_block_from_block_inst(self, blk_inst: BlockInst) -> Block:
         return self.blocks[blk_inst.blkid]
-    
+
     def get_register_set(self) -> List[Path]:
         """
         Returns the register databases (XML files) referenced by the project
@@ -513,10 +514,10 @@ class RegProject:
         """Convert the JSON data back classes"""
 
         try:
-            Container.block_data_path = str(self.path.parent)
+            self.block_data_path = str(self.path.parent)
             skip = False
         except:
-            Container.block_data_path = ""
+            self.block_data_path = ""
             skip = True
 
         self.short_name = data["short_name"]

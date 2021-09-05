@@ -60,11 +60,11 @@ class ParamValue:
         return self.int_str()
 
     def param_name(self):
+        "Returns the parameter name"
         if self.is_parameter:
             pval = ParameterFinder().find(self.txt_value)
             return pval.name
-        else:
-            return ""
+        return ""
 
     def int_str(self) -> str:
         "Prints the parameter with integers in decimal format"

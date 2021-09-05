@@ -34,10 +34,10 @@ class BitValues:
     description - a description of the value
     """
 
-    def __init__(self):
-        self.value: int = 0
-        self.token: str = ""
-        self.description: str = ""
+    def __init__(self, value=0, token="", descript=""):
+        self.value: int = value
+        self.token: str = token
+        self.description: str = descript
 
     def json_decode(self, data: Dict[str, Any]) -> None:
         """Converts the json data into a BitValue"""

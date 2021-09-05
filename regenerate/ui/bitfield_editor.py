@@ -294,7 +294,7 @@ class BitFieldEditor(BaseWindow):
     def update_values(self) -> None:
         "Update the bit field values from the model"
         self.bit_field.values = [
-            (val[0], val[1], val[2]) for val in self.value_model
+            BitValues(val[0], val[1], val[2]) for val in self.value_model
         ]
         self.bit_field.values = []
         for val in self.value_model:
