@@ -147,15 +147,22 @@ class RegSetList:
     def __build_prj_window(self):
         """Build the project window"""
 
-        renderer = Gtk.CellRendererPixbuf()
-        column = Gtk.TreeViewColumn("", renderer, stock_id=0)
-        column.set_min_width(20)
-        self.__obj.append_column(column)
-
         column = ReadOnlyColumn("Register Sets", 1)
         column.renderer.set_property("ellipsize", Pango.EllipsizeMode.END)
+        column.renderer.set_padding(6, 3)
         column.set_min_width(140)
+        column.set_cell_data_func(column.renderer, self.set_format)
         self.__obj.append_column(column)
+
+    def set_format(self, _col, renderer, model, titer, data):
+        val = model.get_value(titer, 0)
+
+        if val:
+            renderer.set_property("weight", Pango.Weight.BOLD)
+            renderer.set_property("style", Pango.Style.ITALIC)
+        else:
+            renderer.set_property("weight", Pango.Weight.NORMAL)
+            renderer.set_property("style", Pango.Style.NORMAL)
 
     def get_selected(self) -> Tuple[SelectModel, Gtk.TreeIter]:
         """Return the selected object"""

@@ -441,7 +441,7 @@ class BlockTab:
     def select_block(self, blkid: str) -> None:
         "Builds a new register model from the selected block ID"
 
-        if self.regmodel is None or self.block is None or self.project is None:
+        if self.regmodel is None or self.project is None:
             return
 
         self.block = self.project.blocks[blkid]
@@ -597,16 +597,28 @@ class BlockSelectList:
     def __build_prj_window(self):
         """Build the block window"""
 
-        renderer = Gtk.CellRendererPixbuf()
-        column = Gtk.TreeViewColumn("", renderer, stock_id=0)
-        column.set_min_width(20)
-        self.__obj.append_column(column)
+        # renderer = Gtk.CellRendererPixbuf()
+        # column = Gtk.TreeViewColumn("", renderer, stock_id=0)
+        # column.set_min_width(20)
+        # self.__obj.append_column(column)
 
         renderer = Gtk.CellRendererText()
         renderer.set_property("ellipsize", Pango.EllipsizeMode.END)
+        renderer.set_padding(6, 3)
         column = Gtk.TreeViewColumn("Blocks", renderer, text=1)
         column.set_min_width(140)
+        column.set_cell_data_func(renderer, self.set_format)
         self.__obj.append_column(column)
+
+    def set_format(self, _col, renderer, model, titer, data):
+        val = model.get_value(titer, 0)
+
+        if val:
+            renderer.set_property("weight", Pango.Weight.BOLD)
+            renderer.set_property("style", Pango.Style.ITALIC)
+        else:
+            renderer.set_property("weight", Pango.Weight.NORMAL)
+            renderer.set_property("style", Pango.Style.NORMAL)
 
     def get_selected(self):
         """Return the selected object"""
