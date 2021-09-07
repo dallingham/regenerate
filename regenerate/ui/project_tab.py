@@ -22,10 +22,9 @@ Handle the module tab
 """
 
 from typing import Callable, List
-
 from gi.repository import Gtk
 
-from regenerate.db import RegProject
+from regenerate.db import RegProject, RegisterDb
 from .base_doc import BaseDoc
 from .entry import EntryText, EntryWord
 
@@ -80,17 +79,23 @@ class ProjectTabs:
         self.set_modified = modified
         self.icon = builder.get_object("mod_def_warn")
 
-    def change_db(self, dbase) -> None:
+    def change_db(self, dbase: RegisterDb) -> None:
+        "Changes the register db used"
+
         self.dbase = dbase
         self.preview.set_project(dbase)
         for obj in self.object_list:
             obj.change_db(dbase)
 
     def after_modified(self) -> None:
+        "Called after the project was modified"
+
         self.set_modified()
 
 
 class ProjectDoc(BaseDoc):
+    "Documentation editor base for the project information"
+
     def __init__(
         self,
         notebook: Gtk.Notebook,
@@ -100,7 +105,9 @@ class ProjectDoc(BaseDoc):
         undo_btn: Gtk.Button,
         redo_btn: Gtk.Button,
     ):
-        super().__init__(notebook, modified, add_btn, del_btn, undo_btn, redo_btn)
+        super().__init__(
+            notebook, modified, add_btn, del_btn, undo_btn, redo_btn
+        )
         self.changing = False
 
     def set_project(self, project: RegProject) -> None:

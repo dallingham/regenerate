@@ -325,13 +325,14 @@ class BlockOverridesList(OverridesList):
     def build_overrides_list(self, block):
         total = 0
         param_list = []
-        for reginst in block.regset_insts:
-            regset = block.regsets[reginst.regset_id]
-            for param in regset.parameters.get():
-                total += 1
-                name = f"{reginst.name}.{param.name}"
-                if param.uuid not in self._used:
-                    param_list.append((name, (reginst, param)))
+        if block is not None:
+            for reginst in block.regset_insts:
+                regset = block.regsets[reginst.regset_id]
+                for param in regset.parameters.get():
+                    total += 1
+                    name = f"{reginst.name}.{param.name}"
+                    if param.uuid not in self._used:
+                        param_list.append((name, (reginst, param)))
         return param_list, total
 
     def update_display(self):

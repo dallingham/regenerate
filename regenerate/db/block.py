@@ -68,15 +68,19 @@ class Block(NameBase):
         self.overrides: List[Overrides] = []
 
     def get_regset_insts(self) -> List[RegisterInst]:
+        "Returns a list of register instances"
         return self.regset_insts
 
     def get_regsets_dict(self) -> Dict[str, RegisterDb]:
+        "Returns a dict of register sets"
         return self.regsets
 
     def get_regset_from_reg_inst(self, reg_inst: RegisterInst) -> RegisterDb:
+        "Returns the register set connected to the register instance"
         return self.regsets[reg_inst.regset_id]
 
     def remove_register_set(self, uuid: str) -> None:
+        "Removes the register set using the UUID"
         if uuid in self.regsets:
             del self.regsets[uuid]
         self.regset_insts = [

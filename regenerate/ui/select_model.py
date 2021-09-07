@@ -35,7 +35,7 @@ class SelectModel(Gtk.ListStore):
     def __init__(self):
         "Model consists of ICON, DISPLAY, OBJECT"
 
-        super().__init__(str, str, object)
+        super().__init__(bool, str, object)
 
         self.file_list = {}
         self.paths = set()
@@ -45,26 +45,22 @@ class SelectModel(Gtk.ListStore):
 
         for row in self:
             if row[SelectCol.OBJ].modified:
-                row[SelectCol.ICON] = Gtk.STOCK_EDIT
+                row[SelectCol.ICON] = True
             else:
-                row[SelectCol.ICON] = ""
+                row[SelectCol.ICON] = False
 
-    def set_markup(self, node, modified):
+    def set_markup(self, node, modified: bool) -> None:
         """Sets the icon if the project has been modified"""
 
-        if modified:
-            icon = Gtk.STOCK_EDIT
-        else:
-            icon = None
-        self.set_value(node, SelectCol.ICON, icon)
+        self.set_value(node, SelectCol.ICON, modified)
 
     def add(self, obj: Union[Block, RegisterDb], modified=False):
         """Add the the database to the model"""
 
         if modified or obj.modified:
-            node = self.append(row=[Gtk.STOCK_EDIT, obj.name, obj])
+            node = self.append(row=[True, obj.name, obj])
         else:
-            node = self.append(row=["", obj.name, obj])
+            node = self.append(row=[False, obj.name, obj])
 
         self.file_list[str(obj.filename)] = node
         self.paths.add(obj.filename.parent)

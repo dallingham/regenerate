@@ -4,10 +4,11 @@ from typing import Union, List, Optional
 from gi.repository import Gtk
 
 
-def get_new_filename():
-    return create_file_selector(
+def get_new_filename() -> Optional[str]:
+    filelist = create_file_selector(
         "New", None, None, None, Gtk.FileChooserAction.SAVE, Gtk.STOCK_SAVE
     )
+    return filelist[0] if filelist else None
 
 
 def create_file_selector(
@@ -17,8 +18,7 @@ def create_file_selector(
     regex: Optional[Union[str, List[str]]],
     action: Gtk.FileChooserAction,
     icon: str,
-    multiple=False,
-) -> Optional[Union[str, List[str]]]:
+) -> List[str]:
     """
     Creates a file save selector, using the mime type and regular
     expression to control the selector.
@@ -36,9 +36,9 @@ def create_file_selector(
         ),
     )
 
-    choose.set_select_multiple(multiple)
-
+    choose.set_select_multiple(False)
     choose.set_current_folder(os.curdir)
+
     if name and regex:
         mime_filter = Gtk.FileFilter()
         mime_filter.set_name(name)
@@ -51,13 +51,8 @@ def create_file_selector(
         choose.add_filter(mime_filter)
     choose.show()
 
-    response = choose.run()
-
     name = None
-    if response == Gtk.ResponseType.OK:
-        if multiple:
-            name = choose.get_filenames()
-        else:
-            name = choose.get_filename()
+    if choose.run() == Gtk.ResponseType.OK:
+        name = choose.get_filenames()
     choose.destroy()
     return name

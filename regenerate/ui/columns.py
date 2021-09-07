@@ -145,7 +145,7 @@ class ReadOnlyColumn(BaseColumn):
 
         self.renderer = Gtk.CellRendererText()
         super().__init__(
-            title, self.renderer, markup=source_column, tooltip=tooltip
+            title, self.renderer, text=source_column, tooltip=tooltip
         )
 
         self.renderer.set_property("editable", False)
