@@ -21,7 +21,7 @@
 Handle the module tab
 """
 
-from typing import Callable, List
+from typing import Callable, List, Optional
 from gi.repository import Gtk
 
 from regenerate.db import RegProject, RegisterDb
@@ -75,7 +75,7 @@ class ProjectTabs:
             builder.get_object("top_redo"),
         )
 
-        self.dbase = None
+        self.dbase: Optional[RegisterDb] = None
         self.set_modified = modified
         self.icon = builder.get_object("mod_def_warn")
 

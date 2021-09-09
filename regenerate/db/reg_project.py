@@ -35,7 +35,6 @@ from .block import Block
 from .block_inst import BlockInst
 from .const import REG_EXT, PRJ_EXT, OLD_PRJ_EXT, OLD_REG_EXT
 
-# from .containers import Container
 from .doc_pages import DocPages
 from .export import ExportData
 from .logger import LOGGER
@@ -78,6 +77,7 @@ class RegProject:
         self.finder = RegsetFinder()
         self._filelist: List[Path] = []
         self.reader_class = None
+        self.block_data_path = ""
 
         self.parameters = ParameterContainer()
         self.overrides: List[Overrides] = []
@@ -282,9 +282,11 @@ class RegProject:
         ]
 
     def get_block_instances(self):
+        "Return the block instances"
         return self.block_insts
 
     def get_block_from_block_inst(self, blk_inst: BlockInst) -> Block:
+        "Find the block associated with a particular block instance"
         return self.blocks[blk_inst.blkid]
 
     def get_register_set(self) -> List[Path]:

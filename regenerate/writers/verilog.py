@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
-Actual program. Parses the arguments, and initiates the main window
+Provides the Verilog RTL generation
 """
 
 import os
@@ -25,8 +25,8 @@ import re
 import copy
 import datetime
 from pathlib import Path
-from collections import namedtuple, defaultdict
-from typing import List, Tuple, TextIO, Set, Dict
+from collections import defaultdict
+from typing import List, Tuple, TextIO, Set, Dict, NamedTuple
 
 from jinja2 import FileSystemLoader, Environment
 from regenerate.db import (
@@ -34,6 +34,7 @@ from regenerate.db import (
     TYPE_TO_OUTPUT,
     Register,
     BitField,
+    ParamValue,
     BitType,
     RegisterDb,
     RegProject,
@@ -44,37 +45,76 @@ from regenerate.writers.verilog_reg_def import REG
 from regenerate.db.enums import ShareType, ResetType
 
 LOWER_BIT = {128: 4, 64: 3, 32: 2, 16: 1, 8: 0}
+MODE_SEP = ["_", "_r_", "_w"]
 
 
 BIT_SLICE = re.compile(r"(.*)\[(\d+)\]")
 BUS_SLICE = re.compile(r"(.*)\[(\d+):(\d+)\]")
 
-CellInfo = namedtuple(
-    "CellInfo",
-    [
-        "name",
-        "has_input",
-        "has_control",
-        "has_oneshot",
-        "type_descr",
-        "allows_wide",
-        "has_rd",
-        "is_read_only",
-    ],
-)
 
-ByteInfo = namedtuple(
-    "ByteInfo",
-    [
-        "field",
-        "start_offset",
-        "stop_offset",
-        "start",
-        "stop",
-        "address",
-        "register",
-    ],
-)
+class LogicDef:
+    "Holds the name and dimension for a definition"
+
+    def __init__(self, name: str, dim: str):
+        self.name = name
+        self.dim = dim
+        self.field_list: List[FieldInfo] = []
+
+
+class LogicDefResolved:
+    "Holds the name and dimension for a definition"
+
+    def __init__(self, name: str, dim: str):
+        self.name = name
+        self.dim = dim
+        self.field_list: List[str] = []
+
+
+class CellInfo(NamedTuple):
+    "Contains the definition of a particular register type"
+
+    name: str
+    has_input: bool
+    has_control: bool
+    has_oneshot: bool
+    type_descr: str
+    allows_wide: bool
+    has_rd: bool
+    is_read_only: bool
+
+
+class ByteInfo(NamedTuple):
+    "Contains the information for a byte of a bitfield"
+
+    field: BitField
+    start_offset: int
+    stop_offset: int
+    start: int
+    stop: int
+    address: int
+    register: Register
+
+
+class AssignInfo(NamedTuple):
+
+    output: str
+    register: str
+    dimension: str
+
+
+class FieldInfo(NamedTuple):
+
+    name: str
+    lsb: int
+    msb: ParamValue
+    offset: int
+
+
+class DecodeInfo(NamedTuple):
+
+    name: str
+    addr: str
+    register: Register
 
 
 def full_reset_value(field: BitField) -> str:
@@ -158,7 +198,7 @@ class Verilog(WriterBase):
 
         self._used_types: Set[BitType] = set()
 
-    def _byte_info(
+    def byte_info(
         self,
         field: BitField,
         register: Register,
@@ -187,10 +227,11 @@ class Verilog(WriterBase):
             register,
         )
 
-    def __generate_group_list(self, reglist: List[Register], size: int):
-        """
-        Breaks a set of bit fields along the specified boundary
-        """
+    def generate_group_list(
+        self, reglist: List[Register], size: int
+    ) -> Dict[int, List[ByteInfo]]:
+        "Breaks a set of bit fields along the specified boundary"
+
         item_list: Dict[int, List[ByteInfo]] = {}
 
         for register in reglist:
@@ -200,18 +241,20 @@ class Verilog(WriterBase):
                 for lower in range(0, register.width, size):
                     if field.msb.is_parameter:
                         finder = ParameterFinder()
-                        msb = finder.find(field.msb.resolve())
+                        msb = finder.find(field.msb.txt_value)
                     else:
                         msb = field.msb.resolve()
                     if in_range(field.lsb, msb, lower, lower + size - 1):
-                        data = self._byte_info(
+                        data = self.byte_info(
                             field, register, lower, size, offset
                         )
                         item_list.setdefault(data.address, []).append(data)
                         offset += size // 8
         return item_list
 
-    def build_register_list(self):
+    def build_register_list(self) -> List[Register]:
+
+        reglist: List[Register] = []
 
         code_registers = [
             reg
@@ -219,7 +262,6 @@ class Verilog(WriterBase):
             if not reg.flags.do_not_generate_code
         ]
 
-        reglist = []
         for reg in code_registers:
             if reg.dimension.is_parameter:
                 new_reg = copy.deepcopy(reg)
@@ -237,7 +279,7 @@ class Verilog(WriterBase):
 
         return reglist
 
-    def write(self, filename: Path):
+    def write(self, filename: Path) -> None:
         """
         Write the data to the file as a SystemVerilog package. This includes
         a block of register definitions for each register and the associated
@@ -259,7 +301,7 @@ class Verilog(WriterBase):
 
         reglist = self.build_register_list()
 
-        word_fields = self.__generate_group_list(reglist, self._data_width)
+        word_fields = self.generate_group_list(reglist, self._data_width)
 
         if (
             self._dbase.ports.reset_active_level
@@ -297,7 +339,6 @@ class Verilog(WriterBase):
             self._dbase, word_fields, self._cell_info
         )
 
-        #        reg_read_output = register_output_definitions(self._dbase, word_fields)
         reg_read_output = register_output_definitions(self._dbase)
 
         # TODO: fix 64 bit registers with 32 bit width
@@ -436,63 +477,54 @@ def build_port_widths(dbase: RegisterDb):
 
 
 def reg_field_name(reg: Register, field: BitField):
-    mode = ["_", "_r_", "_w"]
-    return "r%02x%s%s" % (
-        reg.address,
-        mode[reg.share],
-        field.name.lower(),
-    )
+    return f"r{reg.address:02x}{MODE_SEP[reg.share]}{field.name.lower()}"
 
 
 def build_write_address_selects(
     dbase: RegisterDb, word_fields: Dict[int, List[ByteInfo]]
-):
+) -> List[DecodeInfo]:
+    "Returns the information needed to create the write selects"
 
-    assigns = []
+    assigns: List[DecodeInfo] = []
 
-    for addr in word_fields:
-        rval = addr >> LOWER_BIT[dbase.ports.data_bus_width]
+    data_width = dbase.ports.data_bus_width
+    addr_width = dbase.ports.address_bus_width
 
-        write_signal = f"write_r{addr:02x}"
-        write_width = (
-            dbase.ports.address_bus_width
-            - LOWER_BIT[dbase.ports.data_bus_width]
-        )
-        write_addr = f"{write_width}'h{rval:x}"
+    for addr, val in word_fields.items():
+        rval = addr >> LOWER_BIT[data_width]
+        signal = f"write_r{addr:02x}"
+        width = addr_width - LOWER_BIT[data_width]
+        decode = f"{width}'h{rval:x}"
+        register = val[0][-1]
+        assigns.append(DecodeInfo(signal, decode, register))
 
-        assigns.append(
-            (
-                write_signal,
-                write_addr,
-                word_fields[addr][0][-1],
-            )
-        )
     return assigns
 
 
-def build_read_address_selects(dbase, word_fields, cell_info):
-    assigns = []
-    for addr in word_fields:
-        val = word_fields[addr]
+def build_read_address_selects(
+    dbase: RegisterDb, word_fields: Dict[int, List[ByteInfo]], cell_info
+) -> List[DecodeInfo]:
+    "Returns the information needed to create the read selects"
+
+    assigns: List[DecodeInfo] = []
+
+    data_width = dbase.ports.data_bus_width
+    addr_width = dbase.ports.address_bus_width
+
+    for addr, val in word_fields.items():
 
         for (field, *_) in val:
             if not cell_info[field.field_type].has_rd:
                 continue
-            lower_bit = LOWER_BIT[dbase.ports.data_bus_width]
 
-            read_signal = f"read_r{addr:02x}"
-            read_addr = "%d'h%x" % (
-                dbase.ports.address_bus_width - lower_bit,
-                addr >> lower_bit,
-            )
+            rval = addr >> LOWER_BIT[data_width]
+            signal = f"read_r{addr:02x}"
+            width = addr_width - LOWER_BIT[data_width]
+            decode = f"{width}'h{rval:x}"
+            register = val[0][-1]
 
-            assigns.append(
-                (
-                    read_signal,
-                    read_addr,
-                    word_fields[addr][0][-1],
-                )
-            )
+            assigns.append(DecodeInfo(signal, decode, register))
+
     return assigns
 
 
@@ -579,7 +611,7 @@ def make_scalar(name, vect, dim):
         return (name, vect)
 
 
-def build_logic_list(_dbase, word_fields, cell_info):
+def build_logic_list(_dbase, word_fields, cell_info) -> List[Tuple[str, str]]:
     reg_list = []
 
     for addr in word_fields:
@@ -589,46 +621,27 @@ def build_logic_list(_dbase, word_fields, cell_info):
             dim = reg.dimension.param_name()
             if not field.msb.is_parameter and field.msb.resolve() == field.lsb:
                 if reg.dimension.is_parameter:
-                    reg_list.append(
-                        (
-                            reg_field_name(reg, field)
-                            + "[%s]" % reg.dimension.param_name(),
-                            "",
-                        )
-                    )
+                    reg_list.append((f"{name}[{dim}]", ""))
                 else:
-                    reg_list.append((reg_field_name(reg, field), ""))
+                    reg_list.append((name, ""))
             else:
                 vect = f"[{field.msb.int_str()}:{field.lsb}] "
+                dim_name = f"{name}[{reg.dimension.param_name()}]"
                 if reg.dimension.is_parameter:
-                    reg_list.append(
-                        (
-                            reg_field_name(reg, field)
-                            + "[%s]" % reg.dimension.param_name(),
-                            vect,
-                        )
-                    )
+                    reg_list.append((dim_name, vect))
                 else:
-                    reg_list.append((reg_field_name(reg, field), vect))
+                    reg_list.append((name, vect))
+
             if cell_info[field.field_type].has_oneshot:
+                dim = f"[{stop_pos}:{start_pos}]"
                 if reg.dimension.is_parameter:
-                    reg_list.append(
-                        (
-                            f"{name}_1S[{dim}]",
-                            f"[{stop_pos}:{start_pos}]",
-                        )
-                    )
+                    reg_list.append((f"{name}_1S[{dim}]", dim))
                 else:
-                    reg_list.append(
-                        (
-                            f"{name}_1S",
-                            f"[{stop_pos}:{start_pos}]",
-                        ),
-                    )
+                    reg_list.append((f"{name}_1S", dim))
     return reg_list
 
 
-def build_input_signals(dbase, cell_info):
+def build_input_signals(dbase: RegisterDb, cell_info) -> List[Tuple[str, str]]:
     signals = set()
     for reg in dbase.get_all_registers():
         for field in reg.get_bit_fields():
@@ -691,9 +704,8 @@ def build_oneshot_assignments(word_fields, cell_info):
 
 
 def break_into_bytes(start: int, stop: int) -> List[Tuple[int, int]]:
-    """
-    Return a list of byte boundaries from the start and stop values
-    """
+    "Return a list of byte boundaries from the start and stop values"
+
     index = start
     data = []
 
@@ -704,59 +716,49 @@ def break_into_bytes(start: int, stop: int) -> List[Tuple[int, int]]:
     return data
 
 
+def valid_output(field: BitField) -> bool:
+    "Returns True if the output signal is valid"
+
+    return field.use_output_enable and field.output_signal != ""
+
+
 def build_assignments(word_fields):
 
     assign_list = []
 
-    for addr in word_fields:
-        val = word_fields[addr]
-        for (fld, _, _, _, _, _, reg) in val:
-            if reg.share == 0:
-                mode = "_"
-            elif reg.share == 1:
-                mode = "_r_"
+    for word_field in word_fields.values():
+
+        for (fld, _, _, _, _, _, reg) in word_field:
+
+            if not valid_output(fld):
+                continue
+
+            mode = MODE_SEP[reg.share]
+            reg_name = reg_field_name(reg, fld)
+
+            if reg.dimension.is_parameter:
+                signal_name = fld.output_signal
+                dimension = reg.dimension.param_name()
+            elif reg.dimension.resolve() != -1:
+                signal_name = f"{fld.output_signal}[{reg.dimension.resolve()}]"
+                dimension = ""
             else:
-                mode = "_w_"
-            if fld.use_output_enable and fld.output_signal != "":
-                if reg.dimension.is_parameter:
-                    assign_list.append(
-                        (
-                            fld.output_signal,
-                            "r%02x%s%s"
-                            % (reg.address, mode, fld.name.lower()),
-                            reg.dimension.param_name(),
-                        )
-                    )
-                elif reg.dimension.resolve() != -1:
-                    assign_list.append(
-                        (
-                            f"{fld.output_signal}[{reg.dimension.resolve()}]",
-                            "r%02x%s%s"
-                            % (reg.address, mode, fld.name.lower()),
-                            "",
-                        )
-                    )
-                else:
-                    assign_list.append(
-                        (
-                            fld.resolved_output_signal(),
-                            "r%02x%s%s"
-                            % (reg.address, mode, fld.name.lower()),
-                            "",
-                        )
-                    )
+                signal_name = fld.resolved_output_signal()
+                dimension = ""
+
+            assign_list.append(AssignInfo(signal_name, reg_name, dimension))
+
     return assign_list
 
 
-def register_output_definitions(dbase):
+def register_output_definitions(dbase: RegisterDb) -> List[LogicDefResolved]:
 
-    full_list = []
+    full_list: List[LogicDef] = []
     reg_share = {0: "_", 1: "_r_"}
 
     bus_width = dbase.ports.data_bus_width
     bytes_per_reg = bus_width // 8
     current_group = -1
-    finder = ParameterFinder()
 
     for reg in dbase.get_all_registers():
 
@@ -765,120 +767,60 @@ def register_output_definitions(dbase):
 
         if base_addr // bytes_per_reg != current_group:
             if reg.dimension.is_parameter:
-                wire_name = (
+                wire_name = LogicDef(
                     f"r{base_addr:02x}[reg.dimension.param_name()]",
                     f"[{bus_width-1}:0]",
                 )
             else:
-                wire_name = (f"r{base_addr:02x}", f"[{bus_width-1}:0]")
+                wire_name = LogicDef(f"r{base_addr:02x}", f"[{bus_width-1}:0]")
 
-            field_list = []
-            full_list.append((wire_name, field_list))
+            full_list.append(wire_name)
             current_group = base_addr // bytes_per_reg
 
-        for field in reg.get_bit_fields():
-            share = reg_share[reg.share]
-
-            field_list.append(
-                (
-                    f"r{reg.address:02x}{share}{field.name.lower()}",
+            for field in reg.get_bit_fields():
+                field_info = FieldInfo(
+                    reg_field_name(reg, field),
                     field.lsb,
                     field.msb,
                     current_offset * 8,
                 )
-            )
+                wire_name.field_list.append(field_info)
 
     new_list = []
 
-    for wire_name, field_list in full_list:
-        field_list.reverse()
+    for wire_name in full_list:
+        wire_name.field_list.reverse()
 
-        new_field_list = []
-        new_list.append((wire_name, new_field_list))
+        new_wire = LogicDefResolved(wire_name.name, wire_name.dim)
+        new_list.append(new_wire)
         last = bus_width
-        for name, lsb, msb, offset in field_list:
-            if msb.is_parameter:
-                local_param = copy.copy(msb)
+        for field_info in wire_name.field_list:
+            start = last - field_info.offset
+            if field_info.msb.is_parameter:
+                local_param = copy.copy(field_info.msb)
                 local_param.offset = local_param.offset + 1
-                #                pname = finder.find(local_param.value)
-                new_field_list.append(
-                    f"{{({last-offset}-{local_param.int_str()}){{1'b0}}}}"
+                new_wire.field_list.append(
+                    f"{{({start}-{local_param.int_str()}){{1'b0}}}}"
                 )
             else:
-                if (last - offset - msb.resolve()) > 1:
-                    new_field_list.append(f"{last-offset-msb.resolve()-1}'b0")
+                if (start - field_info.msb.resolve()) > 1:
+                    new_wire.field_list.append(
+                        f"{start-field_info.msb.resolve()-1}'b0"
+                    )
 
-            new_field_list.append(name)
-            last = lsb + offset
+            new_wire.field_list.append(field_info.name)
+            last = field_info.lsb + field_info.offset
         if last != 0:
-            new_field_list.append(f"{last-0}'b0")
+            new_wire.field_list.append(f"{last-0}'b0")
 
     return new_list
 
 
-def register_output_definitions2(dbase, word_fields):
+def build_standard_ports(dbase: RegisterDb):
+    "Returns a dict that maps ports to the port names"
 
-    full_list = []
+    ports = dbase.ports
 
-    for addr in word_fields:
-        val = word_fields[addr]
-
-        last_offset = last = dbase.ports.data_bus_width - 1
-
-        reg = val[0][-1]
-        if reg.dimension.is_parameter:
-            wire_name = (
-                "r%02x[%s]" % (addr, reg.dimension.param_name()),
-                "[%d:0]" % (dbase.ports.data_bus_width - 1,),
-            )
-        else:
-            wire_name = (
-                "r%02x" % addr,
-                "[%d:0]" % (dbase.ports.data_bus_width - 1,),
-            )
-        clist = []
-
-        val = reversed(val)
-        last_offset = 64
-
-        for (field, start_offset, _, start_pos, stop_pos, _, reg) in val:
-
-            width = stop_pos - start_pos + 1
-            if reg.share == 0:
-                mode = "_"
-            elif reg.share == 1:
-                mode = "_r_"
-            else:
-                continue
-
-            if start_offset + width <= last:
-                clist.append("%d'b0" % (last - (start_offset + width) + 1,))
-            if start_pos == stop_pos:
-                clist.append(
-                    "r%02x%s%s" % (reg.address, mode, field.name.lower())
-                )
-            else:
-                clist.append(
-                    "r%02x%s%s[%d:%d]"
-                    % (
-                        reg.address,
-                        mode,
-                        field.name.lower(),
-                        stop_pos,
-                        start_pos,
-                    )
-                )
-            last = start_offset - 1
-            last_offset = start_offset
-
-        if last_offset != 0:
-            clist.append("%d'b0" % last_offset)
-        full_list.append((wire_name, clist))
-
-    return full_list
-
-
-def build_standard_ports(dbase):
     if dbase.use_interface:
         return {
             "clk": "MGMT.CLK",
@@ -889,18 +831,18 @@ def build_standard_ports(dbase):
             "write_data": "MGMT.WDATA",
             "read_data": "MGMT.RDATA",
             "ack": "MGMT.ACK",
-            "addr": "MGMT.ADDR[%d:3]" % (dbase.ports.address_bus_width - 1,),
+            "addr": "MGMT.ADDR[%d:3]" % (ports.address_bus_width - 1,),
         }
     return {
-        "clk": dbase.ports.clock_name,
-        "reset": dbase.ports.reset_name,
-        "write_strobe": dbase.ports.write_strobe_name,
-        "read_strobe": dbase.ports.read_strobe_name,
-        "byte_strobe": dbase.ports.byte_strobe_name,
-        "write_data": dbase.ports.write_data_name,
-        "read_data": dbase.ports.read_data_name,
-        "ack": dbase.ports.acknowledge_name,
-        "addr": dbase.ports.address_bus_name,
+        "clk": ports.clock_name,
+        "reset": ports.reset_name,
+        "write_strobe": ports.write_strobe_name,
+        "read_strobe": ports.read_strobe_name,
+        "byte_strobe": ports.byte_strobe_name,
+        "write_data": ports.write_data_name,
+        "read_data": ports.read_data_name,
+        "ack": ports.acknowledge_name,
+        "addr": ports.address_bus_name,
     }
 
 

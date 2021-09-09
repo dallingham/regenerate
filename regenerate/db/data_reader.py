@@ -22,13 +22,14 @@ Provides a base class for data access routines, allowing abstractions
 other than simple file based reading.
 """
 
+from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Tuple
 
 from .const import REG_EXT
 
 
-class DataReader:
+class DataReader(ABC):
     """
     Base class for reading data. Allows different sources to be used instead
     of just files. Allows for applications to provide their own custom
@@ -45,10 +46,12 @@ class DataReader:
         """
         return Path(self.path), Path(self.path)
 
+    @abstractmethod
     def read(self, _filename: Path) -> str:
         "Read ASCII data"
         return ""
 
+    @abstractmethod
     def read_bytes(self, _filename: Path) -> bytes:
         "Read binary data"
         return b""

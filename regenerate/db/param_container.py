@@ -17,22 +17,19 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-from typing import List
-from .param_data import ParameterData
+"""
+Container for parameters, allowing adding, removing, and searching
+"""
 
-# from .param_resolver import ParameterResolver
+from typing import List, Optional
+from .param_data import ParameterData
 
 
 class ParameterContainer:
+    "Parameter containing class"
+
     def __init__(self):
         self._parameters: List[ParameterData] = []
-
-    def setup(self, _name: str):
-        return
-
-    # resolver = ParameterResolver()
-    # for parameter in self._parameters:
-    #     resolver.add_regset_parameter(name, parameter)
 
     def get(self):
         """Returns the parameter list"""
@@ -50,16 +47,20 @@ class ParameterContainer:
         """Sets the parameter list"""
         self._parameters = parameter_list
 
-    def find(self, name: str) -> ParameterData:
+    def find(self, name: str) -> Optional[ParameterData]:
+        "Finds the parameter from its name"
         for param in self._parameters:
             if param.name == name:
                 return param
         return None
 
     def json(self):
+        "Convert to a dictionary for serialization"
         return [parameter.json() for parameter in self._parameters]
 
     def json_decode(self, data):
+        "Load data from JSON data"
+
         self._parameters = []
         for item_json in data:
             item = ParameterData()

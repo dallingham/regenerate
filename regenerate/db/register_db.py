@@ -137,7 +137,6 @@ class RegisterDb(NameBase):
             self.name = filename.stem
             parser = RegParser(self)
             parser.parse(ifile)
-        self.parameters.setup(self.name)
         return self
 
     def read_json(self, filename: Path):
@@ -150,7 +149,6 @@ class RegisterDb(NameBase):
             self.name = filename.stem
             parser = RegParserJSON(self)
             parser.parse(ifile)
-        self.parameters.setup(self.name)
         return self
 
     def loads(self, data, filename):
@@ -256,7 +254,7 @@ class RegisterDb(NameBase):
         self.name = data["name"]
         self._id = data["uuid"]
         self.array_is_reg = data["array_is_reg"]
-        self.memory = data.get('memory', False)
+        self.memory = data.get("memory", False)
         self.coverage = data["coverage"]
         self.internal_only = data["internal_only"]
         self.organization = data["organization"]

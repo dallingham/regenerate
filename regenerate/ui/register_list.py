@@ -459,7 +459,6 @@ class RegisterList:
         Updates the dimension associated with the register. Called after the text
         has been edited
         """
-        print(">>>>>>", path, text)
         if text != reg.dimension.int_str():
             reg.dimension.set_int(int(text, 0))
             self._set_modified()
@@ -589,7 +588,6 @@ class RegisterList:
         Called when text has been edited. Selects the correct function
         depending on the edited column
         """
-        print("DIM TEXT")
         register = self._model.get_register_at_path(path)
         new_text = new_text.strip()
         try:
@@ -615,13 +613,10 @@ class RegisterList:
         Called when text has been edited. Selects the correct function
         depending on the edited column
         """
-        print("DIM MENU")
         model = cell.get_property("model")
         register = self._model.get_register_at_path(path)
         uuid = model.get_value(node, 1)
         name = model.get_value(node, 0)
-        print("NEW VALUE0", model.get_value(node, 0))
-        print("NEW VALUE1", model.get_value(node, 1))
         register.dimension.set_param(uuid)
         self._model[path][RegCol.DIM] = name
         self._set_modified()
