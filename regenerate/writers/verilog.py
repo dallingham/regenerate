@@ -121,7 +121,7 @@ class RegDecl(NamedTuple):
     "Holds the infomration for register declarations"
 
     name: str
-    dimenstion: str
+    dimension: str
 
 
 class FieldInfo(NamedTuple):
@@ -638,7 +638,7 @@ def make_scalar(name, vect, dim):
                 return Scalar(f"{name}[{dim}]", vect)
             return Scalar(name, vect)
         except ValueError:
-            return Scalar(f"{name}[{dim}]", vect)
+            return Scalar(f"{name}", vect)
     else:
         return Scalar(name, vect)
 
@@ -826,14 +826,14 @@ def register_output_definitions(dbase: RegisterDb) -> List[LogicDefResolved]:
             full_list.append(wire_name)
             current_group = base_addr // bytes_per_reg
 
-            for field in reg.get_bit_fields():
-                field_info = FieldInfo(
-                    reg_field_name(reg, field),
-                    field.lsb,
-                    field.msb,
-                    current_offset * 8,
-                )
-                wire_name.field_list.append(field_info)
+        for field in reg.get_bit_fields():
+            field_info = FieldInfo(
+                reg_field_name(reg, field),
+                field.lsb,
+                field.msb,
+                current_offset * 8,
+            )
+            wire_name.field_list.append(field_info)
 
     for wire_name in full_list:
         wire_name.field_list.reverse()
@@ -897,11 +897,11 @@ def make_one_shot(name: str, reg: Register):
     """Builds the one shot signal from the name and dimenstion"""
 
     if reg.dimension.is_parameter:
-        signal = (f"{name}_1S[{reg.dimension.param_name()}]", "")
+        signal = Scalar(f"{name}_1S[{reg.dimension.param_name()}]", "")
     elif reg.dimension.resolve() > 1:
-        signal = (f"{name}_1S[{reg.dimension.resolve()}]", "")
+        signal = Scalar(f"{name}_1S[{reg.dimension.resolve()}]", "")
     else:
-        signal = (f"{name}_1S", "")
+        signal = Scalar(f"{name}_1S", "")
     return signal
 
 
