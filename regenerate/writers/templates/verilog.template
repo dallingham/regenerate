@@ -23,33 +23,25 @@ module {{db.name}}
 {% endif %}
    (
 {% if not db.use_interface %}
-    {{input_logic}} {{ports['clk']}},
-    {{input_logic}} {{ports['reset']}},
-    {{input_logic}} {{ports['write_strobe']}},
-    {{input_logic}} {{ports['read_strobe']}},
-    {{input_logic}} {{port_width['byte_strobe']}} {{ports['byte_strobe']}},
-    {{input_logic}} {{port_width['addr']}} {{ports['addr']}},
-    {{input_logic}} {{port_width['write_data']}} {{ports['write_data']}},
+    {{lang.input_logic}} {{ports.clk}},
+    {{lang.input_logic}} {{ports.reset}},
+    {{lang.input_logic}} {{ports.write_strobe}},
+    {{lang.input_logic}} {{ports.read_strobe}},
+    {{lang.input_logic}} {{port_width['byte_strobe']}} {{ports.byte_strobe}},
+    {{lang.input_logic}} {{port_width['addr']}} {{ports.addr}},
+    {{lang.input_logic}} {{port_width['write_data']}} {{ports.write_data}},
 {% endif %}
-{% for (signal, vector) in input_signals %}
-  {% if vector == "" %}
-    {{input_logic}} {{signal}},
-  {% else %}
-    {{input_logic}} {{vector}} {{signal}},
-  {% endif %}
+{% for signal in input_signals %}
+    {{lang.input_logic}} {{signal.vector}} {{signal.name}},
 {% endfor %}
-{% for (signal, vector) in output_signals %}
-  {% if vector == "" %}
-    {{output_logic}} {{signal}},
-  {% else %}
-    {{output_logic}} {{vector}} {{signal}},
-  {% endif %}
+{% for signal in output_signals %}
+    {{lang.output_logic}} {{signal.vector}} {{signal.name}},
 {% endfor %}
 {% if db.use_interface %}
     mgmt_interface.target MGMT
 {% else %}
-    {{output_logic}} {{"[%d:0]" % (db.ports.data_bus_width-1,)}} {{ports['read_data']}},
-    {{output_logic}} {{ports['ack']}}
+    {{lang.output_logic}} {{"[%d:0]" % (db.ports.data_bus_width-1,)}} {{ports.read_data}},
+    {{lang.output_logic}} {{ports.ack}}
 {% endif %}
    );
 
@@ -58,53 +50,52 @@ module {{db.name}}
 /*
  * Register Declarations
  */
-{% for r in reg_list %}
-   {{reg_type}} {{r[1]}}{{r[0]}};
+{% for reg in reg_list %}
+   {{lang.reg_type}} {{reg.dimension}}{{reg.name}};
 {% endfor %}
-   {{reg_type}} prev_write;
-   {{reg_type}} prev_read;
-   {{reg_type}} [{{db.ports.data_bus_width-1}}:0] mux_rdata;
+   {{lang.reg_type}} prev_write;
+   {{lang.reg_type}} prev_read;
+   {{lang.reg_type}} [{{db.ports.data_bus_width-1}}:0] mux_rdata;
 
 {% for wire in reg_read_output %}
-   wire {{wire.name}} {{wire.dim}};
+   wire {{wire.dim}} {{wire.name}};
 {% endfor %}
 
 /*
  * Address Selects
  */
-   wire wr_strb = ~prev_write & {{ports['write_strobe']}};
+   wire wr_strb = ~prev_write & {{ports.write_strobe}};
 {% for data in write_address_selects %}
-{%   if data[2].dimension.is_parameter %}
-   wire {{data[0]}}[{{data[2].dimension.param_name()}}];
+{%   if data.register.dimension.is_parameter %}
+   wire {{data.name}}[{{data.register.dimension.param_name()}}];
 {%-   else %}
-   wire {{data[0]}};
+   wire {{data.name}};
 {%-   endif %}   
 {% endfor %}
 {% for data in read_address_selects %}
-   wire {{data[0]}};
+   wire {{data.name}};
 {% endfor %}
 
 {% for data in write_address_selects %}
-{%   if data[2].dimension.is_parameter %}
+{%   if data.register.dimension.is_parameter %}
    generate
-      for (i=0 ; i < {{data[2].dimension.param_name()}}; i++) begin : g_{{data[0]}}
-         assign {{data[0]}}[i] = wr_strb & ({{ports['addr']}} == ({{data[1]}} + i));
+      for (i=0 ; i < {{data.register.dimension.param_name()}}; i++) begin : g_{{data.name}}
+         assign {{data.name}}[i] = wr_strb & ({{ports.addr}} == ({{data.addr}} + i));
       end
    endgenerate
 {%   else %}
-   assign {{data[0]}} = wr_strb & ({{ports['addr']}} == {{data[1]}});
+   assign {{data.name}} = wr_strb & ({{ports.addr}} == {{data.addr}});
 {%   endif %}
 {% endfor %}
 {% for data in read_address_selects %}
-{%   if data[2].dimension.is_parameter %}
+{%   if data.register.dimension.is_parameter %}
    generate
-      for (i=0 ; i < {{data[2].dimension.param_name()}}; i++) begin : g_{{data[0]}}
-         assign {{data[0]}}[i] = (~prev_read & {{ports['read_strobe']}}) & ({{ports['addr']}} == ({{data[1]}} + i));
+      for (i=0 ; i < {{data.register.dimension.param_name()}}; i++) begin : g_{{data.name}}
+         assign {{data.name}}[i] = (~prev_read & {{ports.read_strobe}}) & ({{ports.addr}} == ({{data.addr}} + i));
       end
-      // 2
    endgenerate
 {%   else %}
-   assign {{data[0]}} = (~prev_read & {{ports['read_strobe']}}) & ({{ports['addr']}} == {{data[1]}});
+   assign {{data.name}} = (~prev_read & {{ports.read_strobe}}) & ({{ports.addr}} == {{data.addr}});
 {%   endif %}   
 {% endfor %}
 
@@ -112,7 +103,7 @@ module {{db.name}}
  * Output Assignments
  */
 {% for data in oneshot_assigns %}
-   assign {{data[0]}} = {{data[1]}};
+   assign {{data.name}} = {{data.value}};
 {% endfor %}
 {% for data in assign_list %}
 {%   if data.dimension == "" %}
@@ -125,7 +116,7 @@ module {{db.name}}
    endgenerate
 {%   endif %}
 {% endfor %}
-   assign {{ports['read_data']}} = mux_rdata;
+   assign {{ports.read_data}} = mux_rdata;
 
 {% for reg in db.get_all_registers() %}
 {%   for field in reg.get_bit_fields() %}
@@ -192,12 +183,12 @@ generate
        )
    {{reg_field_name(reg, field)}}_reg
      (
-      .CLK   ({{ports['clk']}}),
-      .RSTn  ({{ports['reset']}}),
+      .CLK   ({{ports.clk}}),
+      .RSTn  ({{ports.reset}}),
 {%       if ci.is_read_only == False %}
       .WE    (write_r{{"%02x" % baddr}}{{dimval}}),
-      .DI    ({{ports['write_data']}}{{wpos}}),
-      .BE    ({{ports['byte_strobe']}}[{{bytepos}}]),
+      .DI    ({{ports.write_data}}{{wpos}}),
+      .BE    ({{ports.byte_strobe}}[{{bytepos}}]),
 {%       endif %}
 {%       if ci.has_rd %}
       .RD    (read_r{{"%02x" % reg.address}}),
@@ -228,15 +219,15 @@ generate
  * Ensure that internal write is one clock wide
  *------------------------------------------------------------------------------
  */
-   {{always}} @(posedge {{ports['clk']}} or {{reset_edge}} {{ports['reset']}}) begin
-     if ({{reset_op}}{{ports['reset']}}) begin
+   {{lang.always}} @(posedge {{ports.clk}} or {{reset_edge}} {{ports.reset}}) begin
+     if ({{reset_op}}{{ports.reset}}) begin
         prev_write <= 1'b0;
         prev_read  <= 1'b0;
-        {{ports['ack']}} <= 1'b0;
+        {{ports.ack}} <= 1'b0;
      end else begin
-        prev_write <= {{ports['write_strobe']}};
-        prev_read  <= {{ports['read_strobe']}};
-        {{ports['ack']}} <= (~prev_write & {{ports['write_strobe']}}) | (~prev_read & {{ports['read_strobe']}});
+        prev_write <= {{ports.write_strobe}};
+        prev_read  <= {{ports.read_strobe}};
+        {{ports.ack}} <= (~prev_write & {{ports.write_strobe}}) | (~prev_read & {{ports.read_strobe}});
      end
    end
 
@@ -258,16 +249,16 @@ generate
 {% endfor %}
    {% set bit_width = db.ports.address_bus_width - low_bit %}
    
-   {{always}} @(posedge {{ports['clk']}} or {{reset_edge}} {{ports['reset']}}) begin
-      if ({{reset_op}}{{ports['reset']}}) begin
+   {{lang.always}} @(posedge {{ports.clk}} or {{reset_edge}} {{ports.reset}}) begin
+      if ({{reset_op}}{{ports.reset}}) begin
          mux_rdata <= '0;
       end else begin
-         if ({{ports['read_strobe']}}) begin
+         if ({{ports.read_strobe}}) begin
 {% for addr, val in word_fields|dictsort %}
 {%   if loop.first %}
-            unique if ({{ports['addr']}} == {{bit_width}}'h{{"%x"|format(rshift(addr, low_bit))}}) begin
+            unique if ({{ports.addr}} == {{bit_width}}'h{{"%x"|format(rshift(addr, low_bit))}}) begin
 {%-   else %}	   
-            end else if ({{ports['addr']}} == {{bit_width}}'h{{"%x"|format(rshift(addr, low_bit))}}) begin
+            end else if ({{ports.addr}} == {{bit_width}}'h{{"%x"|format(rshift(addr, low_bit))}}) begin
 {%-   endif %}	   
                mux_rdata <= r{{"%02x"|format(addr)}};
 {%- endfor %}
