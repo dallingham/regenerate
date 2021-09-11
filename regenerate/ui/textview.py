@@ -21,7 +21,7 @@
 Wrapper around GtkSourceView
 """
 
-from gi.repository import Pango, GtkSource
+from gi.repository import Pango, GtkSource, Gtk
 
 
 class RstEditor(GtkSource.View):
@@ -32,3 +32,4 @@ class RstEditor(GtkSource.View):
         manager = GtkSource.LanguageManager()
         self.get_buffer().set_language(manager.get_language("rst"))
         self.modify_font(Pango.FontDescription("monospace"))
+        self.set_wrap_mode(Gtk.WrapMode.WORD)

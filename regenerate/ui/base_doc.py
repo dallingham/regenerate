@@ -212,6 +212,7 @@ class BaseDoc:
         edit_window.add(text_editor)
 
         text_buffer = text_editor.get_buffer()
+        text_editor.set_wrap_mode(Gtk.WrapMode.WORD)
         text_buffer.set_text(data[0])
         handler = text_buffer.connect("changed", self._text_changed_callback)
         Spell(text_buffer)

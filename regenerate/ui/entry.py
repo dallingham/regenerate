@@ -188,6 +188,7 @@ class EntryValid(EntryText):
     ):
         super().__init__(widget, field_name, modified, placeholder)
         self.valid_data = valid_data
+
         self.widget.connect("insert-text", self.on_insert)
 
     def on_insert(
