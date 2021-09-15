@@ -25,7 +25,7 @@ from .writer_base import WriterBase, ExportInfo, ProjectType
 
 HEADER = ["`ifdef $M$_DEFS\n", "`else\n", "`define $M$_DEFS 1\n", "\n"]
 
-TRAILER = ["" "`endif" ""]
+TRAILER = ["", "`endif", ""]
 
 
 class VerilogDefines(WriterBase):
@@ -57,39 +57,25 @@ class VerilogDefines(WriterBase):
         """
         Writes the output file
         """
-        try:
-            self._ofile = filename.open("w")
-        except IOError as msg:
-            import gtk
 
-            errd = gtk.MessageDialog(type=gtk.MESSAGE_ERROR)
-            errd.set_markup("Could not create %s" % filename)
-            errd.format_secondary_text(str(msg))
-            errd.run()
-            return
-        except:
-            import gtk
-
-            errd = gtk.MessageDialog(type=gtk.MESSAGE_ERROR)
-            errd.set_markup("Could not create %s" % filename)
-            errd.run()
-            return
-
-        self._write_comment_header(
-            self._ofile, "site_verilog.inc", comment_char="//"
-        )
-
-        self.write_header(self._ofile, HEADER)
-
-        for reg_key in self._dbase.get_keys():
-            self.write_def(
-                self._dbase.get_register(reg_key), self._prefix, self._offset
+        with filename.open("w") as self._ofile:
+            self._write_comment_header(
+                self._ofile, "site_verilog.inc", comment_char="//"
             )
-        self._ofile.write("\n")
 
-        for line in TRAILER:
-            self._ofile.write("%s\n" % line.replace("$M$", self._module))
-        self._ofile.close()
+            self.write_header(self._ofile, HEADER)
+
+            for reg_key in self._dbase.get_keys():
+                self.write_def(
+                    self._dbase.get_register(reg_key),
+                    self._prefix,
+                    0,  # self._offset
+                )
+            self._ofile.write("\n")
+
+            for line in TRAILER:
+                self._ofile.write("%s\n" % line.replace("$M$", self._module))
+            self._ofile.close()
 
 
 EXPORTERS = [

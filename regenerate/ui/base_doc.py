@@ -24,9 +24,10 @@ import abc
 from typing import Optional, List, Tuple, Callable
 from gi.repository import Gtk, Gdk, GtkSource
 from regenerate.db import RegProject
-from regenerate.ui.spell import Spell
-from regenerate.ui.utils import clean_format_if_needed
-from regenerate.ui.preview_editor import PreviewEditor
+from .spell import Spell
+from .utils import clean_format_if_needed
+from .preview_editor import PreviewEditor
+from .preview_display import PreviewDisplay
 from .textview import RstEditor
 
 
@@ -38,7 +39,7 @@ class DeleteVerify(Gtk.MessageDialog):
     DISCARD = -1
     CANCEL = -2
 
-    def __init__(self, parent=None):
+    def __init__(self, name: str, parent=None):
 
         super().__init__(
             parent,
@@ -47,7 +48,7 @@ class DeleteVerify(Gtk.MessageDialog):
         )
 
         self.set_markup(
-            f'<span weight="bold" size="larger">Delete Page</span>'
+            f'<span weight="bold" size="larger">Delete "{name}"</span>'
         )
         self.format_secondary_markup(
             f"Do you wish to permanently delete this page?"
@@ -102,9 +103,9 @@ class BaseDoc:
         notebook: Gtk.Notebook,
         modified: Callable,
         add_btn: Gtk.Button,
-        del_btn: Gtk.Button,
         undo_btn: Optional[Gtk.Button] = None,
         redo_btn: Optional[Gtk.Button] = None,
+        preview_btn: Optional[Gtk.Button] = None,
     ):
         self.notebook = notebook
         self.project: Optional[RegProject] = None
@@ -112,17 +113,21 @@ class BaseDoc:
         self.add_id = add_btn.connect(
             "clicked", self._add_notebook_page_callback
         )
-        self.del_id = del_btn.connect(
-            "clicked", self._delete_notebook_page_callback
-        )
         if undo_btn:
             self.undo_id = undo_btn.connect("clicked", self._undo)
         if redo_btn:
             self.redo_id = redo_btn.connect("clicked", self._redo)
+        if preview_btn:
+            self.prev_id = preview_btn.connect("clicked", self._preview)
+
         self.remove_pages()
         self.page_map: List[PageInfo] = []
         self.callback = modified
         self.links = {}
+
+    def _preview(self, obj: Gtk.Button) -> None:
+        info = self.page_map[self.notebook.get_current_page()]
+        PreviewDisplay(info.textbuf)
 
     def _undo(self, _obj: Gtk.Button) -> None:
         info = self.page_map[self.notebook.get_current_page()]
@@ -141,6 +146,12 @@ class BaseDoc:
         for _ in range(0, page_count):
             self.notebook.remove_page(0)
         self.page_map = []
+        button = Gtk.Button.new_from_icon_name(
+            "window-close", Gtk.IconSize.MENU
+        )
+        button.show_all()
+
+    #        self.notebook.append_page(Gtk.Label("New Page"), button)
 
     def _add_notebook_page_callback(self, _obj: Gtk.Button) -> None:
         "GTK callback to adds page to the notebook"
@@ -177,12 +188,52 @@ class BaseDoc:
             self.callback()
         dialog.destroy()
 
-    def _delete_notebook_page_callback(self, _obj: Gtk.Button) -> None:
-        "GTK callback to deletes a page from the notebook"
+    def add_page(self, name: str, data: Tuple[str, List[str]]) -> None:
+        """
+        Adds a page and creates a restructuredText editor associated with their
+        page name.
+        """
 
-        page = self.notebook.get_current_page()
+        edit_window = Gtk.ScrolledWindow()
+        text_editor = self._create_text_editor()
+        edit_window.add(text_editor)
 
-        dialog = DeleteVerify()
+        text_buffer = text_editor.get_buffer()
+        text_editor.set_wrap_mode(Gtk.WrapMode.WORD)
+        text_buffer.set_text(data[0])
+        handler = text_buffer.connect("changed", self._text_changed_callback)
+        Spell(text_buffer)
+
+        preview_window = Gtk.ScrolledWindow()
+        self.preview = PreviewEditor(text_buffer, preview_window, False)
+        edit_window.show_all()
+
+        hbox = Gtk.HBox()
+        label = Gtk.Label(name)
+        button = Gtk.Button.new_from_icon_name(
+            "window-close", Gtk.IconSize.MENU
+        )
+        button.set_relief(Gtk.ReliefStyle.NONE)
+
+        button_align = Gtk.Alignment(xscale=0, xalign=1)
+        button_align.add(button)
+
+        hbox.pack_start(label, True, True, 6)
+        hbox.pack_start(button_align, False, False, 0)
+        hbox.show_all()
+
+        self.notebook.append_page(edit_window, hbox)
+        page_info = PageInfo(handler, text_buffer, name, data[1])
+        self.page_map.append(page_info)
+        button.connect("clicked", self.delete_page, page_info)
+
+    def delete_page(self, _button: Gtk.Button, info: PageInfo):
+        page = 0
+        for i in range(0, self.notebook.get_n_pages()):
+            if self.page_map[i] == info:
+                page = i
+
+        dialog = DeleteVerify(info.name)
         status = dialog.run_dialog()
         if status == DeleteVerify.CANCEL:
             return
@@ -195,35 +246,6 @@ class BaseDoc:
         del self.page_map[self.notebook.get_n_pages()]
         self.remove_page_from_doc(info.name)
         self.callback()
-
-    def add_page(self, name: str, data: Tuple[str, List[str]]) -> None:
-        """
-        Adds a page and creates a restructuredText editor associated with their
-        page name.
-        """
-
-        paned = Gtk.VPaned()
-        paned.set_position(300)
-
-        edit_window = Gtk.ScrolledWindow()
-        paned.add1(edit_window)
-
-        text_editor = self._create_text_editor()
-        edit_window.add(text_editor)
-
-        text_buffer = text_editor.get_buffer()
-        text_editor.set_wrap_mode(Gtk.WrapMode.WORD)
-        text_buffer.set_text(data[0])
-        handler = text_buffer.connect("changed", self._text_changed_callback)
-        Spell(text_buffer)
-
-        preview_window = Gtk.ScrolledWindow()
-        paned.add2(preview_window)
-        self.preview = PreviewEditor(text_buffer, preview_window, False)
-        paned.show_all()
-
-        self.notebook.append_page(paned, Gtk.Label(name))
-        self.page_map.append(PageInfo(handler, text_buffer, name, data[1]))
 
     def _create_text_editor(self) -> RstEditor:
         "Create the text editor and configure it"

@@ -33,7 +33,6 @@ class Xdc(ProjectWriter):
 
     def __init__(self, project):
         super().__init__(project)
-        self._offset = 0
         self.dblist = [dbase[1] for dbase in project.regsets.items()]
         self._ofile = None
 
@@ -92,7 +91,7 @@ class Xdc(ProjectWriter):
             "#----------------------------------------------------------\n"
         )
         of.write("#\n")
-        of.write("# Xilinx XDC Constraints generated %s\n" % tstr)
+        of.write(f"# Xilinx XDC Constraints generated {tstr}\n")
         of.write("#\n")
         of.write(
             "#----------------------------------------------------------\n\n"
@@ -109,16 +108,15 @@ class Xdc(ProjectWriter):
             self.write_header(of)
             for blk_inst in self._project.block_insts:
                 block = self._project.blocks[blk_inst.blkid]
-                
+
                 of.write("#\n# %s group\n#\n\n" % blk_inst.name)
 
                 for regset_inst in block.regset_insts:
                     dbase = block.regsets[regset_inst.regset_id]
-                    
+
                     ports = self.get_static_ports(dbase)
                     of.write(
-                        "# %s - %s\n\n"
-                        % (dbase.name, dbase.descriptive_title)
+                        "# %s - %s\n\n" % (dbase.name, dbase.descriptive_title)
                     )
                     for (addr, field) in ports:
                         if field.is_constant():
@@ -132,9 +130,13 @@ class Xdc(ProjectWriter):
                                         ".", "/"
                                     ).replace("]/", "].")
                                 if regset_inst.hdl != "":
-                                    hdl = hdl + "%s/" % regset_inst.hdl.replace(
-                                        ".", "/"
-                                    ).replace("]/", "].")
+                                    hdl = (
+                                        hdl
+                                        + "%s/"
+                                        % regset_inst.hdl.replace(
+                                            ".", "/"
+                                        ).replace("]/", "].")
+                                    )
                                     hdl = hdl % i
                                 of.write(
                                     "set_multicycle_path 4 -setup -from [get_pins %sr%02x_%s*/DO_reg[*]/C]\n"

@@ -35,7 +35,6 @@ class AsmEqu(WriterBase):
 
     def __init__(self, dbase: Union[None, RegisterDb]) -> None:
         super().__init__(dbase)
-        self._offset = 0
         self._ofile: Optional[TextIO] = None
 
     def write_def(self, reg: Register, prefix: str, offset: int) -> None:
@@ -66,7 +65,7 @@ class AsmEqu(WriterBase):
                 self.write_def(
                     self._dbase.get_register(reg_key),
                     self._prefix,
-                    self._offset,
+                    0,
                 )
             self._ofile.write("\n")
 

@@ -37,15 +37,15 @@ class PreviewEditor:
 
     def __init__(self, text_buffer, webkit_container, use_reg=True):
 
-        self.__webkit = HtmlDisplay()
+        #        self.__webkit = HtmlDisplay()
         self.__container = webkit_container
         child = self.__container.get_child()
         if child:
             self.__container.remove(child)
-        self.__container.add(self.__webkit)
-        self.__container.hide()
+        #        self.__container.add(self.__webkit)
+        #        self.__container.hide()
         self.__text_buffer = text_buffer
-        self.__text_buffer.connect("changed", self._changed)
+        #        self.__text_buffer.connect("changed", self._changed)
         self.__update = False
         self.__adjust = self.__container.get_vadjustment()
         self.__use_reg = use_reg
@@ -57,6 +57,7 @@ class PreviewEditor:
         Extracts text from the buffer, converts it to HTML, and loads it
         into the webkit display
         """
+        return
         text = self.__text_buffer.get_text(
             self.__text_buffer.get_start_iter(),
             self.__text_buffer.get_end_iter(),
@@ -82,6 +83,7 @@ class PreviewEditor:
         """
         Enables updating and display of the webkit display
         """
+        return
         self.__update_text()
         self.__container.show()
         self.__webkit.show()
@@ -91,6 +93,7 @@ class PreviewEditor:
         """
         Disables updating and display of the webkit display
         """
+        return
         self.__update = False
         self.__webkit.hide()
         self.__container.hide()
@@ -99,6 +102,7 @@ class PreviewEditor:
         """
         Text buffer callback tying the buffer to the display
         """
+        return
         if self.__update:
             pos = self.__adjust.get_value()
             self.__update_text()

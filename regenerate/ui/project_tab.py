@@ -70,9 +70,9 @@ class ProjectTabs:
             builder.get_object("prj_doc_notebook"),
             self.after_modified,
             builder.get_object("add_top_doc"),
-            builder.get_object("del_top_doc"),
             builder.get_object("top_undo"),
             builder.get_object("top_redo"),
+            builder.get_object("top_preview_button"),
         )
 
         self.dbase: Optional[RegisterDb] = None
@@ -101,12 +101,17 @@ class ProjectDoc(BaseDoc):
         notebook: Gtk.Notebook,
         modified,
         add_btn: Gtk.Button,
-        del_btn: Gtk.Button,
         undo_btn: Gtk.Button,
         redo_btn: Gtk.Button,
+        preview_btn: Gtk.Button,
     ):
         super().__init__(
-            notebook, modified, add_btn, del_btn, undo_btn, redo_btn
+            notebook,
+            modified,
+            add_btn,
+            undo_btn,
+            redo_btn,
+            preview_btn,
         )
         self.changing = False
 

@@ -31,7 +31,6 @@ from io import StringIO
 from ..settings.paths import ODTFILE, USERODTFILE
 
 from .writer_base import WriterBase, ExportInfo, ProjectType
-from ..db import BitField
 from ..db.enums import ResetType
 
 TYPE_MAP = ["R", "R/W", "W1C", "W1S", "WO"]
@@ -205,7 +204,7 @@ class OdtDoc(WriterBase):
         """
         self.write_paragraph(HEADING2, reg.name, 2)
 
-        caddr = reg.address + self._offset
+        caddr = reg.address + 0  # self._offset
         self.write_paragraph(REGADDR, "<b>Address</b>:\t0x%08x" % caddr)
         self.write_paragraph(REGNAME, "<b>Mnemonic:</b>\t%s" % reg.token)
         descr = reg.description
@@ -426,11 +425,10 @@ def rst_val(val):
     """
     if val > 0xFFFF:
         return "%08x" % val
-    else:
-        return "%x" % val
+    return "%x" % val
 
 
-class StylesXmlParser(object):
+class StylesXmlParser:
     """
     Checks the styles listed in the input string (from a ODT styles.xml file),
     reporting paragraph formats (defined by format_list) that have not been

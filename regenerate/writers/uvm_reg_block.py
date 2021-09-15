@@ -33,7 +33,6 @@ from regenerate.db import (
     RegisterInst,
     ParameterResolver,
     BitField,
-    AddressMap,
     Register,
     BlockInst,
     AddressMap,
@@ -145,12 +144,18 @@ class UVMRegBlockRegisters(ProjectWriter):
             for regset_inst in self._project.blocks[
                 blk_inst.blkid
             ].regset_insts:
-                db = self._project.regsets[regset_inst.regset_id]
+                regset = self._project.regsets[regset_inst.regset_id]
 
-                tag = (db.uuid, regset_inst.uuid, blk_inst.uuid)
+                tag = (regset.uuid, regset_inst.uuid, blk_inst.uuid)
                 if tag not in used:
                     data_set.append(
-                        (db, regset_inst, blk_inst, group_maps[blk_inst], tag)
+                        (
+                            regset,
+                            regset_inst,
+                            blk_inst,
+                            group_maps[blk_inst],
+                            tag,
+                        )
                     )
                     used.add(tag)
 
@@ -160,8 +165,8 @@ class UVMRegBlockRegisters(ProjectWriter):
 
         grp_set = set()
         for blk in self._project.blocks.values():
-            for db in blk.regset_insts:
-                grp_set.add(db)
+            for regset in blk.regset_insts:
+                grp_set.add(regset)
         return grp_set
 
 

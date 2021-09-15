@@ -28,10 +28,8 @@ to maintain.
 """
 
 from collections import namedtuple
+
 from .writer_base import WriterBase, ProjectType
-from regenerate.db import LOGGER
-import platform
-import sys
 
 ExportInfo = namedtuple(
     "ExportInfo", ["obj_class", "type", "description", "extension", "id"]
@@ -81,7 +79,6 @@ MODULES = [
 # from .asm_equ import AsmEqu
 # from .odt_doc import OdtDoc
 # from .rst_doc import RstDoc
-from .uvm_reg_block import UVMRegBlockRegisters
 
 for module in MODULES:
     for mpath in IMPORT_PATHS:

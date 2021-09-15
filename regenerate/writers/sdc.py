@@ -86,7 +86,7 @@ def build_format(top_hdl, top_count, lower_hdl, lower_count):
         lower_hdl = lower_hdl.replace(".", "/")
         lower_hdl = lower_hdl % {"d": lower_count}
         return f"{top_hdl}/{lower_hdl}"
-    elif lower_hdl:
+    if lower_hdl:
         lower_hdl = lower_hdl.replace("%0d", "%(d)d")
         lower_hdl = lower_hdl.replace(".", "/") % {"d": lower_count}
         return lower_hdl

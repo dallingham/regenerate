@@ -31,7 +31,6 @@ class Spyglass(ProjectWriter):
 
     def __init__(self, project):
         super().__init__(project)
-        self._offset = 0
         self.dblist = [dbase[1] for dbase in project.regsets.items()]
         self._ofile = None
 
