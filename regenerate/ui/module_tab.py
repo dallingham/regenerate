@@ -27,8 +27,6 @@ from gi.repository import Gdk, Gtk, GtkSource
 
 from regenerate.db import RegisterDb, RegProject
 
-from .utils import clean_format_if_needed
-from .preview_editor import PreviewEditor
 from .entry import (
     EntryWidth,
     EntryBool,
@@ -36,71 +34,110 @@ from .entry import (
     EntryWord,
     EntryInt,
 )
-from .textview import RstEditor
-from .spell import Spell
+from .base_doc import BaseDoc
 
 
-class ModuleDoc:
-    """
-    Handles the Register description. Sets the font to a monospace font,
-    sets up the changed handler, sets up the spell checker, and makes
-    the link to the preview editor.
-
-    Requires a callback functions from the main window to mark the
-    the system as modified.
-    """
+class ModuleDoc(BaseDoc):
+    "Documentation editor for the Block documentation"
 
     def __init__(
         self,
-        text_view: Gtk.ScrolledWindow,
-        web_view: Gtk.ScrolledWindow,
-        db_name: str,
+        notebook: Gtk.Notebook,
         modified: Callable,
-        use_reg: bool = True,
     ):
-
-        editor = RstEditor()
-        editor.show()
-        text_view.add(editor)
-        Spell(editor)
-
-        self.buf = editor.get_buffer()
-        self.buf.connect("changed", self.on_changed)
-        editor.connect("key-press-event", self.on_key_press_event)
-
-        self.preview = PreviewEditor(self.buf, web_view, use_reg)
-        self.db_name = db_name
+        super().__init__(
+            notebook,
+            modified,
+        )
         self.dbase: Optional[RegisterDb] = None
-        self.callback = modified
+        self.changing = False
 
-    def change_db(
-        self, dbase: RegisterDb, project: Optional[RegProject] = None
-    ):
-        """Change the database so the preview window can resolve references"""
-
+    def change_db(self, dbase: RegisterDb, _project: Optional[RegProject]):
         self.dbase = dbase
-        if self.dbase:
-            self.buf.set_text(getattr(self.dbase, self.db_name))
-        self.preview.set_project(project)
 
-    def on_changed(self, _obj: GtkSource.Buffer):
-        """A change to the text occurred"""
+        self.changing = True
+        self.remove_pages()
+        if dbase:
+            for page in dbase.doc_pages.get_page_names():
+                text = dbase.doc_pages.get_page(page)
+                if text is not None:
+                    self.add_page(page, text)
+        self.changing = False
 
-        if self.dbase:
-            new_text = self.buf.get_text(
-                self.buf.get_start_iter(), self.buf.get_end_iter(), False
-            )
-            setattr(self.dbase, self.db_name, new_text)
-            self.callback()
+    def remove_page_from_doc(self, title: str):
+        if self.dbase is not None:
+            self.dbase.doc_pages.remove_page(title)
 
-    def on_key_press_event(self, obj: RstEditor, event: Gdk.EventKey):
-        """Look for the F12 key"""
+    def update_page_from_doc(self, title: str, text: str, tags: List[str]):
+        if not self.changing and self.dbase is not None:
+            self.dbase.doc_pages.update_page(title, text, tags)
 
-        if event.keyval == Gdk.KEY_F12:
-            if clean_format_if_needed(obj):
-                self.callback()
-            return True
-        return False
+
+# class ModuleDoc:
+#     """
+#     Handles the Register description. Sets the font to a monospace font,
+#     sets up the changed handler, sets up the spell checker, and makes
+#     the link to the preview editor.
+
+#     Requires a callback functions from the main window to mark the
+#     the system as modified.
+#     """
+
+#     def __init__(
+#         self,
+#         text_view: Gtk.ScrolledWindow,
+#         db_name: str,
+#         modified: Callable,
+#         use_reg: bool = True,
+#     ):
+
+#         editor = RstEditor()
+#         editor.show()
+#         text_view.add(editor)
+#         text_view.show()
+#         print(text_view)
+#         Spell(editor)
+
+#         self.buf = editor.get_buffer()
+#         self.buf.connect("changed", self.on_changed)
+#         editor.connect("key-press-event", self.on_key_press_event)
+
+#         self.preview = PreviewEditor(self.buf, text_view, use_reg)
+#         self.db_name = db_name
+#         self.dbase: Optional[RegisterDb] = None
+#         self.callback = modified
+
+#     def change_db(
+#         self, dbase: RegisterDb, project: Optional[RegProject] = None
+#     ):
+#         """Change the database so the preview window can resolve references"""
+
+#         print(">>>", self.dbase, self.db_name)
+#         self.dbase = dbase
+#         if self.dbase:
+#             print("<<<", self.buf)
+#             print(getattr(self.dbase, self.db_name))
+#             self.buf.set_text(getattr(self.dbase, self.db_name))
+#         self.preview.set_project(project)
+
+#     def on_changed(self, _obj: GtkSource.Buffer):
+#         """A change to the text occurred"""
+
+#         if self.dbase:
+#             new_text = self.buf.get_text(
+#                 self.buf.get_start_iter(), self.buf.get_end_iter(), False
+#             )
+#             setattr(self.dbase, self.db_name, new_text)
+#             self.callback()
+
+#     def on_key_press_event(self, obj: RstEditor, event: Gdk.EventKey):
+#         """Look for the F12 key"""
+
+#         if event.keyval == Gdk.KEY_F12:
+#             if clean_format_if_needed(obj):
+#                 self.callback()
+#             return True
+#         return False
 
 
 class ModuleTabs:
@@ -229,9 +266,7 @@ class ModuleTabs:
                 self.top_object_list.append(obj)
 
         self.preview = ModuleDoc(
-            find_obj("scroll_text"),
-            find_obj("scroll_webkit"),
-            "overview_text",
+            find_obj("regset_doc_notebook"),
             self.after_modified,
         )
 

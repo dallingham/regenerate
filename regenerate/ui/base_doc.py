@@ -76,12 +76,14 @@ class PageInfo:
     def __init__(
         self,
         handler: int,
+        button: Gtk.Button,
         textbuf: GtkSource.Buffer,
         name: str,
         tags: List[str],
     ):
         self.tags = tags
         self.handler = handler
+        self.button = button
         self.textbuf = textbuf
         self.name = name
 
@@ -102,56 +104,51 @@ class BaseDoc:
         self,
         notebook: Gtk.Notebook,
         modified: Callable,
-        add_btn: Gtk.Button,
-        undo_btn: Optional[Gtk.Button] = None,
-        redo_btn: Optional[Gtk.Button] = None,
-        preview_btn: Optional[Gtk.Button] = None,
     ):
         self.notebook = notebook
         self.project: Optional[RegProject] = None
         self.preview: Optional[PreviewEditor] = None
-        self.add_id = add_btn.connect(
-            "clicked", self._add_notebook_page_callback
-        )
-        if undo_btn:
-            self.undo_id = undo_btn.connect("clicked", self._undo)
-        if redo_btn:
-            self.redo_id = redo_btn.connect("clicked", self._redo)
-        if preview_btn:
-            self.prev_id = preview_btn.connect("clicked", self._preview)
 
-        self.remove_pages()
+        add = Gtk.Button.new_from_icon_name("add", Gtk.IconSize.MENU)
+        add.set_relief(Gtk.ReliefStyle.NONE)
+        add.set_tooltip_text("Add a new page")
+        add.show()
+
+        preview = Gtk.Button.new_from_icon_name(
+            "x-office-document", Gtk.IconSize.MENU
+        )
+        preview.set_relief(Gtk.ReliefStyle.NONE)
+        preview.set_tooltip_text("Open preview window")
+        preview.show()
+
+        hbox = Gtk.HBox()
+        hbox.pack_start(add, True, True, 0)
+        hbox.pack_start(preview, True, True, 0)
+        hbox.show()
+        self.notebook.set_action_widget(hbox, Gtk.PackType.END)
+
+        preview.connect("clicked", self._preview)
+        add.connect("clicked", self._add_notebook_page_callback)
+
         self.page_map: List[PageInfo] = []
+        self.remove_pages()
         self.callback = modified
         self.links = {}
+        self.notebook.connect("switch-page", self.switch_page)
 
     def _preview(self, obj: Gtk.Button) -> None:
         info = self.page_map[self.notebook.get_current_page()]
         PreviewDisplay(info.textbuf)
 
-    def _undo(self, _obj: Gtk.Button) -> None:
-        info = self.page_map[self.notebook.get_current_page()]
-        if info.textbuf.can_undo():
-            info.textbuf.undo()
-
-    def _redo(self, _obj: Gtk.Button) -> None:
-        info = self.page_map[self.notebook.get_current_page()]
-        if info.textbuf.can_redo():
-            info.textbuf.redo()
-
     def remove_pages(self) -> None:
         "Removes all pages from the notebook"
 
         page_count = self.notebook.get_n_pages()
-        for _ in range(0, page_count):
-            self.notebook.remove_page(0)
-        self.page_map = []
-        button = Gtk.Button.new_from_icon_name(
-            "window-close", Gtk.IconSize.MENU
-        )
-        button.show_all()
-
-    #        self.notebook.append_page(Gtk.Label("New Page"), button)
+        if page_count:
+            for _ in range(0, page_count):
+                self.notebook.remove_page(0)
+        if self.page_map:
+            self.page_map = []
 
     def _add_notebook_page_callback(self, _obj: Gtk.Button) -> None:
         "GTK callback to adds page to the notebook"
@@ -210,22 +207,36 @@ class BaseDoc:
 
         hbox = Gtk.HBox()
         label = Gtk.Label(name)
+        label.set_padding(3, 3)
+        label.show()
+
         button = Gtk.Button.new_from_icon_name(
             "window-close", Gtk.IconSize.MENU
         )
         button.set_relief(Gtk.ReliefStyle.NONE)
+        button.hide()
 
         button_align = Gtk.Alignment(xscale=0, xalign=1)
         button_align.add(button)
+        button_align.show()
 
         hbox.pack_start(label, True, True, 6)
         hbox.pack_start(button_align, False, False, 0)
-        hbox.show_all()
+        hbox.show()
 
-        self.notebook.append_page(edit_window, hbox)
-        page_info = PageInfo(handler, text_buffer, name, data[1])
+        page_info = PageInfo(handler, button, text_buffer, name, data[1])
         self.page_map.append(page_info)
+        self.notebook.append_page(edit_window, hbox)
         button.connect("clicked", self.delete_page, page_info)
+
+    def switch_page(self, notebook, _obj, page):
+        current = notebook.get_current_page()
+        try:
+            old_info = self.page_map[current]
+            old_info.button.hide()
+        except IndexError:
+            pass
+        self.page_map[page].button.show()
 
     def delete_page(self, _button: Gtk.Button, info: PageInfo):
         page = 0

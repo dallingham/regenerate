@@ -83,10 +83,6 @@ class BlockTab:
         self.preview = BlockDoc(
             self.block_docs,
             self.after_modified,
-            find_obj("add_block_doc"),
-            find_obj("block_undo"),
-            find_obj("block_redo"),
-            find_obj("block_preview_button"),
         )
 
         self.overrides_list = BlockOverridesList(
@@ -645,18 +641,10 @@ class BlockDoc(BaseDoc):
         self,
         notebook: Gtk.Notebook,
         modified: Callable,
-        add_btn: Gtk.Button,
-        undo_btn: Gtk.Button,
-        redo_btn: Gtk.Button,
-        preview_btn: Gtk.Button,
     ):
         super().__init__(
             notebook,
             modified,
-            add_btn,
-            undo_btn,
-            redo_btn,
-            preview_btn,
         )
         self.block: Optional[Block] = None
         self.changing = False

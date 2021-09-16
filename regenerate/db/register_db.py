@@ -36,6 +36,7 @@ from .logger import LOGGER
 from .param_container import ParameterContainer
 from .name_base import NameBase
 from .utils import save_json
+from .doc_pages import DocPages
 
 
 class RegisterDb(NameBase):
@@ -58,10 +59,12 @@ class RegisterDb(NameBase):
         self.owner = ""
         self.organization = ""
         self.use_interface = False
-        self.overview_text = ""
+        #        self.overview_text = ""
         self.coverage = True
         self._filename = None
         self.modified = False
+        self.doc_pages = DocPages()
+        self.doc_pages.update_page("Overview", "", ["Confidential"])
 
         if filename is not None:
             self.read_db(filename)
@@ -168,6 +171,14 @@ class RegisterDb(NameBase):
         save_json(self.json(), self.filename)
 
     @property
+    def overview_text(self) -> str:
+        pnames = self.doc_pages.get_page_names()
+        if pnames:
+            return self.doc_pages.get_page(pnames[0])[0]
+        else:
+            return ""
+
+    @property
     def descriptive_title(self) -> str:
         """
         Gets _title, which is accessed via the descriptive_title property
@@ -225,7 +236,7 @@ class RegisterDb(NameBase):
             "coverage": self.coverage,
             "internal_only": self.internal_only,
             "organization": self.organization,
-            "overview_text": self.overview_text,
+            "doc_pages": self.doc_pages.json(),
             "owner": self.owner,
             "use_interface": self.use_interface,
             "register_inst": [reg for index, reg in self._registers.items()],
@@ -258,7 +269,15 @@ class RegisterDb(NameBase):
         self.coverage = data["coverage"]
         self.internal_only = data["internal_only"]
         self.organization = data["organization"]
-        self.overview_text = data["overview_text"]
+
+        self.doc_pages = DocPages()
+        if "overview_text" in data:
+            self.doc_pages.update_page(
+                "Overview", data["overview_text"], ["Confidential"]
+            )
+        else:
+            self.doc_pages.json_decode(data["doc_pages"])
+
         self.owner = data["owner"]
         self.use_interface = data["use_interface"]
         self.modified = False

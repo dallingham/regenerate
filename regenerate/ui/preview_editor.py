@@ -37,15 +37,11 @@ class PreviewEditor:
 
     def __init__(self, text_buffer, webkit_container, use_reg=True):
 
-        #        self.__webkit = HtmlDisplay()
         self.__container = webkit_container
         child = self.__container.get_child()
         if child:
             self.__container.remove(child)
-        #        self.__container.add(self.__webkit)
-        #        self.__container.hide()
         self.__text_buffer = text_buffer
-        #        self.__text_buffer.connect("changed", self._changed)
         self.__update = False
         self.__adjust = self.__container.get_vadjustment()
         self.__use_reg = use_reg
