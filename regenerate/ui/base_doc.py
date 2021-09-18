@@ -78,6 +78,7 @@ class PageInfo:
         handler: int,
         button: Gtk.Button,
         textbuf: GtkSource.Buffer,
+        tagbox: Gtk.HBox,
         name: str,
         tags: List[str],
     ):
@@ -85,6 +86,7 @@ class PageInfo:
         self.handler = handler
         self.button = button
         self.textbuf = textbuf
+        self.tagbox = tagbox
         self.name = name
 
 
@@ -106,6 +108,7 @@ class BaseDoc:
         modified: Callable,
     ):
         self.notebook = notebook
+
         self.project: Optional[RegProject] = None
         self.preview: Optional[PreviewEditor] = None
 
@@ -121,14 +124,23 @@ class BaseDoc:
         preview.set_tooltip_text("Open preview window")
         preview.show()
 
+        add_tag = Gtk.Button.new_from_icon_name(
+            "gtk-properties", Gtk.IconSize.MENU
+        )
+        add_tag.set_relief(Gtk.ReliefStyle.NONE)
+        add_tag.set_tooltip_text("Add a tag to the page")
+        add_tag.show()
+
         hbox = Gtk.HBox()
         hbox.pack_start(add, True, True, 0)
+        hbox.pack_start(add_tag, True, True, 0)
         hbox.pack_start(preview, True, True, 0)
         hbox.show()
         self.notebook.set_action_widget(hbox, Gtk.PackType.END)
 
         preview.connect("clicked", self._preview)
         add.connect("clicked", self._add_notebook_page_callback)
+        add_tag.connect("clicked", self._add_tag)
 
         self.page_map: List[PageInfo] = []
         self.remove_pages()
@@ -149,6 +161,47 @@ class BaseDoc:
                 self.notebook.remove_page(0)
         if self.page_map:
             self.page_map = []
+
+    def _add_tag(self, _button: Gtk.Button) -> None:
+        "GTK callback to adds tag to the page"
+
+        dialog = Gtk.Dialog(
+            "Add a Tag",
+            None,
+            Gtk.DialogFlags.MODAL,
+            (
+                Gtk.STOCK_CANCEL,
+                Gtk.ResponseType.REJECT,
+                Gtk.STOCK_OK,
+                Gtk.ResponseType.ACCEPT,
+            ),
+        )
+        dialog.set_default_response(Gtk.ResponseType.ACCEPT)
+        dialog.set_resizable(False)
+        dialog.set_border_width(8)
+
+        label = Gtk.Label("Enter the tag name")
+        name = Gtk.Entry()
+        name.set_activates_default(True)
+
+        vbox = dialog.vbox
+        vbox.pack_start(label, False, False, 6)
+        vbox.pack_start(name, False, False, 6)
+
+        dialog.show_all()
+        res = dialog.run()
+        if res == Gtk.ResponseType.ACCEPT:
+            tag_name = name.get_text()
+
+            info = self.page_map[self.notebook.get_current_page()]
+            print(tag_name, info.tags, tag_name in info.tags)
+            if tag_name not in info.tags:
+                info.tags.append(tag_name)
+                label_tag = self.make_tag(tag_name, info)
+                info.tagbox.pack_start(label_tag, False, False, 3)
+
+            self.callback()
+        dialog.destroy()
 
     def _add_notebook_page_callback(self, _obj: Gtk.Button) -> None:
         "GTK callback to adds page to the notebook"
@@ -224,10 +277,49 @@ class BaseDoc:
         hbox.pack_start(button_align, False, False, 0)
         hbox.show()
 
-        page_info = PageInfo(handler, button, text_buffer, name, data[1])
+        self.flow = Gtk.HBox()
+        for tag in data[1]:
+            frame = self.make_tag(tag, data[1])
+            self.flow.pack_start(frame, False, False, 3)
+        self.flow.show()
+
+        top_box = Gtk.VBox()
+        top_box.pack_start(edit_window, True, True, 0)
+        top_box.pack_start(self.flow, False, False, 3)
+        top_box.show()
+
+        page_info = PageInfo(
+            handler, button, text_buffer, self.flow, name, data[1]
+        )
         self.page_map.append(page_info)
-        self.notebook.append_page(edit_window, hbox)
+        self.notebook.append_page(top_box, hbox)
         button.connect("clicked", self.delete_page, page_info)
+
+    def delete_tag(self, _button: Gtk.Button, extra):
+        data, tag, frame = extra
+        data[1].remove(tag)
+        frame.hide()
+        self.callback()
+
+    def make_tag(self, name: str, data) -> Gtk.Frame:
+
+        label = Gtk.Label()
+        label.set_markup(f"<b>{name}</b>")
+        close = Gtk.Button.new_from_icon_name(
+            "window-close", Gtk.IconSize.MENU
+        )
+        close.set_relief(Gtk.ReliefStyle.NONE)
+
+        box = Gtk.HBox()
+        box.pack_start(label, True, True, 3)
+        box.pack_start(close, False, False, 0)
+
+        frame = Gtk.Frame()
+        frame.set_shadow_type(Gtk.ShadowType.OUT)
+        frame.add(box)
+        frame.show_all()
+        close.connect("clicked", self.delete_tag, (data, name, frame))
+        return frame
 
     def switch_page(self, notebook, _obj, page):
         current = notebook.get_current_page()
