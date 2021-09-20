@@ -457,7 +457,7 @@ class RegParser:
         Called when the overview tag is terminated. The text value is assigned
         to the database's overview_text
         """
-        self.__db.overview_text = text
+        self.__db.doc_pages.update_page("Overview", text, ["Confidential"])
 
     def end_owner(self, text: str) -> None:
         """

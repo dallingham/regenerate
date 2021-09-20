@@ -112,22 +112,18 @@ class BaseDoc:
         self.project: Optional[RegProject] = None
         self.preview: Optional[PreviewEditor] = None
 
-        add = Gtk.Button.new_from_icon_name("add", Gtk.IconSize.MENU)
-        add.set_relief(Gtk.ReliefStyle.NONE)
+        add = Gtk.ToolButton()
+        add.set_stock_id(Gtk.STOCK_ADD)
         add.set_tooltip_text("Add a new page")
         add.show()
 
-        preview = Gtk.Button.new_from_icon_name(
-            "x-office-document", Gtk.IconSize.MENU
-        )
-        preview.set_relief(Gtk.ReliefStyle.NONE)
+        preview = Gtk.ToolButton()
+        preview.set_stock_id(Gtk.STOCK_FILE)
         preview.set_tooltip_text("Open preview window")
         preview.show()
 
-        add_tag = Gtk.Button.new_from_icon_name(
-            "gtk-properties", Gtk.IconSize.MENU
-        )
-        add_tag.set_relief(Gtk.ReliefStyle.NONE)
+        add_tag = Gtk.ToolButton()
+        add_tag.set_stock_id(Gtk.STOCK_PROPERTIES)
         add_tag.set_tooltip_text("Add a tag to the page")
         add_tag.show()
 
@@ -297,7 +293,9 @@ class BaseDoc:
 
     def delete_tag(self, _button: Gtk.Button, extra):
         data, tag, frame = extra
-        data[1].remove(tag)
+        print(data, tag)
+        if tag in data:
+            data.remove(tag)
         frame.hide()
         self.callback()
 
