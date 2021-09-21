@@ -38,7 +38,7 @@ module {{db.name}}
     {{lang.output_logic}} {{signal.vector}} {{signal.name}},
 {% endfor %}
 {% if db.use_interface %}
-    mgmt_interface.target MGMT
+    {{ports.interface_name}}.{{ports.modport_name}} MGMT
 {% else %}
     {{lang.output_logic}} {{"[%d:0]" % (db.ports.data_bus_width-1,)}} {{ports.read_data}},
     {{lang.output_logic}} {{ports.ack}}

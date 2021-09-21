@@ -32,6 +32,8 @@ DEF_RD_NAME = "RD"
 DEF_ADDR_NAME = "ADDR"
 DEF_BE_NAME = "BE"
 DEF_ACK_NAME = "ACK"
+DEF_INTERFACE = "mgmt_interface"
+DEF_MODPORT = "target"
 
 
 class Signals:
@@ -52,6 +54,10 @@ class Signals:
     def __init__(self):
         self._clock = rules.get("rules", "clock_default", DEF_CLK_NAME)
         self._reset = rules.get("rules", "reset_default", DEF_RST_NAME)
+        self._interface = rules.get(
+            "rules", "interface_default", DEF_INTERFACE
+        )
+        self._modport = rules.get("rules", "modport_default", DEF_MODPORT)
         self._write_data = rules.get(
             "rules", "write_data_default", DEF_WDATA_NAME
         )
@@ -76,6 +82,34 @@ class Signals:
     def address_size_in_bytes(self) -> int:
         """Returns the address size in bytes"""
         return 1 << self.address_bus_width
+
+    @property
+    def interface_name(self) -> str:
+        """
+        Gets _interface, which is accessed via the interface_name property
+        """
+        return self._interface
+
+    @interface_name.setter
+    def interface_name(self, name: str) -> None:
+        """
+        Sets _interface, which is accessed via the interface_name property
+        """
+        self._interface = name.strip()
+
+    @property
+    def modport_name(self) -> str:
+        """
+        Gets _modport, which is accessed via the modport_name property
+        """
+        return self._modport
+
+    @modport_name.setter
+    def modport_name(self, name: str) -> None:
+        """
+        Sets _modport, which is accessed via the modport_name property
+        """
+        self._modport = name.strip()
 
     @property
     def write_data_name(self) -> str:
@@ -213,6 +247,8 @@ class Signals:
         return {
             "clock": self._clock,
             "reset": self._reset,
+            "interface": self._interface,
+            "modport": self._modport,
             "write_data": self._write_data,
             "read_data": self._read_data,
             "write_strobe": self._write_strobe,
@@ -231,6 +267,8 @@ class Signals:
 
         self._clock = data["clock"]
         self._reset = data["reset"]
+        self._interface = data.get("inteface", DEF_INTERFACE)
+        self._modport = data.get("modport", DEF_MODPORT)
         self._write_data = data["write_data"]
         self._read_data = data["read_data"]
         self._write_strobe = data["write_strobe"]

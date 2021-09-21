@@ -73,79 +73,19 @@ class ModuleDoc(BaseDoc):
             self.dbase.doc_pages.update_page(title, text, tags)
 
 
-# class ModuleDoc:
-#     """
-#     Handles the Register description. Sets the font to a monospace font,
-#     sets up the changed handler, sets up the spell checker, and makes
-#     the link to the preview editor.
-
-#     Requires a callback functions from the main window to mark the
-#     the system as modified.
-#     """
-
-#     def __init__(
-#         self,
-#         text_view: Gtk.ScrolledWindow,
-#         db_name: str,
-#         modified: Callable,
-#         use_reg: bool = True,
-#     ):
-
-#         editor = RstEditor()
-#         editor.show()
-#         text_view.add(editor)
-#         text_view.show()
-#         print(text_view)
-#         Spell(editor)
-
-#         self.buf = editor.get_buffer()
-#         self.buf.connect("changed", self.on_changed)
-#         editor.connect("key-press-event", self.on_key_press_event)
-
-#         self.preview = PreviewEditor(self.buf, text_view, use_reg)
-#         self.db_name = db_name
-#         self.dbase: Optional[RegisterDb] = None
-#         self.callback = modified
-
-#     def change_db(
-#         self, dbase: RegisterDb, project: Optional[RegProject] = None
-#     ):
-#         """Change the database so the preview window can resolve references"""
-
-#         print(">>>", self.dbase, self.db_name)
-#         self.dbase = dbase
-#         if self.dbase:
-#             print("<<<", self.buf)
-#             print(getattr(self.dbase, self.db_name))
-#             self.buf.set_text(getattr(self.dbase, self.db_name))
-#         self.preview.set_project(project)
-
-#     def on_changed(self, _obj: GtkSource.Buffer):
-#         """A change to the text occurred"""
-
-#         if self.dbase:
-#             new_text = self.buf.get_text(
-#                 self.buf.get_start_iter(), self.buf.get_end_iter(), False
-#             )
-#             setattr(self.dbase, self.db_name, new_text)
-#             self.callback()
-
-#     def on_key_press_event(self, obj: RstEditor, event: Gdk.EventKey):
-#         """Look for the F12 key"""
-
-#         if event.keyval == Gdk.KEY_F12:
-#             if clean_format_if_needed(obj):
-#                 self.callback()
-#             return True
-#         return False
-
-
 class ModuleTabs:
     "Manages the data on the Module/Regset tabs"
 
     def __init__(self, find_obj: Callable, modified: Callable):
 
         port_list = [
+            (
+                "interface_name",
+                "interface_name",
+                EntryWord,
+                "Missing interface name",
+            ),
+            ("modport", "modport_name", EntryWord, "Missing modport name"),
             ("clock_signal", "clock_name", EntryWord, "Missing clock name"),
             ("reset_signal", "reset_name", EntryWord, "Missing reset name"),
             ("reset_level", "reset_active_level", EntryBool, None),

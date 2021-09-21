@@ -1925,13 +1925,10 @@
                                 <property name="margin_right">6</property>
                                 <property name="label" translatable="yes">Address width:</property>
                                 <property name="xalign">0</property>
-                                <attributes>
-                                  <attribute name="weight" value="bold"/>
-                                </attributes>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
-                                <property name="top_attach">12</property>
+                                <property name="top_attach">14</property>
                               </packing>
                             </child>
                             <child>
@@ -1944,7 +1941,7 @@
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
-                                <property name="top_attach">12</property>
+                                <property name="top_attach">14</property>
                               </packing>
                             </child>
                             <child>
@@ -1955,13 +1952,10 @@
                                 <property name="margin_right">6</property>
                                 <property name="label" translatable="yes">Address bus:</property>
                                 <property name="xalign">0</property>
-                                <attributes>
-                                  <attribute name="weight" value="bold"/>
-                                </attributes>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
-                                <property name="top_attach">10</property>
+                                <property name="top_attach">12</property>
                               </packing>
                             </child>
                             <child>
@@ -1976,7 +1970,7 @@
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
-                                <property name="top_attach">10</property>
+                                <property name="top_attach">12</property>
                               </packing>
                             </child>
                             <child>
@@ -1987,13 +1981,10 @@
                                 <property name="margin_right">6</property>
                                 <property name="label" translatable="yes">Acknowledge:	</property>
                                 <property name="xalign">0</property>
-                                <attributes>
-                                  <attribute name="weight" value="bold"/>
-                                </attributes>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
-                                <property name="top_attach">9</property>
+                                <property name="top_attach">11</property>
                               </packing>
                             </child>
                             <child>
@@ -2008,7 +1999,7 @@
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
-                                <property name="top_attach">9</property>
+                                <property name="top_attach">11</property>
                               </packing>
                             </child>
                             <child>
@@ -2019,13 +2010,10 @@
                                 <property name="margin_right">6</property>
                                 <property name="label" translatable="yes">Read strobe:</property>
                                 <property name="xalign">0</property>
-                                <attributes>
-                                  <attribute name="weight" value="bold"/>
-                                </attributes>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
-                                <property name="top_attach">8</property>
+                                <property name="top_attach">10</property>
                               </packing>
                             </child>
                             <child>
@@ -2040,7 +2028,7 @@
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
-                                <property name="top_attach">8</property>
+                                <property name="top_attach">10</property>
                               </packing>
                             </child>
                             <child>
@@ -2051,13 +2039,10 @@
                                 <property name="margin_right">6</property>
                                 <property name="label" translatable="yes">Write strobe:</property>
                                 <property name="xalign">0</property>
-                                <attributes>
-                                  <attribute name="weight" value="bold"/>
-                                </attributes>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
-                                <property name="top_attach">7</property>
+                                <property name="top_attach">9</property>
                               </packing>
                             </child>
                             <child>
@@ -2072,7 +2057,7 @@
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
-                                <property name="top_attach">7</property>
+                                <property name="top_attach">9</property>
                               </packing>
                             </child>
                             <child>
@@ -2083,13 +2068,10 @@
                                 <property name="margin_right">6</property>
                                 <property name="label" translatable="yes">Byte enables:</property>
                                 <property name="xalign">0</property>
-                                <attributes>
-                                  <attribute name="weight" value="bold"/>
-                                </attributes>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
-                                <property name="top_attach">6</property>
+                                <property name="top_attach">8</property>
                               </packing>
                             </child>
                             <child>
@@ -2104,7 +2086,7 @@
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
-                                <property name="top_attach">6</property>
+                                <property name="top_attach">8</property>
                               </packing>
                             </child>
                             <child>
@@ -2118,7 +2100,7 @@
                               </object>
                               <packing>
                                 <property name="left_attach">2</property>
-                                <property name="top_attach">6</property>
+                                <property name="top_attach">8</property>
                               </packing>
                             </child>
                             <child>
@@ -2129,13 +2111,10 @@
                                 <property name="margin_right">6</property>
                                 <property name="label" translatable="yes">Read data:</property>
                                 <property name="xalign">0</property>
-                                <attributes>
-                                  <attribute name="weight" value="bold"/>
-                                </attributes>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
-                                <property name="top_attach">5</property>
+                                <property name="top_attach">7</property>
                               </packing>
                             </child>
                             <child>
@@ -2150,7 +2129,7 @@
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
-                                <property name="top_attach">5</property>
+                                <property name="top_attach">7</property>
                               </packing>
                             </child>
                             <child>
@@ -2161,13 +2140,10 @@
                                 <property name="margin_right">6</property>
                                 <property name="label" translatable="yes">Write data:</property>
                                 <property name="xalign">0</property>
-                                <attributes>
-                                  <attribute name="weight" value="bold"/>
-                                </attributes>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
-                                <property name="top_attach">4</property>
+                                <property name="top_attach">6</property>
                               </packing>
                             </child>
                             <child>
@@ -2182,7 +2158,7 @@
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
-                                <property name="top_attach">4</property>
+                                <property name="top_attach">6</property>
                               </packing>
                             </child>
                             <child>
@@ -2193,13 +2169,10 @@
                                 <property name="margin_right">6</property>
                                 <property name="label" translatable="yes">Reset:</property>
                                 <property name="xalign">0</property>
-                                <attributes>
-                                  <attribute name="weight" value="bold"/>
-                                </attributes>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
-                                <property name="top_attach">3</property>
+                                <property name="top_attach">5</property>
                               </packing>
                             </child>
                             <child>
@@ -2214,7 +2187,7 @@
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
-                                <property name="top_attach">3</property>
+                                <property name="top_attach">5</property>
                               </packing>
                             </child>
                             <child>
@@ -2228,7 +2201,7 @@
                               </object>
                               <packing>
                                 <property name="left_attach">2</property>
-                                <property name="top_attach">3</property>
+                                <property name="top_attach">5</property>
                               </packing>
                             </child>
                             <child>
@@ -2239,13 +2212,10 @@
                                 <property name="margin_right">6</property>
                                 <property name="label" translatable="yes">Clock:</property>
                                 <property name="xalign">0</property>
-                                <attributes>
-                                  <attribute name="weight" value="bold"/>
-                                </attributes>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
-                                <property name="top_attach">2</property>
+                                <property name="top_attach">4</property>
                               </packing>
                             </child>
                             <child>
@@ -2255,12 +2225,13 @@
                                 <property name="margin_top">3</property>
                                 <property name="margin_bottom">3</property>
                                 <property name="invisible_char">●</property>
+                                <property name="caps_lock_warning">False</property>
                                 <property name="primary_icon_activatable">False</property>
                                 <property name="secondary_icon_activatable">False</property>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
-                                <property name="top_attach">2</property>
+                                <property name="top_attach">4</property>
                               </packing>
                             </child>
                             <child>
@@ -2270,13 +2241,10 @@
                                 <property name="margin_left">18</property>
                                 <property name="label" translatable="yes">Data bus width:</property>
                                 <property name="xalign">0</property>
-                                <attributes>
-                                  <attribute name="weight" value="bold"/>
-                                </attributes>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
-                                <property name="top_attach">13</property>
+                                <property name="top_attach">15</property>
                               </packing>
                             </child>
                             <child>
@@ -2288,7 +2256,7 @@
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
-                                <property name="top_attach">13</property>
+                                <property name="top_attach">15</property>
                               </packing>
                             </child>
                             <child>
@@ -2304,9 +2272,71 @@
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
-                                <property name="top_attach">11</property>
+                                <property name="top_attach">13</property>
                                 <property name="width">3</property>
                               </packing>
+                            </child>
+                            <child>
+                              <object class="GtkLabel">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="margin_left">18</property>
+                                <property name="margin_right">6</property>
+                                <property name="label" translatable="yes">Interface Name:</property>
+                                <property name="xalign">0</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">2</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkLabel">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="margin_left">18</property>
+                                <property name="margin_right">6</property>
+                                <property name="label" translatable="yes">Target Modport:</property>
+                                <property name="xalign">0</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">3</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkEntry" id="modport">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="margin_top">3</property>
+                                <property name="margin_bottom">3</property>
+                                <property name="text" translatable="yes">target</property>
+                                <property name="caps_lock_warning">False</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="top_attach">3</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkEntry" id="interface_name">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="margin_top">3</property>
+                                <property name="margin_bottom">3</property>
+                                <property name="text" translatable="yes">MGMT</property>
+                                <property name="caps_lock_warning">False</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="top_attach">2</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
                             </child>
                             <child>
                               <placeholder/>
