@@ -133,6 +133,34 @@ class EntryBool:
             self.modified()
 
 
+class EntrySwitch:
+    """Connects a database value (boolean) to a checkbox."""
+
+    def __init__(
+        self, widget: Gtk.Switch, field_name: str, modified: Callable
+    ):
+        self.widget = widget
+        self.field_name = field_name
+        self.data_obj = None
+        self.modified = modified
+        self.widget.connect("notify::active", self.on_change)
+
+    def change_db(self, data_obj):
+        """Change the database"""
+
+        self.data_obj = data_obj
+        if data_obj:
+            self.widget.set_state(getattr(data_obj, self.field_name))
+        else:
+            self.widget.set_state(0)
+
+    def on_change(self, obj, active):
+        """Called on the change event"""
+
+        setattr(self.data_obj, self.field_name, obj.get_active())
+        self.modified()
+
+
 class EntryText:
     """Connects a database text value to an entry box."""
 

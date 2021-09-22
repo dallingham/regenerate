@@ -30,6 +30,7 @@ from regenerate.db import RegisterDb, RegProject
 from .entry import (
     EntryWidth,
     EntryBool,
+    EntrySwitch,
     EntryText,
     EntryWord,
     EntryInt,
@@ -161,13 +162,15 @@ class ModuleTabs:
                 EntryText,
                 "Missing description of the module",
             ),
-            ("internal_only", "internal_only", EntryBool, None),
-            ("coverage", "coverage", EntryBool, None),
+            ("internal_only", "internal_only", EntrySwitch, None),
+            ("coverage", "coverage", EntrySwitch, None),
             ("interface", "use_interface", EntryBool, None),
         ]
 
         self.port_object_list = []
         self.top_object_list = []
+
+        find_obj("interface").connect("toggled", self.on_sysv_intf_toggled)
 
         for (widget_name, db_name, class_type, placeholder) in port_list:
             if placeholder is not None:
@@ -213,6 +216,17 @@ class ModuleTabs:
         self.dbase = None
         self.set_modified = modified
         self.icon = find_obj("mod_def_warn")
+        self.modport_field = find_obj("modport")
+        self.interface_field = find_obj("interface_name")
+        self.modport_label_field = find_obj("modport_label")
+        self.interface_label_field = find_obj("interface_label")
+
+    def on_sysv_intf_toggled(self, button):
+        enable = button.get_active()
+        self.modport_field.set_sensitive(enable)
+        self.interface_field.set_sensitive(enable)
+        self.modport_label_field.set_sensitive(enable)
+        self.interface_label_field.set_sensitive(enable)
 
     def change_db(self, dbase, project) -> None:
         "Changes the register set to a new register set"
