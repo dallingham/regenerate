@@ -190,7 +190,6 @@ class BaseDoc:
             tag_name = name.get_text()
 
             info = self.page_map[self.notebook.get_current_page()]
-            print(tag_name, info.tags, tag_name in info.tags)
             if tag_name not in info.tags:
                 info.tags.append(tag_name)
                 label_tag = self.make_tag(tag_name, info)
@@ -293,7 +292,6 @@ class BaseDoc:
 
     def delete_tag(self, _button: Gtk.Button, extra):
         data, tag, frame = extra
-        print(data, tag)
         if tag in data:
             data.remove(tag)
         frame.hide()

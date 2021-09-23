@@ -179,7 +179,6 @@ class OverridesList:
 
     def menu_selected(self, _obj, data):
         _, info = data
-        print(data)
         override = Overrides()
         override.path = info[0].uuid
         override.parameter = info[1].uuid

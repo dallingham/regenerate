@@ -39,6 +39,7 @@ from .param_container import ParameterContainer
 from .param_resolver import ParameterResolver
 from .regset_finder import RegsetFinder
 from .utils import save_json
+from .export import ExportData
 
 
 class Block(NameBase):
@@ -50,7 +51,7 @@ class Block(NameBase):
         address_size=0x10000,
         description="",
     ) -> None:
-        """Initialize the group data item."""
+        """Initialize the block item."""
 
         super().__init__(name)
         self.finder = RegsetFinder()
@@ -66,6 +67,7 @@ class Block(NameBase):
         self._filename = Path("")
         self.parameters = ParameterContainer()
         self.overrides: List[Overrides] = []
+        self.exports: List[ExportData] = []
 
     def get_regset_insts(self) -> List[RegisterInst]:
         "Returns a list of register instances"
@@ -167,6 +169,18 @@ class Block(NameBase):
         self.parameters = ParameterContainer()
         self.parameters.json_decode(data["parameters"])
 
+        self.exports = []
+        if "exports" in data:
+            for exp_json in data["exports"]:
+                exp = ExportData()
+                exp.target = str(
+                    Path(self.filename.parent / exp_json["target"]).resolve()
+                )
+                exp.options = exp_json["options"]
+                exp.exporter = exp_json["exporter"]
+                
+                self.exports.append(exp)
+
         self.overrides = []
         resolver = ParameterResolver()
         try:
@@ -201,6 +215,16 @@ class Block(NameBase):
             "regset_insts": self.regset_insts,
         }
 
+        data["exports"] = []
+
+        for exp in self.exports:
+            info = {
+                "exporter": exp.exporter,
+                "target": os.path.relpath(exp.target, self.filename.parent),
+                "options": exp.options,
+            }
+            data["exports"].append(info)
+            
         data["regsets"] = {}
         for name in self.regsets:
             new_path = os.path.relpath(

@@ -40,14 +40,14 @@ EXPORTERS = []
 GRP_EXPORTERS = []
 PRJ_EXPORTERS = []
 
-IMPORT_PATHS = ("regenerate.site_local", "regenerate.writers")
+IMPORT_PATHS = ["regenerate.writers"]
 
 MODULES = [
     ("verilog", ["Verilog", "Verilog2001", "SystemVerilog"]),
     ("verilog_defs", ["VerilogDefines"]),
     ("verilog_param", ["VerilogParameters"]),
     ("reg_pkg", ["VerilogConstRegPackage"]),
-    ("decoder", ["AddressDecode"]),
+    ("reg_decode", ["RegDecode"]),
     ("ipxact", ["IpXactWriter"]),
     ("c_test", ["CTest"]),
     ("c_struct", ["CStruct"]),
@@ -82,9 +82,11 @@ MODULES = [
 
 for module in MODULES:
     for mpath in IMPORT_PATHS:
-        try:
+#        try:
             fullpath = mpath + "." + module[0]
+            print("Trying", fullpath)
             a = __import__(fullpath, globals(), locals(), module[1])
+            print(a)
             for t, info in a.EXPORTERS:
                 if t == ProjectType.REGSET:
                     EXPORTERS.append(info)
@@ -93,12 +95,14 @@ for module in MODULES:
                 else:
                     PRJ_EXPORTERS.append(info)
             break
-        except ImportError:
-            continue
-        except AttributeError:
-            continue
-        except SyntaxError as msg:
-            print(f"Could not import {fullpath} ({str(msg)})")
-            continue
-    else:
-        print(f'Could not import the "{module[0]}" module')
+#        except ModuleNotFoundError:
+#            continue
+#        except ImportError:
+#            continue
+#        except AttributeError:
+#            continue
+#        except SyntaxError as msg:
+#            print(f"Could not import {fullpath} ({str(msg)})")
+#            continue
+#    else:
+#        print(f'Could not import the "{module[0]}" module')

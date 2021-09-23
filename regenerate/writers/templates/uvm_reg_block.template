@@ -581,7 +581,6 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
       {% endfor %}
         end
     {% else %}
-    //DNA {{regset_inst.name}} {{regset_inst.hdl}}
         {{regset_inst.name}} = new("{{regset_inst.name}}");
         {{regset_inst.name}}.configure(this, "{{regset_inst.hdl}}");
 	

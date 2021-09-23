@@ -103,7 +103,7 @@ class Build(BaseWindow):
                 self.__mapopt[value] = ExportInfo(
                     item.id, item.obj_class, level
                 )
-
+            
     def __build_interface(self, parent: Gtk.Window) -> None:
         """
         Builds the interface from the glade description, connects the signals,
@@ -128,7 +128,6 @@ class Build(BaseWindow):
         """
         Adds the item to the list view.
         """
-
         if self.__optmap[exporter].level == Level.BLOCK:
             self.__add_dbase_item_to_list(full_path, exporter, dest)
         elif self.__optmap[exporter].level == Level.GROUP:
@@ -188,7 +187,7 @@ class Build(BaseWindow):
         )
 
     def __add_group_item_to_list(
-        self, group_name: str, exporter: str, dest: str
+        self, blkid: str, exporter: str, dest: str
     ) -> None:
         """
         Adds the specific item to the build list. We have to check to see
@@ -199,14 +198,15 @@ class Build(BaseWindow):
         mod = True
         self.__modlist.append(mod)
         info = self.__optmap[exporter]
+        block = self.__prj.blocks[blkid]
         self.__model.append(
             row=(
                 mod,
-                group_name,
+                f"{block.name} (block)",
                 info.name,
                 dest,
                 info.cls,
-                None,
+                block,
                 ProjectType.BLOCK,
             )
         )
@@ -354,8 +354,7 @@ class Build(BaseWindow):
                     gen = writer_class(self.__prj, dbase)
                 elif rtype == ProjectType.BLOCK:
                     db_list = self.__prj.regsets.values()
-                    grp = item[BuildCol.BASE].split()[0]
-                    gen = writer_class(self.__prj, grp, db_list)
+                    gen = writer_class(self.__prj, dbase)
                 else:
                     db_list = self.__prj.regsets.values()
                     gen = writer_class(self.__prj)
@@ -386,7 +385,7 @@ class Build(BaseWindow):
 
         reglist = [(i.name, i.uuid) for i in self.__prj.regsets.values()]
 
-        groups = [group.name for group in self.__prj.block_insts]
+        groups = [(group.name, group.uuid) for group in self.__prj.blocks.values()]
 
         ExportAssistant(
             self.__prj.short_name,
@@ -398,7 +397,7 @@ class Build(BaseWindow):
         )
 
     def add_callback(
-        self, filename: str, export_format: str, regset_id: str, _group: str
+        self, filename: str, export_format: str, regset_id: str, blk_id: str
     ) -> None:
         """
         Called when a item has been added to the builder, and is used
@@ -412,10 +411,12 @@ class Build(BaseWindow):
             )
             self.__prj.regsets[regset_id].modified = True
             self.__add_item_to_list(regset_id, exporter, filename)
-        # elif self.__mapopt[export_format][MapOpt.REGISTER_SET] == Level.GROUP:
-        #     self.__prj.add_to_group_export_list(group, exporter, filename)
-        #     register_path = f"{group} (group)"
-        #     self.__add_item_to_list(register_path, exporter, filename)
+        elif self.__mapopt[export_format].level == Level.GROUP:
+            block = self.__prj.blocks[blk_id]
+            self.__add_item_to_list(blk_id, exporter, filename)
+            block.exports.append(
+                ExportData(exporter, filename)
+            )
         else:
             self.__prj.add_to_project_export_list(exporter, filename)
             self.__add_item_to_list(regset_id, exporter, filename)

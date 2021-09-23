@@ -29,7 +29,7 @@ from enum import IntEnum
 from typing import Optional
 from collections import namedtuple
 
-from regenerate.db import RegisterDb, RegProject
+from regenerate.db import RegisterDb, RegProject, Block
 from ..settings.paths import INSTALL_PATH
 
 
@@ -162,3 +162,26 @@ class ProjectWriter:
         The child class must override this to provide an implementation.
         """
         raise NotImplementedError
+
+    
+class BlockWriter:
+    """
+    Writes the register information to the output file determined
+    by the derived class.
+    """
+
+    def __init__(self, project: RegProject, block: Block) -> None:
+        self._project = project
+        self._block = block
+        self._project_name = project.short_name
+
+    def set_project(self, project: RegProject) -> None:
+        self._project = project
+        self._project_name = project.short_name
+
+    def write(self, filename: Path):
+        """
+        The child class must override this to provide an implementation.
+        """
+        raise NotImplementedError
+    

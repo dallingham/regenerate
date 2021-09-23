@@ -144,7 +144,7 @@ class ExportAssistant(Gtk.Assistant):
         sel_fmt = model.get_value(self.export_combo.get_active_iter(), 0)
 
         sel_set = self.register_combo.get_active_value()
-        sel_grp = self.group_combo.get_active_text()
+        sel_grp = self.group_combo.get_active_value()
 
         if filename:
             self.save_callback(filename, sel_fmt, sel_set, sel_grp)
@@ -241,7 +241,7 @@ class ExportAssistant(Gtk.Assistant):
 
         label = Gtk.Label(
             "The selected export file is requires that "
-            "you select a group as the source of "
+            "you select a block as the source of "
             "your data.\n\n"
         )
         label.set_line_wrap(True)
@@ -251,11 +251,11 @@ class ExportAssistant(Gtk.Assistant):
         self.group_combo = TextCombo()
         self.group_combo.show()
         for item in groups:
-            self.group_combo.append_text(item)
+            self.group_combo.append_text(item[0], item[1])
         table.attach(self.group_combo, 1, 2, 1, 2, 0, Gtk.AttachOptions.EXPAND)
 
         self.append_page(table)
-        self.set_page_title(table, "Choose the group")
+        self.set_page_title(table, "Choose the block")
         self.set_page_type(table, Gtk.AssistantPageType.CONTENT)
         return table
 

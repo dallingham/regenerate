@@ -269,7 +269,7 @@ class RegProject:
         self._modified = True
         dest = os.path.relpath(dest, self.path.parent)
         self.exports.append(ExportData(exporter, dest))
-
+        
     def remove_from_project_export_list(
         self, exporter: str, dest: str
     ) -> None:

@@ -155,6 +155,8 @@ class PortInfo(NamedTuple):
 
     clk: str
     reset: str
+    interface: str
+    modport: str
     write_strobe: str
     read_strobe: str
     byte_strobe: str
@@ -872,6 +874,8 @@ def build_standard_ports(dbase: RegisterDb) -> PortInfo:
         return PortInfo(
             "MGMT.CLK",
             "MGMT.RSTn",
+            ports.interface_name,
+            ports.modport_name,
             "MGMT.WR",
             "MGMT.RD",
             "MGMT.BE",
@@ -883,6 +887,8 @@ def build_standard_ports(dbase: RegisterDb) -> PortInfo:
     return PortInfo(
         ports.clock_name,
         ports.reset_name,
+        ports.interface_name,
+        ports.modport_name,
         ports.write_strobe_name,
         ports.read_strobe_name,
         ports.byte_strobe_name,
