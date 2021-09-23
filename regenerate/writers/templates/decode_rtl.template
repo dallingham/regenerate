@@ -1,0 +1,247 @@
+//-----------------------------------------------------------------------------
+//
+// File       : {{GROUP}}_decode.sv
+//
+// Date       : 2020-05-07
+//
+//-----------------------------------------------------------------------------
+
+// spyglass disable_block W240
+
+module {{GROUP}}_decode
+  (
+{% for inst in ext_insts %}
+  {% if inst.repeat > 1 and not inst.single_decode %}
+    {% if flatten %}
+      {% for i in range(inst.repeat) %}
+   mgmt_interface.initiator  MGMT_{{inst.inst|upper}}_{{i}},
+      {% endfor %}
+    {% else %}
+   mgmt_interface.initiator  MGMT_{{inst.inst|upper}}[{{inst.repeat}}],
+    {% endif %}
+  {% else %}
+   mgmt_interface.initiator  MGMT_{{inst.inst|upper}},
+  {% endif %}
+{% endfor %}
+   mgmt_interface.target     MGMT_MAIN
+   );
+
+   genvar                   i;
+   logic                    rw_delay;
+
+   /*--------------------------------------------------------------------
+    *
+    * Register block decoding
+    *
+    *--------------------------------------------------------------------
+    */
+{% for inst in ext_insts %}
+   {% if inst.upper > inst.offset %}
+     {% set limit = inst.offset %}
+   {% else %}
+     {% set limit = inst.upper %}
+   {% endif %}
+   {% if inst.repeat > 1 %}
+     {% if inst.single_decode %}
+   // Range {{ "%x"|format(inst.lower * 8) }} : {{ "%x"|format((inst.lower + (inst.repeat * inst.offset) * 8) - 1) }} | {{inst.repeat}} {{inst.offset}}
+   wire sel_{{inst.inst|lower}} = MGMT_MAIN.ADDR[{{REG_ADDR_WIDTH-1}}:3] >= 'h{{"%x"|format(inst.lower)}} && MGMT_MAIN.ADDR[{{REG_ADDR_WIDTH-1}}:3] < 'h{{"%x"|format((inst.lower + (inst.repeat * inst.offset)))}};
+     {% else %}
+       {% for i in range(inst.repeat) %}
+         {% set bar = inst.lower + (i * inst.offset) %}
+   // Range {{ "%x"|format(bar * 8) }} : {{ "%x"|format(((bar + limit) * 8) - 1) }}
+   wire sel_{{inst.inst|lower}}{{i}} = MGMT_MAIN.ADDR[{{REG_ADDR_WIDTH-1}}:3] >= 'h{{"%x"|format(bar)}} && MGMT_MAIN.ADDR[{{REG_ADDR_WIDTH-1}}:3] < 'h{{"%x"|format((bar + limit))}};
+       {% endfor %}
+     {% endif %}
+   {% else %}
+   // Range {{ "%x"|format(inst.lower * 8) }} : {{ "%x"|format(((inst.lower + limit) * 8) - 1) }}
+   wire sel_{{inst.inst|lower}} = MGMT_MAIN.ADDR[{{REG_ADDR_WIDTH-1}}:3] >= 'h{{"%x"|format(inst.lower)}} && MGMT_MAIN.ADDR[{{REG_ADDR_WIDTH-1}}:3] < 'h{{"%x"|format((inst.lower + limit))}};
+   {% endif %}
+{% endfor %}
+
+   // Block selects for internal register blocks
+
+
+{% for inst in int_insts %}
+   {% if inst.upper > inst.offset %}
+     {% set limit = inst.offset %}
+   {% else %}
+     {% set limit = inst.upper %}
+   {% endif %}
+   {% if inst.repeat > 1 %}
+     {% for i in range(inst.repeat) %}
+       {% set bar = inst.lower + (i * inst.offset) %}
+   wire sel_{{inst.inst|lower}}{{i}} = MGMT_MAIN.ADDR[{{REG_ADDR_WIDTH-1}}:3] >= 'h{{"%x"|format(bar)}} && MGMT_MAIN.ADDR[{{REG_ADDR_WIDTH-1}}:3] < 'h{{"%x"|format((bar + limit))}};
+     {% endfor %}
+   {% else %}
+   wire sel_{{inst.inst|lower}} = MGMT_MAIN.ADDR[{{REG_ADDR_WIDTH-1}}:3] >= 'h{{"%x"|format(inst.lower)}} && MGMT_MAIN.ADDR[{{REG_ADDR_WIDTH-1}}:3] < 'h{{"%x"|format((inst.lower + limit))}};
+   {% endif %}
+{% endfor %}
+
+   // Output port assignments
+
+{% for inst in ext_insts %}
+  {% if inst.repeat > 1 and not inst.single_decode %}
+    {% for i in range(inst.repeat) %}
+      {% if flatten %}
+   assign MGMT_{{inst.inst|upper}}_{{i}}.ADDR = MGMT_MAIN.ADDR;
+   assign MGMT_{{inst.inst|upper}}_{{i}}.WDATA = MGMT_MAIN.WDATA;
+   assign MGMT_{{inst.inst|upper}}_{{i}}.BE = MGMT_MAIN.BE;
+   assign MGMT_{{inst.inst|upper}}_{{i}}.RD = MGMT_MAIN.RD & sel_{{inst.inst|lower}}{{i}};
+   assign MGMT_{{inst.inst|upper}}_{{i}}.WR = MGMT_MAIN.WR & sel_{{inst.inst|lower}}{{i}};
+      {% else %}
+   assign MGMT_{{inst.inst|upper}}[{{i}}].ADDR = MGMT_MAIN.ADDR;
+   assign MGMT_{{inst.inst|upper}}[{{i}}].WDATA = MGMT_MAIN.WDATA;
+   assign MGMT_{{inst.inst|upper}}[{{i}}].BE = MGMT_MAIN.BE;
+   assign MGMT_{{inst.inst|upper}}[{{i}}].RD = MGMT_MAIN.RD & sel_{{inst.inst|lower}}{{i}};
+   assign MGMT_{{inst.inst|upper}}[{{i}}].WR = MGMT_MAIN.WR & sel_{{inst.inst|lower}}{{i}};
+      {% endif %}
+    {% endfor %}
+  {% else %}
+   assign MGMT_{{inst.inst|upper}}.ADDR = MGMT_MAIN.ADDR;
+   assign MGMT_{{inst.inst|upper}}.WDATA = MGMT_MAIN.WDATA;
+   assign MGMT_{{inst.inst|upper}}.BE = MGMT_MAIN.BE;
+   assign MGMT_{{inst.inst|upper}}.RD = MGMT_MAIN.RD & sel_{{inst.inst|lower}};
+   assign MGMT_{{inst.inst|upper}}.WR = MGMT_MAIN.WR & sel_{{inst.inst|lower}};
+  {% endif %}
+{% endfor %}
+
+  /*--------------------------------------------------------------------
+   *
+   * Read data selection
+   *
+   *--------------------------------------------------------------------
+   */
+   always_comb begin
+{% for inst in all_insts %}
+  {% set outer_loop = loop %}
+  {% if inst.repeat > 1 and not inst.single_decode %}
+    {% for i in range(inst.repeat) %}
+      {% if outer_loop.index0 == 0 and i == 0 %}
+      unique if (sel_{{inst.inst|lower}}{{i}}) begin
+      {% else %}
+      end else if (sel_{{inst.inst|lower}}{{i}}) begin
+      {% endif %}
+      {% if inst in int_insts %}
+         MGMT_MAIN.RDATA = mgmt_{{inst.inst|lower}}[{{i}}].RDATA;
+      {% else %}
+        {% if flatten %}
+         MGMT_MAIN.RDATA = MGMT_{{inst.inst|upper}}_{{i}}.RDATA;
+        {% else  %}
+         MGMT_MAIN.RDATA = MGMT_{{inst.inst|upper}}[{{i}}].RDATA;
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+  {% else %}
+    {% if loop.index0 == 0 %}
+      unique if (sel_{{inst.inst|lower}}) begin
+    {% else %}
+      end else if (sel_{{inst.inst|lower}}) begin
+    {% endif %}
+      {% if inst in int_insts %}
+         MGMT_MAIN.RDATA = mgmt_{{inst.inst|lower}}.RDATA;
+      {% else %}
+         MGMT_MAIN.RDATA = MGMT_{{inst.inst|upper}}.RDATA;
+      {% endif %}
+  {% endif %}
+{% endfor %}
+      end else begin
+         MGMT_MAIN.RDATA = 64'hdead_beef_dead_beef;
+      end
+   end
+
+  /*--------------------------------------------------------------------
+   *
+   * ACK selection
+   *
+   *--------------------------------------------------------------------
+   */
+   always_comb begin
+{% for inst in all_insts %}
+  {% set outer_loop = loop %}
+  {% if inst.repeat > 1 and not inst.single_decode %}
+    {% for i in range(inst.repeat) %}
+      {% if outer_loop.index0 == 0 and i == 0 %}
+      unique if (sel_{{inst.inst|lower}}{{i}}) begin
+      {% else %}
+      end else if (sel_{{inst.inst|lower}}{{i}}) begin
+      {% endif %}
+      {% if inst in int_insts %}
+         MGMT_MAIN.ACK = mgmt_{{inst.inst|lower}}[{{i}}].ACK;
+      {% else %}
+        {% if flatten %}
+         MGMT_MAIN.ACK = MGMT_{{inst.inst|upper}}_{{i}}.ACK;
+        {% else %}
+         MGMT_MAIN.ACK = MGMT_{{inst.inst|upper}}[{{i}}].ACK;
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+  {% else %}
+    {% if loop.index0 == 0 %}
+      unique if (sel_{{inst.inst|lower}}) begin
+    {% else %}
+      end else if (sel_{{inst.inst|lower}}) begin
+    {% endif %}
+      {% if inst in int_insts %}
+         MGMT_MAIN.ACK = mgmt_{{inst.inst|lower}}.ACK;
+      {% else %}
+         MGMT_MAIN.ACK = MGMT_{{inst.inst|upper}}.ACK;
+      {% endif %}
+  {% endif %}
+{% endfor %}
+      end else begin
+         MGMT_MAIN.ACK = rw_delay & (MGMT_MAIN.RD | MGMT_MAIN.WR);
+      end
+   end
+
+   always_ff @(posedge REG.ACLK or negedge REG.ARESETn) begin
+      if (~REG.ARESETn) begin
+         rw_delay <= 1'b0;
+      end else begin
+         rw_delay <= MGMT_MAIN.RD | MGMT_MAIN.WR;
+      end
+   end
+
+{% for inst in int_insts %}
+  {% if inst.repeat > 1 and not inst.single_decode %}
+   generate
+      for (i = 0; i < {{inst.repeat}}; i++) begin : g_{{inst.inst}}
+
+         {{inst.db.module_name}} u_{{inst.inst}}
+           (
+{%     for reg in inst.db.get_all_registers() %}
+{%       for f in reg.get_bit_fields() %}
+{%         if f.use_output_enable %}
+            .{{f.output_signal}} ({{inst.inst}}_{{f.output_signal|lower}}[i]),
+{%         endif %}
+{%         if f.input_signal != "" %}
+            .{{f.input_signal}} ({{inst.inst}}_{{f.input_signal|lower}}[i]),
+{%         endif %}
+{%       endfor %}
+{%     endfor %}
+            .MGMT (mgmt_{{inst.inst|lower}}[i])
+            );
+      end
+   endgenerate
+
+  {% else %}
+   {{inst.db.module_name}} u_{{inst.inst}}
+     (
+{%     for reg in inst.db.get_all_registers() %}
+{%       for f in reg.get_bit_fields() %}
+{%         if f.use_output_enable %}
+      .{{f.output_signal}} ({{inst.inst}}_{{f.output_signal|lower}}[0]),
+{%         endif %}
+{%         if f.input_signal != "" %}
+      .{{f.input_signal}} ({{inst.inst}}_{{f.input_signal|lower}}[0]),
+{%         endif %}
+{%       endfor %}
+{%     endfor %}
+      .MGMT (mgmt_{{inst.inst|lower}})
+      );
+  {% endif %}
+{% endfor %}
+
+
+endmodule : {{GROUP}}_decode
+
+// spyglass enable_block W240
