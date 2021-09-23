@@ -103,7 +103,7 @@ class Build(BaseWindow):
                 self.__mapopt[value] = ExportInfo(
                     item.id, item.obj_class, level
                 )
-            
+
     def __build_interface(self, parent: Gtk.Window) -> None:
         """
         Builds the interface from the glade description, connects the signals,
@@ -229,13 +229,15 @@ class Build(BaseWindow):
                 except KeyError:
                     pass
 
-        # for group_data in self.__prj.block_insts:
-        #     for export_data in self.__prj.get_group_exports(group_data.name):
-        #         self.__add_group_item_to_list(
-        #             "%s (group)" % group_data.name,
-        #             export_data.exporter,
-        #             export_data.target,
-        #         )
+        for block in self.__prj.blocks.values():
+            print("BLOCK", block, block.exports)
+            for i, export_data in enumerate(block.exports):
+                print("EXPORT", export_data, i)
+                self.__add_group_item_to_list(
+                    block.uuid,
+                    export_data.exporter,
+                    export_data.target,
+                )
 
         for export_data in self.__prj.get_project_exports():
             try:
@@ -385,7 +387,9 @@ class Build(BaseWindow):
 
         reglist = [(i.name, i.uuid) for i in self.__prj.regsets.values()]
 
-        groups = [(group.name, group.uuid) for group in self.__prj.blocks.values()]
+        groups = [
+            (group.name, group.uuid) for group in self.__prj.blocks.values()
+        ]
 
         ExportAssistant(
             self.__prj.short_name,
@@ -414,9 +418,7 @@ class Build(BaseWindow):
         elif self.__mapopt[export_format].level == Level.GROUP:
             block = self.__prj.blocks[blk_id]
             self.__add_item_to_list(blk_id, exporter, filename)
-            block.exports.append(
-                ExportData(exporter, filename)
-            )
+            block.exports.append(ExportData(exporter, filename))
         else:
             self.__prj.add_to_project_export_list(exporter, filename)
             self.__add_item_to_list(regset_id, exporter, filename)

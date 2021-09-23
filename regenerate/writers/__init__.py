@@ -61,32 +61,12 @@ MODULES = [
     ("spyglass", ["Spyglass"]),
 ]
 
-# -----------------------------------------------------------------------------
-#
-#  Dynamically load writers for Linux. To get the packaging tools to work,
-#  we must use the stanard import for windows
-#
-# -----------------------------------------------------------------------------
-
-# from .verilog import Verilog, Verilog2001, SystemVerilog
-# from .verilog_defs import VerilogDefines
-# from .verilog_param import VerilogParameters
-# from .reg_pkg import VerilogConstRegPackage
-# from .decoder import AddressDecode
-# from .ipxact import IpXactWriter
-# from .c_test import CTest
-# from .c_defines import CDefines
-# from .asm_equ import AsmEqu
-# from .odt_doc import OdtDoc
-# from .rst_doc import RstDoc
 
 for module in MODULES:
     for mpath in IMPORT_PATHS:
-#        try:
+        try:
             fullpath = mpath + "." + module[0]
-            print("Trying", fullpath)
             a = __import__(fullpath, globals(), locals(), module[1])
-            print(a)
             for t, info in a.EXPORTERS:
                 if t == ProjectType.REGSET:
                     EXPORTERS.append(info)
@@ -95,14 +75,14 @@ for module in MODULES:
                 else:
                     PRJ_EXPORTERS.append(info)
             break
-#        except ModuleNotFoundError:
-#            continue
-#        except ImportError:
-#            continue
-#        except AttributeError:
-#            continue
-#        except SyntaxError as msg:
-#            print(f"Could not import {fullpath} ({str(msg)})")
-#            continue
-#    else:
-#        print(f'Could not import the "{module[0]}" module')
+        except ModuleNotFoundError:
+            continue
+        except ImportError:
+            continue
+        except AttributeError:
+            continue
+        except SyntaxError as msg:
+            print(f"Could not import {fullpath} ({str(msg)})")
+            continue
+    else:
+        print(f'Could not import the "{module[0]}" module')

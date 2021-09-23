@@ -154,11 +154,11 @@ class EntrySwitch:
         else:
             self.widget.set_state(0)
 
-    def on_change(self, obj, active):
+    def on_change(self, obj, _active):
         """Called on the change event"""
-
-        setattr(self.data_obj, self.field_name, obj.get_active())
-        self.modified()
+        if self.data_obj:
+            setattr(self.data_obj, self.field_name, obj.get_active())
+            self.modified()
 
 
 class EntryText:
@@ -216,7 +216,6 @@ class EntryValid(EntryText):
     ):
         super().__init__(widget, field_name, modified, placeholder)
         self.valid_data = valid_data
-
         self.widget.connect("insert-text", self.on_insert)
 
     def on_insert(

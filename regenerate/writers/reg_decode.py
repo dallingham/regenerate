@@ -13,7 +13,8 @@ from .writer_base import BlockWriter, ExportInfo, ProjectType
 
 # Define named tuple to hold the data to pass to the template
 
-class Ginfo(NamedTuple):
+
+class BlockInfo(NamedTuple):
     inst: str
     lower: int
     upper: int
@@ -24,7 +25,6 @@ class Ginfo(NamedTuple):
 
 
 class RegDecode(BlockWriter):
-
     def __init__(self, prj: RegProject, blkid: str):
         super().__init__(prj, blkid)
 
@@ -37,16 +37,15 @@ class RegDecode(BlockWriter):
             else:
                 sys.stderr.write('Group "%s" not found\n' % name)
                 return None
-            
+
         return group
 
-
     def build_group_info(
-            self, proj: RegProject, block: Block
-    ) -> List[Ginfo]:
+        self, proj: RegProject, block: Block
+    ) -> List[BlockInfo]:
         """
         For each register instance in the block, return:
-        
+
         * block instance name
         * base address of the block (dropping lower 3 bits to align
         to 64-bit boundary)
@@ -62,35 +61,33 @@ class RegDecode(BlockWriter):
         # Build the data to send to the template
         external_list = []
 
-        reg_addr_width = 64 # FIXME
-        
-        mask = (1 << reg_addr_width) - 1
+        reg_addr_width = 16  # FIXME
 
+        mask = (1 << reg_addr_width) - 1
+        print(
+            f"{reg_addr_width}, {1<<reg_addr_width:x} {(1<<reg_addr_width)-1:x}"
+        )
         for reg_inst in reginsts:
-            
+
             regset = proj.finder.find_by_id(reg_inst.regset_id)
             size = 1 << regset.ports.address_bus_width
 
-            # if group.repeat > 1 and args.no_group_repeat:
-            #     flatten = False
-            #     repeat_val = group.repeat
-            #     offset = group.repeat_offset >> 3
-            #     size = size * dbinfo.repeat
-            if reg_inst.repeat.resolve() > 1 : #and args.array_single_decode:
+            if reg_inst.repeat.resolve() > 1:  # and args.array_single_decode:
                 flatten = 1
                 repeat_val = 1
                 size = reg_inst.repeat.resolve() >> 3
-                #            offset = (reg_inst.offset + size) >> 3
-                #            print("SIZE", size, offset)
             else:
                 flatten = reg_inst.single_decode
                 repeat_val = reg_inst.repeat.resolve()
                 offset = reg_inst.repeat_offset >> 3
-                
-            new_set = Ginfo(
+
+            lower = reg_inst.offset & mask
+            upper = lower + size
+
+            new_set = BlockInfo(
                 reg_inst.name,
-                ((reg_inst.offset + size) & mask) >> 3,
-                size,
+                lower // 8,
+                upper // 8,
                 repeat_val,
                 offset,
                 flatten,
@@ -98,16 +95,16 @@ class RegDecode(BlockWriter):
             )
 
             external_list.append(new_set)
-            
+
         return external_list
 
-    def write(self, filename: Path) :
+    def write(self, filename: Path):
         """Main program"""
 
         proj = self._project
-        
+
         external_list = self.build_group_info(self._project, self._block)
-            
+
         # Open the JINJA template
         env = Environment(
             loader=FileSystemLoader(
@@ -122,17 +119,19 @@ class RegDecode(BlockWriter):
             with filename.open("w") as ofile:
                 ofile.write(
                     template.render(
-                        REG_ADDR_WIDTH=16, #args.reg_addr_width,
-                        ADDR_WIDTH=16, # FIXME args.addr_width,
-                        flatten=False, # FIXME args.flatten,
-                        DATA_WIDTH=64, # FIXME args.width,
-                        ID_WIDTH=4, # args.id_size,
+                        REG_ADDR_WIDTH=16,  # args.reg_addr_width,
+                        ADDR_WIDTH=16,  # FIXME args.addr_width,
+                        flatten=False,  # FIXME args.flatten,
+                        DATA_WIDTH=64,  # FIXME args.width,
+                        ID_WIDTH=4,  # args.id_size,
                         GROUP=self._block.name,
-                        ext_insts=external_list
+                        ext_insts=external_list,
                     )
                 )
         except IOError as msg:
-            sys.stderr.write("Could not open %s - %s\n" % (args.output, str(msg)))
+            sys.stderr.write(
+                "Could not open %s - %s\n" % (args.output, str(msg))
+            )
 
 
 EXPORTERS = [

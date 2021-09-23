@@ -59,7 +59,6 @@ class RegisterDb(NameBase):
         self.owner = ""
         self.organization = ""
         self.use_interface = False
-        #        self.overview_text = ""
         self.coverage = True
         self._filename = None
         self.modified = False
