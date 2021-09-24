@@ -25,11 +25,7 @@ from regenerate.db import RegProject
 from .writer_base import ExportInfo, ProjectWriter, ProjectType
 
 
-class Sdc(ProjectWriter):
-    """
-    Output file creation class that writes a set of synthesis constraints
-    """
-
+class StaticTiming(ProjectWriter):
     def __init__(self, project: RegProject):
         super().__init__(project)
         self.ofile = None
@@ -40,6 +36,15 @@ class Sdc(ProjectWriter):
 
             for regset in block.regsets:
                 self.dblist.add(block.regsets[regset])
+
+
+class Sdc(StaticTiming):
+    """
+    Output file creation class that writes a set of synthesis constraints
+    """
+
+    def __init__(self, project: RegProject):
+        super().__init__(project)
 
     def write(self, filename: Path):
         "Writes the output file"

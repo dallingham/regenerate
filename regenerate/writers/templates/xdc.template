@@ -1,0 +1,21 @@
+#----------------------------------------------------------
+#
+# Xilinx XDC Constraints generated {{date}}
+#
+#----------------------------------------------------------
+
+{% for block in block_list %}
+#----------------------------------------------------------
+#
+# {{block.name}} block instance
+#
+#----------------------------------------------------------
+{%   for reginst in block.reginst_list %}
+{%     for static_path in reginst.static_list %}
+set_multicycle_path 4 -setup -from [get_pins {{static_path}}*/DO_reg[*]/C]
+set_multicycle_path 3 -hold  -from [get_pins {{static_path}}*/DO_reg[*]/C]
+{%     endfor %}
+
+{%   endfor %}
+
+{% endfor %}
