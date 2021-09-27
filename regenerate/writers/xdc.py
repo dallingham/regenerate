@@ -110,8 +110,6 @@ class StaticTiming(ProjectWriter):
             if reglist:
                 block_list.append(block_data)
 
-        print(">>>", block_list)
-
 
 class Xdc(StaticTiming):
     """

@@ -243,7 +243,7 @@ class AddrMapList:
         (model, node) = select_data
         path = model.get_path(node)
         if len(path) > 1:
-            # remove group from address map
+            # remove block from address map
             pass
         else:
             addr_map = model.get_value(node, AddrCol.OBJ)

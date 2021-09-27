@@ -27,11 +27,11 @@ import zipfile
 import xml
 from xml.sax.saxutils import escape
 from io import StringIO
-
-from ..settings.paths import ODTFILE, USERODTFILE
+from regenerate.db.enums import ResetType
+from regenerate.settings.paths import ODTFILE, USERODTFILE
+from regenerate.ui.error_dialogs import ErrorMsg
 
 from .writer_base import WriterBase, ExportInfo, ProjectType
-from ..db.enums import ResetType
 
 TYPE_MAP = ["R", "R/W", "W1C", "W1S", "WO"]
 
@@ -399,8 +399,6 @@ def find_odt_template():
             odtfile = ODTFILE
         original = zipfile.ZipFile(odtfile)
     except IOError as msg:
-        from ..ui.error_dialogs import ErrorMsg
-
         ErrorMsg("Could not open OpenDocument template", str(msg))
         return None
 
@@ -408,8 +406,6 @@ def find_odt_template():
     status = parser.parse(StringIO(original.read("styles.xml")))
 
     if status:
-        from ..ui.error_dialogs import ErrorMsg
-
         ErrorMsg(
             "Bad OpenDocument template",
             "The %s file is missing the following "

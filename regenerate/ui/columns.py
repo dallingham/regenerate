@@ -85,6 +85,7 @@ class EditableColumn(BaseColumn):
         visible_callback=None,
         placeholder=None,
         tooltip=None,
+        ellipsize=Pango.EllipsizeMode.END,
     ):
 
         self.renderer = Gtk.CellRendererText()
@@ -97,7 +98,7 @@ class EditableColumn(BaseColumn):
             except TypeError:
                 pass
 
-        self.renderer.set_property("ellipsize", Pango.EllipsizeMode.END)
+        self.renderer.set_property("ellipsize", ellipsize)
         if monospace:
             self.renderer.set_property("family", "Monospace")
 

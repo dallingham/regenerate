@@ -59,10 +59,6 @@ class VerilogDefines(WriterBase):
         """
 
         with filename.open("w") as self._ofile:
-            self._write_comment_header(
-                self._ofile, "site_verilog.inc", comment_char="//"
-            )
-
             self.write_header(self._ofile, HEADER)
 
             for reg_key in self._dbase.get_keys():

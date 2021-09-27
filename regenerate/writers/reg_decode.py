@@ -64,9 +64,6 @@ class RegDecode(BlockWriter):
         reg_addr_width = 16  # FIXME
 
         mask = (1 << reg_addr_width) - 1
-        print(
-            f"{reg_addr_width}, {1<<reg_addr_width:x} {(1<<reg_addr_width)-1:x}"
-        )
         for reg_inst in reginsts:
 
             regset = proj.finder.find_by_id(reg_inst.regset_id)

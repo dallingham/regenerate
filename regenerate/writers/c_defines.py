@@ -20,15 +20,12 @@
 CWriter - Writes out C defines representing the register addresses
 """
 
-import os
-
 from typing import Optional, TextIO
 from pathlib import Path
 
-from .writer_base import WriterBase, ExportInfo, ProjectType
-from ..extras import full_token, in_groups
-from ..extras.token import InstData
 from regenerate.db import RegProject, RegisterDb, Register
+from .writer_base import RegsetWriter, ExportInfo, ProjectType
+
 
 HEADER = [
     "/*------------------------------------------------------------------\n",
@@ -56,16 +53,18 @@ REG_TYPE = {
 }
 
 
-class CDefines(WriterBase):
+class CDefines(RegsetWriter):
     """
     Writes out C defines representing the register addresses
     """
 
-    def __init__(self, project: RegProject, dbase: RegisterDb) -> None:
-        super().__init__(project, dbase)
+    def __init__(self, project: RegProject, regset: RegisterDb) -> None:
+        super().__init__(project, regset)
         self._ofile = Optional[TextIO]
 
-    def write_def(self, reg: Register, blk_name: str, reg_name: str, base: int) -> None:
+    def write_def(
+        self, reg: Register, blk_name: str, reg_name: str, base: int
+    ) -> None:
         """
         Writes the definition in the format of:
 
@@ -89,7 +88,7 @@ class CDefines(WriterBase):
         Writes the output file
         """
         assert self._ofile is not None
-        assert self._dbase is not None
+        assert self._regset is not None
 
         with filename.open("w") as self._ofile:
             self.write_header(self._ofile, "".join(HEADER))
@@ -108,15 +107,15 @@ class CDefines(WriterBase):
                 for reginst in block.regset_insts:
                     reg_base = reginst.offset
                     regset = block.regsets[reginst.regset_id]
-                    if regset.uuid == self._dbase.uuid:
+                    if regset.uuid == self._regset.uuid:
                         for register in regset.get_all_registers():
                             self.write_def(
                                 register,
                                 blkinst.name,
                                 reginst.name,
-                                base + blk_base + reg_base
+                                base + blk_base + reg_base,
                             )
-                        self._ofile.write("\n")                    
+                        self._ofile.write("\n")
 
             for line in TRAILER:
                 self._ofile.write("%s\n" % line.replace("$M$", self._module))
@@ -127,7 +126,7 @@ EXPORTERS = [
         ProjectType.REGSET,
         ExportInfo(
             CDefines,
-            ("Header files", "C Source"),
+            ("Header files", "C Defines"),
             "C header files",
             ".h",
             "headers-c",

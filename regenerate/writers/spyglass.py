@@ -100,7 +100,7 @@ EXPORTERS = [
         ProjectType.PROJECT,
         ExportInfo(
             Spyglass,
-            ("Spyglass CDC Checking", "SGDC Constraints"),
+            ("Spyglass CDC Checking", "Spyglass Constraints"),
             "SGDC files",
             ".sgdc",
             "spy-constraints",

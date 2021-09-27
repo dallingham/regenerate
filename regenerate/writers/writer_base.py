@@ -163,7 +163,28 @@ class ProjectWriter:
         """
         raise NotImplementedError
 
-    
+
+class RegsetWriter:
+    """
+    Writes the register information to the output file determined
+    by the derived class.
+    """
+
+    def __init__(self, project: RegProject, regset: RegisterDb) -> None:
+        self._project = project
+        self._regset = regset
+
+    def set_project(self, obj: RegProject) -> None:
+        self._project = obj
+        self._project_name = obj.short_name
+
+    def write(self, filename: Path):
+        """
+        The child class must override this to provide an implementation.
+        """
+        raise NotImplementedError
+
+
 class BlockWriter:
     """
     Writes the register information to the output file determined
@@ -184,4 +205,3 @@ class BlockWriter:
         The child class must override this to provide an implementation.
         """
         raise NotImplementedError
-    

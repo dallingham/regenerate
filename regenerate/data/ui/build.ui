@@ -7,7 +7,7 @@
     <property name="can_focus">False</property>
     <property name="border_width">12</property>
     <property name="title" translatable="yes">regenerate - Build</property>
-    <property name="default_width">1000</property>
+    <property name="default_width">1200</property>
     <property name="default_height">450</property>
     <property name="type_hint">normal</property>
     <child type="titlebar">
@@ -31,6 +31,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
+                <property name="tooltip_text" translatable="yes">Build the selected rules</property>
                 <property name="use_underline">True</property>
                 <signal name="clicked" handler="on_run_build_clicked" swapped="no"/>
               </object>
@@ -65,17 +66,28 @@
           </packing>
         </child>
         <child>
-          <object class="GtkTable" id="table1">
+          <object class="GtkGrid">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="n_rows">2</property>
-            <property name="n_columns">2</property>
-            <property name="column_spacing">6</property>
-            <property name="row_spacing">6</property>
+            <child>
+              <object class="GtkLabel" id="xxx000">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_bottom">6</property>
+                <property name="label" translatable="yes">Build output files from project and register information.</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">0</property>
+                <property name="width">2</property>
+              </packing>
+            </child>
             <child>
               <object class="GtkScrolledWindow" id="scrolledwindow1">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="hexpand">True</property>
+                <property name="vexpand">True</property>
                 <property name="shadow_type">in</property>
                 <child>
                   <object class="GtkTreeView" id="buildlist">
@@ -83,30 +95,44 @@
                     <property name="can_focus">True</property>
                     <signal name="button-press-event" handler="on_buildlist_button_press_event" swapped="no"/>
                     <child internal-child="selection">
-                      <object class="GtkTreeSelection" id="buildlist_selection"/>
+                      <object class="GtkTreeSelection"/>
                     </child>
                   </object>
                 </child>
               </object>
               <packing>
+                <property name="left_attach">0</property>
                 <property name="top_attach">1</property>
-                <property name="bottom_attach">2</property>
+                <property name="width">2</property>
               </packing>
             </child>
             <child>
-              <object class="GtkVButtonBox" id="vbuttonbox1">
+              <object class="GtkBox">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="layout_style">start</property>
+                <property name="halign">start</property>
+                <property name="valign">start</property>
+                <property name="margin_left">6</property>
+                <property name="hexpand">False</property>
+                <property name="orientation">vertical</property>
                 <child>
                   <object class="GtkButton" id="add_build">
-                    <property name="label">gtk-add</property>
                     <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
-                    <property name="use_stock">True</property>
+                    <property name="tooltip_text" translatable="yes">Add a new builder rule</property>
+                    <property name="halign">end</property>
+                    <property name="hexpand">False</property>
                     <signal name="clicked" handler="on_add_build_clicked" swapped="no"/>
+                    <child>
+                      <object class="GtkImage">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="stock">gtk-add</property>
+                        <property name="icon_size">1</property>
+                      </object>
+                    </child>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -116,12 +142,21 @@
                 </child>
                 <child>
                   <object class="GtkButton" id="remove_build">
-                    <property name="label">gtk-remove</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
-                    <property name="use_stock">True</property>
+                    <property name="tooltip_text" translatable="yes">Delete the selected builder rule</property>
+                    <property name="halign">end</property>
+                    <property name="hexpand">False</property>
                     <signal name="clicked" handler="on_remove_build_clicked" swapped="no"/>
+                    <child>
+                      <object class="GtkImage">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="hexpand">False</property>
+                        <property name="stock">gtk-remove</property>
+                      </object>
+                    </child>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -131,25 +166,12 @@
                 </child>
               </object>
               <packing>
-                <property name="left_attach">1</property>
-                <property name="right_attach">2</property>
+                <property name="left_attach">2</property>
                 <property name="top_attach">1</property>
-                <property name="bottom_attach">2</property>
-                <property name="x_options"/>
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="xxx000">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Build output files from project and register information.</property>
-              </object>
-              <packing>
-                <property name="right_attach">2</property>
-                <property name="y_options">GTK_FILL</property>
-                <property name="x_padding">12</property>
-                <property name="y_padding">12</property>
-              </packing>
+              <placeholder/>
             </child>
           </object>
           <packing>

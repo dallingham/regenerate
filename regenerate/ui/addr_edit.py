@@ -31,7 +31,7 @@ from regenerate.ui.base_window import BaseWindow
 
 class AddrMapEdit(BaseWindow):
     """
-    Creates a dialog box allowing the selection of subsystem groups
+    Creates a dialog box allowing the selection of blocks
     for an address map.
     """
 
