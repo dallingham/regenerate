@@ -490,13 +490,13 @@ def make_byte_info(
 def build_port_widths(dbase: RegisterDb):
     "Returns the port widths for the signals"
 
+    awidth = dbase.ports.address_bus_width - 1
+    dwidth = dbase.ports.data_bus_width
+
     return {
-        "byte_strobe": "[{}:0]".format(dbase.ports.data_bus_width // 8 - 1),
-        "addr": "[{}:{}]".format(
-            dbase.ports.address_bus_width - 1,
-            LOWER_BIT[dbase.ports.data_bus_width],
-        ),
-        "write_data": "[{}:0]".format(dbase.ports.data_bus_width - 1),
+        "byte_strobe": f"[{dwidth // 8 - 1}:0]",
+        "addr": f"[{awidth}:{LOWER_BIT[dwidth]}]",
+        "write_data": f"[{dwidth - 1}:0]",
     }
 
 
@@ -933,7 +933,7 @@ EXPORTERS = [
         ProjectType.REGSET,
         ExportInfo(
             SystemVerilog,
-            ("RTL", "SystemVerilog"),
+            ("RTL", "RTL (SystemVerilog)"),
             "SystemVerilog files",
             ".sv",
             "rtl-system-verilog",
@@ -943,7 +943,7 @@ EXPORTERS = [
         ProjectType.REGSET,
         ExportInfo(
             Verilog2001,
-            ("RTL", "Verilog 2001"),
+            ("RTL", "RTL (Verilog 2001)"),
             "Verilog files",
             ".v",
             "rtl-verilog-2001",
@@ -953,7 +953,7 @@ EXPORTERS = [
         ProjectType.REGSET,
         ExportInfo(
             Verilog,
-            ("RTL", "Verilog 95"),
+            ("RTL", "RTL (Verilog 95)"),
             "Verilog files",
             ".v",
             "rtl-verilog-95",

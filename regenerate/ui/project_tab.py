@@ -126,6 +126,3 @@ class ProjectDoc(BaseDoc):
     ) -> None:
         if not self.changing and self.project:
             self.project.doc_pages.update_page(title, text, tags)
-            print(tags)
-            for tag in tags:
-                print(tag)

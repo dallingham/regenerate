@@ -21,7 +21,6 @@ OdtDoc - Writes out an OpenDocument document that contains the register
              descriptions
 """
 
-import gtk
 import os
 import hashlib
 import zipfile
@@ -30,11 +29,11 @@ import time
 import xml
 from pathlib import Path
 from xml.sax.saxutils import escape
-from cStringIO import StringIO
+from io import StringIO
+import gtk
 
 from regenerate.settings.paths import ODTFILE, USERODTFILE
 from regenerate.writers.writer_base import WriterBase
-from regenerate.db import RegisterDb
 from regenerate.db.enums import ResetType
 
 TYPE_MAP = ["R", "R/W", "W1C", "W1S", "WO"]

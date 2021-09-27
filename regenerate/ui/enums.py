@@ -62,8 +62,8 @@ class BitCol(IntEnum):
 class Level(IntEnum):
     """Report level, indicating what type of data is included in a report"""
 
-    BLOCK = 0
-    GROUP = 1
+    REGSET = 0
+    BLOCK = 1
     PROJECT = 2
 
 
@@ -71,12 +71,13 @@ class BuildCol(IntEnum):
     """Column numbers for the Build list"""
 
     MODIFIED = 0
-    BASE = 1
-    FORMAT = 2
-    DEST = 3
-    CLASS = 4
-    DBASE = 5
-    TYPE = 6
+    TYPE_STR = 1
+    BASE = 2
+    FORMAT = 3
+    DEST = 4
+    CLASS = 5
+    DBASE = 6
+    TYPE = 7
 
 
 class DbMap(IntEnum):

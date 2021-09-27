@@ -24,7 +24,7 @@ import os
 from pathlib import Path
 from jinja2 import Template
 from regenerate.db.enums import BitType
-from .writer_base import WriterBase, ExportInfo, ProjectType
+from .writer_base import RegsetWriter, ExportInfo, ProjectType
 
 #
 # Map regenerate types to UVM type strings
@@ -79,7 +79,7 @@ XML = [
 ]
 
 
-class IpXactWriter(WriterBase):
+class IpXactWriter(RegsetWriter):
     """
     Generates a SystemVerilog package representing the registers in
     the UVM format.
@@ -104,7 +104,7 @@ class IpXactWriter(WriterBase):
 
         with filename.open("w") as ofile:
             text = template.render(
-                db=self._dbase,
+                db=self._regset,
                 WRITE_MAP=WRITE_MAP,
                 ACCESS_MAP=ACCESS_MAP,
                 scope="ipxact",
@@ -118,7 +118,7 @@ EXPORTERS = [
         ProjectType.REGSET,
         ExportInfo(
             IpXactWriter,
-            ("XML", "IP-XACT"),
+            ("XML", "IP-XACT Registers"),
             "IP-XACT files",
             ".xml",
             "ip-xact",

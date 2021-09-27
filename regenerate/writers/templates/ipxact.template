@@ -15,8 +15,8 @@
                 <{{scope}}:addressBlock>
                     <{{scope}}:name>{{db.name|e}}</{{scope}}:name>
                     <{{scope}}:baseAddress>0x0</{{scope}}:baseAddress>
-                    <{{scope}}:range {{scope}}:format="long">{{db.address_size_in_bytes()}}</{{scope}}:range>
-                    <{{scope}}:width>{{db.data_bus_width}}</{{scope}}:width>
+                    <{{scope}}:range {{scope}}:format="long">{{2 ** db.ports.address_bus_width}}</{{scope}}:range>
+                    <{{scope}}:width>{{db.ports.data_bus_width}}</{{scope}}:width>
                     <{{scope}}:usage>register</{{scope}}:usage> 
 
 {% for reg in db.get_all_registers() %}
@@ -35,7 +35,7 @@
                             <{{scope}}:name>{{field.name|e}}</{{scope}}:name>
                             <{{scope}}:description>{{field.description|e}}</{{scope}}:description>
                             <{{scope}}:bitOffset>{{field.lsb}}</{{scope}}:bitOffset>
-                            <{{scope}}:bitWidth>{{field.msb - field.lsb + 1}}</{{scope}}:bitWidth>
+                            <{{scope}}:bitWidth>{{field.msb.resolve() - field.lsb + 1}}</{{scope}}:bitWidth>
                             <{{scope}}:access>{{ACCESS_MAP[field.field_type]}}</{{scope}}:access>
 {%     if field.field_type in WRITE_MAP %}
                             <{{scope}}:modifiedWriteValue>{{WRITE_MAP[field.field_type]}}</{{scope}}:modifiedWriteValue>

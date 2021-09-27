@@ -25,7 +25,6 @@ import os
 from pathlib import Path
 from jinja2 import Environment
 
-from regenerate.db import BitField, TYPES, LOGGER
 from regenerate.extras.remap import REMAP_NAME
 from .writer_base import WriterBase, ExportInfo, ProjectType
 
@@ -54,8 +53,7 @@ class CStruct(WriterBase):
 
         if name in REMAP_NAME:
             return "%s_field" % name
-        else:
-            return name
+        return name
 
     def fix_reg_name(self, reg):
         """
@@ -67,8 +65,7 @@ class CStruct(WriterBase):
 
         if name in REMAP_NAME:
             return "%s_reg" % name
-        else:
-            return name
+        return name
 
     def uvm_address_maps(self):
         return [d for d in self._project.get_address_maps() if not d.uvm]
@@ -97,7 +94,7 @@ class CStruct(WriterBase):
         return group_maps
 
     def _used_maps(self):
-        return set([addr_map.name for addr_map in self.uvm_address_maps()])
+        return set({addr_map.name for addr_map in self.uvm_address_maps()})
 
     def write(self, filename: Path):
         """
@@ -159,7 +156,7 @@ class CStruct(WriterBase):
             if group.name in grp_set:
                 for reg_sets in group.register_sets:
                     used_sets.add(reg_sets.set)
-        return set([db for db in self.dblist if db.set_name in used_sets])
+        return set({db for db in self.dblist if db.set_name in used_sets})
 
 
 EXPORTERS = [

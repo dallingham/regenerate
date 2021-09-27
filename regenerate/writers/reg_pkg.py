@@ -64,7 +64,7 @@ EXPORTERS = [
         ProjectType.PROJECT,
         ExportInfo(
             VerilogConstRegPackage,
-            ("Headers", "SystemVerilog Register Constants"),
+            ("Headers", "RTL Register Constants"),
             "SystemVerilog files",
             ".sv",
             "headers-system-verilog",

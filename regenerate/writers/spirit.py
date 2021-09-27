@@ -20,7 +20,6 @@
 Actual program. Parses the arguments, and initiates the main window
 """
 
-import os
 from pathlib import Path
 
 from regenerate.db import BitType

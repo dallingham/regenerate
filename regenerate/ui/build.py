@@ -25,7 +25,7 @@ import os
 from typing import Tuple, Dict, List, NamedTuple
 from pathlib import Path
 
-from gi.repository import Gtk
+from gi.repository import Gtk, Pango
 from regenerate.settings.paths import INSTALL_PATH
 from regenerate.db import RegProject, RegisterDb, ExportData
 from regenerate.writers import (
@@ -82,21 +82,21 @@ class Build(BaseWindow):
         Builds the maps used to map options. The __optmap maps an internal
         Type Identifier to:
 
-        (Document Description, Exporter Class, Register/Group/Project)
+        (Document Description, Exporter Class, Register/Block/Project)
 
         The __mapopt maps the Document Description to:
 
-        (Type Identifier, Exporter Class, Register/Group/Project)
+        (Type Identifier, Exporter Class, Register/Block/Project)
 
         """
         self.__optmap = {}
         for level, export_list in [
-            (Level.BLOCK, EXPORTERS),
-            (Level.GROUP, GRP_EXPORTERS),
+            (Level.REGSET, EXPORTERS),
+            (Level.BLOCK, GRP_EXPORTERS),
             (Level.PROJECT, PRJ_EXPORTERS),
         ]:
             for item in export_list:
-                value = f"{item.type[0]} ({item.type[1]})"
+                value = f"{item.type[1]}"
                 self.__optmap[item.id] = ExportInfo(
                     value, item.obj_class, level
                 )
@@ -116,7 +116,9 @@ class Build(BaseWindow):
         self.__build_list = self.__builder.get_object("buildlist")
         self.__builder.connect_signals(self)
         self.__add_columns()
-        self.__model = Gtk.ListStore(bool, str, str, str, object, object, int)
+        self.__model = Gtk.ListStore(
+            bool, str, str, str, str, object, object, int
+        )
         self.__build_list.set_model(self.__model)
         self.configure(self.__build_top)
         self.__build_top.set_transient_for(parent)
@@ -128,9 +130,9 @@ class Build(BaseWindow):
         """
         Adds the item to the list view.
         """
-        if self.__optmap[exporter].level == Level.BLOCK:
+        if self.__optmap[exporter].level == Level.REGSET:
             self.__add_dbase_item_to_list(full_path, exporter, dest)
-        elif self.__optmap[exporter].level == Level.GROUP:
+        elif self.__optmap[exporter].level == Level.BLOCK:
             self.__add_group_item_to_list(full_path, exporter, dest)
         else:
             self.__add_prj_item_to_list(exporter, dest)
@@ -150,7 +152,8 @@ class Build(BaseWindow):
         self.__model.append(
             row=[
                 mod,
-                "<project>",
+                "Project",
+                "",
                 info.name,
                 dest,
                 info.cls,
@@ -177,6 +180,7 @@ class Build(BaseWindow):
         self.__model.append(
             row=(
                 mod,
+                "Register Set",
                 regset.name,
                 info.name,
                 rel_dest,
@@ -202,7 +206,8 @@ class Build(BaseWindow):
         self.__model.append(
             row=(
                 mod,
-                f"{block.name} (block)",
+                "Block",
+                block.name,
                 info.name,
                 dest,
                 info.cls,
@@ -288,17 +293,27 @@ class Build(BaseWindow):
         column = ToggleColumn("Build", self.toggle_callback, BuildCol.MODIFIED)
         self.__build_list.append_column(column)
 
-        column = EditableColumn("RegisterSet", None, BuildCol.BASE)
-        column.set_min_width(125)
+        column = EditableColumn("Type", None, BuildCol.TYPE_STR)
+        column.set_min_width(120)
+        column.set_sort_column_id(BuildCol.TYPE_STR)
+        self.__build_list.append_column(column)
+
+        column = EditableColumn("Source", None, BuildCol.BASE)
+        column.set_min_width(150)
         column.set_sort_column_id(BuildCol.BASE)
         self.__build_list.append_column(column)
 
         column = EditableColumn("Format", None, BuildCol.FORMAT)
-        column.set_min_width(175)
+        column.set_min_width(200)
         column.set_sort_column_id(BuildCol.FORMAT)
         self.__build_list.append_column(column)
 
-        column = EditableColumn("Destination", None, BuildCol.DEST)
+        column = EditableColumn(
+            "Destination",
+            None,
+            BuildCol.DEST,
+            ellipsize=Pango.EllipsizeMode.START,
+        )
         column.set_min_width(250)
         column.set_sort_column_id(BuildCol.DEST)
         self.__build_list.append_column(column)
@@ -407,13 +422,13 @@ class Build(BaseWindow):
         """
 
         exporter = self.__mapopt[export_format].name
-        if self.__mapopt[export_format].level == Level.BLOCK:
+        if self.__mapopt[export_format].level == Level.REGSET:
             self.__prj.regsets[regset_id].exports.append(
                 ExportData(exporter, filename)
             )
             self.__prj.regsets[regset_id].modified = True
             self.__add_item_to_list(regset_id, exporter, filename)
-        elif self.__mapopt[export_format].level == Level.GROUP:
+        elif self.__mapopt[export_format].level == Level.BLOCK:
             block = self.__prj.blocks[blk_id]
             self.__add_item_to_list(blk_id, exporter, filename)
             block.exports.append(ExportData(exporter, filename))
@@ -499,4 +514,4 @@ def file_needs_rebuilt(
 def exp_type_fmt(item: Tuple[str, str]) -> str:
     "Export format type"
 
-    return f"{item[0]} ({item[1]})"
+    return f"{item[1]}"
