@@ -1,0 +1,21 @@
+#----------------------------------------------------------
+#
+# SDC Constraints generated {{date}}
+#
+#----------------------------------------------------------
+
+{% for block in block_list %}
+#----------------------------------------------------------
+#
+# {{block.name}} block instance
+#
+#----------------------------------------------------------
+{%   for reginst in block.reginst_list %}
+{%     for static_path in reginst.static_list %}
+set_multicycle -from [get_cells{static_path}] -setup 4
+set_false_path -from [get_cells{static_path}] -hold
+{%     endfor %}
+
+{%   endfor %}
+
+{% endfor %}
