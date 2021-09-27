@@ -230,9 +230,7 @@ class Build(BaseWindow):
                     pass
 
         for block in self.__prj.blocks.values():
-            print("BLOCK", block, block.exports)
             for i, export_data in enumerate(block.exports):
-                print("EXPORT", export_data, i)
                 self.__add_group_item_to_list(
                     block.uuid,
                     export_data.exporter,
@@ -419,6 +417,7 @@ class Build(BaseWindow):
             block = self.__prj.blocks[blk_id]
             self.__add_item_to_list(blk_id, exporter, filename)
             block.exports.append(ExportData(exporter, filename))
+            block.modified = True
         else:
             self.__prj.add_to_project_export_list(exporter, filename)
             self.__add_item_to_list(regset_id, exporter, filename)

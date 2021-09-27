@@ -133,6 +133,13 @@ class Block(NameBase):
             data = ofile.read()
         self.json_decode(json.loads(data))
 
+    def get_address_size(self) -> int:
+        base = 0
+        for reginst in self.regset_insts:
+            regset = self.regsets[reginst.regset_id]
+            base = max(base, reginst.offset + (1 << regset.ports.address_bus_width))
+        return base
+        
     def json_decode(self, data: Dict[str, Any]) -> None:
         """Compare for equality."""
         self.name = data["name"]

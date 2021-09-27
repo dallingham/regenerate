@@ -34,6 +34,7 @@ DEF_BE_NAME = "BE"
 DEF_ACK_NAME = "ACK"
 DEF_INTERFACE = "mgmt_interface"
 DEF_MODPORT = "target"
+DEF_IMODPORT = "initiator"
 
 
 class Signals:
@@ -58,6 +59,7 @@ class Signals:
             "rules", "interface_default", DEF_INTERFACE
         )
         self._modport = rules.get("rules", "modport_default", DEF_MODPORT)
+        self._imodport = rules.get("rules", "initiator_modport_default", DEF_IMODPORT)
         self._write_data = rules.get(
             "rules", "write_data_default", DEF_WDATA_NAME
         )
@@ -111,6 +113,20 @@ class Signals:
         """
         self._modport = name.strip()
 
+    @property
+    def imodport_name(self) -> str:
+        """
+        Gets _modport, which is accessed via the modport_name property
+        """
+        return self._imodport
+
+    @imodport_name.setter
+    def imodport_name(self, name: str) -> None:
+        """
+        Sets _modport, which is accessed via the modport_name property
+        """
+        self._imodport = name.strip()
+        
     @property
     def write_data_name(self) -> str:
         """
@@ -249,6 +265,7 @@ class Signals:
             "reset": self._reset,
             "interface": self._interface,
             "modport": self._modport,
+            "imodport": self._imodport,
             "write_data": self._write_data,
             "read_data": self._read_data,
             "write_strobe": self._write_strobe,
@@ -269,6 +286,7 @@ class Signals:
         self._reset = data["reset"]
         self._interface = data.get("inteface", DEF_INTERFACE)
         self._modport = data.get("modport", DEF_MODPORT)
+        self._imodport = data.get("imodport", DEF_IMODPORT)
         self._write_data = data["write_data"]
         self._read_data = data["read_data"]
         self._write_strobe = data["write_strobe"]

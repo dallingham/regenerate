@@ -12,16 +12,16 @@ module {{GROUP}}_decode
   {% if inst.repeat > 1 and not inst.single_decode %}
     {% if flatten %}
       {% for i in range(inst.repeat) %}
-   mgmt_interface.initiator  MGMT_{{inst.inst|upper}}_{{i}},
+   {{inst.db.ports.interface_name}}.{{inst.db.ports.imodport_name}} MGMT_{{inst.inst|upper}}_{{i}},
       {% endfor %}
     {% else %}
-   mgmt_interface.initiator  MGMT_{{inst.inst|upper}}[{{inst.repeat}}],
+   {{inst.db.ports.interface_name}}.{{inst.db.ports.imodport_name}} MGMT_{{inst.inst|upper}}[{{inst.repeat}}],
     {% endif %}
   {% else %}
-   mgmt_interface.initiator  MGMT_{{inst.inst|upper}},
+   {{inst.db.ports.interface_name}}.{{inst.db.ports.imodport_name}} MGMT_{{inst.inst|upper}},
   {% endif %}
 {% endfor %}
-   mgmt_interface.target     MGMT_MAIN
+   mgmt_interface.target MGMT_MAIN
    );
 
    genvar                   i;

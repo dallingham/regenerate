@@ -61,6 +61,7 @@ class RegDecode(BlockWriter):
         # Build the data to send to the template
         external_list = []
 
+        address_size = block.get_address_size()
         reg_addr_width = 16  # FIXME
 
         mask = (1 << reg_addr_width) - 1

@@ -56,8 +56,7 @@ MODULES = [
     ("odt_doc", ["OdtDoc"]),
     ("rst_doc", ["RstDoc"]),
     ("uvm_reg_block", ["UVMRegBlockRegisters"]),
-    ("sdc", ["Sdc"]),
-    ("xdc", ["Xdc"]),
+    ("static_timing", ["Sdc", "Xdc"]),
     ("spyglass", ["Spyglass"]),
 ]
 

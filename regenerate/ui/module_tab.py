@@ -87,6 +87,7 @@ class ModuleTabs:
                 "Missing interface name",
             ),
             ("modport", "modport_name", EntryWord, "Missing modport name"),
+            ("imodport", "imodport_name", EntryWord, "Missing modport name"),
             ("clock_signal", "clock_name", EntryWord, "Missing clock name"),
             ("reset_signal", "reset_name", EntryWord, "Missing reset name"),
             ("reset_level", "reset_active_level", EntryBool, None),
@@ -217,15 +218,19 @@ class ModuleTabs:
         self.set_modified = modified
         self.icon = find_obj("mod_def_warn")
         self.modport_field = find_obj("modport")
+        self.imodport_field = find_obj("imodport")
         self.interface_field = find_obj("interface_name")
         self.modport_label_field = find_obj("modport_label")
+        self.imodport_label_field = find_obj("imodport_label")
         self.interface_label_field = find_obj("interface_label")
 
     def on_sysv_intf_toggled(self, button):
         enable = button.get_active()
         self.modport_field.set_sensitive(enable)
-        self.interface_field.set_sensitive(enable)
         self.modport_label_field.set_sensitive(enable)
+        self.imodport_field.set_sensitive(enable)
+        self.imodport_label_field.set_sensitive(enable)
+        self.interface_field.set_sensitive(enable)
         self.interface_label_field.set_sensitive(enable)
 
     def change_db(self, dbase, project) -> None:
