@@ -1,0 +1,54 @@
+/*----------------------------------------------------------------------------
+ *
+ * {{ports.interface_name}}
+ *
+ *----------------------------------------------------------------------------
+ */
+ 
+interface {{ports.interface_name}}
+  #(
+    parameter int pAddressWidth = {{ports.address_bus_width}},
+    parameter int pDataWidth = {{ports.data_bus_width}}
+    )
+   (
+    input logic                   {{ports.clock_name}}, // Input clock
+    input logic                   {{ports.reset_name}} // Reset
+    );
+
+   logic [pAddressWidth-1:0]      {{ports.address_bus_name}}; // Address
+   logic [$clog2(pDataWidth)-1:0] {{ports.byte_en}}; // Byte enables
+   logic                          {{ports.write_strobe}}; // Write strobe
+   logic                          {{ports.read_strobe}}; // Read strobe
+   logic [pDataWidth-1:0]         {{ports.write_data}}; // Write data
+   logic [pDataWidth-1:0]         {{ports.read_data}}; // Read data
+   logic                          {{ports.acknowledge}}; // Acknowledge
+
+   modport {{ports.modport_name}}
+     (
+      input  {{ports.clock_name}},
+      input  {{ports.reset_name}},
+
+      input  {{ports.address_bus_name}},
+      input  {{ports.write_strobe}},
+      input  {{ports.read_strobe}},
+      input  {{ports.byte_en}},
+      input  {{ports.write_data}},
+      output {{ports.read_data}},
+      output {{ports.acknowledge}}
+      );
+
+   modport {{ports.imodport_name}}
+     (
+      input  {{ports.clock_name}},
+      input  {{ports.reset_name}},
+
+      output {{ports.address_bus_name}},
+      output {{ports.write_strobe}},
+      output {{ports.read_strobe}},
+      output {{ports.byte_en}},
+      output {{ports.write_data}},
+      input  {{ports.read_data}},
+      input  {{ports.acknowledge}}
+      );
+
+endinterface : {{ports.interface_name}}

@@ -33,6 +33,7 @@ from .entry import (
     EntrySwitch,
     EntryText,
     EntryWord,
+    EntrySwitch,
     EntryInt,
 )
 from .base_doc import BaseDoc
@@ -165,13 +166,15 @@ class ModuleTabs:
             ),
             ("internal_only", "internal_only", EntrySwitch, None),
             ("coverage", "coverage", EntrySwitch, None),
-            ("interface", "use_interface", EntryBool, None),
+            ("interface", "use_interface", EntrySwitch, None),
         ]
 
         self.port_object_list = []
         self.top_object_list = []
 
-        find_obj("interface").connect("toggled", self.on_sysv_intf_toggled)
+        find_obj("interface").connect(
+            "notify::active", self.on_sysv_intf_toggled
+        )
 
         for (widget_name, db_name, class_type, placeholder) in port_list:
             if placeholder is not None:
@@ -224,7 +227,7 @@ class ModuleTabs:
         self.imodport_label_field = find_obj("imodport_label")
         self.interface_label_field = find_obj("interface_label")
 
-    def on_sysv_intf_toggled(self, button):
+    def on_sysv_intf_toggled(self, button, state):
         enable = button.get_active()
         self.modport_field.set_sensitive(enable)
         self.modport_label_field.set_sensitive(enable)
