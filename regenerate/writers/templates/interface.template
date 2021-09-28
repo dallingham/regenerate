@@ -16,12 +16,12 @@ interface {{ports.interface_name}}
     );
 
    logic [pAddressWidth-1:0]      {{ports.address_bus_name}}; // Address
-   logic [$clog2(pDataWidth)-1:0] {{ports.byte_en}}; // Byte enables
-   logic                          {{ports.write_strobe}}; // Write strobe
-   logic                          {{ports.read_strobe}}; // Read strobe
-   logic [pDataWidth-1:0]         {{ports.write_data}}; // Write data
-   logic [pDataWidth-1:0]         {{ports.read_data}}; // Read data
-   logic                          {{ports.acknowledge}}; // Acknowledge
+   logic [$clog2(pDataWidth)-1:0] {{ports.byte_strobe_name}}; // Byte enables
+   logic                          {{ports.write_strobe_name}}; // Write strobe
+   logic                          {{ports.read_strobe_name}}; // Read strobe
+   logic [pDataWidth-1:0]         {{ports.write_data_name}}; // Write data
+   logic [pDataWidth-1:0]         {{ports.read_data_name}}; // Read data
+   logic                          {{ports.acknowledge_name}}; // Acknowledge
 
    modport {{ports.modport_name}}
      (
@@ -29,12 +29,12 @@ interface {{ports.interface_name}}
       input  {{ports.reset_name}},
 
       input  {{ports.address_bus_name}},
-      input  {{ports.write_strobe}},
-      input  {{ports.read_strobe}},
-      input  {{ports.byte_en}},
-      input  {{ports.write_data}},
-      output {{ports.read_data}},
-      output {{ports.acknowledge}}
+      input  {{ports.write_strobe_name}},
+      input  {{ports.read_strobe_name}},
+      input  {{ports.byte_strobe_name}},
+      input  {{ports.write_data_name}},
+      output {{ports.read_data_name}},
+      output {{ports.acknowledge_name}}
       );
 
    modport {{ports.imodport_name}}
@@ -43,12 +43,12 @@ interface {{ports.interface_name}}
       input  {{ports.reset_name}},
 
       output {{ports.address_bus_name}},
-      output {{ports.write_strobe}},
-      output {{ports.read_strobe}},
-      output {{ports.byte_en}},
-      output {{ports.write_data}},
-      input  {{ports.read_data}},
-      input  {{ports.acknowledge}}
+      output {{ports.write_strobe_name}},
+      output {{ports.read_strobe_name}},
+      output {{ports.byte_strobe_name}},
+      output {{ports.write_data_name}},
+      input  {{ports.read_data_name}},
+      input  {{ports.acknowledge_name}}
       );
 
 endinterface : {{ports.interface_name}}

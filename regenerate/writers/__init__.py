@@ -46,6 +46,7 @@ MODULES = [
     ("verilog", ["Verilog", "Verilog2001", "SystemVerilog"]),
     ("verilog_defs", ["VerilogDefines"]),
     ("verilog_param", ["VerilogParameters"]),
+    ("interface", ["InterfaceGen"]),
     ("reg_pkg", ["VerilogConstRegPackage"]),
     ("reg_decode", ["RegDecode"]),
     ("ipxact", ["IpXactWriter"]),
