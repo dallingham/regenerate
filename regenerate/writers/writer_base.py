@@ -25,9 +25,11 @@ import os
 import time
 import pwd
 from pathlib import Path
+from typing import List, Tuple, Callable
 from enum import IntEnum
 from typing import Optional
 from collections import namedtuple
+from jinja2 import FileSystemLoader, Environment
 
 from regenerate.db import RegisterDb, RegProject, Block
 from ..settings.paths import INSTALL_PATH
@@ -162,6 +164,25 @@ class ProjectWriter:
         The child class must override this to provide an implementation.
         """
         raise NotImplementedError
+
+
+def find_template(
+    template_name: str,
+    filters: Optional[List[Tuple[str, Callable]]] = None,
+):
+
+    template_dir = Path(__file__).parent / "templates"
+
+    env = Environment(
+        loader=FileSystemLoader(str(template_dir)),
+        trim_blocks=True,
+        lstrip_blocks=True,
+    )
+    if filters:
+        for (name, func) in filters:
+            env.filters[name] = func
+
+    return env.get_template(template_name)
 
 
 class RegsetWriter:

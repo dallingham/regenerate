@@ -21,14 +21,12 @@
 Static timing - Writes out synthesis constraints
 """
 
-import os
 import datetime
 from pathlib import Path
 from typing import NamedTuple, List
-from jinja2 import FileSystemLoader, Environment
 
 from regenerate.db import RegProject
-from .writer_base import ProjectWriter, ExportInfo, ProjectType
+from .writer_base import ProjectWriter, ExportInfo, ProjectType, find_template
 
 
 class RegInstData(NamedTuple):
@@ -45,7 +43,7 @@ class BlockInstData(NamedTuple):
 
 class StaticTiming(ProjectWriter):
     "Extracts the list of static registers and writes them to the template"
-    
+
     def __init__(self, project: RegProject, template: str):
         super().__init__(project)
         self.template = template
@@ -124,7 +122,7 @@ class StaticTiming(ProjectWriter):
                             regset_inst.hdl,
                             signal_name,
                             addr,
-                            -1
+                            -1,
                         )
                         if hdl:
                             static_list.append(hdl)
@@ -137,25 +135,17 @@ class StaticTiming(ProjectWriter):
     def write(self, filename: Path):
         """Writes the output file"""
 
-        env = Environment(
-            loader=FileSystemLoader(
-                os.path.join(os.path.dirname(__file__), "templates")
-            ),
-            trim_blocks=True,
-            lstrip_blocks=True,
-        )
-
-        template = env.get_template("xdc.template")
+        template = find_template("xdc.template")
 
         t = datetime.datetime.now()
         with filename.open("w") as ofile:
             ofile.write(
                 template.render(
                     date=t.strftime("%H:%M on %Y-%m-%d"),
-                    block_list=self.block_list
+                    block_list=self.block_list,
                 )
             )
-    
+
 
 class Xdc(StaticTiming):
     "Produces a file with static constraints in Xilinx XDC format"
@@ -163,13 +153,13 @@ class Xdc(StaticTiming):
     def __init__(self, project: RegProject):
         super().__init__(project, "xdc.template")
 
-        
+
 class Sdc(StaticTiming):
     "Produces a file with static constraints in Synopsys SDC format"
 
     def __init__(self, project: RegProject):
         super().__init__(project, "sdc.template")
-        
+
 
 EXPORTERS = [
     (
@@ -191,5 +181,5 @@ EXPORTERS = [
             ".sdc",
             "syn-constraints",
         ),
-    )
+    ),
 ]

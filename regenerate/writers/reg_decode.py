@@ -3,13 +3,11 @@ SystemVerilog RTL register decoder generator
 """
 
 import sys
-import os
 from pathlib import Path
-from typing import List, Tuple, Dict, NamedTuple
+from typing import List, NamedTuple
 
-from jinja2 import Environment, FileSystemLoader
 from regenerate.db import RegProject, RegisterDb, Block
-from .writer_base import BlockWriter, ExportInfo, ProjectType
+from .writer_base import BlockWriter, ExportInfo, ProjectType, find_template
 
 # Define named tuple to hold the data to pass to the template
 
@@ -104,14 +102,7 @@ class RegDecode(BlockWriter):
         external_list = self.build_group_info(self._project, self._block)
 
         # Open the JINJA template
-        env = Environment(
-            loader=FileSystemLoader(
-                os.path.join(os.path.dirname(__file__), "templates")
-            ),
-            trim_blocks=True,
-            lstrip_blocks=True,
-        )
-        template = env.get_template("decode_rtl.template")
+        template = find_template("decode_rtl.template")
 
         try:
             with filename.open("w") as ofile:

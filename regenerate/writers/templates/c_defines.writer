@@ -1,0 +1,16 @@
+/*----------------------------------------------------------------------------
+ *
+ * Register Defines
+ *
+ *----------------------------------------------------------------------------
+ */
+
+#ifndef {{file_base.upper()}}_H
+#define {{file_base.upper()}}_H 1
+
+{% for p in path_data %}
+{% set name = p.block|upper + "__" +  p.regset|upper  + "__" + p.name|upper %}
+  #define {{ "%-38s" % name }} (*((volatile {{type_map[p.size]}}*){{"0x%x" % p.address}}))
+{% endfor %}
+
+#endif

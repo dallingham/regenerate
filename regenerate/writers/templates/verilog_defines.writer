@@ -1,0 +1,19 @@
+/*----------------------------------------------------------------------------
+ *
+ * Register Defines
+ *
+ *----------------------------------------------------------------------------
+ */
+
+`ifdef {{file_base.upper()}}_H
+
+{% for p in path_data %}
+{% set name = p.block|upper + "__" +  p.regset|upper  + "__" + p.name|upper %}
+  `define {{ "%-38s" % name }} ({{"'h%x" % p.address}})
+{% endfor %}
+
+`else
+
+`define {{file_base.upper()}}_VH 1
+
+`endif

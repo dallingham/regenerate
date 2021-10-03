@@ -23,19 +23,21 @@ EquWriter - Writes out Assembler defines (based off the GNU assembler)
 from typing import Union, Optional, TextIO
 from pathlib import Path
 
-from .writer_base import WriterBase, ExportInfo, ProjectType
-from ..db import RegisterDb, Register
+from .writer_base import RegsetWriter, ExportInfo, ProjectType
+from ..db import RegisterDb, Register, RegProject
 
 
-class AsmEqu(WriterBase):
+class AsmEqu(RegsetWriter):
     """
     Output file creation class that writes a set of constants representing
     the token for the registers addresses.
     """
 
-    def __init__(self, dbase: Union[None, RegisterDb]) -> None:
-        super().__init__(dbase)
+    def __init__(self, project: RegProject, regset: RegisterDb):
+        super().__init__(project, regset)
+
         self._ofile: Optional[TextIO] = None
+        self._prefix = ""
 
     def write_def(self, reg: Register, prefix: str, offset: int) -> None:
         """
@@ -54,16 +56,10 @@ class AsmEqu(WriterBase):
         """
         Writes the output file
         """
-        assert self._ofile is not None
-        assert self._dbase is not None
-
         with filename.open("w") as self._ofile:
-            self._write_header_comment(
-                self._ofile, "site_asm.inc", comment_char=";; "
-            )
-            for reg_key in self._dbase.get_keys():
+            for reg_key in self._regset.get_keys():
                 self.write_def(
-                    self._dbase.get_register(reg_key),
+                    self._regset.get_register(reg_key),
                     self._prefix,
                     0,
                 )

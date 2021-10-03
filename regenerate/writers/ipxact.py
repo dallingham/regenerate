@@ -20,11 +20,9 @@
 Actual program. Parses the arguments, and initiates the main window
 """
 
-import os
 from pathlib import Path
-from jinja2 import Template
-from regenerate.db.enums import BitType
-from .writer_base import RegsetWriter, ExportInfo, ProjectType
+from regenerate.db import BitType, RegisterDb, RegProject
+from .writer_base import RegsetWriter, ExportInfo, ProjectType, find_template
 
 #
 # Map regenerate types to UVM type strings
@@ -85,8 +83,8 @@ class IpXactWriter(RegsetWriter):
     the UVM format.
     """
 
-    def __init__(self, project, dbase):
-        super().__init__(project, dbase)
+    def __init__(self, project: RegProject, regset: RegisterDb):
+        super().__init__(project, regset)
 
     def write(self, filename: Path):
         """
@@ -95,12 +93,7 @@ class IpXactWriter(RegsetWriter):
         container blocks.
         """
 
-        dirpath = os.path.dirname(__file__)
-
-        with open(os.path.join(dirpath, "templates", "ipxact.template")) as of:
-            template = Template(
-                of.read(), trim_blocks=True, lstrip_blocks=True
-            )
+        template = find_template("ipxact.template")
 
         with filename.open("w") as ofile:
             text = template.render(

@@ -27,7 +27,6 @@ interface {{ports.interface_name}}
      (
       input  {{ports.clock_name}},
       input  {{ports.reset_name}},
-
       input  {{ports.address_bus_name}},
       input  {{ports.write_strobe_name}},
       input  {{ports.read_strobe_name}},
@@ -41,7 +40,6 @@ interface {{ports.interface_name}}
      (
       input  {{ports.clock_name}},
       input  {{ports.reset_name}},
-
       output {{ports.address_bus_name}},
       output {{ports.write_strobe_name}},
       output {{ports.read_strobe_name}},

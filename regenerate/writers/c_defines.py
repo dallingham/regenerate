@@ -73,8 +73,8 @@ class CDefines(RegsetWriter):
         assert self._ofile is not None
 
         address = reg.address + base
-        if reg.dimension > 1:
-            for i in range(0, reg.dimension):
+        if reg.dimension.resolve() > 1:
+            for i in range(0, reg.dimension.resolve()):
                 self._ofile.write(
                     f"#define {blk_name.upper()}__{reg_name.upper()}__{reg.token}{{i}} (*((volatile {REG_TYPE[reg.width]})0x{(address + (i * reg.width)):x}))\n"
                 )
@@ -91,8 +91,6 @@ class CDefines(RegsetWriter):
         assert self._regset is not None
 
         with filename.open("w") as self._ofile:
-            self.write_header(self._ofile, "".join(HEADER))
-
             addr_maps = self._project.get_address_maps()
             if len(addr_maps) > 0:
                 maps = list(addr_maps)
@@ -118,18 +116,18 @@ class CDefines(RegsetWriter):
                         self._ofile.write("\n")
 
             for line in TRAILER:
-                self._ofile.write("%s\n" % line.replace("$M$", self._module))
+                self._ofile.write("%s\n")
 
 
-EXPORTERS = [
-    (
-        ProjectType.REGSET,
-        ExportInfo(
-            CDefines,
-            ("Header files", "C Defines"),
-            "C header files",
-            ".h",
-            "headers-c",
-        ),
-    )
-]
+# EXPORTERS = [
+#     (
+#         ProjectType.REGSET,
+#         ExportInfo(
+#             CDefines,
+#             ("Header files", "C Defines"),
+#             "C header files",
+#             ".h",
+#             "headers-c",
+#         ),
+#     )
+# ]

@@ -20,7 +20,6 @@
 Provides the Verilog RTL generation
 """
 
-import os
 import re
 import copy
 import datetime
@@ -28,7 +27,6 @@ from pathlib import Path
 from collections import defaultdict
 from typing import List, Tuple, TextIO, Set, Dict, NamedTuple
 
-from jinja2 import FileSystemLoader, Environment
 from regenerate.db import (
     TYPES,
     TYPE_TO_OUTPUT,
@@ -40,8 +38,13 @@ from regenerate.db import (
     RegProject,
     ParameterFinder,
 )
-from regenerate.writers.writer_base import WriterBase, ExportInfo, ProjectType
-from regenerate.writers.verilog_reg_def import REG
+from .writer_base import (
+    find_template,
+    RegsetWriter,
+    ExportInfo,
+    ProjectType,
+)
+from .verilog_reg_def import REG
 from regenerate.db.enums import ShareType, ResetType
 
 LOWER_BIT = {128: 4, 64: 3, 32: 2, 16: 1, 8: 0}
@@ -212,14 +215,14 @@ def rshift(val: int, shift: int) -> int:
     return int(val) >> int(shift)
 
 
-class Verilog(WriterBase):
+class Verilog(RegsetWriter):
     """
     Generates a SystemVerilog package representing the registers in
     the UVM format.
     """
 
-    def __init__(self, project: RegProject, dbase: RegisterDb):
-        super().__init__(project, dbase)
+    def __init__(self, project: RegProject, regset: RegisterDb):
+        super().__init__(project, regset)
 
         self.lang = LanguageTerms("input", "output", "always", "reg")
 
@@ -238,7 +241,7 @@ class Verilog(WriterBase):
 
         self.__sorted_regs = [
             reg
-            for reg in dbase.get_all_registers()
+            for reg in regset.get_all_registers()
             if not (reg.flags.do_not_generate_code or reg.ram_size > 0)
         ]
 
@@ -276,7 +279,7 @@ class Verilog(WriterBase):
 
         code_registers = [
             reg
-            for reg in self._dbase.get_all_registers()
+            for reg in self._regset.get_all_registers()
             if not reg.flags.do_not_generate_code
         ]
 
@@ -304,26 +307,17 @@ class Verilog(WriterBase):
         container blocks.
         """
 
-        assert self._dbase is not None
-
-        env = Environment(
-            loader=FileSystemLoader(
-                os.path.join(os.path.dirname(__file__), "templates")
-            ),
-            trim_blocks=True,
-            lstrip_blocks=True,
+        template = find_template(
+            "verilog.template", [("drop_write_share", drop_write_share)]
         )
-        env.filters["drop_write_share"] = drop_write_share
-
-        template = env.get_template("verilog.template")
 
         word_fields = self.generate_group_list(
-            self.build_register_list(), self._data_width
+            self.build_register_list(), self._regset.ports.data_bus_width
         )
 
         if (
-            self._dbase.ports.reset_active_level
-            and not self._dbase.use_interface
+            self._regset.ports.reset_active_level
+            and not self._regset.use_interface
         ):
             reset_edge = "posedge"
         else:
@@ -332,24 +326,24 @@ class Verilog(WriterBase):
         reset_op = (
             ""
             if (
-                self._dbase.ports.reset_active_level
-                and not self._dbase.use_interface
+                self._regset.ports.reset_active_level
+                and not self._regset.use_interface
             )
             else "~"
         )
 
-        input_signals = build_input_signals(self._dbase, self._cell_info)
-        output_signals = build_output_signals(self._dbase, self._cell_info)
-        reg_list = build_logic_list(self._dbase, word_fields, self._cell_info)
+        input_signals = build_input_signals(self._regset, self._cell_info)
+        output_signals = build_output_signals(self._regset, self._cell_info)
+        reg_list = build_logic_list(self._regset, word_fields, self._cell_info)
         oneshot_assigns = build_oneshot_assignments(
             word_fields, self._cell_info
         )
 
         write_address_selects = build_write_address_selects(
-            self._dbase, word_fields
+            self._regset, word_fields
         )
         read_address_selects = build_read_address_selects(
-            self._dbase, word_fields, self._cell_info
+            self._regset, word_fields, self._cell_info
         )
 
         # TODO: fix 64 bit registers with 32 bit width
@@ -358,19 +352,19 @@ class Verilog(WriterBase):
             ofile.write(
                 template.render(
                     year=datetime.datetime.now().date().strftime("%Y"),
-                    db=self._dbase,
-                    ports=build_standard_ports(self._dbase),
+                    db=self._regset,
+                    ports=build_standard_ports(self._regset),
                     reg_list=reg_list,
-                    port_width=build_port_widths(self._dbase),
+                    port_width=build_port_widths(self._regset),
                     input_signals=input_signals,
                     output_signals=output_signals,
                     oneshot_assigns=oneshot_assigns,
                     write_address_selects=write_address_selects,
                     read_address_selects=read_address_selects,
-                    reg_read_output=register_output_definitions(self._dbase),
+                    reg_read_output=register_output_definitions(self._regset),
                     rshift=rshift,
                     reg_field_name=reg_field_name,
-                    parameters=self._dbase.parameters.get(),
+                    parameters=self._regset.parameters.get(),
                     cell_info=self._cell_info,
                     word_fields=word_fields,
                     assign_list=build_assignments(word_fields),
@@ -379,7 +373,7 @@ class Verilog(WriterBase):
                     lang=self.lang,
                     reset_edge=reset_edge,
                     reset_op=reset_op,
-                    low_bit=LOWER_BIT[self._dbase.ports.data_bus_width],
+                    low_bit=LOWER_BIT[self._regset.ports.data_bus_width],
                 )
             )
             self.write_register_modules(ofile)
@@ -388,31 +382,31 @@ class Verilog(WriterBase):
         """Writes the used register module types to the file."""
 
         if (
-            self._dbase.ports.reset_active_level
-            and not self._dbase.use_interface
+            self._regset.ports.reset_active_level
+            and not self._regset.use_interface
         ):
             edge = "posedge"
         else:
             edge = "negedge"
 
         if (
-            self._dbase.ports.reset_active_level
-            and not self._dbase.use_interface
+            self._regset.ports.reset_active_level
+            and not self._regset.use_interface
         ):
             condition = ""
         else:
             condition = "~"
 
         if (
-            self._dbase.ports.byte_strobe_active_level
-            or self._dbase.use_interface
+            self._regset.ports.byte_strobe_active_level
+            or self._regset.use_interface
         ):
             be_level = ""
         else:
             be_level = "~"
 
         name_map = {
-            "MODULE": self._module,
+            "MODULE": self._regset.name,
             "BE_LEVEL": be_level,
             "RESET_CONDITION": condition,
             "RESET_EDGE": edge,
@@ -428,7 +422,7 @@ class Verilog(WriterBase):
                     ofile,
                     [
                         "No definition for %s_%s_reg\n"
-                        % (self._module, self._cell_info[i][0])
+                        % (self._regset.name, self._cell_info[i][0])
                     ],
                 )
 
@@ -436,8 +430,8 @@ class Verilog(WriterBase):
 class SystemVerilog(Verilog):
     """Provides the SystemVerilog version"""
 
-    def __init__(self, project, dbase):
-        super().__init__(project, dbase)
+    def __init__(self, project, regset):
+        super().__init__(project, regset)
         self.lang = LanguageTerms(
             "input logic", "output logic", "always_ff", "logic"
         )
@@ -446,8 +440,8 @@ class SystemVerilog(Verilog):
 class Verilog2001(Verilog):
     "Provides the Verilog2001 version"
 
-    def __init(self, project, dbase):
-        super().__init__(project, dbase)
+    def __init(self, project, regset):
+        super().__init__(project, regset)
 
 
 def drop_write_share(list_in):
@@ -487,11 +481,11 @@ def make_byte_info(
     )
 
 
-def build_port_widths(dbase: RegisterDb):
+def build_port_widths(regset: RegisterDb):
     "Returns the port widths for the signals"
 
-    awidth = dbase.ports.address_bus_width - 1
-    dwidth = dbase.ports.data_bus_width
+    awidth = regset.ports.address_bus_width - 1
+    dwidth = regset.ports.data_bus_width
 
     return {
         "byte_strobe": f"[{dwidth // 8 - 1}:0]",
@@ -507,14 +501,14 @@ def reg_field_name(reg: Register, field: BitField):
 
 
 def build_write_address_selects(
-    dbase: RegisterDb, word_fields: Dict[int, List[ByteInfo]]
+    regset: RegisterDb, word_fields: Dict[int, List[ByteInfo]]
 ) -> List[DecodeInfo]:
     "Returns the information needed to create the write selects"
 
     assigns: List[DecodeInfo] = []
 
-    data_width = dbase.ports.data_bus_width
-    addr_width = dbase.ports.address_bus_width
+    data_width = regset.ports.data_bus_width
+    addr_width = regset.ports.address_bus_width
 
     for addr, val in word_fields.items():
         rval = addr >> LOWER_BIT[data_width]
@@ -528,14 +522,14 @@ def build_write_address_selects(
 
 
 def build_read_address_selects(
-    dbase: RegisterDb, word_fields: Dict[int, List[ByteInfo]], cell_info
+    regset: RegisterDb, word_fields: Dict[int, List[ByteInfo]], cell_info
 ) -> List[DecodeInfo]:
     "Returns the information needed to create the read selects"
 
     assigns: List[DecodeInfo] = []
 
-    data_width = dbase.ports.data_bus_width
-    addr_width = dbase.ports.address_bus_width
+    data_width = regset.ports.data_bus_width
+    addr_width = regset.ports.address_bus_width
 
     for addr, val in word_fields.items():
 
@@ -554,7 +548,7 @@ def build_read_address_selects(
     return assigns
 
 
-def build_output_signals(dbase, cell_info) -> List[Scalar]:
+def build_output_signals(regset, cell_info) -> List[Scalar]:
     "Builds the output signal list"
 
     scalar_ports = []
@@ -564,7 +558,7 @@ def build_output_signals(dbase, cell_info) -> List[Scalar]:
 
     reg_list = [
         reg
-        for reg in dbase.get_all_registers()
+        for reg in regset.get_all_registers()
         if not reg.flags.do_not_generate_code
     ]
 
@@ -645,7 +639,7 @@ def make_scalar(name, vect, dim):
         return Scalar(name, vect)
 
 
-def build_logic_list(_dbase, word_fields, cell_info) -> List[RegDecl]:
+def build_logic_list(_regset, word_fields, cell_info) -> List[RegDecl]:
     "Builds the logic definition list"
 
     reg_list = []
@@ -684,11 +678,11 @@ def build_logic_list(_dbase, word_fields, cell_info) -> List[RegDecl]:
     return reg_list
 
 
-def build_input_signals(dbase: RegisterDb, cell_info) -> List[Scalar]:
+def build_input_signals(regset: RegisterDb, cell_info) -> List[Scalar]:
     "Builds the input list"
 
     signals = set()
-    for reg in dbase.get_all_registers():
+    for reg in regset.get_all_registers():
         for field in reg.get_bit_fields():
             cinfo = cell_info[field.field_type]
             signal = field.control_signal
@@ -801,17 +795,17 @@ def build_assignments(word_fields):
     return assign_list
 
 
-def register_output_definitions(dbase: RegisterDb) -> List[LogicDefResolved]:
+def register_output_definitions(regset: RegisterDb) -> List[LogicDefResolved]:
     "Build the register output definitions"
 
     full_list: List[LogicDef] = []
     new_list: List[LogicDefResolved] = []
 
-    bus_width = dbase.ports.data_bus_width
+    bus_width = regset.ports.data_bus_width
     bytes_per_reg = bus_width // 8
     current_group = -1
 
-    for reg in dbase.get_all_registers():
+    for reg in regset.get_all_registers():
 
         current_offset = reg.address % bytes_per_reg
         base_addr = (reg.address // bytes_per_reg) * bytes_per_reg
@@ -865,12 +859,12 @@ def register_output_definitions(dbase: RegisterDb) -> List[LogicDefResolved]:
     return new_list
 
 
-def build_standard_ports(dbase: RegisterDb) -> PortInfo:
+def build_standard_ports(regset: RegisterDb) -> PortInfo:
     "Returns a dict that maps ports to the port names"
 
-    ports = dbase.ports
+    ports = regset.ports
 
-    if dbase.use_interface:
+    if regset.use_interface:
         return PortInfo(
             "MGMT.CLK",
             "MGMT.RSTn",

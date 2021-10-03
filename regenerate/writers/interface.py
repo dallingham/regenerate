@@ -60,10 +60,10 @@ class InterfaceGen(RegsetWriter):
         container blocks.
         """
 
+        template_dir = Path(__file__) / "templates"
+
         env = Environment(
-            loader=FileSystemLoader(
-                os.path.join(os.path.dirname(__file__), "templates")
-            ),
+            loader=FileSystemLoader(str(template_dir)),
             trim_blocks=True,
             lstrip_blocks=True,
         )

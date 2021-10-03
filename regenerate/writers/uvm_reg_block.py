@@ -40,7 +40,7 @@ from regenerate.db import (
 )
 
 from ..extras.remap import REMAP_NAME
-from .writer_base import ExportInfo, ProjectWriter, ProjectType
+from .writer_base import ExportInfo, ProjectWriter, ProjectType, find_template
 
 GroupData = namedtuple(
     "GroupData",
@@ -103,15 +103,9 @@ class UVMRegBlockRegisters(ProjectWriter):
         container blocks.
         """
 
-        env = Environment(trim_blocks=True, lstrip_blocks=True)
-        env.filters["remove_no_uvm"] = remove_no_uvm
-
-        template_file = (
-            Path(__file__).parent / "templates" / "uvm_reg_block.template"
+        template = find_template(
+            "uvm_reg_block.template", [("remove_no_uvm", remove_no_uvm)]
         )
-
-        with template_file.open() as ofile:
-            template = env.from_string(ofile.read())
 
         used_dbs = self.get_used_databases()
 

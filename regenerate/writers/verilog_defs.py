@@ -74,15 +74,15 @@ class VerilogDefines(WriterBase):
             self._ofile.close()
 
 
-EXPORTERS = [
-    (
-        ProjectType.REGSET,
-        ExportInfo(
-            VerilogDefines,
-            ("RTL", "Verilog defines"),
-            "Verilog header files",
-            ".vh",
-            "rtl-verilog-defines",
-        ),
-    )
-]
+# EXPORTERS = [
+#     (
+#         ProjectType.REGSET,
+#         ExportInfo(
+#             VerilogDefines,
+#             ("RTL", "Verilog defines"),
+#             "Verilog header files",
+#             ".vh",
+#             "rtl-verilog-defines",
+#         ),
+#     )
+# ]
