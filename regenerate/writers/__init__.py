@@ -46,10 +46,14 @@ MODULES = [
     ("verilog", ["Verilog", "Verilog2001", "SystemVerilog"]),
     (
         "address",
-        ["VerilogDefinesWriter", "CDefinesWriter", "VerilogParametersWriter"],
+        [
+            "VerilogDefinesWriter",
+            "CDefinesWriter",
+            "VerilogParametersWriter",
+            "VerilogConstRegPackage",
+        ],
     ),
     ("interface", ["InterfaceGen"]),
-    ("reg_pkg", ["VerilogConstRegPackage"]),
     ("reg_decode", ["RegDecode"]),
     ("ipxact", ["IpXactWriter"]),
     ("c_test", ["CTest"]),

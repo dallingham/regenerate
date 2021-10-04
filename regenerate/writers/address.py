@@ -197,7 +197,7 @@ EXPORTERS = [
         ExportInfo(
             VerliogDefinesWriter,
             ("RTL", "Verilog Defines"),
-            "Verlog header files",
+            "Verilog header files",
             ".vh",
             "rtl-verilog-defines",
         ),
@@ -207,7 +207,7 @@ EXPORTERS = [
         ExportInfo(
             VerliogParametersWriter,
             ("RTL", "Verilog Parameters"),
-            "Verlog header files",
+            "Verilog header files",
             ".vh",
             "rtl-verilog-parameters",
         ),
@@ -216,9 +216,9 @@ EXPORTERS = [
         ProjectType.PROJECT,
         ExportInfo(
             VerliogConstPkgWriter,
-            ("RTL", "Verilog Constants"),
-            "Verlog header files",
-            ".vh",
+            ("RTL", "SystemVerilog Constants"),
+            "Verilog package",
+            ".sv",
             "headers-system-verilog",
         ),
     ),
