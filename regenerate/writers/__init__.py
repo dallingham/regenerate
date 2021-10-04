@@ -29,7 +29,7 @@ to maintain.
 
 from collections import namedtuple
 
-from .writer_base import ProjectType
+from .writer_base import ProjectType, WriterBase
 
 ExportInfo = namedtuple(
     "ExportInfo", ["obj_class", "type", "description", "extension", "id"]
@@ -44,8 +44,10 @@ IMPORT_PATHS = ["regenerate.writers"]
 
 MODULES = [
     ("verilog", ["Verilog", "Verilog2001", "SystemVerilog"]),
-    ("address", ["VerilogDefinesWriter", "CDefinesWriter"]),
-    ("verilog_param", ["VerilogParameters"]),
+    (
+        "address",
+        ["VerilogDefinesWriter", "CDefinesWriter", "VerilogParametersWriter"],
+    ),
     ("interface", ["InterfaceGen"]),
     ("reg_pkg", ["VerilogConstRegPackage"]),
     ("reg_decode", ["RegDecode"]),

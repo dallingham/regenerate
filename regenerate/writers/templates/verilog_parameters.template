@@ -1,0 +1,12 @@
+/*----------------------------------------------------------------------------
+ *
+ * Register Defines
+ *
+ *----------------------------------------------------------------------------
+ */
+
+{% for p in path_data %}
+{% set name = p.block|upper + "__" +  p.regset|upper  + "__" + p.name|upper %}
+parameter bit[{{addr_width-1}}:0] {{name}} = {{addr_width}}'h{{"%x" % p.address}};
+{% endfor %}
+

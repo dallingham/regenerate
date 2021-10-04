@@ -21,11 +21,10 @@ DefsWriter - Writes out Verilog defines representing the register addresses
 """
 
 from pathlib import Path
-from typing import NamedTuple, List, Dict
-from jinja2 import Environment, FileSystemLoader
+from typing import NamedTuple, List, Dict, Optional
 
-from regenerate.db import RegProject, Block, LOGGER
-from .writer_base import ProjectWriter, ExportInfo, ProjectType
+from regenerate.db import RegProject, Block, LOGGER, AddressMap
+from .writer_base import ProjectWriter, ExportInfo, ProjectType, find_template
 
 
 class SignalPath(NamedTuple):
@@ -40,39 +39,46 @@ class AddressWriter(ProjectWriter):
     "Base class that creates a flat list of register paths and addresses"
 
     def __init__(
-        self, project: RegProject, template: str, type_map: Dict[int, str]
+        self,
+        project: RegProject,
+        template: str,
+        type_map: Dict[int, str],
+        addr_map: Optional[AddressMap] = None,
     ):
         super().__init__(project)
         self.type_map = type_map
         self.template = template
+        self.addr_map = addr_map
+        if addr_map:
+            self.addr_width = addr_map.width
+            if addr_map.fixed:
+                self.map_base = addr_map.base
+            else:
+                self.map_base = 0
+        else:
+            self.addr_width = 64
+            self.map_base = 0
 
     def write(self, filename: Path):
         """Writes the output file"""
 
-        template_dir = Path(__file__).parent / "templates"
-
-        # Open the JINJA template
-        env = Environment(
-            loader=FileSystemLoader(str(template_dir)),
-            trim_blocks=True,
-            lstrip_blocks=True,
-        )
-        template = env.get_template(self.template)
+        template = find_template(self.template)
 
         try:
             with filename.open("w") as ofile:
                 ofile.write(
                     template.render(
                         file_base=filename.stem,
-                        path_data=build_map(self._project),
+                        path_data=build_map(self._project, self.map_base),
                         type_map=self.type_map,
+                        addr_width=self.addr_width,
                     )
                 )
         except IOError as msg:
             LOGGER.error("Could not open %s - %s", str(filename), str(msg))
 
 
-def build_map(project: RegProject) -> List[SignalPath]:
+def build_map(project: RegProject, map_base: int) -> List[SignalPath]:
 
     map_list: List[SignalPath] = []
 
@@ -81,7 +87,11 @@ def build_map(project: RegProject) -> List[SignalPath]:
 
         if blk_inst.repeat > 1:
             for blkrpt in range(0, blk_inst.repeat):
-                address = (blkrpt * block.address_size) + blk_inst.address_base
+                address = (
+                    (blkrpt * block.address_size)
+                    + blk_inst.address_base
+                    + map_base
+                )
                 blk_name = f"{blk_inst.name}_{blkrpt}"
                 dump_blkinst(blk_name, block, address, map_list)
         else:
@@ -151,12 +161,32 @@ class VerliogDefinesWriter(AddressWriter):
         super().__init__(project, "verilog_defines.writer", type_map)
 
 
+class VerliogParametersWriter(AddressWriter):
+    """
+    Writes out Verilog defines representing the register addresses
+    """
+
+    def __init__(self, project: RegProject):
+        type_map = {}
+        super().__init__(project, "verilog_parameters.writer", type_map)
+
+
+class VerliogConstPkgWriter(AddressWriter):
+    """
+    Writes out Verilog defines representing the register addresses
+    """
+
+    def __init__(self, project: RegProject):
+        type_map = {}
+        super().__init__(project, "verilog_const_pkg.template", type_map)
+
+
 EXPORTERS = [
     (
         ProjectType.PROJECT,
         ExportInfo(
             CDefinesWriter,
-            ("C", "C Defines Writer"),
+            ("C", "C Defines"),
             "C header files",
             ".h",
             "headers-c",
@@ -166,10 +196,30 @@ EXPORTERS = [
         ProjectType.PROJECT,
         ExportInfo(
             VerliogDefinesWriter,
-            ("RTL", "Verilog Defines Writer"),
+            ("RTL", "Verilog Defines"),
             "Verlog header files",
             ".vh",
             "rtl-verilog-defines",
+        ),
+    ),
+    (
+        ProjectType.PROJECT,
+        ExportInfo(
+            VerliogParametersWriter,
+            ("RTL", "Verilog Parameters"),
+            "Verlog header files",
+            ".vh",
+            "rtl-verilog-parameters",
+        ),
+    ),
+    (
+        ProjectType.PROJECT,
+        ExportInfo(
+            VerliogConstPkgWriter,
+            ("RTL", "Verilog Constants"),
+            "Verlog header files",
+            ".vh",
+            "headers-system-verilog",
         ),
     ),
 ]

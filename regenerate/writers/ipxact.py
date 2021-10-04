@@ -16,8 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
 """
-Actual program. Parses the arguments, and initiates the main window
+IP-XACT register definition exporter. Writes an IP-XACT (or the older Spirit)
+XML files describing the registers.
 """
 
 from pathlib import Path
@@ -70,13 +72,6 @@ WRITE_MAP = {
 }
 
 
-XML = [
-    'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"',
-    'xmlns:ipxact="http://www.accellera.org/XMLSchema/IPXACT/1685-2014"',
-    'xsi:schemaLocation="http://www.accellera.org/XMLSchema/IPXACT/1685-2014 http://www.accellera.org/XMLSchema/IPXACT/1685-2014/index.xsd"',
-]
-
-
 class IpXactWriter(RegsetWriter):
     """
     Generates a SystemVerilog package representing the registers in
@@ -85,6 +80,12 @@ class IpXactWriter(RegsetWriter):
 
     def __init__(self, project: RegProject, regset: RegisterDb):
         super().__init__(project, regset)
+        self.scope = "ipxact"
+        self.schema = [
+            'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"',
+            'xmlns:ipxact="http://www.accellera.org/XMLSchema/IPXACT/1685-2014"',
+            'xsi:schemaLocation="http://www.accellera.org/XMLSchema/IPXACT/1685-2014 http://www.accellera.org/XMLSchema/IPXACT/1685-2014/index.xsd"',
+        ]
 
     def write(self, filename: Path):
         """
@@ -100,10 +101,19 @@ class IpXactWriter(RegsetWriter):
                 db=self._regset,
                 WRITE_MAP=WRITE_MAP,
                 ACCESS_MAP=ACCESS_MAP,
-                scope="ipxact",
-                refs=XML,
+                scope=self.scope,
+                refs=self.schema,
             )
             ofile.write(text)
+
+
+class SpiritWriter(IpXactWriter):
+    def __init__(self, project: RegProject, regset: RegisterDb):
+        super().__init__(project, regset)
+        self.scope = "spirit"
+        self.schema = [
+            'xmlns:spirit="http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009"'
+        ]
 
 
 EXPORTERS = [
@@ -116,5 +126,15 @@ EXPORTERS = [
             ".xml",
             "ip-xact",
         ),
-    )
+    ),
+    (
+        ProjectType.REGSET,
+        ExportInfo(
+            IpXactWriter,
+            ("XML", "Spirit 1.4 Registers"),
+            "Spirit files",
+            ".spirit",
+            "spirit",
+        ),
+    ),
 ]

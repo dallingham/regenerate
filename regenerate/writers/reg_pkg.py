@@ -59,15 +59,15 @@ class VerilogConstRegPackage(ProjectWriter):
             cfile.write("\nendpackage : %s\n" % base)
 
 
-EXPORTERS = [
-    (
-        ProjectType.PROJECT,
-        ExportInfo(
-            VerilogConstRegPackage,
-            ("Headers", "RTL Register Constants"),
-            "SystemVerilog files",
-            ".sv",
-            "headers-system-verilog",
-        ),
-    )
-]
+# EXPORTERS = [
+#     (
+#         ProjectType.PROJECT,
+#         ExportInfo(
+#             VerilogConstRegPackage,
+#             ("Headers", "RTL Register Constants"),
+#             "SystemVerilog files",
+#             ".sv",
+#             "headers-system-verilog",
+#         ),
+#     )
+# ]

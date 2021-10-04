@@ -1,0 +1,15 @@
+/*----------------------------------------------------------------------------
+ *
+ * Register Defines
+ *
+ *----------------------------------------------------------------------------
+ */
+
+package {{file_base}}_pkg;
+
+{% for p in path_data %}
+{% set name = p.block|upper + "__" +  p.regset|upper  + "__" + p.name|upper %}
+  const bit[{{addr_width-1}}:0] {{name}} = {{addr_width}}'h{{"%x" % p.address}};
+{% endfor %}
+
+endpackage : {{file_base}}_pkg
