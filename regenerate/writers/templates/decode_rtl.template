@@ -58,28 +58,29 @@ module {{GROUP}}_decode
    // Output port assignments
 
 {% for inst in ext_insts %}
+  // {{inst}}
   {% if inst.repeat > 1 and not inst.single_decode %}
     {% for i in range(inst.repeat) %}
       {% if flatten %}
-   assign MGMT_{{inst.inst|upper}}_{{i}}.ADDR = MGMT_MAIN.ADDR;
-   assign MGMT_{{inst.inst|upper}}_{{i}}.WDATA = MGMT_MAIN.WDATA;
-   assign MGMT_{{inst.inst|upper}}_{{i}}.BE = MGMT_MAIN.BE;
-   assign MGMT_{{inst.inst|upper}}_{{i}}.RD = MGMT_MAIN.RD & sel_{{inst.inst|lower}}{{i}};
-   assign MGMT_{{inst.inst|upper}}_{{i}}.WR = MGMT_MAIN.WR & sel_{{inst.inst|lower}}{{i}};
+   assign MGMT_{{inst.inst|upper}}_{{i}}.{{inst.db.ports.address_bus_name}} = MGMT_MAIN.ADDR;
+   assign MGMT_{{inst.inst|upper}}_{{i}}.{{inst.db.ports.write_data_name}} = MGMT_MAIN.WDATA;
+   assign MGMT_{{inst.inst|upper}}_{{i}}.{{inst.db.ports.byte_strobe_name}} = MGMT_MAIN.BE;
+   assign MGMT_{{inst.inst|upper}}_{{i}}.{{inst.db.ports.read_data_name}} = MGMT_MAIN.RD & sel_{{inst.inst|lower}}{{i}};
+   assign MGMT_{{inst.inst|upper}}_{{i}}.{{inst.db.ports.write_strobe_name}} = MGMT_MAIN.WR & sel_{{inst.inst|lower}}{{i}};
       {% else %}
-   assign MGMT_{{inst.inst|upper}}[{{i}}].ADDR = MGMT_MAIN.ADDR;
-   assign MGMT_{{inst.inst|upper}}[{{i}}].WDATA = MGMT_MAIN.WDATA;
-   assign MGMT_{{inst.inst|upper}}[{{i}}].BE = MGMT_MAIN.BE;
-   assign MGMT_{{inst.inst|upper}}[{{i}}].RD = MGMT_MAIN.RD & sel_{{inst.inst|lower}}{{i}};
-   assign MGMT_{{inst.inst|upper}}[{{i}}].WR = MGMT_MAIN.WR & sel_{{inst.inst|lower}}{{i}};
+   assign MGMT_{{inst.inst|upper}}[{{i}}].{{inst.db.ports.address_bus_name}} = MGMT_MAIN.ADDR;
+   assign MGMT_{{inst.inst|upper}}[{{i}}].{{inst.db.ports.write_data_name}} = MGMT_MAIN.WDATA;
+   assign MGMT_{{inst.inst|upper}}[{{i}}].{{inst.db.ports.byte_strobe_name}} = MGMT_MAIN.BE;
+   assign MGMT_{{inst.inst|upper}}[{{i}}].{{inst.db.ports.read_strobe_name}} = MGMT_MAIN.RD & sel_{{inst.inst|lower}}{{i}};
+   assign MGMT_{{inst.inst|upper}}[{{i}}].{{inst.db.ports.write_strobe_name}} = MGMT_MAIN.WR & sel_{{inst.inst|lower}}{{i}};
       {% endif %}
     {% endfor %}
   {% else %}
-   assign MGMT_{{inst.inst|upper}}.ADDR = MGMT_MAIN.ADDR;
-   assign MGMT_{{inst.inst|upper}}.WDATA = MGMT_MAIN.WDATA;
-   assign MGMT_{{inst.inst|upper}}.BE = MGMT_MAIN.BE;
-   assign MGMT_{{inst.inst|upper}}.RD = MGMT_MAIN.RD & sel_{{inst.inst|lower}};
-   assign MGMT_{{inst.inst|upper}}.WR = MGMT_MAIN.WR & sel_{{inst.inst|lower}};
+   assign MGMT_{{inst.inst|upper}}.{{inst.db.ports.address_bus_name}} = MGMT_MAIN.ADDR;
+   assign MGMT_{{inst.inst|upper}}.{{inst.db.ports.write_data_name}} = MGMT_MAIN.WDATA;
+   assign MGMT_{{inst.inst|upper}}.{{inst.db.ports.byte_strobe_name}} = MGMT_MAIN.BE;
+   assign MGMT_{{inst.inst|upper}}.{{inst.db.ports.read_strobe_name}} = MGMT_MAIN.RD & sel_{{inst.inst|lower}};
+   assign MGMT_{{inst.inst|upper}}.{{inst.db.ports.write_strobe_name}} = MGMT_MAIN.WR & sel_{{inst.inst|lower}};
   {% endif %}
 {% endfor %}
 
@@ -99,14 +100,10 @@ module {{GROUP}}_decode
       {% else %}
       end else if (sel_{{inst.inst|lower}}{{i}}) begin
       {% endif %}
-      {% if inst in int_insts %}
-         MGMT_MAIN.RDATA = mgmt_{{inst.inst|lower}}[{{i}}].RDATA;
-      {% else %}
-        {% if flatten %}
-         MGMT_MAIN.RDATA = MGMT_{{inst.inst|upper}}_{{i}}.RDATA;
-        {% else  %}
-         MGMT_MAIN.RDATA = MGMT_{{inst.inst|upper}}[{{i}}].RDATA;
-        {% endif %}
+      {% if flatten %}
+         MGMT_MAIN.RDATA = MGMT_{{inst.inst|upper}}_{{i}}.{{inst.db.ports.read_data_name}};
+      {% else  %}
+         MGMT_MAIN.RDATA = MGMT_{{inst.inst|upper}}[{{i}}].{{inst.db.ports.read_data_name}};
       {% endif %}
     {% endfor %}
   {% else %}
@@ -115,11 +112,7 @@ module {{GROUP}}_decode
     {% else %}
       end else if (sel_{{inst.inst|lower}}) begin
     {% endif %}
-      {% if inst in int_insts %}
-         MGMT_MAIN.RDATA = mgmt_{{inst.inst|lower}}.RDATA;
-      {% else %}
-         MGMT_MAIN.RDATA = MGMT_{{inst.inst|upper}}.RDATA;
-      {% endif %}
+         MGMT_MAIN.RDATA = MGMT_{{inst.inst|upper}}.{{inst.db.ports.read_data_name}};
   {% endif %}
 {% endfor %}
       end else begin
@@ -143,14 +136,10 @@ module {{GROUP}}_decode
       {% else %}
       end else if (sel_{{inst.inst|lower}}{{i}}) begin
       {% endif %}
-      {% if inst in int_insts %}
-         MGMT_MAIN.ACK = mgmt_{{inst.inst|lower}}[{{i}}].ACK;
+      {% if flatten %}
+         MGMT_MAIN.ACK = MGMT_{{inst.inst|upper}}_{{i}}.{{inst.db.ports.acknowledge_name}};
       {% else %}
-        {% if flatten %}
-         MGMT_MAIN.ACK = MGMT_{{inst.inst|upper}}_{{i}}.ACK;
-        {% else %}
-         MGMT_MAIN.ACK = MGMT_{{inst.inst|upper}}[{{i}}].ACK;
-        {% endif %}
+         MGMT_MAIN.ACK = MGMT_{{inst.inst|upper}}[{{i}}].{{inst.db.ports.acknowledge_name}};
       {% endif %}
     {% endfor %}
   {% else %}
@@ -159,11 +148,7 @@ module {{GROUP}}_decode
     {% else %}
       end else if (sel_{{inst.inst|lower}}) begin
     {% endif %}
-      {% if inst in int_insts %}
-         MGMT_MAIN.ACK = mgmt_{{inst.inst|lower}}.ACK;
-      {% else %}
-         MGMT_MAIN.ACK = MGMT_{{inst.inst|upper}}.ACK;
-      {% endif %}
+         MGMT_MAIN.ACK = MGMT_{{inst.inst|upper}}.{{inst.db.ports.acknowledge_name}};
   {% endif %}
 {% endfor %}
       end else begin
@@ -171,8 +156,8 @@ module {{GROUP}}_decode
       end
    end
 
-   always_ff @(posedge REG.ACLK or negedge REG.ARESETn) begin
-      if (~REG.ARESETn) begin
+   always_ff @(posedge MGMT_MAIN.CLK or negedge MGMT_MAIN.RSTn) begin
+      if (~MGMT_MAIN.RSTn) begin
          rw_delay <= 1'b0;
       end else begin
          rw_delay <= MGMT_MAIN.RD | MGMT_MAIN.WR;
