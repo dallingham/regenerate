@@ -93,6 +93,7 @@ class ModuleTabs:
             ("reset_signal", "reset_name", EntryWord, "Missing reset name"),
             ("reset_level", "reset_active_level", EntryBool, None),
             ("byte_en_level", "byte_strobe_active_level", EntryBool, None),
+            ("sync_reset", "sync_reset", EntrySwitch, None),
             ("data_width", "data_bus_width", EntryWidth, None),
             (
                 "write_data_bus",
@@ -219,6 +220,7 @@ class ModuleTabs:
 
         self.dbase = None
         self.set_modified = modified
+        self.sync_reset = find_obj("sync_reset")
         self.icon = find_obj("mod_def_warn")
         self.modport_field = find_obj("modport")
         self.imodport_field = find_obj("imodport")

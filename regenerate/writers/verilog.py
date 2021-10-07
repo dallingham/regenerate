@@ -405,10 +405,16 @@ class Verilog(RegsetWriter):
         else:
             be_level = "~"
 
+        if self._regset.ports.sync_reset:
+            trigger = ""
+        else:
+            trigger = f" or {edge} RSTn"
+
         name_map = {
             "MODULE": self._regset.name,
             "BE_LEVEL": be_level,
             "RESET_CONDITION": condition,
+            "RESET_TRIGGER": trigger,
             "RESET_EDGE": edge,
         }
 

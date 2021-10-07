@@ -59,7 +59,9 @@ class Signals:
             "rules", "interface_default", DEF_INTERFACE
         )
         self._modport = rules.get("rules", "modport_default", DEF_MODPORT)
-        self._imodport = rules.get("rules", "initiator_modport_default", DEF_IMODPORT)
+        self._imodport = rules.get(
+            "rules", "initiator_modport_default", DEF_IMODPORT
+        )
         self._write_data = rules.get(
             "rules", "write_data_default", DEF_WDATA_NAME
         )
@@ -80,6 +82,7 @@ class Signals:
         self.byte_strobe_active_level = 1
         self.data_bus_width = 32
         self.address_bus_width = 12
+        self.sync_reset = False
 
     def address_size_in_bytes(self) -> int:
         """Returns the address size in bytes"""
@@ -126,7 +129,7 @@ class Signals:
         Sets _modport, which is accessed via the modport_name property
         """
         self._imodport = name.strip()
-        
+
     @property
     def write_data_name(self) -> str:
         """
@@ -276,6 +279,7 @@ class Signals:
             "reset_level": self.reset_active_level,
             "be_level": self.byte_strobe_active_level,
             "data_bus_width": self.data_bus_width,
+            "sync_reset": self.sync_reset,
             "address_bus_width": self.address_bus_width,
         }
 
@@ -298,3 +302,4 @@ class Signals:
         self.byte_strobe_active_level = data["be_level"]
         self.data_bus_width = data["data_bus_width"]
         self.address_bus_width = data["address_bus_width"]
+        self.sync_reset = data.get("sync_reset", False)
