@@ -417,6 +417,8 @@ class RegisterRst:
         last_index = self._reg.width - 1
         extra_text = []
 
+        footnote = False
+
         for field in reversed(self._reg.get_bit_fields()):
             msb = field.msb.resolve()
             if msb != last_index:
@@ -430,12 +432,17 @@ class RegisterRst:
             if self._decode:
                 val = (self._decode & mask(msb, field.lsb)) >> field.lsb
                 if val != field.reset_value:
-                    ofile.write("     - :resetvalue:`0x%x`\n" % val)
+                    ofile.write("     - :resetvalue:`0x%x`" % val)
                 else:
-                    ofile.write("     - ``0x%x``\n" % val)
+                    ofile.write("     - ``0x%x``" % val)
             else:
-                ofile.write("     - ``0x%x``\n" % field.reset_value)
+                ofile.write("     - ``0x%x``" % field.reset_value)
 
+            if field.use_alternate_reset:
+                ofile.write(" :sup:`*`")
+                footnote = True
+
+            ofile.write("\n")
             ofile.write("     - %s\n" % TYPE_TO_SIMPLE_TYPE[field.field_type])
             ofile.write("     - %s\n" % field.name)
             descr = field.description.strip()
@@ -503,6 +510,9 @@ class RegisterRst:
             ofile.write("\n\n")
             ofile.write(descr)
             ofile.write("\n\n")
+
+        if footnote:
+            ofile.write(":sup:`*` This field uses the secondary reset.\n\n")
 
         if ret_str:
             return ofile.getvalue()
