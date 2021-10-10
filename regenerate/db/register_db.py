@@ -171,11 +171,12 @@ class RegisterDb(NameBase):
 
     @property
     def overview_text(self) -> str:
+        "Backward compatible method to get first document page"
+
         pnames = self.doc_pages.get_page_names()
         if pnames:
             return self.doc_pages.get_page(pnames[0])[0]
-        else:
-            return ""
+        return ""
 
     @property
     def descriptive_title(self) -> str:

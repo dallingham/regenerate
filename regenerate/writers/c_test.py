@@ -22,6 +22,7 @@ Actual program. Parses the arguments, and initiates the main window
 import string
 from pathlib import Path
 
+from regenerate.db import Register, RegisterDb, RegProject
 from regenerate.db.enums import BitType
 from regenerate.extras import find_addresses
 
@@ -62,9 +63,13 @@ CODE_REG32 = [
     "check_reg32(volatile uint32* addr_ptr, uint32 ro_mask, uint32 defval)",
     "{",
     "  if (*addr_ptr     != defval) return 1;",
-    "" "  *addr_ptr = 0xffffffff;",
+    "",
+    "  *addr_ptr = 0xffffffff;",
     "  if ((*addr_ptr & ro_mask) != ro_mask) return 1;",
-    "" "  *addr_ptr = 0x0;" "  if ((*addr_ptr & ro_mask) != 0x0) return 3;" "",
+    "",
+    "  *addr_ptr = 0x0;",
+    "  if ((*addr_ptr & ro_mask) != 0x0) return 3;",
+    "",
     "  *addr_ptr = defval;",
     "  if (*addr_ptr != defval) return 4;",
     "",
@@ -99,7 +104,9 @@ CODE_REG16 = [
     "  *addr_ptr = 0xffff;",
     "  if ((*addr_ptr & ro_mask) != ro_mask) return 2;",
     "",
-    "  *addr_ptr = 0x0;" "  if ((*addr_ptr & ro_mask) != 0x0) return 3;" "",
+    "  *addr_ptr = 0x0;",
+    "  if ((*addr_ptr & ro_mask) != 0x0) return 3;",
+    "",
     "  *addr_ptr = defval;",
     "  if (*addr_ptr != defval) return 4;",
     "",
@@ -115,7 +122,9 @@ CODE_REG8 = [
     "  *addr_ptr = 0xff;",
     "  if ((*addr_ptr & ro_mask) != ro_mask) return 2;",
     "",
-    "  *addr_ptr = 0x0;" "  if ((*addr_ptr & ro_mask) != 0x0) return 3;" "",
+    "  *addr_ptr = 0x0;",
+    "  if ((*addr_ptr & ro_mask) != 0x0) return 3;",
+    "",
     "  *addr_ptr = defval;",
     "  if (*addr_ptr != defval) return 4;",
     "",
@@ -124,98 +133,104 @@ CODE_REG8 = [
 ]
 
 
+def calc_default_value(register: Register):
+    "Calculate the reset value for a register"
+
+    value = 0
+
+    for rng in [
+        register.get_bit_field(key) for key in register.get_bit_field_keys()
+    ]:
+        value = value | (rng.reset_value << rng.start_position)
+    return value
+
+
+def calc_ro_mask(register):
+    "Calculate the Read/Only mask"
+
+    value = 0x0
+
+    for rng in [
+        register.get_bit_field(key) for key in register.get_bit_field_keys()
+    ]:
+        if rng.field_type in (
+            BitType.READ_WRITE,
+            BitType.READ_WRITE_1S,
+            BitType.READ_WRITE_1S_1,
+            BitType.READ_WRITE_LOAD,
+            BitType.READ_WRITE_LOAD_1S,
+            BitType.READ_WRITE_LOAD_1S_1,
+            BitType.READ_WRITE_SET,
+            BitType.READ_WRITE_SET_1S,
+            BitType.READ_WRITE_SET_1S_1,
+            BitType.READ_WRITE_CLR,
+            BitType.READ_WRITE_CLR_1S,
+            BitType.READ_WRITE_PROTECT,
+            BitType.READ_WRITE_PROTECT_1S,
+            BitType.READ_WRITE_CLR_1S_1,
+        ):
+            for i in range(rng.lsb, rng.msb.resolve() + 1):
+                value = value | (1 << i)
+    return value
+
+
+def write_protos(cfile, rlist, name, size):
+    "Write the prototypes"
+
+    if rlist:
+        for index, _ in enumerate(range(0, len(rlist), MAX_REGS)):
+            cfile.write(
+                "uint32 check_{0}_{1}{2} (msgptr func);\n".format(
+                    name, size, string.ascii_letters[index]
+                )
+            )
+
+
+def write_call(cfile, rlist, name, size):
+    if rlist:
+        for index, _ in enumerate(range(0, len(rlist), MAX_REGS)):
+            cfile.write(
+                "  if ((val = check_{}_{}{}(func)) != 0)\n".format(
+                    name, size, string.ascii_letters[index]
+                )
+            )
+            cfile.write("    return val;\n")
+
+
+def write_function(cfile, rlist, name, size, letter, suffix, size_suffix):
+
+    format_str = "    {{0x%08x, 0x%08x{0}, 0x%08x{0}}}".format(size_suffix)
+    data = [format_str % val for val in rlist]
+
+    cfile.write("\n")
+    cfile.write("uint32\n")
+    cfile.write("check_{0}_{1}{2} (msgptr func)\n".format(name, size, letter))
+    cfile.write("{\n")
+    cfile.write("  uint32 val;\n")
+    cfile.write("  static reg{0}_data r[] = {{\n".format(suffix))
+    cfile.write(",\n".join(data))
+    cfile.write("\n  };\n\n")
+    cfile.write("   for (int i = 0; i < {0}; i++) {{\n".format(len(rlist)))
+    cfile.write("     func(r[i].addr);\n")
+    cfile.write(
+        "     val = check_reg{0}(REG_UINT{0}_PTR(r[i].addr), r[i].ro, r[i].def);\n".format(
+            size
+        )
+    )
+    cfile.write("     if (val) return (r[i].addr);\n")
+    cfile.write("   }\n")
+    cfile.write("   return 0;\n")
+    cfile.write("}\n")
+
+
 class CTest(RegsetWriter):
-    def __init__(self, project, regset):
+    def __init__(self, project: RegProject, regset: RegisterDb):
         super().__init__(project, regset)
         self._ofile = None
         self.module_set = set()
 
-    def calc_default_value(self, register):
-        value = 0
-
-        for rng in [
-            register.get_bit_field(key)
-            for key in register.get_bit_field_keys()
-        ]:
-            value = value | (rng.reset_value << rng.start_position)
-        return value
-
-    def calc_ro_mask(self, register):
-        value = 0x0
-
-        for rng in [
-            register.get_bit_field(key)
-            for key in register.get_bit_field_keys()
-        ]:
-            if rng.field_type in (
-                BitType.READ_WRITE,
-                BitType.READ_WRITE_1S,
-                BitType.READ_WRITE_1S_1,
-                BitType.READ_WRITE_LOAD,
-                BitType.READ_WRITE_LOAD_1S,
-                BitType.READ_WRITE_LOAD_1S_1,
-                BitType.READ_WRITE_SET,
-                BitType.READ_WRITE_SET_1S,
-                BitType.READ_WRITE_SET_1S_1,
-                BitType.READ_WRITE_CLR,
-                BitType.READ_WRITE_CLR_1S,
-                BitType.READ_WRITE_PROTECT,
-                BitType.READ_WRITE_PROTECT_1S,
-                BitType.READ_WRITE_CLR_1S_1,
-            ):
-                for i in range(rng.lsb, rng.msb.resolve() + 1):
-                    value = value | (1 << i)
-        return value
-
-    def write_protos(self, cfile, rlist, name, size):
-        if rlist:
-            for index, _ in enumerate(range(0, len(rlist), MAX_REGS)):
-                cfile.write(
-                    "uint32 check_{0}_{1}{2} (msgptr func);\n".format(
-                        name, size, string.ascii_letters[index]
-                    )
-                )
-
-    def write_call(self, cfile, rlist, name, size):
-        if rlist:
-            for index, _ in enumerate(range(0, len(rlist), MAX_REGS)):
-                cfile.write(
-                    "  if ((val = check_{}_{}{}(func)) != 0)\n".format(
-                        name, size, string.ascii_letters[index]
-                    )
-                )
-                cfile.write("    return val;\n")
-
-    def write_function(
-        self, cfile, rlist, name, size, letter, suffix, size_suffix
-    ):
-
-        format_str = "    {{0x%08x, 0x%08x{0}, 0x%08x{0}}}".format(size_suffix)
-        data = [format_str % val for val in rlist]
-
-        cfile.write("\n")
-        cfile.write("uint32\n")
-        cfile.write(
-            "check_{0}_{1}{2} (msgptr func)\n".format(name, size, letter)
-        )
-        cfile.write("{\n")
-        cfile.write("  uint32 val;\n")
-        cfile.write("  static reg{0}_data r[] = {{\n".format(suffix))
-        cfile.write(",\n".join(data))
-        cfile.write("\n  };\n\n")
-        cfile.write("   for (int i = 0; i < {0}; i++) {{\n".format(len(rlist)))
-        cfile.write("     func(r[i].addr);\n")
-        cfile.write(
-            "     val = check_reg{0}(REG_UINT{0}_PTR(r[i].addr), r[i].ro, r[i].def);\n".format(
-                size
-            )
-        )
-        cfile.write("     if (val) return (r[i].addr);\n")
-        cfile.write("   }\n")
-        cfile.write("   return 0;\n")
-        cfile.write("}\n")
-
     def gen_test(self, cfile, regset):
+        "Generate the test"
 
         rdata8 = []
         rdata16 = []
@@ -227,8 +242,8 @@ class CTest(RegsetWriter):
             if register.flags.do_not_test:
                 continue
 
-            default = self.calc_default_value(register)
-            mask = self.calc_ro_mask(register)
+            default = calc_default_value(register)
+            mask = calc_ro_mask(register)
             width = register.width
 
             for addr in find_addresses(self._project, regset.name, register):
@@ -243,10 +258,10 @@ class CTest(RegsetWriter):
 
         cfile.write("\n")
 
-        self.write_protos(cfile, rdata8, regset.name, "8")
-        self.write_protos(cfile, rdata16, regset.name, "16")
-        self.write_protos(cfile, rdata32, regset.name, "32")
-        self.write_protos(cfile, rdata64, regset.name, "64")
+        write_protos(cfile, rdata8, regset.name, "8")
+        write_protos(cfile, rdata16, regset.name, "16")
+        write_protos(cfile, rdata32, regset.name, "32")
+        write_protos(cfile, rdata64, regset.name, "64")
 
         cfile.write("\n")
         cfile.write("uint32\n")
@@ -254,16 +269,16 @@ class CTest(RegsetWriter):
         cfile.write("{\n")
         cfile.write("  uint32 val;\n\n")
 
-        self.write_call(cfile, rdata8, regset.name, "8")
-        self.write_call(cfile, rdata16, regset.name, "16")
-        self.write_call(cfile, rdata32, regset.name, "32")
-        self.write_call(cfile, rdata64, regset.name, "64")
+        write_call(cfile, rdata8, regset.name, "8")
+        write_call(cfile, rdata16, regset.name, "16")
+        write_call(cfile, rdata32, regset.name, "32")
+        write_call(cfile, rdata64, regset.name, "64")
         cfile.write("  return 0;\n}\n\n")
 
         if rdata8:
             for pos, index in enumerate(range(0, len(rdata8), MAX_REGS)):
                 letter = string.ascii_letters[pos]
-                self.write_function(
+                write_function(
                     cfile,
                     rdata8[index:MAX_REGS],
                     regset.name,
@@ -276,7 +291,7 @@ class CTest(RegsetWriter):
         if rdata16:
             for pos, index in enumerate(range(0, len(rdata16), MAX_REGS)):
                 letter = string.ascii_letters[pos]
-                self.write_function(
+                write_function(
                     cfile,
                     rdata16[index:MAX_REGS],
                     regset.name,
@@ -289,7 +304,7 @@ class CTest(RegsetWriter):
         if rdata32:
             for pos, index in enumerate(range(0, len(rdata32), MAX_REGS)):
                 letter = string.ascii_letters[pos]
-                self.write_function(
+                write_function(
                     cfile,
                     rdata32[index : index + MAX_REGS],
                     regset.name,
@@ -302,7 +317,7 @@ class CTest(RegsetWriter):
         if rdata64:
             for pos, index in enumerate(range(0, len(rdata64), MAX_REGS)):
                 letter = string.ascii_letters[pos]
-                self.write_function(
+                write_function(
                     cfile,
                     rdata64[index : index + MAX_REGS],
                     regset.name,

@@ -28,6 +28,8 @@ from .writer_base import ProjectWriter, ExportInfo, ProjectType, find_template
 
 
 class SignalPath(NamedTuple):
+    "Signal path information class"
+
     block: str
     regset: str
     name: str
@@ -79,6 +81,7 @@ class AddressWriter(ProjectWriter):
 
 
 def build_map(project: RegProject, map_base: int) -> List[SignalPath]:
+    "Builds the list of signal paths for the project"
 
     map_list: List[SignalPath] = []
 
@@ -105,6 +108,7 @@ def dump_blkinst(
     address: int,
     map_list: List[SignalPath],
 ) -> None:
+    "Builds the list of signal information for the block instance"
 
     for reg_inst in block.get_regset_insts():
         regset = block.get_regset_from_reg_inst(reg_inst)

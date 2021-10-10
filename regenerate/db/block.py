@@ -134,14 +134,18 @@ class Block(NameBase):
         self.json_decode(json.loads(data))
 
     def get_address_size(self) -> int:
+        "Returns the size of the address space"
         base = 0
         for reginst in self.regset_insts:
             regset = self.regsets[reginst.regset_id]
-            base = max(base, reginst.offset + (1 << regset.ports.address_bus_width))
+            base = max(
+                base, reginst.offset + (1 << regset.ports.address_bus_width)
+            )
         return base
-        
+
     def json_decode(self, data: Dict[str, Any]) -> None:
-        """Compare for equality."""
+        "Compare for equality."
+
         self.name = data["name"]
         self.uuid = data["uuid"]
         self.description = data["description"]
@@ -185,7 +189,7 @@ class Block(NameBase):
                 )
                 exp.options = exp_json["options"]
                 exp.exporter = exp_json["exporter"]
-                
+
                 self.exports.append(exp)
 
         self.overrides = []
@@ -231,7 +235,7 @@ class Block(NameBase):
                 "options": exp.options,
             }
             data["exports"].append(info)
-            
+
         data["regsets"] = {}
         for name in self.regsets:
             new_path = os.path.relpath(

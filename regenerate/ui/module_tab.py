@@ -23,17 +23,16 @@ Handle the module tab
 
 from typing import Callable, List, Optional
 
-from gi.repository import Gdk, Gtk, GtkSource
+from gi.repository import Gtk
 
 from regenerate.db import RegisterDb, RegProject
 
 from .entry import (
     EntryWidth,
-    EntryBool,
+    EntryRadio,
     EntrySwitch,
     EntryText,
     EntryWord,
-    EntrySwitch,
     EntryInt,
 )
 from .base_doc import BaseDoc
@@ -89,54 +88,15 @@ class ModuleTabs:
             ),
             ("modport", "modport_name", EntryWord, "Missing modport name"),
             ("imodport", "imodport_name", EntryWord, "Missing modport name"),
-            ("clock_signal", "clock_name", EntryWord, "Missing clock name"),
-            ("reset_signal", "reset_name", EntryWord, "Missing reset name"),
-            ("reset_level", "reset_active_level", EntryBool, None),
-            ("byte_en_level", "byte_strobe_active_level", EntryBool, None),
+            (
+                ("reset_low", "reset_high"),
+                "reset_active_level",
+                EntryRadio,
+                None,
+            ),
             ("sync_reset", "sync_reset", EntrySwitch, None),
+            ("secondary_reset", "secondary_reset", EntrySwitch, None),
             ("data_width", "data_bus_width", EntryWidth, None),
-            (
-                "write_data_bus",
-                "write_data_name",
-                EntryWord,
-                "Missing write data bus name",
-            ),
-            (
-                "read_data_bus",
-                "read_data_name",
-                EntryWord,
-                "Missing read data bus name",
-            ),
-            (
-                "byte_en_signal",
-                "byte_strobe_name",
-                EntryWord,
-                "Missing byte enable name",
-            ),
-            (
-                "write_strobe",
-                "write_strobe_name",
-                EntryWord,
-                "Missing write strobe name",
-            ),
-            (
-                "ack",
-                "acknowledge_name",
-                EntryWord,
-                "Missing acknowledge signal name",
-            ),
-            (
-                "read_strobe",
-                "read_strobe_name",
-                EntryWord,
-                "Missing read strobe name",
-            ),
-            (
-                "address_bus",
-                "address_bus_name",
-                EntryWord,
-                "Missing address bus name",
-            ),
             (
                 "address_width",
                 "address_bus_width",
@@ -188,13 +148,25 @@ class ModuleTabs:
                     )
                 )
             else:
-                self.port_object_list.append(
-                    class_type(
-                        find_obj(widget_name),
-                        db_name,
-                        self.after_modified,
+                if type(widget_name) is tuple:
+                    self.port_object_list.append(
+                        class_type(
+                            (
+                                find_obj(widget_name[0]),
+                                find_obj(widget_name[1]),
+                            ),
+                            db_name,
+                            self.after_modified,
+                        )
                     )
-                )
+                else:
+                    self.port_object_list.append(
+                        class_type(
+                            find_obj(widget_name),
+                            db_name,
+                            self.after_modified,
+                        )
+                    )
 
         for (widget_name, db_name, class_type, placeholder) in item_list:
             if placeholder is not None:
@@ -221,6 +193,7 @@ class ModuleTabs:
         self.dbase = None
         self.set_modified = modified
         self.sync_reset = find_obj("sync_reset")
+        self.secondary_reset = find_obj("secondary_reset")
         self.icon = find_obj("mod_def_warn")
         self.modport_field = find_obj("modport")
         self.imodport_field = find_obj("imodport")

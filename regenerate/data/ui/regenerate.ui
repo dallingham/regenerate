@@ -148,6 +148,14 @@
     <property name="label" translatable="yes">Project Properties</property>
     <property name="short_label" translatable="yes">Project Properties</property>
   </object>
+  <object class="GtkRadioButton" id="radiobutton1">
+    <property name="label" translatable="yes">radiobutton</property>
+    <property name="visible">True</property>
+    <property name="can_focus">True</property>
+    <property name="receives_default">False</property>
+    <property name="active">True</property>
+    <property name="draw_indicator">True</property>
+  </object>
   <object class="GtkAction" id="reg_grouping_action">
     <property name="label" translatable="yes">Register Set Groupings</property>
     <property name="short_label" translatable="yes">Groupings</property>
@@ -1902,6 +1910,7 @@
                             <property name="can_focus">False</property>
                             <property name="margin_top">3</property>
                             <property name="margin_bottom">3</property>
+                            <property name="row_homogeneous">True</property>
                             <child>
                               <object class="GtkLabel" id="label24">
                                 <property name="visible">True</property>
@@ -1925,162 +1934,21 @@
                                 <property name="can_focus">False</property>
                                 <property name="margin_left">18</property>
                                 <property name="margin_right">6</property>
-                                <property name="label" translatable="yes">Address width:</property>
+                                <property name="margin_top">6</property>
+                                <property name="margin_bottom">6</property>
+                                <property name="label" translatable="yes">Address bus width:</property>
                                 <property name="xalign">0</property>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
-                                <property name="top_attach">15</property>
+                                <property name="top_attach">9</property>
                               </packing>
                             </child>
                             <child>
                               <object class="GtkEntry" id="address_width">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
-                                <property name="invisible_char">●</property>
-                                <property name="primary_icon_activatable">False</property>
-                                <property name="secondary_icon_activatable">False</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">1</property>
-                                <property name="top_attach">15</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="label21">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="margin_left">18</property>
-                                <property name="margin_right">6</property>
-                                <property name="label" translatable="yes">Address:</property>
-                                <property name="xalign">0</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">0</property>
-                                <property name="top_attach">13</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkEntry" id="address_bus">
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="margin_top">3</property>
-                                <property name="margin_bottom">3</property>
-                                <property name="invisible_char">●</property>
-                                <property name="primary_icon_activatable">False</property>
-                                <property name="secondary_icon_activatable">False</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">1</property>
-                                <property name="top_attach">13</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="label29">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="margin_left">18</property>
-                                <property name="margin_right">6</property>
-                                <property name="label" translatable="yes">Acknowledge:	</property>
-                                <property name="xalign">0</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">0</property>
-                                <property name="top_attach">12</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkEntry" id="ack">
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="margin_top">3</property>
-                                <property name="margin_bottom">3</property>
-                                <property name="invisible_char">●</property>
-                                <property name="primary_icon_activatable">False</property>
-                                <property name="secondary_icon_activatable">False</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">1</property>
-                                <property name="top_attach">12</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="label28">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="margin_left">18</property>
-                                <property name="margin_right">6</property>
-                                <property name="label" translatable="yes">Read strobe:</property>
-                                <property name="xalign">0</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">0</property>
-                                <property name="top_attach">11</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkEntry" id="read_strobe">
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="margin_top">3</property>
-                                <property name="margin_bottom">3</property>
-                                <property name="invisible_char">•</property>
-                                <property name="primary_icon_activatable">False</property>
-                                <property name="secondary_icon_activatable">False</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">1</property>
-                                <property name="top_attach">11</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="label20">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="margin_left">18</property>
-                                <property name="margin_right">6</property>
-                                <property name="label" translatable="yes">Write strobe:</property>
-                                <property name="xalign">0</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">0</property>
-                                <property name="top_attach">10</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkEntry" id="write_strobe">
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="margin_top">3</property>
-                                <property name="margin_bottom">3</property>
-                                <property name="invisible_char">●</property>
-                                <property name="primary_icon_activatable">False</property>
-                                <property name="secondary_icon_activatable">False</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">1</property>
-                                <property name="top_attach">10</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="label19">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="margin_left">18</property>
-                                <property name="margin_right">6</property>
-                                <property name="label" translatable="yes">Byte enables:</property>
-                                <property name="xalign">0</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">0</property>
-                                <property name="top_attach">9</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkEntry" id="byte_en_signal">
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="margin_top">3</property>
+                                <property name="margin_top">2</property>
                                 <property name="margin_bottom">3</property>
                                 <property name="invisible_char">●</property>
                                 <property name="primary_icon_activatable">False</property>
@@ -2089,79 +1957,6 @@
                               <packing>
                                 <property name="left_attach">1</property>
                                 <property name="top_attach">9</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkCheckButton" id="byte_en_level">
-                                <property name="label" translatable="yes">active high</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="margin_left">6</property>
-                                <property name="margin_right">24</property>
-                                <property name="draw_indicator">True</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">2</property>
-                                <property name="top_attach">9</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="label18">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="margin_left">18</property>
-                                <property name="margin_right">6</property>
-                                <property name="label" translatable="yes">Read data:</property>
-                                <property name="xalign">0</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">0</property>
-                                <property name="top_attach">8</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkEntry" id="read_data_bus">
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="margin_top">3</property>
-                                <property name="margin_bottom">3</property>
-                                <property name="invisible_char">●</property>
-                                <property name="primary_icon_activatable">False</property>
-                                <property name="secondary_icon_activatable">False</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">1</property>
-                                <property name="top_attach">8</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="label17">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="margin_left">18</property>
-                                <property name="margin_right">6</property>
-                                <property name="label" translatable="yes">Write data:</property>
-                                <property name="xalign">0</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">0</property>
-                                <property name="top_attach">7</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkEntry" id="write_data_bus">
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="margin_top">3</property>
-                                <property name="margin_bottom">3</property>
-                                <property name="invisible_char">●</property>
-                                <property name="primary_icon_activatable">False</property>
-                                <property name="secondary_icon_activatable">False</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">1</property>
-                                <property name="top_attach">7</property>
                               </packing>
                             </child>
                             <child>
@@ -2170,71 +1965,13 @@
                                 <property name="can_focus">False</property>
                                 <property name="margin_left">18</property>
                                 <property name="margin_right">6</property>
-                                <property name="label" translatable="yes">Reset:</property>
+                                <property name="margin_top">6</property>
+                                <property name="margin_bottom">6</property>
+                                <property name="label" translatable="yes">Reset Level:</property>
                                 <property name="xalign">0</property>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
-                                <property name="top_attach">6</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkEntry" id="reset_signal">
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="margin_top">3</property>
-                                <property name="margin_bottom">3</property>
-                                <property name="invisible_char">●</property>
-                                <property name="primary_icon_activatable">False</property>
-                                <property name="secondary_icon_activatable">False</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">1</property>
-                                <property name="top_attach">6</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkCheckButton" id="reset_level">
-                                <property name="label" translatable="yes">active high</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">False</property>
-                                <property name="margin_left">6</property>
-                                <property name="margin_right">24</property>
-                                <property name="draw_indicator">True</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">2</property>
-                                <property name="top_attach">6</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="label15">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="margin_left">18</property>
-                                <property name="margin_right">6</property>
-                                <property name="label" translatable="yes">Clock:</property>
-                                <property name="xalign">0</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">0</property>
-                                <property name="top_attach">5</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkEntry" id="clock_signal">
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="margin_top">3</property>
-                                <property name="margin_bottom">3</property>
-                                <property name="invisible_char">●</property>
-                                <property name="caps_lock_warning">False</property>
-                                <property name="primary_icon_activatable">False</property>
-                                <property name="secondary_icon_activatable">False</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">1</property>
                                 <property name="top_attach">5</property>
                               </packing>
                             </child>
@@ -2243,24 +1980,24 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="margin_left">18</property>
+                                <property name="margin_top">6</property>
+                                <property name="margin_bottom">6</property>
                                 <property name="label" translatable="yes">Data bus width:</property>
                                 <property name="xalign">0</property>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
-                                <property name="top_attach">16</property>
+                                <property name="top_attach">10</property>
                               </packing>
                             </child>
                             <child>
                               <object class="GtkComboBox" id="data_width">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
-                                <property name="margin_top">3</property>
-                                <property name="margin_bottom">3</property>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
-                                <property name="top_attach">16</property>
+                                <property name="top_attach">10</property>
                               </packing>
                             </child>
                             <child>
@@ -2278,7 +2015,7 @@
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
-                                <property name="top_attach">14</property>
+                                <property name="top_attach">8</property>
                                 <property name="width">3</property>
                               </packing>
                             </child>
@@ -2288,6 +2025,8 @@
                                 <property name="can_focus">False</property>
                                 <property name="margin_left">18</property>
                                 <property name="margin_right">6</property>
+                                <property name="margin_top">6</property>
+                                <property name="margin_bottom">6</property>
                                 <property name="label" translatable="yes">Interface Name:</property>
                                 <property name="xalign">0</property>
                               </object>
@@ -2302,6 +2041,8 @@
                                 <property name="can_focus">False</property>
                                 <property name="margin_left">18</property>
                                 <property name="margin_right">6</property>
+                                <property name="margin_top">6</property>
+                                <property name="margin_bottom">6</property>
                                 <property name="label" translatable="yes">Target Modport:</property>
                                 <property name="xalign">0</property>
                               </object>
@@ -2314,6 +2055,7 @@
                               <object class="GtkEntry" id="modport">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
+                                <property name="tooltip_text" translatable="yes">SystemVerilog modport name for the target interface</property>
                                 <property name="margin_top">3</property>
                                 <property name="margin_bottom">3</property>
                                 <property name="text" translatable="yes">target</property>
@@ -2328,6 +2070,7 @@
                               <object class="GtkEntry" id="interface_name">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
+                                <property name="tooltip_text" translatable="yes">SystemVerilog interface name</property>
                                 <property name="margin_top">3</property>
                                 <property name="margin_bottom">3</property>
                                 <property name="text" translatable="yes">MGMT</property>
@@ -2369,8 +2112,8 @@
                               </object>
                               <packing>
                                 <property name="left_attach">3</property>
-                                <property name="top_attach">2</property>
-                                <property name="height">7</property>
+                                <property name="top_attach">1</property>
+                                <property name="height">6</property>
                               </packing>
                             </child>
                             <child>
@@ -2404,7 +2147,7 @@
                               </object>
                               <packing>
                                 <property name="left_attach">3</property>
-                                <property name="top_attach">11</property>
+                                <property name="top_attach">9</property>
                                 <property name="height">6</property>
                               </packing>
                             </child>
@@ -2414,6 +2157,8 @@
                                 <property name="can_focus">False</property>
                                 <property name="margin_left">18</property>
                                 <property name="margin_right">6</property>
+                                <property name="margin_top">6</property>
+                                <property name="margin_bottom">6</property>
                                 <property name="label" translatable="yes">Initiator Modport:</property>
                                 <property name="xalign">0</property>
                               </object>
@@ -2426,7 +2171,9 @@
                               <object class="GtkEntry" id="imodport">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
+                                <property name="tooltip_text" translatable="yes">SystemVerilog modport name for the initiator interface</property>
                                 <property name="text" translatable="yes">initiator</property>
+                                <property name="caps_lock_warning">False</property>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
@@ -2439,6 +2186,8 @@
                                 <property name="can_focus">False</property>
                                 <property name="margin_left">18</property>
                                 <property name="margin_right">6</property>
+                                <property name="margin_top">6</property>
+                                <property name="margin_bottom">6</property>
                                 <property name="label" translatable="yes">SystemVerilog interface: </property>
                                 <property name="xalign">0</property>
                               </object>
@@ -2451,6 +2200,7 @@
                               <object class="GtkSwitch" id="interface">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
+                                <property name="tooltip_text" translatable="yes">Use a SystemVerilog interface instead of individual signals for the module interface</property>
                                 <property name="halign">start</property>
                                 <property name="hexpand">False</property>
                                 <property name="active">True</property>
@@ -2465,25 +2215,112 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="margin_left">18</property>
+                                <property name="margin_top">6</property>
+                                <property name="margin_bottom">6</property>
                                 <property name="label" translatable="yes">Synchronous Reset:</property>
                                 <property name="xalign">0</property>
                               </object>
                               <packing>
                                 <property name="left_attach">0</property>
-                                <property name="top_attach">17</property>
+                                <property name="top_attach">7</property>
                               </packing>
                             </child>
                             <child>
                               <object class="GtkSwitch" id="sync_reset">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
+                                <property name="tooltip_text" translatable="yes">Use synchronous resets</property>
                                 <property name="halign">start</property>
                                 <property name="hexpand">True</property>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
-                                <property name="top_attach">17</property>
+                                <property name="top_attach">7</property>
                               </packing>
+                            </child>
+                            <child>
+                              <object class="GtkLabel" id="secondary_rese">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="margin_left">18</property>
+                                <property name="margin_top">6</property>
+                                <property name="margin_bottom">6</property>
+                                <property name="label" translatable="yes">Secondary Reset:</property>
+                                <property name="xalign">0</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">6</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkSwitch" id="secondary_reset">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="tooltip_text" translatable="yes">Enable a second reset signal that can control the resets of selected registers</property>
+                                <property name="halign">start</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="top_attach">6</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkBox">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="homogeneous">True</property>
+                                <child>
+                                  <object class="GtkRadioButton" id="reset_low">
+                                    <property name="label" translatable="yes">active low</property>
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="receives_default">False</property>
+                                    <property name="active">True</property>
+                                    <property name="draw_indicator">True</property>
+                                    <property name="group">radiobutton1</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkRadioButton" id="reset_high">
+                                    <property name="label" translatable="yes">active high</property>
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="receives_default">False</property>
+                                    <property name="draw_indicator">True</property>
+                                    <property name="group">radiobutton1</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="top_attach">5</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
+                            </child>
+                            <child>
+                              <placeholder/>
                             </child>
                             <child>
                               <placeholder/>

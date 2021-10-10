@@ -269,7 +269,7 @@ class RegProject:
         self._modified = True
         dest = os.path.relpath(dest, self.path.parent)
         self.exports.append(ExportData(exporter, dest))
-        
+
     def remove_from_project_export_list(
         self, exporter: str, dest: str
     ) -> None:
@@ -515,12 +515,8 @@ class RegProject:
     def json_decode(self, data: Dict[str, Any]) -> None:
         """Convert the JSON data back classes"""
 
-        try:
-            self.block_data_path = str(self.path.parent)
-            skip = False
-        except:
-            self.block_data_path = ""
-            skip = True
+        self.block_data_path = str(self.path.parent)
+        skip = False
 
         self.short_name = data["short_name"]
         self.name = data["name"]
@@ -528,12 +524,13 @@ class RegProject:
         self.doc_pages.json_decode(data["doc_pages"])
         self.company_name = data["company_name"]
         self.access_map = data["access_map"]
+
         self.block_insts = data["block_insts"]
         self._filelist = []
 
         if not skip:
             for path in data["filelist"]:
-                full_path = Path(self.path.parent / Path(path)).resolve()
+                full_path = Path(self.path.parent / path).resolve()
                 self._filelist.append(
                     Path(os.path.relpath(full_path, self.path.parent))
                 )

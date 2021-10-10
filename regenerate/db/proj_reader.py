@@ -27,6 +27,7 @@ from pathlib import Path
 from typing import List, Dict, Union
 import xml.parsers.expat
 
+from .xml_base import XmlBase
 from .address_map import AddressMap
 from .block import Block
 from .block_inst import BlockInst
@@ -36,12 +37,14 @@ from .register_inst import RegisterInst
 from .logger import LOGGER
 
 
-class ProjectReader:
+class ProjectReader(XmlBase):
     """
     Reads the project information from the project file.
     """
 
     def __init__(self, project):
+        super().__init__()
+
         self.prj = project
         self.current_group = None
         self.current = ""
@@ -49,7 +52,6 @@ class ProjectReader:
         self.current_access = 0
         self.current_map_group = None
         self.path = Path(".")
-        self.token_list: List[str] = []
         self.id_to_block: Dict[str, Block] = {}
         self.block_insts: List[BlockInst] = []
         self.reg_exports: Dict[str, List[ExportData]] = defaultdict(list)
@@ -83,34 +85,6 @@ class ProjectReader:
         parser.CharacterDataHandler = self.characters
         parser.ParseFile(ofile)
         self.prj.modified = True
-
-    def start_element(self, tag: str, attrs: Dict[str, str]) -> None:
-        """
-        Called every time an XML element begins
-        """
-        self.token_list = []
-        mname = "start_" + tag
-        if hasattr(self, mname):
-            method = getattr(self, mname)
-            method(attrs)
-
-    def end_element(self, tag: str) -> None:
-        """
-        Called every time an XML element end
-        """
-        text = "".join(self.token_list)
-        mname = "end_" + tag
-        if hasattr(self, mname):
-            method = getattr(self, mname)
-            method(text)
-
-    def characters(self, data: str) -> None:
-        """
-        Called with segments of the character data. This is not predictable
-        in how it is called, so we must collect the information for assembly
-        later.
-        """
-        self.token_list.append(data)
 
     def start_project(self, attrs: Dict[str, str]) -> None:
         """Called when a project tag is found"""

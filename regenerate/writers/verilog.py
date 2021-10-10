@@ -38,6 +38,8 @@ from regenerate.db import (
     RegProject,
     ParameterFinder,
 )
+from regenerate.db.enums import ShareType, ResetType
+
 from .writer_base import (
     find_template,
     RegsetWriter,
@@ -45,7 +47,6 @@ from .writer_base import (
     ProjectType,
 )
 from .verilog_reg_def import REG
-from regenerate.db.enums import ShareType, ResetType
 
 LOWER_BIT = {128: 4, 64: 3, 32: 2, 16: 1, 8: 0}
 MODE_SEP = ["_", "_r_", "_w"]
@@ -158,6 +159,7 @@ class PortInfo(NamedTuple):
 
     clk: str
     reset: str
+    alt_reset: str
     interface: str
     modport: str
     write_strobe: str
@@ -874,6 +876,7 @@ def build_standard_ports(regset: RegisterDb) -> PortInfo:
         return PortInfo(
             "MGMT.CLK",
             "MGMT.RSTn",
+            ports.secondary_reset_name,
             ports.interface_name,
             ports.modport_name,
             "MGMT.WR",
@@ -887,6 +890,7 @@ def build_standard_ports(regset: RegisterDb) -> PortInfo:
     return PortInfo(
         ports.clock_name,
         ports.reset_name,
+        ports.secondary_reset_name,
         ports.interface_name,
         ports.modport_name,
         ports.write_strobe_name,

@@ -20,7 +20,7 @@
 """
 Data entry classes.
 """
-from typing import Callable, Optional
+from typing import Callable, Optional, Tuple
 import string
 
 from gi.repository import GObject, Gtk
@@ -124,6 +124,42 @@ class EntryBool:
             self.widget.set_active(getattr(data_obj, self.field_name))
         else:
             self.widget.set_active(0)
+
+    def on_change(self, obj):
+        """Called on the change event"""
+
+        if self.data_obj:
+            setattr(self.data_obj, self.field_name, obj.get_active())
+            self.modified()
+
+
+class EntryRadio:
+    """Connects a database value (boolean) to a checkbox."""
+
+    def __init__(
+        self,
+        widgets: Tuple[Gtk.RadioButton, Gtk.RadioButton],
+        field_name: str,
+        modified: Callable,
+    ):
+        self.widget1 = widgets[0]
+        self.widget2 = widgets[1]
+        self.field_name = field_name
+        self.data_obj = None
+        self.modified = modified
+        self.widget2.connect("toggled", self.on_change)
+
+    def change_db(self, data_obj):
+        """Change the database"""
+
+        self.data_obj = data_obj
+        if data_obj:
+            if getattr(data_obj, self.field_name):
+                self.widget2.set_active(1)
+            else:
+                self.widget1.set_active(1)
+        else:
+            self.widget1.set_active(1)
 
     def on_change(self, obj):
         """Called on the change event"""

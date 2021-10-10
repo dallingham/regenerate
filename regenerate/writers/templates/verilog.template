@@ -31,6 +31,9 @@ module {{db.name}}
     {{lang.input_logic}} {{port_width['addr']}} {{ports.addr}},
     {{lang.input_logic}} {{port_width['write_data']}} {{ports.write_data}},
 {% endif %}
+{% if db.ports.secondary_reset %}
+    {{lang.input_logic}} {{ports.alt_reset}},
+{% endif %}
 {% for signal in input_signals %}
     {{lang.input_logic}} {{signal.vector}} {{signal.name}},
 {% endfor %}
@@ -184,7 +187,11 @@ generate
    {{reg_field_name(reg, field)}}_reg
      (
       .CLK   ({{ports.clk}}),
+{% if db.ports.secondary_reset and field.use_alternate_reset %}
+      .RSTn  ({{ports.alt_reset}}),
+{% else %}
       .RSTn  ({{ports.reset}}),
+{% endif %}      
 {%       if ci.is_read_only == False %}
       .WE    (write_r{{"%02x" % baddr}}{{dimval}}),
       .DI    ({{ports.write_data}}{{wpos}}),

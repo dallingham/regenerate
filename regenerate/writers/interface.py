@@ -20,26 +20,9 @@
 Provides the Verilog RTL generation
 """
 
-import os
-import re
-import copy
-import datetime
 from pathlib import Path
-from collections import defaultdict
-from typing import List, Tuple, TextIO, Set, Dict, NamedTuple
 
 from jinja2 import FileSystemLoader, Environment
-from regenerate.db import (
-    TYPES,
-    TYPE_TO_OUTPUT,
-    Register,
-    BitField,
-    ParamValue,
-    BitType,
-    RegisterDb,
-    RegProject,
-    ParameterFinder,
-)
 from regenerate.writers.writer_base import (
     RegsetWriter,
     ExportInfo,
@@ -48,10 +31,7 @@ from regenerate.writers.writer_base import (
 
 
 class InterfaceGen(RegsetWriter):
-    """"""
-
-    def __init__(self, project: RegProject, regset: RegisterDb):
-        super().__init__(project, regset)
+    "Interface generator"
 
     def write(self, filename: Path) -> None:
         """

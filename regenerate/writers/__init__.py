@@ -59,11 +59,9 @@ MODULES = [
     ("c_test", ["CTest"]),
     ("c_struct", ["CStruct"]),
     ("asm_equ", ["AsmEqu"]),
-    ("odt_doc", ["OdtDoc"]),
     ("rst_doc", ["RstDoc"]),
     ("uvm_reg_block", ["UVMRegBlockRegisters"]),
     ("static_timing", ["Sdc", "Xdc"]),
-    ("spyglass", ["Spyglass"]),
 ]
 
 

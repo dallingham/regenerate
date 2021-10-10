@@ -23,6 +23,7 @@ Parses the register database, loading the database.
 import xml.parsers.expat
 from typing import Dict
 
+from .xml_base import XmlBase
 from .register import Register
 from .bitfield import BitField
 from .bit_values import BitValues
@@ -67,12 +68,14 @@ def cnv_str(attrs: Dict[str, str], key: str, default: str = "") -> str:
     return attrs.get(key, default)
 
 
-class RegParser:
+class RegParser(XmlBase):
     """
     Parses the XML file, loading up the register database.
     """
 
     def __init__(self, dbase):
+        super().__init__()
+
         self.__db = dbase
         self.__reg = None
         self.__field = None
@@ -81,7 +84,6 @@ class RegParser:
         self.__current_token = ""
         self.__reset_type = 0
         self.__reset_parameter = ""
-        self.__token_list = []
         self.save_id = None
         self.existing_ids = set()
         self.found_parameters = set()
@@ -96,30 +98,6 @@ class RegParser:
         parser.CharacterDataHandler = self.characters
         parser.ParseFile(input_file)
         self.__db.modified = True
-
-    def start_element(self, tag: str, attrs: Dict[str, str]) -> None:
-        """Called every time an XML element begins"""
-        self.__token_list = []
-        mname = "start_" + tag
-        if hasattr(self, mname):
-            method = getattr(self, mname)
-            method(attrs)
-
-    def end_element(self, tag: str) -> None:
-        """Called every time an XML element end """
-        text = "".join(self.__token_list)
-        mname = "end_" + tag
-        if hasattr(self, mname):
-            method = getattr(self, mname)
-            method(text)
-
-    def characters(self, data: str) -> None:
-        """
-        Called with segments of the character data. This is not predictable
-        in how it is called, so we must collect the information for assembly
-        later.
-        """
-        self.__token_list.append(data)
 
     def start_module(self, attrs: Dict[str, str]) -> None:
         """

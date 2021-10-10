@@ -83,6 +83,7 @@ class BitField(NameBase):
         "reset_parameter",
         "reset_type",
         "use_output_enable",
+        "use_alternate_reset",
         "values",
     )
 
@@ -111,6 +112,7 @@ class BitField(NameBase):
         "reset_input",
         "reset_parameter",
         "reset_type",
+        "use_alternate_reset",
         "use_output_enable",
         "values",
     )
@@ -135,6 +137,7 @@ class BitField(NameBase):
         self.output_has_side_effect = False
         self.output_is_static = False
         self.use_output_enable = False
+        self.use_alternate_reset = False
 
         self._reset_value = 0
         self.reset_input = ""
@@ -328,6 +331,7 @@ class BitField(NameBase):
             "reset_parameter": self.reset_parameter,
             "reset_type": self.reset_type,
             "use_output_enable": self.use_output_enable,
+            "use_alternate_reset": self.use_alternate_reset,
             "values": self.values,
         }
 
@@ -343,6 +347,7 @@ class BitField(NameBase):
 
         self._output_signal = data["output_signal"]
         self.use_output_enable = data["use_output_enable"]
+        self.use_alternate_reset = data.get("use_alternate_reset", False)
         self.field_type = data["field_type"]
         self.lsb = data["lsb"]
         self.msb = ParamValue()

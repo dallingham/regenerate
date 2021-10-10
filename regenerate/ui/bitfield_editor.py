@@ -82,6 +82,7 @@ class BitFieldEditor(BaseWindow):
         self.control_obj = self.builder.get_object("control")
         self.output_obj = self.builder.get_object("output")
         self.output_enable_obj = self.builder.get_object("outen")
+        self.alt_reset_obj = self.builder.get_object("alt_reset")
         self.input_obj = self.builder.get_object("input")
         self.value_obj = self.builder.get_object("values")
         self.col = None
@@ -141,10 +142,16 @@ class BitFieldEditor(BaseWindow):
             condition = "" if self.dbase.ports.reset_active_level else "~"
             be_level = "" if self.dbase.ports.byte_strobe_active_level else "~"
 
+            if self.dbase.ports.sync_reset:
+                trigger = ""
+            else:
+                trigger = f" or {edge} RSTn"
+
             name_map = {
                 "MODULE": self.dbase.name,
                 "BE_LEVEL": be_level,
                 "RESET_CONDITION": condition,
+                "RESET_TRIGGER": trigger,
                 "RESET_EDGE": edge,
             }
             text = REG[TYPE_TO_ID[bit_field.field_type].lower()] % name_map
@@ -179,6 +186,10 @@ class BitFieldEditor(BaseWindow):
         self.set_active("static", bit_field.output_is_static)
         self.set_active("side_effect", bit_field.output_has_side_effect)
         self.set_active("outen", bit_field.use_output_enable)
+        self.set_active("alt_reset", bit_field.use_alternate_reset)
+        self.builder.get_object("alt_reset").set_sensitive(
+            self.dbase.ports.secondary_reset
+        )
 
         text_buffer = self.builder.get_object("descr").get_buffer()
         text_buffer.connect("changed", self._description_changed)
@@ -312,6 +323,15 @@ class BitFieldEditor(BaseWindow):
         active = self.output_enable_obj.get_active()
         self.bit_field.use_output_enable = active
         self.output_obj.set_sensitive(obj.get_active())
+        self.check_data()
+
+    @modified
+    def on_alt_reset_toggled(self, obj: Gtk.CheckButton) -> None:
+        """
+        Enables the output field based on the output enable field
+        """
+        active = self.alt_reset_obj.get_active()
+        self.bit_field.use_alternate_reset = active
         self.check_data()
 
     def on_descr_key_press_event(

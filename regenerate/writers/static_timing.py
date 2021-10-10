@@ -23,22 +23,62 @@ Static timing - Writes out synthesis constraints
 
 import datetime
 from pathlib import Path
-from typing import NamedTuple, List
+from typing import NamedTuple, List, Tuple
 
-from regenerate.db import RegProject
+from regenerate.db import RegProject, RegisterDb, BitField
 from .writer_base import ProjectWriter, ExportInfo, ProjectType, find_template
 
 
 class RegInstData(NamedTuple):
     "Holds the register instance name and list of its static paths"
+
     name: str
     static_list: List[str]
 
 
 class BlockInstData(NamedTuple):
     "Holds the block instance name and list of its register instance's data"
+
     name: str
     reginst_list: List[RegInstData]
+
+
+def fix_path(path: str) -> str:
+    "Converts the path to the target's expected path"
+
+    return path.replace(".", "/").replace("]/", "].")
+
+
+def get_static_ports(dbase: RegisterDb) -> List[Tuple[int, BitField]]:
+    "Returns the list of static ports"
+
+    fields = []
+    for reg in dbase.get_all_registers():
+        for field in reg.get_bit_fields():
+            if (
+                field.use_output_enable
+                and field.output_signal
+                and field.output_is_static
+            ):
+                fields.append((reg.address, field))
+    return fields
+
+
+def build_hdl_path(hdl1, hdl2, signal, addr, index):
+    "Builds the HDL path from the components"
+
+    if hdl1 and hdl2:
+        path = fix_path(f"{hdl1}/{hdl2}/r{addr:02x}_{signal}")
+    elif hdl1:
+        path = fix_path(f"{hdl1}/r{addr:02x}_{signal}")
+    elif hdl2:
+        path = fix_path(f"{hdl2}/r{addr:02x}_{signal}")
+    else:
+        path = ""
+
+    if index >= 0:
+        return path % index
+    return path
 
 
 class StaticTiming(ProjectWriter):
@@ -49,37 +89,6 @@ class StaticTiming(ProjectWriter):
         self.template = template
         self.dblist = set()
         self.block_list = self.build_data()
-
-    def fix_path(self, path: str) -> str:
-        return path.replace(".", "/").replace("]/", "].")
-
-    def build_hdl_path(self, hdl1, hdl2, signal, addr, index):
-
-        if hdl1 and hdl2:
-            path = self.fix_path(f"{hdl1}/{hdl2}/r{addr:02x}_{signal}")
-        elif hdl1:
-            path = self.fix_path(f"{hdl1}/r{addr:02x}_{signal}")
-        elif hdl2:
-            path = self.fix_path(f"{hdl2}/r{addr:02x}_{signal}")
-        else:
-            path = ""
-
-        if index >= 0:
-            return path % i
-        else:
-            return path
-
-    def get_static_ports(self, dbase):
-        fields = []
-        for reg in dbase.get_all_registers():
-            for field in reg.get_bit_fields():
-                if (
-                    field.use_output_enable
-                    and field.output_signal
-                    and field.output_is_static
-                ):
-                    fields.append((reg.address, field))
-        return fields
 
     def build_data(self) -> List[BlockInstData]:
         """Writes the output file"""
@@ -99,15 +108,13 @@ class StaticTiming(ProjectWriter):
                 static_list = []
                 regset_data = RegInstData(regset.name, static_list)
 
-                ports = self.get_static_ports(regset)
-
-                for (addr, field) in ports:
+                for (addr, field) in get_static_ports(regset):
                     if field.is_constant():
                         continue
                     signal_name = field.name.lower()
                     if regset_inst.repeat.resolve() > 1:
                         for i in range(0, regset_inst.repeat.resolve()):
-                            hdl = self.build_hdl_path(
+                            hdl = build_hdl_path(
                                 blk_inst.hdl_path,
                                 regset_inst.hdl,
                                 signal_name,
@@ -117,7 +124,7 @@ class StaticTiming(ProjectWriter):
                             if hdl:
                                 static_list.append(hdl)
                     else:
-                        hdl = self.build_hdl_path(
+                        hdl = build_hdl_path(
                             blk_inst.hdl_path,
                             regset_inst.hdl,
                             signal_name,
@@ -137,11 +144,11 @@ class StaticTiming(ProjectWriter):
 
         template = find_template("xdc.template")
 
-        t = datetime.datetime.now()
+        timeval = datetime.datetime.now()
         with filename.open("w") as ofile:
             ofile.write(
                 template.render(
-                    date=t.strftime("%H:%M on %Y-%m-%d"),
+                    date=timeval.strftime("%H:%M on %Y-%m-%d"),
                     block_list=self.block_list,
                 )
             )

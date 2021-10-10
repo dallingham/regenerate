@@ -26,8 +26,6 @@ from pathlib import Path
 from typing import List, Set, Dict
 from collections import namedtuple
 
-from jinja2 import Environment
-
 from regenerate.db import (
     RegProject,
     RegisterInst,
@@ -77,7 +75,9 @@ class UVMRegBlockRegisters(ProjectWriter):
 
         return [d for d in self._project.get_address_maps() if not d.uvm]
 
-    def _build_group_maps(self) -> Dict[BlockInst, Set[AddressMap]]:
+    def _block_inst_to_address_map(self) -> Dict[BlockInst, Set[AddressMap]]:
+        "Returns the map of block instances to address maps"
+
         group_maps: Dict[BlockInst, Set[AddressMap]] = {}
         id2blkinst = {}
         for blkinst in self._project.block_insts:
@@ -119,7 +119,7 @@ class UVMRegBlockRegisters(ProjectWriter):
                     ACCESS_MAP=ACCESS_MAP,
                     TYPE_TO_INPUT=TYPE_TO_INPUT,
                     db_grp_maps=self.get_db_groups(),
-                    group_maps=self._build_group_maps(),
+                    group_maps=self._block_inst_to_address_map(),
                     fix_name=fix_name,
                     fix_reg=fix_reg_name,
                     used_maps=self._used_maps(),
@@ -128,10 +128,11 @@ class UVMRegBlockRegisters(ProjectWriter):
             )
 
     def get_db_groups(self):
+        "Returns the data set"
 
         used = set()
         data_set = []
-        group_maps = self._build_group_maps()
+        group_maps = self._block_inst_to_address_map()
         for blk_inst in self._project.block_insts:
             if blk_inst not in group_maps:
                 continue
@@ -156,15 +157,18 @@ class UVMRegBlockRegisters(ProjectWriter):
         return data_set
 
     def get_used_databases(self) -> Set[RegisterInst]:
+        "Gets the register sets used"
 
-        grp_set = set()
+        regsets = set()
         for blk in self._project.blocks.values():
             for regset in blk.regset_insts:
-                grp_set.add(regset)
-        return grp_set
+                regsets.add(regset)
+        return regsets
 
 
 def is_readonly(field: BitField):
+    "Returns True if the type is a read only type"
+
     return TYPES[field.field_type].readonly
 
 
@@ -197,6 +201,8 @@ def individual_access(field: BitField, reg: Register) -> int:
 
 
 def remove_no_uvm(slist: List[Register]) -> List[Register]:
+    "Removes registers that flagged to not use UVM"
+
     return [reg for reg in slist if reg.flags.do_not_use_uvm is False]
 
 
