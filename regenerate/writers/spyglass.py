@@ -102,6 +102,7 @@ EXPORTERS = [
             Spyglass,
             ("Spyglass CDC Checking", "Spyglass Constraints"),
             "SGDC files",
+            "Spyglass timing constraints for quasi-static registers",
             ".sgdc",
             "spy-constraints",
         ),

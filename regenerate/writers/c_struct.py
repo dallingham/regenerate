@@ -166,6 +166,7 @@ EXPORTERS = [
             CStruct,
             ("Header files", "C Structures"),
             "Structures for C Headers",
+            "C structure representing the address map",
             ".h",
             "structs-c",
         ),

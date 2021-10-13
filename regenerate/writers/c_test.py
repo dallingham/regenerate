@@ -377,6 +377,13 @@ class CTest(RegsetWriter):
 EXPORTERS = [
     (
         ProjectType.REGSET,
-        ExportInfo(CTest, ("Test", "C program"), "C files", ".c", "test-c"),
+        ExportInfo(
+            CTest,
+            ("Test", "C program"),
+            "C files",
+            "C source code for a test to verify registers",
+            ".c",
+            "test-c",
+        ),
     )
 ]

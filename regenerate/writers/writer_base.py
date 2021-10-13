@@ -42,7 +42,15 @@ class ProjectType(IntEnum):
 
 
 ExportInfo = namedtuple(
-    "ExportInfo", ["obj_class", "type", "description", "extension", "id"]
+    "ExportInfo",
+    [
+        "obj_class",
+        "type",
+        "description",
+        "full_description",
+        "extension",
+        "id",
+    ],
 )
 
 

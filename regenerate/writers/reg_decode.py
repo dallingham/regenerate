@@ -130,6 +130,7 @@ EXPORTERS = [
             RegDecode,
             ("RTL", "Register Decode Logic"),
             "Register block decoder",
+            "Decoder module to select the correct register module",
             ".sv",
             "decode-sv",
         ),

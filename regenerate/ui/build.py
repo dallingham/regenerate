@@ -40,6 +40,8 @@ from .base_window import BaseWindow
 from .columns import EditableColumn, ToggleColumn
 from .error_dialogs import ErrorMsg
 from .export_assistant import ExportAssistant
+from .rule_builder import Assistant
+
 from .enums import (
     Level,
     BuildCol,
@@ -398,20 +400,18 @@ class Build(BaseWindow):
             ]
         )
 
-        reglist = [(i.name, i.uuid) for i in self.__prj.regsets.values()]
+        # reglist = [(i.name, i.uuid) for i in self.__prj.regsets.values()]
 
-        groups = [
-            (group.name, group.uuid) for group in self.__prj.blocks.values()
-        ]
+        # groups = [
+        #     (group.name, group.uuid) for group in self.__prj.blocks.values()
+        # ]
 
-        ExportAssistant(
-            self.__prj.short_name,
-            optlist,
-            reglist,
-            groups,
-            self.add_callback,
-            self.__build_top,
+        assistant = Assistant(
+            self.__prj,
+            # self.add_callback,
+            # self.__build_top,
         )
+        assistant.show_all()
 
     def add_callback(
         self, filename: str, export_format: str, regset_id: str, blk_id: str

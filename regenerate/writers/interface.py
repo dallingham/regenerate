@@ -65,6 +65,7 @@ EXPORTERS = [
             InterfaceGen,
             ("RTL", "Register Set Interface"),
             "SystemVerilog files",
+            "SystemVerilog interface for the register module control bus",
             ".sv",
             "rtl-interface",
         ),

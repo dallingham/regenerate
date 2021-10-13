@@ -32,7 +32,15 @@ from collections import namedtuple
 from .writer_base import ProjectType, WriterBase
 
 ExportInfo = namedtuple(
-    "ExportInfo", ["obj_class", "type", "description", "extension", "id"]
+    "ExportInfo",
+    [
+        "obj_class",
+        "type",
+        "description",
+        "full_description",
+        "extension",
+        "id",
+    ],
 )
 
 

@@ -73,6 +73,7 @@ EXPORTERS = [
             AsmEqu,
             ("Header files", "Assembler Source"),
             "Assembler files",
+            "Assembler constants for each register's address",
             ".s",
             "headers-asm",
         ),

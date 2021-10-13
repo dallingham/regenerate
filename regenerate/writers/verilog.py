@@ -937,8 +937,9 @@ EXPORTERS = [
         ProjectType.REGSET,
         ExportInfo(
             SystemVerilog,
-            ("RTL", "RTL (SystemVerilog)"),
+            ("RTL", "Register RTL (SystemVerilog)"),
             "SystemVerilog files",
+            "RTL module for the registers in SystemVerilog format",
             ".sv",
             "rtl-system-verilog",
         ),
@@ -947,8 +948,9 @@ EXPORTERS = [
         ProjectType.REGSET,
         ExportInfo(
             Verilog2001,
-            ("RTL", "RTL (Verilog 2001)"),
+            ("RTL", "Register RTL (Verilog 2001)"),
             "Verilog files",
+            "RTL module for the registers in Verilog 2001 format",
             ".v",
             "rtl-verilog-2001",
         ),
@@ -957,8 +959,9 @@ EXPORTERS = [
         ProjectType.REGSET,
         ExportInfo(
             Verilog,
-            ("RTL", "RTL (Verilog 95)"),
+            ("RTL", "Register RTL (Verilog 95)"),
             "Verilog files",
+            "RTL module for the registers in Verilog 95 format",
             ".v",
             "rtl-verilog-95",
         ),

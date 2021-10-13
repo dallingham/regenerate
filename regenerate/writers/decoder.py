@@ -131,6 +131,7 @@ EXPORTERS = [
             AddressDecode,
             ("RTL", "Address decoder"),
             "SystemVerilog files",
+            "Module to select the correct register module by address",
             ".sv",
             "grp-decode",
         ),

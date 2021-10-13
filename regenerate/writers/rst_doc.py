@@ -169,15 +169,15 @@ class RstDoc(ProjectWriter):
                     f.write("\n\n")
 
 
-EXPORTERS = [
-    (
-        ProjectType.PROJECT,
-        ExportInfo(
-            RstDoc,
-            ("Specification", "RestructuredText"),
-            "RestructuredText files",
-            ".rest",
-            "spec-rst",
-        ),
-    )
-]
+# EXPORTERS = [
+#     (
+#         ProjectType.PROJECT,
+#         ExportInfo(
+#             RstDoc,
+#             ("Specification", "RestructuredText"),
+#             "RestructuredText files",
+#             ".rest",
+#             "spec-rst",
+#         ),
+#     )
+# ]

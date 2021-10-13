@@ -241,6 +241,7 @@ EXPORTERS = [
             UVMRegBlockRegisters,
             ("Test", "UVM Registers"),
             "SystemVerilog files",
+            "UVM register class hierarchy for verification",
             ".sv",
             "proj-uvm",
         ),
