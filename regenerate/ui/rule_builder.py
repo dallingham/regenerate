@@ -1,3 +1,4 @@
+import os
 from gi.repository import Gtk
 from regenerate.db import RegProject
 from regenerate.writers import (
@@ -21,11 +22,13 @@ class Assistant(Gtk.Assistant):
 
         self.project = project
         self.format_list = Gtk.TreeView()
-        self.format_model = Gtk.ListStore(str, str, object, int)
+        self.format_model = Gtk.ListStore(str, str, object, int, str)
 
         self.build_intro()
         self.build_format_content()
         self.build_source_content()
+        self.build_options_content()
+        self.build_filename_content()
         self.build_confirm()
 
     def build_intro(self):
@@ -49,13 +52,13 @@ class Assistant(Gtk.Assistant):
         self.set_page_title(box, "Select Output Format")
         label = Gtk.Label(label="Select the output format")
         label.set_line_wrap(True)
-        box.pack_start(label, False, False, 12)
+        box.pack_start(label, False, False, 9)
 
         scroll = Gtk.ScrolledWindow()
         scroll.set_shadow_type(Gtk.ShadowType.IN)
         self.build_format_list()
         scroll.add(self.format_list)
-        box.pack_start(scroll, True, True, 12)
+        box.pack_start(scroll, True, True, 9)
         self.set_page_complete(box, True)
 
     def build_source_content(self):
@@ -67,14 +70,52 @@ class Assistant(Gtk.Assistant):
             label="Select the data source of the file"
         )
         self.source_label.set_line_wrap(True)
-        box.pack_start(self.source_label, False, False, 12)
+        box.pack_start(self.source_label, False, False, 9)
 
         scroll = Gtk.ScrolledWindow()
+        scroll.set_shadow_type(Gtk.ShadowType.IN)
         select_list = self.build_source_list()
         scroll.add(select_list)
-        box.pack_start(scroll, True, True, 12)
+        box.pack_start(scroll, True, True, 9)
         self.set_page_complete(box, True)
 
+    def build_options_content(self):
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.append_page(box)
+        self.set_page_type(box, Gtk.AssistantPageType.CONTENT)
+        self.set_page_title(box, "Select Available Options")
+        self.options_label = Gtk.Label(
+            label="Select the options for the file"
+        )
+        self.options_label.set_line_wrap(True)
+        box.pack_start(self.options_label, False, False, 9)
+
+        # scroll = Gtk.ScrolledWindow()
+        # scroll.set_shadow_type(Gtk.ShadowType.IN)
+        # select_list = self.build_options_list()
+        # scroll.add(select_list)
+        # box.pack_start(scroll, True, True, 9)
+        self.set_page_complete(box, True)
+        
+    def build_filename_content(self):
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.append_page(box)
+        self.set_page_type(box, Gtk.AssistantPageType.CONTENT)
+        self.set_page_title(box, "Select Filename")
+        self.filename_label = Gtk.Label(
+            label="Select the filename for the rule"
+        )
+        self.filename_label.set_line_wrap(True)
+        box.pack_start(self.filename_label, False, False, 9)
+
+        self.choose = Gtk.FileChooserWidget(action=Gtk.FileChooserAction.SAVE)
+        self.choose.set_current_folder(os.curdir)
+        self.choose.show()
+        self.choose.set_border_width(0)
+        
+        box.pack_start(self.choose, True, True, 9)
+        self.set_page_complete(box, True)
+        
     def build_source_list(self):
         source_list = Gtk.TreeView()
         self.source_model = Gtk.ListStore(str, str, object)
@@ -82,7 +123,7 @@ class Assistant(Gtk.Assistant):
         column = ReadOnlyColumn("Source", 0)
         column.set_min_width(250)
         source_list.append_column(column)
-        column = ReadOnlyColumn("Description", 0)
+        column = ReadOnlyColumn("Description", 1)
         source_list.append_column(column)
         return source_list
 
@@ -90,6 +131,8 @@ class Assistant(Gtk.Assistant):
         self.format_list.set_model(self.format_model)
         column = ReadOnlyColumn("Format", 0)
         column.set_min_width(250)
+        self.format_list.append_column(column)
+        column = ReadOnlyColumn("Level", 4)
         self.format_list.append_column(column)
         column = ReadOnlyColumn("Description", 1)
         self.format_list.append_column(column)
@@ -101,11 +144,12 @@ class Assistant(Gtk.Assistant):
                     exp.full_description,
                     exp,
                     ProjectType.REGSET,
+                    "Register Set",
                 ]
             )
         for exp in GRP_EXPORTERS:
             self.format_model.append(
-                row=[exp.type[1], exp.full_description, exp, ProjectType.BLOCK]
+                row=[exp.type[1], exp.full_description, exp, ProjectType.BLOCK, "Block"]
             )
         for exp in PRJ_EXPORTERS:
             self.format_model.append(
@@ -114,8 +158,10 @@ class Assistant(Gtk.Assistant):
                     exp.full_description,
                     exp,
                     ProjectType.PROJECT,
+                    "Project",
                 ]
             )
+        self.format_list.get_selection().select_path((0,))
 
     def build_complete(self):
 
@@ -154,10 +200,6 @@ class Assistant(Gtk.Assistant):
     def get_exporter(self):
         selection = self.format_list.get_selection()
         model, node = selection.get_selected()
-        print(model.get_value(node, 0))
-        print(model.get_value(node, 1))
-        print(model.get_value(node, 2))
-        print(model.get_value(node, 3))
         return (model.get_value(node, 2), model.get_value(node, 3))
 
     def on_apply_clicked(self, *_args):
@@ -165,11 +207,11 @@ class Assistant(Gtk.Assistant):
 
     def on_close_clicked(self, *_args):
         print("The 'Close' button has been clicked")
-        Gtk.main_quit()
+        self.destory()
 
     def on_cancel_clicked(self, *_args):
         print("The Assistant has been cancelled.")
-        Gtk.main_quit()
+        self.destroy()
 
     def on_complete_toggled(self, checkbutton):
         self.set_page_complete(self.complete, checkbutton.get_active())
@@ -188,6 +230,16 @@ class Assistant(Gtk.Assistant):
                     self.source_model.append(
                         row=[regset.name, regset.descriptive_title, regset]
                     )
+            elif category == ProjectType.BLOCK:
+                blocks = sorted(
+                    self.project.blocks.values(), key=lambda x: x.name
+                )
+                self.source_model.clear()
+                for block in blocks:
+                    self.source_model.append(
+                        row=[block.name, block.description, block]
+                    )
+                
         elif page == 2:
             exp, category = self.get_exporter()
             format = exp.type[1]
