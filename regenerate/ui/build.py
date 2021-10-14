@@ -29,7 +29,7 @@ from gi.repository import Gtk, Pango
 from regenerate.settings.paths import INSTALL_PATH
 from regenerate.db import RegProject, RegisterDb, ExportData
 from regenerate.writers import (
-    WriterBase,
+    BaseWriter,
     EXPORTERS,
     PRJ_EXPORTERS,
     GRP_EXPORTERS,
@@ -48,11 +48,11 @@ from .enums import (
 )
 
 
-class ExportInfo(NamedTuple):
+class LocalExportData(NamedTuple):
     "Holds the information for exporters"
 
     name: str
-    cls: WriterBase
+    cls: BaseWriter
     level: Level
 
 
@@ -67,8 +67,8 @@ class Build(BaseWindow):
 
         self.__prj = project
         self.__modlist: List[bool] = []
-        self.__mapopt: Dict[str, ExportInfo] = {}
-        self.__optmap: Dict[str, ExportInfo] = {}
+        self.__mapopt: Dict[str, LocalExportData] = {}
+        self.__optmap: Dict[str, LocalExportData] = {}
 
         self.__base2path = {}
         for item in self.__prj.get_register_set():
@@ -98,12 +98,12 @@ class Build(BaseWindow):
             (Level.PROJECT, PRJ_EXPORTERS),
         ]:
             for item in export_list:
-                value = f"{item.type[1]}"
-                self.__optmap[item.id] = ExportInfo(
+                value = item.description
+                self.__optmap[item.writer_id] = LocalExportData(
                     value, item.obj_class, level
                 )
-                self.__mapopt[value] = ExportInfo(
-                    item.id, item.obj_class, level
+                self.__mapopt[value] = LocalExportData(
+                    item.writer_id, item.obj_class, level
                 )
 
     def __build_interface(self, parent: Gtk.Window) -> None:
@@ -385,20 +385,21 @@ class Build(BaseWindow):
         Brings up the export assistant, to help the user build a new rule
         to add to the builder.
         """
-        optlist = (
-            [
-                (exp_type_fmt(item.type), 0, item.extension)
-                for item in EXPORTERS
-            ]
-            + [
-                (exp_type_fmt(item.type), 1, item.extension)
-                for item in GRP_EXPORTERS
-            ]
-            + [
-                (exp_type_fmt(item.type), 2, item.extension)
-                for item in PRJ_EXPORTERS
-            ]
-        )
+
+        rlist = [
+            (item.description, ProjectType.REGSET, item.file_extension)
+            for item in EXPORTERS
+        ]
+        blist = [
+            (item.description, ProjectType.BLOCK, item.file_extension)
+            for item in GRP_EXPORTERS
+        ]
+        plist = [
+            (item.description, ProjectType.PROJECT, item.file_extension)
+            for item in PRJ_EXPORTERS
+        ]
+
+        optlist = rlist + blist + plist
 
         # reglist = [(i.name, i.uuid) for i in self.__prj.regsets.values()]
 

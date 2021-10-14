@@ -18,6 +18,7 @@ class Assistant(Gtk.Assistant):
         self.connect("cancel", self.on_cancel_clicked)
         self.connect("close", self.on_close_clicked)
         self.connect("apply", self.on_apply_clicked)
+        self.connect("escape", self.on_escape_clicked)
         self.connect("prepare", self.on_prepare_clicked)
 
         self.project = project
@@ -84,9 +85,7 @@ class Assistant(Gtk.Assistant):
         self.append_page(box)
         self.set_page_type(box, Gtk.AssistantPageType.CONTENT)
         self.set_page_title(box, "Select Available Options")
-        self.options_label = Gtk.Label(
-            label="Select the options for the file"
-        )
+        self.options_label = Gtk.Label(label="Select the options for the file")
         self.options_label.set_line_wrap(True)
         box.pack_start(self.options_label, False, False, 9)
 
@@ -96,7 +95,7 @@ class Assistant(Gtk.Assistant):
         # scroll.add(select_list)
         # box.pack_start(scroll, True, True, 9)
         self.set_page_complete(box, True)
-        
+
     def build_filename_content(self):
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.append_page(box)
@@ -112,10 +111,10 @@ class Assistant(Gtk.Assistant):
         self.choose.set_current_folder(os.curdir)
         self.choose.show()
         self.choose.set_border_width(0)
-        
+
         box.pack_start(self.choose, True, True, 9)
         self.set_page_complete(box, True)
-        
+
     def build_source_list(self):
         source_list = Gtk.TreeView()
         self.source_model = Gtk.ListStore(str, str, object)
@@ -140,7 +139,7 @@ class Assistant(Gtk.Assistant):
         for exp in EXPORTERS:
             self.format_model.append(
                 row=[
-                    exp.type[1],
+                    exp.description,
                     exp.full_description,
                     exp,
                     ProjectType.REGSET,
@@ -149,12 +148,18 @@ class Assistant(Gtk.Assistant):
             )
         for exp in GRP_EXPORTERS:
             self.format_model.append(
-                row=[exp.type[1], exp.full_description, exp, ProjectType.BLOCK, "Block"]
+                row=[
+                    exp.description,
+                    exp.full_description,
+                    exp,
+                    ProjectType.BLOCK,
+                    "Block",
+                ]
             )
         for exp in PRJ_EXPORTERS:
             self.format_model.append(
                 row=[
-                    exp.type[1],
+                    exp.description,
                     exp.full_description,
                     exp,
                     ProjectType.PROJECT,
@@ -205,9 +210,12 @@ class Assistant(Gtk.Assistant):
     def on_apply_clicked(self, *_args):
         print("The 'Apply' button has been clicked")
 
+    def on_escape_clicked(self, *_args):
+        print("The escape button has been clicked")
+
     def on_close_clicked(self, *_args):
         print("The 'Close' button has been clicked")
-        self.destory()
+        self.destroy()
 
     def on_cancel_clicked(self, *_args):
         print("The Assistant has been cancelled.")
@@ -239,13 +247,13 @@ class Assistant(Gtk.Assistant):
                     self.source_model.append(
                         row=[block.name, block.description, block]
                     )
-                
+
         elif page == 2:
             exp, category = self.get_exporter()
-            format = exp.type[1]
+            fmt = exp.description
             source = PRJ_SOURCE[category]
             self.source_label.set_text(
-                f"The {format} format requires that you select a {source} as the data source"
+                f"The {fmt} format requires that you select a {source} as the data source"
             )
 
         print(self.get_current_page())

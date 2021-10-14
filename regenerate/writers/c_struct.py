@@ -26,7 +26,8 @@ from pathlib import Path
 from jinja2 import Environment
 
 from regenerate.extras.remap import REMAP_NAME
-from .writer_base import WriterBase, ExportInfo, ProjectType
+from .writer_base import WriterBase, ProjectType
+from .export_info import ExportInfo
 
 
 class CStruct(WriterBase):
@@ -159,16 +160,16 @@ class CStruct(WriterBase):
         return set({db for db in self.dblist if db.set_name in used_sets})
 
 
-EXPORTERS = [
-    (
-        ProjectType.REGSET,
-        ExportInfo(
-            CStruct,
-            ("Header files", "C Structures"),
-            "Structures for C Headers",
-            "C structure representing the address map",
-            ".h",
-            "structs-c",
-        ),
-    )
-]
+# EXPORTERS = [
+#     (
+#         ProjectType.REGSET,
+#         ExportInfo(
+#             CStruct,
+#             ("Header files", "C Structures"),
+#             "Structures for C Headers",
+#             "C structure representing the address map",
+#             ".h",
+#             "structs-c",
+#         ),
+#     )
+# ]

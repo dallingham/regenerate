@@ -124,16 +124,16 @@ class AddressDecode(WriterBase):
         )
 
 
-EXPORTERS = [
-    (
-        ProjectType.REGSET,
-        ExportInfo(
-            AddressDecode,
-            ("RTL", "Address decoder"),
-            "SystemVerilog files",
-            "Module to select the correct register module by address",
-            ".sv",
-            "grp-decode",
-        ),
-    )
-]
+# EXPORTERS = [
+#     (
+#         ProjectType.REGSET,
+#         ExportInfo(
+#             AddressDecode,
+#             ("RTL", "Address decoder"),
+#             "SystemVerilog files",
+#             "Module to select the correct register module by address",
+#             ".sv",
+#             "grp-decode",
+#         ),
+#     )
+# ]

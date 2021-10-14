@@ -24,7 +24,8 @@ XML files describing the registers.
 
 from pathlib import Path
 from regenerate.db import BitType, RegisterDb, RegProject
-from .writer_base import RegsetWriter, ExportInfo, ProjectType, find_template
+from .writer_base import RegsetWriter, ProjectType, find_template
+from .export_info import ExportInfo
 
 #
 # Map regenerate types to UVM type strings
@@ -121,10 +122,12 @@ EXPORTERS = [
         ProjectType.REGSET,
         ExportInfo(
             IpXactWriter,
-            ("XML", "IP-XACT Registers"),
+            "XML",
+            "IP-XACT Registers",
             "IP-XACT files",
             "Register definition file in IP-XACT format",
             ".xml",
+            {},
             "ip-xact",
         ),
     ),
@@ -132,10 +135,12 @@ EXPORTERS = [
         ProjectType.REGSET,
         ExportInfo(
             IpXactWriter,
-            ("XML", "Spirit 1.4 Registers"),
+            "XML",
+            "Spirit 1.4 Registers",
             "Spirit files",
             "Register definition file in the Spirit 1.4 format",
             ".spirit",
+            {},
             "spirit",
         ),
     ),

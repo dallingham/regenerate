@@ -21,7 +21,8 @@ Sdc - Writes out synthesis constraints
 """
 
 from pathlib import Path
-from .writer_base import ProjectWriter, ExportInfo, ProjectType
+from .writer_base import ProjectWriter, ProjectType
+from .export_info import ExportInfo
 
 
 class Spyglass(ProjectWriter):
@@ -100,10 +101,12 @@ EXPORTERS = [
         ProjectType.PROJECT,
         ExportInfo(
             Spyglass,
-            ("Spyglass CDC Checking", "Spyglass Constraints"),
+            "Spyglass CDC Checking",
+            "Spyglass Constraints",
             "SGDC files",
             "Spyglass timing constraints for quasi-static registers",
             ".sgdc",
+            {},
             "spy-constraints",
         ),
     )

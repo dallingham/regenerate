@@ -26,7 +26,8 @@ from regenerate.db import Register, RegisterDb, RegProject
 from regenerate.db.enums import BitType
 from regenerate.extras import find_addresses
 
-from .writer_base import RegsetWriter, ExportInfo, ProjectType
+from .writer_base import RegsetWriter, ProjectType
+from .export_info import ExportInfo
 
 MAX_REGS = 100
 
@@ -379,10 +380,12 @@ EXPORTERS = [
         ProjectType.REGSET,
         ExportInfo(
             CTest,
-            ("Test", "C program"),
+            "Test",
+            "C program",
             "C files",
             "C source code for a test to verify registers",
             ".c",
+            {},
             "test-c",
         ),
     )

@@ -153,27 +153,6 @@ class WriterBase:
         raise NotImplementedError
 
 
-class ProjectWriter:
-    """
-    Writes the register information to the output file determined
-    by the derived class.
-    """
-
-    def __init__(self, project: RegProject) -> None:
-        self._project = project
-        self._project_name = project.short_name
-
-    def set_project(self, obj: RegProject) -> None:
-        self._project = obj
-        self._project_name = obj.short_name
-
-    def write(self, filename: Path):
-        """
-        The child class must override this to provide an implementation.
-        """
-        raise NotImplementedError
-
-
 def find_template(
     template_name: str,
     filters: Optional[List[Tuple[str, Callable]]] = None,
@@ -193,44 +172,45 @@ def find_template(
     return env.get_template(template_name)
 
 
-class RegsetWriter:
+class BaseWriter:
+    def __init__(self, project: RegProject) -> None:
+        self._project = project
+
+    def write(self, filename: Path):
+        "The child class must override this to provide an implementation."
+        raise NotImplementedError
+
+    def set_project(self, obj: RegProject) -> None:
+        self._project = obj
+
+
+class ProjectWriter(BaseWriter):
+    """
+    Writes the register information to the output file determined
+    by the derived class.
+    """
+
+    def __init__(self, project: RegProject) -> None:
+        super().__init__(project)
+
+
+class RegsetWriter(BaseWriter):
     """
     Writes the register information to the output file determined
     by the derived class.
     """
 
     def __init__(self, project: RegProject, regset: RegisterDb) -> None:
-        self._project = project
+        super().__init__(project)
         self._regset = regset
 
-    def set_project(self, obj: RegProject) -> None:
-        self._project = obj
-        self._project_name = obj.short_name
 
-    def write(self, filename: Path):
-        """
-        The child class must override this to provide an implementation.
-        """
-        raise NotImplementedError
-
-
-class BlockWriter:
+class BlockWriter(BaseWriter):
     """
     Writes the register information to the output file determined
     by the derived class.
     """
 
     def __init__(self, project: RegProject, block: Block) -> None:
-        self._project = project
+        super().__init__(project)
         self._block = block
-        self._project_name = project.short_name
-
-    def set_project(self, project: RegProject) -> None:
-        self._project = project
-        self._project_name = project.short_name
-
-    def write(self, filename: Path):
-        """
-        The child class must override this to provide an implementation.
-        """
-        raise NotImplementedError

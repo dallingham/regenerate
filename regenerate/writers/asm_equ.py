@@ -20,10 +20,11 @@
 EquWriter - Writes out Assembler defines (based off the GNU assembler)
 """
 
-from typing import Union, Optional, TextIO
+from typing import Optional, TextIO
 from pathlib import Path
 
-from .writer_base import RegsetWriter, ExportInfo, ProjectType
+from .writer_base import RegsetWriter, ProjectType
+from .export_info import ExportInfo
 from ..db import RegisterDb, Register, RegProject
 
 
@@ -71,10 +72,12 @@ EXPORTERS = [
         ProjectType.REGSET,
         ExportInfo(
             AsmEqu,
-            ("Header files", "Assembler Source"),
+            "Header files",
+            "Assembler Source",
             "Assembler files",
             "Assembler constants for each register's address",
             ".s",
+            {},
             "headers-asm",
         ),
     )

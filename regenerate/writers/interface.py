@@ -23,11 +23,11 @@ Provides the Verilog RTL generation
 from pathlib import Path
 
 from jinja2 import FileSystemLoader, Environment
-from regenerate.writers.writer_base import (
+from .writer_base import (
     RegsetWriter,
-    ExportInfo,
     ProjectType,
 )
+from .export_info import ExportInfo
 
 
 class InterfaceGen(RegsetWriter):
@@ -63,10 +63,12 @@ EXPORTERS = [
         ProjectType.REGSET,
         ExportInfo(
             InterfaceGen,
-            ("RTL", "Register Set Interface"),
+            "RTL",
+            "Register Set Interface",
             "SystemVerilog files",
             "SystemVerilog interface for the register module control bus",
             ".sv",
+            {},
             "rtl-interface",
         ),
     ),

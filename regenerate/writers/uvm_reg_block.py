@@ -38,7 +38,9 @@ from regenerate.db import (
 )
 
 from ..extras.remap import REMAP_NAME
-from .writer_base import ExportInfo, ProjectWriter, ProjectType, find_template
+from .writer_base import ProjectWriter, ProjectType, find_template
+from .export_info import ExportInfo
+
 
 GroupData = namedtuple(
     "GroupData",
@@ -239,10 +241,12 @@ EXPORTERS = [
         ProjectType.PROJECT,
         ExportInfo(
             UVMRegBlockRegisters,
-            ("Test", "UVM Registers"),
+            "Test",
+            "UVM Registers",
             "SystemVerilog files",
             "UVM register class hierarchy for verification",
             ".sv",
+            {},
             "proj-uvm",
         ),
     )

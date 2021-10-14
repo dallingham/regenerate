@@ -24,7 +24,8 @@ from pathlib import Path
 from typing import NamedTuple, List, Dict, Optional
 
 from regenerate.db import RegProject, Block, LOGGER, AddressMap
-from .writer_base import ProjectWriter, ExportInfo, ProjectType, find_template
+from .writer_base import ProjectWriter, ProjectType, find_template
+from .export_info import ExportInfo
 
 
 class SignalPath(NamedTuple):
@@ -190,10 +191,12 @@ EXPORTERS = [
         ProjectType.PROJECT,
         ExportInfo(
             CDefinesWriter,
-            ("C", "C Defines"),
+            "C",
+            "C Defines",
             "C header files",
             "C #define definitions for each register's address",
             ".h",
+            {},
             "headers-c",
         ),
     ),
@@ -201,10 +204,12 @@ EXPORTERS = [
         ProjectType.PROJECT,
         ExportInfo(
             VerliogDefinesWriter,
-            ("RTL", "Verilog Defines"),
+            "RTL",
+            "Verilog Defines",
             "Verilog header files",
             "Verilog `define definitions for each register's address",
             ".vh",
+            {},
             "rtl-verilog-defines",
         ),
     ),
@@ -212,10 +217,12 @@ EXPORTERS = [
         ProjectType.PROJECT,
         ExportInfo(
             VerliogParametersWriter,
-            ("RTL", "Verilog Parameters"),
+            "RTL",
+            "Verilog Parameters",
             "Verilog header files",
             "Verilog parameters for each register's address",
             ".vh",
+            {},
             "rtl-verilog-parameters",
         ),
     ),
@@ -223,10 +230,12 @@ EXPORTERS = [
         ProjectType.PROJECT,
         ExportInfo(
             VerliogConstPkgWriter,
-            ("RTL", "SystemVerilog Constants"),
+            "RTL",
+            "SystemVerilog Constants",
             "Verilog package",
             "SystemVerilog package with a const definitions for each register's address",
             ".sv",
+            {},
             "headers-system-verilog",
         ),
     ),

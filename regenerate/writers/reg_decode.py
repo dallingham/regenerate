@@ -7,7 +7,8 @@ from pathlib import Path
 from typing import List, NamedTuple
 
 from regenerate.db import RegProject, RegisterDb, Block
-from .writer_base import BlockWriter, ExportInfo, ProjectType, find_template
+from .writer_base import BlockWriter, ProjectType, find_template
+from .export_info import ExportInfo
 
 # Define named tuple to hold the data to pass to the template
 
@@ -128,10 +129,12 @@ EXPORTERS = [
         ProjectType.BLOCK,
         ExportInfo(
             RegDecode,
-            ("RTL", "Register Decode Logic"),
+            "RTL",
+            "Register Decode Logic",
             "Register block decoder",
             "Decoder module to select the correct register module",
             ".sv",
+            {},
             "decode-sv",
         ),
     )

@@ -29,19 +29,8 @@ to maintain.
 
 from collections import namedtuple
 
-from .writer_base import ProjectType, WriterBase
-
-ExportInfo = namedtuple(
-    "ExportInfo",
-    [
-        "obj_class",
-        "type",
-        "description",
-        "full_description",
-        "extension",
-        "id",
-    ],
-)
+from .writer_base import ProjectType, WriterBase, BaseWriter
+from .export_info import ExportInfo
 
 
 EXPORTERS = []

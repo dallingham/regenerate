@@ -43,9 +43,9 @@ from regenerate.db.enums import ShareType, ResetType
 from .writer_base import (
     find_template,
     RegsetWriter,
-    ExportInfo,
     ProjectType,
 )
+from .export_info import ExportInfo
 from .verilog_reg_def import REG
 
 LOWER_BIT = {128: 4, 64: 3, 32: 2, 16: 1, 8: 0}
@@ -937,10 +937,12 @@ EXPORTERS = [
         ProjectType.REGSET,
         ExportInfo(
             SystemVerilog,
-            ("RTL", "Register RTL (SystemVerilog)"),
+            "RTL",
+            "Register RTL (SystemVerilog)",
             "SystemVerilog files",
             "RTL module for the registers in SystemVerilog format",
             ".sv",
+            {},
             "rtl-system-verilog",
         ),
     ),
@@ -948,10 +950,12 @@ EXPORTERS = [
         ProjectType.REGSET,
         ExportInfo(
             Verilog2001,
-            ("RTL", "Register RTL (Verilog 2001)"),
+            "RTL",
+            "Register RTL (Verilog 2001)",
             "Verilog files",
             "RTL module for the registers in Verilog 2001 format",
             ".v",
+            {},
             "rtl-verilog-2001",
         ),
     ),
@@ -959,10 +963,12 @@ EXPORTERS = [
         ProjectType.REGSET,
         ExportInfo(
             Verilog,
-            ("RTL", "Register RTL (Verilog 95)"),
+            "RTL",
+            "Register RTL (Verilog 95)",
             "Verilog files",
             "RTL module for the registers in Verilog 95 format",
             ".v",
+            {},
             "rtl-verilog-95",
         ),
     ),

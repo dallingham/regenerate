@@ -26,7 +26,8 @@ from pathlib import Path
 from typing import NamedTuple, List, Tuple
 
 from regenerate.db import RegProject, RegisterDb, BitField
-from .writer_base import ProjectWriter, ExportInfo, ProjectType, find_template
+from .writer_base import ProjectWriter, ProjectType, find_template
+from .export_info import ExportInfo
 
 
 class RegInstData(NamedTuple):
@@ -173,10 +174,12 @@ EXPORTERS = [
         ProjectType.PROJECT,
         ExportInfo(
             Xdc,
-            ("Synthesis", "Vivado Constraints"),
+            "Synthesis",
+            "Vivado Constraints",
             "XDC files",
             "Xilinx timing constraints for static registers",
             ".xdc",
+            {},
             "xdc-constraints",
         ),
     ),
@@ -184,10 +187,12 @@ EXPORTERS = [
         ProjectType.PROJECT,
         ExportInfo(
             Sdc,
-            ("Synthesis", "SDC Constraints"),
+            "Synthesis",
+            "SDC Constraints",
             "SDC files",
             "Synopsys timing constraints for static registers",
             ".sdc",
+            {},
             "syn-constraints",
         ),
     ),
