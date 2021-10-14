@@ -29,6 +29,7 @@ from gi.repository import Gtk, Pango
 from regenerate.settings.paths import INSTALL_PATH
 from regenerate.db import RegProject, RegisterDb, ExportData
 from regenerate.writers import (
+    ExportInfo,
     BaseWriter,
     EXPORTERS,
     PRJ_EXPORTERS,
@@ -39,8 +40,7 @@ from regenerate.writers import (
 from .base_window import BaseWindow
 from .columns import EditableColumn, ToggleColumn
 from .error_dialogs import ErrorMsg
-from .export_assistant import ExportAssistant
-from .rule_builder import Assistant
+from .rule_builder import RuleBuilder
 
 from .enums import (
     Level,
@@ -407,36 +407,36 @@ class Build(BaseWindow):
         #     (group.name, group.uuid) for group in self.__prj.blocks.values()
         # ]
 
-        assistant = Assistant(
+        assistant = RuleBuilder(
             self.__prj,
-            # self.add_callback,
+            self.add_callback,
             # self.__build_top,
         )
         assistant.show_all()
 
     def add_callback(
-        self, filename: str, export_format: str, regset_id: str, blk_id: str
+        self, filename: str, export_info: ExportInfo, uuid: str, project_type: ProjectType
     ) -> None:
         """
         Called when a item has been added to the builder, and is used
         to add the new item to the list view.
         """
 
-        exporter = self.__mapopt[export_format].name
-        if self.__mapopt[export_format].level == Level.REGSET:
-            self.__prj.regsets[regset_id].exports.append(
+        exporter = export_info.writer_id
+        if project_type == ProjectType.REGSET:
+            self.__prj.regsets[uuid].exports.append(
                 ExportData(exporter, filename)
             )
-            self.__prj.regsets[regset_id].modified = True
-            self.__add_item_to_list(regset_id, exporter, filename)
-        elif self.__mapopt[export_format].level == Level.BLOCK:
-            block = self.__prj.blocks[blk_id]
-            self.__add_item_to_list(blk_id, exporter, filename)
+            self.__prj.regsets[uuid].modified = True
+            self.__add_item_to_list(uuid, exporter, filename)
+        elif project_type == ProjectType.BLOCK:
+            block = self.__prj.blocks[uuid]
+            self.__add_item_to_list(uuid, exporter, filename)
             block.exports.append(ExportData(exporter, filename))
             block.modified = True
         else:
             self.__prj.add_to_project_export_list(exporter, filename)
-            self.__add_item_to_list(regset_id, exporter, filename)
+            self.__add_item_to_list(uuid, exporter, filename)
 
     def on_remove_build_clicked(self, _obj: Gtk.Button):
         """

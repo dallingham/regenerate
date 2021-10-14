@@ -1,4 +1,5 @@
 import os
+from typing import Callable
 from gi.repository import Gtk
 from regenerate.db import RegProject
 from regenerate.writers import (
@@ -10,9 +11,10 @@ from regenerate.writers import (
 from .columns import ReadOnlyColumn
 
 
-class Assistant(Gtk.Assistant):
-    def __init__(self, project: RegProject):
+class RuleBuilder(Gtk.Assistant):
+    def __init__(self, project: RegProject, callback: Callable):
         Gtk.Assistant.__init__(self)
+        self.callback = callback
         self.set_title("Assistant")
         self.set_default_size(1150, 600)
         self.connect("cancel", self.on_cancel_clicked)
@@ -75,8 +77,9 @@ class Assistant(Gtk.Assistant):
 
         scroll = Gtk.ScrolledWindow()
         scroll.set_shadow_type(Gtk.ShadowType.IN)
-        select_list = self.build_source_list()
-        scroll.add(select_list)
+        self.source_list = self.build_source_list()
+        scroll.add(self.source_list)
+        self.source_list.get_selection().select_path((0,))
         box.pack_start(scroll, True, True, 9)
         self.set_page_complete(box, True)
 
@@ -107,14 +110,24 @@ class Assistant(Gtk.Assistant):
         self.filename_label.set_line_wrap(True)
         box.pack_start(self.filename_label, False, False, 9)
 
+
+        exporter, level = self.get_exporter()
         self.choose = Gtk.FileChooserWidget(action=Gtk.FileChooserAction.SAVE)
         self.choose.set_current_folder(os.curdir)
+        self.choose.set_local_only(True)
+        file_filter = Gtk.FileFilter()
+        file_filter.set_name(exporter.description)
+        file_filter.add_pattern(f"*{exporter.file_extension}")
+        self.choose.set_filter(file_filter)
+        filename = f"output{exporter.file_extension}"
+        self.choose.set_current_name(filename)
         self.choose.show()
         self.choose.set_border_width(0)
 
         box.pack_start(self.choose, True, True, 9)
         self.set_page_complete(box, True)
-
+        
+    
     def build_source_list(self):
         source_list = Gtk.TreeView()
         self.source_model = Gtk.ListStore(str, str, object)
@@ -129,9 +142,10 @@ class Assistant(Gtk.Assistant):
     def build_format_list(self):
         self.format_list.set_model(self.format_model)
         column = ReadOnlyColumn("Format", 0)
-        column.set_min_width(250)
+        column.set_min_width(225)
         self.format_list.append_column(column)
         column = ReadOnlyColumn("Level", 4)
+        column.set_min_width(100)
         self.format_list.append_column(column)
         column = ReadOnlyColumn("Description", 1)
         self.format_list.append_column(column)
@@ -207,8 +221,17 @@ class Assistant(Gtk.Assistant):
         model, node = selection.get_selected()
         return (model.get_value(node, 2), model.get_value(node, 3))
 
+    def get_source(self):
+        selection = self.source_list.get_selection()
+        model, node = selection.get_selected()
+        print(model, node)
+        return model.get_value(node, 2).uuid
+    
     def on_apply_clicked(self, *_args):
-        print("The 'Apply' button has been clicked")
+        info, level = self.get_exporter()
+        uuid = self.get_source()
+        filename = self.choose.get_filename()
+        self.callback(filename, info, uuid, level)
 
     def on_escape_clicked(self, *_args):
         print("The escape button has been clicked")
