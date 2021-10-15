@@ -23,28 +23,29 @@ Actual program. Parses the arguments, and initiates the main window
 import time
 import os
 from pathlib import Path
+from typing import Dict, Any
 from jinja2 import Environment
 
+from regenerate.db import RegProject, BitField, Register
 from regenerate.extras.remap import REMAP_NAME
-from .writer_base import WriterBase, ProjectType
+from .writer_base import ProjectWriter, ProjectType
 from .export_info import ExportInfo
 
 
-class CStruct(WriterBase):
+class CStruct(ProjectWriter):
     """
     Generates a SystemVerilog package representing the registers in
     the UVM format.
     """
 
-    def __init__(self, project, dblist):
+    def __init__(self, project: RegProject, options: Dict[str, Any]):
         """
         Initialize the object. At the current time, only little endian is
         supported by the package
         """
-        WriterBase.__init__(self, project, None)
-        self.dblist = dblist
+        super().__init__(self, project, options)
 
-    def fix_name(self, field):
+    def fix_name(self, field: BitField):
         """
         Creates a name from the field. If there are any spaces (which the
         UI should prevent), the are converted to underscores. We then replace
@@ -53,10 +54,10 @@ class CStruct(WriterBase):
         name = "_".join(field.name.lower().split())
 
         if name in REMAP_NAME:
-            return "%s_field" % name
+            return f"{name}_field"
         return name
 
-    def fix_reg_name(self, reg):
+    def fix_reg_name(self, reg: Register):
         """
         Creates a name from the register. If there are any spaces (which the
         UI should prevent), the are converted to underscores. We then replace
@@ -65,7 +66,7 @@ class CStruct(WriterBase):
         name = "_".join(reg.token.lower().split())
 
         if name in REMAP_NAME:
-            return "%s_reg" % name
+            return f"{name}_reg"
         return name
 
     def uvm_address_maps(self):

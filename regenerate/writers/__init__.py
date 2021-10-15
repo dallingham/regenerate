@@ -54,9 +54,7 @@ MODULES = [
     ("reg_decode", ["RegDecode"]),
     ("ipxact", ["IpXactWriter"]),
     ("c_test", ["CTest"]),
-    ("c_struct", ["CStruct"]),
     ("asm_equ", ["AsmEqu"]),
-    ("rst_doc", ["RstDoc"]),
     ("uvm_reg_block", ["UVMRegBlockRegisters"]),
     ("static_timing", ["Sdc", "Xdc"]),
 ]

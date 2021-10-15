@@ -36,7 +36,6 @@ class ExportData(JSONEncodable):
         self.options: Dict[str, str] = {}
         if options is not None:
             self.options = options
-        print(self.options)
 
     def __repr__(self) -> str:
         return f"ExportData(exporter={self.exporter}, target={self.target})"

@@ -27,7 +27,7 @@ name, and the listed import times from that module. It makes it simpler
 to maintain.
 """
 
-from typing import NamedTuple, Dict, Any
+from typing import NamedTuple, Dict, Any, Type
 
 from .writer_base import BaseWriter
 
