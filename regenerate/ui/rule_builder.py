@@ -1,3 +1,26 @@
+#
+# Manage registers in a hardware design
+#
+# Copyright (C) 2008  Donald N. Allingham
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+"""
+Provides the rule builder for the build tool.
+"""
+
 import os
 from typing import Callable
 from gi.repository import Gtk
@@ -15,7 +38,7 @@ class RuleBuilder(Gtk.Assistant):
     def __init__(self, project: RegProject, callback: Callable):
         Gtk.Assistant.__init__(self)
         self.callback = callback
-        self.set_title("Assistant")
+        self.set_title("Rule Builder")
         self.set_default_size(1150, 600)
         self.connect("cancel", self.on_cancel_clicked)
         self.connect("close", self.on_close_clicked)
@@ -42,7 +65,9 @@ class RuleBuilder(Gtk.Assistant):
         label = Gtk.Label(
             label="This rule builder will guide you in creating "
             "rules that will build output files from the data "
-            "in this database."
+            "in this database.\n\nThere are three types of rules "
+            "based off their data source. They can use a single "
+            "register set, a single block, or the entire project."
         )
         label.set_line_wrap(True)
         box.pack_start(label, True, True, 0)
@@ -214,6 +239,10 @@ class RuleBuilder(Gtk.Assistant):
         """Called when enable changed"""
         self.reginst_model[path][0] = not self.reginst_model[path][0]
 
+    def addrmap_toggle_changed(self, _cell, path, _source):
+        """Called when enable changed"""
+        self.addrmap_model[path][0] = not self.addrmap_model[path][0]
+        
     def build_options_reginsts(self) -> Gtk.Box:
         exporter, _ = self.get_exporter()
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
@@ -246,6 +275,33 @@ class RuleBuilder(Gtk.Assistant):
         box.show_all()
         return box
 
+    def build_options_addrmaps(self) -> Gtk.Box:
+        exporter, _ = self.get_exporter()
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        label = Gtk.Label(label=exporter.options["addrmaps"])
+        box.pack_start(label, False, False, 6)
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_shadow_type(Gtk.ShadowType.IN)
+        table = Gtk.TreeView()
+        table.append_column(
+            ToggleColumn("Select", self.addrmap_toggle_changed, 0)
+        )
+        table.append_column(ReadOnlyColumn("Address Map", 1))
+        box.pack_start(table, True, True, 6)
+        self.addrmap_model = Gtk.ListStore(bool, str, object)
+
+        for addrmap in self.project.get_address_maps():
+            self.addrmap_model.append(
+                row=[
+                    False,
+                    addrmap.name,
+                    addrmap,
+                ]
+            )
+        table.set_model(self.addrmap_model)
+        box.show_all()
+        return box
+    
     def get_source(self):
         selection = self.source_list.get_selection()
         model, node = selection.get_selected()
@@ -259,6 +315,10 @@ class RuleBuilder(Gtk.Assistant):
         if "reginsts" in info.options:
             options["reginsts"] = [
                 row[3].uuid for row in self.reginst_model if row[0]
+            ]
+        if "addrmaps" in info.options:
+            options["addrmaps"] = [
+                row[1].uuid for row in self.reginst_model if row[0]
             ]
         self.callback(filename, info, uuid, level, options)
 
@@ -307,8 +367,13 @@ class RuleBuilder(Gtk.Assistant):
             )
         elif page == 3:
             box = self.get_nth_page(page)
+            for child in box.get_children():
+                box.remove(child)
             if "reginsts" in exporter.options:
                 widget = self.build_options_reginsts()
+                box.pack_start(widget, True, True, 6)
+            if "addrmaps" in exporter.options:
+                widget = self.build_options_addrmaps()
                 box.pack_start(widget, True, True, 6)
 
 

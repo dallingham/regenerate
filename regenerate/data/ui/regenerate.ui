@@ -2441,9 +2441,11 @@
                 <property name="can_focus">False</property>
                 <property name="margin_top">12</property>
                 <property name="margin_bottom">12</property>
-                <property name="label" translatable="yes">&lt;b&gt;Registers&lt;/b&gt;</property>
-                <property name="use_markup">True</property>
+                <property name="label" translatable="yes">Register Sets</property>
                 <property name="angle">90</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
               </object>
               <packing>
                 <property name="tab_fill">False</property>
@@ -3164,9 +3166,11 @@
                 <property name="can_focus">False</property>
                 <property name="margin_top">12</property>
                 <property name="margin_bottom">12</property>
-                <property name="label" translatable="yes">&lt;b&gt;Blocks&lt;/b&gt;</property>
-                <property name="use_markup">True</property>
+                <property name="label" translatable="yes">Blocks</property>
                 <property name="angle">90</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
               </object>
               <packing>
                 <property name="position">1</property>
@@ -3896,9 +3900,11 @@
                 <property name="can_focus">False</property>
                 <property name="margin_top">12</property>
                 <property name="margin_bottom">12</property>
-                <property name="label" translatable="yes">&lt;b&gt;Top Level&lt;/b&gt;</property>
-                <property name="use_markup">True</property>
+                <property name="label" translatable="yes">Top Level</property>
                 <property name="angle">90</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
               </object>
               <packing>
                 <property name="position">2</property>
