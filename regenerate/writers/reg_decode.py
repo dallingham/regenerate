@@ -4,7 +4,7 @@ SystemVerilog RTL register decoder generator
 
 import sys
 from pathlib import Path
-from typing import List, NamedTuple
+from typing import List, NamedTuple, Dict
 
 from regenerate.db import RegProject, RegisterDb, Block
 from .writer_base import BlockWriter, ProjectType, find_template
@@ -24,8 +24,8 @@ class BlockInfo(NamedTuple):
 
 
 class RegDecode(BlockWriter):
-    def __init__(self, prj: RegProject, blkid: str):
-        super().__init__(prj, blkid)
+    def __init__(self, prj: RegProject, block: Block, options: Dict[str, str]):
+        super().__init__(prj, block, options)
 
     def find_group_data(self, prj: RegProject, name: str) -> Block:
         """Finds the group structure based on the name provided"""
@@ -134,7 +134,9 @@ EXPORTERS = [
             "Register block decoder",
             "Decoder module to select the correct register module",
             ".sv",
-            {},
+            {
+                "reginsts": "Select the register set instances used by the decoder",
+            },
             "decode-sv",
         ),
     )

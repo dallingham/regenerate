@@ -415,7 +415,12 @@ class Build(BaseWindow):
         assistant.show_all()
 
     def add_callback(
-        self, filename: str, export_info: ExportInfo, uuid: str, project_type: ProjectType
+        self,
+        filename: str,
+        export_info: ExportInfo,
+        uuid: str,
+        project_type: ProjectType,
+        options,
     ) -> None:
         """
         Called when a item has been added to the builder, and is used
@@ -425,7 +430,7 @@ class Build(BaseWindow):
         exporter = export_info.writer_id
         if project_type == ProjectType.REGSET:
             self.__prj.regsets[uuid].exports.append(
-                ExportData(exporter, filename)
+                ExportData(exporter, filename, options)
             )
             self.__prj.regsets[uuid].modified = True
             self.__add_item_to_list(uuid, exporter, filename)

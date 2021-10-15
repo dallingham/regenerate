@@ -30,10 +30,13 @@ class ExportData(JSONEncodable):
     the exporter name (option) and the destination file (path).
     """
 
-    def __init__(self, exporter: str = "", target: str = ""):
+    def __init__(self, exporter: str = "", target: str = "", options=None):
         self.exporter: str = exporter
         self.target: str = str(target)
-        self.options: Dict[str, str] = {}
+        if options:
+            self.options: Dict[str, str] = options
+        else:
+            self.options: Dict[str, str] = {}
 
     def __repr__(self) -> str:
         return f"ExportData(exporter={self.exporter}, target={self.target})"

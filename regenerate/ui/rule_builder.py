@@ -8,7 +8,7 @@ from regenerate.writers import (
     PRJ_EXPORTERS,
     ProjectType,
 )
-from .columns import ReadOnlyColumn
+from .columns import ReadOnlyColumn, ToggleColumn
 
 
 class RuleBuilder(Gtk.Assistant):
@@ -88,15 +88,6 @@ class RuleBuilder(Gtk.Assistant):
         self.append_page(box)
         self.set_page_type(box, Gtk.AssistantPageType.CONTENT)
         self.set_page_title(box, "Select Available Options")
-        self.options_label = Gtk.Label(label="Select the options for the file")
-        self.options_label.set_line_wrap(True)
-        box.pack_start(self.options_label, False, False, 9)
-
-        # scroll = Gtk.ScrolledWindow()
-        # scroll.set_shadow_type(Gtk.ShadowType.IN)
-        # select_list = self.build_options_list()
-        # scroll.add(select_list)
-        # box.pack_start(scroll, True, True, 9)
         self.set_page_complete(box, True)
 
     def build_filename_content(self):
@@ -109,7 +100,6 @@ class RuleBuilder(Gtk.Assistant):
         )
         self.filename_label.set_line_wrap(True)
         box.pack_start(self.filename_label, False, False, 9)
-
 
         exporter, level = self.get_exporter()
         self.choose = Gtk.FileChooserWidget(action=Gtk.FileChooserAction.SAVE)
@@ -126,8 +116,7 @@ class RuleBuilder(Gtk.Assistant):
 
         box.pack_start(self.choose, True, True, 9)
         self.set_page_complete(box, True)
-        
-    
+
     def build_source_list(self):
         source_list = Gtk.TreeView()
         self.source_model = Gtk.ListStore(str, str, object)
@@ -221,17 +210,57 @@ class RuleBuilder(Gtk.Assistant):
         model, node = selection.get_selected()
         return (model.get_value(node, 2), model.get_value(node, 3))
 
+    def reginst_toggle_changed(self, _cell, path, _source):
+        """Called when enable changed"""
+        self.reginst_model[path][0] = not self.reginst_model[path][0]
+
+    def build_options_reginsts(self) -> Gtk.Box:
+        exporter, _ = self.get_exporter()
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        label = Gtk.Label(label=exporter.options["reginsts"])
+        box.pack_start(label, False, False, 6)
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_shadow_type(Gtk.ShadowType.IN)
+        table = Gtk.TreeView()
+        table.append_column(
+            ToggleColumn("Select", self.reginst_toggle_changed, 0)
+        )
+        table.append_column(ReadOnlyColumn("Register Set Instance", 1))
+        table.append_column(ReadOnlyColumn("Register Set", 2))
+        box.pack_start(table, True, True, 6)
+        self.reginst_model = Gtk.ListStore(bool, str, str, object)
+
+        blkid = self.get_source()
+        block = self.project.blocks[blkid]
+
+        for reginst in block.regset_insts:
+            self.reginst_model.append(
+                row=[
+                    False,
+                    reginst.name,
+                    self.project.regsets[reginst.regset_id].name,
+                    reginst,
+                ]
+            )
+        table.set_model(self.reginst_model)
+        box.show_all()
+        return box
+
     def get_source(self):
         selection = self.source_list.get_selection()
         model, node = selection.get_selected()
-        print(model, node)
         return model.get_value(node, 2).uuid
-    
+
     def on_apply_clicked(self, *_args):
         info, level = self.get_exporter()
         uuid = self.get_source()
         filename = self.choose.get_filename()
-        self.callback(filename, info, uuid, level)
+        options = {}
+        if "reginsts" in info.options:
+            options["reginsts"] = [
+                row[3].uuid for row in self.reginst_model if row[0]
+            ]
+        self.callback(filename, info, uuid, level, options)
 
     def on_escape_clicked(self, *_args):
         print("The escape button has been clicked")
@@ -250,8 +279,8 @@ class RuleBuilder(Gtk.Assistant):
     def on_prepare_clicked(self, _assistant: Gtk.Assistant, _page):
         PRJ_SOURCE = ("register set", "block", "project")
         page = self.get_current_page()
-        if page == 1:
-            exp, category = self.get_exporter()
+        exporter, category = self.get_exporter()
+        if page == 2:
             if category == ProjectType.REGSET:
                 rsets = sorted(
                     self.project.regsets.values(), key=lambda x: x.name
@@ -270,16 +299,17 @@ class RuleBuilder(Gtk.Assistant):
                     self.source_model.append(
                         row=[block.name, block.description, block]
                     )
-
-        elif page == 2:
             exp, category = self.get_exporter()
             fmt = exp.description
             source = PRJ_SOURCE[category]
             self.source_label.set_text(
                 f"The {fmt} format requires that you select a {source} as the data source"
             )
-
-        print(self.get_current_page())
+        elif page == 3:
+            box = self.get_nth_page(page)
+            if "reginsts" in exporter.options:
+                widget = self.build_options_reginsts()
+                box.pack_start(widget, True, True, 6)
 
 
 # Gtk.main()

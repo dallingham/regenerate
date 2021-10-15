@@ -25,7 +25,7 @@ import os
 import time
 import pwd
 from pathlib import Path
-from typing import List, Tuple, Callable
+from typing import List, Tuple, Callable, Dict
 from enum import IntEnum
 from typing import Optional
 from collections import namedtuple
@@ -211,6 +211,9 @@ class BlockWriter(BaseWriter):
     by the derived class.
     """
 
-    def __init__(self, project: RegProject, block: Block) -> None:
+    def __init__(
+        self, project: RegProject, block: Block, options: Dict[str, str]
+    ) -> None:
         super().__init__(project)
         self._block = block
+        self.options = options
