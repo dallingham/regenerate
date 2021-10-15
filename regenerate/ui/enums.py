@@ -78,6 +78,7 @@ class BuildCol(IntEnum):
     CLASS = 5
     DBASE = 6
     TYPE = 7
+    OPTIONS = 8
 
 
 class DbMap(IntEnum):

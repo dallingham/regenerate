@@ -20,6 +20,7 @@
 Actual program. Parses the arguments, and initiates the main window
 """
 import string
+from typing import Dict, Any
 from pathlib import Path
 
 from regenerate.db import Register, RegisterDb, RegProject
@@ -225,8 +226,8 @@ def write_function(cfile, rlist, name, size, letter, suffix, size_suffix):
 
 
 class CTest(RegsetWriter):
-    def __init__(self, project: RegProject, regset: RegisterDb):
-        super().__init__(project, regset)
+    def __init__(self, project: RegProject, regset: RegisterDb, options: Dict[str, Any]):
+        super().__init__(project, regset, options)
         self._ofile = None
         self.module_set = set()
 

@@ -23,7 +23,7 @@ UVM register generation
 
 import time
 from pathlib import Path
-from typing import List, Set, Dict
+from typing import List, Set, Dict, Any
 from collections import namedtuple
 
 from regenerate.db import (
@@ -64,12 +64,12 @@ class UVMRegBlockRegisters(ProjectWriter):
     the UVM format.
     """
 
-    def __init__(self, project: RegProject) -> None:
+    def __init__(self, project: RegProject, options: Dict[str, Any]) -> None:
         """
         Initialize the object. At the current time, only little endian is
         supported by the package
         """
-        super().__init__(project)
+        super().__init__(project, options)
         self.dblist = [dbase[1] for dbase in project.regsets.items()]
 
     def uvm_address_maps(self) -> List[AddressMap]:

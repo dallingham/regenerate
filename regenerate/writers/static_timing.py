@@ -23,7 +23,7 @@ Static timing - Writes out synthesis constraints
 
 import datetime
 from pathlib import Path
-from typing import NamedTuple, List, Tuple
+from typing import NamedTuple, List, Tuple, Any, Dict
 
 from regenerate.db import RegProject, RegisterDb, BitField
 from .writer_base import ProjectWriter, ProjectType, find_template
@@ -85,8 +85,8 @@ def build_hdl_path(hdl1, hdl2, signal, addr, index):
 class StaticTiming(ProjectWriter):
     "Extracts the list of static registers and writes them to the template"
 
-    def __init__(self, project: RegProject, template: str):
-        super().__init__(project)
+    def __init__(self, project: RegProject, template: str, options: Dict[str, Any]):
+        super().__init__(project, options)
         self.template = template
         self.dblist = set()
         self.block_list = self.build_data()
@@ -158,15 +158,15 @@ class StaticTiming(ProjectWriter):
 class Xdc(StaticTiming):
     "Produces a file with static constraints in Xilinx XDC format"
 
-    def __init__(self, project: RegProject):
-        super().__init__(project, "xdc.template")
+    def __init__(self, project: RegProject, options: Dict[str, Any]):
+        super().__init__(project, "xdc.template", options)
 
 
 class Sdc(StaticTiming):
     "Produces a file with static constraints in Synopsys SDC format"
 
-    def __init__(self, project: RegProject):
-        super().__init__(project, "sdc.template")
+    def __init__(self, project: RegProject, options: Dict[str, Any]):
+        super().__init__(project, "sdc.template", options)
 
 
 EXPORTERS = [

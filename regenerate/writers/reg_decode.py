@@ -55,7 +55,11 @@ class RegDecode(BlockWriter):
         64-bit boundary)
         """
 
-        reginsts = block.get_regset_insts()
+        reginst_id_list = self.options.get("reginsts")
+        if not reginst_id_list:
+            reginsts = block.get_regset_insts()
+        else:
+            reginsts = [inst for inst in block.regset_insts if inst.uuid in reginst_id_list]
 
         # Build the data to send to the template
         external_list = []
@@ -70,7 +74,7 @@ class RegDecode(BlockWriter):
             size = 1 << regset.ports.address_bus_width
 
             if reg_inst.repeat.resolve() > 1:  # and args.array_single_decode:
-                flatten = 1
+                flatten = True
                 repeat_val = 1
                 size = reg_inst.repeat.resolve() >> 3
             else:

@@ -30,8 +30,8 @@ class Spyglass(ProjectWriter):
     Output file creation class that writes a set of synthesis constraints
     """
 
-    def __init__(self, project):
-        super().__init__(project)
+    def __init__(self, project, options: Dict[str, Any]):
+        super().__init__(project, options)
         self.dblist = [dbase[1] for dbase in project.regsets.items()]
         self._ofile = None
 

@@ -25,7 +25,7 @@ import copy
 import datetime
 from pathlib import Path
 from collections import defaultdict
-from typing import List, Tuple, TextIO, Set, Dict, NamedTuple
+from typing import List, Tuple, TextIO, Set, Dict, NamedTuple, Any
 
 from regenerate.db import (
     TYPES,
@@ -223,8 +223,8 @@ class Verilog(RegsetWriter):
     the UVM format.
     """
 
-    def __init__(self, project: RegProject, regset: RegisterDb):
-        super().__init__(project, regset)
+    def __init__(self, project: RegProject, regset: RegisterDb, options: Dict[str, Any]):
+        super().__init__(project, regset, options)
 
         self.lang = LanguageTerms("input", "output", "always", "reg")
 
@@ -438,8 +438,8 @@ class Verilog(RegsetWriter):
 class SystemVerilog(Verilog):
     """Provides the SystemVerilog version"""
 
-    def __init__(self, project, regset):
-        super().__init__(project, regset)
+    def __init__(self, project, regset, options: Dict[str, Any]):
+        super().__init__(project, regset, options)
         self.lang = LanguageTerms(
             "input logic", "output logic", "always_ff", "logic"
         )
@@ -448,8 +448,8 @@ class SystemVerilog(Verilog):
 class Verilog2001(Verilog):
     "Provides the Verilog2001 version"
 
-    def __init(self, project, regset):
-        super().__init__(project, regset)
+    def __init(self, project, regset, options: Dict[str, Any]):
+        super().__init__(project, regset, options)
 
 
 def drop_write_share(list_in):

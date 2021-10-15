@@ -20,7 +20,7 @@
 EquWriter - Writes out Assembler defines (based off the GNU assembler)
 """
 
-from typing import Optional, TextIO
+from typing import Optional, TextIO, Dict, Any
 from pathlib import Path
 
 from .writer_base import RegsetWriter, ProjectType
@@ -34,8 +34,8 @@ class AsmEqu(RegsetWriter):
     the token for the registers addresses.
     """
 
-    def __init__(self, project: RegProject, regset: RegisterDb):
-        super().__init__(project, regset)
+    def __init__(self, project: RegProject, regset: RegisterDb, options: Dict[str, Any]):
+        super().__init__(project, regset, options)
 
         self._ofile: Optional[TextIO] = None
         self._prefix = ""

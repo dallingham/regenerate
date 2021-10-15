@@ -25,7 +25,7 @@ import os
 import time
 import pwd
 from pathlib import Path
-from typing import List, Tuple, Callable, Dict
+from typing import List, Tuple, Callable, Dict, Any
 from enum import IntEnum
 from typing import Optional
 from collections import namedtuple
@@ -173,8 +173,9 @@ def find_template(
 
 
 class BaseWriter:
-    def __init__(self, project: RegProject) -> None:
+    def __init__(self, project: RegProject, options: Dict[str, Any]) -> None:
         self._project = project
+        self.options = options
 
     def write(self, filename: Path):
         "The child class must override this to provide an implementation."
@@ -190,8 +191,8 @@ class ProjectWriter(BaseWriter):
     by the derived class.
     """
 
-    def __init__(self, project: RegProject) -> None:
-        super().__init__(project)
+    def __init__(self, project: RegProject, options: Dict[str, Any]) -> None:
+        super().__init__(project, options)
 
 
 class RegsetWriter(BaseWriter):
@@ -200,8 +201,8 @@ class RegsetWriter(BaseWriter):
     by the derived class.
     """
 
-    def __init__(self, project: RegProject, regset: RegisterDb) -> None:
-        super().__init__(project)
+    def __init__(self, project: RegProject, regset: RegisterDb, options: Dict[str, Any] = None) -> None:
+        super().__init__(project, options)
         self._regset = regset
 
 
@@ -212,8 +213,7 @@ class BlockWriter(BaseWriter):
     """
 
     def __init__(
-        self, project: RegProject, block: Block, options: Dict[str, str]
+        self, project: RegProject, block: Block, options: Dict[str, Any] = None
     ) -> None:
-        super().__init__(project)
+        super().__init__(project, options)
         self._block = block
-        self.options = options

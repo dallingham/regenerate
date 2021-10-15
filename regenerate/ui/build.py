@@ -22,7 +22,7 @@ keeps track of when an output file should be rebuilt.
 """
 
 import os
-from typing import Tuple, Dict, List, NamedTuple
+from typing import Tuple, Dict, List, NamedTuple, Any
 from pathlib import Path
 
 from gi.repository import Gtk, Pango
@@ -54,6 +54,7 @@ class LocalExportData(NamedTuple):
     name: str
     cls: BaseWriter
     level: Level
+    options: Dict[str, Any]
 
 
 class Build(BaseWindow):
@@ -100,10 +101,10 @@ class Build(BaseWindow):
             for item in export_list:
                 value = item.description
                 self.__optmap[item.writer_id] = LocalExportData(
-                    value, item.obj_class, level
+                    value, item.obj_class, level, item.options
                 )
                 self.__mapopt[value] = LocalExportData(
-                    item.writer_id, item.obj_class, level
+                    item.writer_id, item.obj_class, level, item.options
                 )
 
     def __build_interface(self, parent: Gtk.Window) -> None:
@@ -119,7 +120,7 @@ class Build(BaseWindow):
         self.__builder.connect_signals(self)
         self.__add_columns()
         self.__model = Gtk.ListStore(
-            bool, str, str, str, str, object, object, int
+            bool, str, str, str, str, object, object, int, object
         )
         self.__build_list.set_model(self.__model)
         self.configure(self.__build_top)
@@ -127,19 +128,19 @@ class Build(BaseWindow):
         self.__build_top.show_all()
 
     def __add_item_to_list(
-        self, full_path: str, exporter: str, dest: str
+            self, full_path: str, exporter: str, dest: str, options
     ) -> None:
         """
         Adds the item to the list view.
         """
         if self.__optmap[exporter].level == Level.REGSET:
-            self.__add_dbase_item_to_list(full_path, exporter, dest)
+            self.__add_dbase_item_to_list(full_path, exporter, dest, options)
         elif self.__optmap[exporter].level == Level.BLOCK:
-            self.__add_group_item_to_list(full_path, exporter, dest)
+            self.__add_group_item_to_list(full_path, exporter, dest, options)
         else:
-            self.__add_prj_item_to_list(exporter, dest)
+            self.__add_prj_item_to_list(exporter, dest, options)
 
-    def __add_prj_item_to_list(self, exporter: str, dest: str) -> None:
+    def __add_prj_item_to_list(self, exporter: str, dest: str, options) -> None:
         """
         Adds a target to the list that is dependent on the entire project.
         This is similar to adding a target that is dependent on a single
@@ -161,11 +162,12 @@ class Build(BaseWindow):
                 info.cls,
                 None,
                 ProjectType.PROJECT,
+                options
             ]
         )
 
     def __add_dbase_item_to_list(
-        self, regset_name: str, exporter: str, dest: str
+        self, regset_name: str, exporter: str, dest: str, options
     ) -> None:
         """
         Adds the specific item to the build list. We have to check to see
@@ -189,11 +191,12 @@ class Build(BaseWindow):
                 info.cls,
                 regset,
                 ProjectType.REGSET,
+                options
             )
         )
 
     def __add_group_item_to_list(
-        self, blkid: str, exporter: str, dest: str
+        self, blkid: str, exporter: str, dest: str, options
     ) -> None:
         """
         Adds the specific item to the build list. We have to check to see
@@ -215,6 +218,7 @@ class Build(BaseWindow):
                 info.cls,
                 block,
                 ProjectType.BLOCK,
+                options
             )
         )
 
@@ -232,6 +236,7 @@ class Build(BaseWindow):
                         item,
                         export_data.exporter,
                         str(export_data.target),
+                        export_data.options
                     )
                 except KeyError:
                     pass
@@ -242,12 +247,15 @@ class Build(BaseWindow):
                     block.uuid,
                     export_data.exporter,
                     export_data.target,
+                    export_data.options
                 )
 
         for export_data in self.__prj.get_project_exports():
             try:
                 self.__add_prj_item_to_list(
-                    export_data.exporter, export_data.target
+                    export_data.exporter,
+                    export_data.target,
+                    export_data.options
                 )
             except KeyError:
                 pass
@@ -262,31 +270,6 @@ class Build(BaseWindow):
         self.__model[path][BuildCol.MODIFIED] = not self.__model[path][
             BuildCol.MODIFIED
         ]
-
-    # def register_set_callback(self, cell, path, node, _col):
-    #     """
-    #     Called when the register set is changed. The combo_box_model is
-    #     attached to the cell that caused the change (on the 'model'
-    #     property). The data is then copied out of the combo_box_model and
-    #     into the database.
-    #     """
-    #     print(type(cell), type(path), type(node), type(_col))
-
-    #     combo_box_model = cell.get_property("model")
-    #     self.__model[path][BuildCol.DBASE] = combo_box_model[node][1]
-    #     self.__model[path][BuildCol.BASE] = combo_box_model[node][0]
-
-    # def format_callback(self, cell, path, node, _col):
-    #     """
-    #     Called when the format is changed. The combo_box_model is
-    #     attached to the cell that caused the change (on the 'model'
-    #     property). The data is then copied out of the combo_box_model and
-    #     into the database.
-    #     """
-    #     print(type(cell), type(path), type(node), type(_col))
-    #     combo_box_model = cell.get_property("model")
-    #     self.__model[path][BuildCol.CLASS] = combo_box_model[node][1]
-    #     self.__model[path][BuildCol.FORMAT] = combo_box_model[node][0]
 
     def __add_columns(self) -> None:
         """
@@ -363,18 +346,19 @@ class Build(BaseWindow):
             writer_class = item[BuildCol.CLASS]
             dbase = item[BuildCol.DBASE]
             rtype = item[BuildCol.TYPE]
+            options = item[BuildCol.OPTIONS]
 
             dest = Path(item[BuildCol.DEST]).resolve()
 
             try:
                 if rtype == ProjectType.REGSET:
-                    gen = writer_class(self.__prj, dbase)
+                    gen = writer_class(self.__prj, dbase, options)
                 elif rtype == ProjectType.BLOCK:
                     db_list = self.__prj.regsets.values()
-                    gen = writer_class(self.__prj, dbase)
+                    gen = writer_class(self.__prj, dbase, options)
                 else:
                     db_list = self.__prj.regsets.values()
-                    gen = writer_class(self.__prj)
+                    gen = writer_class(self.__prj, options)
                 gen.write(dest)
                 item[BuildCol.MODIFIED] = False
             except IOError as msg:
@@ -437,7 +421,7 @@ class Build(BaseWindow):
         elif project_type == ProjectType.BLOCK:
             block = self.__prj.blocks[uuid]
             self.__add_item_to_list(uuid, exporter, filename)
-            block.exports.append(ExportData(exporter, filename))
+            block.exports.append(ExportData(exporter, filename, options))
             block.modified = True
         else:
             self.__prj.add_to_project_export_list(exporter, filename)

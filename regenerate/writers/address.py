@@ -21,7 +21,7 @@ DefsWriter - Writes out Verilog defines representing the register addresses
 """
 
 from pathlib import Path
-from typing import NamedTuple, List, Dict, Optional
+from typing import NamedTuple, List, Dict, Optional, Any
 
 from regenerate.db import RegProject, Block, LOGGER, AddressMap
 from .writer_base import ProjectWriter, ProjectType, find_template
@@ -146,7 +146,7 @@ class CDefinesWriter(AddressWriter):
     Writes out Verilog defines representing the register addresses
     """
 
-    def __init__(self, project: RegProject):
+    def __init__(self, project: RegProject, options: Dict[str, Any]):
         type_map = {
             8: "unsigned char",
             16: "unsigned short",
@@ -161,7 +161,7 @@ class VerliogDefinesWriter(AddressWriter):
     Writes out Verilog defines representing the register addresses
     """
 
-    def __init__(self, project: RegProject):
+    def __init__(self, project: RegProject, options: Dict[str, Any]):
         type_map = {}
         super().__init__(project, "verilog_defines.writer", type_map)
 
@@ -171,7 +171,7 @@ class VerliogParametersWriter(AddressWriter):
     Writes out Verilog defines representing the register addresses
     """
 
-    def __init__(self, project: RegProject):
+    def __init__(self, project: RegProject, options: Dict[str, Any]):
         type_map = {}
         super().__init__(project, "verilog_parameters.writer", type_map)
 
@@ -181,7 +181,7 @@ class VerliogConstPkgWriter(AddressWriter):
     Writes out Verilog defines representing the register addresses
     """
 
-    def __init__(self, project: RegProject):
+    def __init__(self, project: RegProject, options: Dict[str, Any]):
         type_map = {}
         super().__init__(project, "verilog_const_pkg.template", type_map)
 

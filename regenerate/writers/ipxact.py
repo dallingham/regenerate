@@ -21,7 +21,7 @@
 IP-XACT register definition exporter. Writes an IP-XACT (or the older Spirit)
 XML files describing the registers.
 """
-
+from typing import Dict, Any
 from pathlib import Path
 from regenerate.db import BitType, RegisterDb, RegProject
 from .writer_base import RegsetWriter, ProjectType, find_template
@@ -79,8 +79,8 @@ class IpXactWriter(RegsetWriter):
     the UVM format.
     """
 
-    def __init__(self, project: RegProject, regset: RegisterDb):
-        super().__init__(project, regset)
+    def __init__(self, project: RegProject, regset: RegisterDb, options: Dict[str, Any]):
+        super().__init__(project, regset, options)
         self.scope = "ipxact"
         self.schema = [
             'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"',
@@ -109,8 +109,8 @@ class IpXactWriter(RegsetWriter):
 
 
 class SpiritWriter(IpXactWriter):
-    def __init__(self, project: RegProject, regset: RegisterDb):
-        super().__init__(project, regset)
+    def __init__(self, project: RegProject, regset: RegisterDb, options: Dict[str, Any]):
+        super().__init__(project, regset, options)
         self.scope = "spirit"
         self.schema = [
             'xmlns:spirit="http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009"'
