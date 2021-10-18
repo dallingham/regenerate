@@ -427,7 +427,7 @@ class RuleBuilder(Gtk.Assistant):
         title.set_markup('<span weight="bold" size="large">Summary of new rule</span>')
         title.set_hexpand(True)
         title.set_justify(Gtk.Justification.CENTER)
-        grid.attach(title, 0, 0, 3, 1)
+        grid.attach(title, 0, 0, 2, 1)
 
         filename = self.choose.get_filename()
         exporter, level = self.get_exporter()
