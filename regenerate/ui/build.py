@@ -128,26 +128,27 @@ class Build(BaseWindow):
         self.__build_top.show_all()
 
     def __add_item_to_list(
-            self, full_path: str, exporter: str, dest: str, options
+        self, uuid: str, exporter: str, dest: str, options
     ) -> None:
-        """
-        Adds the item to the list view.
-        """
+        """Adds the item to the list view."""
+
         if self.__optmap[exporter].level == Level.REGSET:
-            self.__add_dbase_item_to_list(full_path, exporter, dest, options)
+            self.__add_dbase_item_to_list(uuid, exporter, dest, options)
         elif self.__optmap[exporter].level == Level.BLOCK:
-            self.__add_group_item_to_list(full_path, exporter, dest, options)
+            self.__add_group_item_to_list(uuid, exporter, dest, options)
         else:
             self.__add_prj_item_to_list(exporter, dest, options)
 
-    def __add_prj_item_to_list(self, exporter: str, dest: str, options) -> None:
+    def __add_prj_item_to_list(
+        self, exporter: str, dest: str, options
+    ) -> None:
         """
         Adds a target to the list that is dependent on the entire project.
         This is similar to adding a target that is dependent on a single
         database, except we have to compare dates on all files in the project,
         not just a single file.
         """
-        local_dest = os.path.join(os.path.dirname(self.__prj.path), dest)
+        local_dest = self.__prj.path.parent / dest
 
         mod = file_needs_rebuilt(local_dest, self.__prj, self.__prj.regsets)
         self.__modlist.append(mod)
@@ -162,7 +163,7 @@ class Build(BaseWindow):
                 info.cls,
                 None,
                 ProjectType.PROJECT,
-                options
+                options,
             ]
         )
 
@@ -191,7 +192,7 @@ class Build(BaseWindow):
                 info.cls,
                 regset,
                 ProjectType.REGSET,
-                options
+                options,
             )
         )
 
@@ -218,7 +219,7 @@ class Build(BaseWindow):
                 info.cls,
                 block,
                 ProjectType.BLOCK,
-                options
+                options,
             )
         )
 
@@ -236,7 +237,7 @@ class Build(BaseWindow):
                         item,
                         export_data.exporter,
                         str(export_data.target),
-                        export_data.options
+                        export_data.options,
                     )
                 except KeyError:
                     pass
@@ -247,7 +248,7 @@ class Build(BaseWindow):
                     block.uuid,
                     export_data.exporter,
                     export_data.target,
-                    export_data.options
+                    export_data.options,
                 )
 
         for export_data in self.__prj.get_project_exports():
@@ -255,7 +256,7 @@ class Build(BaseWindow):
                 self.__add_prj_item_to_list(
                     export_data.exporter,
                     export_data.target,
-                    export_data.options
+                    export_data.options,
                 )
             except KeyError:
                 pass
@@ -350,19 +351,14 @@ class Build(BaseWindow):
 
             dest = Path(item[BuildCol.DEST]).resolve()
 
-            try:
-                if rtype == ProjectType.REGSET:
-                    gen = writer_class(self.__prj, dbase, options)
-                elif rtype == ProjectType.BLOCK:
-                    db_list = self.__prj.regsets.values()
-                    gen = writer_class(self.__prj, dbase, options)
-                else:
-                    db_list = self.__prj.regsets.values()
-                    gen = writer_class(self.__prj, options)
-                gen.write(dest)
-                item[BuildCol.MODIFIED] = False
-            except IOError as msg:
-                ErrorMsg("Error running exporter", str(msg))
+            if rtype == ProjectType.REGSET:
+                gen = writer_class(self.__prj, dbase, options)
+            elif rtype == ProjectType.BLOCK:
+                gen = writer_class(self.__prj, dbase, options)
+            else:
+                gen = writer_class(self.__prj, options)
+            gen.write(dest)
+            item[BuildCol.MODIFIED] = False
 
     def on_add_build_clicked(self, _obj: Gtk.Button) -> None:
         """
@@ -417,15 +413,16 @@ class Build(BaseWindow):
                 ExportData(exporter, filename, options)
             )
             self.__prj.regsets[uuid].modified = True
-            self.__add_item_to_list(uuid, exporter, filename)
+            self.__add_item_to_list(uuid, exporter, filename, options)
         elif project_type == ProjectType.BLOCK:
             block = self.__prj.blocks[uuid]
+            block.modified = True
             self.__add_item_to_list(uuid, exporter, filename)
             block.exports.append(ExportData(exporter, filename, options))
-            block.modified = True
         else:
-            self.__prj.add_to_project_export_list(exporter, filename)
-            self.__add_item_to_list(uuid, exporter, filename)
+            self.__prj.add_to_project_export_list(exporter, filename, options)
+            self.__prj.modified = True
+            self.__add_item_to_list(uuid, exporter, filename, options)
 
     def on_remove_build_clicked(self, _obj: Gtk.Button):
         """

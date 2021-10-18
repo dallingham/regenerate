@@ -79,7 +79,9 @@ class IpXactWriter(RegsetWriter):
     the UVM format.
     """
 
-    def __init__(self, project: RegProject, regset: RegisterDb, options: Dict[str, Any]):
+    def __init__(
+        self, project: RegProject, regset: RegisterDb, options: Dict[str, Any]
+    ):
         super().__init__(project, regset, options)
         self.scope = "ipxact"
         self.schema = [
@@ -109,7 +111,9 @@ class IpXactWriter(RegsetWriter):
 
 
 class SpiritWriter(IpXactWriter):
-    def __init__(self, project: RegProject, regset: RegisterDb, options: Dict[str, Any]):
+    def __init__(
+        self, project: RegProject, regset: RegisterDb, options: Dict[str, Any]
+    ):
         super().__init__(project, regset, options)
         self.scope = "spirit"
         self.schema = [
@@ -127,6 +131,7 @@ EXPORTERS = [
             "IP-XACT files",
             "Register definition file in IP-XACT format",
             ".xml",
+            "{}.xml",
             {},
             "ip-xact",
         ),
@@ -140,6 +145,7 @@ EXPORTERS = [
             "Spirit files",
             "Register definition file in the Spirit 1.4 format",
             ".spirit",
+            "{}.spirit",
             {},
             "spirit",
         ),

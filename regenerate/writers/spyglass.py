@@ -106,6 +106,7 @@ EXPORTERS = [
             "SGDC files",
             "Spyglass timing constraints for quasi-static registers",
             ".sgdc",
+            "{}.sgdc",
             {},
             "spy-constraints",
         ),

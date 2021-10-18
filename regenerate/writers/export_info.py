@@ -40,5 +40,6 @@ class ExportInfo(NamedTuple):
     file_type: str
     full_description: str
     file_extension: str
+    default_path: str
     options: Dict[str, Any]
     writer_id: str

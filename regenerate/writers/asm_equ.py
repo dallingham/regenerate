@@ -34,7 +34,9 @@ class AsmEqu(RegsetWriter):
     the token for the registers addresses.
     """
 
-    def __init__(self, project: RegProject, regset: RegisterDb, options: Dict[str, Any]):
+    def __init__(
+        self, project: RegProject, regset: RegisterDb, options: Dict[str, Any]
+    ):
         super().__init__(project, regset, options)
 
         self._ofile: Optional[TextIO] = None
@@ -77,6 +79,7 @@ EXPORTERS = [
             "Assembler files",
             "Assembler constants for each register's address",
             ".s",
+            "{}_defs.s",
             {},
             "headers-asm",
         ),

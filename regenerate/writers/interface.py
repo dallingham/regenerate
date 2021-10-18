@@ -68,6 +68,7 @@ EXPORTERS = [
             "SystemVerilog files",
             "SystemVerilog interface for the register module control bus",
             ".sv",
+            "{}_if.sv",
             {},
             "rtl-interface",
         ),

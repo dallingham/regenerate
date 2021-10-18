@@ -226,7 +226,9 @@ def write_function(cfile, rlist, name, size, letter, suffix, size_suffix):
 
 
 class CTest(RegsetWriter):
-    def __init__(self, project: RegProject, regset: RegisterDb, options: Dict[str, Any]):
+    def __init__(
+        self, project: RegProject, regset: RegisterDb, options: Dict[str, Any]
+    ):
         super().__init__(project, regset, options)
         self._ofile = None
         self.module_set = set()
@@ -386,6 +388,7 @@ EXPORTERS = [
             "C files",
             "C source code for a test to verify registers",
             ".c",
+            "{}_test.c",
             {},
             "test-c",
         ),

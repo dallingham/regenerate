@@ -223,7 +223,9 @@ class Verilog(RegsetWriter):
     the UVM format.
     """
 
-    def __init__(self, project: RegProject, regset: RegisterDb, options: Dict[str, Any]):
+    def __init__(
+        self, project: RegProject, regset: RegisterDb, options: Dict[str, Any]
+    ):
         super().__init__(project, regset, options)
 
         self.lang = LanguageTerms("input", "output", "always", "reg")
@@ -942,6 +944,7 @@ EXPORTERS = [
             "SystemVerilog files",
             "RTL module for the registers in SystemVerilog format",
             ".sv",
+            "{}.sv",
             {},
             "rtl-system-verilog",
         ),
@@ -955,6 +958,7 @@ EXPORTERS = [
             "Verilog files",
             "RTL module for the registers in Verilog 2001 format",
             ".v",
+            "{}.v",
             {},
             "rtl-verilog-2001",
         ),
@@ -968,6 +972,7 @@ EXPORTERS = [
             "Verilog files",
             "RTL module for the registers in Verilog 95 format",
             ".v",
+            "{}.v",
             {},
             "rtl-verilog-95",
         ),

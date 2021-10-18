@@ -246,6 +246,7 @@ EXPORTERS = [
             "SystemVerilog files",
             "UVM register class hierarchy for verification",
             ".sv",
+            "{}_reg_pkg.sv",
             {},
             "proj-uvm",
         ),

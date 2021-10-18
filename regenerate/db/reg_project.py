@@ -257,7 +257,9 @@ class RegProject:
         exp = ExportData(exporter, dest)
         self.exports.append(exp)
 
-    def add_to_project_export_list(self, exporter: str, dest: str) -> None:
+    def add_to_project_export_list(
+        self, exporter: str, dest: str, options
+    ) -> None:
         """
         Adds a export to the project export list. Project exporters operation
         on the entire project, not just a specific register database (XML file)
@@ -267,8 +269,7 @@ class RegProject:
         dest - destination output name
         """
         self._modified = True
-        dest = os.path.relpath(dest, self.path.parent)
-        self.exports.append(ExportData(exporter, dest))
+        self.exports.append(ExportData(exporter, dest, options))
 
     def remove_from_project_export_list(
         self, exporter: str, dest: str

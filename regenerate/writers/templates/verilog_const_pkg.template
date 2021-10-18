@@ -1,15 +1,18 @@
 /*----------------------------------------------------------------------------
  *
- * Register Defines
+ * Register Address Defines
  *
  *----------------------------------------------------------------------------
  */
-
-package {{file_base}}_pkg;
+{% if options["bool:pkg"] %}
+package {{file_base}};
+{% endif %}
 
 {% for p in path_data %}
 {% set name = p.block|upper + "__" +  p.regset|upper  + "__" + p.name|upper %}
-  const bit [{{addr_width-1}}:0] {{name}} = {{addr_width}}'h{{"%x" % p.address}};
+  const bit [{{(8*addr_width)-1}}:0] {{name}} = {{8*addr_width}}'h{{"%x" % p.address}};
 {% endfor %}
 
-endpackage : {{file_base}}_pkg
+{% if options["bool:pkg"] %}
+endpackage : {{file_base}}
+{% endif %}

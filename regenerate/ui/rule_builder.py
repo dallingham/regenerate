@@ -22,6 +22,7 @@ Provides the rule builder for the build tool.
 """
 
 import os
+from enum import IntEnum
 from typing import Callable
 from gi.repository import Gtk
 from regenerate.db import RegProject
@@ -34,17 +35,30 @@ from regenerate.writers import (
 from .columns import ReadOnlyColumn, ToggleColumn
 
 
+class PageId(IntEnum):
+
+    INTRO = 0
+    EXPORTER = 1
+    SOURCE = 2
+    OPTIONS = 3
+    FILENAME = 4
+    CONFIRM = 5
+
+
 class RuleBuilder(Gtk.Assistant):
+    """
+    Guides the user through the process of creating a builder by using
+    a Gtk.Assistant and information in the Exporter's ExportInfo
+    structure.
+    """
+
     def __init__(self, project: RegProject, callback: Callable):
         Gtk.Assistant.__init__(self)
         self.callback = callback
         self.set_title("Rule Builder")
         self.set_default_size(1150, 600)
-        self.connect("cancel", self.on_cancel_clicked)
-        self.connect("close", self.on_close_clicked)
-        self.connect("apply", self.on_apply_clicked)
-        self.connect("escape", self.on_escape_clicked)
-        self.connect("prepare", self.on_prepare_clicked)
+
+        self.setup_buttons()
 
         self.project = project
         self.format_list = Gtk.TreeView()
@@ -57,7 +71,24 @@ class RuleBuilder(Gtk.Assistant):
         self.build_filename_content()
         self.build_confirm()
 
+    def setup_buttons(self) -> None:
+        """
+        Connects buttons to the callback functions, and establishes the forward
+        function to control the flow.
+        """
+
+        self.connect("cancel", self.on_cancel_clicked)
+        self.connect("close", self.on_close_clicked)
+        self.connect("apply", self.on_apply_clicked)
+        self.connect("prepare", self.on_prepare_clicked)
+        self.set_forward_page_func(self.on_page_forward)
+
     def build_intro(self):
+        """
+        Builds the introduction page, which does nothing by provide some
+        information on how to use the rule builder.
+        """
+
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.append_page(box)
         self.set_page_type(box, Gtk.AssistantPageType.INTRO)
@@ -74,6 +105,10 @@ class RuleBuilder(Gtk.Assistant):
         self.set_page_complete(box, True)
 
     def build_format_content(self):
+        """
+        The first thing we need is the exporter. So we build a page which
+        allows them to select the exporter.
+        """
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.append_page(box)
         self.set_page_type(box, Gtk.AssistantPageType.CONTENT)
@@ -84,8 +119,10 @@ class RuleBuilder(Gtk.Assistant):
 
         scroll = Gtk.ScrolledWindow()
         scroll.set_shadow_type(Gtk.ShadowType.IN)
+
         self.build_format_list()
         scroll.add(self.format_list)
+
         box.pack_start(scroll, True, True, 9)
         self.set_page_complete(box, True)
 
@@ -102,6 +139,7 @@ class RuleBuilder(Gtk.Assistant):
 
         scroll = Gtk.ScrolledWindow()
         scroll.set_shadow_type(Gtk.ShadowType.IN)
+
         self.source_list = self.build_source_list()
         scroll.add(self.source_list)
         self.source_list.get_selection().select_path((0,))
@@ -115,6 +153,23 @@ class RuleBuilder(Gtk.Assistant):
         self.set_page_title(box, "Select Available Options")
         self.set_page_complete(box, True)
 
+    def create_default_filename(self):
+        exporter, level = self.get_exporter()
+
+        if level == ProjectType.REGSET:
+            source = self.project.regsets[self.get_source()]
+            filename = exporter.default_path.format(source.name)
+        elif level == ProjectType.BLOCK:
+            source = self.project.blocks[self.get_source()]
+            filename = exporter.default_path.format(source.name)
+        else:
+            filename = exporter.default_path.format(self.project.short_name)
+        self.choose.set_current_name(filename)
+        file_filter = Gtk.FileFilter()
+        file_filter.set_name(exporter.description)
+        file_filter.add_pattern(f"*{exporter.file_extension}")
+        self.choose.set_filter(file_filter)
+
     def build_filename_content(self):
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.append_page(box)
@@ -126,16 +181,9 @@ class RuleBuilder(Gtk.Assistant):
         self.filename_label.set_line_wrap(True)
         box.pack_start(self.filename_label, False, False, 9)
 
-        exporter, level = self.get_exporter()
         self.choose = Gtk.FileChooserWidget(action=Gtk.FileChooserAction.SAVE)
         self.choose.set_current_folder(os.curdir)
         self.choose.set_local_only(True)
-        file_filter = Gtk.FileFilter()
-        file_filter.set_name(exporter.description)
-        file_filter.add_pattern(f"*{exporter.file_extension}")
-        self.choose.set_filter(file_filter)
-        filename = f"output{exporter.file_extension}"
-        self.choose.set_current_name(filename)
         self.choose.show()
         self.choose.set_border_width(0)
 
@@ -196,36 +244,13 @@ class RuleBuilder(Gtk.Assistant):
             )
         self.format_list.get_selection().select_path((0,))
 
-    def build_complete(self):
-
-        self.complete = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        self.append_page(self.complete)
-        self.set_page_type(self.complete, Gtk.AssistantPageType.PROGRESS)
-        self.set_page_title(self.complete, "Page 3: Progress")
-        label = Gtk.Label(
-            label="A 'Progress' page is used to prevent changing pages "
-            "within the Assistant before a long-running process has "
-            "completed. The 'Continue' button will be marked as insensitive "
-            "until the process has finished. Once finished, the button will "
-            "become sensitive."
-        )
-        label.set_line_wrap(True)
-        self.complete.pack_start(label, True, True, 0)
-        checkbutton = Gtk.CheckButton(label="Mark page as complete")
-        checkbutton.connect("toggled", self.on_complete_toggled)
-        self.complete.pack_start(checkbutton, False, False, 0)
-
     def build_confirm(self):
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.append_page(box)
         self.set_page_type(box, Gtk.AssistantPageType.CONFIRM)
-        self.set_page_title(box, "Page 4: Confirm")
-        label = Gtk.Label(
-            label="The 'Confirm' page may be set as the final page in "
-            "the Assistant, however this depends on what the Assistant "
-            "does. This page provides an 'Apply' button to explicitly "
-            "set the changes, or a 'Go Back' button to correct any mistakes."
-        )
+        self.set_page_title(box, "Confirm")
+
+        label = Gtk.Label(label="")
         label.set_line_wrap(True)
         box.pack_start(label, True, True, 0)
         self.set_page_complete(box, True)
@@ -242,7 +267,7 @@ class RuleBuilder(Gtk.Assistant):
     def addrmap_toggle_changed(self, _cell, path, _source):
         """Called when enable changed"""
         self.addrmap_model[path][0] = not self.addrmap_model[path][0]
-        
+
     def build_options_reginsts(self) -> Gtk.Box:
         exporter, _ = self.get_exporter()
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
@@ -250,6 +275,7 @@ class RuleBuilder(Gtk.Assistant):
         box.pack_start(label, False, False, 6)
         scroll = Gtk.ScrolledWindow()
         scroll.set_shadow_type(Gtk.ShadowType.IN)
+
         table = Gtk.TreeView()
         table.append_column(
             ToggleColumn("Select", self.reginst_toggle_changed, 0)
@@ -282,26 +308,29 @@ class RuleBuilder(Gtk.Assistant):
         box.pack_start(label, False, False, 6)
         scroll = Gtk.ScrolledWindow()
         scroll.set_shadow_type(Gtk.ShadowType.IN)
-        table = Gtk.TreeView()
-        table.append_column(
-            ToggleColumn("Select", self.addrmap_toggle_changed, 0)
-        )
-        table.append_column(ReadOnlyColumn("Address Map", 1))
-        box.pack_start(table, True, True, 6)
-        self.addrmap_model = Gtk.ListStore(bool, str, object)
+
+        self.addrmap_table = Gtk.TreeView()
+        self.addrmap_table.get_selection().set_mode(Gtk.SelectionMode.BROWSE)
+        column = ReadOnlyColumn("Address Map", 0)
+        column.set_min_width(300)
+        self.addrmap_table.append_column(column)
+        self.addrmap_table.append_column(ReadOnlyColumn("Base Address", 1))
+        scroll.add(self.addrmap_table)
+        box.pack_start(scroll, True, True, 6)
+        self.addrmap_model = Gtk.ListStore(str, str, object)
 
         for addrmap in self.project.get_address_maps():
             self.addrmap_model.append(
                 row=[
-                    False,
                     addrmap.name,
+                    f"0x{addrmap.base:x}",
                     addrmap,
                 ]
             )
-        table.set_model(self.addrmap_model)
+        self.addrmap_table.set_model(self.addrmap_model)
         box.show_all()
         return box
-    
+
     def get_source(self):
         selection = self.source_list.get_selection()
         model, node = selection.get_selected()
@@ -309,7 +338,12 @@ class RuleBuilder(Gtk.Assistant):
 
     def on_apply_clicked(self, *_args):
         info, level = self.get_exporter()
-        uuid = self.get_source()
+
+        if level != ProjectType.PROJECT:
+            uuid = self.get_source()
+        else:
+            uuid = ""
+
         filename = self.choose.get_filename()
         options = {}
         if "reginsts" in info.options:
@@ -317,64 +351,147 @@ class RuleBuilder(Gtk.Assistant):
                 row[3].uuid for row in self.reginst_model if row[0]
             ]
         if "addrmaps" in info.options:
-            options["addrmaps"] = [
-                row[1].uuid for row in self.reginst_model if row[0]
-            ]
+            model, node = self.addrmap_table.get_selection().get_selected()
+            selected = model.get_value(node, 2)
+            options["addrmaps"] = [selected.uuid]
+        for option in info.options:
+            if option.startswith("bool:"):
+                options[option] = self.widgets[option].get_active()
         self.callback(filename, info, uuid, level, options)
 
-    def on_escape_clicked(self, *_args):
-        print("The escape button has been clicked")
+    def on_page_forward(self, page_num: int) -> int:
+        """
+        Controls the next page selection.
+
+        If the exporter is a Project Level, then we do not need a source
+        of the data. So we go to the Options page if options are needed,
+        otherwise we go the Filename.
+
+        If we are on the source page, and there are not options, we go to
+        the Filename page.
+
+        Otherwise, we just advance to the next page.
+        """
+        exporter, level = self.get_exporter()
+
+        if page_num == PageId.EXPORTER and level == ProjectType.PROJECT:
+            if exporter.options:
+                return PageId.OPTIONS
+            else:
+                return PageId.FILENAME
+        if page_num == PageId.SOURCE and not exporter.options:
+            return PageId.FILENAME
+        return page_num + 1
 
     def on_close_clicked(self, *_args):
-        print("The 'Close' button has been clicked")
         self.destroy()
 
     def on_cancel_clicked(self, *_args):
-        print("The Assistant has been cancelled.")
         self.destroy()
 
     def on_complete_toggled(self, checkbutton):
         self.set_page_complete(self.complete, checkbutton.get_active())
 
     def on_prepare_clicked(self, _assistant: Gtk.Assistant, _page):
-        PRJ_SOURCE = ("register set", "block", "project")
         page = self.get_current_page()
         exporter, category = self.get_exporter()
-        if page == 2:
-            if category == ProjectType.REGSET:
-                rsets = sorted(
-                    self.project.regsets.values(), key=lambda x: x.name
-                )
-                self.source_model.clear()
-                for regset in rsets:
-                    self.source_model.append(
-                        row=[regset.name, regset.descriptive_title, regset]
-                    )
-            elif category == ProjectType.BLOCK:
-                blocks = sorted(
-                    self.project.blocks.values(), key=lambda x: x.name
-                )
-                self.source_model.clear()
-                for block in blocks:
-                    self.source_model.append(
-                        row=[block.name, block.description, block]
-                    )
-            exp, category = self.get_exporter()
-            fmt = exp.description
-            source = PRJ_SOURCE[category]
-            self.source_label.set_text(
-                f"The {fmt} format requires that you select a {source} as the data source"
+        if page == PageId.SOURCE:
+            self.prepare_source(exporter, category)
+        elif page == PageId.OPTIONS:
+            self.prepare_options(exporter)
+        elif page == PageId.FILENAME:
+            self.create_default_filename()
+        elif page == PageId.CONFIRM:
+            self.prepare_confirm()
+
+    def prepare_confirm(self):
+        box = self.get_nth_page(PageId.CONFIRM)
+        for child in box.get_children():
+            box.remove(child)
+
+        grid = Gtk.Grid()
+        title = Gtk.Label(label="Summary of new rule")
+        title.set_justify(Gtk.Justification.CENTER)
+        grid.attach(title, 0, 0, 3, 1)
+
+        filename = self.choose.get_filename()
+        exporter, level = self.get_exporter()
+
+        grid.attach(Gtk.Label("Filename:"), 0, 1, 1, 1)
+        filename_label = Gtk.Label(filename)
+        filename_label.set_justify(Gtk.Justification.LEFT)
+        grid.attach(filename_label, 1, 1, 1, 1)
+
+        exporter_label = Gtk.Label(exporter.description)
+        exporter_label.set_justify(Gtk.Justification.LEFT)
+        grid.attach(Gtk.Label("Exporter:"), 0, 2, 1, 1)
+        grid.attach(exporter_label, 1, 2, 1, 1)
+
+        # print(f"Filename: {filename}")
+        # print(f"Exporter: {exporter.description}")
+        if level == ProjectType.PROJECT:
+            source = "Project"
+        elif level == ProjectType.BLOCK:
+            block = self.get_source()
+            name = self.project.blocks[block].name
+            source = f"Block: {name}"
+        else:
+            regset = self.get_source()
+            name = self.project.regsets[regset].name
+            source = f"Register Set: {name}"
+        print(f"Source: {source}")
+        box.pack_start(grid, True, True, 12)
+        grid.show_all()
+
+    def prepare_options(self, exporter):
+        self.widgets = {}
+        box = self.get_nth_page(PageId.OPTIONS)
+        for child in box.get_children():
+            box.remove(child)
+        if "reginsts" in exporter.options:
+            widget = self.build_options_reginsts()
+            box.pack_start(widget, True, True, 6)
+        if "addrmaps" in exporter.options:
+            widget = self.build_options_addrmaps()
+            box.pack_start(widget, True, True, 6)
+        for option in exporter.options:
+            if option.startswith("bool:"):
+                hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+                label = Gtk.Label(label=exporter.options[option])
+                hbox.pack_start(label, False, False, 12)
+                self.widgets[option] = Gtk.Switch()
+                hbox.pack_start(self.widgets[option], False, False, 12)
+                hbox.show_all()
+                box.pack_start(hbox, True, True, 12)
+
+    def prepare_source(self, exporter, category):
+        if category == ProjectType.REGSET:
+            self.prepare_regset_source()
+            source = "register set"
+        elif category == ProjectType.BLOCK:
+            self.prepare_block_source()
+            source = "block"
+        else:
+            source = "project"
+
+        fmt = exporter.description
+        self.source_label.set_text(
+            f"The {fmt} format requires that you select a "
+            f"{source} as the data source"
+        )
+
+    def prepare_block_source(self):
+        blocks = sorted(self.project.blocks.values(), key=lambda x: x.name)
+        self.source_model.clear()
+        for block in blocks:
+            self.source_model.append(
+                row=[block.name, block.description, block]
             )
-        elif page == 3:
-            box = self.get_nth_page(page)
-            for child in box.get_children():
-                box.remove(child)
-            if "reginsts" in exporter.options:
-                widget = self.build_options_reginsts()
-                box.pack_start(widget, True, True, 6)
-            if "addrmaps" in exporter.options:
-                widget = self.build_options_addrmaps()
-                box.pack_start(widget, True, True, 6)
 
-
-# Gtk.main()
+    def prepare_regset_source(self):
+        rsets = sorted(self.project.regsets.values(), key=lambda x: x.name)
+        self.source_model.clear()
+        for regset in rsets:
+            self.source_model.append(
+                row=[regset.name, regset.descriptive_title, regset]
+            )

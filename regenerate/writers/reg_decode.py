@@ -59,7 +59,11 @@ class RegDecode(BlockWriter):
         if not reginst_id_list:
             reginsts = block.get_regset_insts()
         else:
-            reginsts = [inst for inst in block.regset_insts if inst.uuid in reginst_id_list]
+            reginsts = [
+                inst
+                for inst in block.regset_insts
+                if inst.uuid in reginst_id_list
+            ]
 
         # Build the data to send to the template
         external_list = []
@@ -138,6 +142,7 @@ EXPORTERS = [
             "Register block decoder",
             "Decoder module to select the correct register module",
             ".sv",
+            "{}_decode.sv",
             {
                 "reginsts": "Select the register set instances used by the decoder",
             },

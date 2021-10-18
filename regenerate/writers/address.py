@@ -21,9 +21,9 @@ DefsWriter - Writes out Verilog defines representing the register addresses
 """
 
 from pathlib import Path
-from typing import NamedTuple, List, Dict, Optional, Any
+from typing import NamedTuple, List, Dict, Any
 
-from regenerate.db import RegProject, Block, LOGGER, AddressMap
+from regenerate.db import RegProject, Block, LOGGER
 from .writer_base import ProjectWriter, ProjectType, find_template
 from .export_info import ExportInfo
 
@@ -45,19 +45,16 @@ class AddressWriter(ProjectWriter):
         self,
         project: RegProject,
         template: str,
+        options: Dict[str, Any],
         type_map: Dict[int, str],
-        addr_map: Optional[AddressMap] = None,
     ):
-        super().__init__(project)
+        super().__init__(project, options)
         self.type_map = type_map
         self.template = template
-        self.addr_map = addr_map
+        addr_map = options.get("addrmaps")
         if addr_map:
-            self.addr_width = addr_map.width
-            if addr_map.fixed:
-                self.map_base = addr_map.base
-            else:
-                self.map_base = 0
+            self.addr_width = self._project.get_address_width(addr_map[0])
+            self.map_base = self._project.get_address_base(addr_map[0])
         else:
             self.addr_width = 64
             self.map_base = 0
@@ -74,6 +71,7 @@ class AddressWriter(ProjectWriter):
                         file_base=filename.stem,
                         path_data=build_map(self._project, self.map_base),
                         type_map=self.type_map,
+                        options=self.options,
                         addr_width=self.addr_width,
                     )
                 )
@@ -99,7 +97,12 @@ def build_map(project: RegProject, map_base: int) -> List[SignalPath]:
                 blk_name = f"{blk_inst.name}_{blkrpt}"
                 dump_blkinst(blk_name, block, address, map_list)
         else:
-            dump_blkinst(blk_inst.name, block, blk_inst.address_base, map_list)
+            dump_blkinst(
+                blk_inst.name,
+                block,
+                blk_inst.address_base + map_base,
+                map_list,
+            )
     return map_list
 
 
@@ -153,7 +156,7 @@ class CDefinesWriter(AddressWriter):
             32: "unsigned long",
             64: "unsigned long long",
         }
-        super().__init__(project, "c_defines.writer", type_map)
+        super().__init__(project, "c_defines.template", options, type_map)
 
 
 class VerliogDefinesWriter(AddressWriter):
@@ -163,7 +166,7 @@ class VerliogDefinesWriter(AddressWriter):
 
     def __init__(self, project: RegProject, options: Dict[str, Any]):
         type_map = {}
-        super().__init__(project, "verilog_defines.writer", type_map)
+        super().__init__(project, "verilog_defines.tempate", options, type_map)
 
 
 class VerliogParametersWriter(AddressWriter):
@@ -173,7 +176,9 @@ class VerliogParametersWriter(AddressWriter):
 
     def __init__(self, project: RegProject, options: Dict[str, Any]):
         type_map = {}
-        super().__init__(project, "verilog_parameters.writer", type_map)
+        super().__init__(
+            project, "verilog_parameters.template", options, type_map
+        )
 
 
 class VerliogConstPkgWriter(AddressWriter):
@@ -183,7 +188,9 @@ class VerliogConstPkgWriter(AddressWriter):
 
     def __init__(self, project: RegProject, options: Dict[str, Any]):
         type_map = {}
-        super().__init__(project, "verilog_const_pkg.template", type_map)
+        super().__init__(
+            project, "verilog_const_pkg.template", options, type_map
+        )
 
 
 EXPORTERS = [
@@ -196,7 +203,10 @@ EXPORTERS = [
             "C header files",
             "C #define definitions for each register's address",
             ".h",
-            {},
+            "{}_defs.h",
+            {
+                "addrmaps": "Select the Address Map",
+            },
             "headers-c",
         ),
     ),
@@ -209,7 +219,10 @@ EXPORTERS = [
             "Verilog header files",
             "Verilog `define definitions for each register's address",
             ".vh",
-            {},
+            "{}_defs.vh",
+            {
+                "addrmaps": "Select the Address Map",
+            },
             "rtl-verilog-defines",
         ),
     ),
@@ -218,11 +231,15 @@ EXPORTERS = [
         ExportInfo(
             VerliogParametersWriter,
             "RTL",
-            "Verilog Parameters",
-            "Verilog header files",
-            "Verilog parameters for each register's address",
-            ".vh",
-            {},
+            "SystemVerilog Parameters",
+            "SystemVerilog files",
+            "SystemVerilog parameters for each register's address",
+            ".sv",
+            "{}_param.sv",
+            {
+                "bool:pkg": "Wrap in a SystemVerilog package",
+                "addrmaps": "Select the Address Map",
+            },
             "rtl-verilog-parameters",
         ),
     ),
@@ -235,7 +252,11 @@ EXPORTERS = [
             "Verilog package",
             "SystemVerilog package with a const definitions for each register's address",
             ".sv",
-            {},
+            "{}_const.sv",
+            {
+                "bool:pkg": "Wrap in a SystemVerilog package",
+                "addrmaps": "Select the Address Map",
+            },
             "headers-system-verilog",
         ),
     ),

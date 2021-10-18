@@ -85,7 +85,9 @@ def build_hdl_path(hdl1, hdl2, signal, addr, index):
 class StaticTiming(ProjectWriter):
     "Extracts the list of static registers and writes them to the template"
 
-    def __init__(self, project: RegProject, template: str, options: Dict[str, Any]):
+    def __init__(
+        self, project: RegProject, template: str, options: Dict[str, Any]
+    ):
         super().__init__(project, options)
         self.template = template
         self.dblist = set()
@@ -179,6 +181,7 @@ EXPORTERS = [
             "XDC files",
             "Xilinx timing constraints for static registers",
             ".xdc",
+            "{}.xdc",
             {},
             "xdc-constraints",
         ),
@@ -192,6 +195,7 @@ EXPORTERS = [
             "SDC files",
             "Synopsys timing constraints for static registers",
             ".sdc",
+            "{}.sdc",
             {},
             "syn-constraints",
         ),

@@ -1,12 +1,18 @@
 /*----------------------------------------------------------------------------
  *
- * Register Defines
+ * Register Address Parameters
  *
  *----------------------------------------------------------------------------
  */
+{% if options["bool:pkg"] %}
+package {{file_base}};
+{% endif %}
 
 {% for p in path_data %}
 {% set name = p.block|upper + "__" +  p.regset|upper  + "__" + p.name|upper %}
-parameter bit[{{addr_width-1}}:0] {{name}} = {{addr_width}}'h{{"%x" % p.address}};
+parameter bit [{{addr_width-1}}:0] {{name}} = {{addr_width}}'h{{"%x" % p.address}};
 {% endfor %}
 
+{% if options["bool:pkg"] %}
+endpackage : {{file_base}}
+{% endif %}
