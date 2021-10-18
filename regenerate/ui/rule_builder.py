@@ -24,7 +24,9 @@ Provides the rule builder for the build tool.
 import os
 from enum import IntEnum
 from typing import Callable
+
 from gi.repository import Gtk
+
 from regenerate.db import RegProject
 from regenerate.writers import (
     EXPORTERS,
@@ -404,42 +406,47 @@ class RuleBuilder(Gtk.Assistant):
         elif page == PageId.CONFIRM:
             self.prepare_confirm()
 
+    def add_row_to_grid(self, grid: Gtk.Grid, row: int, str1: str, str2: str):
+        label1 = Gtk.Label(label=str1)
+        label1.set_alignment(1.0, 0.5)
+        label2 = Gtk.Label(label=str2)
+        label2.set_alignment(0, 0.5)
+        grid.attach(label1, 0, row, 1, 1)
+        grid.attach(label2, 1, row, 1, 1)
+            
     def prepare_confirm(self):
         box = self.get_nth_page(PageId.CONFIRM)
         for child in box.get_children():
             box.remove(child)
 
         grid = Gtk.Grid()
-        title = Gtk.Label(label="Summary of new rule")
+        grid.set_row_spacing(6)
+        grid.set_column_spacing(6)
+        grid.set_hexpand(True)
+        title = Gtk.Label()
+        title.set_markup('<span weight="bold" size="large">Summary of new rule</span>')
+        title.set_hexpand(True)
         title.set_justify(Gtk.Justification.CENTER)
         grid.attach(title, 0, 0, 3, 1)
 
         filename = self.choose.get_filename()
         exporter, level = self.get_exporter()
-
-        grid.attach(Gtk.Label("Filename:"), 0, 1, 1, 1)
-        filename_label = Gtk.Label(filename)
-        filename_label.set_justify(Gtk.Justification.LEFT)
-        grid.attach(filename_label, 1, 1, 1, 1)
-
-        exporter_label = Gtk.Label(exporter.description)
-        exporter_label.set_justify(Gtk.Justification.LEFT)
-        grid.attach(Gtk.Label("Exporter:"), 0, 2, 1, 1)
-        grid.attach(exporter_label, 1, 2, 1, 1)
-
-        # print(f"Filename: {filename}")
-        # print(f"Exporter: {exporter.description}")
+        
         if level == ProjectType.PROJECT:
             source = "Project"
         elif level == ProjectType.BLOCK:
             block = self.get_source()
             name = self.project.blocks[block].name
-            source = f"Block: {name}"
+            source = f"Block ({name})"
         else:
             regset = self.get_source()
             name = self.project.regsets[regset].name
-            source = f"Register Set: {name}"
-        print(f"Source: {source}")
+            source = f"Register Set ({name})"
+
+        self.add_row_to_grid(grid, 1, "Filename:", filename)
+        self.add_row_to_grid(grid, 2, "Exporter:", exporter.description)
+        self.add_row_to_grid(grid, 3, "Source:", source)
+
         box.pack_start(grid, True, True, 12)
         grid.show_all()
 
