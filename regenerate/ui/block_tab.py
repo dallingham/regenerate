@@ -36,6 +36,7 @@ from .entry import (
     EntryText,
     EntryWord,
     EntryHex,
+    ValidHexEntry,
 )
 from .file_dialogs import create_file_selector
 from .select_model import SelectModel
@@ -59,9 +60,15 @@ class BlockTab:
             self.modified,
             "Enter the block description",
         )
-        self.block_size = EntryHex(
-            find_obj("block_size"), "address_size", self.modified
+        self.grid = find_obj("blk_grid")
+        label = find_obj("blk_addr_size_label")
+        new_entry = ValidHexEntry()
+        new_entry.show()
+        self.block_size = EntryHex(new_entry, "address_size", self.modified)
+        self.grid.attach_next_to(
+            new_entry, label, Gtk.PositionType.RIGHT, 1, 1
         )
+
         self.block_notebook = find_obj("block_notebook")
         self.block_regsets = find_obj("block_regsets")
         self.block_reg_add = find_obj("block_reg_add")

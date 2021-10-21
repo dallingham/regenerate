@@ -34,6 +34,7 @@ from .entry import (
     EntryText,
     EntryWord,
     EntryInt,
+    ValidIntEntry,
 )
 from .base_doc import BaseDoc
 
@@ -97,12 +98,6 @@ class ModuleTabs:
             ("sync_reset", "sync_reset", EntrySwitch, None),
             ("secondary_reset", "secondary_reset", EntrySwitch, None),
             ("data_width", "data_bus_width", EntryWidth, None),
-            (
-                "address_width",
-                "address_bus_width",
-                EntryInt,
-                "Missing address bus width",
-            ),
         ]
 
         item_list = [
@@ -135,6 +130,22 @@ class ModuleTabs:
 
         find_obj("interface").connect(
             "notify::active", self.on_sysv_intf_toggled
+        )
+
+        label = find_obj("regset_addr_width_label")
+        grid = find_obj("port_table")
+
+        addr_width = ValidIntEntry()
+        addr_width.show()
+
+        grid.attach_next_to(addr_width, label, Gtk.PositionType.RIGHT, 1, 1)
+        self.port_object_list.append(
+            EntryInt(
+                addr_width,
+                "address_bus_width",
+                self.after_modified,
+                "Missing address bus width",
+            )
         )
 
         for (widget_name, db_name, class_type, placeholder) in port_list:

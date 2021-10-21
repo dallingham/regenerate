@@ -22,6 +22,7 @@ Data entry classes.
 """
 from typing import Callable, Optional, Tuple
 import string
+import re
 
 from gi.repository import GObject, Gtk
 from regenerate.db import LOGGER
@@ -304,7 +305,7 @@ class EntryWord(EntryValid):
         )
 
 
-class EntryInt(EntryValid):
+class EntryInt(EntryText):
     """
     Connects a database value to a text entry, but restricts the input
     to a digits.
@@ -322,18 +323,13 @@ class EntryInt(EntryValid):
             field_name,
             modified,
             string.digits,
-            placeholder=placeholder,
         )
 
     def on_change(self, obj: Gtk.Entry):
         """Called on the change event"""
 
         if self.data_obj:
-            if obj.get_text():
-                int_val = int(obj.get_text())
-            else:
-                int_val = 0
-            setattr(self.data_obj, self.field_name, int_val)
+            setattr(self.data_obj, self.field_name, int(obj.get_text()))
             self.modified()
 
     def change_db(self, data_obj):
@@ -343,10 +339,10 @@ class EntryInt(EntryValid):
         if data_obj:
             self.widget.set_text(f"{getattr(data_obj, self.field_name)}")
         else:
-            self.widget.set_text("")
+            self.widget.set_text("0")
 
 
-class EntryHex(EntryValid):
+class EntryHex(EntryText):
     """
     Connects a database value to a text entry, but restricts the input
     to a digits.
@@ -364,23 +360,14 @@ class EntryHex(EntryValid):
             field_name,
             modified,
             string.hexdigits + "x",
-            placeholder=placeholder,
         )
 
     def on_change(self, obj: Gtk.Entry) -> None:
         """Called on the change event"""
 
         if self.data_obj:
-            try:
-                text = obj.get_text()
-                if text:
-                    int_val = int(text, 0)
-                else:
-                    int_val = 0
-                setattr(self.data_obj, self.field_name, int_val)
-                self.modified()
-            except ValueError:
-                LOGGER.error("Invalid number (%s). Possible missing 0x", text)
+            setattr(self.data_obj, self.field_name, int(obj.get_text(), 0))
+            self.modified()
 
     def change_db(self, data_obj):
         """Change the database"""
@@ -390,4 +377,32 @@ class EntryHex(EntryValid):
             val = f"0x{getattr(data_obj, self.field_name):08x}"
             self.widget.set_text(val)
         else:
-            self.widget.set_text("")
+            self.widget.set_text("0x0")
+
+
+class ValidHexEntry(Gtk.Entry, Gtk.Editable):
+    def __init__(self):
+        super(ValidHexEntry, self).__init__()
+
+    def do_insert_text(self, new_text, length, position):
+        regexp = re.compile("^(0x)?[A-Fa-f0-9_]+$")
+
+        if regexp.match(new_text) is not None:
+            self.get_buffer().insert_text(position, new_text, length)
+            return position + length
+
+        return position
+
+
+class ValidIntEntry(Gtk.Entry, Gtk.Editable):
+    def __init__(self):
+        super(ValidIntEntry, self).__init__()
+
+    def do_insert_text(self, new_text, length, position):
+        regexp = re.compile("^[0-9]+$")
+
+        if regexp.match(new_text) is not None:
+            self.get_buffer().insert_text(position, new_text, length)
+            return position + length
+
+        return position
