@@ -5,10 +5,10 @@
   <object class="GtkDialog" id="build">
     <property name="width_request">800</property>
     <property name="can_focus">False</property>
-    <property name="border_width">12</property>
+    <property name="border_width">7</property>
     <property name="title" translatable="yes">regenerate - Build</property>
     <property name="default_width">1200</property>
-    <property name="default_height">450</property>
+    <property name="default_height">600</property>
     <property name="type_hint">normal</property>
     <child type="titlebar">
       <placeholder/>
@@ -73,8 +73,10 @@
               <object class="GtkLabel" id="xxx000">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="margin_bottom">6</property>
-                <property name="label" translatable="yes">Build output files from project and register information.</property>
+                <property name="margin_top">12</property>
+                <property name="margin_bottom">12</property>
+                <property name="hexpand">True</property>
+                <property name="label" translatable="yes">Generate output files from the builder rules</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
@@ -93,6 +95,8 @@
                   <object class="GtkTreeView" id="buildlist">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
+                    <property name="hexpand">True</property>
+                    <property name="vexpand">True</property>
                     <signal name="button-press-event" handler="on_buildlist_button_press_event" swapped="no"/>
                     <child internal-child="selection">
                       <object class="GtkTreeSelection"/>
