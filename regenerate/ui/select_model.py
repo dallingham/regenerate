@@ -55,7 +55,7 @@ class SelectModel(Gtk.ListStore):
         self.set_value(node, SelectCol.ICON, modified)
 
     def add(self, obj: Union[Block, RegisterDb], modified=False):
-        """Add the the database to the model"""
+        """Add the database to the model"""
 
         if modified or obj.modified:
             node = self.append(row=[True, obj.name, obj])

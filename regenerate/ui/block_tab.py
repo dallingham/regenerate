@@ -48,27 +48,32 @@ class BlockTab:
     def __init__(self, find_obj: Callable, block_remove_callback: Callable):
 
         self.block_remove_callback = block_remove_callback
+
+        self.block_notebook = find_obj("block_notebook")
+        self.block_regsets = find_obj("block_regsets")
+        self.block_reg_add = find_obj("block_reg_add")
+        self.block_name_obj = find_obj("block_name")
+        self.block_descr_obj = find_obj("block_description")
+        self.block_size_obj = find_obj("blk_addr_size")
+        self.block_reg_remove = find_obj("block_reg_remove")
+        self.block_docs = find_obj("block_doc_pages")
+
         self.block_name = EntryWord(
-            find_obj("block_name"),
+            self.block_name_obj,
             "name",
             self.modified,
             "Enter the block name",
         )
         self.block_description = EntryText(
-            find_obj("block_description"),
+            self.block_descr_obj,
             "description",
             self.modified,
             "Enter the block description",
         )
         self.block_size = EntryHex(
-            find_obj("blk_addr_size"), "address_size", self.modified
+            self.block_size_obj, "address_size", self.modified
         )
 
-        self.block_notebook = find_obj("block_notebook")
-        self.block_regsets = find_obj("block_regsets")
-        self.block_reg_add = find_obj("block_reg_add")
-        self.block_reg_remove = find_obj("block_reg_remove")
-        self.block_docs = find_obj("block_doc_pages")
         self.regmodel: Optional[Gtk.ListStore] = None
         self.project: Optional[RegProject] = None
         self.block: Optional[Block] = None
@@ -135,10 +140,23 @@ class BlockTab:
         "Redraw the screen"
 
         self.block_model.update()
+        self.build_add_regset_menu()
         if self.block:
             self.set_parameters(self.block.parameters.get())
             self.overrides_list.set_parameters(self.block.parameters.get())
+        else:
+            LOGGER.warning(
+                ("No block is selected. Select a block from the list or "
+                 "use the buttons in the lower left corner to create or add a block."
+                 )
+            )
+            
+        self.block_name_obj.set_sensitive(self.block is not None)
+        self.block_descr_obj.set_sensitive(self.block is not None)
+        self.block_size_obj.set_sensitive(self.block is not None)
+            
         self.overrides_list.update_display()
+        self.build_add_regset_menu()
 
     def clear_flags(self) -> None:
         self.block_model.update()
@@ -339,7 +357,7 @@ class BlockTab:
     def build_add_regset_menu(self):
         "Builds the menu to add a register set to a block"
 
-        if self.block and self.project:
+        if self.project:
             reg_menu = Gtk.Menu()
 
             sorted_dict = {
@@ -349,13 +367,31 @@ class BlockTab:
                 )
             }
 
+            empty = True
             for regset_id in sorted_dict:
+                empty = False
                 regset = self.project.regsets[regset_id]
                 menu_item = Gtk.MenuItem(regset.name)
                 menu_item.connect("activate", self.menu_selected, regset)
                 menu_item.show()
                 reg_menu.append(menu_item)
-            self.block_reg_add.set_popup(reg_menu)
+
+            if empty:
+                self.block_reg_add.set_sensitive(False)
+                self.block_reg_add.set_tooltip_text(
+                    "No register sets have been defined"
+                )
+            else:
+                self.block_reg_add.set_sensitive(True)
+                self.block_reg_add.set_tooltip_text(
+                    "Select a register set to add to the block"
+                )
+                self.block_reg_add.set_popup(reg_menu)
+        else:
+            self.block_reg_add.set_sensitive(False)
+            self.block_reg_add.set_tooltip_text(
+                "No register sets have been defined"
+            )
 
     def set_parameters(self, parameters) -> None:
         "Sets the parameters"
@@ -395,7 +431,14 @@ class BlockTab:
     def menu_selected(self, _obj, regset) -> None:
         "Called when the menu entry has been selected"
 
-        if self.regmodel is None or self.project is None or self.block is None:
+        if self.block is None:
+            LOGGER.warning(
+                ("A block must be created or added before register set can be added. "
+                 "Use the buttons in the lower left corner to create or add a block."
+                 )
+            )
+            return
+        if self.regmodel is None or self.project is None:
             return
 
         new_name = self.find_name_inst_name(regset.name)

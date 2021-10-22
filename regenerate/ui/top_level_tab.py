@@ -88,6 +88,7 @@ class TopLevelTab:
     def update(self) -> None:
         "Update the block instance list"
         self.blkinst_list.update()
+        self.build_add_block_menu()
 
     def change_project(self, prj: RegProject) -> None:
         "Change the project, updating the displays"
@@ -123,13 +124,26 @@ class TopLevelTab:
         if self.prj is None:
             return
 
+        empty = True
         blk_menu = Gtk.Menu()
-        for block in self.prj.blocks.values():
+        for count, block in enumerate(self.prj.blocks.values()):
             menu_item = Gtk.MenuItem(block.name)
             menu_item.connect("activate", self.menu_selected, block)
             menu_item.show()
+            empty = False
             blk_menu.append(menu_item)
-        self.top_block_add.set_popup(blk_menu)
+            self.top_block_add.set_sensitive(True)
+
+        if empty:
+            self.top_block_add.set_sensitive(False)
+            self.top_block_add.set_tooltip_text(
+                "No blocks have been defined"
+            )
+        else:
+            self.top_block_add.set_popup(blk_menu)
+            self.top_block_add.set_tooltip_text(
+                "Select a block to add to the top level"
+            )
 
     def menu_selected(self, _obj: Gtk.MenuItem, block: Block) -> None:
         "Adds the block as a new block instance"

@@ -413,7 +413,7 @@ class RegSetTab:
             self.project = prj
             self.name2status = {}
             self.rebuild_model()
-        self.update_display()
+        self.update_display(False)
         self.reg_set_obj.select_path(0)
 
     def rebuild_model(self):
@@ -439,13 +439,13 @@ class RegSetTab:
         self.set_modified()
         self.set_register_warn_flags(reg)
 
-    def update_display(self):
+    def update_display(self, show_msg=False):
         old_skip = self.skip_changes
         self.skip_changes = True
-        self.redraw()
+        self.redraw(show_msg)
         self.skip_changes = old_skip
 
-    def redraw(self):
+    def redraw(self, show_msg=False):
         """Redraws the information in the register list."""
         if self.regset:
             self.module_tabs.change_db(self.regset, self.project)
@@ -458,7 +458,13 @@ class RegSetTab:
                 self.widgets.array_notation.set_active(True)
         else:
             self.module_tabs.change_db(None, None)
-
+            if show_msg:
+                LOGGER.warning(
+                    ("No register set is selected. Select a one from the list or "
+                     "use the buttons in the lower left corner to create or add a "
+                     "register set."
+                    )
+                )
         self.rebuild_model()
 
         self.update_bit_count()
@@ -527,9 +533,10 @@ class RegSetTab:
                     txt = f"Field name ({field.name}) is a SystemVerilog reserved word"
                     msg.append(txt)
                 if check_field(field):
-                    txt = (f"Missing field description for '{field.name}' field of this "
-                           "register. Select the field in the Bit Field table and click "
-                           "on the Edit button to add a description.")
+                    txt = (f"Missing field description for '{field.name}' "
+                           "field of this register. Select the field in the "
+                           "Bit Fields table and click on the Edit button "
+                           "to add a description.")
                     msg.append(txt)
                     warn_bit = True
                 if check_reset(field):

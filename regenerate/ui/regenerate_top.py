@@ -341,11 +341,13 @@ class MainWindow(BaseWindow):
         self, _obj: Gtk.Notebook, _page: Gtk.Paned, page_num: int
     ) -> None:
         "Called when the Top/Block/Registers tab is changed"
-        self.block_tab.build_add_regset_menu()
-        self.regset_tab.update_display()
-        self.block_tab.redraw()
-        self.top_level_tab.update()
         self.regset_tab.filter_visible(page_num == 0)
+        if page_num == 0:
+            self.regset_tab.update_display(True)
+        elif page_num == 1:
+            self.block_tab.redraw()
+        else:
+            self.top_level_tab.update()
 
     def on_notebook_switch_page(
         self, _obj: Gtk.Notebook, _page: Gtk.Box, page_num: int
@@ -542,7 +544,7 @@ class MainWindow(BaseWindow):
         old_skip = self.skip_changes
         self.skip_changes = True
         self.redraw()
-        self.regset_tab.redraw()
+        self.regset_tab.redraw(False)
         self.block_tab.redraw()
         self.skip_changes = old_skip
 
@@ -572,7 +574,7 @@ class MainWindow(BaseWindow):
                 self.top_window,
             )
 
-        self.regset_tab.update_display()
+        self.regset_tab.update_display(False)
         self.block_tab.redraw()
 
     def exit(self):
@@ -636,9 +638,7 @@ class MainWindow(BaseWindow):
         self.regset_tab.bitfield_obj.set_parameters(
             self.dbase.parameters.get()
         )
-
-        self.block_tab.redraw()
-        self.regset_tab.update_display()
+        self.regset_tab.update_display(False)
         self.set_description_warn_flag()
 
     def delete_block_callback(self):
