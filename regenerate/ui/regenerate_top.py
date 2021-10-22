@@ -480,21 +480,6 @@ class MainWindow(BaseWindow):
             self.open_project(filename, uri)
             self.add_recent(Path(filename).resolve())
 
-    def set_busy_cursor(self, value):
-        """
-        This seems to cause Windows to hang, so don't change the cursor
-        to indicate busy under Windows.
-        """
-        if os.name == "posix":
-            if value:
-                cursor = Gdk.Cursor.new(Gdk.CursorType.WATCH)
-                self.top_window.get_root_window().set_cursor(cursor)
-            else:
-                cursor = Gdk.Cursor.new(Gdk.CursorType.ARROW)
-                self.top_window.get_root_window().set_cursor(cursor)
-            while Gtk.events_pending():
-                Gtk.main_iteration()
-
     def open_project(self, filename, _uri):
         self.loading_project = True
         self.regset_tab.clear()
