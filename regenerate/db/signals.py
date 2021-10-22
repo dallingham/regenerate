@@ -24,6 +24,7 @@ from typing import Dict, Any
 from regenerate.settings import rules
 
 DEF_CLK_NAME = "CLK"
+DEF_RST_NAME_P = "RST"
 DEF_RST_NAME = "RSTn"
 DEF_SEC_RESET_NAME = "SEC_RSTn"
 DEF_WDATA_NAME = "WDATA"
@@ -55,7 +56,6 @@ class Signals:
 
     def __init__(self):
         self.clock_name = DEF_CLK_NAME
-        self.reset_name = DEF_RST_NAME
         self._interface = rules.get(
             "rules", "interface_default", DEF_INTERFACE
         )
@@ -82,6 +82,15 @@ class Signals:
         """Returns the address size in bytes"""
         return 1 << self.address_bus_width
 
+    @property
+    def reset_name(self) -> str:
+        """
+        Gets _interface, which is accessed via the interface_name property
+        """
+        if self.reset_active_level:
+            return DEF_RST_NAME_P
+        return DEF_RST_NAME
+    
     @property
     def interface_name(self) -> str:
         """

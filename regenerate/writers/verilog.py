@@ -319,22 +319,12 @@ class Verilog(RegsetWriter):
             self.build_register_list(), self._regset.ports.data_bus_width
         )
 
-        if (
-            self._regset.ports.reset_active_level
-            and not self._regset.use_interface
-        ):
+        if (self._regset.ports.reset_active_level):
             reset_edge = "posedge"
+            reset_op = ""
         else:
             reset_edge = "negedge"
-
-        reset_op = (
-            ""
-            if (
-                self._regset.ports.reset_active_level
-                and not self._regset.use_interface
-            )
-            else "~"
-        )
+            reset_op = "!"
 
         input_signals = build_input_signals(self._regset, self._cell_info)
         output_signals = build_output_signals(self._regset, self._cell_info)
@@ -385,26 +375,16 @@ class Verilog(RegsetWriter):
     def write_register_modules(self, ofile):
         """Writes the used register module types to the file."""
 
-        if (
-            self._regset.ports.reset_active_level
-            and not self._regset.use_interface
-        ):
+        if self._regset.ports.reset_active_level:
             edge = "posedge"
+            condition = ""
+            rst_name = "RST"
         else:
             edge = "negedge"
+            condition = "!"
+            rst_name = "RSTn"
 
-        if (
-            self._regset.ports.reset_active_level
-            and not self._regset.use_interface
-        ):
-            condition = ""
-        else:
-            condition = "~"
-
-        if (
-            self._regset.ports.byte_strobe_active_level
-            or self._regset.use_interface
-        ):
+        if self._regset.ports.byte_strobe_active_level:
             be_level = ""
         else:
             be_level = "~"
@@ -412,10 +392,14 @@ class Verilog(RegsetWriter):
         if self._regset.ports.sync_reset:
             trigger = ""
         else:
-            trigger = f" or {edge} RSTn"
+            if self._regset.ports.reset_active_level:
+                trigger = f" or posedge RST"
+            else:
+                trigger = f" or negedge RSTn"
 
         name_map = {
             "MODULE": self._regset.name,
+            "RST": rst_name,
             "BE_LEVEL": be_level,
             "RESET_CONDITION": condition,
             "RESET_TRIGGER": trigger,
@@ -874,10 +858,15 @@ def build_standard_ports(regset: RegisterDb) -> PortInfo:
 
     ports = regset.ports
 
+    if ports.reset_active_level:
+        rst = "MGMT.RST"
+    else:
+        rst = "MGMT.RSTn"
+        
     if regset.use_interface:
         return PortInfo(
             "MGMT.CLK",
-            "MGMT.RSTn",
+            rst,
             ports.secondary_reset_name,
             ports.interface_name,
             ports.modport_name,

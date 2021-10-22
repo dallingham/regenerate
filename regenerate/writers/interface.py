@@ -26,6 +26,7 @@ from jinja2 import FileSystemLoader, Environment
 from .writer_base import (
     RegsetWriter,
     ProjectType,
+    find_template,
 )
 from .export_info import ExportInfo
 
@@ -40,15 +41,7 @@ class InterfaceGen(RegsetWriter):
         container blocks.
         """
 
-        template_dir = Path(__file__) / "templates"
-
-        env = Environment(
-            loader=FileSystemLoader(str(template_dir)),
-            trim_blocks=True,
-            lstrip_blocks=True,
-        )
-
-        template = env.get_template("interface.template")
+        template = find_template("interface.template")
 
         with filename.open("w") as ofile:
             ofile.write(

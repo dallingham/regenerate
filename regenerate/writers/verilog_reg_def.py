@@ -6,7 +6,7 @@ REG = {
     )
    (
     input                  CLK,         // Clock
-    input                  RSTn,        // Reset
+    input                  %(RST)s,        // Reset
     input                  BE,          // Byte Enable
     input                  RD,          // Write Strobe
     input [WIDTH-1:0]      DI,          // Data In
@@ -15,7 +15,7 @@ REG = {
     );
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
          if (WE & %(BE_LEVEL)sBE) begin
@@ -33,7 +33,7 @@ endmodule
     )
    (
     input                  CLK,         // Clock
-    input                  RSTn,        // Reset
+    input                  %(RST)s,        // Reset
     input                  BE,          // Byte Enable
     input                  WE,          // Write Strobe
     input [WIDTH-1:0]      DI,          // Data In
@@ -41,7 +41,7 @@ endmodule
     );
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
          if (WE & %(BE_LEVEL)sBE) begin
@@ -59,7 +59,7 @@ endmodule
     )
    (
     input                  CLK,         // Clock
-    input                  RSTn,        // Reset
+    input                  %(RST)s,        // Reset
     input                  BE,          // Byte Enable
     input                  WE,          // Write Strobe
     input                  LD,          // Write protect when high
@@ -68,7 +68,7 @@ endmodule
     );
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
          if (WE & %(BE_LEVEL)sBE & ~LD) begin
@@ -86,7 +86,7 @@ endmodule
     )
    (
     input                  CLK,         // Clock
-    input                  RSTn,        // Reset
+    input                  %(RST)s,        // Reset
     input                  BE,          // Byte Enable
     input                  WE,          // Write Strobe
     input                  LD,          // Write protect when high
@@ -99,7 +99,7 @@ endmodule
    reg                     ws_d;
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
          if (WE & %(BE_LEVEL)sBE & ~LD) begin
@@ -111,7 +111,7 @@ endmodule
    assign DO_1S = ws & !ws_d;
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          ws <= 1'b0;
          ws_d <= 1'b0;
       end else begin
@@ -129,7 +129,7 @@ endmodule
     )
    (
     input                  CLK,         // Clock
-    input                  RSTn,        // Reset
+    input                  %(RST)s,        // Reset
     input                  BE,          // Byte Enable
     input                  WE,          // Write Strobe
     input [WIDTH-1:0]      DI,          // Data In
@@ -141,7 +141,7 @@ endmodule
    reg                     ws_d;
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
          if (WE & %(BE_LEVEL)sBE) begin
@@ -153,7 +153,7 @@ endmodule
    assign DO_1S = ws & !ws_d;
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          ws <= 1'b0;
          ws_d <= 1'b0;
       end else begin
@@ -171,7 +171,7 @@ endmodule
     )
    (
     input                  CLK,         // Clock
-    input                  RSTn,        // Reset
+    input                  %(RST)s,        // Reset
     input                  BE,          // Byte Enable
     input                  WE,          // Write Strobe
     input [WIDTH-1:0]      DI,          // Data In
@@ -183,7 +183,7 @@ endmodule
    reg                     ws_d;
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
          if (WE & %(BE_LEVEL)sBE) begin
@@ -197,7 +197,7 @@ endmodule
    assign DO_1S = ws & !ws_d;
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          ws <= 1'b0;
          ws_d <= 1'b0;
       end else begin
@@ -215,7 +215,7 @@ endmodule
     )
    (
     input                  CLK,         // Clock
-    input                  RSTn,        // Reset
+    input                  %(RST)s,        // Reset
     input                  BE,          // Byte Enable
     input                  WE,          // Write Strobe
     input                  LD,          // Load Control
@@ -225,7 +225,7 @@ endmodule
     );
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
          if (WE & %(BE_LEVEL)sBE) begin
@@ -245,7 +245,7 @@ endmodule
     )
    (
     input                  CLK,         // Clock
-    input                  RSTn,        // Reset
+    input                  %(RST)s,        // Reset
     input                  BE,          // Byte Enable
     input                  WE,          // Write Strobe
     input                  LD,          // Load Control
@@ -259,7 +259,7 @@ endmodule
    reg                     ws_d;
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
          if (WE & %(BE_LEVEL)sBE) begin
@@ -273,7 +273,7 @@ endmodule
    assign DO_1S = ws & !ws_d;
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          ws <= 1'b0;
          ws_d <= 1'b0;
       end else begin
@@ -291,7 +291,7 @@ endmodule
     )
    (
     input                  CLK,         // Clock
-    input                  RSTn,        // Reset
+    input                  %(RST)s,        // Reset
     input                  BE,          // Byte Enable
     input                  WE,          // Write Strobe
     input                  LD,          // Load Control
@@ -305,7 +305,7 @@ endmodule
    reg                     ws_d;
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
          if (WE & %(BE_LEVEL)sBE) begin
@@ -319,7 +319,7 @@ endmodule
    assign DO_1S = ws & !ws_d;
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          ws <= 1'b0;
          ws_d <= 1'b0;
       end else begin
@@ -337,7 +337,7 @@ endmodule
     )
    (
     input                  CLK,         // Clock
-    input                  RSTn,        // Reset
+    input                  %(RST)s,        // Reset
     input                  BE,          // Byte Enable
     input                  WE,          // Write Strobe
     input [WIDTH-1:0]      DI,          // Data In
@@ -346,7 +346,7 @@ endmodule
     );
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
          if (WE & %(BE_LEVEL)sBE) begin
@@ -366,7 +366,7 @@ endmodule
     )
    (
     input                  CLK,         // Clock
-    input                  RSTn,        // Reset
+    input                  %(RST)s,        // Reset
     input                  BE,          // Byte Enable
     input                  WE,          // Write Strobe
     input [WIDTH-1:0]      DI,          // Data In
@@ -379,7 +379,7 @@ endmodule
    reg                     ws_d;
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
          if (WE & %(BE_LEVEL)sBE) begin
@@ -393,7 +393,7 @@ endmodule
    assign DO_1S = ws & !ws_d;
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          ws <= 1'b0;
          ws_d <= 1'b0;
       end else begin
@@ -411,7 +411,7 @@ endmodule
     )
    (
     input                  CLK,         // Clock
-    input                  RSTn,        // Reset
+    input                  %(RST)s,        // Reset
     input                  BE,          // Byte Enable
     input                  WE,          // Write Strobe
     input [WIDTH-1:0]      DI,          // Data In
@@ -424,7 +424,7 @@ endmodule
    reg                     ws_d;
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
          if (WE & %(BE_LEVEL)sBE) begin
@@ -438,7 +438,7 @@ endmodule
    assign DO_1S = ws & !ws_d;
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          ws <= 1'b0;
          ws_d <= 1'b0;
       end else begin
@@ -456,7 +456,7 @@ endmodule
     )
    (
     input                  CLK,         // Clock
-    input                  RSTn,        // Reset
+    input                  %(RST)s,        // Reset
     input                  BE,          // Byte Enable
     input                  WE,          // Write Strobe
     input [WIDTH-1:0]      DI,          // Data In
@@ -468,7 +468,7 @@ endmodule
    generate
       for(i = 0; i < WIDTH; i = i + 1) begin : u
          always @(posedge CLK%(RESET_TRIGGER)s) begin
-            if (%(RESET_CONDITION)sRSTn) begin
+            if (%(RESET_CONDITION)s%(RST)s) begin
                DO[i] <= RVAL[i];
             end else begin
                if (WE & %(BE_LEVEL)sBE & DI[i]) begin
@@ -490,7 +490,7 @@ endmodule
     )
    (
     input                  CLK,         // Clock
-    input                  RSTn,        // Reset
+    input                  %(RST)s,        // Reset
     input                  BE,          // Byte Enable
     input                  WE,          // Write Strobe
     input                  LD,          // Soft Clear
@@ -503,7 +503,7 @@ endmodule
    generate
       for(i = 0; i < WIDTH; i = i + 1) begin : u
          always @(posedge CLK%(RESET_TRIGGER)s) begin
-            if (%(RESET_CONDITION)sRSTn) begin
+            if (%(RESET_CONDITION)s%(RST)s) begin
                DO[i] <= RVAL[i];
             end else begin
                if ((WE & %(BE_LEVEL)sBE & DI[i]) | LD) begin
@@ -525,7 +525,7 @@ endmodule
     )
    (
     input                  CLK,         // Clock
-    input                  RSTn,        // Reset
+    input                  %(RST)s,        // Reset
     input                  BE,          // Byte Enable
     input                  WE,          // Write Strobe
     input [WIDTH-1:0]      DI,          // Data In
@@ -541,7 +541,7 @@ endmodule
    generate
       for(i = 0; i < WIDTH; i = i + 1) begin : u
          always @(posedge CLK%(RESET_TRIGGER)s) begin
-            if (%(RESET_CONDITION)sRSTn) begin
+            if (%(RESET_CONDITION)s%(RST)s) begin
                DO[i] <= RVAL[i];
             end else begin
                if (WE & %(BE_LEVEL)sBE & DI[i]) begin
@@ -557,7 +557,7 @@ endmodule
    assign DO_1S = ws & !ws_d;
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          ws <= 1'b0;
          ws_d <= 1'b0;
       end else begin
@@ -575,7 +575,7 @@ endmodule
     )
    (
     input                  CLK,         // Clock
-    input                  RSTn,        // Reset
+    input                  %(RST)s,        // Reset
     input                  BE,          // Byte Enable
     input                  WE,          // Write Strobe
     input [WIDTH-1:0]      DI,          // Data In
@@ -591,7 +591,7 @@ endmodule
    generate
       for(i = 0; i < WIDTH; i = i + 1) begin : u
          always @(posedge CLK%(RESET_TRIGGER)s) begin
-            if (%(RESET_CONDITION)sRSTn) begin
+            if (%(RESET_CONDITION)s%(RST)s) begin
                DO[i] <= RVAL[i];
             end else begin
                if (WE & %(BE_LEVEL)sBE & DI[i]) begin
@@ -607,7 +607,7 @@ endmodule
    assign DO_1S = ws & !ws_d;
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          ws <= 1'b0;
          ws_d <= 1'b0;
       end else begin
@@ -625,7 +625,7 @@ endmodule
     )
    (
     input                  CLK,         // Clock
-    input                  RSTn,        // Reset
+    input                  %(RST)s,        // Reset
     input                  BE,          // Byte Enable
     input                  WE,          // Write Strobe
     input                  LD,          // Load Control
@@ -638,7 +638,7 @@ endmodule
    generate
       for(i = 0; i < WIDTH; i = i + 1) begin : u
          always @(posedge CLK%(RESET_TRIGGER)s) begin
-            if (%(RESET_CONDITION)sRSTn) begin
+            if (%(RESET_CONDITION)s%(RST)s) begin
                DO[i] <= RVAL[i];
             end else begin
                if (WE & %(BE_LEVEL)sBE & DI[i]) begin
@@ -660,7 +660,7 @@ endmodule
     )
    (
     input                  CLK,         // Clock
-    input                  RSTn,        // Reset
+    input                  %(RST)s,        // Reset
     input                  BE,          // Byte Enable
     input                  WE,          // Write Strobe
     input [WIDTH-1:0]      DI,          // Data In
@@ -677,7 +677,7 @@ endmodule
    generate
       for(i = 0; i < WIDTH; i = i + 1) begin : u
          always @(posedge CLK%(RESET_TRIGGER)s) begin
-            if (%(RESET_CONDITION)sRSTn) begin
+            if (%(RESET_CONDITION)s%(RST)s) begin
                DO[i] <= RVAL[i];
             end else begin
                if (WE & %(BE_LEVEL)sBE & DI[i]) begin
@@ -693,7 +693,7 @@ endmodule
    assign DO_1S = ws & !ws_d;
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          ws <= 1'b0;
          ws_d <= 1'b0;
       end else begin
@@ -711,7 +711,7 @@ endmodule
     )
    (
     input                  CLK,         // Clock
-    input                  RSTn,        // Reset
+    input                  %(RST)s,        // Reset
     input                  BE,          // Byte Enable
     input                  WE,          // Write Strobe
     input [WIDTH-1:0]      DI,          // Data In
@@ -728,7 +728,7 @@ endmodule
    generate
       for(i = 0; i < WIDTH; i = i + 1) begin : u
          always @(posedge CLK%(RESET_TRIGGER)s) begin
-            if (%(RESET_CONDITION)sRSTn) begin
+            if (%(RESET_CONDITION)s%(RST)s) begin
                DO[i] <= RVAL[i];
             end else begin
                if (WE & %(BE_LEVEL)sBE & DI[i]) begin
@@ -744,7 +744,7 @@ endmodule
    assign DO_1S = ws & !ws_d;
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          ws <= 1'b0;
          ws_d <= 1'b0;
       end else begin
@@ -762,14 +762,14 @@ endmodule
     )
    (
     input                  CLK,         // Clock
-    input                  RSTn,        // Reset
+    input                  %(RST)s,        // Reset
     input                  LD,          // Load Control
     input [WIDTH-1:0]      IN,          // Load Data
     output reg [WIDTH-1:0] DO           // Data Out
     );
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else if (LD) begin
          DO <= IN;
@@ -785,7 +785,7 @@ endmodule
     )
    (
     input                  CLK,         // Clock
-    input                  RSTn,        // Reset
+    input                  %(RST)s,        // Reset
     input                  RD,          // Read Strobe
     input                  LD,          // Load Control
     input [WIDTH-1:0]      IN,          // Load Data
@@ -793,7 +793,7 @@ endmodule
     );
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
          if (LD) begin
@@ -813,7 +813,7 @@ endmodule
     )
    (
     input              CLK,  // Clock
-    input              RSTn, // Reset
+    input              %(RST)s, // Reset
     input              RD,   // Read Strobe
     input [WIDTH-1:0]  IN,   // Load Data
     output [WIDTH-1:0] DO,   // Data Out
@@ -827,7 +827,7 @@ endmodule
    assign DO_1S = ws & !ws_d;
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          ws <= 1'b0;
          ws_d <= 1'b0;
       end else begin
@@ -845,7 +845,7 @@ endmodule
     )
    (
     input                  CLK,         // Clock
-    input                  RSTn,        // Reset
+    input                  %(RST)s,        // Reset
     input                  RD,          // Read Strobe
     input                  LD,          // Load Control
     input [WIDTH-1:0]      IN,          // Load Data
@@ -853,7 +853,7 @@ endmodule
     );
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
          if (LD) begin
@@ -873,7 +873,7 @@ endmodule
     )
    (
     input  CLK,                 // Clock
-    input  RSTn,                // Reset
+    input  %(RST)s,                // Reset
     input  BE,                  // Byte Enable
     input  WE,                  // Write Strobe
     input  [WIDTH-1:0] DI,      // Data In
@@ -886,7 +886,7 @@ endmodule
    assign DO = ws & ~ws_d;
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          ws <= {WIDTH{1'b0}};
          ws_d <= {WIDTH{1'b0}};
       end else begin
@@ -908,7 +908,7 @@ endmodule
     )
    (
     input                  CLK,         // Clock
-    input                  RSTn,        // Reset
+    input                  %(RST)s,        // Reset
     input                  BE,          // Byte Enable
     input                  WE,          // Write Strobe
     input [WIDTH-1:0]      DI,          // Data In
@@ -917,7 +917,7 @@ endmodule
     );
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
          if (WE & %(BE_LEVEL)sBE) begin
@@ -937,7 +937,7 @@ endmodule
     )
    (
     input      CLK,     // Clock
-    input      RSTn,    // Reset
+    input      %(RST)s,    // Reset
     input      BE,      // Byte Enable
     input      WE,      // Write Strobe
     input      DI,      // Data In
@@ -950,7 +950,7 @@ endmodule
    reg         ws_d;
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
          if (WE & %(BE_LEVEL)sBE) begin
@@ -964,7 +964,7 @@ endmodule
    assign DO_1S = ws & !ws_d;
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          ws <= 1'b0;
          ws_d <= 1'b0;
       end else begin
@@ -982,7 +982,7 @@ endmodule
     )
    (
     input      CLK,  // Clock
-    input      RSTn, // Reset
+    input      %(RST)s, // Reset
     input      BE,   // Byte Enable
     input      WE,   // Write Strobe
     input      DI,   // Data In
@@ -995,7 +995,7 @@ endmodule
    reg         ws_d;
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
          if (WE & %(BE_LEVEL)sBE) begin
@@ -1009,7 +1009,7 @@ endmodule
    assign DO_1S = ws & !ws_d;
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          ws <= 1'b0;
          ws_d <= 1'b0;
       end else begin
@@ -1027,7 +1027,7 @@ endmodule
     )
    (
     input                  CLK,  // Clock
-    input                  RSTn, // Reset
+    input                  %(RST)s, // Reset
     input                  BE,   // Byte Enable
     input                  WE,   // Write Strobe
     input [WIDTH-1:0]      DI,   // Data In
@@ -1036,7 +1036,7 @@ endmodule
     );
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
          if (WE & %(BE_LEVEL)sBE) begin
@@ -1056,7 +1056,7 @@ endmodule
     )
    (
     input                  CLK,  // Clock
-    input                  RSTn, // Reset
+    input                  %(RST)s, // Reset
     input                  BE,   // Byte Enable
     input                  WE,   // Write Strobe
     input [WIDTH-1:0]      DI,   // Data In
@@ -1069,7 +1069,7 @@ endmodule
    reg                     ws_d;
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
          if (WE & %(BE_LEVEL)sBE) begin
@@ -1083,7 +1083,7 @@ endmodule
    assign DO_1S = ws & !ws_d;
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          ws <= 1'b0;
          ws_d <= 1'b0;
       end else begin
@@ -1101,7 +1101,7 @@ endmodule
     )
    (
     input                  CLK,  // Clock
-    input                  RSTn, // Reset
+    input                  %(RST)s, // Reset
     input                  BE,   // Byte Enable
     input                  WE,   // Write Strobe
     input [WIDTH-1:0]      DI,   // Data In
@@ -1114,7 +1114,7 @@ endmodule
    reg                     ws_d;
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
          if (WE & %(BE_LEVEL)sBE) begin
@@ -1128,7 +1128,7 @@ endmodule
    assign DO_1S = ws & !ws_d;
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          ws <= 1'b0;
          ws_d <= 1'b0;
       end else begin
@@ -1146,7 +1146,7 @@ endmodule
     )
    (
     input                  CLK,  // Clock
-    input                  RSTn, // Reset
+    input                  %(RST)s, // Reset
     input                  BE,   // Byte Enable
     input                  WE,   // Write Strobe
     input [WIDTH-1:0]      DI,   // Data In
@@ -1155,7 +1155,7 @@ endmodule
 
 
    always @(posedge CLK%(RESET_TRIGGER)s) begin
-      if (%(RESET_CONDITION)sRSTn) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
         if (WE & %(BE_LEVEL)sBE) begin

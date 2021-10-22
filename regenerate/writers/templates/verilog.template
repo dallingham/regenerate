@@ -226,7 +226,11 @@ generate
  * Ensure that internal write is one clock wide
  *------------------------------------------------------------------------------
  */
+{% if db.ports.sync_reset %}
+   {{lang.always}} @(posedge {{ports.clk}}) begin
+{% else %}
    {{lang.always}} @(posedge {{ports.clk}} or {{reset_edge}} {{ports.reset}}) begin
+{% endif %}
      if ({{reset_op}}{{ports.reset}}) begin
         prev_write <= 1'b0;
         prev_read  <= 1'b0;
@@ -256,7 +260,11 @@ generate
 {% endfor %}
    {% set bit_width = db.ports.address_bus_width - low_bit %}
    
+{% if db.ports.sync_reset %}
+   {{lang.always}} @(posedge {{ports.clk}}) begin
+{% else %}
    {{lang.always}} @(posedge {{ports.clk}} or {{reset_edge}} {{ports.reset}}) begin
+{% endif %}
       if ({{reset_op}}{{ports.reset}}) begin
          mux_rdata <= '0;
       end else begin
