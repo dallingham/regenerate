@@ -527,11 +527,13 @@ class RegSetTab:
                     txt = f"Field name ({field.name}) is a SystemVerilog reserved word"
                     msg.append(txt)
                 if check_field(field):
-                    txt = "Missing field description for '{field.name}'"
+                    txt = (f"Missing field description for '{field.name}' field of this "
+                           "register. Select the field in the Bit Field table and click "
+                           "on the Edit button to add a description.")
                     msg.append(txt)
                     warn_bit = True
                 if check_reset(field):
-                    txt = "Missing reset parameter name for '{field.name}'"
+                    txt = f"Missing reset parameter name for '{field.name}'"
                     msg.append(txt)
                     warn_bit = True
         # if mark and not self.loading_project:
