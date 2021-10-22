@@ -26,6 +26,7 @@ import re
 
 from gi.repository import GObject, Gtk
 from regenerate.db import LOGGER
+from .widgets import ValidHexEntry, ValidIntEntry, ValidWordEntry
 
 
 class EntryWidth:
@@ -283,7 +284,7 @@ class EntryValid(EntryText):
         entry.stop_emission("insert_text")
 
 
-class EntryWord(EntryValid):
+class EntryWord(EntryText):
     """
     Connects a database value to a text entry, but restricts the input
     to a single word (no spaces).
@@ -291,16 +292,15 @@ class EntryWord(EntryValid):
 
     def __init__(
         self,
-        widget: Gtk.Entry,
+        widget: ValidWordEntry,
         field_name: str,
         modified: Callable,
-        placeholder=Optional[str],
+        placeholder: Optional[str] = None,
     ):
         super().__init__(
             widget,
             field_name,
             modified,
-            string.ascii_letters + string.digits + "_",
             placeholder=placeholder,
         )
 
@@ -316,7 +316,7 @@ class EntryInt(EntryText):
         widget: Gtk.Entry,
         field_name: str,
         modified: Callable,
-        placeholder: Optional[str],
+        placeholder: Optional[str] = None,
     ):
         super().__init__(
             widget,
@@ -359,15 +359,20 @@ class EntryHex(EntryText):
             widget,
             field_name,
             modified,
-            string.hexdigits + "x",
+            placeholder=placeholder,
         )
 
     def on_change(self, obj: Gtk.Entry) -> None:
         """Called on the change event"""
 
         if self.data_obj:
-            setattr(self.data_obj, self.field_name, int(obj.get_text(), 0))
-            self.modified()
+            try:
+                setattr(
+                    self.data_obj, self.field_name, int(obj.get_text(), 16)
+                )
+                self.modified()
+            except ValueError:
+                pass
 
     def change_db(self, data_obj):
         """Change the database"""
@@ -378,31 +383,3 @@ class EntryHex(EntryText):
             self.widget.set_text(val)
         else:
             self.widget.set_text("0x0")
-
-
-class ValidHexEntry(Gtk.Entry, Gtk.Editable):
-    def __init__(self):
-        super(ValidHexEntry, self).__init__()
-
-    def do_insert_text(self, new_text, length, position):
-        regexp = re.compile("^(0x)?[A-Fa-f0-9_]+$")
-
-        if regexp.match(new_text) is not None:
-            self.get_buffer().insert_text(position, new_text, length)
-            return position + length
-
-        return position
-
-
-class ValidIntEntry(Gtk.Entry, Gtk.Editable):
-    def __init__(self):
-        super(ValidIntEntry, self).__init__()
-
-    def do_insert_text(self, new_text, length, position):
-        regexp = re.compile("^[0-9]+$")
-
-        if regexp.match(new_text) is not None:
-            self.get_buffer().insert_text(position, new_text, length)
-            return position + length
-
-        return position

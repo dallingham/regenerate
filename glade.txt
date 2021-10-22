@@ -1,0 +1,2 @@
+GLADE_CATALOG_SEARCH_PATH=regenerate/data/ui/catalog GLADE_MODULE_SEARCH_PATH=regenerate/data/ui/catalog/ glade
+

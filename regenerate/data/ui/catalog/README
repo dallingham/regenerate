@@ -1,0 +1,5 @@
+This directory contains the catalog needed to use the glade files in glade.
+
+Assuming you are in the root git directory do:
+
+GLADE_CATALOG_SEARCH_PATH=regenerate/data/ui/catalog GLADE_MODULE_SEARCH_PATH=regenerate/data/ui/catalog/ glade

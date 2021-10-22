@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<glade-catalog name="widgets" library="gladepython"
+                domain="glade-3" depends="gtk+">
+  <init-function>glade_python_init</init-function>
+  <glade-widget-classes>
+    <glade-widget-class 
+        name="ValidWordEntry" 
+        title="Valid Word Entry"
+        generic-name="valid_word"/>
+    <glade-widget-class 
+        name="ValidIntEntry" 
+        title="Valid Int Entry"
+        generic-name="valid_int"/>
+    <glade-widget-class 
+        name="ValidHexEntry" 
+        title="Valid Hex Entry"
+        generic-name="valid_hex"/>
+  </glade-widget-classes>
+  <glade-widget-group name="RegenerateWidgets" title="Regenerate Widgets">
+    <glade-widget-class-ref name="ValidWordEntry"/>
+  </glade-widget-group>
+</glade-catalog>

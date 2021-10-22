@@ -2,6 +2,7 @@
 <!-- Generated with glade 3.22.2 -->
 <interface>
   <requires lib="gtk+" version="3.12"/>
+  <requires lib="widgets" version="0.0"/>
   <object class="GtkAction" id="add_set_action">
     <property name="label" translatable="yes">Add Register Set</property>
     <property name="short_label" translatable="yes">Add Set</property>
@@ -852,7 +853,7 @@
                                   </packing>
                                 </child>
                                 <child>
-                                  <object class="GtkEntry" id="regset_name">
+                                  <object class="ValidWordEntry" id="regset_name">
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="margin_top">3</property>
@@ -2037,7 +2038,7 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkEntry" id="modport">
+                              <object class="ValidWordEntry" id="modport">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="tooltip_text" translatable="yes">SystemVerilog modport name for the target interface</property>
@@ -2052,7 +2053,7 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkEntry" id="interface_name">
+                              <object class="ValidWordEntry" id="interface_name">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="tooltip_text" translatable="yes">SystemVerilog interface name</property>
@@ -2153,7 +2154,7 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkEntry" id="imodport">
+                              <object class="ValidWordEntry" id="imodport">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="tooltip_text" translatable="yes">SystemVerilog modport name for the initiator interface</property>
@@ -2293,7 +2294,14 @@
                               </packing>
                             </child>
                             <child>
-                              <placeholder/>
+                              <object class="ValidIntEntry" id="addr_width">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">1</property>
+                                <property name="top_attach">9</property>
+                              </packing>
                             </child>
                             <child>
                               <placeholder/>
@@ -2742,7 +2750,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkEntry" id="block_name">
+                          <object class="ValidWordEntry" id="block_name">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="halign">start</property>
@@ -2786,7 +2794,21 @@
                           </packing>
                         </child>
                         <child>
-                          <placeholder/>
+                          <object class="ValidHexEntry" id="blk_addr_size">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="halign">start</property>
+                            <property name="margin_left">6</property>
+                            <property name="margin_right">6</property>
+                            <property name="margin_top">6</property>
+                            <property name="margin_bottom">6</property>
+                            <property name="hexpand">False</property>
+                            <property name="vexpand">False</property>
+                          </object>
+                          <packing>
+                            <property name="left_attach">1</property>
+                            <property name="top_attach">2</property>
+                          </packing>
                         </child>
                         <child>
                           <placeholder/>
@@ -3225,7 +3247,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkEntry" id="short_name">
+                          <object class="ValidWordEntry" id="short_name">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="margin_left">6</property>

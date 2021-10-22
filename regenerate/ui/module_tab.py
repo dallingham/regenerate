@@ -87,6 +87,12 @@ class ModuleTabs:
                 EntryWord,
                 "Missing interface name",
             ),
+            (
+                "addr_width",
+                "address_bus_width",
+                EntryInt,
+                "Missing address bus width",
+            ),
             ("modport", "modport_name", EntryWord, "Missing modport name"),
             ("imodport", "imodport_name", EntryWord, "Missing modport name"),
             (
