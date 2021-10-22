@@ -188,9 +188,17 @@ generate
      (
       .CLK   ({{ports.clk}}),
 {% if db.ports.secondary_reset and field.use_alternate_reset %}
+  {% if db.ports.sync_reset %}
+      .RST   ({{ports.alt_reset}}),
+  {% else %}
       .RSTn  ({{ports.alt_reset}}),
+  {% endif %}
 {% else %}
+  {% if db.ports.sync_reset %}
+      .RST   ({{ports.reset}}),
+  {% else %}
       .RSTn  ({{ports.reset}}),
+  {% endif %}
 {% endif %}      
 {%       if ci.is_read_only == False %}
       .WE    (write_r{{"%02x" % baddr}}{{dimval}}),
