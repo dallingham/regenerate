@@ -88,9 +88,12 @@ def main():
         numeric_level = getattr(logging, args.log.upper(), None)
         if not isinstance(numeric_level, int):
             raise ValueError("Invalid log level: %s" % args.log)
-        logging.basicConfig(
-            level=numeric_level, format="%(levelname)s: %(message)s"
-        )
+    else:
+        numeric_level = logging.INFO
+        
+    logging.basicConfig(
+        level=numeric_level, format="%(levelname)s: %(message)s"
+    )
 
     if "DISPLAY" in os.environ:
         run_gui(args)

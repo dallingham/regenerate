@@ -1175,6 +1175,57 @@
                                           </packing>
                                         </child>
                                         <child>
+                                          <object class="GtkCheckButton" id="no_test">
+                                            <property name="label" translatable="yes">Exclude the register from UVM bit-bash testing</property>
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="receives_default">False</property>
+                                            <property name="margin_left">12</property>
+                                            <property name="margin_top">6</property>
+                                            <property name="margin_bottom">6</property>
+                                            <property name="draw_indicator">True</property>
+                                            <signal name="toggled" handler="on_no_test_toggled" swapped="no"/>
+                                          </object>
+                                          <packing>
+                                            <property name="left_attach">1</property>
+                                            <property name="top_attach">0</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkCheckButton" id="no_reset_test">
+                                            <property name="label" translatable="yes">Exclude the register from UVM reset testing</property>
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="receives_default">False</property>
+                                            <property name="margin_left">12</property>
+                                            <property name="margin_top">6</property>
+                                            <property name="margin_bottom">6</property>
+                                            <property name="draw_indicator">True</property>
+                                            <signal name="toggled" handler="on_no_reset_test_toggled" swapped="no"/>
+                                          </object>
+                                          <packing>
+                                            <property name="left_attach">1</property>
+                                            <property name="top_attach">1</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkCheckButton" id="no_uvm">
+                                            <property name="label" translatable="yes">Exclude the register from the UVM register package</property>
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="receives_default">False</property>
+                                            <property name="margin_left">12</property>
+                                            <property name="margin_top">6</property>
+                                            <property name="margin_bottom">6</property>
+                                            <property name="draw_indicator">True</property>
+                                            <signal name="toggled" handler="on_no_uvm_toggled" swapped="no"/>
+                                          </object>
+                                          <packing>
+                                            <property name="left_attach">1</property>
+                                            <property name="top_attach">2</property>
+                                          </packing>
+                                        </child>
+                                        <child>
                                           <object class="GtkCheckButton" id="hide_doc">
                                             <property name="label" translatable="yes">Exclude the register from the documentation</property>
                                             <property name="visible">True</property>
@@ -1187,7 +1238,7 @@
                                           </object>
                                           <packing>
                                             <property name="left_attach">0</property>
-                                            <property name="top_attach">3</property>
+                                            <property name="top_attach">1</property>
                                           </packing>
                                         </child>
                                         <child>
@@ -1200,54 +1251,6 @@
                                             <property name="margin_bottom">5</property>
                                             <property name="draw_indicator">True</property>
                                             <signal name="toggled" handler="on_no_cover_toggled" swapped="no"/>
-                                          </object>
-                                          <packing>
-                                            <property name="left_attach">0</property>
-                                            <property name="top_attach">4</property>
-                                          </packing>
-                                        </child>
-                                        <child>
-                                          <object class="GtkCheckButton" id="no_uvm">
-                                            <property name="label" translatable="yes">Exclude the register from the UVM register package</property>
-                                            <property name="visible">True</property>
-                                            <property name="can_focus">True</property>
-                                            <property name="receives_default">False</property>
-                                            <property name="margin_top">6</property>
-                                            <property name="margin_bottom">6</property>
-                                            <property name="draw_indicator">True</property>
-                                            <signal name="toggled" handler="on_no_uvm_toggled" swapped="no"/>
-                                          </object>
-                                          <packing>
-                                            <property name="left_attach">0</property>
-                                            <property name="top_attach">5</property>
-                                          </packing>
-                                        </child>
-                                        <child>
-                                          <object class="GtkCheckButton" id="no_test">
-                                            <property name="label" translatable="yes">Exclude the register from UVM bit-bash testing</property>
-                                            <property name="visible">True</property>
-                                            <property name="can_focus">True</property>
-                                            <property name="receives_default">False</property>
-                                            <property name="margin_top">6</property>
-                                            <property name="margin_bottom">6</property>
-                                            <property name="draw_indicator">True</property>
-                                            <signal name="toggled" handler="on_no_test_toggled" swapped="no"/>
-                                          </object>
-                                          <packing>
-                                            <property name="left_attach">0</property>
-                                            <property name="top_attach">1</property>
-                                          </packing>
-                                        </child>
-                                        <child>
-                                          <object class="GtkCheckButton" id="no_reset_test">
-                                            <property name="label" translatable="yes">Exclude the register from UVM reset testing</property>
-                                            <property name="visible">True</property>
-                                            <property name="can_focus">True</property>
-                                            <property name="receives_default">False</property>
-                                            <property name="margin_top">6</property>
-                                            <property name="margin_bottom">6</property>
-                                            <property name="draw_indicator">True</property>
-                                            <signal name="toggled" handler="on_no_reset_test_toggled" swapped="no"/>
                                           </object>
                                           <packing>
                                             <property name="left_attach">0</property>
@@ -3909,7 +3912,7 @@
             </child>
           </object>
           <packing>
-            <property name="expand">False</property>
+            <property name="expand">True</property>
             <property name="fill">True</property>
             <property name="position">2</property>
           </packing>

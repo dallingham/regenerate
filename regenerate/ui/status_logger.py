@@ -28,7 +28,7 @@ from gi.repository import GObject, Gtk, Gdk
 class StatusHandler(logging.Handler):
     """
     Status handler for the logger that displays the string in the
-    statusbar for 5 seconds
+    statusbar for 10 seconds
     """
 
     SECONDS = 10
@@ -45,9 +45,10 @@ class StatusHandler(logging.Handler):
         self.error_color.green = 0
         self.error_color.blue = 0
         self.error_color.alpha = 1
+        self.setLevel(logging.INFO)
 
     def emit(self, record):
-        if record.levelno == 30:
+        if record.levelno in (logging.INFO, logging.WARNING):
             self.status_obj.override_color(
                 Gtk.StateFlags.NORMAL, self.error_color
             )

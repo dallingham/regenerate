@@ -522,7 +522,7 @@ class MainWindow(BaseWindow):
                 filepath,
             )
         else:
-            LOGGER.warning("Loaded %s", filepath)
+            LOGGER.info("Loaded %s", filepath)
 
         ini.set("user", "last_project", str(filepath.resolve()))
 
@@ -802,12 +802,13 @@ class MainWindow(BaseWindow):
             )
 
     def set_title(self, modified):
+        name = self.prj.path.name
         if modified:
             self.top_window.set_title(
-                f"{self.prj.name} (modified) - regenerate"
+                f"{name}: {self.prj.name} (modified) - regenerate"
             )
         else:
-            self.top_window.set_title(f"{self.prj.name} - regenerate")
+            self.top_window.set_title(f"{name}: {self.prj.name} - regenerate")
 
 
 def check_field(field):
