@@ -138,22 +138,6 @@ class ModuleTabs:
             "notify::active", self.on_sysv_intf_toggled
         )
 
-        label = find_obj("regset_addr_width_label")
-        grid = find_obj("port_table")
-
-        addr_width = ValidIntEntry()
-        addr_width.show()
-
-        grid.attach_next_to(addr_width, label, Gtk.PositionType.RIGHT, 1, 1)
-        self.port_object_list.append(
-            EntryInt(
-                addr_width,
-                "address_bus_width",
-                self.after_modified,
-                "Missing address bus width",
-            )
-        )
-
         for (widget_name, db_name, class_type, placeholder) in port_list:
             if placeholder is not None:
                 self.port_object_list.append(

@@ -1383,7 +1383,7 @@
                                     </child>
                                   </object>
                                   <packing>
-                                    <property name="expand">False</property>
+                                    <property name="expand">True</property>
                                     <property name="fill">True</property>
                                     <property name="position">1</property>
                                   </packing>
@@ -1730,6 +1730,8 @@
                                     <property name="can_focus">True</property>
                                     <property name="halign">start</property>
                                     <property name="margin_left">12</property>
+                                    <property name="margin_top">6</property>
+                                    <property name="margin_bottom">6</property>
                                     <property name="active">True</property>
                                   </object>
                                   <packing>
@@ -1744,6 +1746,8 @@
                                     <property name="can_focus">True</property>
                                     <property name="halign">start</property>
                                     <property name="margin_left">12</property>
+                                    <property name="margin_top">6</property>
+                                    <property name="margin_bottom">6</property>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
@@ -1983,6 +1987,8 @@
                               <object class="GtkComboBox" id="data_width">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
+                                <property name="margin_top">6</property>
+                                <property name="margin_bottom">6</property>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
@@ -2045,8 +2051,8 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="tooltip_text" translatable="yes">SystemVerilog modport name for the target interface</property>
-                                <property name="margin_top">3</property>
-                                <property name="margin_bottom">3</property>
+                                <property name="margin_top">6</property>
+                                <property name="margin_bottom">6</property>
                                 <property name="text" translatable="yes">target</property>
                                 <property name="caps_lock_warning">False</property>
                               </object>
@@ -2060,8 +2066,8 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="tooltip_text" translatable="yes">SystemVerilog interface name</property>
-                                <property name="margin_top">3</property>
-                                <property name="margin_bottom">3</property>
+                                <property name="margin_top">6</property>
+                                <property name="margin_bottom">6</property>
                                 <property name="text" translatable="yes">MGMT</property>
                                 <property name="caps_lock_warning">False</property>
                               </object>
@@ -2161,6 +2167,8 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="tooltip_text" translatable="yes">SystemVerilog modport name for the initiator interface</property>
+                                <property name="margin_top">6</property>
+                                <property name="margin_bottom">6</property>
                                 <property name="text" translatable="yes">initiator</property>
                                 <property name="caps_lock_warning">False</property>
                               </object>
@@ -2191,7 +2199,8 @@
                                 <property name="can_focus">True</property>
                                 <property name="tooltip_text" translatable="yes">Use a SystemVerilog interface instead of individual signals for the module interface</property>
                                 <property name="halign">start</property>
-                                <property name="hexpand">False</property>
+                                <property name="margin_top">6</property>
+                                <property name="margin_bottom">6</property>
                                 <property name="active">True</property>
                               </object>
                               <packing>
@@ -2220,6 +2229,8 @@
                                 <property name="can_focus">True</property>
                                 <property name="tooltip_text" translatable="yes">Use synchronous resets</property>
                                 <property name="halign">start</property>
+                                <property name="margin_top">6</property>
+                                <property name="margin_bottom">6</property>
                                 <property name="hexpand">True</property>
                               </object>
                               <packing>
@@ -2248,6 +2259,8 @@
                                 <property name="can_focus">True</property>
                                 <property name="tooltip_text" translatable="yes">Enable a second reset signal that can control the resets of selected registers</property>
                                 <property name="halign">start</property>
+                                <property name="margin_top">6</property>
+                                <property name="margin_bottom">6</property>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
@@ -2300,6 +2313,9 @@
                               <object class="ValidIntEntry" id="addr_width">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
+                                <property name="margin_top">6</property>
+                                <property name="margin_bottom">6</property>
+                                <property name="caps_lock_warning">False</property>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
