@@ -735,10 +735,8 @@ class MainWindow(BaseWindow):
         """
         Called when a file is chosen from the open recent dialog
         """
-        recent_item = chooser.get_current_item()
-        fname = recent_item.get_uri()
-        if recent_item.exists():
-            self.open_project(fname.replace("file:///", ""), fname)
+        fname = chooser.get_current_uri()
+        self.open_project(fname.replace("file://", ""), fname)
 
     def create_recent_menu_item(self):
         """
