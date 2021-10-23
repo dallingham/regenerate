@@ -11,42 +11,62 @@ interface {{ports.interface_name}}
     parameter int pDataWidth = {{ports.data_bus_width}}
     )
    (
-    input logic                   {{ports.clock_name}}, // Input clock
-    input logic                   {{ports.reset_name}} // Reset
+    input logic                   {{CLK}}, // Input clock
+    input logic                   {{RST}} // Reset
     );
 
-   logic [pAddressWidth-1:0]      {{ports.address_bus_name}}; // Address
-   logic [$clog2(pDataWidth)-1:0] {{ports.byte_strobe_name}}; // Byte enables
-   logic                          {{ports.write_strobe_name}}; // Write strobe
-   logic                          {{ports.read_strobe_name}}; // Read strobe
-   logic [pDataWidth-1:0]         {{ports.write_data_name}}; // Write data
-   logic [pDataWidth-1:0]         {{ports.read_data_name}}; // Read data
-   logic                          {{ports.acknowledge_name}}; // Acknowledge
+   logic [pAddressWidth-1:0]      {{ADDR}}; // Address
+   logic [$clog2(pDataWidth)-1:0] {{BE}}; // Byte enables
+   logic                          {{WR}}; // Write strobe
+   logic                          {{RD}}; // Read strobe
+   logic [pDataWidth-1:0]         {{WDATA}}; // Write data
+   logic [pDataWidth-1:0]         {{RDATA}}; // Read data
+   logic                          {{ACK}}; // Acknowledge
 
    modport {{ports.modport_name}}
      (
-      input  {{ports.clock_name}},
-      input  {{ports.reset_name}},
-      input  {{ports.address_bus_name}},
-      input  {{ports.write_strobe_name}},
-      input  {{ports.read_strobe_name}},
-      input  {{ports.byte_strobe_name}},
-      input  {{ports.write_data_name}},
-      output {{ports.read_data_name}},
-      output {{ports.acknowledge_name}}
+      input  {{CLK}},
+      input  {{RST}},
+      input  {{ADDR}},
+      input  {{WR}},
+      input  {{RD}},
+      input  {{BE}},
+      input  {{WDATA}},
+      output {{RDATA}},
+      output {{ACK}}
       );
 
    modport {{ports.imodport_name}}
      (
-      input  {{ports.clock_name}},
-      input  {{ports.reset_name}},
-      output {{ports.address_bus_name}},
-      output {{ports.write_strobe_name}},
-      output {{ports.read_strobe_name}},
-      output {{ports.byte_strobe_name}},
-      output {{ports.write_data_name}},
-      input  {{ports.read_data_name}},
-      input  {{ports.acknowledge_name}}
+      input  {{CLK}},
+      input  {{RST}},
+      output {{ADDR}},
+      output {{WR}},
+      output {{RD}},
+      output {{BE}},
+      output {{WDATA}},
+      input  {{RDATA}},
+      input  {{ACK}}
       );
+
+{% if options["bool:assert"] %}
+
+   // synopsys translate_off
+
+   /*-------------------------------------------------------------------------
+    * 
+    * Write and read strobes cannot be asserted at the same time
+    *
+    *-------------------------------------------------------------------------
+    */
+
+   ERR_WR_RD_NOT_CONCURRENT:
+     assert property @(posedge {{CLK}})
+       disable iff ({{RESET_CONDITION}})
+         (!({{WR}} | {{RD}}))
+	 else $error("{{WR}} and {{RD}} must not be asserted at the same time");
+
+   // synopsys translate_on
+{% endif %}
 
 endinterface : {{ports.interface_name}}

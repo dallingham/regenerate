@@ -1,5 +1,9 @@
+"""
+Verilog register definitions
+"""
+
 REG = {
-    "ro1s" : """module %(MODULE)s_ro1s_reg
+    "ro1s": """module %(MODULE)s_ro1s_reg
   #(
     parameter             WIDTH = 1,
     parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
@@ -26,7 +30,7 @@ REG = {
 
 endmodule
 """,
-    "rw" : """module %(MODULE)s_rw_reg
+    "rw": """module %(MODULE)s_rw_reg
   #(
     parameter             WIDTH = 1,
     parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
@@ -52,7 +56,7 @@ endmodule
 
 endmodule
 """,
-    "rwpr" : """module %(MODULE)s_rwpr_reg
+    "rwpr": """module %(MODULE)s_rwpr_reg
   #(
     parameter             WIDTH = 1,
     parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
@@ -79,7 +83,7 @@ endmodule
 
 endmodule
 """,
-    "rwpr1s" : """module %(MODULE)s_rwpr1s_reg
+    "rwpr1s": """module %(MODULE)s_rwpr1s_reg
   #(
     parameter             WIDTH = 1,
     parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
@@ -122,7 +126,7 @@ endmodule
 
 endmodule
 """,
-    "rw1s" : """module %(MODULE)s_rw1s_reg
+    "rw1s": """module %(MODULE)s_rw1s_reg
   #(
     parameter             WIDTH = 1,
     parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
@@ -164,7 +168,7 @@ endmodule
 
 endmodule
 """,
-    "rw1s1" : """module %(MODULE)s_rw1s1_reg
+    "rw1s1": """module %(MODULE)s_rw1s1_reg
   #(
     parameter             WIDTH = 1,
     parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
@@ -208,7 +212,7 @@ endmodule
 
 endmodule
 """,
-    "rwld" : """module %(MODULE)s_rwld_reg
+    "rwld": """module %(MODULE)s_rwld_reg
   #(
     parameter             WIDTH = 1,
     parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
@@ -238,7 +242,7 @@ endmodule
 
 endmodule
 """,
-    "rwld1s" : """module %(MODULE)s_rwld1s_reg
+    "rwld1s": """module %(MODULE)s_rwld1s_reg
   #(
     parameter             WIDTH = 1,
     parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
@@ -284,7 +288,7 @@ endmodule
 
 endmodule
 """,
-    "rwld1s1" : """module %(MODULE)s_rwld1s1_reg
+    "rwld1s1": """module %(MODULE)s_rwld1s1_reg
   #(
     parameter             WIDTH = 1,
     parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
@@ -330,7 +334,7 @@ endmodule
 
 endmodule
 """,
-    "rws" : """module %(MODULE)s_rws_reg
+    "rws": """module %(MODULE)s_rws_reg
   #(
     parameter             WIDTH = 1,
     parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
@@ -359,7 +363,7 @@ endmodule
 
 endmodule
 """,
-    "rws1s" : """module %(MODULE)s_rws1s_reg
+    "rws1s": """module %(MODULE)s_rws1s_reg
   #(
     parameter             WIDTH = 1,
     parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
@@ -404,7 +408,7 @@ endmodule
 
 endmodule
 """,
-    "rws1s1" : """module %(MODULE)s_rws1s1_reg
+    "rws1s1": """module %(MODULE)s_rws1s1_reg
   #(
     parameter             WIDTH = 1,
     parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
@@ -449,7 +453,7 @@ endmodule
 
 endmodule
 """,
-    "w1cs" : """module %(MODULE)s_w1cs_reg
+    "w1cs": """module %(MODULE)s_w1cs_reg
   #(
     parameter             WIDTH = 1,
     parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
@@ -483,7 +487,7 @@ endmodule
 
 endmodule
 """,
-    "w1csc" : """module %(MODULE)s_w1csc_reg
+    "w1csc": """module %(MODULE)s_w1csc_reg
   #(
     parameter             WIDTH = 1,
     parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
@@ -518,7 +522,7 @@ endmodule
 
 endmodule
 """,
-    "w1cs1s" : """module %(MODULE)s_w1cs1s_reg
+    "w1cs1s": """module %(MODULE)s_w1cs1s_reg
   #(
     parameter             WIDTH = 1,
     parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
@@ -568,7 +572,7 @@ endmodule
 
 endmodule
 """,
-    "w1cs1s1" : """module %(MODULE)s_w1cs1s1_reg
+    "w1cs1s1": """module %(MODULE)s_w1cs1s1_reg
   #(
     parameter             WIDTH = 1,
     parameter [WIDTH-1:0] RVAL = {(WIDTH){1'b0}}
@@ -618,7 +622,7 @@ endmodule
 
 endmodule
 """,
-    "w1cld" : """module %(MODULE)s_w1cld_reg
+    "w1cld": """module %(MODULE)s_w1cld_reg
   #(
     parameter             WIDTH = 1,
     parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
@@ -653,7 +657,7 @@ endmodule
 
 endmodule
 """,
-    "w1cld1s" : """module %(MODULE)s_w1cld1s_reg
+    "w1cld1s": """module %(MODULE)s_w1cld1s_reg
   #(
     parameter             WIDTH = 1,
     parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
@@ -704,7 +708,7 @@ endmodule
 
 endmodule
 """,
-    "w1cld1s1" : """module %(MODULE)s_w1cld1s1_reg
+    "w1cld1s1": """module %(MODULE)s_w1cld1s1_reg
   #(
     parameter             WIDTH = 1,
     parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
@@ -755,7 +759,7 @@ endmodule
 
 endmodule
 """,
-    "rold" : """module %(MODULE)s_rold_reg
+    "rold": """module %(MODULE)s_rold_reg
   #(
     parameter             WIDTH = 1,
     parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
@@ -778,7 +782,7 @@ endmodule
 
 endmodule
 """,
-    "rcld" : """module %(MODULE)s_rcld_reg
+    "rcld": """module %(MODULE)s_rcld_reg
   #(
     parameter             WIDTH = 1,
     parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
@@ -806,7 +810,7 @@ endmodule
 
 endmodule
 """,
-    "rv1s" : """module %(MODULE)s_rv1s_reg
+    "rv1s": """module %(MODULE)s_rv1s_reg
   #(
     parameter             WIDTH = 1,
     parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
@@ -838,7 +842,7 @@ endmodule
 
 endmodule
 """,
-    "rcs" : """module %(MODULE)s_rcs_reg
+    "rcs": """module %(MODULE)s_rcs_reg
   #(
     parameter             WIDTH = 1,
     parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
@@ -866,7 +870,7 @@ endmodule
 
 endmodule
 """,
-    "wo" : """module %(MODULE)s_wo_reg
+    "wo": """module %(MODULE)s_wo_reg
   #(
     parameter             WIDTH = 1,
     parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
@@ -901,7 +905,7 @@ endmodule
 
 endmodule
 """,
-    "w1s" : """module %(MODULE)s_w1s_reg
+    "w1s": """module %(MODULE)s_w1s_reg
   #(
     parameter             WIDTH = 1,
     parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
@@ -930,7 +934,7 @@ endmodule
 
 endmodule
 """,
-    "w1s1s1" : """module %(MODULE)s_w1s1s1_reg
+    "w1s1s1": """module %(MODULE)s_w1s1s1_reg
   #(
     parameter             WIDTH = 1,
     parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
@@ -975,7 +979,7 @@ endmodule
 
 endmodule
 """,
-    "w1s1s" : """module %(MODULE)s_w1s1s_reg
+    "w1s1s": """module %(MODULE)s_w1s1s_reg
   #(
     parameter             WIDTH = 1,
     parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
@@ -1020,7 +1024,7 @@ endmodule
 
 endmodule
 """,
-    "rwc" : """module %(MODULE)s_rwc_reg
+    "rwc": """module %(MODULE)s_rwc_reg
   #(
     parameter             WIDTH = 1,
     parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
@@ -1049,7 +1053,7 @@ endmodule
 
 endmodule
 """,
-    "rwc1s" : """module %(MODULE)s_rwc1s_reg
+    "rwc1s": """module %(MODULE)s_rwc1s_reg
   #(
     parameter             WIDTH = 1,
     parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
@@ -1094,7 +1098,7 @@ endmodule
 
 endmodule
 """,
-    "rwc1s1" : """module %(MODULE)s_rwc1s1_reg
+    "rwc1s1": """module %(MODULE)s_rwc1s1_reg
   #(
     parameter             WIDTH = 1,
     parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
@@ -1139,7 +1143,7 @@ endmodule
 
 endmodule
 """,
-    "rwrc" : """module %(MODULE)s_rwrc_reg
+    "rwrc": """module %(MODULE)s_rwrc_reg
   #(
     parameter             WIDTH = 1,
     parameter [WIDTH-1:0] RVAL  = {(WIDTH){1'b0}}
@@ -1169,4 +1173,4 @@ endmodule
    end
 endmodule
 """,
- }
+}

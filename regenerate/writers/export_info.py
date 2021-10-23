@@ -27,12 +27,13 @@ name, and the listed import times from that module. It makes it simpler
 to maintain.
 """
 
-from typing import NamedTuple, Dict, Any, Type
+from typing import NamedTuple, Dict, Any
 
 from .writer_base import BaseWriter
 
 
 class ExportInfo(NamedTuple):
+    "Describes an exporter"
 
     obj_class: BaseWriter
     category: str

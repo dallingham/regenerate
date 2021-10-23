@@ -2,7 +2,6 @@
 SystemVerilog RTL register decoder generator
 """
 
-import sys
 from pathlib import Path
 from typing import List, NamedTuple, Dict
 
@@ -14,6 +13,8 @@ from .export_info import ExportInfo
 
 
 class BlockInfo(NamedTuple):
+    "Information about a block"
+
     inst: str
     lower: int
     upper: int
@@ -24,20 +25,10 @@ class BlockInfo(NamedTuple):
 
 
 class RegDecode(BlockWriter):
+    "Register decode block generator"
+
     def __init__(self, prj: RegProject, block: Block, options: Dict[str, str]):
         super().__init__(prj, block, options)
-
-    def find_group_data(self, prj: RegProject, name: str) -> Block:
-        """Finds the group structure based on the name provided"""
-        for grp in prj.blocks.values():
-            if grp.name == name:
-                group = grp
-                break
-            else:
-                sys.stderr.write('Group "%s" not found\n' % name)
-                return None
-
-        return group
 
     def build_group_info(
         self, proj: RegProject, block: Block
@@ -68,7 +59,6 @@ class RegDecode(BlockWriter):
         # Build the data to send to the template
         external_list = []
 
-        address_size = block.get_address_size()
         reg_addr_width = 16  # FIXME
 
         mask = (1 << reg_addr_width) - 1
@@ -106,29 +96,22 @@ class RegDecode(BlockWriter):
     def write(self, filename: Path):
         """Main program"""
 
-        proj = self._project
-
         external_list = self.build_group_info(self._project, self._block)
 
         # Open the JINJA template
         template = find_template("decode_rtl.template")
 
-        try:
-            with filename.open("w") as ofile:
-                ofile.write(
-                    template.render(
-                        REG_ADDR_WIDTH=16,  # args.reg_addr_width,
-                        ADDR_WIDTH=16,  # FIXME args.addr_width,
-                        flatten=False,  # FIXME args.flatten,
-                        DATA_WIDTH=64,  # FIXME args.width,
-                        ID_WIDTH=4,  # args.id_size,
-                        GROUP=self._block.name,
-                        ext_insts=external_list,
-                    )
+        with filename.open("w") as ofile:
+            ofile.write(
+                template.render(
+                    REG_ADDR_WIDTH=16,  # args.reg_addr_width,
+                    ADDR_WIDTH=16,  # FIXME args.addr_width,
+                    flatten=False,  # FIXME args.flatten,
+                    DATA_WIDTH=64,  # FIXME args.width,
+                    ID_WIDTH=4,  # args.id_size,
+                    GROUP=self._block.name,
+                    ext_insts=external_list,
                 )
-        except IOError as msg:
-            sys.stderr.write(
-                "Could not open %s - %s\n" % (args.output, str(msg))
             )
 
 

@@ -250,7 +250,7 @@ EXPORTERS = [
             "RTL",
             "SystemVerilog Constants",
             "Verilog package",
-            "SystemVerilog package with a const definitions for each register's address",
+            "SystemVerilog const definitions for each register's address",
             ".sv",
             "{}_const.sv",
             {

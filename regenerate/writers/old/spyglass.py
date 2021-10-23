@@ -21,6 +21,8 @@ Sdc - Writes out synthesis constraints
 """
 
 from pathlib import Path
+from typing import Dict, Any
+
 from .writer_base import ProjectWriter, ProjectType
 from .export_info import ExportInfo
 

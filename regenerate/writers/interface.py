@@ -22,7 +22,6 @@ Provides the Verilog RTL generation
 
 from pathlib import Path
 
-from jinja2 import FileSystemLoader, Environment
 from .writer_base import (
     RegsetWriter,
     ProjectType,
@@ -43,10 +42,26 @@ class InterfaceGen(RegsetWriter):
 
         template = find_template("interface.template")
 
+        if self._regset.ports.reset_active_level:
+            assert_reset = f"{self._regset.ports.reset_name}"
+        else:
+            assert_reset = f"!{self._regset.ports.reset_name}"
+
         with filename.open("w") as ofile:
             ofile.write(
                 template.render(
                     ports=self._regset.ports,
+                    RESET_CONDITION=assert_reset,
+                    WR=self._regset.ports.write_strobe_name,
+                    RD=self._regset.ports.read_strobe_name,
+                    CLK=self._regset.ports.clock_name,
+                    BE=self._regset.ports.byte_strobe_name,
+                    ADDR=self._regset.ports.address_bus_name,
+                    WDATA=self._regset.ports.write_data_name,
+                    RDATA=self._regset.ports.read_data_name,
+                    ACK=self._regset.ports.acknowledge_name,
+                    RST=self._regset.ports.reset_name,
+                    options=self.options,
                 )
             )
 
@@ -62,7 +77,9 @@ EXPORTERS = [
             "SystemVerilog interface for the register module control bus",
             ".sv",
             "{}_if.sv",
-            {},
+            {
+                "bool:assert": "Include protocol assertions",
+            },
             "rtl-interface",
         ),
     ),

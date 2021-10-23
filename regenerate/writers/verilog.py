@@ -319,7 +319,7 @@ class Verilog(RegsetWriter):
             self.build_register_list(), self._regset.ports.data_bus_width
         )
 
-        if (self._regset.ports.reset_active_level):
+        if self._regset.ports.reset_active_level:
             reset_edge = "posedge"
             reset_op = ""
         else:
@@ -862,7 +862,7 @@ def build_standard_ports(regset: RegisterDb) -> PortInfo:
         rst = "MGMT.RST"
     else:
         rst = "MGMT.RSTn"
-        
+
     if regset.use_interface:
         return PortInfo(
             "MGMT.CLK",
@@ -894,7 +894,7 @@ def build_standard_ports(regset: RegisterDb) -> PortInfo:
     )
 
 
-def make_one_shot(name: str, reg: Register):
+def make_one_shot(name: str, reg: Register) -> Scalar:
     """Builds the one shot signal from the name and dimenstion"""
 
     if reg.dimension.is_parameter:
@@ -906,7 +906,9 @@ def make_one_shot(name: str, reg: Register):
     return signal
 
 
-def comment(ofile: TextIO, text_list: List[str], border=None, precede_blank=0):
+def comment(
+    ofile: TextIO, text_list: List[str], border=None, precede_blank=0
+) -> None:
     "Creates a comment from the list of text strings"
 
     max_column = 78

@@ -27,9 +27,7 @@ name, and the listed import times from that module. It makes it simpler
 to maintain.
 """
 
-from collections import namedtuple
-
-from .writer_base import ProjectType, WriterBase, BaseWriter
+from .writer_base import ProjectType, BaseWriter
 from .export_info import ExportInfo
 
 

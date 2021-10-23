@@ -21,6 +21,7 @@
 IP-XACT register definition exporter. Writes an IP-XACT (or the older Spirit)
 XML files describing the registers.
 """
+
 from typing import Dict, Any
 from pathlib import Path
 from regenerate.db import BitType, RegisterDb, RegProject
@@ -111,6 +112,8 @@ class IpXactWriter(RegsetWriter):
 
 
 class SpiritWriter(IpXactWriter):
+    "Older Spirit generator"
+
     def __init__(
         self, project: RegProject, regset: RegisterDb, options: Dict[str, Any]
     ):

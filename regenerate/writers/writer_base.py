@@ -22,20 +22,20 @@ WriterBase - base class for objects that product output from the
 """
 
 import os
-import time
 import pwd
+from abc import ABCMeta, abstractmethod
 from pathlib import Path
-from typing import List, Tuple, Callable, Dict, Any
+from typing import List, Tuple, Callable, Dict, Any, Optional
 from enum import IntEnum
-from typing import Optional
 from collections import namedtuple
 from jinja2 import FileSystemLoader, Environment
 
 from regenerate.db import RegisterDb, RegProject, Block
-from ..settings.paths import INSTALL_PATH
 
 
 class ProjectType(IntEnum):
+    "Project type enumeration"
+
     REGSET = 0
     BLOCK = 1
     PROJECT = 2
@@ -55,108 +55,15 @@ ExportInfo = namedtuple(
 
 
 def get_username():
+    "Returns the POSIX password name"
     return pwd.getpwnam(os.environ["USER"])[4].split(",")[0]
-
-
-class WriterBase:
-    """
-    Writes the register information to the output file determined
-    by the derived class.
-    """
-
-    def __init__(
-        self, project: RegProject, dbase: Optional[RegisterDb]
-    ) -> None:
-        self._dbase = dbase
-        self._project = project
-        self._project_name = ""
-        if dbase:
-            self._set_values_init(dbase)
-
-    def set_project(self, obj: RegProject) -> None:
-        self._project = obj
-        self._project_name = obj.short_name
-
-    def _set_values_init(self, dbase: RegisterDb, _instance_name=None) -> None:
-        self._comments = dbase.overview_text
-        self._module = dbase.name
-        self._clock = dbase.ports.clock_name
-        self._addr = dbase.ports.address_bus_name
-        self._addr_width = dbase.ports.address_bus_width
-
-        self._data_width = dbase.ports.data_bus_width
-        self._reset = dbase.ports.reset_name
-        self._reset_level = dbase.ports.reset_active_level
-        self._byte_enables = dbase.ports.byte_strobe_name
-        self._be_level = dbase.ports.byte_strobe_active_level
-        self._data_in = dbase.ports.write_data_name
-        self._data_out = dbase.ports.read_data_name
-        self._write_strobe = dbase.ports.write_strobe_name
-        self._read_strobe = dbase.ports.read_strobe_name
-        self._filename = "UNKNOWN"
-        self._project_name = "UNKNOWN"
-        self._local_path = os.path.join(INSTALL_PATH, "site_local")
-        self._data_path = os.path.join(INSTALL_PATH, "data")
-
-        self._prefix = ""
-
-    def _write_header_comment(self, ofile, default_path, comment_char="#"):
-        """
-        Looks for the header include file to allow users to define their own
-        header. If not, default to the built in header.
-        """
-        try:
-            cfile = os.path.join(self._data_path, default_path)
-            with open(cfile) as ifile:
-                data = "".join(ifile.readlines())
-        except IOError:
-            try:
-                cfile = os.path.join(self._data_path, "site_comment.txt")
-                with open(cfile) as ifile:
-                    data = comment_char.join(ifile.readlines())
-            except IOError:
-                try:
-                    cfile = os.path.join(INSTALL_PATH, "comment.txt")
-                    with open(cfile) as ifile:
-                        data = comment_char.join(ifile.readlines())
-                except IOError:
-                    data = "\n"
-            data = comment_char + data
-
-        self.write_header(ofile, data)
-
-    def write_header(self, ofile, line):
-        """
-        Goes through the specified text, substituting information if needed.
-        """
-        current_time = time.time()
-        year = str(time.localtime(current_time)[0])
-        date = time.asctime(time.localtime(current_time))
-
-        user = get_username()
-
-        module = self._dbase.name
-
-        fixed = self._filename.upper().replace(".", "_")
-        line = line.replace("$M$", module)
-        line = line.replace("$Y$", year)
-        line = line.replace("$f$", self._filename)
-        line = line.replace("$F$", fixed)
-        line = line.replace("$D$", date)
-        line = line.replace("$U$", user)
-        ofile.write(line)
-
-    def write(self, filename: Path):
-        """
-        The child class must override this to provide an implementation.
-        """
-        raise NotImplementedError
 
 
 def find_template(
     template_name: str,
     filters: Optional[List[Tuple[str, Callable]]] = None,
 ):
+    "Find the JINJA template"
 
     template_dir = Path(__file__).parent / "templates"
 
@@ -172,17 +79,17 @@ def find_template(
     return env.get_template(template_name)
 
 
-class BaseWriter:
+class BaseWriter(metaclass=ABCMeta):
+    "Common base function for all the writers"
+
     def __init__(self, project: RegProject, options: Dict[str, Any]) -> None:
         self._project = project
         self.options = options
 
+    @abstractmethod
     def write(self, filename: Path):
         "The child class must override this to provide an implementation."
-        raise NotImplementedError
-
-    def set_project(self, obj: RegProject) -> None:
-        self._project = obj
+        ...
 
 
 class ProjectWriter(BaseWriter):
@@ -191,8 +98,10 @@ class ProjectWriter(BaseWriter):
     by the derived class.
     """
 
-    def __init__(self, project: RegProject, options: Dict[str, Any]) -> None:
-        super().__init__(project, options)
+    @abstractmethod
+    def write(self, filename: Path):
+        "The child class must override this to provide an implementation."
+        ...
 
 
 class RegsetWriter(BaseWriter):
@@ -201,9 +110,19 @@ class RegsetWriter(BaseWriter):
     by the derived class.
     """
 
-    def __init__(self, project: RegProject, regset: RegisterDb, options: Dict[str, Any] = None) -> None:
+    def __init__(
+        self,
+        project: RegProject,
+        regset: RegisterDb,
+        options: Dict[str, Any],
+    ) -> None:
         super().__init__(project, options)
         self._regset = regset
+
+    @abstractmethod
+    def write(self, filename: Path):
+        "The child class must override this to provide an implementation."
+        ...
 
 
 class BlockWriter(BaseWriter):
@@ -213,7 +132,15 @@ class BlockWriter(BaseWriter):
     """
 
     def __init__(
-        self, project: RegProject, block: Block, options: Dict[str, Any] = None
+        self,
+        project: RegProject,
+        block: Block,
+        options: Dict[str, Any],
     ) -> None:
         super().__init__(project, options)
         self._block = block
+
+    @abstractmethod
+    def write(self, filename: Path):
+        "The child class must override this to provide an implementation."
+        ...
