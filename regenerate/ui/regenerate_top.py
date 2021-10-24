@@ -224,10 +224,7 @@ class MainWindow(BaseWindow):
             self.set_project_modified()
 
     def on_block_select_changed(self, _obj: Gtk.TreeSelection) -> None:
-        if self.top_level_tab.blkinst_list.get_selected_instance():
-            self.builder.get_object("instance_delete_btn").set_sensitive(True)
-        else:
-            self.builder.get_object("instance_delete_btn").set_sensitive(False)
+        self.top_level_tab.update_buttons()
 
     def on_addr_map_help_clicked(self, _obj: Gtk.Button) -> None:
         "Display the address map help"
@@ -446,7 +443,8 @@ class MainWindow(BaseWindow):
             self.prj = RegProject()
             self.prj.path = filename
             self.top_level_tab.change_project(self.prj)
-            self.prj.name = filename.stem
+            self.prj.name = ""
+            self.prj.short_name = filename.stem
             self.prj.save()
 
             self.regset_tab.change_project(self.prj)

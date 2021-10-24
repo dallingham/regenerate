@@ -25,7 +25,7 @@ import os
 from pathlib import Path
 from typing import Optional, List, Callable, Set, Tuple
 from gi.repository import Gtk, GdkPixbuf, Pango
-from regenerate.settings.paths import INSTALL_PATH
+from regenerate.settings.paths import INSTALL_PATH, HELP_PATH
 from regenerate.db import RegisterInst, Block, BLK_EXT, LOGGER, RegProject
 from .columns import ReadOnlyColumn, EditableColumn, MenuEditColumn
 from .parameter_list import ParameterList
@@ -57,6 +57,16 @@ class BlockTab:
         self.block_size_obj = find_obj("blk_addr_size")
         self.block_reg_remove = find_obj("block_reg_remove")
         self.block_docs = find_obj("block_doc_pages")
+
+        self.block_select_notebook = find_obj("block_select_notebook")
+        self.block_select_notebook.set_show_tabs(False)
+        self.block_select_help = find_obj("block_select_help")
+        help_path = Path(HELP_PATH) / "block_select_help.html"
+        try:
+            with help_path.open() as ifile:
+                self.block_select_help.load_html(ifile.read(), "text/html")
+        except IOError:
+            pass
 
         self.block_name = EntryWord(
             self.block_name_obj,
@@ -146,15 +156,16 @@ class BlockTab:
             self.overrides_list.set_parameters(self.block.parameters.get())
         else:
             LOGGER.warning(
-                ("No block is selected. Select a block from the list or "
-                 "use the buttons in the lower left corner to create or add a block."
-                 )
+                (
+                    "No block is selected. Select a block from the list or "
+                    "use the buttons in the lower left corner to create or add a block."
+                )
             )
-            
+
         self.block_name_obj.set_sensitive(self.block is not None)
         self.block_descr_obj.set_sensitive(self.block is not None)
         self.block_size_obj.set_sensitive(self.block is not None)
-            
+
         self.overrides_list.update_display()
         self.build_add_regset_menu()
 
@@ -166,15 +177,26 @@ class BlockTab:
 
     def block_selection_changed(self, obj: Gtk.TreeSelection) -> None:
         "Called with the block selection changes"
+        self.update_block_selection()
 
-        model, node = obj.get_selected()
+    def update_block_selection(self):
+        model, node = self.block_obj.get_selected()
+
         if node:
+            self.block_notebook.set_sensitive(True)
             block = model[node][-1]
             self.disable_modified = True
             self.select_block(block.uuid)
             self.disable_modified = False
             self.parameter_list.set_db(self.block)
             self.preview.change_block(self.block, self.project)
+        else:
+            self.block_notebook.set_sensitive(False)
+
+        if self.project and self.project.blocks:
+            self.block_select_notebook.set_current_page(0)
+        else:
+            self.block_select_notebook.set_current_page(1)
 
     def after_modified(self) -> None:
         self.modified()
@@ -378,8 +400,11 @@ class BlockTab:
 
             if empty:
                 self.block_reg_add.set_sensitive(False)
-                self.block_reg_add.set_tooltip_text(
-                    "No register sets have been defined"
+                self.block_reg_add.set_tooltip_markup(
+                    "No register sets have been defined.\n"
+                    "Register sets can be defined on the\n"
+                    "<b>Register Sets</b> tab on the left side\n"
+                    "of the window."
                 )
             else:
                 self.block_reg_add.set_sensitive(True)
@@ -433,9 +458,10 @@ class BlockTab:
 
         if self.block is None:
             LOGGER.warning(
-                ("A block must be created or added before register set can be added. "
-                 "Use the buttons in the lower left corner to create or add a block."
-                 )
+                (
+                    "A block must be created or added before register set can be added. "
+                    "Use the buttons in the lower left corner to create or add a block."
+                )
             )
             return
         if self.regmodel is None or self.project is None:
@@ -524,6 +550,9 @@ class BlockTab:
             Gtk.FileChooserAction.SAVE,
             Gtk.STOCK_SAVE,
         )
+        if not filename_list:
+            return
+
         for filename in filename_list:
             filepath = Path(filename)
 
@@ -540,6 +569,7 @@ class BlockTab:
 
             self.modified()
             self.project.modified = True
+        self.update_block_selection()
 
     def add_block_clicked(self, _obj: Gtk.Button) -> None:
         """
@@ -547,7 +577,7 @@ class BlockTab:
         create_selector method, then runs the dialog, and calls the
         open_xml routine with the result.
         """
-        if self.block is None or self.project is None:
+        if self.project is None:
             return
 
         filename_list = create_file_selector(
@@ -560,6 +590,7 @@ class BlockTab:
         )
 
         for filename in filename_list:
+            print(filename)
 
             name = Path(filename)
             blk = Block()
@@ -573,6 +604,7 @@ class BlockTab:
                 if regset not in self.project.regsets:
                     self.project.regsets[regset] = blk.regsets[regset]
         self.project.modified = True
+        self.update_block_selection()
 
     def remove_block_clicked(self, _obj: Gtk.Button) -> None:
         "Called with the remove block button has been pressed"
@@ -587,6 +619,7 @@ class BlockTab:
         self.project.remove_block(obj.uuid)
         self.block_remove_callback()
         self.project.modified = True
+        self.update_block_selection()
 
 
 class BlockSelectList:

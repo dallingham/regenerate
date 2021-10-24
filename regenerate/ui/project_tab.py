@@ -35,8 +35,18 @@ class ProjectTabs:
     def __init__(self, builder: Gtk.Builder, modified: Callable):
 
         item_list = [
-            ("project_name", "name", EntryText, "Missing project name"),
-            ("short_name", "short_name", EntryWord, "Missing short name"),
+            (
+                "project_name",
+                "name",
+                EntryText,
+                "Missing a sentence describing the project",
+            ),
+            (
+                "short_name",
+                "short_name",
+                EntryWord,
+                "Missing a single word project name",
+            ),
             (
                 "company_name",
                 "company_name",

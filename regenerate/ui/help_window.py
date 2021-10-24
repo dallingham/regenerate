@@ -53,6 +53,7 @@ class HelpWindow(BaseWindow):
             HelpWindow.window = builder.get_object("help_win")
             self.configure(HelpWindow.window)
             HelpWindow.wkit = HtmlDisplay()
+            help(HelpWindow.wkit)
             HelpWindow.container = builder.get_object("help_scroll")
             HelpWindow.container.add(HelpWindow.wkit)
             HelpWindow.button = builder.get_object("help_close")

@@ -2,6 +2,7 @@
 <!-- Generated with glade 3.22.2 -->
 <interface>
   <requires lib="gtk+" version="3.12"/>
+  <requires lib="webkit2gtk" version="2.12"/>
   <requires lib="widgets" version="0.0"/>
   <object class="GtkAction" id="add_set_action">
     <property name="label" translatable="yes">Add Register Set</property>
@@ -176,6 +177,29 @@
     <property name="label" translatable="yes">Save Project</property>
     <property name="short_label" translatable="yes">Save</property>
     <property name="stock_id">gtk-save</property>
+  </object>
+  <object class="WebKitSettings" id="settings1">
+    <property name="enable_javascript">False</property>
+    <property name="auto_load_images">False</property>
+    <property name="enable_offline_web_application_cache">False</property>
+    <property name="enable_html5_local_storage">False</property>
+    <property name="enable_html5_database">False</property>
+    <property name="enable_xss_auditor">False</property>
+    <property name="enable_java">False</property>
+    <property name="enable_hyperlink_auditing">False</property>
+    <property name="default_font_size">12</property>
+    <property name="default_monospace_font_size">9</property>
+    <property name="enable_tabs_to_links">False</property>
+    <property name="enable_fullscreen">False</property>
+    <property name="print_backgrounds">False</property>
+    <property name="enable_webaudio">False</property>
+    <property name="enable_webgl">False</property>
+    <property name="media_playback_allows_inline">False</property>
+    <property name="enable_site_specific_quirks">False</property>
+    <property name="enable_page_cache">False</property>
+    <property name="user_agent">Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Safari/605.1.15</property>
+    <property name="enable_javascript_markup">False</property>
+    <property name="enable_media">False</property>
   </object>
   <object class="GtkWindow" id="summary_window">
     <property name="can_focus">False</property>
@@ -2476,24 +2500,68 @@
                     <property name="can_focus">False</property>
                     <property name="orientation">vertical</property>
                     <child>
-                      <object class="GtkScrolledWindow" id="scrolledwindow10">
+                      <object class="GtkNotebook" id="block_select_notebook">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
-                        <property name="shadow_type">in</property>
+                        <property name="vexpand">True</property>
+                        <property name="show_border">False</property>
                         <child>
-                          <object class="GtkTreeView" id="block_select_list">
-                            <property name="width_request">190</property>
+                          <object class="GtkScrolledWindow" id="scrolledwindow10">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
-                            <property name="border_width">6</property>
-                            <child internal-child="selection">
-                              <object class="GtkTreeSelection"/>
+                            <property name="vexpand">True</property>
+                            <property name="shadow_type">in</property>
+                            <child>
+                              <object class="GtkTreeView" id="block_select_list">
+                                <property name="width_request">190</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="vexpand">True</property>
+                                <property name="border_width">6</property>
+                                <child internal-child="selection">
+                                  <object class="GtkTreeSelection"/>
+                                </child>
+                              </object>
                             </child>
                           </object>
                         </child>
+                        <child type="tab">
+                          <object class="GtkLabel">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">page 1</property>
+                          </object>
+                          <packing>
+                            <property name="tab_fill">False</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="WebKitWebView" id="block_select_help">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="settings">settings1</property>
+                            <child>
+                              <placeholder/>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                        <child type="tab">
+                          <object class="GtkLabel">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">page 2</property>
+                          </object>
+                          <packing>
+                            <property name="position">1</property>
+                            <property name="tab_fill">False</property>
+                          </packing>
+                        </child>
                       </object>
                       <packing>
-                        <property name="expand">True</property>
+                        <property name="expand">False</property>
                         <property name="fill">True</property>
                         <property name="position">0</property>
                       </packing>
@@ -2529,7 +2597,8 @@
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
-                            <property name="tooltip_text" translatable="yes">Add an existing block and add it to the project</property>
+                            <property name="tooltip_markup" translatable="yes">Add a block to the project by
+loading an existing &lt;b&gt;&lt;tt&gt;.regb&lt;/tt&gt;&lt;/b&gt; file.</property>
                             <child>
                               <object class="GtkImage">
                                 <property name="visible">True</property>
@@ -3254,7 +3323,7 @@
                             <property name="can_focus">False</property>
                             <property name="halign">start</property>
                             <property name="margin_left">24</property>
-                            <property name="label" translatable="yes">Code name:</property>
+                            <property name="label" translatable="yes">Project name:</property>
                             <property name="xalign">0</property>
                             <attributes>
                               <attribute name="weight" value="bold"/>
@@ -3330,33 +3399,6 @@
                           <packing>
                             <property name="left_attach">0</property>
                             <property name="top_attach">3</property>
-                            <property name="width">4</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkScrolledWindow" id="scrolledwindow5">
-                            <property name="visible">True</property>
-                            <property name="can_focus">True</property>
-                            <property name="margin_left">12</property>
-                            <property name="hexpand">True</property>
-                            <property name="vexpand">True</property>
-                            <property name="hscrollbar_policy">never</property>
-                            <property name="shadow_type">in</property>
-                            <child>
-                              <object class="GtkTreeView" id="instances">
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <child internal-child="selection">
-                                  <object class="GtkTreeSelection">
-                                    <signal name="changed" handler="on_block_select_changed" swapped="no"/>
-                                  </object>
-                                </child>
-                              </object>
-                            </child>
-                          </object>
-                          <packing>
-                            <property name="left_attach">0</property>
-                            <property name="top_attach">4</property>
                             <property name="width">4</property>
                           </packing>
                         </child>
@@ -3569,6 +3611,72 @@
                           <packing>
                             <property name="left_attach">3</property>
                             <property name="top_attach">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkNotebook" id="block_or_help">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <child>
+                              <object class="GtkScrolledWindow" id="scrolledwindow5">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="hexpand">True</property>
+                                <property name="vexpand">True</property>
+                                <property name="hscrollbar_policy">never</property>
+                                <property name="shadow_type">in</property>
+                                <child>
+                                  <object class="GtkTreeView" id="instances">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <child internal-child="selection">
+                                      <object class="GtkTreeSelection">
+                                        <signal name="changed" handler="on_block_select_changed" swapped="no"/>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                            <child type="tab">
+                              <object class="GtkLabel">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">page 1</property>
+                              </object>
+                              <packing>
+                                <property name="tab_fill">False</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="WebKitWebView" id="top_get_started">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="settings">settings1</property>
+                                <child>
+                                  <placeholder/>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="position">1</property>
+                              </packing>
+                            </child>
+                            <child type="tab">
+                              <object class="GtkLabel">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">page 2</property>
+                              </object>
+                              <packing>
+                                <property name="position">1</property>
+                                <property name="tab_fill">False</property>
+                              </packing>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="left_attach">0</property>
+                            <property name="top_attach">4</property>
+                            <property name="width">4</property>
                           </packing>
                         </child>
                         <child>

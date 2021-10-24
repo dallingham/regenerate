@@ -22,10 +22,11 @@ Top level tabxs
 """
 
 from typing import Callable, Optional
-
+from pathlib import Path
 from gi.repository import Gtk
 
 from regenerate.db import BlockInst, RegProject, Block
+from regenerate.settings.paths import HELP_PATH
 from .instance_list import InstMdl, InstanceList
 from .enums import InstCol
 from .param_overrides import OverridesList
@@ -45,6 +46,18 @@ class TopLevelTab:
         self.blkinst_model: Optional[InstMdl] = None
 
         self.top_block_add = find_obj("top_block_add")
+        self.block_or_help = find_obj("block_or_help")
+        self.block_or_help.set_show_tabs(False)
+
+        self.top_get_started = find_obj("top_get_started")
+
+        help_path = Path(HELP_PATH) / "top_get_started.html"
+
+        try:
+            with help_path.open() as ifile:
+                self.top_get_started.load_html(ifile.read(), "text/html")
+        except IOError:
+            pass
 
         self.blkinst_list = InstanceList(
             find_obj("instances"),
@@ -64,7 +77,7 @@ class TopLevelTab:
             find_obj("top_param_remove"),
             self.param_list_modified,
         )
-
+        self.instance_delete_btn = find_obj("instance_delete_btn")
         self.connect_signals(find_obj)
 
     def connect_signals(self, find_obj: Callable):
@@ -72,6 +85,12 @@ class TopLevelTab:
         find_obj("instance_delete_btn").connect(
             "clicked", self.delete_instance_callback
         )
+
+    def update_buttons(self):
+        if self.blkinst_list.get_selected_instance()[1]:
+            self.instance_delete_btn.set_sensitive(True)
+        else:
+            self.instance_delete_btn.set_sensitive(False)
 
     def delete_instance_callback(self, _obj: Gtk.Button) -> None:
         "Delete the selected block instance"
@@ -89,6 +108,7 @@ class TopLevelTab:
         "Update the block instance list"
         self.blkinst_list.update()
         self.build_add_block_menu()
+        self.update_buttons()
 
     def change_project(self, prj: RegProject) -> None:
         "Change the project, updating the displays"
@@ -136,14 +156,20 @@ class TopLevelTab:
 
         if empty:
             self.top_block_add.set_sensitive(False)
-            self.top_block_add.set_tooltip_text(
-                "No blocks have been defined"
+            self.top_block_add.set_tooltip_markup(
+                (
+                    "No blocks have been defined. Blocks\n"
+                    "can be defined on the <b>Blocks</b> tab\n"
+                    "on the left side of the window."
+                )
             )
+            self.block_or_help.set_current_page(1)
         else:
             self.top_block_add.set_popup(blk_menu)
             self.top_block_add.set_tooltip_text(
                 "Select a block to add to the top level"
             )
+            self.block_or_help.set_current_page(0)
 
     def menu_selected(self, _obj: Gtk.MenuItem, block: Block) -> None:
         "Adds the block as a new block instance"

@@ -402,8 +402,9 @@ class RegSetTab:
 
     def array_changed(self, obj):
         "Callback for the array_is_reg value"
-        self.regset.array_is_reg = obj.get_active()
-        self.set_modified()
+        if self.regset:
+            self.regset.array_is_reg = obj.get_active()
+            self.set_modified()
 
     def change_project(self, prj):
         "Change the project"
@@ -460,9 +461,10 @@ class RegSetTab:
             self.module_tabs.change_db(None, None)
             if show_msg:
                 LOGGER.warning(
-                    ("No register set is selected. Select a one from the list or "
-                     "use the buttons in the lower left corner to create or add a "
-                     "register set."
+                    (
+                        "No register set is selected. Select a one from the list or "
+                        "use the buttons in the lower left corner to create or add a "
+                        "register set."
                     )
                 )
         self.rebuild_model()
@@ -533,10 +535,12 @@ class RegSetTab:
                     txt = f"Field name ({field.name}) is a SystemVerilog reserved word"
                     msg.append(txt)
                 if check_field(field):
-                    txt = (f"Missing field description for '{field.name}' "
-                           "field of this register. Select the field in the "
-                           "Bit Fields table and click on the Edit button "
-                           "to add a description.")
+                    txt = (
+                        f"Missing field description for '{field.name}' "
+                        "field of this register. Select the field in the "
+                        "Bit Fields table and click on the Edit button "
+                        "to add a description."
+                    )
                     msg.append(txt)
                     warn_bit = True
                 if check_reset(field):
