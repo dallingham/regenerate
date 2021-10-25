@@ -1,0 +1,67 @@
+<html>
+  <body>
+    <h2>Register Protocol</h2>
+    <h3>Signals</h3>
+    <dl>
+      <dt><tt><b>ADDR</b></tt></dt>
+      <dd>Address bus. The address is driven by the initiator. It must
+	be held stable throughout the transaction, asserted
+	when <tt><b>RD</b></tt> or <tt><b>WR</b></tt> is asserted, and
+	held until <tt><b>ACK</b></tt> is asserted.</dd>
+      <dt><tt><b>WR</b></tt></dt>
+      <dd>Write Strobe. The write strobe is driven by the initiator,
+	and indicates that the transaction is a write
+	transaction. Once asserted, it must be held until the target
+	asserts <tt><b>ACK</b></tt>.</dd>
+      <dt><tt><b>BE</b></tt></dt>
+      <dd>Write Byte Enables. The byte enables are driven by the
+	initiator, and indicate which byte lanes on
+	the <tt><b>WDATA</b></tt> bus hold valid data to be
+	written. If the bit in the <tt><b>BE</b></tt> bus is not set,
+	then the corresponding byte on the <tt><b>WDATA</b></tt> bus
+	is not written. The value on this bus must be stable
+	throughout the transaction.</dd>
+      <dt><tt><b>WDATA</b></tt></dt>
+      <dd>Write Data. The write data bus is driven by the initiator,
+	and contains the data to be written during a write
+	operation. The value on this bus must be stable throughout the
+	transaction.</dd>
+      <dt><tt><b>RD</b></tt></dt>
+      <dd>Read Strobe. The read strobe is driven by the initiator, and
+      indicates that the transaction is a read transaction. Once
+      asserted, it must be held until the target
+      asserts <tt><b>ACK</b></tt>.</dd>
+      <dt><tt><b>RDATA</b></tt></dt>
+      <dd>Read Data. The read data bus is driven by the target. It
+	contains the data associated with the requested address. It is
+	valid only when <tt><b>ACK</b></tt> is asserted on a read
+	transaction.</dd>
+      <dt><tt><b>ACK</b></tt></dt>
+      <dd>The acknowledge is driven by the initiator, and indicates
+      that the cycle is complete. It is asserted only for a single
+      clock per transaction. For write operations, it indicates that
+      the target has accepted the write data. For read operations, it
+      indicates that the data on the <tt><b>RDATA</b></tt> bus is
+      valid.</dd>
+    </dl>
+    <h3>Write operation</h3>
+    <p>The write operation begins with the assertion
+    of <tt><b>WR</b></tt>. When <tt><b>WR</b></tt> is asserted, the
+    address (<tt><b>ADDR</b></tt>), byte enables (<tt><b>BE</b></tt>),
+    and write data (<tt><b>WDATA</b></tt>) must be valid. All signals
+    must be held stable until the target
+    asserts <tt><b>ACK</b></tt>. At that point <tt><b>WR</b></tt> must
+    be dasserted.</p>
+    <p>The write interface transfers a single data phase per transaction</p>
+    <img src="../media/write_cycle.png">
+    <h3>Read operation</h3>
+    <p>The read operation begins with the assertion
+    of <tt><b>RD</b></tt>. When <tt><b>RD</b></tt> is asserted, the
+    address (<tt><b>ADDR</b></tt>) must be valid. All signals must be
+    held stable until the target asserts <tt><b>ACK</b></tt>. At that
+    point <tt><b>RD</b></tt> must be dasserted.</p>
+    <p>The read interface transfers a single data phase per
+    transaction</p>
+    <img src="../media/read_cycle.png">
+  </body>
+<html>
