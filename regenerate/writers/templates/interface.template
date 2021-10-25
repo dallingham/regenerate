@@ -61,10 +61,17 @@ interface {{ports.interface_name}}
     */
 
    ERR_WR_RD_NOT_CONCURRENT:
-     assert property @(posedge {{CLK}})
-       disable iff ({{RESET_CONDITION}})
-         (!({{WR}} | {{RD}}))
-	 else $error("{{WR}} and {{RD}} must not be asserted at the same time");
+     assert property
+       (@(posedge {{CLK}}) disable iff ({{RESET_CONDITION}})
+        (!({{WR}} | {{RD}})))
+        else $error("{{WR}} and {{RD}} must not be asserted at the same time");
+
+   ERR_UNEXPECTED_ACK:
+     assert property
+       (@(posedge {{CLK}}) disable iff ({{RESET_CONDITION}})
+        {{ACK}} |-> ({{RD}} | {{WR}}))
+        else $error("{{ACK}} asserted while {{RD}} and {{WR}} are deasserted");       
+
 
    // synopsys translate_on
 {% endif %}
