@@ -28,6 +28,7 @@ setup(
             "data/ui/*.ui",
             "data/media/*.svg",
             "data/help/*.rst",
+            "data/help/*.html",
             "data/media/*.png",
             "data/extra/*.odt",
             "data/*.*",

@@ -607,21 +607,21 @@ class BlockTab:
             Gtk.STOCK_OPEN,
         )
 
-        for filename in filename_list:
-            print(filename)
+        if filename_list:
+            for filename in filename_list:
 
-            name = Path(filename)
-            blk = Block()
-            blk.open(name)
-            blk.modified = True
-
-            self.project.blocks[blk.uuid] = blk
-            self.block_model.add(blk)
-
-            for regset in blk.regsets:
-                if regset not in self.project.regsets:
-                    self.project.regsets[regset] = blk.regsets[regset]
-        self.project.modified = True
+                name = Path(filename)
+                blk = Block()
+                blk.open(name)
+                blk.modified = True
+                
+                self.project.blocks[blk.uuid] = blk
+                self.block_model.add(blk)
+                
+                for regset in blk.regsets:
+                    if regset not in self.project.regsets:
+                        self.project.regsets[regset] = blk.regsets[regset]
+            self.project.modified = True
         self.update_block_selection()
 
     def remove_block_clicked(self, _obj: Gtk.Button) -> None:
