@@ -55,7 +55,7 @@ interface {{ports.interface_name}}
 
    /*-------------------------------------------------------------------------
     * 
-    * Write and read strobes cannot be asserted at the same time
+    * Check the protocol of the interface
     *
     *-------------------------------------------------------------------------
     */
@@ -72,6 +72,41 @@ interface {{ports.interface_name}}
         {{ACK}} |-> ({{RD}} | {{WR}}))
         else $error("{{ACK}} asserted while {{RD}} and {{WR}} are deasserted");       
 
+   ERR_EARLY_RD_DEASSERTION:
+     assert property
+      (@(posedge {{CLK}}) disable iff ({{RESET_CONDITION}})
+       (!{{RD}} & $past({{RD}}, 1)) |-> $past({{ACK}}, 1))
+       else $error("{{RD}} deasserted before {{ACK}} asserted");
+
+   ERR_EARLY_WR_DEASSERTION:
+     assert property
+      (@(posedge {{CLK}}) disable iff ({{RESET_CONDITION}})
+       (!{{WR}} & $past({{WR}}, 1)) |-> $past({{ACK}}, 1))
+       else $error("{{WR}} deasserted before {{ACK}} asserted");
+
+   ERR_WDATA_NOT_STABLE:
+     assert property
+      (@(posedge {{CLK}}) disable iff ({{RESET_CONDITION}})
+       ({{WR}} & !{{ACK}}) |=> (WDATA == $past(WDATA)))
+       else $error("WDATA was not stable while {{WR}} asserted");
+
+   ERR_WR_{{ADDR}}_STABLE:
+     assert property
+      (@(posedge {{CLK}}) disable iff ({{RESET_CONDITION}})
+       ({{WR}} & !{{ACK}}) |=> ({{ADDR}} == $past({{ADDR}})))
+     else $error("{{ADDR}} was not stable while {{WR}} asserted");
+
+   ERR_WR_BE_STABLE:
+     assert property
+      (@(posedge {{CLK}}) disable iff ({{RESET_CONDITION}})
+       ({{WR}} & !{{ACK}}) |=> (BE == $past(BE)))
+       else $error("BE was not stable while {{WR}} asserted");
+
+   ERR_RD_{{ADDR}}_STABLE:
+     assert property
+      (@(posedge {{CLK}}) disable iff ({{RESET_CONDITION}})
+       ({{RD}} & !{{ACK}}) |=> ({{ADDR}} == $past({{ADDR}})))
+     else $error("{{ADDR}} was not stable while {{RD}} asserted");
 
    // synopsys translate_on
 {% endif %}
