@@ -46,7 +46,7 @@ class HelpWindow(BaseWindow):
         super().__init__()
 
         data = self.load_file(filename)
-
+        
         if HelpWindow.window is None:
             HelpWindow.window = builder.get_object("help_win")
             self.configure(HelpWindow.window)

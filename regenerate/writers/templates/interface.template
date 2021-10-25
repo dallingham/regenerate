@@ -108,6 +108,42 @@ interface {{ports.interface_name}}
        ({{RD}} & !{{ACK}}) |=> ({{ADDR}} == $past({{ADDR}})))
      else $error("{{ADDR}} was not stable while {{RD}} asserted");
 
+   ERR_RDATA_UNKNOWN:
+     assert property
+      (@(posedge {{CLK}}) disable iff ({{RESET_CONDITION}})
+       ({{RD}} & {{ACK}}) |-> (!$isunknown({{RDATA}})))
+       else $warning("{{RDATA}} is unknown when {{RD}} and {{ACK}} asserted");
+
+   ERR_WDATA_UNKNOWN:
+     assert property
+      (@(posedge {{CLK}}) disable iff ({{RESET_CONDITION}})
+       ({{WR}}) |-> (!$isunknown({{WDATA}})))
+       else $warning("{{WDATA}} is unknown when {{WR}} asserted");
+
+   ERR_BE_UNKNOWN:
+     assert property
+      (@(posedge {{CLK}}) disable iff ({{RESET_CONDITION}})
+       ({{WR}}) |-> (!$isunknown({{BE}})))
+       else $warning("{{BE}} is unknown when {{WR}} asserted");
+
+   ERR_ADDR_UNKNOWN:
+     assert property
+      (@(posedge {{CLK}}) disable iff ({{RESET_CONDITION}})
+       ({{WR}} | {{RD}}) |-> (!$isunknown({{ADDR}})))
+       else $warning("{{ADDR}} is unknown when {{WR}} or {{RD}} asserted");
+
+   ERR_WR_LATE_ACK:
+     assert property
+      (@(posedge {{CLK}}) disable iff (!{{RESET_CONDITION}})
+       ($rose({{WR}})) |-> (##[1:20] {{ACK}}))
+       else $warning("{{ACK}} not asserted within 20 clocks of {{WR}}");
+
+   ERR_RD_LATE_ACK:
+     assert property
+      (@(posedge {{CLK}}) disable iff ({{RESET_CONDITION}})
+       ($rose({{RD}})) |-> (##[1:20] {{ACK}}))
+       else $warning("{{ACK}} not asserted within 20 clocks of {{RD}}");
+
    // synopsys translate_on
 {% endif %}
 
