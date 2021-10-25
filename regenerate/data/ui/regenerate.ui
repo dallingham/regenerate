@@ -396,6 +396,19 @@
                         <property name="image">image19</property>
                         <property name="use_stock">False</property>
                         <signal name="activate" handler="on_user_preferences_activate" swapped="no"/>
+                        <child type="submenu">
+                          <object class="GtkMenu">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkCheckMenuItem" id="autoload">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Autoload the last project</property>
                       </object>
                     </child>
                   </object>
@@ -490,21 +503,6 @@
                 <property name="label" translatable="yes">Build</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-convert</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="homogeneous">True</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkToolButton" id="toolbutton2">
-                <property name="use_action_appearance">True</property>
-                <property name="related_action">help_action</property>
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="tooltip_text" translatable="yes">Display help</property>
-                <property name="label" translatable="yes">Help</property>
-                <property name="use_underline">True</property>
               </object>
               <packing>
                 <property name="expand">False</property>
