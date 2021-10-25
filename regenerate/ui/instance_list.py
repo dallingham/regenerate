@@ -24,7 +24,7 @@ Instance List and Model
 from typing import Callable, Optional, Tuple
 import re
 from gi.repository import Gtk, GObject
-from regenerate.db import RegisterInst, LOGGER, BlockInst, RegProject
+from regenerate.db import LOGGER, BlockInst, RegProject
 
 from .columns import EditableColumn, ReadOnlyColumn
 from .enums import InstCol

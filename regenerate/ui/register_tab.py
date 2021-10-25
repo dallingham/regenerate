@@ -23,7 +23,7 @@ from typing import Dict, Optional, Callable, Tuple
 from pathlib import Path
 
 from gi.repository import Gtk, GdkPixbuf, Pango
-from regenerate.settings.paths import INSTALL_PATH
+from regenerate.settings.paths import INSTALL_PATH, HELP_PATH
 from regenerate.db import (
     Register,
     BitField,
@@ -131,12 +131,12 @@ class RegSetList:
         self.__model: Optional[SelectModel] = None
         self.__build_prj_window()
 
-        self.factory = Gtk.IconFactory()
-        filename = Path(INSTALL_PATH) / "media" / "ModifiedIcon.png"
-        pixbuf = GdkPixbuf.Pixbuf.new_from_file(str(filename))
-        iconset = Gtk.IconSet(pixbuf)
-        self.factory.add("out-of-date", iconset)
-        self.factory.add_default()
+        # self.factory = Gtk.IconFactory()
+        # filename = Path(INSTALL_PATH) / "media" / "ModifiedIcon.png"
+        # pixbuf = GdkPixbuf.Pixbuf.new_from_file(str(filename))
+        # iconset = Gtk.IconSet(pixbuf)
+        # self.factory.add("out-of-date", iconset)
+        # self.factory.add_default()
 
     def set_model(self, model: SelectModel):
         """Sets the model"""
@@ -212,6 +212,16 @@ class RegSetTab:
         self.reg_selected_action.set_sensitive(False)
 
         self.connect_signals()
+
+        self.regset_select_notebook = find_obj("regset_select_notebook")
+        self.regset_select_notebook.set_show_tabs(False)
+        self.regset_select_help = find_obj("regset_select_help")
+        help_path = Path(HELP_PATH) / "regset_select_help.html"
+        try:
+            with help_path.open() as ifile:
+                self.regset_select_help.load_html(ifile.read(), "text/html")
+        except IOError:
+            pass
 
         self.reg_set_obj = RegSetList(
             self.widgets.regset_list, self.regset_sel_changed
@@ -459,15 +469,12 @@ class RegSetTab:
                 self.widgets.array_notation.set_active(True)
         else:
             self.module_tabs.change_db(None, None)
-            if show_msg:
-                LOGGER.warning(
-                    (
-                        "No register set is selected. Select a one from the list or "
-                        "use the buttons in the lower left corner to create or add a "
-                        "register set."
-                    )
-                )
         self.rebuild_model()
+
+        if self.project.regsets:
+            self.regset_select_notebook.set_current_page(0)
+        else:
+            self.regset_select_notebook.set_current_page(1)
 
         self.update_bit_count()
         self.set_description_warn_flag()

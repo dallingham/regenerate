@@ -21,11 +21,12 @@ Provides a dialog window that displays the contents of a file, converting
 the contents from restructuredText to HTML.
 """
 
-import os
+from typing import Optional
+from pathlib import Path
+from gi.repository import Gtk, Gdk
 from regenerate.settings.paths import HELP_PATH
 from regenerate.ui.preview import html_string
 from regenerate.ui.base_window import BaseWindow
-from regenerate.ui.html_display import HtmlDisplay
 
 
 class HelpWindow(BaseWindow):
@@ -38,28 +39,22 @@ class HelpWindow(BaseWindow):
     container = None
     button = None
 
-    def __init__(self, builder, filename):
+    def __init__(
+        self, builder: Gtk.Builder, filename: str, title: Optional[str] = None
+    ):
 
         super().__init__()
 
-        try:
-            fname = os.path.join(HELP_PATH, filename)
-            with open(fname) as ifile:
-                data = ifile.read()
-        except IOError as msg:
-            data = f"Help file '{fname}' could not be found\n{str(msg)}"
+        data = self.load_file(filename)
 
         if HelpWindow.window is None:
             HelpWindow.window = builder.get_object("help_win")
             self.configure(HelpWindow.window)
-            HelpWindow.wkit = HtmlDisplay()
-            help(HelpWindow.wkit)
-            HelpWindow.container = builder.get_object("help_scroll")
-            HelpWindow.container.add(HelpWindow.wkit)
+            HelpWindow.wkit = builder.get_object("html_view")
             HelpWindow.button = builder.get_object("help_close")
-            HelpWindow.button.connect("clicked", self.hide)
-            HelpWindow.window.connect("destroy", self.destroy)
-            HelpWindow.window.connect("delete_event", self.delete)
+            HelpWindow.button.connect("clicked", _hide)
+            HelpWindow.window.connect("destroy", _destroy)
+            HelpWindow.window.connect("delete_event", _delete)
             HelpWindow.window.show_all()
         else:
             HelpWindow.window.show()
@@ -69,16 +64,35 @@ class HelpWindow(BaseWindow):
         except:
             HelpWindow.wkit.load_html_string(html_string(data), "text/html")
 
-    def destroy(self, _obj):
-        """Hide the window with the destroy event is received"""
-        HelpWindow.window.hide()
-        return True
+        if title:
+            HelpWindow.window.set_title(f"{title} - regenerate")
 
-    def delete(self, _obj, _event):
-        """Hide the window with the delete event is received"""
-        HelpWindow.window.hide()
-        return True
+    def load_file(self, filename: str) -> str:
+        "Loads the file if found"
 
-    def hide(self, _obj):
-        """Hide the window"""
+        try:
+            fname = Path(HELP_PATH) / filename
+            with fname.open() as ifile:
+                data = ifile.read()
+        except IOError as msg:
+            data = f"Help file '{fname}' could not be found\n{str(msg)}"
+        return data
+
+
+def _destroy(_obj):
+    """Hide the window with the destroy event is received"""
+    if HelpWindow.window:
+        HelpWindow.window.hide()
+    return True
+
+
+def _delete(window: Gtk.Window, _event: Gdk.Event):
+    """Hide the window with the delete event is received"""
+    window.hide()
+    return True
+
+
+def _hide(_button: Gtk.Button):
+    "Hide the window"
+    if HelpWindow.window:
         HelpWindow.window.hide()

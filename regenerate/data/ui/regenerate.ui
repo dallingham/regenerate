@@ -32,77 +32,6 @@
     <property name="stock_id">gtk-help</property>
     <signal name="activate" handler="on_help_action_activate" swapped="no"/>
   </object>
-  <object class="GtkWindow" id="help_win">
-    <property name="can_focus">False</property>
-    <property name="default_width">800</property>
-    <property name="default_height">600</property>
-    <child type="titlebar">
-      <placeholder/>
-    </child>
-    <child>
-      <object class="GtkBox" id="vbox5">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="orientation">vertical</property>
-        <child>
-          <object class="GtkLabel" id="help_title">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="label" translatable="yes">Help</property>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="padding">12</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkScrolledWindow" id="help_scroll">
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="shadow_type">in</property>
-            <child>
-              <placeholder/>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">True</property>
-            <property name="fill">True</property>
-            <property name="position">1</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkHButtonBox" id="hbuttonbox3">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="border_width">6</property>
-            <property name="layout_style">end</property>
-            <child>
-              <object class="GtkButton" id="help_close">
-                <property name="label">gtk-close</property>
-                <property name="use_action_appearance">False</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">2</property>
-          </packing>
-        </child>
-      </object>
-    </child>
-  </object>
   <object class="GtkImage" id="image1">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -200,6 +129,64 @@
     <property name="user_agent">Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Safari/605.1.15</property>
     <property name="enable_javascript_markup">False</property>
     <property name="enable_media">False</property>
+  </object>
+  <object class="GtkWindow" id="help_win">
+    <property name="can_focus">False</property>
+    <property name="default_width">800</property>
+    <property name="default_height">600</property>
+    <child type="titlebar">
+      <placeholder/>
+    </child>
+    <child>
+      <object class="GtkBox" id="vbox5">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="WebKitWebView" id="html_view">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="settings">settings1</property>
+            <child>
+              <placeholder/>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkHButtonBox" id="hbuttonbox3">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="border_width">6</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="help_close">
+                <property name="label">gtk-close</property>
+                <property name="use_action_appearance">False</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+      </object>
+    </child>
   </object>
   <object class="GtkWindow" id="summary_window">
     <property name="can_focus">False</property>
@@ -575,26 +562,69 @@
                 <property name="name">hpaned</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="position">200</property>
+                <property name="position_set">True</property>
+                <property name="wide_handle">True</property>
                 <child>
                   <object class="GtkBox">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="orientation">vertical</property>
                     <child>
-                      <object class="GtkScrolledWindow" id="scrolledwindow3">
+                      <object class="GtkNotebook" id="regset_select_notebook">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
-                        <property name="shadow_type">in</property>
                         <child>
-                          <object class="GtkTreeView" id="project_list">
-                            <property name="width_request">190</property>
+                          <object class="GtkScrolledWindow" id="scrolledwindow3">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
-                            <property name="border_width">6</property>
-                            <child internal-child="selection">
-                              <object class="GtkTreeSelection"/>
+                            <property name="shadow_type">in</property>
+                            <child>
+                              <object class="GtkTreeView" id="project_list">
+                                <property name="width_request">190</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="border_width">6</property>
+                                <child internal-child="selection">
+                                  <object class="GtkTreeSelection"/>
+                                </child>
+                              </object>
                             </child>
                           </object>
+                        </child>
+                        <child type="tab">
+                          <object class="GtkLabel">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">page 1</property>
+                          </object>
+                          <packing>
+                            <property name="tab_fill">False</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="WebKitWebView" id="regset_select_help">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="settings">settings1</property>
+                            <child>
+                              <placeholder/>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                        <child type="tab">
+                          <object class="GtkLabel">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">page 2</property>
+                          </object>
+                          <packing>
+                            <property name="position">1</property>
+                            <property name="tab_fill">False</property>
+                          </packing>
                         </child>
                       </object>
                       <packing>
@@ -710,6 +740,7 @@
                             <property name="orientation">vertical</property>
                             <property name="position">350</property>
                             <property name="position_set">True</property>
+                            <property name="wide_handle">True</property>
                             <child>
                               <object class="GtkGrid">
                                 <property name="visible">True</property>
@@ -2494,6 +2525,9 @@
               <object class="GtkPaned" id="bpaned">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="position">200</property>
+                <property name="position_set">True</property>
+                <property name="wide_handle">True</property>
                 <child>
                   <object class="GtkBox">
                     <property name="visible">True</property>
@@ -2725,9 +2759,6 @@ loading an existing &lt;b&gt;&lt;tt&gt;.regb&lt;/tt&gt;&lt;/b&gt; file.</propert
                                 <property name="position">1</property>
                               </packing>
                             </child>
-                            <child>
-                              <placeholder/>
-                            </child>
                           </object>
                           <packing>
                             <property name="left_attach">5</property>
@@ -2738,7 +2769,7 @@ loading an existing &lt;b&gt;&lt;tt&gt;.regb&lt;/tt&gt;&lt;/b&gt; file.</propert
                           <object class="GtkLabel">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="margin_left">12</property>
+                            <property name="margin_left">6</property>
                             <property name="margin_top">12</property>
                             <property name="margin_bottom">12</property>
                             <property name="vexpand">False</property>
@@ -2753,39 +2784,12 @@ loading an existing &lt;b&gt;&lt;tt&gt;.regb&lt;/tt&gt;&lt;/b&gt; file.</propert
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkScrolledWindow">
-                            <property name="visible">True</property>
-                            <property name="can_focus">True</property>
-                            <property name="margin_left">24</property>
-                            <property name="margin_bottom">12</property>
-                            <property name="shadow_type">in</property>
-                            <child>
-                              <object class="GtkTreeView" id="block_regsets">
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="hexpand">True</property>
-                                <property name="vexpand">True</property>
-                                <property name="model">block_list</property>
-                                <property name="search_column">0</property>
-                                <child internal-child="selection">
-                                  <object class="GtkTreeSelection"/>
-                                </child>
-                              </object>
-                            </child>
-                          </object>
-                          <packing>
-                            <property name="left_attach">0</property>
-                            <property name="top_attach">4</property>
-                            <property name="width">5</property>
-                          </packing>
-                        </child>
-                        <child>
                           <object class="GtkLabel">
                             <property name="name">2</property>
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="halign">start</property>
-                            <property name="margin_left">24</property>
+                            <property name="margin_left">6</property>
                             <property name="hexpand">False</property>
                             <property name="vexpand">False</property>
                             <property name="label" translatable="yes">Block Name:</property>
@@ -2804,7 +2808,7 @@ loading an existing &lt;b&gt;&lt;tt&gt;.regb&lt;/tt&gt;&lt;/b&gt; file.</propert
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="halign">start</property>
-                            <property name="margin_left">24</property>
+                            <property name="margin_left">6</property>
                             <property name="hexpand">False</property>
                             <property name="vexpand">False</property>
                             <property name="label" translatable="yes">Description:</property>
@@ -2823,7 +2827,7 @@ loading an existing &lt;b&gt;&lt;tt&gt;.regb&lt;/tt&gt;&lt;/b&gt; file.</propert
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="halign">start</property>
-                            <property name="margin_left">24</property>
+                            <property name="margin_left">6</property>
                             <property name="hexpand">False</property>
                             <property name="vexpand">False</property>
                             <property name="label" translatable="yes">Address Space Size:</property>
@@ -2896,6 +2900,75 @@ loading an existing &lt;b&gt;&lt;tt&gt;.regb&lt;/tt&gt;&lt;/b&gt; file.</propert
                           <packing>
                             <property name="left_attach">1</property>
                             <property name="top_attach">2</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkNotebook" id="reginst_list_notebook">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="margin_left">12</property>
+                            <property name="vexpand">True</property>
+                            <child>
+                              <object class="GtkScrolledWindow">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="hexpand">True</property>
+                                <property name="vexpand">True</property>
+                                <property name="shadow_type">in</property>
+                                <child>
+                                  <object class="GtkTreeView" id="block_regsets">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="hexpand">True</property>
+                                    <property name="vexpand">True</property>
+                                    <property name="model">block_list</property>
+                                    <property name="search_column">0</property>
+                                    <child internal-child="selection">
+                                      <object class="GtkTreeSelection"/>
+                                    </child>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                            <child type="tab">
+                              <object class="GtkLabel">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">page 1</property>
+                              </object>
+                              <packing>
+                                <property name="tab_fill">False</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="WebKitWebView" id="reginst_list_help">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="settings">settings1</property>
+                                <child>
+                                  <placeholder/>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="position">1</property>
+                              </packing>
+                            </child>
+                            <child type="tab">
+                              <object class="GtkLabel">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">page 2</property>
+                              </object>
+                              <packing>
+                                <property name="position">1</property>
+                                <property name="tab_fill">False</property>
+                              </packing>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="left_attach">0</property>
+                            <property name="top_attach">4</property>
+                            <property name="width">5</property>
                           </packing>
                         </child>
                         <child>
@@ -3511,9 +3584,6 @@ loading an existing &lt;b&gt;&lt;tt&gt;.regb&lt;/tt&gt;&lt;/b&gt; file.</propert
                                 <property name="position">1</property>
                               </packing>
                             </child>
-                            <child>
-                              <placeholder/>
-                            </child>
                           </object>
                           <packing>
                             <property name="left_attach">4</property>
@@ -3617,6 +3687,8 @@ loading an existing &lt;b&gt;&lt;tt&gt;.regb&lt;/tt&gt;&lt;/b&gt; file.</propert
                           <object class="GtkNotebook" id="block_or_help">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
+                            <property name="margin_left">12</property>
+                            <property name="vexpand">True</property>
                             <child>
                               <object class="GtkScrolledWindow" id="scrolledwindow5">
                                 <property name="visible">True</property>
@@ -3629,6 +3701,7 @@ loading an existing &lt;b&gt;&lt;tt&gt;.regb&lt;/tt&gt;&lt;/b&gt; file.</propert
                                   <object class="GtkTreeView" id="instances">
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
+                                    <property name="vexpand">True</property>
                                     <child internal-child="selection">
                                       <object class="GtkTreeSelection">
                                         <signal name="changed" handler="on_block_select_changed" swapped="no"/>

@@ -21,27 +21,18 @@ If the address is not fixed, then regenerate will use the specified
 Base Address field for examples, but will generate all files with the
 address as being relocatable.
 
-Address Maps and Subsystems
----------------------------
-
-Each address map must contain at least one of the subsytems listed in
-the Subsystems list. This indicates that the subsystem's registers are
-visible in the address map. All registers in all blocks in the
-subsystem are visible in the address map. Partial blocks are not
-supported.
-
-Adding a Subsystem to an Address Map
+Adding a Block to an Address Map
 ------------------------------------
 
 Selecting an address map in the Address Maps list and clicking on the
 Edit button next to the list will bring up a dialog allowing you to
-select which subsystems belong to the address map. This button will
+select which blocks belong to the address map. This button will
 only be visible when a address map is selected in the list. Selecting
 components underneath address map will disable the Edit button.
 
 Clicking the button will bring up a dialog that lists all available
-subsystems. Check each subsystem that should belong to the address
-map.
+block instances. Check each block instance that should belong to the
+address map.
 
 
    

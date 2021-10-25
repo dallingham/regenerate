@@ -58,6 +58,10 @@ class BlockTab:
         self.block_reg_remove = find_obj("block_reg_remove")
         self.block_docs = find_obj("block_doc_pages")
 
+        self.reginst_list_notebook = find_obj("reginst_list_notebook")
+        self.reginst_list_notebook.set_show_tabs(False)
+        self.reginst_list_help = find_obj("reginst_list_help")
+
         self.block_select_notebook = find_obj("block_select_notebook")
         self.block_select_notebook.set_show_tabs(False)
         self.block_select_help = find_obj("block_select_help")
@@ -65,6 +69,13 @@ class BlockTab:
         try:
             with help_path.open() as ifile:
                 self.block_select_help.load_html(ifile.read(), "text/html")
+        except IOError:
+            pass
+
+        help_path = Path(HELP_PATH) / "reginst_list_help.html"
+        try:
+            with help_path.open() as ifile:
+                self.reginst_list_help.load_html(ifile.read(), "text/html")
         except IOError:
             pass
 
@@ -168,6 +179,7 @@ class BlockTab:
 
         self.overrides_list.update_display()
         self.build_add_regset_menu()
+        self.update_block_selection()
 
     def clear_flags(self) -> None:
         self.block_model.update()
@@ -379,7 +391,9 @@ class BlockTab:
     def build_add_regset_menu(self):
         "Builds the menu to add a register set to a block"
 
-        if self.project:
+        page = 1
+
+        if self.project and self.block:
             reg_menu = Gtk.Menu()
 
             sorted_dict = {
@@ -400,6 +414,7 @@ class BlockTab:
 
             if empty:
                 self.block_reg_add.set_sensitive(False)
+                show_doc = False
                 self.block_reg_add.set_tooltip_markup(
                     "No register sets have been defined.\n"
                     "Register sets can be defined on the\n"
@@ -408,15 +423,18 @@ class BlockTab:
                 )
             else:
                 self.block_reg_add.set_sensitive(True)
+                show_doc = True
                 self.block_reg_add.set_tooltip_text(
                     "Select a register set to add to the block"
                 )
                 self.block_reg_add.set_popup(reg_menu)
+                page = 0
         else:
             self.block_reg_add.set_sensitive(False)
             self.block_reg_add.set_tooltip_text(
                 "No register sets have been defined"
             )
+        self.reginst_list_notebook.set_current_page(page)
 
     def set_parameters(self, parameters) -> None:
         "Sets the parameters"

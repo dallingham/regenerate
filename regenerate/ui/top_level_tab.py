@@ -146,7 +146,7 @@ class TopLevelTab:
 
         empty = True
         blk_menu = Gtk.Menu()
-        for count, block in enumerate(self.prj.blocks.values()):
+        for block in self.prj.blocks.values():
             menu_item = Gtk.MenuItem(block.name)
             menu_item.connect("activate", self.menu_selected, block)
             menu_item.show()

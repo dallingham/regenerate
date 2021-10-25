@@ -228,11 +228,11 @@ class MainWindow(BaseWindow):
 
     def on_addr_map_help_clicked(self, _obj: Gtk.Button) -> None:
         "Display the address map help"
-        HelpWindow(self.builder, "addr_map_help.rst")
+        HelpWindow(self.builder, "addr_map_help.rst", "Address Map Help")
 
     def on_param_help_clicked(self, _obj: Gtk.Button) -> None:
         """Display the parameter help"""
-        HelpWindow(self.builder, "parameter_help.rst")
+        HelpWindow(self.builder, "parameter_help.rst", "Parameter Help")
 
     def on_prj_param_help_clicked(self, _obj: Gtk.Button) -> None:
         """Display the project parameter help"""
@@ -249,7 +249,7 @@ class MainWindow(BaseWindow):
 
     def on_help_action_activate(self, _obj: Gtk.Action) -> None:
         """Display the help window"""
-        HelpWindow(self.builder, "regenerate_help.rst")
+        HelpWindow(self.builder, "regenerate_help.rst", "Overview")
 
     def restore_position_and_size(self) -> None:
         "Restore the desired position and size from the user's config file"
@@ -786,10 +786,10 @@ class MainWindow(BaseWindow):
         name = self.prj.path.name
         if modified:
             self.top_window.set_title(
-                f"{name}: {self.prj.name} (modified) - regenerate"
+                f"{self.prj.name} ({name}*) - regenerate"
             )
         else:
-            self.top_window.set_title(f"{name}: {self.prj.name} - regenerate")
+            self.top_window.set_title(f"{self.prj.name} ({name}) - regenerate")
 
 
 def check_field(field):
