@@ -150,7 +150,7 @@ class Signals:
     def json_decode(self, data: Dict[str, Any]) -> None:
         """Converts JSON data back into a Signal"""
 
-        self._interface = data.get("inteface", DEF_INTERFACE)
+        self._interface = data.get("interface", DEF_INTERFACE)
         self._modport = data.get("modport", DEF_MODPORT)
         self._imodport = data.get("imodport", DEF_IMODPORT)
         self.reset_active_level = data["reset_level"]
