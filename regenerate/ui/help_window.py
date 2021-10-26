@@ -45,8 +45,6 @@ class HelpWindow(BaseWindow):
 
         super().__init__()
 
-        data = self.load_file(filename)
-        
         if HelpWindow.window is None:
             HelpWindow.window = builder.get_object("help_win")
             self.configure(HelpWindow.window)
@@ -59,10 +57,17 @@ class HelpWindow(BaseWindow):
         else:
             HelpWindow.window.show()
 
-        try:
-            HelpWindow.wkit.load_html(html_string(data), "text/html")
-        except:
-            HelpWindow.wkit.load_html_string(html_string(data), "text/html")
+        if Path(filename).suffix == ".rst":
+            data = self.load_file(filename)
+            try:
+                HelpWindow.wkit.load_html(html_string(data), "text/html")
+            except:
+                HelpWindow.wkit.load_html_string(
+                    html_string(data), "text/html"
+                )
+        else:
+            full_path = str(Path(HELP_PATH) / filename)
+            HelpWindow.wkit.load_uri(f"file:///{full_path}")
 
         if title:
             HelpWindow.window.set_title(f"{title} - regenerate")

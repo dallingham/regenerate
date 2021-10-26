@@ -228,11 +228,11 @@ class MainWindow(BaseWindow):
 
     def on_addr_map_help_clicked(self, _obj: Gtk.Button) -> None:
         "Display the address map help"
-        HelpWindow(self.builder, "addr_map_help.rst", "Address Map Help")
+        HelpWindow(self.builder, "addr_map_help.html", "Address Map Help")
 
     def on_param_help_clicked(self, _obj: Gtk.Button) -> None:
         """Display the parameter help"""
-        HelpWindow(self.builder, "parameter_help.rst", "Parameter Help")
+        HelpWindow(self.builder, "parameter_help.html", "Parameter Help")
 
     def on_prj_param_help_clicked(self, _obj: Gtk.Button) -> None:
         """Display the project parameter help"""
@@ -247,9 +247,17 @@ class MainWindow(BaseWindow):
         """Add a new map when clicked"""
         self.addr_map_list.add_new_map()
 
-    def on_help_action_activate(self, _obj: Gtk.Action) -> None:
+    def on_general_help_activate(self, _obj: Gtk.MenuItem) -> None:
         """Display the help window"""
-        HelpWindow(self.builder, "regenerate_help.rst", "Overview")
+        HelpWindow(self.builder, "regenerate_help.html", "Overview")
+
+    def on_protocol_help_activate(self, _obj: Gtk.MenuItem) -> None:
+        """Display the help window"""
+        HelpWindow(
+            self.builder,
+            "interface_protocol.html",
+            "Register Interface Protocol",
+        )
 
     def restore_position_and_size(self) -> None:
         "Restore the desired position and size from the user's config file"

@@ -1,0 +1,67 @@
+<h2>Regenerate</h2>
+
+<h3>Creating a project</h3>
+
+<p>Regenerate is project based. A project consists of multiple register
+sets, along with the relationships between them. These relationships
+include:</p>
+
+<ul>
+  <li>Logical groupings of registers along with their associated addressing.</li>
+  <li>Address maps</li>
+</ul>
+
+<h4>Creating a New Register Set</h4>
+
+<h4>Adding an Existing Register Set</h4>
+
+<h4>Creating a Subsystem</h4>
+
+<h4>Adding a Register Set to a Subsystem</h4>
+
+<h4>Defining Address Maps</h4>
+
+<h3>Defining Registers</h3>
+
+<h4>Address Fields</h4>
+
+<p>Each register has an address associated with it. The register is a
+register set is not an absolute address, but rather an address offset
+from the begining of the register set. The address must be aligned to
+the register width.</p>
+
+<p>Memory regions mapped to register space can be also be represented. In
+the case, the address used is in the format of:</p>
+
+  ``Address:NumberOfBytes``
+
+<p>Regenerate will not generate code for memory regions.</p>
+
+<h4>Name</h4>
+
+<p>The Name is a descriptive name of the register. This is typically a
+phrase, and can consist of multiple words.</p>
+
+<h4>Token</h4>
+
+<p>The Token is a symbolic name for the register. It is used in
+creating define names and variable names in generated code. This
+should be a single word, consisting of ASCII letters (typically
+capital letters), numbers, and underscores.</p>
+
+<h4>Width</h4>
+
+<p>The width of the register specifies the number of bits in the
+register. The number of bits must be either 8, 16, 32, or 64. The
+width must be aligned correctly with the address. For example, and
+32-bit address can be <tt>0x1000</tt> and <tt>0x1004</tt>, but cannot
+be <tt>0x1001</tt>, <tt>0x1002</tt>, or <tt>0x1003</tt>.</p>
+
+<h3>Defining Bit Fields</h3>
+
+More to come...
+
+Using the Builder
+-----------------
+
+More to come...
