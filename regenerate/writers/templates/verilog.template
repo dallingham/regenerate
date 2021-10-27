@@ -134,6 +134,7 @@ generate
 {%     if field.field_type == 0 %}
     assign {{reg_field_name(reg, field)}}{{dimval}} = {{full_reset_value(field)}};
 {%     elif field.field_type == 1 %}
+{%       set rval = field.reset_input %}
     assign {{reg_field_name(reg, field)}}{{dimval}} = {{field.reset_input}}{{dimval}};
 {%     else %}
 {%       if field.msb.is_parameter or field.msb.resolve() > field.lsb %}
@@ -150,22 +151,20 @@ generate
 {% if field.reset_type != 1 %}
 localparam bit [{{field.msb.int_str()}}:{{field.lsb}}] {{rval}} = {{field.reset_vstr()}};
 {%         set generate = 1 %}
+{%         set rval = field.reset_input %}
+{% else %}
+{%         set rval = field.reset_vstr() %}
 {% endif %}
 generate
    for (bitpos = {{field.lsb}}; bitpos <= {{field.msb.int_str()}}; bitpos++) begin : g{{faddr_str.lower()}}
 {%       else %}
 {%         set generate = 0 %}
 {%         set pos = "" %}
-{%         set rval = field.reset_vstr() %}
 {%         set bytepos = "%d" % ((field.lsb // 8) + byte_offset,) %}
 {%         set wpos = "[%d]" % (field.lsb + byte_offset * 8,) %}
 {%       endif %}      
 {%     set reg_start_bit = ((reg.address * 8) % db.ports.data_bus_width) %}
-   {{db.name}}_{{ci.name}}_reg
-     #(
-       .RVAL ({{rval}}{{pos}})
-       )
-   {{reg_field_name(reg, field)}}_reg
+   {{db.name}}_{{ci.name}}_reg {{reg_field_name(reg, field)}}_reg
      (
       .CLK   ({{ports.clk}}),
 {% if db.ports.secondary_reset and field.use_alternate_reset %}
@@ -181,6 +180,7 @@ generate
       .RSTn  ({{ports.reset}}),
   {% endif %}
 {% endif %}      
+      .RVAL  ({{rval}}{{pos}}),
 {%       if ci.is_read_only == False %}
       .WE    (write_r{{"%02x" % baddr}}{{dimval}}),
       .DI    ({{ports.write_data}}{{wpos}}),

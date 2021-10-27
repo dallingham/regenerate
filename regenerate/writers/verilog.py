@@ -716,6 +716,19 @@ def build_input_signals(regset: RegisterDb, cell_info) -> List[Scalar]:
             signal = field.control_signal
             dim = reg.dimension
 
+            if field.reset_type == ResetType.INPUT:
+                rval = field.reset_input
+                if field.width == 1:
+                    vec_width = ""
+                else:
+                    vec_width = f"[{field.width-1}:0]"
+                if reg.dimension.is_parameter:
+                    signals.add(Scalar(f"{rval}[{dim.param_name()}]", vec_width))
+                elif reg.dimension.resolve() > 1:
+                    signals.add(Scalar(f"{rval}[{dim.resolve()}]", vec_width))
+                else:
+                    signals.add(Scalar(rval, vec_width))
+                    
             if cinfo.has_control:
                 if reg.dimension.is_parameter:
                     signals.add(Scalar(f"{signal}[{dim.param_name()}]", ""))
