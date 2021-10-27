@@ -326,8 +326,6 @@ class Verilog(RegsetWriter):
             reset_edge = "negedge"
             reset_op = "!"
 
-        input_signals = build_input_signals(self._regset, self._cell_info)
-        output_signals = build_output_signals(self._regset, self._cell_info)
         reg_list = build_logic_list(self._regset, word_fields, self._cell_info)
         oneshot_assigns = build_oneshot_assignments(
             word_fields, self._cell_info
@@ -342,6 +340,8 @@ class Verilog(RegsetWriter):
 
         # TODO: fix 64 bit registers with 32 bit width
 
+        signal_list = self.build_signal_list()
+
         with filename.open("w") as ofile:
             ofile.write(
                 template.render(
@@ -349,9 +349,7 @@ class Verilog(RegsetWriter):
                     db=self._regset,
                     ports=build_standard_ports(self._regset),
                     reg_list=reg_list,
-                    port_width=build_port_widths(self._regset),
-                    input_signals=input_signals,
-                    output_signals=output_signals,
+                    signal_list=signal_list,
                     oneshot_assigns=oneshot_assigns,
                     write_address_selects=write_address_selects,
                     read_address_selects=read_address_selects,
@@ -371,6 +369,42 @@ class Verilog(RegsetWriter):
                 )
             )
             self.write_register_modules(ofile)
+
+    def build_signal_list(self):
+
+        input_signals = build_input_signals(self._regset, self._cell_info)
+        output_signals = build_output_signals(self._regset, self._cell_info)
+        in_logic = self.lang.input_logic
+        out_logic = self.lang.output_logic
+        port_width = build_port_widths(self._regset)
+        ports = build_standard_ports(self._regset)
+
+        if self._regset.use_interface:
+            new_input_signals = [f"{ports.interface}.{ports.modport} MGMT"]
+        else:
+            new_input_signals = [
+                f"{in_logic}          {ports.clk}",
+                f"{in_logic}          {ports.reset}",
+                f"{in_logic}          {ports.write_strobe}",
+                f"{in_logic}          {ports.read_strobe}",
+                f"{in_logic}  {port_width['byte_strobe']:7s} {ports.byte_strobe}",
+                f"{in_logic}  {port_width['addr']:7s} {ports.addr}",
+                f"{in_logic}  {port_width['write_data']:7s} {ports.write_data}",
+                f"{out_logic} {port_width['write_data']:7s} {ports.read_data}",
+                f"{out_logic}         {ports.ack}",
+            ]
+
+        if self._regset.ports.secondary_reset:
+            new_input_signals.append(f"{in_logic}          {ports.alt_reset}")
+        for scalar in input_signals:
+            new_input_signals.append(
+                f"{in_logic}  {scalar.vector:7s} {scalar.name}"
+            )
+        for scalar in output_signals:
+            new_input_signals.append(
+                f"{out_logic} {scalar.vector:7s} {scalar.name}"
+            )
+        return new_input_signals
 
     def write_register_modules(self, ofile):
         """Writes the used register module types to the file."""

@@ -22,30 +22,10 @@ module {{db.name}}
     )
 {% endif %}
    (
-{% if not db.use_interface %}
-    {{lang.input_logic}} {{ports.clk}},
-    {{lang.input_logic}} {{ports.reset}},
-    {{lang.input_logic}} {{ports.write_strobe}},
-    {{lang.input_logic}} {{ports.read_strobe}},
-    {{lang.input_logic}} {{port_width['byte_strobe']}} {{ports.byte_strobe}},
-    {{lang.input_logic}} {{port_width['addr']}} {{ports.addr}},
-    {{lang.input_logic}} {{port_width['write_data']}} {{ports.write_data}},
-{% endif %}
-{% if db.ports.secondary_reset %}
-    {{lang.input_logic}} {{ports.alt_reset}},
-{% endif %}
-{% for signal in input_signals %}
-    {{lang.input_logic}} {{signal.vector}} {{signal.name}},
+{% for signal in signal_list %}
+    {{signal}}{% if not loop.last %},{% endif %}
+
 {% endfor %}
-{% for signal in output_signals %}
-    {{lang.output_logic}} {{signal.vector}} {{signal.name}},
-{% endfor %}
-{% if db.use_interface %}
-    {{ports.interface}}.{{ports.modport}} MGMT
-{% else %}
-    {{lang.output_logic}} {{"[%d:0]" % (db.ports.data_bus_width-1,)}} {{ports.read_data}},
-    {{lang.output_logic}} {{ports.ack}}
-{% endif %}
    );
 
    genvar dim, bitpos;
@@ -135,49 +115,49 @@ module {{db.name}}
  * Reset Value : {{field.reset_string()}}
  *------------------------------------------------------------------------------
  */
-{% set bytes_per_word = db.ports.data_bus_width // 8 %}
-{% set baddr = (reg.address // bytes_per_word) * bytes_per_word %}
-{% set byte_offset = (reg.address % bytes_per_word) %}
-{% if byte_offset != 0 %}
-{%   set byte_off_str = "+%d" % byte_offset %}
-{% else %}
-{%   set byte_off_str = "" %}
-{% endif %}
-{% set faddr_str = "%02x" % reg.address + "_" + field.name %}
-{%     if reg.dimension.is_parameter %}
-{%       set dimval = "[dim]" %}
+{%     set bytes_per_word = db.ports.data_bus_width // 8 %}
+{%     set baddr = (reg.address // bytes_per_word) * bytes_per_word %}
+{%     set byte_offset = (reg.address % bytes_per_word) %}
+{%     if byte_offset != 0 %}
+{%       set byte_off_str = "+%d" % byte_offset %}
+{%     else %}
+{%       set byte_off_str = "" %}
+{%     endif %}
+{%     set faddr_str = "%02x" % reg.address + "_" + field.name %}
+{%       if reg.dimension.is_parameter %}
+{%         set dimval = "[dim]" %}
 generate 
    for (dim = 0; dim < {{reg.dimension.param_name()}}; dim++) begin : g_r{{"%02x" % reg.address}}
-{%     else %}
-{%       set dimval = "" %}
-{%     endif %}
+{%       else %}
+{%         set dimval = "" %}
+{%       endif %}
 {%     if field.field_type == 0 %}
     assign {{reg_field_name(reg, field)}}{{dimval}} = {{full_reset_value(field)}};
 {%     elif field.field_type == 1 %}
     assign {{reg_field_name(reg, field)}}{{dimval}} = {{field.input_signal}}{{dimval}};
 {%     else %}
 {%       if field.msb.is_parameter or field.msb.resolve() > field.lsb %}
-{%          set pos = "[bitpos]" %}
-{%          set rval = "pRST%s" % faddr_str %}
-{%          if byte_offset == 0 %}
-{%            set bytepos = "bitpos >> 3" %}
-{%            set wpos = "[bitpos]" %}
-{%          else %}
-{%            set bytepos = "(bitpos >> 3)+%d" % byte_offset %}
-{%            set wpos = "[bitpos+%d]" % (byte_offset * 8,) %}
-{%          endif %}
+{%         set pos = "[bitpos]" %}
+{%         set rval = "pRST%s" % faddr_str %}
+{%         if byte_offset == 0 %}
+{%           set bytepos = "bitpos >> 3" %}
+{%           set wpos = "[bitpos]" %}
+{%         else %}
+{%           set bytepos = "(bitpos >> 3)+%d" % byte_offset %}
+{%           set wpos = "[bitpos+%d]" % (byte_offset * 8,) %}
+{%         endif %}
 
 localparam bit [{{field.msb.int_str()}}:{{field.lsb}}] {{rval}} = {{field.reset_vstr()}};
 
-           {% set generate = 1 %}
+{%         set generate = 1 %}
 generate
    for (bitpos = {{field.lsb}}; bitpos <= {{field.msb.int_str()}}; bitpos++) begin : g{{faddr_str.lower()}}
 {%       else %}
-{%          set generate = 0 %}
-{%          set pos = "" %}
-{%          set rval = field.reset_vstr() %}
-{%          set bytepos = "%d" % ((field.lsb // 8) + byte_offset,) %}
-{%          set wpos = "[%d]" % (field.lsb + byte_offset * 8,) %}
+{%         set generate = 0 %}
+{%         set pos = "" %}
+{%         set rval = field.reset_vstr() %}
+{%         set bytepos = "%d" % ((field.lsb // 8) + byte_offset,) %}
+{%         set wpos = "[%d]" % (field.lsb + byte_offset * 8,) %}
 {%       endif %}      
 {%     set reg_start_bit = ((reg.address * 8) % db.ports.data_bus_width) %}
    {{db.name}}_{{ci.name}}_reg
