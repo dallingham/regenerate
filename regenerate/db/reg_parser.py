@@ -321,7 +321,7 @@ class RegParser(XmlBase):
         definition, then the text contains the reset signal name.
         """
         if self.__in_ports:
-            self.__db.ports.reset_name = text
+            ...
         elif self.__reset_type == 1:
             self.__field.reset_input = text.strip()
             self.__field.reset_type = ResetType.INPUT

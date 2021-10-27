@@ -9,7 +9,6 @@ label = str(subprocess.check_output(["git", "describe", "--always"]).strip())
 
 label = label.split("'")[1]
 
-print(type(label), label)
 VERSION = f"1.9.9 ({label})"
 
 try:
