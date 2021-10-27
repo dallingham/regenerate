@@ -31,11 +31,6 @@
     <property name="can_focus">False</property>
     <property name="stock">gtk-file</property>
   </object>
-  <object class="GtkImage" id="image19">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-preferences</property>
-  </object>
   <object class="GtkImage" id="image6">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -382,28 +377,11 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkImageMenuItem" id="user_preferences">
-                        <property name="label" translatable="yes">_User Preferences</property>
-                        <property name="use_action_appearance">False</property>
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="use_underline">True</property>
-                        <property name="image">image19</property>
-                        <property name="use_stock">False</property>
-                        <signal name="activate" handler="on_user_preferences_activate" swapped="no"/>
-                        <child type="submenu">
-                          <object class="GtkMenu">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                    <child>
                       <object class="GtkCheckMenuItem" id="autoload">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Autoload the last project</property>
+                        <signal name="toggled" handler="on_autoload_toggled" swapped="no"/>
                       </object>
                     </child>
                   </object>

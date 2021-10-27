@@ -220,6 +220,8 @@ class BitField(NameBase):
         """Return the reset value."""
         if self.reset_type == ResetType.PARAMETER:
             return BitField.PARAMETERS.get(self.reset_parameter, 0)
+        elif self.reset_type == ResetType.INPUT:
+            return self.reset_input
         return self._reset_value
 
     @reset_value.setter
@@ -237,12 +239,16 @@ class BitField(NameBase):
         "Returns the reset value as a string"
         if self.reset_type == ResetType.PARAMETER:
             return self.reset_parameter
+        elif self.reset_type == ResetType.INPUT:
+            return self.reset_input
         return hex(self._reset_value)
 
     def reset_vstr(self) -> Optional[str]:
         "Returns the reset value as a string in verilog format"
         if self.reset_type == ResetType.PARAMETER:
             return self.reset_parameter
+        elif self.reset_type == ResetType.INPUT:
+            return self.reset_input
         return f"'h{self._reset_value:x}"
 
     @property

@@ -134,7 +134,7 @@ generate
 {%     if field.field_type == 0 %}
     assign {{reg_field_name(reg, field)}}{{dimval}} = {{full_reset_value(field)}};
 {%     elif field.field_type == 1 %}
-    assign {{reg_field_name(reg, field)}}{{dimval}} = {{field.input_signal}}{{dimval}};
+    assign {{reg_field_name(reg, field)}}{{dimval}} = {{field.reset_input}}{{dimval}};
 {%     else %}
 {%       if field.msb.is_parameter or field.msb.resolve() > field.lsb %}
 {%         set pos = "[bitpos]" %}
@@ -147,9 +147,10 @@ generate
 {%           set wpos = "[bitpos+%d]" % (byte_offset * 8,) %}
 {%         endif %}
 
+{% if field.reset_type != 1 %}
 localparam bit [{{field.msb.int_str()}}:{{field.lsb}}] {{rval}} = {{field.reset_vstr()}};
-
 {%         set generate = 1 %}
+{% endif %}
 generate
    for (bitpos = {{field.lsb}}; bitpos <= {{field.msb.int_str()}}; bitpos++) begin : g{{faddr_str.lower()}}
 {%       else %}

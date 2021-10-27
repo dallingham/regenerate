@@ -910,7 +910,7 @@ def build_standard_ports(regset: RegisterDb) -> PortInfo:
             "MGMT.WDATA",
             "MGMT.RDATA",
             "MGMT.ACK",
-            "MGMT.ADDR[%d:3]" % (ports.address_bus_width - 1,),
+            f"MGMT.ADDR[{ports.address_bus_width - 1}:{LOWER_BIT[ports.data_bus_width]}]",
         )
     return PortInfo(
         ports.clock_name,

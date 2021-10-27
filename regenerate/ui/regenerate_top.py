@@ -53,7 +53,6 @@ from .build import Build
 from .error_dialogs import ErrorMsg, Question
 from .help_window import HelpWindow
 from .project_tab import ProjectTabs
-from .preferences import Preferences
 from .register_tab import RegSetTab
 from .status_logger import StatusHandler
 from .top_level_tab import TopLevelTab
@@ -94,6 +93,9 @@ class MainWindow(BaseWindow):
         self.top_notebook.set_current_page(2)
         self.top_notebook.set_sensitive(False)
 
+        autoload = bool(int(ini.get("user", "load_last_project", "0")))
+        self.find_obj("autoload").set_active(autoload)
+        
         self.setup_project()
         self.setup_recent_menu()
 
@@ -322,8 +324,8 @@ class MainWindow(BaseWindow):
     def on_build_action_activate(self, _obj: Gtk.Action) -> None:
         Build(self.prj)
 
-    def on_user_preferences_activate(self, _obj: Gtk.Action) -> None:
-        Preferences(self.top_window)
+    def on_autoload_toggled(self, _obj) -> None:
+        ini.set("user", "load_last_project", int(bool(_obj.get_active())))
 
     def build_import_menu(self) -> None:
         """
