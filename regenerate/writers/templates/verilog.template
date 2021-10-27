@@ -1,5 +1,7 @@
 // Author: {{db.owner}}
 // Block: {{db.name}}
+// Generated: {{date}}
+// Regenerate Version: {{version}}
 //
 // ----------------------------------------------------------------------
 // Functional Description

@@ -31,7 +31,7 @@ from pathlib import Path
 
 from typing import List, Union, Optional
 from gi.repository import Gtk, GdkPixbuf, Gdk
-from regenerate import PROGRAM_VERSION, PROGRAM_NAME
+from regenerate.settings.version import PROGRAM_NAME, PROGRAM_VERSION
 from regenerate.db import (
     RegProject,
     LOGGER,
@@ -43,7 +43,7 @@ from regenerate.db import (
 )
 from regenerate.importers import IMPORTERS
 from regenerate.settings import ini
-from regenerate.settings.paths import GLADE_TOP, INSTALL_PATH
+from regenerate.settings.paths import GLADE_TOP, INSTALL_PATH, HELP_PATH
 
 from .addr_edit import AddrMapEdit
 from .addrmap_list import AddrMapList
@@ -775,12 +775,7 @@ class MainWindow(BaseWindow):
             "registers for an ASIC or FPGA based design."
         )
         box.set_authors(["Donald N. Allingham"])
-        try:
-            with open(INSTALL_PATH / "LICENSE.txt") as ifile:
-                data = ifile.read()
-                box.set_license(data)
-        except IOError:
-            pass
+        box.set_license_type(Gtk.License.GPL_2_0)
         fname = INSTALL_PATH / "media" / "flop.svg"
         box.set_logo(GdkPixbuf.Pixbuf.new_from_file(str(fname)))
         box.run()

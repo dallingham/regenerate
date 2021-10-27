@@ -240,8 +240,13 @@ package {{prj.short_name}}_reg_pkg;
         {% else %}
           {% set volatile = "0" %}
         {% endif %}
-        {%- set reset = "%d'h%x" % (field.width, field.reset_value) %}
-        {%- set has_reset = 1 %}
+	{%- if field.reset_type == 1 %}
+	{%-   set has_reset = 0 %}
+	{%-   set reset = "'0" %}
+	{%- else %}
+        {%-   set has_reset = 1 %}
+        {%-   set reset = "%d'h%x" % (field.width, field.reset_value) %}
+	{%- endif %}
         {%- set ind_access = individual_access(field, reg) %}
         {%- set access = ACCESS_MAP[field.field_type] %}
 

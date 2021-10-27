@@ -39,6 +39,7 @@ from regenerate.db import (
     ParameterFinder,
 )
 from regenerate.db.enums import ShareType, ResetType
+from regenerate.settings.version import PROGRAM_VERSION
 
 from .writer_base import (
     find_template,
@@ -346,6 +347,8 @@ class Verilog(RegsetWriter):
             ofile.write(
                 template.render(
                     year=datetime.datetime.now().date().strftime("%Y"),
+                    date=datetime.datetime.now().strftime("%Y-%m-%d %X"),
+                    version=PROGRAM_VERSION,
                     db=self._regset,
                     ports=build_standard_ports(self._regset),
                     reg_list=reg_list,

@@ -3,9 +3,26 @@ try:
 except ImportError:
     from distutils.core import setup
 
+import subprocess
+
+label = str(subprocess.check_output(["git", "describe", "--always"]).strip())
+
+label = label.split("'")[1]
+
+print(type(label), label)
+VERSION = f"1.9.9 ({label})"
+
+try:
+    out = open("regenerate/settings/version.py", "w")
+    out.write(f'PROGRAM_NAME = "regenerate"\n')
+    out.write(f'PROGRAM_VERSION = "{VERSION}"\n')
+    out.close()
+except:
+    pass
+
 setup(
     name="regenerate",
-    version="1.9.9",
+    version=VERSION,
     license="License.txt",
     author="Donald N. Allingham",
     author_email="dallingham@gmail.com",
