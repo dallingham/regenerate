@@ -172,6 +172,28 @@ class PortInfo(NamedTuple):
     addr: str
 
 
+class RegData:
+    def __init__(self):
+        self.ci = None
+        self.reg_name = None
+        self.reg_addr = None
+        self.type_descr = None
+        self.msb = None
+        self.lsb = None
+        self.localparam = None
+        self.rval = None
+        self.dim = None
+        self.byte_offset = None
+        self.byte_addr = None
+        self.byte_offset_str = None
+        self.field_width = None
+        self.reset_val = None
+        self.generate = None
+        self.pos = None
+        self.bytepos = None
+        self.wpos = None
+
+
 def full_reset_value(field: BitField) -> str:
     """returns the full reset value for the entire field"""
 
@@ -343,6 +365,8 @@ class Verilog(RegsetWriter):
 
         signal_list = self.build_signal_list()
 
+        self.test()
+
         with filename.open("w") as ofile:
             ofile.write(
                 template.render(
@@ -456,6 +480,66 @@ class Verilog(RegsetWriter):
                         % (self._regset.name, self._cell_info[i][0])
                     ],
                 )
+
+    def test(self):
+        db = self._regset
+        bytes_per_word = db.ports.data_bus_width // 8
+
+        full_list = []
+        for reg in db.get_all_registers():
+            for field in reg.get_bit_fields():
+
+                reg_field = RegData()
+                reg_field.ci = self._cell_info[field.field_type]
+                if field.reset_type != 1:
+                    reg_field.rval = "pRST{reg.address:02x}_{field.name}"
+                else:
+                    reg_field.rval = field.reset_input
+                if reg.dimension:
+                    reg_field.dim = "[dim]"
+                else:
+                    reg_field.dim = None
+                reg_field.byte_offset = reg.address % bytes_per_word
+                reg_field.byte_addr = (
+                    reg.address // bytes_per_word
+                ) * bytes_per_word
+                if reg_field.byte_offset:
+                    reg_field.byte_offset_str = f"+{reg_field.byte_offset}"
+                else:
+                    reg_field.byte_offset_str = ""
+                if not field.msb.is_parameter and field.width == 1:
+                    reg_field.field_width = ""
+                else:
+                    reg_field.field_width = (
+                        f"[{field.msb.int_str()}:{field.lsb}]"
+                    )
+                reg_field.reset_val = field.reset_vstr()
+
+                if field.msb.is_parameter or field.msb.resolve() > field.lsb:
+                    reg_field.pos = "[bitpos]"
+                    if reg_field.byte_offset == 0:
+                        reg_field.bytepos = "bitpos >> 3"
+                        reg_field.wpos = "[bitpos]"
+                    else:
+                        reg_field.bytepos = (
+                            "(bitpos >> 3)+%d" % reg_field.byte_offset
+                        )
+                        reg_field.wpos = "[bitpos+%d]" % (
+                            reg_field.byte_offset * 8,
+                        )
+                    reg_field.generate = True
+                else:
+                    reg_field.generate = False
+                    reg_field.pos = ""
+                    reg_field.bytepos = "%d" % (
+                        (field.lsb // 8) + reg_field.byte_offset,
+                    )
+                    reg_field.wpos = "[%d]" % (
+                        field.lsb + reg_field.byte_offset * 8,
+                    )
+
+                full_list.append(reg_field)
+        return full_list
 
 
 class SystemVerilog(Verilog):
@@ -726,12 +810,14 @@ def build_input_signals(regset: RegisterDb, cell_info) -> List[Scalar]:
                 else:
                     vec_width = f"[{field.width-1}:0]"
                 if reg.dimension.is_parameter:
-                    signals.add(Scalar(f"{rval}[{dim.param_name()}]", vec_width))
+                    signals.add(
+                        Scalar(f"{rval}[{dim.param_name()}]", vec_width)
+                    )
                 elif reg.dimension.resolve() > 1:
                     signals.add(Scalar(f"{rval}[{dim.resolve()}]", vec_width))
                 else:
                     signals.add(Scalar(rval, vec_width))
-                    
+
             if cinfo.has_control:
                 if reg.dimension.is_parameter:
                     signals.add(Scalar(f"{signal}[{dim.param_name()}]", ""))

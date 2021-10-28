@@ -117,6 +117,17 @@ module {{db.name}}
  * Reset Value : {{field.reset_string()}}
  *------------------------------------------------------------------------------
  */
+{%     if field.reset_type != 1 %}
+{%       set faddr_str = "%02x" % reg.address + "_" + field.name %}
+{%       set rval = "pRST%s" % faddr_str %}
+{%     else %}
+{%       set rval = field.reset_input %}
+{%     endif %}
+{%     if not field.msb.is_parameter and field.width == 1 %}
+   localparam bit {{rval}} = {{field.reset_vstr()}};
+{%     else %}
+   localparam bit [{{field.msb.int_str()}}:{{field.lsb}}] {{rval}} = {{field.reset_vstr()}};
+{%     endif %}
 {%     set bytes_per_word = db.ports.data_bus_width // 8 %}
 {%     set baddr = (reg.address // bytes_per_word) * bytes_per_word %}
 {%     set byte_offset = (reg.address % bytes_per_word) %}
@@ -125,7 +136,6 @@ module {{db.name}}
 {%     else %}
 {%       set byte_off_str = "" %}
 {%     endif %}
-{%     set faddr_str = "%02x" % reg.address + "_" + field.name %}
 {%       if reg.dimension.is_parameter %}
 {%         set dimval = "[dim]" %}
 generate 
@@ -136,12 +146,10 @@ generate
 {%     if field.field_type == 0 %}
     assign {{reg_field_name(reg, field)}}{{dimval}} = {{full_reset_value(field)}};
 {%     elif field.field_type == 1 %}
-{%       set rval = field.reset_input %}
     assign {{reg_field_name(reg, field)}}{{dimval}} = {{field.reset_input}}{{dimval}};
 {%     else %}
 {%       if field.msb.is_parameter or field.msb.resolve() > field.lsb %}
 {%         set pos = "[bitpos]" %}
-{%         set rval = "pRST%s" % faddr_str %}
 {%         if byte_offset == 0 %}
 {%           set bytepos = "bitpos >> 3" %}
 {%           set wpos = "[bitpos]" %}
@@ -149,14 +157,7 @@ generate
 {%           set bytepos = "(bitpos >> 3)+%d" % byte_offset %}
 {%           set wpos = "[bitpos+%d]" % (byte_offset * 8,) %}
 {%         endif %}
-
-{% if field.reset_type != 1 %}
-localparam bit [{{field.msb.int_str()}}:{{field.lsb}}] {{rval}} = {{field.reset_vstr()}};
 {%         set generate = 1 %}
-{%         set rval = field.reset_input %}
-{% else %}
-{%         set rval = field.reset_vstr() %}
-{% endif %}
 generate
    for (bitpos = {{field.lsb}}; bitpos <= {{field.msb.int_str()}}; bitpos++) begin : g{{faddr_str.lower()}}
 {%       else %}
@@ -170,17 +171,17 @@ generate
      (
       .CLK   ({{ports.clk}}),
 {% if db.ports.secondary_reset and field.use_alternate_reset %}
-  {% if db.ports.sync_reset %}
+  {%- if db.ports.sync_reset %}
       .RST   ({{ports.alt_reset}}),
-  {% else %}
+  {%- else %}
       .RSTn  ({{ports.alt_reset}}),
-  {% endif %}
+  {%- endif %}
 {% else %}
-  {% if db.ports.sync_reset %}
+  {%- if db.ports.sync_reset %}
       .RST   ({{ports.reset}}),
-  {% else %}
+  {%- else %}
       .RSTn  ({{ports.reset}}),
-  {% endif %}
+  {%- endif %}
 {% endif %}      
       .RVAL  ({{rval}}{{pos}}),
 {%       if ci.is_read_only == False %}
@@ -204,10 +205,10 @@ generate
      );
 {%     endif %}
 {%     if field.field_type == 0 or field.msb.is_parameter or field.msb.resolve() > field.lsb %}
-{% if generate == 1 %}    
+{%       if generate == 1 %}    
     end
  endgenerate
-{% endif %}
+{%       endif %}
 {%     endif %}
 
 {%   endfor %}
