@@ -153,7 +153,7 @@ generate
       .DI    ({{ri.write_data_name}}),
 {%     endif %}
 {%     if ri.byte_strobe_name %}
-      .BE    ({{ri.byte_strobe_name}}]),
+      .BE    ({{ri.byte_strobe_name}}),
 {%     endif %}
 {%     if ri.read_name %}
       .RD    ({{ri.read_name}}),

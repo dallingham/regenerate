@@ -575,9 +575,9 @@ class Verilog(RegsetWriter):
                 if cell_info.has_rd:
                     reg_field.read_name = f"read_r{reg_field.reg_addr:02x}"
                 if rset.ports.secondary_reset and field.use_alternate_reset:
-                    reg_field.reset_name = rset.ports.secondary_reset_name
+                    reg_field.reset_name = ports.alt_reset
                 else:
-                    reg_field.reset_name = rset.ports.reset_name
+                    reg_field.reset_name = ports.reset
                 full_list.append(reg_field)
         return full_list
 
