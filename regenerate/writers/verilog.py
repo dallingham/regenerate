@@ -173,6 +173,8 @@ class PortInfo(NamedTuple):
 
 
 class RegData:
+    "Holds the data that defines a register bit instance"
+
     def __init__(self):
         self.name = None
         self.cell_type = None
@@ -187,7 +189,6 @@ class RegData:
         self.control_name = None
         self.read_name = None
         self.dim_param = None
-        self.ci = None
         self.field = None
         self.reg_name = None
         self.reg_addr = None
@@ -490,12 +491,14 @@ class Verilog(RegsetWriter):
                     ],
                 )
 
-    def build_flop_info(self):
-        db = self._regset
-        bytes_per_word = db.ports.data_bus_width // 8
+    def build_flop_info(self) -> List[RegData]:
+        "Builds the info needed to instantiate a flop"
+
+        rset = self._regset
+        bytes_per_word = rset.data_bus_width // 8
 
         full_list = []
-        for reg in db.get_all_registers():
+        for reg in rset.get_all_registers():
             for field in reg.get_bit_fields():
 
                 base_name = reg_field_name(reg, field)
@@ -503,7 +506,7 @@ class Verilog(RegsetWriter):
                 reg_field = RegData()
                 reg_field.name = reg_field_name(reg, field)
                 reg_field.field = field
-                reg_field.cell_type = f"{db.name}_{cell_info.name}_reg"
+                reg_field.cell_type = f"{rset.name}_{cell_info.name}_reg"
                 reg_field.type_descr = self._cell_info[
                     field.field_type
                 ].type_descr
@@ -550,10 +553,10 @@ class Verilog(RegsetWriter):
                         f"write_r{byte_addr:02x}{reg_field.dim}"
                     )
                     reg_field.write_data_name = (
-                        f"{db.ports.write_data_name}{wpos}"
+                        f"{rset.ports.write_data_name}{wpos}"
                     )
                     reg_field.byte_strobe_name = (
-                        f"{db.ports.byte_strobe_name}[{bytepos}]"
+                        f"{rset.ports.byte_strobe_name}[{bytepos}]"
                     )
                 reg_field.do_name = (
                     f"{base_name}{reg_field.dim}{reg_field.pos}"
@@ -570,10 +573,10 @@ class Verilog(RegsetWriter):
                     )
                 if cell_info.has_rd:
                     reg_field.read_name = f"read_r{reg_field.reg_addr:02x}"
-                if db.ports.secondary_reset and field.use_alternate_reset:
-                    reg_field.reset_name = db.ports.secondary_reset_name
+                if rset.ports.secondary_reset and field.use_alternate_reset:
+                    reg_field.reset_name = rset.ports.secondary_reset_name
                 else:
-                    reg_field.reset_name = db.ports.reset_name
+                    reg_field.reset_name = rset.ports.reset_name
                 full_list.append(reg_field)
         return full_list
 
@@ -595,11 +598,10 @@ class Verilog2001(Verilog):
         super().__init__(project, regset, options)
 
 
-def drop_write_share(list_in):
+def drop_write_share(list_in: List[Register]) -> List[Register]:
     "Drops the write-share registers from the list"
 
-    list_out = [l for l in list_in if l[6].share != ShareType.WRITE]
-    return list_out
+    return [l for l in list_in if l[6].share != ShareType.WRITE]
 
 
 def make_byte_info(
@@ -645,7 +647,7 @@ def build_port_widths(regset: RegisterDb):
     }
 
 
-def reg_field_name(reg: Register, field: BitField):
+def reg_field_name(reg: Register, field: BitField) -> str:
     "Returns the register name"
 
     return f"r{reg.address:02x}{MODE_SEP[reg.share]}{field.name.lower()}"
@@ -775,7 +777,7 @@ def build_output_signals(regset, cell_info) -> List[Scalar]:
     return sorted(signals)
 
 
-def make_scalar(name, vect, dim):
+def make_scalar(name, vect, dim) -> Scalar:
     """Converts the name, vect, and dim into a signal"""
 
     if isinstance(dim, str) or dim > 1:
@@ -932,10 +934,10 @@ def valid_output(field: BitField) -> bool:
     return field.use_output_enable and field.output_signal != ""
 
 
-def build_assignments(word_fields):
+def build_assignments(word_fields) -> List[AssignInfo]:
     "Build the general assignments"
 
-    assign_list = []
+    assign_list: List[AssignInfo] = []
 
     for word_field in word_fields.values():
 

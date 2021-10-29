@@ -1,3 +1,4 @@
+{# -*- mode: Jinja2;-*- #}
 // Author: {{db.owner}}
 // Block: {{db.name}}
 // Generated: {{date}}
@@ -13,7 +14,7 @@
 // Copyright {{year}} {{db.organization}}. All rights reserved.
 //
 //
-//
+
 module {{db.name}}
 {% if parameters|length > 0 %}
    #(
@@ -53,9 +54,9 @@ module {{db.name}}
 {% for data in write_address_selects %}
 {%   if data.register.dimension.is_parameter %}
    wire {{data.name}}[{{data.register.dimension.param_name()}}];
-{%-   else %}
+{%-  else %}
    wire {{data.name}};
-{%-   endif %}   
+{%-  endif %}   
 {% endfor %}
 {% for data in read_address_selects %}
    wire {{data.name}};

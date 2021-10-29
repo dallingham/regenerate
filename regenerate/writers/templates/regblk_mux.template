@@ -1,3 +1,4 @@
+{# -*- mode: Jinja2;-*- #}
 /*----------------------------------------------------------------------
  *
  * {{group_name}}_regblk_mux - Register decode block for {{group_name}}
