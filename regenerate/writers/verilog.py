@@ -496,7 +496,7 @@ class Verilog(RegsetWriter):
 
         rset = self._regset
         bytes_per_word = rset.ports.data_bus_width // 8
-        ports = build_standard_ports(regset)
+        ports = build_standard_ports(rset)
 
         full_list = []
         for reg in rset.get_all_registers():
