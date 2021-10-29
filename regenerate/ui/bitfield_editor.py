@@ -140,7 +140,6 @@ class BitFieldEditor(BaseWindow):
                 "posedge" if self.dbase.ports.reset_active_level else "negedge"
             )
             condition = "" if self.dbase.ports.reset_active_level else "~"
-            be_level = "" if self.dbase.ports.byte_strobe_active_level else "~"
 
             if self.dbase.ports.sync_reset:
                 trigger = ""
@@ -149,7 +148,6 @@ class BitFieldEditor(BaseWindow):
 
             name_map = {
                 "MODULE": self.dbase.name,
-                "BE_LEVEL": be_level,
                 "RESET_CONDITION": condition,
                 "RESET_TRIGGER": trigger,
                 "RESET_EDGE": edge,

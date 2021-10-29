@@ -228,14 +228,6 @@ class RegParser(XmlBase):
         self.__field = BitField(stop, start)
         self.__reg.add_bit_field(self.__field)
 
-    def start_be(self, attrs: Dict[str, str]) -> None:
-        """
-        Called when the be tag is encountered. Attributes are:
-
-          active
-        """
-        self.__db.ports.byte_strobe_active_level = cnv_int(attrs, "active")
-
     def start_reset(self, attrs: Dict[str, str]) -> None:
         """
         Called with the reset tag is encountered. If it is a ports definition,

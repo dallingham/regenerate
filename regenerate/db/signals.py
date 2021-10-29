@@ -73,7 +73,6 @@ class Signals:
         self.secondary_reset = False
         self.secondary_reset_name = DEF_SEC_RESET_NAME
         self.reset_active_level = 0
-        self.byte_strobe_active_level = 1
         self.data_bus_width = 32
         self.address_bus_width = 12
         self.sync_reset = False
@@ -90,7 +89,7 @@ class Signals:
         if self.reset_active_level:
             return DEF_RST_NAME_P
         return DEF_RST_NAME
-    
+
     @property
     def interface_name(self) -> str:
         """

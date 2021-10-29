@@ -174,7 +174,21 @@ class PortInfo(NamedTuple):
 
 class RegData:
     def __init__(self):
+        self.name = None
+        self.cell_type = None
+        self.reset_port = None
+        self.write_name = None
+        self.write_data_name = None
+        self.byte_strobe_name = None
+        self.do_name = None
+        self.one_shot_name = None
+        self.input_name = None
+        self.reset_name = None
+        self.control_name = None
+        self.read_name = None
+        self.dim_param = None
         self.ci = None
+        self.field = None
         self.reg_name = None
         self.reg_addr = None
         self.type_descr = None
@@ -183,15 +197,10 @@ class RegData:
         self.localparam = None
         self.rval = None
         self.dim = None
-        self.byte_offset = None
-        self.byte_addr = None
-        self.byte_offset_str = None
         self.field_width = None
         self.reset_val = None
         self.generate = None
         self.pos = None
-        self.bytepos = None
-        self.wpos = None
 
 
 def full_reset_value(field: BitField) -> str:
@@ -365,14 +374,21 @@ class Verilog(RegsetWriter):
 
         signal_list = self.build_signal_list()
 
-        self.test()
+        reg_data_list = self.build_flop_info()
+
+        if self._regset.ports.reset_active_level:
+            rst = "RST "
+        else:
+            rst = "RSTn"
 
         with filename.open("w") as ofile:
             ofile.write(
                 template.render(
                     year=datetime.datetime.now().date().strftime("%Y"),
                     date=datetime.datetime.now().strftime("%Y-%m-%d %X"),
+                    RST=rst,
                     version=PROGRAM_VERSION,
+                    reg_data_list=reg_data_list,
                     db=self._regset,
                     ports=build_standard_ports(self._regset),
                     reg_list=reg_list,
@@ -382,7 +398,6 @@ class Verilog(RegsetWriter):
                     read_address_selects=read_address_selects,
                     reg_read_output=register_output_definitions(self._regset),
                     rshift=rshift,
-                    reg_field_name=reg_field_name,
                     parameters=self._regset.parameters.get(),
                     cell_info=self._cell_info,
                     word_fields=word_fields,
@@ -445,11 +460,6 @@ class Verilog(RegsetWriter):
             condition = "!"
             rst_name = "RSTn"
 
-        if self._regset.ports.byte_strobe_active_level:
-            be_level = ""
-        else:
-            be_level = "~"
-
         if self._regset.ports.sync_reset:
             trigger = ""
         else:
@@ -461,7 +471,6 @@ class Verilog(RegsetWriter):
         name_map = {
             "MODULE": self._regset.name,
             "RST": rst_name,
-            "BE_LEVEL": be_level,
             "RESET_CONDITION": condition,
             "RESET_TRIGGER": trigger,
             "RESET_EDGE": edge,
@@ -476,12 +485,12 @@ class Verilog(RegsetWriter):
                 comment(
                     ofile,
                     [
-                        "No definition for %s_%s_reg\n"
+                        "No definition for %s_%s_reg"
                         % (self._regset.name, self._cell_info[i][0])
                     ],
                 )
 
-    def test(self):
+    def build_flop_info(self):
         db = self._regset
         bytes_per_word = db.ports.data_bus_width // 8
 
@@ -489,24 +498,30 @@ class Verilog(RegsetWriter):
         for reg in db.get_all_registers():
             for field in reg.get_bit_fields():
 
+                base_name = reg_field_name(reg, field)
+                cell_info = self._cell_info[field.field_type]
                 reg_field = RegData()
-                reg_field.ci = self._cell_info[field.field_type]
+                reg_field.name = reg_field_name(reg, field)
+                reg_field.field = field
+                reg_field.cell_type = f"{db.name}_{cell_info.name}_reg"
+                reg_field.type_descr = self._cell_info[
+                    field.field_type
+                ].type_descr
+                if reg.dimension.is_parameter:
+                    reg.dim_param = reg.dimension.param_name()
+                reg_field.reg_addr = reg.address
                 if field.reset_type != 1:
-                    reg_field.rval = "pRST{reg.address:02x}_{field.name}"
+                    reg_field.rval = f"pRST{reg.address:02x}_{field.name}"
                 else:
                     reg_field.rval = field.reset_input
-                if reg.dimension:
+                if reg.dimension.is_parameter or reg.dimension.int_value > 1:
                     reg_field.dim = "[dim]"
                 else:
-                    reg_field.dim = None
-                reg_field.byte_offset = reg.address % bytes_per_word
-                reg_field.byte_addr = (
-                    reg.address // bytes_per_word
-                ) * bytes_per_word
-                if reg_field.byte_offset:
-                    reg_field.byte_offset_str = f"+{reg_field.byte_offset}"
-                else:
-                    reg_field.byte_offset_str = ""
+                    reg_field.dim = ""
+                reg_field.msb = field.msb
+                reg_field.lsb = field.lsb
+                byte_offset = reg.address % bytes_per_word
+                byte_addr = (reg.address // bytes_per_word) * bytes_per_word
                 if not field.msb.is_parameter and field.width == 1:
                     reg_field.field_width = ""
                 else:
@@ -517,27 +532,48 @@ class Verilog(RegsetWriter):
 
                 if field.msb.is_parameter or field.msb.resolve() > field.lsb:
                     reg_field.pos = "[bitpos]"
-                    if reg_field.byte_offset == 0:
-                        reg_field.bytepos = "bitpos >> 3"
-                        reg_field.wpos = "[bitpos]"
+                    if byte_offset == 0:
+                        bytepos = "bitpos/8"
+                        wpos = "[bitpos]"
                     else:
-                        reg_field.bytepos = (
-                            "(bitpos >> 3)+%d" % reg_field.byte_offset
-                        )
-                        reg_field.wpos = "[bitpos+%d]" % (
-                            reg_field.byte_offset * 8,
-                        )
+                        bytepos = f"(bitpos/8)+{byte_offset}"
+                        wpos = f"[bitpos+{byte_offset*8}]"
                     reg_field.generate = True
                 else:
                     reg_field.generate = False
                     reg_field.pos = ""
-                    reg_field.bytepos = "%d" % (
-                        (field.lsb // 8) + reg_field.byte_offset,
-                    )
-                    reg_field.wpos = "[%d]" % (
-                        field.lsb + reg_field.byte_offset * 8,
-                    )
+                    bytepos = f"{(field.lsb // 8) + byte_offset}"
+                    wpos = f"[{field.lsb + byte_offset * 8}]"
 
+                if not cell_info.is_read_only:
+                    reg_field.write_name = (
+                        f"write_r{byte_addr:02x}{reg_field.dim}"
+                    )
+                    reg_field.write_data_name = (
+                        f"{db.ports.write_data_name}{wpos}"
+                    )
+                    reg_field.byte_strobe_name = (
+                        f"{db.ports.byte_strobe_name}[{bytepos}]"
+                    )
+                reg_field.do_name = (
+                    f"{base_name}{reg_field.dim}{reg_field.pos}"
+                )
+                if cell_info.has_oneshot:
+                    reg_field.one_shot_name = f"{base_name}_1S{reg_field.pos}"
+                if cell_info.has_input:
+                    reg_field.input_name = (
+                        f"{field.input_signal}{reg_field.dim}{reg_field.pos}"
+                    )
+                if cell_info.has_control:
+                    reg_field.control_name = (
+                        f"{field.control_signal}{reg_field.dim}"
+                    )
+                if cell_info.has_rd:
+                    reg_field.read_name = f"read_r{reg_field.reg_addr:02x}"
+                if db.ports.secondary_reset and field.use_alternate_reset:
+                    reg_field.reset_name = db.ports.secondary_reset_name
+                else:
+                    reg_field.reset_name = db.ports.reset_name
                 full_list.append(reg_field)
         return full_list
 
@@ -782,7 +818,10 @@ def build_logic_list(_regset, word_fields, cell_info) -> List[RegDecl]:
             reg_list.append(new_reg)
 
             if cell_info[byte_info.field.field_type].has_oneshot:
-                dim_str = f"[{byte_info.stop}:{byte_info.start}]"
+                if byte_info.stop == byte_info.start:
+                    dim_str = ""
+                else:
+                    dim_str = f"[{byte_info.stop}:{byte_info.start}]"
                 if dim.is_parameter:
                     new_reg = RegDecl(f"{name}_1S[{dim_str}]", dim_str)
                 else:

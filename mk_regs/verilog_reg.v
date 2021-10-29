@@ -15,7 +15,7 @@ module %(MODULE)s_ro1s_reg
       if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
-         if (WE & %(BE_LEVEL)sBE) begin
+         if (WE & BE) begin
             DO <= DI;
          end
       end
@@ -39,7 +39,7 @@ module %(MODULE)s_rw_reg
       if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
-         if (WE & %(BE_LEVEL)sBE) begin
+         if (WE & BE) begin
             DO <= DI;
          end
       end
@@ -64,7 +64,7 @@ module %(MODULE)s_rwpr_reg
       if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
-         if (WE & %(BE_LEVEL)sBE & ~LD) begin
+         if (WE & BE & ~LD) begin
             DO <= DI;
          end
       end
@@ -93,7 +93,7 @@ module %(MODULE)s_rwpr1s_reg
       if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
-         if (WE & %(BE_LEVEL)sBE & ~LD) begin
+         if (WE & BE & ~LD) begin
             DO <= DI;
          end
       end
@@ -106,7 +106,7 @@ module %(MODULE)s_rwpr1s_reg
          ws <= 1'b0;
          ws_d <= 1'b0;
       end else begin
-         ws <= WE & %(BE_LEVEL)sBE & ~LD;
+         ws <= WE & BE & ~LD;
          ws_d <= ws;
       end
    end
@@ -133,7 +133,7 @@ module %(MODULE)s_rw1s_reg
       if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
-         if (WE & %(BE_LEVEL)sBE) begin
+         if (WE & BE) begin
             DO <= DI;
          end
       end
@@ -146,7 +146,7 @@ module %(MODULE)s_rw1s_reg
          ws <= 1'b0;
          ws_d <= 1'b0;
       end else begin
-         ws <= WE & %(BE_LEVEL)sBE;
+         ws <= WE & BE;
          ws_d <= ws;
       end
    end
@@ -173,7 +173,7 @@ module %(MODULE)s_rw1s1_reg
       if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
-         if (WE & %(BE_LEVEL)sBE) begin
+         if (WE & BE) begin
             DO <= DI;
          end else begin
             DO <= DO;
@@ -188,7 +188,7 @@ module %(MODULE)s_rw1s1_reg
          ws <= 1'b0;
          ws_d <= 1'b0;
       end else begin
-         ws <= WE & %(BE_LEVEL)sBE && DI != 1'b0;
+         ws <= WE & BE && DI != 1'b0;
          ws_d <= ws;
       end
    end
@@ -213,7 +213,7 @@ module %(MODULE)s_rwld_reg
       if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
-         if (WE & %(BE_LEVEL)sBE) begin
+         if (WE & BE) begin
             DO <= DI;
          end else begin
             DO <= (LD) ? IN : DO;
@@ -245,7 +245,7 @@ module %(MODULE)s_rwld1s_reg
       if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
-         if (WE & %(BE_LEVEL)sBE) begin
+         if (WE & BE) begin
             DO <= DI;
          end else begin
             DO <= (LD) ? IN : DO;
@@ -260,7 +260,7 @@ module %(MODULE)s_rwld1s_reg
          ws <= 1'b0;
          ws_d <= 1'b0;
       end else begin
-         ws <= WE & %(BE_LEVEL)sBE;
+         ws <= WE & BE;
          ws_d <= ws;
       end
    end
@@ -289,7 +289,7 @@ module %(MODULE)s_rwld1s1_reg
       if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
-         if (WE & %(BE_LEVEL)sBE) begin
+         if (WE & BE) begin
             DO <= DI;
          end else begin
             DO <= (LD) ? IN : DO;
@@ -304,7 +304,7 @@ module %(MODULE)s_rwld1s1_reg
          ws <= 1'b0;
          ws_d <= 1'b0;
       end else begin
-         ws <= WE & %(BE_LEVEL)sBE && DI != 1'b0;
+         ws <= WE & BE && DI != 1'b0;
          ws_d <= ws;
       end
    end
@@ -328,7 +328,7 @@ module %(MODULE)s_rws_reg
       if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
-         if (WE & %(BE_LEVEL)sBE) begin
+         if (WE & BE) begin
             DO <= DI;
          end else begin
             DO <= IN | DO;
@@ -359,7 +359,7 @@ module %(MODULE)s_rws1s_reg
       if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
-         if (WE & %(BE_LEVEL)sBE) begin
+         if (WE & BE) begin
             DO <= DI;
          end else begin
             DO <= IN | DO;
@@ -374,7 +374,7 @@ module %(MODULE)s_rws1s_reg
          ws <= 1'b0;
          ws_d <= 1'b0;
       end else begin
-         ws <= WE & %(BE_LEVEL)sBE;
+         ws <= WE & BE;
          ws_d <= ws;
       end
    end
@@ -402,7 +402,7 @@ module %(MODULE)s_rws1s1_reg
       if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
-         if (WE & %(BE_LEVEL)sBE) begin
+         if (WE & BE) begin
             DO <= DI;
          end else begin
             DO <= IN | DO;
@@ -417,7 +417,7 @@ module %(MODULE)s_rws1s1_reg
          ws <= 1'b0;
          ws_d <= 1'b0;
       end else begin
-         ws <= WE & %(BE_LEVEL)sBE && DI != 1'b0;
+         ws <= WE & BE && DI != 1'b0;
          ws_d <= ws;
       end
    end
@@ -441,7 +441,7 @@ module %(MODULE)s_w1cs_reg
       if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
-         if (WE & %(BE_LEVEL)sBE & DI) begin
+         if (WE & BE & DI) begin
             DO <= 1'b0;
          end else begin
             DO <= IN | DO;
@@ -469,7 +469,7 @@ module %(MODULE)s_w1csc_reg
       if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
-         if ((WE & %(BE_LEVEL)sBE & DI) | LD) begin
+         if ((WE & BE & DI) | LD) begin
             DO <= 1'b0;
          end else begin
             DO <= IN | DO;
@@ -500,7 +500,7 @@ module %(MODULE)s_w1cs1s_reg
       if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
-         if (WE & %(BE_LEVEL)sBE & DI) begin
+         if (WE & BE & DI) begin
             DO <= 1'b0;
          end else begin
             DO <= IN | DO;
@@ -515,7 +515,7 @@ module %(MODULE)s_w1cs1s_reg
          ws <= 1'b0;
          ws_d <= 1'b0;
       end else begin
-         ws <= WE & %(BE_LEVEL)sBE;
+         ws <= WE & BE;
          ws_d <= ws;
       end
    end
@@ -543,7 +543,7 @@ module %(MODULE)s_w1cs1s1_reg
       if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
-         if (WE & %(BE_LEVEL)sBE & DI) begin
+         if (WE & BE & DI) begin
             DO <= 1'b0;
          end else begin
             DO <= IN | DO;
@@ -558,7 +558,7 @@ module %(MODULE)s_w1cs1s1_reg
          ws <= 1'b0;
          ws_d <= 1'b0;
       end else begin
-         ws <= WE & %(BE_LEVEL)sBE && DI != 1'b0;
+         ws <= WE & BE && DI != 1'b0;
          ws_d <= ws;
       end
    end
@@ -583,7 +583,7 @@ module %(MODULE)s_w1cld_reg
       if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
-         if (WE & %(BE_LEVEL)sBE & DI) begin
+         if (WE & BE & DI) begin
             DO <= 1'b0 ;
          end else begin
             DO <= (LD & IN) | DO;
@@ -615,7 +615,7 @@ module %(MODULE)s_w1cld1s_reg
       if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
-         if (WE & %(BE_LEVEL)sBE & DI) begin
+         if (WE & BE & DI) begin
             DO <= 1'b0;
          end else begin
             DO <= (LD & IN) | DO;
@@ -630,7 +630,7 @@ module %(MODULE)s_w1cld1s_reg
          ws <= 1'b0;
          ws_d <= 1'b0;
       end else begin
-         ws <= WE & %(BE_LEVEL)sBE;
+         ws <= WE & BE;
          ws_d <= ws;
       end
    end
@@ -659,7 +659,7 @@ module %(MODULE)s_w1cld1s1_reg
       if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
-         if (WE & %(BE_LEVEL)sBE & DI) begin
+         if (WE & BE & DI) begin
             DO <= 1'b0;
          end else begin
             DO <= (LD & IN) | DO;
@@ -674,7 +674,7 @@ module %(MODULE)s_w1cld1s1_reg
          ws <= 1'b0;
          ws_d <= 1'b0;
       end else begin
-         ws <= WE & %(BE_LEVEL)sBE && DI != 1'b0;
+         ws <= WE & BE && DI != 1'b0;
          ws_d <= ws;
       end
    end
@@ -805,7 +805,7 @@ module %(MODULE)s_wo_reg
          ws <= 1'b0;
          ws_d <= 1'b0;
       end else begin
-         if (WE & %(BE_LEVEL)sBE) begin
+         if (WE & BE) begin
             ws <= DI;
          end else begin
             ws <= 1'b0;
@@ -833,7 +833,7 @@ module %(MODULE)s_w1s_reg
       if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
-         if (WE & %(BE_LEVEL)sBE) begin
+         if (WE & BE) begin
             DO <= DO | DI;
          end else begin
             DO <= ~(IN) & DO;
@@ -863,7 +863,7 @@ module %(MODULE)s_w1s1s1_reg
       if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
-         if (WE & %(BE_LEVEL)sBE) begin
+         if (WE & BE) begin
             DO <= DO | DI;
          end else begin
             DO <= ~(IN) & DO;
@@ -878,7 +878,7 @@ module %(MODULE)s_w1s1s1_reg
          ws <= 1'b0;
          ws_d <= 1'b0;
       end else begin
-         ws <= WE & %(BE_LEVEL)sBE && DI != 1'b0;
+         ws <= WE & BE && DI != 1'b0;
          ws_d <= ws;
       end
    end
@@ -905,7 +905,7 @@ module %(MODULE)s_w1s1s_reg
       if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
-         if (WE & %(BE_LEVEL)sBE) begin
+         if (WE & BE) begin
             DO <= DO | DI;
          end else begin
             DO <= ~(IN) & DO;
@@ -920,7 +920,7 @@ module %(MODULE)s_w1s1s_reg
          ws <= 1'b0;
          ws_d <= 1'b0;
       end else begin
-         ws <= WE & %(BE_LEVEL)sBE;
+         ws <= WE & BE;
          ws_d <= ws;
       end
    end
@@ -944,7 +944,7 @@ module %(MODULE)s_rwc_reg
       if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
-         if (WE & %(BE_LEVEL)sBE) begin
+         if (WE & BE) begin
             DO <= DI;
          end else begin
             DO <= ~(IN) & DO;
@@ -975,7 +975,7 @@ module %(MODULE)s_rwc1s_reg
       if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
-         if (WE & %(BE_LEVEL)sBE) begin
+         if (WE & BE) begin
             DO <= DI;
          end else begin
             DO <= ~(IN) & DO;
@@ -990,7 +990,7 @@ module %(MODULE)s_rwc1s_reg
          ws <= 1'b0;
          ws_d <= 1'b0;
       end else begin
-         ws <= WE & %(BE_LEVEL)sBE;
+         ws <= WE & BE;
          ws_d <= ws;
       end
    end
@@ -1018,7 +1018,7 @@ module %(MODULE)s_rwc1s1_reg
       if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
-         if (WE & %(BE_LEVEL)sBE) begin
+         if (WE & BE) begin
             DO <= DI;
          end else begin
             DO <= ~(IN) & DO;
@@ -1033,7 +1033,7 @@ module %(MODULE)s_rwc1s1_reg
          ws <= 1'b0;
          ws_d <= 1'b0;
       end else begin
-         ws <= WE & %(BE_LEVEL)sBE && DI != 1'b0;
+         ws <= WE & BE && DI != 1'b0;
          ws_d <= ws;
       end
    end
@@ -1057,7 +1057,7 @@ module %(MODULE)s_rwrc_reg
       if (%(RESET_CONDITION)s%(RST)s) begin
          DO <= RVAL;
       end else begin
-        if (WE & %(BE_LEVEL)sBE) begin
+        if (WE & BE) begin
            if (DO == RVAL) begin
               DO <= DI;
            end else if (DO == ~DI) begin
