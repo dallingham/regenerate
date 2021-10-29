@@ -247,9 +247,11 @@ class BitField(NameBase):
         "Returns the reset value as a string in verilog format"
         if self.reset_type == ResetType.PARAMETER:
             return self.reset_parameter
-        elif self.reset_type == ResetType.INPUT:
+        if self.reset_type == ResetType.INPUT:
             return self.reset_input
-        return f"'h{self._reset_value:x}"
+        if self.msb.is_parameter:
+            return f"'h{self._reset_value:x}"
+        return f"{self.width}'h{self._reset_value:x}"        
 
     @property
     def stop_position(self) -> ParamValue:
