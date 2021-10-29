@@ -178,6 +178,7 @@ class RegData:
     def __init__(self):
         self.name = None
         self.cell_type = None
+        self.reset_from_input = None
         self.reset_port = None
         self.write_name = None
         self.write_data_name = None
@@ -185,6 +186,7 @@ class RegData:
         self.do_name = None
         self.one_shot_name = None
         self.input_name = None
+        self.input_name_bit = None
         self.reset_name = None
         self.control_name = None
         self.read_name = None
@@ -506,6 +508,7 @@ class Verilog(RegsetWriter):
                 cell_info = self._cell_info[field.field_type]
                 reg_field = RegData()
                 reg_field.name = reg_field_name(reg, field)
+                reg_field.reset_from_input = field.reset_type == ResetType.INPUT
                 reg_field.field = field
                 reg_field.cell_type = f"{rset.name}_{cell_info.name}_reg"
                 reg_field.type_descr = self._cell_info[
@@ -566,6 +569,9 @@ class Verilog(RegsetWriter):
                     reg_field.one_shot_name = f"{base_name}_1S{reg_field.pos}"
                 if cell_info.has_input:
                     reg_field.input_name = (
+                        f"{field.input_signal}{reg_field.dim}"
+                    )
+                    reg_field.input_name_bit = (
                         f"{field.input_signal}{reg_field.dim}{reg_field.pos}"
                     )
                 if cell_info.has_control:

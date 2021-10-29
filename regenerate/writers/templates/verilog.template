@@ -116,7 +116,7 @@ module {{db.name}}
  * Reset Value : {{ri.field.reset_string()}}
  *------------------------------------------------------------------------------
  */
-{%   if ri.field.msb.is_parameter or ri.field.width != 1 %}
+{%   if (ri.field.msb.is_parameter or ri.field.width != 1) and ri.field.field_type != 1 %}
    localparam bit [{{ri.msb.int_str()}}:{{ri.lsb}}] {{ri.rval}} = {{ri.field.reset_vstr()}};
 
 {%   endif %}
@@ -129,7 +129,7 @@ generate
     assign {{ri.name}}{{ri.dim}} = {{full_reset_value(ri.field)}};
 
 {%   elif ri.field.field_type == 1 %}
-    assign {{ri.name}}{{ri.dim}} = {{ri.input_name}}{{ri.dim}};
+    assign {{ri.name}} = {{ri.input_name}};
 
 {%   else %}
 {%     if ri.generate %}  
@@ -161,8 +161,8 @@ generate
 {%     if ri.control_name %}
       .LD    ({{ri.control_name}}),
 {%     endif %}
-{%     if ri.input_name %}
-      .IN    ({{ri.input_name}}),
+{%     if ri.input_name_bit %}
+      .IN    ({{ri.input_name_bit}}),
 {%     endif %}
 {%     if ri.one_shot_name %}
       .DO_1S ({{ri.one_shot_name}}),
