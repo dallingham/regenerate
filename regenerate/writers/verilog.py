@@ -495,7 +495,7 @@ class Verilog(RegsetWriter):
         "Builds the info needed to instantiate a flop"
 
         rset = self._regset
-        bytes_per_word = rset.data_bus_width // 8
+        bytes_per_word = rset.ports.data_bus_width // 8
 
         full_list = []
         for reg in rset.get_all_registers():
