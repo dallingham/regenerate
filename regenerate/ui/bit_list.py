@@ -490,6 +490,7 @@ class BitList:
 
             field.msb.set_int(int(new_text, 0))
             self.__model[path][BitCol.MSB] = f"{field.msb.int_str()}"
+            self.__modified()
         except ValueError:
             ...
 

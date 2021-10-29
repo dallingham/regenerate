@@ -496,6 +496,7 @@ class Verilog(RegsetWriter):
 
         rset = self._regset
         bytes_per_word = rset.ports.data_bus_width // 8
+        ports = build_standard_ports(regset: RegisterDb)
 
         full_list = []
         for reg in rset.get_all_registers():
@@ -553,10 +554,10 @@ class Verilog(RegsetWriter):
                         f"write_r{byte_addr:02x}{reg_field.dim}"
                     )
                     reg_field.write_data_name = (
-                        f"{rset.ports.write_data_name}{wpos}"
+                        f"{ports.write_data_name}{wpos}"
                     )
                     reg_field.byte_strobe_name = (
-                        f"{rset.ports.byte_strobe_name}[{bytepos}]"
+                        f"{ports.byte_strobe_name}[{bytepos}]"
                     )
                 reg_field.do_name = (
                     f"{base_name}{reg_field.dim}{reg_field.pos}"
@@ -574,9 +575,9 @@ class Verilog(RegsetWriter):
                 if cell_info.has_rd:
                     reg_field.read_name = f"read_r{reg_field.reg_addr:02x}"
                 if rset.ports.secondary_reset and field.use_alternate_reset:
-                    reg_field.reset_name = rset.ports.secondary_reset_name
+                    reg_field.reset_name = ports.secondary_reset_name
                 else:
-                    reg_field.reset_name = rset.ports.reset_name
+                    reg_field.reset_name = ports.reset_name
                 full_list.append(reg_field)
         return full_list
 
