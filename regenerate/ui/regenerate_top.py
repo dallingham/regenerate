@@ -95,7 +95,7 @@ class MainWindow(BaseWindow):
 
         autoload = bool(int(ini.get("user", "load_last_project", "0")))
         self.find_obj("autoload").set_active(autoload)
-        
+
         self.setup_project()
         self.setup_recent_menu()
 
@@ -230,15 +230,15 @@ class MainWindow(BaseWindow):
 
     def on_addr_map_help_clicked(self, _obj: Gtk.Button) -> None:
         "Display the address map help"
-        HelpWindow(self.builder, "addr_map_help.html", "Address Map Help")
+        HelpWindow("addr_map_help.html", "Address Map Help")
 
     def on_param_help_clicked(self, _obj: Gtk.Button) -> None:
         """Display the parameter help"""
-        HelpWindow(self.builder, "parameter_help.html", "Parameter Help")
+        HelpWindow("parameter_help.html", "Parameter Help")
 
     def on_prj_param_help_clicked(self, _obj: Gtk.Button) -> None:
         """Display the project parameter help"""
-        HelpWindow(self.builder, "prj_parameter_help.rst")
+        HelpWindow("prj_parameter_help.rst")
 
     def on_remove_map_clicked(self, _obj: Gtk.Button) -> None:
         """Remove the selected map with clicked"""
@@ -251,12 +251,11 @@ class MainWindow(BaseWindow):
 
     def on_general_help_activate(self, _obj: Gtk.MenuItem) -> None:
         """Display the help window"""
-        HelpWindow(self.builder, "regenerate_help.html", "Overview")
+        HelpWindow("regenerate_help.html", "Overview")
 
     def on_protocol_help_activate(self, _obj: Gtk.MenuItem) -> None:
         """Display the help window"""
         HelpWindow(
-            self.builder,
             "interface_protocol.html",
             "Register Interface Protocol",
         )

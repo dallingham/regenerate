@@ -63,8 +63,10 @@ class RegDecode(BlockWriter):
 
         mask = (1 << reg_addr_width) - 1
         for reg_inst in reginsts:
-
             regset = proj.finder.find_by_id(reg_inst.regset_id)
+            if regset is None:
+                continue
+
             size = 1 << regset.ports.address_bus_width
 
             if reg_inst.repeat.resolve() > 1:  # and args.array_single_decode:

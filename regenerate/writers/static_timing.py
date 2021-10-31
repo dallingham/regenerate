@@ -65,7 +65,9 @@ def get_static_ports(dbase: RegisterDb) -> List[Tuple[int, BitField]]:
     return fields
 
 
-def build_hdl_path(hdl1, hdl2, signal, addr, index):
+def build_hdl_path(
+    hdl1: str, hdl2: str, signal: str, addr: int, index: int
+) -> str:
     "Builds the HDL path from the components"
 
     if hdl1 and hdl2:
@@ -90,7 +92,6 @@ class StaticTiming(ProjectWriter):
     ):
         super().__init__(project, options)
         self.template = template
-        self.dblist = set()
         self.block_list = self.build_data()
 
     def build_data(self) -> List[BlockInstData]:
@@ -100,7 +101,7 @@ class StaticTiming(ProjectWriter):
 
         for blk_inst in self._project.block_insts:
 
-            reglist = []
+            reglist: List[RegInstData] = []
             block = self._project.blocks[blk_inst.blkid]
 
             block_data = BlockInstData(blk_inst.name, reglist)
@@ -108,7 +109,7 @@ class StaticTiming(ProjectWriter):
             for regset_inst in block.regset_insts:
                 regset = block.regsets[regset_inst.regset_id]
 
-                static_list = []
+                static_list: List[str] = []
                 regset_data = RegInstData(regset.name, static_list)
 
                 for (addr, field) in get_static_ports(regset):

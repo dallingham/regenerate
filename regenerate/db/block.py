@@ -215,7 +215,7 @@ class Block(NameBase):
         self.modified = False
 
     def json(self) -> Dict[str, Any]:
-        data = {
+        data: Dict[str, Any] = {
             "name": self.name,
             "uuid": self.uuid,
             "parameters": self.parameters,
@@ -224,9 +224,9 @@ class Block(NameBase):
             "doc_pages": self.doc_pages.json(),
             "description": self.description,
             "regset_insts": self.regset_insts,
+            "exports": [],
+            "regsets": {},
         }
-
-        data["exports"] = []
 
         for exp in self.exports:
             info = {
@@ -236,7 +236,6 @@ class Block(NameBase):
             }
             data["exports"].append(info)
 
-        data["regsets"] = {}
         for name in self.regsets:
             new_path = os.path.relpath(
                 self.regsets[name].filename,

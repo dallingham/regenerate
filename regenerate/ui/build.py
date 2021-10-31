@@ -26,7 +26,7 @@ from typing import Tuple, Dict, List, NamedTuple, Any
 from pathlib import Path
 
 from gi.repository import Gtk, Pango
-from regenerate.settings.paths import INSTALL_PATH
+from regenerate.settings.paths import INSTALL_PATH, HELP_PATH
 from regenerate.db import RegProject, RegisterDb, ExportData
 from regenerate.writers import (
     ExportInfo,
@@ -39,8 +39,8 @@ from regenerate.writers import (
 
 from .base_window import BaseWindow
 from .columns import EditableColumn, ToggleColumn
-from .error_dialogs import ErrorMsg
 from .rule_builder import RuleBuilder
+from .help_window import HelpWindow
 
 from .enums import (
     Level,
@@ -118,12 +118,25 @@ class Build(BaseWindow):
         self.__build_top = self.__builder.get_object("build")
         self.__build_list = self.__builder.get_object("buildlist")
         self.__builder.connect_signals(self)
+        self.__build_html = self.__builder.get_object("build_html")
+        self.__build_notebook = self.__builder.get_object("build_notebook")
+        self.__build_notebook.set_current_page(1)
+        self.__build_notebook.set_show_tabs(False)
+
         self.__add_columns()
         self.__model = Gtk.ListStore(
             bool, str, str, str, str, object, object, int, object
         )
         self.__build_list.set_model(self.__model)
         self.configure(self.__build_top)
+
+        help_path = Path(HELP_PATH) / "build_select_help.html"
+        try:
+            with help_path.open() as ifile:
+                self.__build_html.load_html(ifile.read(), "text/html")
+        except IOError:
+            pass
+
         self.__build_top.set_transient_for(parent)
         self.__build_top.show_all()
 
@@ -153,6 +166,7 @@ class Build(BaseWindow):
         mod = file_needs_rebuilt(local_dest, self.__prj, self.__prj.regsets)
         self.__modlist.append(mod)
         info = self.__optmap[exporter]
+        self.__build_notebook.set_current_page(0)
         self.__model.append(
             row=[
                 mod,
@@ -182,6 +196,7 @@ class Build(BaseWindow):
         info = self.__optmap[exporter]
         rel_dest = dest
 
+        self.__build_notebook.set_current_page(0)
         self.__model.append(
             row=(
                 mod,
@@ -205,6 +220,7 @@ class Build(BaseWindow):
         timestamps.
         """
         # mod = file_needs_rebuilt(local_dest, self.__dbmap, [dbase_full_path])
+        self.__build_notebook.set_current_page(0)
         mod = True
         self.__modlist.append(mod)
         info = self.__optmap[exporter]
@@ -243,7 +259,7 @@ class Build(BaseWindow):
                     pass
 
         for block in self.__prj.blocks.values():
-            for i, export_data in enumerate(block.exports):
+            for export_data in block.exports:
                 self.__add_group_item_to_list(
                     block.uuid,
                     export_data.exporter,
@@ -448,12 +464,17 @@ class Build(BaseWindow):
         else:
             self.__prj.remove_from_project_export_list(exporter, filename)
         self.__model.remove(node)
+        if len(store) == 0:
+            self.__build_notebook.set_current_page(1)
 
     def on_close_clicked(self, _obj: Gtk.Button):
         """
         Closes the builder.
         """
         self.__build_top.destroy()
+
+    def on_help_build_clicked(self, _obj: Gtk.Button):
+        HelpWindow("builder_help.html", "Using the builder")
 
 
 def base_and_modtime(dbase_full_path: Path):

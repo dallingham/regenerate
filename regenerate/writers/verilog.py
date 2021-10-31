@@ -508,14 +508,16 @@ class Verilog(RegsetWriter):
                 cell_info = self._cell_info[field.field_type]
                 reg_field = RegData()
                 reg_field.name = reg_field_name(reg, field)
-                reg_field.reset_from_input = field.reset_type == ResetType.INPUT
+                reg_field.reset_from_input = (
+                    field.reset_type == ResetType.INPUT
+                )
                 reg_field.field = field
                 reg_field.cell_type = f"{rset.name}_{cell_info.name}_reg"
                 reg_field.type_descr = self._cell_info[
                     field.field_type
                 ].type_descr
                 if reg.dimension.is_parameter:
-                    reg.dim_param = reg.dimension.param_name()
+                    reg_field.dim_param = reg.dimension.param_name()
                 reg_field.reg_addr = reg.address
                 if field.reset_type != 1:
                     reg_field.rval = f"pRST{reg.address:02x}_{field.name}"
@@ -556,9 +558,7 @@ class Verilog(RegsetWriter):
                     reg_field.write_name = (
                         f"write_r{byte_addr:02x}{reg_field.dim}"
                     )
-                    reg_field.write_data_name = (
-                        f"{ports.write_data}{wpos}"
-                    )
+                    reg_field.write_data_name = f"{ports.write_data}{wpos}"
                     reg_field.byte_strobe_name = (
                         f"{ports.byte_strobe}[{bytepos}]"
                     )
@@ -607,7 +607,7 @@ class Verilog2001(Verilog):
 
 def drop_write_share(list_in: List[Register]) -> List[Register]:
     "Drops the write-share registers from the list"
-
+    print(list_in)
     return [l for l in list_in if l[6].share != ShareType.WRITE]
 
 
@@ -712,7 +712,7 @@ def build_output_signals(regset, cell_info) -> List[Scalar]:
     "Builds the output signal list"
 
     scalar_ports = []
-    array_ports = defaultdict(list)
+    array_ports: Dict[str, list] = defaultdict(list)
     dim = {}
     signals = []
 
@@ -891,7 +891,7 @@ def build_input_signals(regset: RegisterDb, cell_info) -> List[Scalar]:
                         Scalar(f"{signal}[{dim.param_name()}]", vector)
                     )
                 elif reg.dimension.resolve() > 1:
-                    signals.add((f"{signal}[{dim.resolve()}]", vector))
+                    signals.add(Scalar(f"{signal}[{dim.resolve()}]", vector))
                 else:
                     signals.add(Scalar(signal, vector))
 

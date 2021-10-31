@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.22.2 -->
+<interface>
+  <requires lib="gtk+" version="3.12"/>
+  <requires lib="webkit2gtk" version="2.12"/>
+  <object class="WebKitSettings" id="settings1">
+    <property name="enable_javascript">False</property>
+    <property name="load_icons_ignoring_image_load_setting">True</property>
+    <property name="enable_offline_web_application_cache">False</property>
+    <property name="enable_html5_local_storage">False</property>
+    <property name="enable_html5_database">False</property>
+    <property name="enable_xss_auditor">False</property>
+    <property name="enable_java">False</property>
+    <property name="enable_hyperlink_auditing">False</property>
+    <property name="default_font_size">12</property>
+    <property name="default_monospace_font_size">12</property>
+    <property name="enable_tabs_to_links">False</property>
+    <property name="enable_fullscreen">False</property>
+    <property name="print_backgrounds">False</property>
+    <property name="enable_webaudio">False</property>
+    <property name="enable_webgl">False</property>
+    <property name="media_playback_allows_inline">False</property>
+    <property name="enable_site_specific_quirks">False</property>
+    <property name="enable_page_cache">False</property>
+    <property name="user_agent">Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Safari/605.1.15</property>
+    <property name="enable_write_console_messages_to_stdout">True</property>
+    <property name="allow_file_access_from_file_urls">True</property>
+    <property name="enable_javascript_markup">False</property>
+  </object>
+  <object class="GtkWindow" id="help_win">
+    <property name="can_focus">False</property>
+    <property name="default_width">800</property>
+    <property name="default_height">600</property>
+    <child type="titlebar">
+      <placeholder/>
+    </child>
+    <child>
+      <object class="GtkBox" id="vbox5">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="WebKitWebView" id="html_view">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="settings">settings1</property>
+            <child>
+              <placeholder/>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkHButtonBox" id="hbuttonbox3">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="border_width">6</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="help_close">
+                <property name="label">gtk-close</property>
+                <property name="use_action_appearance">False</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>

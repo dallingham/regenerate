@@ -24,7 +24,7 @@ the contents from restructuredText to HTML.
 from typing import Optional
 from pathlib import Path
 from gi.repository import Gtk, Gdk
-from regenerate.settings.paths import HELP_PATH
+from regenerate.settings.paths import INSTALL_PATH, HELP_PATH
 from regenerate.ui.preview import html_string
 from regenerate.ui.base_window import BaseWindow
 
@@ -39,13 +39,15 @@ class HelpWindow(BaseWindow):
     container = None
     button = None
 
-    def __init__(
-        self, builder: Gtk.Builder, filename: str, title: Optional[str] = None
-    ):
+    def __init__(self, filename: str, title: Optional[str] = None):
 
         super().__init__()
 
         if HelpWindow.window is None:
+            builder = Gtk.Builder()
+            bfile = Path(INSTALL_PATH) / "ui" / "help.ui"
+            builder.add_from_file(str(bfile))
+
             HelpWindow.window = builder.get_object("help_win")
             self.configure(HelpWindow.window)
             HelpWindow.wkit = builder.get_object("html_view")

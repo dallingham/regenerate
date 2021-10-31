@@ -116,13 +116,13 @@ def dump_blkinst(
 
     for reg_inst in block.get_regset_insts():
         regset = block.get_regset_from_reg_inst(reg_inst)
-
         repeat = reg_inst.repeat.resolve()
+
         if repeat > 1:
             for i in range(0, repeat):
                 for reg in regset.get_all_registers():
                     base = reg.address + reg_inst.offset + address
-                    addr = base + (i * (1 << reg.ports.address_bus_width))
+                    addr = base + (i * (1 << regset.ports.address_bus_width))
                     path = SignalPath(
                         blk_name,
                         f"{reg_inst.name}_{i}",
@@ -165,8 +165,7 @@ class VerliogDefinesWriter(AddressWriter):
     """
 
     def __init__(self, project: RegProject, options: Dict[str, Any]):
-        type_map = {}
-        super().__init__(project, "verilog_defines.tempate", options, type_map)
+        super().__init__(project, "verilog_defines.tempate", options, {})
 
 
 class VerliogParametersWriter(AddressWriter):
@@ -175,10 +174,7 @@ class VerliogParametersWriter(AddressWriter):
     """
 
     def __init__(self, project: RegProject, options: Dict[str, Any]):
-        type_map = {}
-        super().__init__(
-            project, "verilog_parameters.template", options, type_map
-        )
+        super().__init__(project, "verilog_parameters.template", options, {})
 
 
 class VerliogConstPkgWriter(AddressWriter):
@@ -187,10 +183,7 @@ class VerliogConstPkgWriter(AddressWriter):
     """
 
     def __init__(self, project: RegProject, options: Dict[str, Any]):
-        type_map = {}
-        super().__init__(
-            project, "verilog_const_pkg.template", options, type_map
-        )
+        super().__init__(project, "verilog_const_pkg.template", options, {})
 
 
 EXPORTERS = [

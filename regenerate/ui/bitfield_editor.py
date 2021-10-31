@@ -197,15 +197,15 @@ class BitFieldEditor(BaseWindow):
 
     def on_help_clicked(self, _obj: Gtk.Button) -> None:
         "Display the help window"
-        HelpWindow(self.top_builder, "bitfield_value_help.rst")
+        HelpWindow("bitfield_value_help.rst")
 
     def on_property_help_clicked(self, _obj: Gtk.Button) -> None:
         "Display the help window"
-        HelpWindow(self.top_builder, "bitfield_signal_prop_help.rst")
+        HelpWindow("bitfield_signal_prop_help.html")
 
     def on_signal_help_clicked(self, _obj: Gtk.Button) -> None:
         "Display the help window"
-        HelpWindow(self.top_builder, "bitfield_signal_help.rst")
+        HelpWindow("bitfield_signal_help.html")
 
     def _set_field_value(self, val: str, obj: Gtk.CheckButton) -> None:
         "Sets the field value"

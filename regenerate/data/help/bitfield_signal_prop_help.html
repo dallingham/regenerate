@@ -1,0 +1,35 @@
+<html>
+  <body>
+    <h3>Bit Field Properties</h3>
+    <dl>
+      <dt>Output is static</dt>
+      <dd>Indicates that the register's value is stable, and will not
+      change during operation. The value will be set at initialization
+      and not altered. Regenerate will mark the signal
+      as <em>quasi-static</em>, and will be identified as such for
+      static timing and synthesis.</dd>
+      <dt>Has write side effects</dt>
+      <dd>Indicates that writing this register can have side effects
+      that may affect the design. When a field is marked as having
+      side effects, it will be dropped from the UVM bit bash
+      tests.</dd>
+      <dt>Uses alternate reset</dt>
+      <dd>Indicates that the bit field does not use the standard reset
+      signal on its control bus to reset this signal. Instead, the
+      alternate reset will be used. This allows bit fields values to
+      survive a standard reset. The secondary reset must be enabled in
+      the register set before this can be used.</dd>
+      <dt>Is an error status field</dt>
+      <dd>Indicates that this bit field represents an error field
+      (active high when an error has been detected. This can be used
+      to automated error detection in firmware.</dd>
+      <dt>Can be safely randomized</dt>
+      <dd>Indicates that this value can be safely randomized without affecting other controls. This is used for randomization in UVM testing.</dd>
+      <dt>Volatile</dt>
+      <dd>Indicates that the bit field can change between reads,
+      typically altered by hardware. This tells the UVM register
+      package to mark the field as being volatile, so that it knows
+      that it cannot use mirrored value.</dd>
+    </dl>
+  </body>
+</html>

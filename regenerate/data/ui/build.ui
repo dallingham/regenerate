@@ -2,6 +2,66 @@
 <!-- Generated with glade 3.22.2 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
+  <requires lib="webkit2gtk" version="2.12"/>
+  <object class="GtkMenu" id="menu">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <child>
+      <object class="GtkImageMenuItem" id="select_all">
+        <property name="label">gtk-select-all</property>
+        <property name="use_action_appearance">False</property>
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="use_underline">True</property>
+        <property name="use_stock">True</property>
+        <signal name="activate" handler="on_select_all_activate" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="select_ood">
+        <property name="use_action_appearance">False</property>
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Select Out of Date</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_select_ood_activate" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="unselect_all">
+        <property name="use_action_appearance">False</property>
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Unselect All</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_unselect_all_activate" swapped="no"/>
+      </object>
+    </child>
+  </object>
+  <object class="WebKitSettings" id="settings1">
+    <property name="enable_javascript">False</property>
+    <property name="enable_offline_web_application_cache">False</property>
+    <property name="enable_html5_local_storage">False</property>
+    <property name="enable_html5_database">False</property>
+    <property name="enable_xss_auditor">False</property>
+    <property name="enable_java">False</property>
+    <property name="enable_hyperlink_auditing">False</property>
+    <property name="default_font_size">12</property>
+    <property name="default_monospace_font_size">12</property>
+    <property name="enable_resizable_text_areas">False</property>
+    <property name="enable_tabs_to_links">False</property>
+    <property name="enable_fullscreen">False</property>
+    <property name="print_backgrounds">False</property>
+    <property name="enable_webaudio">False</property>
+    <property name="enable_webgl">False</property>
+    <property name="media_playback_allows_inline">False</property>
+    <property name="enable_site_specific_quirks">False</property>
+    <property name="enable_page_cache">False</property>
+    <property name="user_agent">Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Safari/605.1.15</property>
+    <property name="enable_mediasource">False</property>
+    <property name="enable_javascript_markup">False</property>
+    <property name="enable_media">False</property>
+  </object>
   <object class="GtkDialog" id="build">
     <property name="width_request">800</property>
     <property name="can_focus">False</property>
@@ -73,6 +133,7 @@
               <object class="GtkLabel" id="xxx000">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="valign">start</property>
                 <property name="margin_top">12</property>
                 <property name="margin_bottom">12</property>
                 <property name="hexpand">True</property>
@@ -81,32 +142,6 @@
               <packing>
                 <property name="left_attach">0</property>
                 <property name="top_attach">0</property>
-                <property name="width">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkScrolledWindow" id="scrolledwindow1">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="hexpand">True</property>
-                <property name="vexpand">True</property>
-                <property name="shadow_type">in</property>
-                <child>
-                  <object class="GtkTreeView" id="buildlist">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="hexpand">True</property>
-                    <property name="vexpand">True</property>
-                    <signal name="button-press-event" handler="on_buildlist_button_press_event" swapped="no"/>
-                    <child internal-child="selection">
-                      <object class="GtkTreeSelection"/>
-                    </child>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">1</property>
                 <property name="width">2</property>
               </packing>
             </child>
@@ -168,10 +203,97 @@
                     <property name="position">1</property>
                   </packing>
                 </child>
+                <child>
+                  <object class="GtkButton" id="help">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <signal name="clicked" handler="on_help_build_clicked" swapped="no"/>
+                    <child>
+                      <object class="GtkImage">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="stock">gtk-help</property>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">2</property>
+                  </packing>
+                </child>
               </object>
               <packing>
                 <property name="left_attach">2</property>
                 <property name="top_attach">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkNotebook" id="build_notebook">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="vexpand">True</property>
+                <child>
+                  <object class="GtkScrolledWindow" id="scrolledwindow1">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="hexpand">True</property>
+                    <property name="vexpand">True</property>
+                    <property name="shadow_type">in</property>
+                    <child>
+                      <object class="GtkTreeView" id="buildlist">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="hexpand">True</property>
+                        <property name="vexpand">True</property>
+                        <signal name="button-press-event" handler="on_buildlist_button_press_event" swapped="no"/>
+                        <child internal-child="selection">
+                          <object class="GtkTreeSelection"/>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child type="tab">
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">page 1</property>
+                  </object>
+                  <packing>
+                    <property name="tab_fill">False</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="WebKitWebView" id="build_html">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="settings">settings1</property>
+                    <child>
+                      <placeholder/>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+                <child type="tab">
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">page 2</property>
+                  </object>
+                  <packing>
+                    <property name="position">1</property>
+                    <property name="tab_fill">False</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">1</property>
+                <property name="width">2</property>
               </packing>
             </child>
             <child>
@@ -190,40 +312,5 @@
       <action-widget response="0">run_build</action-widget>
       <action-widget response="0">close</action-widget>
     </action-widgets>
-  </object>
-  <object class="GtkMenu" id="menu">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <child>
-      <object class="GtkImageMenuItem" id="select_all">
-        <property name="label">gtk-select-all</property>
-        <property name="use_action_appearance">False</property>
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="use_underline">True</property>
-        <property name="use_stock">True</property>
-        <signal name="activate" handler="on_select_all_activate" swapped="no"/>
-      </object>
-    </child>
-    <child>
-      <object class="GtkMenuItem" id="select_ood">
-        <property name="use_action_appearance">False</property>
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Select Out of Date</property>
-        <property name="use_underline">True</property>
-        <signal name="activate" handler="on_select_ood_activate" swapped="no"/>
-      </object>
-    </child>
-    <child>
-      <object class="GtkMenuItem" id="unselect_all">
-        <property name="use_action_appearance">False</property>
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Unselect All</property>
-        <property name="use_underline">True</property>
-        <signal name="activate" handler="on_unselect_all_activate" swapped="no"/>
-      </object>
-    </child>
   </object>
 </interface>

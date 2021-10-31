@@ -1,0 +1,23 @@
+<html>
+  <body>
+    <h3>Bit Field Signals</h3>
+    <p>Up to four optional signals can be associated with a bit field,
+      depending on the bit field type. These are:</p>
+    <ul>
+      <li>Output signal. The output signal provides the value of the
+	register to the rest of the hardware design.</li>
+      <li>Input signal. The input signal provides data that allows the
+	hardware to alter the value of the register. The exact
+	functionality depends on the bit field type. If the bit field
+	type does not support an input signal, the field will not be
+	editable.</li>
+      <li>Control signal. The control signal typically controls when
+	the input signal is allowed to alter the register bit. If the
+	bit field type does not support a control signal, the field will
+	not be editable.</li>
+      <li>One Shot signal. If the bit field type can generate a one
+	shot, it will use the same name as the output signal, with a
+	"<tt>_1S</tt>" appended to the name.</li>
+    </ul>
+  </body>
+</html>

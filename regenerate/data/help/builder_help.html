@@ -1,0 +1,52 @@
+<html>
+  <body>
+    <h1>Using the Builder</h1>
+    <p>The builder allows you to generate output files from the data stored
+      in you regenerate project. These files can include (among others):</p>
+    <ul>
+      <li>Verilog RTL for the registers</li>
+      <li>Address decoders to allow multiple register blocks to be
+	connected to a single interface</li>
+      <li>UVM register packages for design verification</li>
+      <li>Quasi-static constraints for timing analysis</li>
+      <li>C/C++ #defines</li>
+      <li>IP-XACT files</li>
+    </ul>
+    <h2>Rules</h2>
+    <p>The builder uses <em>rules</em> to build output files. Rules
+      are created by the user, and convert a data source to the
+      desired output format.</p>
+    <h3>Data Sources</h3>
+    <p>A data source can be:</p>
+    <ul>
+      <li>A register set</li>
+      <li>A block</li>
+      <li>The entire project</li>
+    </ul>
+    <p>The output format determines what type of source is
+      required. For example, the Verilog RTL output for registers
+      required a register set, while the UVM Register Package requires
+      the entire project.</p>
+    <h3>Creating a Rule</h3>
+    <p>Rules are created by use the <em>rule assistant</em>. This is
+      accessed by clicking on the Add button on the right hand side of
+      the window. This brings up the <em>rule assistant</em>, which will
+      guide you thorugh the process of creating the rule. There are up
+      to four steps to creating a rule.</p>
+    <ol>
+      <li>Selecting the output format.</li>
+      <li>Selecting the source. Note that if the output format requires
+	the entire project, this step is skipped</li>
+      <li>Selecting any output format specific operation</li>
+      <li>Selecting the output file</li>
+    </ol>
+    <p>Once a rule has been created, it appears in the builder list<p>
+    <p>Rules are associated with their data source, not with the
+      project. This allows rules to be imported with the data source
+      when a register set or block is imported into another project.</p>
+    <h2>Building files</h2>
+    <p>Once a rule has been created, building the files is quite simple.
+      Simply clicking the Build button will build all selected files.</p>
+    <p>The builder attempts to select all out of date files by default</p>
+  </body>
+</html>

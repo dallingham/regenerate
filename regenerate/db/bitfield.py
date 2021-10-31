@@ -21,7 +21,7 @@
 Provides the definition of a Bit Field.
 """
 
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Union
 from .name_base import NameBase
 from .enums import BitType, ResetType
 from .bit_values import BitValues
@@ -217,11 +217,14 @@ class BitField(NameBase):
 
     @property
     def reset_value(self) -> int:
-        """Return the reset value."""
+        """
+        Return the reset value. If the source is an input signal
+        assume that the value is zero.
+        """
         if self.reset_type == ResetType.PARAMETER:
             return BitField.PARAMETERS.get(self.reset_parameter, 0)
-        elif self.reset_type == ResetType.INPUT:
-            return self.reset_input
+        if self.reset_type == ResetType.INPUT:
+            return 0
         return self._reset_value
 
     @reset_value.setter
@@ -251,7 +254,7 @@ class BitField(NameBase):
             return self.reset_input
         if self.msb.is_parameter:
             return f"'h{self._reset_value:x}"
-        return f"{self.width}'h{self._reset_value:x}"        
+        return f"{self.width}'h{self._reset_value:x}"
 
     @property
     def stop_position(self) -> ParamValue:
