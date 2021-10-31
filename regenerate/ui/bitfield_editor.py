@@ -201,11 +201,11 @@ class BitFieldEditor(BaseWindow):
 
     def on_property_help_clicked(self, _obj: Gtk.Button) -> None:
         "Display the help window"
-        HelpWindow("bitfield_signal_prop_help.html")
+        HelpWindow("bitfield_signal_prop_help.html", "Bit Field Properties")
 
     def on_signal_help_clicked(self, _obj: Gtk.Button) -> None:
         "Display the help window"
-        HelpWindow("bitfield_signal_help.html")
+        HelpWindow("bitfield_signal_help.html", "Bit Field Signals")
 
     def _set_field_value(self, val: str, obj: Gtk.CheckButton) -> None:
         "Sets the field value"
