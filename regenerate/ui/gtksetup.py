@@ -1,3 +1,5 @@
+#! /usr/bin/env python3
+#
 #
 # Manage registers in a hardware design
 #
@@ -16,7 +18,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
 """
-Define the editors
+Configure the GI libraries
 """
+import sys
+
+try:
+    import gi
+except ImportError as msg:
+    sys.stderr.write("Fatal Error: Cannot start import the GTK libraries. Exiting.\n")
+    sys.exit()
+
+gi.require_version("Gtk", "3.0")
+gi.require_version("Pango", "1.0")
+gi.require_version("GtkSource", "3.0")
 

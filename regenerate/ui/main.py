@@ -29,21 +29,14 @@ import logging
 from pathlib import Path
 from argparse import ArgumentParser
 
-import gi
-
-gi.require_version("Gtk", "3.0")
-gi.require_version("Pango", "1.0")
-gi.require_version("GtkSource", "3.0")
-from gi.repository import Gtk
-
 from regenerate.settings import ini
+
+from .gtksetup import *
 from .regenerate_top import MainWindow
 
 
 def run_gui(args):
-    """
-    Actually runs the program
-    """
+    "Actually runs the program"
 
     edit = MainWindow()
 
