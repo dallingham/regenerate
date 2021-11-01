@@ -50,6 +50,50 @@
     <property name="label" translatable="yes">New Register Set</property>
     <property name="short_label" translatable="yes">New Set</property>
   </object>
+  <object class="GtkPopover" id="no_project_popover">
+    <property name="can_focus">False</property>
+    <child>
+      <object class="GtkBox">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <child>
+          <object class="GtkImage">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_left">12</property>
+            <property name="margin_right">12</property>
+            <property name="icon_name">dialog-information</property>
+            <property name="icon_size">6</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="no_project_popover_label">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_left">12</property>
+            <property name="margin_right">12</property>
+            <property name="margin_top">12</property>
+            <property name="margin_bottom">12</property>
+            <property name="label" translatable="yes">To get started, open an existing 
+project using the &lt;b&gt;Open&lt;/b&gt; button, or 
+create a new project by selecting
+&lt;b&gt;New Project&lt;/b&gt; under the &lt;b&gt;File&lt;/b&gt; menu.</property>
+            <property name="use_markup">True</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
   <object class="GtkAction" id="open_action">
     <property name="label">_Open Project</property>
     <property name="short_label">_Open</property>
@@ -393,6 +437,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="tooltip_text" translatable="yes">Opens a project</property>
+                <property name="is_important">True</property>
                 <property name="label" translatable="yes">Open</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-open</property>
@@ -409,6 +454,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="tooltip_text" translatable="yes">Saves all modified files</property>
+                <property name="is_important">True</property>
                 <property name="label" translatable="yes">Save</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-save</property>
@@ -425,6 +471,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="tooltip_text">Build generated files</property>
+                <property name="is_important">True</property>
                 <property name="label" translatable="yes">Build</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-convert</property>
@@ -3500,6 +3547,21 @@ loading an existing &lt;b&gt;&lt;tt&gt;.regb&lt;/tt&gt;&lt;/b&gt; file.</propert
                                 <property name="position">1</property>
                               </packing>
                             </child>
+                            <child>
+                              <object class="GtkButton" id="help_block_inst">
+                                <property name="label">gtk-help</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">True</property>
+                                <property name="use_stock">True</property>
+                                <signal name="clicked" handler="on_help_block_inst_clicked" swapped="no"/>
+                              </object>
+                              <packing>
+                                <property name="expand">True</property>
+                                <property name="fill">True</property>
+                                <property name="position">2</property>
+                              </packing>
+                            </child>
                           </object>
                           <packing>
                             <property name="left_attach">4</property>
@@ -4040,6 +4102,50 @@ loading an existing &lt;b&gt;&lt;tt&gt;.regb&lt;/tt&gt;&lt;/b&gt; file.</propert
             <property name="expand">False</property>
             <property name="fill">True</property>
             <property name="position">3</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
+  <object class="GtkPopover" id="block_btn_popover">
+    <property name="can_focus">False</property>
+    <property name="relative_to">block_add_block</property>
+    <child>
+      <object class="GtkBox">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <child>
+          <object class="GtkImage">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_left">12</property>
+            <property name="margin_right">12</property>
+            <property name="icon_name">dialog-information</property>
+            <property name="icon_size">6</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="no_project_popover_label1">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_left">12</property>
+            <property name="margin_right">12</property>
+            <property name="margin_top">12</property>
+            <property name="margin_bottom">12</property>
+            <property name="label" translatable="yes">Create a new block or load an existing
+block from a &lt;tt&gt;.regb&lt;/tt&gt; file by using
+these buttons.</property>
+            <property name="use_markup">True</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
           </packing>
         </child>
       </object>

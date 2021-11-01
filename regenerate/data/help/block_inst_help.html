@@ -1,0 +1,47 @@
+<html>
+  <body>
+    <h3>Block Instances</h3>
+    <p>
+      A <em>block instance</em> is an instantiation of a block at the
+      top level. The <em>block</em> is the definition, and the <em>block
+      instance</em> is the actual object. In software terms, you can
+      think of the block as a <em>class</em> and the block instance as
+      the <em>object</em>. There can be multiple instatiations of the
+      same block at the top level.
+    </p>
+    <p>
+      When a block instance is created, it needs to be described to the
+      system with some additional information. This includes:
+    </p>
+    <ul>
+      <li>
+	<strong>Instance name</strong>. Each instance has to have a
+	unique name to distiguish if from the other instances.
+      </li>
+      <li>
+	<strong>Address base</strong>. Indicates where the instance is
+	located in the address map relative to the other
+	instances. Instance address ranges (the address base + the
+	block size) may not overlap.
+      </li>
+      <li>
+	<strong>Repeat</strong>. Indicates if the instance is actually
+	an array of instances or a single instance. If the repeat
+	count is greater than 1, it is considered to be an array. Each
+	instance is a contiguous block in the address map, with next
+	instance immediately beginning where the last instance in the
+	array ended.
+      </li>
+      <li>
+	<strong>HDL Path</strong>. The HDL path maps to the
+	heirarchical path to the to the block instance within the
+	design. While optional, this path is used by the static timing
+	and UVM register package exporters.  In the HDL path, the
+	index is represented in the path with a <tt>%0d</tt> value,
+	and must be the same between all instances in the array. It is
+	recommended that a <tt>generate</tt> statement be used to
+	create instaces of the block in the RTL code.
+      </li>
+    </ul>
+  </body>
+<html>

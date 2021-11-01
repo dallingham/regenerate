@@ -29,6 +29,7 @@ from .utils import clean_format_if_needed
 from .preview_editor import PreviewEditor
 from .preview_display import PreviewDisplay
 from .textview import RstEditor
+from .help_window import HelpWindow
 
 
 class DeleteVerify(Gtk.MessageDialog):
@@ -127,16 +128,23 @@ class BaseDoc:
         add_tag.set_tooltip_text("Add a tag to the page")
         add_tag.show()
 
+        help_btn = Gtk.ToolButton()
+        help_btn.set_stock_id(Gtk.STOCK_HELP)
+        help_btn.set_tooltip_text("Add a tag to the page")
+        help_btn.show()
+
         hbox = Gtk.HBox()
         hbox.pack_start(add, True, True, 0)
         hbox.pack_start(add_tag, True, True, 0)
         hbox.pack_start(preview, True, True, 0)
+        hbox.pack_start(help_btn, True, True, 0)
         hbox.show()
         self.notebook.set_action_widget(hbox, Gtk.PackType.END)
 
         preview.connect("clicked", self._preview)
         add.connect("clicked", self._add_notebook_page_callback)
         add_tag.connect("clicked", self._add_tag)
+        help_btn.connect("clicked", self._help)
 
         self.page_map: List[PageInfo] = []
         self.remove_pages()
@@ -157,6 +165,9 @@ class BaseDoc:
                 self.notebook.remove_page(0)
         if self.page_map:
             self.page_map = []
+
+    def _help(self, _button: Gtk.Button) -> None:
+        HelpWindow("doc.html", "Documentation")
 
     def _add_tag(self, _button: Gtk.Button) -> None:
         "GTK callback to adds tag to the page"

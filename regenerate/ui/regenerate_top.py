@@ -105,10 +105,18 @@ class MainWindow(BaseWindow):
             self.project_modified,
         )
 
+        self.new_popup()
+
         self.restore_position_and_size()
         self.top_window.show()
+        self.initial_popup.show()
         self.builder.connect_signals(self)
         self.build_import_menu()
+
+    def new_popup(self):
+        open_btn = self.find_obj("open_btn")
+        self.initial_popup = self.find_obj("no_project_popover")
+        self.initial_popup.set_relative_to(open_btn)
 
     def check_subsystem_addresses(self) -> bool:
         "Checks the address ranges"
@@ -252,6 +260,10 @@ class MainWindow(BaseWindow):
     def on_general_help_activate(self, _obj: Gtk.MenuItem) -> None:
         """Display the help window"""
         HelpWindow("regenerate_help.html", "Overview")
+
+    def on_help_block_inst_clicked(self, obj: Gtk.Button) -> None:
+        "Display the help window for the Block Inst display"
+        HelpWindow("block_inst_help.html", "Block Instances")
 
     def on_protocol_help_activate(self, _obj: Gtk.MenuItem) -> None:
         """Display the help window"""
@@ -464,6 +476,8 @@ class MainWindow(BaseWindow):
             self.add_recent(str(filename.resolve()))
             self.find_obj("save_btn").set_sensitive(True)
             self.prj_loaded.set_sensitive(True)
+            if self.initial_popup.get_visible():
+                self.initial_popup.hide()
         choose.destroy()
 
     def add_recent(self, path: str):
@@ -531,6 +545,8 @@ class MainWindow(BaseWindow):
         self.prj_loaded.set_sensitive(True)
         self.loading_project = False
         self.skip_changes = False
+        if self.initial_popup.get_visible():
+            self.initial_popup.hide()
 
     def update_display(self):
         old_skip = self.skip_changes

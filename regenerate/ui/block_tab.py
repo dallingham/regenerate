@@ -48,7 +48,7 @@ class BlockTab:
     def __init__(self, find_obj: Callable, block_remove_callback: Callable):
 
         self.block_remove_callback = block_remove_callback
-
+        self.block_add_btn = find_obj("block_add_block")
         self.block_notebook = find_obj("block_notebook")
         self.block_regsets = find_obj("block_regsets")
         self.block_reg_add = find_obj("block_reg_add")
@@ -430,6 +430,7 @@ class BlockTab:
                 self.block_reg_add.set_popup(reg_menu)
                 page = 0
         else:
+            page = 0
             self.block_reg_add.set_sensitive(False)
             self.block_reg_add.set_tooltip_text(
                 "No register sets have been defined"
@@ -614,10 +615,10 @@ class BlockTab:
                 blk = Block()
                 blk.open(name)
                 blk.modified = True
-                
+
                 self.project.blocks[blk.uuid] = blk
                 self.block_model.add(blk)
-                
+
                 for regset in blk.regsets:
                     if regset not in self.project.regsets:
                         self.project.regsets[regset] = blk.regsets[regset]

@@ -46,6 +46,9 @@ def run_gui(args):
     """
 
     edit = MainWindow()
+
+    load_last = int(ini.get("user", "load_last_project", 0))
+
     if args.project_file:
         try:
             full_file = str(Path(args.project_file).resolve())
@@ -54,14 +57,10 @@ def run_gui(args):
             sys.stderr.write("regenerate: error: could not project file: ")
             sys.stderr.write("%s\n" % str(msg))
             sys.exit(1)
-    elif ini.get("user", "last_project", False):
+    elif load_last != 0:
         filename = ini.get("user", "last_project", None)
         if filename and os.path.exists(filename):
             edit.open_project(filename, None)
-
-    # Windows seems to have a real problem with threads. This little trick
-    # allows us to get around it. Fortunately, Linux doesn't appear to be
-    # broken in the same way.
 
     Gtk.main()
 
@@ -90,7 +89,7 @@ def main():
             raise ValueError("Invalid log level: %s" % args.log)
     else:
         numeric_level = logging.INFO
-        
+
     logging.basicConfig(
         level=numeric_level, format="%(levelname)s: %(message)s"
     )
