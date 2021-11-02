@@ -32,6 +32,8 @@ from argparse import ArgumentParser
 from regenerate.settings import ini
 
 from .gtksetup import *
+from gi.repository import Gtk
+
 from .regenerate_top import MainWindow
 
 

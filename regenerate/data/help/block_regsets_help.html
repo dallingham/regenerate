@@ -1,0 +1,52 @@
+<html>
+  <body>
+    <h3>Register Set Instances</h3>
+    <p>
+      A <em>register set instance</em> is an instantiation of a
+      regster with in a block. The <em>register set</em> is the
+      definition, and the <em>register set instance</em> is the actual
+      object. In software terms, you can think of the register set as
+      a <em>class</em> and the register set instance as
+      the <em>object</em>. There can be multiple instatiations of the
+      same register set within the block.
+    </p>
+    <p>
+      When a register set instance is created, it needs to be
+      described to the system with some additional information. This
+      includes:
+    </p>
+    <ul>
+      <li>
+	<strong>Instance name</strong>. Each instance has to have a
+	unique name to distiguish if from the other instances.
+      </li>
+      <li>
+	<strong>Offset</strong>. Indicates where the instance is
+	located in the address map relative to the other
+	instances. Instance address ranges (the address base + the
+	register set size) may not overlap.
+      </li>
+      <li>
+	<strong>Repeat</strong>. Indicates if the instance is actually
+	an array of instances or a single instance. If the repeat
+	count is greater than 1, it is considered to be an array. Each
+	instance is a contiguous block in the address map, with next
+	instance immediately beginning where the last instance in the
+	array ended.
+      </li>
+      <li>
+	<strong>HDL Path</strong>. The HDL path maps to the
+	heirarchical path from the block instance to the register set
+	instance.  This is combined with the HDL Path at the top level
+	to create a full path to the register set instace.
+	While optional, this path is used by the static timing
+	and UVM register package exporters.  In the HDL path, the
+	index is represented in the path with a <tt>%0d</tt> value,
+	and must be the same between all instances in the array. It is
+	recommended that a <tt>generate</tt> statement be used to
+	create instaces of the block in the RTL code.
+      </li>
+    </ul>
+    
+  </body>
+</html>

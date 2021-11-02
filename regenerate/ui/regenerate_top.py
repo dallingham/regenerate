@@ -236,6 +236,10 @@ class MainWindow(BaseWindow):
     def on_block_select_changed(self, _obj: Gtk.TreeSelection) -> None:
         self.top_level_tab.update_buttons()
 
+    def on_block_regset_help_clicked(self, _obj: Gtk.Button) -> None:
+        "Display help for the block tab"
+        HelpWindow("block_regsets_help.html", "Register Set Instances Help")
+
     def on_addr_map_help_clicked(self, _obj: Gtk.Button) -> None:
         "Display the address map help"
         HelpWindow("addr_map_help.html", "Address Map Help")

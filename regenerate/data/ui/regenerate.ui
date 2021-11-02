@@ -356,7 +356,7 @@ create a new project by selecting
                 <property name="use_action_appearance">False</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">_Edit</property>
+                <property name="label" translatable="yes">_Preferences</property>
                 <property name="use_underline">True</property>
                 <child type="submenu">
                   <object class="GtkMenu" id="menu2">
@@ -746,7 +746,6 @@ create a new project by selecting
                                     <property name="can_focus">False</property>
                                     <property name="margin_left">6</property>
                                     <property name="margin_right">6</property>
-                                    <property name="margin_top">12</property>
                                     <property name="margin_bottom">6</property>
                                     <property name="orientation">vertical</property>
                                     <property name="layout_style">start</property>
@@ -953,8 +952,6 @@ create a new project by selecting
                                     <property name="sensitive">False</property>
                                     <property name="can_focus">True</property>
                                     <property name="margin_left">12</property>
-                                    <property name="margin_top">6</property>
-                                    <property name="show_border">False</property>
                                     <child>
                                       <object class="GtkGrid">
                                         <property name="visible">True</property>
@@ -964,7 +961,6 @@ create a new project by selecting
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
                                             <property name="margin_left">6</property>
-                                            <property name="margin_top">6</property>
                                             <property name="margin_bottom">6</property>
                                             <property name="hexpand">False</property>
                                             <property name="orientation">vertical</property>
@@ -1036,7 +1032,6 @@ create a new project by selecting
                                               <object class="GtkScrolledWindow" id="scrolledwindow2">
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
-                                                <property name="shadow_type">in</property>
                                                 <child>
                                                   <object class="GtkTreeView" id="bitfield_list">
                                                     <property name="visible">True</property>
@@ -2722,6 +2717,21 @@ loading an existing &lt;b&gt;&lt;tt&gt;.regb&lt;/tt&gt;&lt;/b&gt; file.</propert
                                 <property name="position">1</property>
                               </packing>
                             </child>
+                            <child>
+                              <object class="GtkButton" id="block_regset_help">
+                                <property name="label">gtk-help</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">True</property>
+                                <property name="use_stock">True</property>
+                                <signal name="clicked" handler="on_block_regset_help_clicked" swapped="no"/>
+                              </object>
+                              <packing>
+                                <property name="expand">True</property>
+                                <property name="fill">True</property>
+                                <property name="position">2</property>
+                              </packing>
+                            </child>
                           </object>
                           <packing>
                             <property name="left_attach">5</property>
@@ -2877,7 +2887,6 @@ loading an existing &lt;b&gt;&lt;tt&gt;.regb&lt;/tt&gt;&lt;/b&gt; file.</propert
                                 <property name="can_focus">True</property>
                                 <property name="hexpand">True</property>
                                 <property name="vexpand">True</property>
-                                <property name="shadow_type">in</property>
                                 <child>
                                   <object class="GtkTreeView" id="block_regsets">
                                     <property name="visible">True</property>
@@ -3674,7 +3683,6 @@ loading an existing &lt;b&gt;&lt;tt&gt;.regb&lt;/tt&gt;&lt;/b&gt; file.</propert
                                 <property name="hexpand">True</property>
                                 <property name="vexpand">True</property>
                                 <property name="hscrollbar_policy">never</property>
-                                <property name="shadow_type">in</property>
                                 <child>
                                   <object class="GtkTreeView" id="instances">
                                     <property name="visible">True</property>
