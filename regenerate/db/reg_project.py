@@ -33,6 +33,7 @@ from .data_reader import FileReader
 from .address_map import AddressMap
 from .block import Block
 from .block_inst import BlockInst
+from .register_inst import RegisterInst
 from .const import REG_EXT, PRJ_EXT, OLD_PRJ_EXT, OLD_REG_EXT
 
 from .doc_pages import DocPages
@@ -290,6 +291,10 @@ class RegProject:
         "Find the block associated with a particular block instance"
         return self.blocks[blk_inst.blkid]
 
+    def get_regset_from_regset_inst(self, regset_inst: RegisterInst) -> RegisterDb:
+        "Find the regset associated with a particular regset instance"
+        return self.regsets[regset_inst.regset_id]
+    
     def get_register_set(self) -> List[Path]:
         """
         Returns the register databases (XML files) referenced by the project
