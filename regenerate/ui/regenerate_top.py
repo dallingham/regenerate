@@ -91,7 +91,7 @@ class MainWindow(BaseWindow):
 
         self.top_notebook = self.find_obj("main_notebook")
         self.top_notebook.set_current_page(2)
-        self.top_notebook.set_sensitive(False)
+        self.enable_controls(False)
 
         autoload = bool(int(ini.get("user", "load_last_project", "0")))
         self.find_obj("autoload").set_active(autoload)
@@ -199,8 +199,16 @@ class MainWindow(BaseWindow):
         self.set_title(value)
         self.prj.modified = value
 
+    def enable_controls(self, value):
+        self.top_notebook.set_sensitive(value)
+        self.find_obj("save_btn").set_sensitive(value)
+        self.find_obj("build").set_sensitive(value)
+        self.find_obj("save_project").set_sensitive(value)
+        self.find_obj("build_button").set_sensitive(value)
+        self.find_obj("import_menu").set_sensitive(value)
+
     def load_project_tab(self) -> None:
-        self.top_notebook.set_sensitive(True)
+        self.enable_controls(True)
         self.block_tab.set_project(self.prj)
         self.project_tabs.change_db(self.prj)
         self.addr_map_list.set_project(self.prj)

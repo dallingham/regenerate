@@ -1,10 +1,33 @@
 <h2>Regenerate</h2>
 
-<h3>Creating a project</h3>
+Regenerate is a tool for managing the registers in an ASIC or FPGA design. 
 
-<p>Regenerate is project based. A project consists of multiple register
-sets, along with the relationships between them. These relationships
-include:</p>
+<h3>Basic Components</h3>
+
+Regenerate has three levels of data - the register set, the block, and
+the top level.
+
+<h4>Register Set</h4>
+
+The register set is a collection of related registers. The register
+set typically represents a single module.
+
+<h4>Block</h4>
+
+The block is a set of instantiated register sets (known as register
+set instances) that are related. Typically this represents a
+heirarchial block (<em>e.g.</em> a DDR interface, or a CPU subsystem).
+
+<h4>Top Level</h4>
+
+The top level is the set of instantiated blocks (known as block
+instances) that compose a chip or FPGA.
+
+<h3>Projects</h3>
+
+<p>Regenerate is project based. A project must be creatd or opened
+before any operations can be performed.
+</p>
 
 <ul>
   <li>Logical groupings of registers along with their associated addressing.</li>
