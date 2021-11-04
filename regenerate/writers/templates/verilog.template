@@ -144,7 +144,7 @@ generate
       .{{RST}}  ({{ri.reset_name}}),
 {%     if not ri.field.msb.is_parameter and ri.field.width == 1 %}
       .RVAL  ({{ri.field.reset_vstr()}}),
-{%-    else %}
+    {%-    else %}
       .RVAL  ({{ri.rval}}{{ri.pos}}),
 {%-    endif %}
 {%     if ri.write_name %}    

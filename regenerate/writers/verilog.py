@@ -607,7 +607,6 @@ class Verilog2001(Verilog):
 
 def drop_write_share(list_in: List[Register]) -> List[Register]:
     "Drops the write-share registers from the list"
-    print(list_in)
     return [l for l in list_in if l[6].share != ShareType.WRITE]
 
 
@@ -856,7 +855,7 @@ def build_input_signals(regset: RegisterDb, cell_info) -> List[Scalar]:
                 if field.width == 1:
                     vec_width = ""
                 else:
-                    vec_width = f"[{field.width-1}:0]"
+                    vec_width = f"[{field.lsb+field.width-1}:{field.lsb}]"
                 if reg.dimension.is_parameter:
                     signals.add(
                         Scalar(f"{rval}[{dim.param_name()}]", vec_width)
