@@ -117,7 +117,6 @@ module {{db.name}}
  *------------------------------------------------------------------------------
  */
 {%   if (ri.field.msb.is_parameter or ri.field.width != 1) and not ri.reset_from_input %}
-   // DNA {{ri.field.field_type}}
    localparam bit [{{ri.msb.int_str()}}:{{ri.lsb}}] {{ri.rval}} = {{ri.field.reset_vstr()}};
 
 {%   endif %}

@@ -176,34 +176,31 @@ class RegData:
     "Holds the data that defines a register bit instance"
 
     def __init__(self):
-        self.name = None
-        self.cell_type = None
-        self.reset_from_input = None
-        self.reset_port = None
-        self.write_name = None
-        self.write_data_name = None
         self.byte_strobe_name = None
+        self.cell_type = None
+        self.control_name = None
+        self.dim = None
+        self.dim_param = None
         self.do_name = None
-        self.one_shot_name = None
+        self.field = None
+        self.generate = None
         self.input_name = None
         self.input_name_bit = None
-        self.reset_name = None
-        self.control_name = None
-        self.read_name = None
-        self.dim_param = None
-        self.field = None
-        self.reg_name = None
-        self.reg_addr = None
-        self.type_descr = None
-        self.msb = None
         self.lsb = None
-        self.localparam = None
-        self.rval = None
-        self.dim = None
-        self.field_width = None
-        self.reset_val = None
-        self.generate = None
+        self.msb = None
+        self.name = None
+        self.one_shot_name = None
         self.pos = None
+        self.read_name = None
+        self.reg_addr = None
+        self.reg_name = None
+        self.reset_from_input = None
+        self.reset_name = None
+        self.reset_val = None
+        self.rval = None
+        self.type_descr = None
+        self.write_data_name = None
+        self.write_name = None
 
 
 def full_reset_value(field: BitField) -> str:
@@ -467,9 +464,9 @@ class Verilog(RegsetWriter):
             trigger = ""
         else:
             if self._regset.ports.reset_active_level:
-                trigger = f" or posedge RST"
+                trigger = " or posedge RST"
             else:
-                trigger = f" or negedge RSTn"
+                trigger = " or negedge RSTn"
 
         name_map = {
             "MODULE": self._regset.name,
@@ -531,12 +528,6 @@ class Verilog(RegsetWriter):
                 reg_field.lsb = field.lsb
                 byte_offset = reg.address % bytes_per_word
                 byte_addr = (reg.address // bytes_per_word) * bytes_per_word
-                if not field.msb.is_parameter and field.width == 1:
-                    reg_field.field_width = ""
-                else:
-                    reg_field.field_width = (
-                        f"[{field.msb.int_str()}:{field.lsb}]"
-                    )
                 reg_field.reset_val = field.reset_vstr()
 
                 if field.msb.is_parameter or field.msb.resolve() > field.lsb:
@@ -681,7 +672,9 @@ def build_write_address_selects(
 
 
 def build_read_address_selects(
-    regset: RegisterDb, word_fields: Dict[int, List[ByteInfo]], cell_info
+    regset: RegisterDb,
+    word_fields: Dict[int, List[ByteInfo]],
+    cell_info: CellInfo,
 ) -> List[DecodeInfo]:
     "Returns the information needed to create the read selects"
 
@@ -707,7 +700,9 @@ def build_read_address_selects(
     return assigns
 
 
-def build_output_signals(regset, cell_info) -> List[Scalar]:
+def build_output_signals(
+    regset: RegisterDb, cell_info: CellInfo
+) -> List[Scalar]:
     "Builds the output signal list"
 
     scalar_ports = []
@@ -840,61 +835,58 @@ def build_logic_list(_regset, word_fields, cell_info) -> List[RegDecl]:
     return reg_list
 
 
-def build_input_signals(regset: RegisterDb, cell_info) -> List[Scalar]:
+def build_input_signals(
+    regset: RegisterDb, cell_info: CellInfo
+) -> List[Scalar]:
     "Builds the input list"
 
-    signals = set()
+    signals: Set[Scalar] = set()
+
     for reg in regset.get_all_registers():
         for field in reg.get_bit_fields():
             cinfo = cell_info[field.field_type]
-            signal = field.control_signal
-            dim = reg.dimension
+            vector = make_vector(field)
 
             if field.reset_type == ResetType.INPUT:
-                rval = field.reset_input
-                if field.width == 1:
-                    vec_width = ""
-                else:
-                    vec_width = f"[{field.lsb+field.width-1}:{field.lsb}]"
-                if reg.dimension.is_parameter:
-                    signals.add(
-                        Scalar(f"{rval}[{dim.param_name()}]", vec_width)
-                    )
-                elif reg.dimension.resolve() > 1:
-                    signals.add(Scalar(f"{rval}[{dim.resolve()}]", vec_width))
-                else:
-                    signals.add(Scalar(rval, vec_width))
+                add_signal(field.reset_input, vector, reg.dimension, signals)
 
             if cinfo.has_control:
-                if reg.dimension.is_parameter:
-                    signals.add(Scalar(f"{signal}[{dim.param_name()}]", ""))
-                elif reg.dimension.resolve() > 1:
-                    signals.add(Scalar(f"{signal}[{dim.resolve()}]", ""))
-                else:
-                    signals.add(Scalar(field.control_signal, ""))
+                add_signal(field.control_signal, "", reg.dimension, signals)
 
             if (
                 cinfo.has_input
                 and field.input_signal
                 and field.input_signal not in signals
             ):
-                signal = field.input_signal
-
-                if field.width == 1:
-                    vector = ""
-                else:
-                    vector = f"[{field.msb.int_str()}:{field.lsb}]"
-
-                if reg.dimension.is_parameter:
-                    signals.add(
-                        Scalar(f"{signal}[{dim.param_name()}]", vector)
-                    )
-                elif reg.dimension.resolve() > 1:
-                    signals.add(Scalar(f"{signal}[{dim.resolve()}]", vector))
-                else:
-                    signals.add(Scalar(signal, vector))
+                add_signal(field.input_signal, vector, reg.dimension, signals)
 
     return sorted(signals)
+
+
+def add_signal(
+    signal_name: str,
+    vector: str,
+    dimension: ParamValue,
+    signal_set: Set[Scalar],
+) -> None:
+    "Adds the signal to the signal set, handling dimensions"
+
+    print(type(dimension))
+    if dimension.is_parameter:
+        signal_set.add(
+            Scalar(f"{signal_name}[{dimension.param_name()}]", vector)
+        )
+    elif dimension.resolve() > 1:
+        signal_set.add(Scalar(f"{signal_name}[{dimension.resolve()}]", vector))
+    else:
+        signal_set.add(Scalar(signal_name, vector))
+
+
+def make_vector(field: BitField) -> str:
+    "Build the vector indices if needed"
+    if field.width == 1:
+        return ""
+    return f"[{field.msb.int_str()}:{field.lsb}]"
 
 
 def build_oneshot_assignments(word_fields, cell_info) -> List[OneShots]:

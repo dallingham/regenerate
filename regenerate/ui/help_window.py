@@ -24,6 +24,7 @@ the contents from restructuredText to HTML.
 from typing import Optional
 from pathlib import Path
 from gi.repository import Gtk, Gdk
+
 from regenerate.settings.paths import INSTALL_PATH, HELP_PATH
 from regenerate.ui.preview import html_string
 from regenerate.ui.base_window import BaseWindow
@@ -69,7 +70,13 @@ class HelpWindow(BaseWindow):
         if title:
             HelpWindow.window.set_title(f"{title} - regenerate")
 
-    def load_home_page(self):
+    def load_home_page(self) -> None:
+        """Loads the original page specified when created. Treats this
+        file as if it were the home page"""
+
+        if HelpWindow.wkit is None:
+            return
+
         if Path(self._filename).suffix == ".rst":
             data = self.load_file(self._filename)
             try:
@@ -82,14 +89,19 @@ class HelpWindow(BaseWindow):
             full_path = str(Path(HELP_PATH) / self._filename)
             HelpWindow.wkit.load_uri(f"file:///{full_path}")
 
-    def _go_back(self, _obj):
-        HelpWindow.wkit.go_back()
+    def _go_back(self, _obj: Gtk.Button) -> None:
+        "Goes back to the previous page"
+        if HelpWindow.wkit:
+            HelpWindow.wkit.go_back()
 
-    def _go_home(self, _obj):
+    def _go_home(self, _obj: Gtk.Button) -> None:
+        "Reloads the home page"
         self.load_home_page()
 
-    def _go_forward(self, _obj):
-        HelpWindow.wkit.go_forward()
+    def _go_forward(self, _obj: Gtk.Button) -> None:
+        "Goes forward"
+        if HelpWindow.wkit:
+            HelpWindow.wkit.go_forward()
 
     def load_file(self, filename: str) -> str:
         "Loads the file if found"
@@ -103,20 +115,14 @@ class HelpWindow(BaseWindow):
         return data
 
 
-def _destroy(_obj):
-    """Hide the window with the destroy event is received"""
+def _destroy(_obj) -> bool:
+    "Hide the window with the destroy event is received"
     if HelpWindow.window:
         HelpWindow.window.hide()
     return True
 
 
-def _delete(window: Gtk.Window, _event: Gdk.Event):
-    """Hide the window with the delete event is received"""
+def _delete(window: Gtk.Window, _event: Gdk.Event) -> bool:
+    "Hide the window with the delete event is received"
     window.hide()
     return True
-
-
-def _hide(_button: Gtk.Button):
-    "Hide the window"
-    if HelpWindow.window:
-        HelpWindow.window.hide()
