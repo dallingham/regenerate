@@ -130,7 +130,7 @@ class BaseDoc:
 
         help_btn = Gtk.ToolButton()
         help_btn.set_stock_id(Gtk.STOCK_HELP)
-        help_btn.set_tooltip_text("Add a tag to the page")
+        help_btn.set_tooltip_text("Display help")
         help_btn.show()
 
         hbox = Gtk.HBox()

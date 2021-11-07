@@ -43,6 +43,8 @@ class HelpWindow(BaseWindow):
 
         super().__init__()
 
+        self._filename = filename
+
         if HelpWindow.window is None:
             builder = Gtk.Builder()
             bfile = Path(INSTALL_PATH) / "ui" / "help.ui"
@@ -51,16 +53,25 @@ class HelpWindow(BaseWindow):
             HelpWindow.window = builder.get_object("help_win")
             self.configure(HelpWindow.window)
             HelpWindow.wkit = builder.get_object("html_view")
-            HelpWindow.button = builder.get_object("help_close")
-            HelpWindow.button.connect("clicked", _hide)
+            builder.get_object("go_back").connect("clicked", self._go_back)
+            builder.get_object("go_home").connect("clicked", self._go_home)
+            builder.get_object("go_forward").connect(
+                "clicked", self._go_forward
+            )
             HelpWindow.window.connect("destroy", _destroy)
             HelpWindow.window.connect("delete_event", _delete)
             HelpWindow.window.show_all()
         else:
             HelpWindow.window.show()
 
-        if Path(filename).suffix == ".rst":
-            data = self.load_file(filename)
+        self.load_home_page()
+
+        if title:
+            HelpWindow.window.set_title(f"{title} - regenerate")
+
+    def load_home_page(self):
+        if Path(self._filename).suffix == ".rst":
+            data = self.load_file(self._filename)
             try:
                 HelpWindow.wkit.load_html(html_string(data), "text/html")
             except:
@@ -68,11 +79,17 @@ class HelpWindow(BaseWindow):
                     html_string(data), "text/html"
                 )
         else:
-            full_path = str(Path(HELP_PATH) / filename)
+            full_path = str(Path(HELP_PATH) / self._filename)
             HelpWindow.wkit.load_uri(f"file:///{full_path}")
 
-        if title:
-            HelpWindow.window.set_title(f"{title} - regenerate")
+    def _go_back(self, _obj):
+        HelpWindow.wkit.go_back()
+
+    def _go_home(self, _obj):
+        self.load_home_page()
+
+    def _go_forward(self, _obj):
+        HelpWindow.wkit.go_forward()
 
     def load_file(self, filename: str) -> str:
         "Loads the file if found"

@@ -22,8 +22,8 @@ import os
 from typing import Dict, Optional, Callable, Tuple
 from pathlib import Path
 
-from gi.repository import Gtk, GdkPixbuf, Pango
-from regenerate.settings.paths import INSTALL_PATH, HELP_PATH
+from gi.repository import Gtk, Pango
+from regenerate.settings.paths import HELP_PATH
 from regenerate.db import (
     Register,
     BitField,
@@ -125,60 +125,43 @@ class RegSetList:
 
         self.prj: Optional[RegProject] = None
 
-        self.__obj = obj
-        self.__obj.get_selection().connect("changed", selection_callback)
-        self.__obj.set_reorderable(True)
-        self.__model: Optional[SelectModel] = None
-        self.__build_prj_window()
+        self._obj = obj
+        self._obj.get_selection().connect("changed", selection_callback)
+        self._obj.set_reorderable(True)
+        self._model: Optional[SelectModel] = None
+        self._build_prj_window()
 
-        # self.factory = Gtk.IconFactory()
-        # filename = Path(INSTALL_PATH) / "media" / "ModifiedIcon.png"
-        # pixbuf = GdkPixbuf.Pixbuf.new_from_file(str(filename))
-        # iconset = Gtk.IconSet(pixbuf)
-        # self.factory.add("out-of-date", iconset)
-        # self.factory.add_default()
-
-    def set_model(self, model: SelectModel):
-        """Sets the model"""
-
-        self.__model = model
-        self.__obj.set_model(model)
-
-    def __build_prj_window(self):
+    def _build_prj_window(self):
         """Build the project window"""
 
         column = ReadOnlyColumn("Register Sets", 1)
         column.renderer.set_property("ellipsize", Pango.EllipsizeMode.END)
         column.renderer.set_padding(6, 3)
         column.set_min_width(140)
-        column.set_cell_data_func(column.renderer, self.set_format)
-        self.__obj.append_column(column)
+        column.set_cell_data_func(column.renderer, _set_format)
+        self._obj.append_column(column)
 
-    def set_format(self, _col, renderer, model, titer, data):
-        val = model.get_value(titer, 0)
+    def set_model(self, model: SelectModel):
+        """Sets the model"""
 
-        if val:
-            renderer.set_property("weight", Pango.Weight.BOLD)
-            renderer.set_property("style", Pango.Style.ITALIC)
-        else:
-            renderer.set_property("weight", Pango.Weight.NORMAL)
-            renderer.set_property("style", Pango.Style.NORMAL)
+        self._model = model
+        self._obj.set_model(model)
 
     def get_selected(self) -> Tuple[SelectModel, Gtk.TreeIter]:
         """Return the selected object"""
-        return self.__obj.get_selection().get_selected()
+        return self._obj.get_selection().get_selected()
 
     def select(self, node: Gtk.TreeIter) -> None:
         """Select the specified row"""
 
-        selection = self.__obj.get_selection()
+        selection = self._obj.get_selection()
         if node and selection:
             selection.select_iter(node)
 
     def select_path(self, path: str) -> None:
         """Select based on path"""
 
-        selection = self.__obj.get_selection()
+        selection = self._obj.get_selection()
         selection.select_path(path)
 
     def change_project(self, prj: RegProject) -> None:
@@ -186,14 +169,32 @@ class RegSetList:
         self.prj = prj
 
 
+def _set_format(
+    _col: ReadOnlyColumn,
+    renderer: Gtk.CellRendererText,
+    model: SelectModel,
+    titer: Gtk.TreeIter,
+    _data,
+):
+    "Determines if the text should be highlighted"
+    if model.get_value(titer, 0):
+        renderer.set_property("weight", Pango.Weight.BOLD)
+        renderer.set_property("style", Pango.Style.ITALIC)
+    else:
+        renderer.set_property("weight", Pango.Weight.NORMAL)
+        renderer.set_property("style", Pango.Style.NORMAL)
+
+
 class RegSetTab:
+    "Register set tab"
+
     def __init__(
         self,
-        find_obj,
-        modified,
-        db_selected_action,
-        reg_selected_action,
-        field_selected_action,
+        find_obj: Callable,
+        modified: Callable,
+        db_selected_action: Gtk.ActionGroup,
+        reg_selected_action: Gtk.ActionGroup,
+        field_selected_action: Gtk.ActionGroup,
     ):
         self.modified_callback = modified
         self.db_selected_action = db_selected_action
@@ -384,11 +385,14 @@ class RegSetTab:
     def new_regset(self, regset: RegisterDb) -> Optional[Gtk.TreeIter]:
         "Inserts the register set into the tree"
 
-        node = self.reg_set_model.add(regset)
+        if self.reg_set_model is None:
+            return None
+
         self.reg_model = RegisterModel()
-        mdl = self.reg_model.filter_new()
-        self.modelsort = Gtk.TreeModelSort(mdl)
-        self.filter_manage.change_filter(mdl, True)
+        filter_model = self.reg_model.filter_new()
+        self.modelsort = Gtk.TreeModelSort(filter_model)
+        self.filter_manage.change_filter(filter_model, True)
+
         self.reglist_obj.set_model(self.modelsort)
 
         for key in regset.get_keys():
@@ -398,6 +402,7 @@ class RegSetTab:
 
         bit_model = BitModel()
 
+        node = self.reg_set_model.add(regset)
         status = RegSetStatus(
             regset,
             self.reg_model,
