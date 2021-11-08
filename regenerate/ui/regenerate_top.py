@@ -371,6 +371,7 @@ class MainWindow(BaseWindow):
         self, _obj: Gtk.Notebook, _page: Gtk.Paned, page_num: int
     ) -> None:
         "Called when the Top/Block/Registers tab is changed"
+
         self.regset_tab.filter_visible(page_num == 0)
         if page_num == 0:
             self.regset_tab.update_display(True)
