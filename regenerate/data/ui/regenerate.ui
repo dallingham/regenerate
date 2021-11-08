@@ -535,7 +535,7 @@ create a new project by selecting
                 <property name="position_set">True</property>
                 <property name="wide_handle">True</property>
                 <child>
-                  <object class="GtkBox">
+                  <object class="GtkBox" id="regset_sidebar">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="orientation">vertical</property>
@@ -2486,7 +2486,7 @@ create a new project by selecting
                 <property name="position_set">True</property>
                 <property name="wide_handle">True</property>
                 <child>
-                  <object class="GtkBox">
+                  <object class="GtkBox" id="block_sidebar">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="orientation">vertical</property>

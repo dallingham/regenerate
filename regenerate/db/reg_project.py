@@ -291,10 +291,12 @@ class RegProject:
         "Find the block associated with a particular block instance"
         return self.blocks[blk_inst.blkid]
 
-    def get_regset_from_regset_inst(self, regset_inst: RegisterInst) -> RegisterDb:
+    def get_regset_from_regset_inst(
+        self, regset_inst: RegisterInst
+    ) -> RegisterDb:
         "Find the regset associated with a particular regset instance"
         return self.regsets[regset_inst.regset_id]
-    
+
     def get_register_set(self) -> List[Path]:
         """
         Returns the register databases (XML files) referenced by the project
@@ -541,11 +543,11 @@ class RegProject:
                     Path(os.path.relpath(full_path, self.path.parent))
                 )
 
-        self.address_maps = {}
-        for name, addr_data_json in data["address_maps"].items():
-            addr_data = AddressMap()
-            addr_data.json_decode(addr_data_json)
-            self.address_maps[name] = addr_data
+        if data["address_maps"]:
+            for name, addr_data_json in data["address_maps"].items():
+                addr_data = AddressMap()
+                addr_data.json_decode(addr_data_json)
+                self.address_maps[name] = addr_data
 
         if not skip:
             self.exports = []
@@ -568,26 +570,29 @@ class RegProject:
             self.block_insts.append(blk_inst_data)
 
         self.blocks = {}
-        for key in data["blocks"]:
-            blk_data = Block()
-            base_path = data["blocks"][key]["filename"]
+        if data["blocks"]:
+            for key in data["blocks"]:
+                blk_data = Block()
+                base_path = data["blocks"][key]["filename"]
 
-            if self.reader_class:
-                rdr = self.reader_class
-                text = rdr.read_bytes(base_path)
-                json_data = json.loads(text)
-                blk_data.filename, _ = self.reader_class.resolve_path(
-                    base_path
-                )
-                blk_data.reader_class = self.reader_class.__class__(
-                    base_path, self.reader_class.repo, self.reader_class.rtl_id
-                )
-                blk_data.json_decode(json_data)
-            else:
-                path = self.path.parent / base_path
-                blk_data.open(path)
+                if self.reader_class:
+                    rdr = self.reader_class
+                    text = rdr.read_bytes(base_path)
+                    json_data = json.loads(text)
+                    blk_data.filename, _ = self.reader_class.resolve_path(
+                        base_path
+                    )
+                    blk_data.reader_class = self.reader_class.__class__(
+                        base_path,
+                        self.reader_class.repo,
+                        self.reader_class.rtl_id,
+                    )
+                    blk_data.json_decode(json_data)
+                else:
+                    path = self.path.parent / base_path
+                    blk_data.open(path)
 
-            self.blocks[key] = blk_data
+                self.blocks[key] = blk_data
 
         self.parameters = ParameterContainer()
         self.parameters.json_decode(data["parameters"])
@@ -600,3 +605,19 @@ class RegProject:
                 self.overrides.append(item)
         except KeyError:
             ...
+
+        for filename in self._filelist:
+            full_path = (self.path.parent / filename).resolve()
+            regset = self.finder.find_by_file(str(full_path))
+            if not regset and full_path.exists():
+                regset = RegisterDb()
+                if self.reader_class is None:
+                    rdr = FileReader(full_path)
+                else:
+                    rdr = self.reader_class
+
+                json_data = json.loads(rdr.read_bytes(full_path))
+                regset.filename = full_path
+                regset.json_decode(json_data)
+                self.finder.register(regset)
+                self.regsets[regset.uuid] = regset

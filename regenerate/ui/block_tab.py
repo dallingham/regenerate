@@ -21,25 +21,25 @@
 Project model and list
 """
 
-import os
 from pathlib import Path
 from typing import Optional, List, Callable, Set, Tuple
-from gi.repository import Gtk, GdkPixbuf, Pango
-from regenerate.settings.paths import INSTALL_PATH, HELP_PATH
-from regenerate.db import RegisterInst, Block, BLK_EXT, LOGGER, RegProject
+from gi.repository import Gtk
+from regenerate.settings.paths import HELP_PATH
+from regenerate.db import (
+    RegisterInst,
+    Block,
+    BLK_EXT,
+    LOGGER,
+    RegProject,
+    RegisterDb,
+)
 from .columns import ReadOnlyColumn, EditableColumn, MenuEditColumn
 from .parameter_list import ParameterList
 from .base_doc import BaseDoc
 from .param_overrides import BlockOverridesList
-from .enums import SelectCol
-from .entry import (
-    EntryText,
-    EntryWord,
-    EntryHex,
-    ValidHexEntry,
-)
+from .entry import EntryText, EntryWord, EntryHex
 from .file_dialogs import create_file_selector
-from .select_model import SelectModel
+from .select_sidebar import SelectSidebar
 
 
 class BlockTab:
@@ -47,77 +47,72 @@ class BlockTab:
 
     def __init__(self, find_obj: Callable, block_remove_callback: Callable):
 
-        self.block_remove_callback = block_remove_callback
-        self.block_add_btn = find_obj("block_add_block")
-        self.block_notebook = find_obj("block_notebook")
-        self.block_regsets = find_obj("block_regsets")
-        self.block_reg_add = find_obj("block_reg_add")
-        self.block_name_obj = find_obj("block_name")
-        self.block_descr_obj = find_obj("block_description")
-        self.block_size_obj = find_obj("blk_addr_size")
-        self.block_reg_remove = find_obj("block_reg_remove")
-        self.block_docs = find_obj("block_doc_pages")
+        self._block_remove_callback = block_remove_callback
+        self._block_notebook = find_obj("block_notebook")
+        self._block_regsets = find_obj("block_regsets")
+        self._block_reg_add = find_obj("block_reg_add")
+        self._block_name_obj = find_obj("block_name")
+        self._block_descr_obj = find_obj("block_description")
+        self._block_size_obj = find_obj("blk_addr_size")
+        self._block_reg_remove = find_obj("block_reg_remove")
+        self._block_docs = find_obj("block_doc_pages")
+        self._block_select_notebook = find_obj("block_select_notebook")
+        self._reginst_list_notebook = find_obj("reginst_list_notebook")
+        self._reginst_list_notebook.set_show_tabs(False)
+        self._reginst_list_help = find_obj("reginst_list_help")
 
-        self.reginst_list_notebook = find_obj("reginst_list_notebook")
-        self.reginst_list_notebook.set_show_tabs(False)
-        self.reginst_list_help = find_obj("reginst_list_help")
+        self._sidebar = SelectSidebar(
+            find_obj("block_sidebar"),
+            "Blocks",
+            "block_select_help.html",
+            self.new_block_clicked,
+            self.add_block_clicked,
+            self.remove_block_clicked,
+        )
 
-        self.block_select_notebook = find_obj("block_select_notebook")
-        self.block_select_notebook.set_show_tabs(False)
-        self.block_select_help = find_obj("block_select_help")
-        help_path = Path(HELP_PATH) / "block_select_help.html"
-        try:
-            with help_path.open() as ifile:
-                self.block_select_help.load_html(ifile.read(), "text/html")
-        except IOError:
-            pass
+        self._sidebar.set_selection_changed_callback(
+            self._block_selection_changed
+        )
 
         help_path = Path(HELP_PATH) / "reginst_list_help.html"
         try:
             with help_path.open() as ifile:
-                self.reginst_list_help.load_html(ifile.read(), "text/html")
+                self._reginst_list_help.load_html(ifile.read(), "text/html")
         except IOError:
             pass
 
-        self.block_name = EntryWord(
-            self.block_name_obj,
+        self._block_name = EntryWord(
+            self._block_name_obj,
             "name",
             self.modified,
             "Enter the block name",
         )
-        self.block_description = EntryText(
-            self.block_descr_obj,
+        self._block_description = EntryText(
+            self._block_descr_obj,
             "description",
             self.modified,
             "Enter the block description",
         )
-        self.block_size = EntryHex(
-            self.block_size_obj, "address_size", self.modified
+        self._block_size = EntryHex(
+            self._block_size_obj, "address_size", self.modified
         )
 
-        self.regmodel: Optional[Gtk.ListStore] = None
-        self.project: Optional[RegProject] = None
-        self.block: Optional[Block] = None
+        self._reg_model: Optional[Gtk.ListStore] = None
+        self._project: Optional[RegProject] = None
+        self._block: Optional[Block] = None
         self.disable_modified = True
         self._parameter_names: Set[Tuple[str, str]] = set()
 
-        self.block_obj = BlockSelectList(
-            find_obj("block_select_list"), self.block_selection_changed
-        )
-
-        self.block_model = SelectModel()
-        self.block_obj.set_model(self.block_model)
-
-        self.preview = BlockDoc(
-            self.block_docs,
+        self._preview = BlockDoc(
+            self._block_docs,
             self.after_modified,
         )
 
-        self.overrides_list = BlockOverridesList(
+        self._overrides_list = BlockOverridesList(
             find_obj("block_override_list"),
             find_obj("block_override_add"),
             find_obj("block_override_remove"),
-            self.overrides_modified,
+            self._overrides_modified,
         )
 
         self.parameter_list = find_obj("block_param_list")
@@ -128,43 +123,36 @@ class BlockTab:
             self.set_parameters_modified,
         )
 
-        find_obj("block_add_block").connect("clicked", self.add_block_clicked)
-        find_obj("block_new_block").connect("clicked", self.new_block_clicked)
-        find_obj("block_remove_block").connect(
-            "clicked", self.remove_block_clicked
-        )
-
         self.build()
-        self.block_reg_remove.connect("clicked", self.on_remove_clicked)
-        self.block_notebook.connect("switch-page", self.page_changed)
+        self._block_reg_remove.connect("clicked", self.on_remove_clicked)
+        self._block_notebook.connect("switch-page", self.page_changed)
 
     def clear(self) -> None:
         "Clears data from the tab"
 
-        self.block_model = SelectModel()
-        self.block_obj.set_model(self.block_model)
-        self.regmodel = Gtk.ListStore(str, str, str, str, str, object)
-        self.block_regsets.set_model(self.regmodel)
-        self.block_name.change_db(None)
-        self.block_description.change_db(None)
-        self.block_size.change_db(None)
-        self.preview.change_block(None, None)
+        self._sidebar.clear()
+        self._reg_model = Gtk.ListStore(str, str, str, str, str, object)
+        self._block_regsets.set_model(self._reg_model)
+        self._block_name.change_db(None)
+        self._block_description.change_db(None)
+        self._block_size.change_db(None)
+        self._preview.change_block(None, None)
 
     def page_changed(
         self, _obj: Gtk.Notebook, _page: Gtk.Grid, page_num: int
     ) -> None:
         "Called when the notebook page changes"
         if page_num == 1:
-            self.overrides_list.update_display()
+            self._overrides_list.update_display()
 
     def redraw(self) -> None:
         "Redraw the screen"
 
-        self.block_model.update()
+        self._sidebar.update()
         self.build_add_regset_menu()
-        if self.block:
-            self.set_parameters(self.block.parameters.get())
-            self.overrides_list.set_parameters(self.block.parameters.get())
+        if self._block:
+            self.set_parameters(self._block.parameters.get())
+            self._overrides_list.set_parameters(self._block.parameters.get())
         else:
             LOGGER.warning(
                 (
@@ -173,42 +161,42 @@ class BlockTab:
                 )
             )
 
-        self.block_name_obj.set_sensitive(self.block is not None)
-        self.block_descr_obj.set_sensitive(self.block is not None)
-        self.block_size_obj.set_sensitive(self.block is not None)
+        self._block_name_obj.set_sensitive(self._block is not None)
+        self._block_descr_obj.set_sensitive(self._block is not None)
+        self._block_size_obj.set_sensitive(self._block is not None)
 
-        self.overrides_list.update_display()
+        self._overrides_list.update_display()
         self.build_add_regset_menu()
         self.update_block_selection()
 
     def clear_flags(self) -> None:
-        self.block_model.update()
+        self._sidebar.update()
 
-    def overrides_modified(self) -> None:
+    def _overrides_modified(self) -> None:
         self.modified()
 
-    def block_selection_changed(self, obj: Gtk.TreeSelection) -> None:
+    def _block_selection_changed(self, _obj: Gtk.TreeSelection) -> None:
         "Called with the block selection changes"
         self.update_block_selection()
 
     def update_block_selection(self):
-        model, node = self.block_obj.get_selected()
+        model, node = self._sidebar.get_selected()
 
         if node:
-            self.block_notebook.set_sensitive(True)
+            self._block_notebook.set_sensitive(True)
             block = model[node][-1]
             self.disable_modified = True
             self.select_block(block.uuid)
             self.disable_modified = False
-            self.parameter_list.set_db(self.block)
-            self.preview.change_block(self.block, self.project)
+            self.parameter_list.set_db(self._block)
+            self._preview.change_block(self._block, self._project)
         else:
-            self.block_notebook.set_sensitive(False)
+            self._block_notebook.set_sensitive(False)
 
-        if self.project and self.project.blocks:
-            self.block_select_notebook.set_current_page(0)
+        if self._project and self._project.blocks:
+            self._block_select_notebook.set_current_page(0)
         else:
-            self.block_select_notebook.set_current_page(1)
+            self._block_select_notebook.set_current_page(1)
 
     def after_modified(self) -> None:
         self.modified()
@@ -217,13 +205,13 @@ class BlockTab:
         "Build the interface"
 
         column = EditableColumn("Instance", self.instance_changed, 1)
-        self.block_regsets.append_column(column)
+        self._block_regsets.append_column(column)
         column.set_min_width(175)
         column.set_expand(False)
         column.set_resizable(True)
 
         column = ReadOnlyColumn("Register Set", 0)
-        self.block_regsets.append_column(column)
+        self._block_regsets.append_column(column)
         column.set_min_width(175)
         column.set_expand(False)
         column.set_resizable(True)
@@ -231,7 +219,7 @@ class BlockTab:
         column = EditableColumn(
             "Offset", self.address_changed, 2, monospace=True
         )
-        self.block_regsets.append_column(column)
+        self._block_regsets.append_column(column)
         column.set_min_width(125)
         column.set_expand(False)
         column.set_resizable(True)
@@ -239,41 +227,38 @@ class BlockTab:
         column = MenuEditColumn(
             "Repeat", self.repeat_menu, self.repeat_text, [], 3
         )
-        self.block_regsets.append_column(column)
+        self._block_regsets.append_column(column)
         column.set_min_width(150)
         column.set_expand(False)
         column.set_resizable(True)
         self.repeat_col = column
 
         column = EditableColumn("HDL path", self.hdl_path_changed, 4)
-        self.block_regsets.append_column(column)
+        self._block_regsets.append_column(column)
         column.set_expand(True)
         column.set_resizable(True)
 
     def modified(self) -> None:
         "Called when the data has been modified"
 
-        if self.disable_modified or self.block is None:
+        if self.disable_modified or self._block is None:
             return
 
-        self.block_obj.update_data()
-        model, node = self.block_obj.get_selected()
-        if node:
-            model[node][SelectCol.ICON] = Gtk.STOCK_EDIT
-            self.block.modified = True
+        self._sidebar.update()
+        self._block.modified = True
 
     def instance_changed(
         self, _cell: Gtk.CellRendererText, path: str, text: str, col: int
     ) -> None:
         "Called when the instance name changed for a register instance"
 
-        if self.block is None or self.regmodel is None:
+        if self._block is None or self._reg_model is None:
             return
 
-        old_text = self.regmodel[int(path)][col]
-        self.regmodel[int(path)][col] = text
+        old_text = self._reg_model[int(path)][col]
+        self._reg_model[int(path)][col] = text
 
-        for rset in self.block.regset_insts:
+        for rset in self._block.regset_insts:
             if rset.name == old_text:
                 rset.name = text
                 self.modified()
@@ -283,7 +268,7 @@ class BlockTab:
     ) -> None:
         "Called with the address changed"
 
-        if self.block is None or self.regmodel is None:
+        if self._block is None or self._reg_model is None:
             return
 
         try:
@@ -291,10 +276,10 @@ class BlockTab:
         except ValueError:
             return
 
-        reg_name = self.regmodel[int(path)][0]
-        self.regmodel[int(path)][col] = f"0x{int(new_text,0):08x}"
-        self.block.modified = True
-        for rset in self.block.regset_insts:
+        reg_name = self._reg_model[int(path)][0]
+        self._reg_model[int(path)][col] = f"0x{int(new_text,0):08x}"
+        self._block.modified = True
+        for rset in self._block.regset_insts:
             if rset.name == reg_name:
                 rset.offset = value
                 self.modified()
@@ -308,20 +293,20 @@ class BlockTab:
     ) -> None:
         "Called with the repeat value changes due to the menu selection"
 
-        if self.block is None or self.regmodel is None:
+        if self._block is None or self._reg_model is None:
             return
 
         model = cell.get_property("model")
         new_text = model.get_value(node, 0)
         new_uuid = model.get_value(node, 1)
-        self.block.modified = True
+        self._block.modified = True
 
-        reg_name = self.regmodel[int(path)][1]
-        for rset in self.block.regset_insts:
+        reg_name = self._reg_model[int(path)][1]
+        for rset in self._block.regset_insts:
             if rset.name == reg_name:
                 rset.repeat.set_param(new_uuid)
                 break
-        self.regmodel[int(path)][col] = new_text
+        self._reg_model[int(path)][col] = new_text
         self.modified()
 
     def repeat_text(
@@ -329,7 +314,7 @@ class BlockTab:
     ) -> None:
         "Called with the repeat value changes due to text being edited"
 
-        if self.block is None or self.regmodel is None:
+        if self._block is None or self._reg_model is None:
             return
 
         try:
@@ -343,9 +328,9 @@ class BlockTab:
             return
 
         row = int(path)
-        reg_name = self.regmodel[row][1]
-        self.block.modified = True
-        for rset in self.block.regset_insts:
+        reg_name = self._reg_model[row][1]
+        self._block.modified = True
+        for rset in self._block.regset_insts:
             if rset.name == reg_name:
                 if (
                     rset.repeat.is_parameter
@@ -353,7 +338,7 @@ class BlockTab:
                 ):
                     return
                 rset.repeat.set_int(value)
-                self.regmodel[row][col] = rset.repeat.int_str()
+                self._reg_model[row][col] = rset.repeat.int_str()
         self.modified()
 
     def hdl_path_changed(
@@ -361,14 +346,14 @@ class BlockTab:
     ) -> None:
         "Called with the HDL path changes"
 
-        if self.block is None or self.regmodel is None:
+        if self._block is None or self._reg_model is None:
             return
 
         row = int(path)
-        reg_inst = self.regmodel[row][-1]
-        self.regmodel[row][col] = new_text
-        self.block.modified = True
-        for rset in self.block.regset_insts:
+        reg_inst = self._reg_model[row][-1]
+        self._reg_model[row][col] = new_text
+        self._block.modified = True
+        for rset in self._block.regset_insts:
             if rset.uuid == reg_inst.uuid:
                 rset.hdl = new_text
         self.modified()
@@ -378,14 +363,14 @@ class BlockTab:
 
         self.clear()
         self.disable_modified = True
-        self.project = project
+        self._project = project
 
-        if self.project:
+        if self._project:
             key_list = project.blocks.keys()
             if key_list:
                 self.select_block(list(key_list)[0])
             self.build_add_regset_menu()
-            self.block_obj.set_project(project)
+            self._sidebar.set_items(list(self._project.blocks.values()))
             self.disable_modified = False
 
     def build_add_regset_menu(self):
@@ -393,73 +378,74 @@ class BlockTab:
 
         page = 1
 
-        if self.project and self.block:
+        if self._project and self._block:
             reg_menu = Gtk.Menu()
 
             sorted_dict = {
                 key: value
                 for key, value in sorted(
-                    self.project.regsets.items(), key=lambda item: item[1].name
+                    self._project.regsets.items(),
+                    key=lambda item: item[1].name,
                 )
             }
 
             empty = True
             for regset_id in sorted_dict:
                 empty = False
-                regset = self.project.regsets[regset_id]
+                regset = self._project.regsets[regset_id]
                 menu_item = Gtk.MenuItem(regset.name)
-                menu_item.connect("activate", self.menu_selected, regset)
+                menu_item.connect(
+                    "activate", self.add_reginst_to_block, regset
+                )
                 menu_item.show()
                 reg_menu.append(menu_item)
 
             if empty:
-                self.block_reg_add.set_sensitive(False)
-                show_doc = False
-                self.block_reg_add.set_tooltip_markup(
+                self._block_reg_add.set_sensitive(False)
+                self._block_reg_add.set_tooltip_markup(
                     "No register sets have been defined.\n"
                     "Register sets can be defined on the\n"
                     "<b>Register Sets</b> tab on the left side\n"
                     "of the window."
                 )
             else:
-                self.block_reg_add.set_sensitive(True)
-                show_doc = True
-                self.block_reg_add.set_tooltip_text(
+                self._block_reg_add.set_sensitive(True)
+                self._block_reg_add.set_tooltip_text(
                     "Select a register set to add to the block"
                 )
-                self.block_reg_add.set_popup(reg_menu)
+                self._block_reg_add.set_popup(reg_menu)
                 page = 0
         else:
             page = 0
-            self.block_reg_add.set_sensitive(False)
-            self.block_reg_add.set_tooltip_text(
+            self._block_reg_add.set_sensitive(False)
+            self._block_reg_add.set_tooltip_text(
                 "No register sets have been defined"
             )
-        self.reginst_list_notebook.set_current_page(page)
+        self._reginst_list_notebook.set_current_page(page)
 
     def set_parameters(self, parameters) -> None:
         "Sets the parameters"
 
         self._parameter_names = set({(p.name, p.uuid) for p in parameters})
-        self.overrides_list.set_parameters(parameters)
+        self._overrides_list.set_parameters(parameters)
         self.repeat_col.update_menu(sorted(list(self._parameter_names)))
 
     def set_parameters_modified(self) -> None:
         "Called when the parameters have been modified"
 
-        if self.block is None:
+        if self._block is None:
             return
 
         self.modified()
-        self.set_parameters(self.block.parameters.get())
+        self.set_parameters(self._block.parameters.get())
 
     def find_name_inst_name(self, regset_name: str) -> str:
         "Finds the next available instance name"
 
-        if self.block is None:
+        if self._block is None:
             return ""
 
-        names = set({rset.name for rset in self.block.regset_insts})
+        names = set({rset.name for rset in self._block.regset_insts})
 
         if regset_name not in names:
             new_name = regset_name
@@ -472,10 +458,10 @@ class BlockTab:
                 index += 1
         return new_name
 
-    def menu_selected(self, _obj, regset) -> None:
+    def add_reginst_to_block(self, _obj, regset: RegisterDb) -> None:
         "Called when the menu entry has been selected"
 
-        if self.block is None:
+        if self._block is None:
             LOGGER.warning(
                 (
                     "A block must be created or added before register set can be added. "
@@ -483,18 +469,18 @@ class BlockTab:
                 )
             )
             return
-        if self.regmodel is None or self.project is None:
+        if self._reg_model is None or self._project is None:
             return
 
         new_name = self.find_name_inst_name(regset.name)
 
         reginst = RegisterInst(rset=regset.uuid, inst=new_name)
-        reg_cont = self.project.regsets[regset.uuid]
+        reg_cont = self._project.regsets[regset.uuid]
 
-        self.block.regset_insts.append(reginst)
-        self.block.regsets[regset.uuid] = reg_cont
+        self._block.regset_insts.append(reginst)
+        self._block.regsets[regset.uuid] = reg_cont
 
-        self.regmodel.append(
+        self._reg_model.append(
             row=(
                 regset.name,
                 new_name,
@@ -509,16 +495,16 @@ class BlockTab:
     def on_remove_clicked(self, _obj: Gtk.Button) -> None:
         "Called when the remove button has been clicked"
 
-        if self.block is None:
+        if self._block is None:
             return
 
-        model, node = self.block_regsets.get_selection().get_selected()
+        model, node = self._block_regsets.get_selection().get_selected()
 
         to_be_deleted = model[node][-1]
 
-        self.block.regset_insts = [
+        self._block.regset_insts = [
             regset
-            for regset in self.block.regset_insts
+            for regset in self._block.regset_insts
             if regset.uuid != to_be_deleted.uuid
         ]
         model.remove(node)
@@ -527,23 +513,23 @@ class BlockTab:
     def select_block(self, blkid: str) -> None:
         "Builds a new register model from the selected block ID"
 
-        if self.regmodel is None or self.project is None:
+        if self._reg_model is None or self._project is None:
             return
 
-        self.block = self.project.blocks[blkid]
+        self._block = self._project.blocks[blkid]
 
-        self.preview.change_block(self.block, self.project)
-        self.block_name.change_db(self.block)
-        self.block_description.change_db(self.block)
-        self.block_size.change_db(self.block)
+        self._preview.change_block(self._block, self._project)
+        self._block_name.change_db(self._block)
+        self._block_description.change_db(self._block)
+        self._block_size.change_db(self._block)
 
-        self.regmodel = Gtk.ListStore(str, str, str, str, str, object)
-        self.block_regsets.set_model(self.regmodel)
-        self.overrides_list.set_project(self.block)
+        self._reg_model = Gtk.ListStore(str, str, str, str, str, object)
+        self._block_regsets.set_model(self._reg_model)
+        self._overrides_list.set_project(self._block)
 
-        for reginst in self.block.regset_insts:
-            regset = self.block.regsets[reginst.regset_id]
-            self.regmodel.append(
+        for reginst in self._block.regset_insts:
+            regset = self._block.regsets[reginst.regset_id]
+            self._reg_model.append(
                 row=(
                     regset.name,
                     reginst.name,
@@ -558,7 +544,7 @@ class BlockTab:
     def new_block_clicked(self, _obj: Gtk.Button) -> None:
         "Called when the new block button has been clicked"
 
-        if self.project is None:
+        if self._project is None:
             return
 
         filename_list = create_file_selector(
@@ -578,16 +564,16 @@ class BlockTab:
             if filepath.suffix != BLK_EXT:
                 filepath = filepath.with_suffix(BLK_EXT)
 
-            self.block = Block()
-            self.block.filename = filepath
-            self.block.name = filepath.stem
+            self._block = Block()
+            self._block.filename = filepath
+            self._block.name = filepath.stem
 
-            self.project.blocks[self.block.uuid] = self.block
-            node = self.block_model.add(self.block)
-            self.block_obj.select(node)
+            self._project.blocks[self._block.uuid] = self._block
+            node = self._sidebar.add(self._block)
+            self._sidebar.select(node)
 
             self.modified()
-            self.project.modified = True
+            self._project.modified = True
         self.update_block_selection()
 
     def add_block_clicked(self, _obj: Gtk.Button) -> None:
@@ -596,7 +582,7 @@ class BlockTab:
         create_selector method, then runs the dialog, and calls the
         open_xml routine with the result.
         """
-        if self.project is None:
+        if self._project is None:
             return
 
         filename_list = create_file_selector(
@@ -616,119 +602,26 @@ class BlockTab:
                 blk.open(name)
                 blk.modified = True
 
-                self.project.blocks[blk.uuid] = blk
-                self.block_model.add(blk)
+                self._project.blocks[blk.uuid] = blk
+                self._sidebar.add(blk)
 
                 for regset in blk.regsets:
-                    if regset not in self.project.regsets:
-                        self.project.regsets[regset] = blk.regsets[regset]
-            self.project.modified = True
+                    if regset not in self._project.regsets:
+                        self._project.regsets[regset] = blk.regsets[regset]
+            self._project.modified = True
         self.update_block_selection()
 
     def remove_block_clicked(self, _obj: Gtk.Button) -> None:
         "Called with the remove block button has been pressed"
 
-        if self.block is None or self.project is None:
+        if self._block is None or self._project is None:
             return
 
-        model, node = self.block_obj.get_selected()
-        obj = model.get_value(node, 2)
-
-        model.remove(node)
-        self.project.remove_block(obj.uuid)
-        self.block_remove_callback()
-        self.project.modified = True
+        uuid = self._sidebar.remove_selected()
+        self._project.remove_block(uuid)
+        self._block_remove_callback()
+        self._project.modified = True
         self.update_block_selection()
-
-
-class BlockSelectList:
-    """Block list"""
-
-    def __init__(self, obj, selection_callback):
-        self.__obj = obj
-        self.__obj.get_selection().connect("changed", selection_callback)
-        self.__obj.set_reorderable(True)
-        self.__model = None
-        self.__build_prj_window()
-
-        self.factory = Gtk.IconFactory()
-        filename = os.path.join(INSTALL_PATH, "media", "ModifiedIcon.png")
-        pixbuf = GdkPixbuf.Pixbuf.new_from_file(filename)
-        iconset = Gtk.IconSet(pixbuf)
-        self.factory.add("out-of-date", iconset)
-        self.factory.add_default()
-        self.project = None
-
-    def update_data(self):
-        "Refreshes the data in the model after the block has been changed"
-
-        for row in self.__model:
-            row[1] = row[2].name
-
-    def set_project(self, project):
-        "Updates after a change in the project"
-
-        self.__model.clear()
-        self.project = project
-
-        sorted_dict = {
-            key: value
-            for key, value in sorted(
-                self.project.blocks.items(), key=lambda item: item[1].name
-            )
-        }
-
-        for blkid in sorted_dict:
-            self.__model.add(self.project.blocks[blkid])
-
-    def set_model(self, model):
-        """Sets the model"""
-
-        self.__model = model
-        self.__obj.set_model(model)
-
-    def __build_prj_window(self):
-        """Build the block window"""
-
-        # renderer = Gtk.CellRendererPixbuf()
-        # column = Gtk.TreeViewColumn("", renderer, stock_id=0)
-        # column.set_min_width(20)
-        # self.__obj.append_column(column)
-
-        renderer = Gtk.CellRendererText()
-        renderer.set_property("ellipsize", Pango.EllipsizeMode.END)
-        renderer.set_padding(6, 3)
-        column = Gtk.TreeViewColumn("Blocks", renderer, text=1)
-        column.set_min_width(140)
-        column.set_cell_data_func(renderer, self.set_format)
-        self.__obj.append_column(column)
-
-    def set_format(self, _col, renderer, model, titer, data):
-        val = model.get_value(titer, 0)
-
-        if val:
-            renderer.set_property("weight", Pango.Weight.BOLD)
-            renderer.set_property("style", Pango.Style.ITALIC)
-        else:
-            renderer.set_property("weight", Pango.Weight.NORMAL)
-            renderer.set_property("style", Pango.Style.NORMAL)
-
-    def get_selected(self):
-        """Return the selected object"""
-        return self.__obj.get_selection().get_selected()
-
-    def select(self, node):
-        """Select the specified row"""
-
-        selection = self.__obj.get_selection()
-        if node and selection:
-            selection.select_iter(node)
-
-    def select_path(self, path):
-        """Select based on path"""
-
-        selection = self.__obj.get_selection()
-        selection.select_path(path)
 
 
 class BlockDoc(BaseDoc):
@@ -743,13 +636,13 @@ class BlockDoc(BaseDoc):
             notebook,
             modified,
         )
-        self.block: Optional[Block] = None
+        self._block: Optional[Block] = None
         self.changing = False
 
     def change_block(
         self, block: Optional[Block], _project: Optional[RegProject]
     ):
-        self.block = block
+        self._block = block
 
         self.changing = True
         self.remove_pages()
@@ -761,9 +654,9 @@ class BlockDoc(BaseDoc):
         self.changing = False
 
     def remove_page_from_doc(self, title: str):
-        if self.block is not None:
-            self.block.doc_pages.remove_page(title)
+        if self._block is not None:
+            self._block.doc_pages.remove_page(title)
 
     def update_page_from_doc(self, title: str, text: str, tags: List[str]):
-        if not self.changing and self.block is not None:
-            self.block.doc_pages.update_page(title, text, tags)
+        if not self.changing and self._block is not None:
+            self._block.doc_pages.update_page(title, text, tags)

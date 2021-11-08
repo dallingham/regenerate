@@ -433,7 +433,7 @@ class Build(BaseWindow):
         elif project_type == ProjectType.BLOCK:
             block = self.__prj.blocks[uuid]
             block.modified = True
-            self.__add_item_to_list(uuid, exporter, filename)
+            self.__add_item_to_list(uuid, exporter, filename, options)
             block.exports.append(ExportData(exporter, filename, options))
         else:
             self.__prj.add_to_project_export_list(exporter, filename, options)

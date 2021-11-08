@@ -27,7 +27,6 @@ from abc import ABCMeta, abstractmethod
 from pathlib import Path
 from typing import List, Tuple, Callable, Dict, Any, Optional
 from enum import IntEnum
-from collections import namedtuple
 from jinja2 import FileSystemLoader, Environment
 
 from regenerate.db import RegisterDb, RegProject, Block
@@ -39,19 +38,6 @@ class ProjectType(IntEnum):
     REGSET = 0
     BLOCK = 1
     PROJECT = 2
-
-
-ExportInfo = namedtuple(
-    "ExportInfo",
-    [
-        "obj_class",
-        "type",
-        "description",
-        "full_description",
-        "extension",
-        "id",
-    ],
-)
 
 
 def get_username():

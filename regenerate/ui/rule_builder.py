@@ -312,7 +312,7 @@ class RuleBuilder(Gtk.Assistant):
         for reginst in block.regset_insts:
             self._reginst_mdl.append(
                 row=[
-                    False,
+                    True,
                     reginst.name,
                     self._project.regsets[reginst.regset_id].name,
                     reginst,

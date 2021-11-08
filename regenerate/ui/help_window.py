@@ -24,6 +24,7 @@ the contents from restructuredText to HTML.
 from typing import Optional
 from pathlib import Path
 from gi.repository import Gtk, Gdk
+
 from regenerate.settings.paths import INSTALL_PATH, HELP_PATH
 from regenerate.ui.preview import html_string
 from regenerate.ui.base_window import BaseWindow
@@ -43,6 +44,8 @@ class HelpWindow(BaseWindow):
 
         super().__init__()
 
+        self._filename = filename
+
         if HelpWindow.window is None:
             builder = Gtk.Builder()
             bfile = Path(INSTALL_PATH) / "ui" / "help.ui"
@@ -51,16 +54,31 @@ class HelpWindow(BaseWindow):
             HelpWindow.window = builder.get_object("help_win")
             self.configure(HelpWindow.window)
             HelpWindow.wkit = builder.get_object("html_view")
-            HelpWindow.button = builder.get_object("help_close")
-            HelpWindow.button.connect("clicked", _hide)
+            builder.get_object("go_back").connect("clicked", self._go_back)
+            builder.get_object("go_home").connect("clicked", self._go_home)
+            builder.get_object("go_forward").connect(
+                "clicked", self._go_forward
+            )
             HelpWindow.window.connect("destroy", _destroy)
             HelpWindow.window.connect("delete_event", _delete)
             HelpWindow.window.show_all()
         else:
             HelpWindow.window.show()
 
-        if Path(filename).suffix == ".rst":
-            data = self.load_file(filename)
+        self.load_home_page()
+
+        if title:
+            HelpWindow.window.set_title(f"{title} - regenerate")
+
+    def load_home_page(self) -> None:
+        """Loads the original page specified when created. Treats this
+        file as if it were the home page"""
+
+        if HelpWindow.wkit is None:
+            return
+
+        if Path(self._filename).suffix == ".rst":
+            data = self.load_file(self._filename)
             try:
                 HelpWindow.wkit.load_html(html_string(data), "text/html")
             except:
@@ -68,11 +86,22 @@ class HelpWindow(BaseWindow):
                     html_string(data), "text/html"
                 )
         else:
-            full_path = str(Path(HELP_PATH) / filename)
+            full_path = str(Path(HELP_PATH) / self._filename)
             HelpWindow.wkit.load_uri(f"file:///{full_path}")
 
-        if title:
-            HelpWindow.window.set_title(f"{title} - regenerate")
+    def _go_back(self, _obj: Gtk.Button) -> None:
+        "Goes back to the previous page"
+        if HelpWindow.wkit:
+            HelpWindow.wkit.go_back()
+
+    def _go_home(self, _obj: Gtk.Button) -> None:
+        "Reloads the home page"
+        self.load_home_page()
+
+    def _go_forward(self, _obj: Gtk.Button) -> None:
+        "Goes forward"
+        if HelpWindow.wkit:
+            HelpWindow.wkit.go_forward()
 
     def load_file(self, filename: str) -> str:
         "Loads the file if found"
@@ -86,20 +115,14 @@ class HelpWindow(BaseWindow):
         return data
 
 
-def _destroy(_obj):
-    """Hide the window with the destroy event is received"""
+def _destroy(_obj) -> bool:
+    "Hide the window with the destroy event is received"
     if HelpWindow.window:
         HelpWindow.window.hide()
     return True
 
 
-def _delete(window: Gtk.Window, _event: Gdk.Event):
-    """Hide the window with the delete event is received"""
+def _delete(window: Gtk.Window, _event: Gdk.Event) -> bool:
+    "Hide the window with the delete event is received"
     window.hide()
     return True
-
-
-def _hide(_button: Gtk.Button):
-    "Hide the window"
-    if HelpWindow.window:
-        HelpWindow.window.hide()

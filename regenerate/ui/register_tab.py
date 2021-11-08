@@ -19,11 +19,10 @@
 
 import os
 
-from typing import Dict, Optional, Callable, Tuple
+from typing import Dict, Optional, Callable
 from pathlib import Path
 
-from gi.repository import Gtk, GdkPixbuf, Pango
-from regenerate.settings.paths import INSTALL_PATH, HELP_PATH
+from gi.repository import Gtk
 from regenerate.db import (
     Register,
     BitField,
@@ -43,8 +42,7 @@ from regenerate.extras.regutils import (
 )
 from .bit_list import BitModel, BitList
 from .bitfield_editor import BitFieldEditor
-from .columns import ReadOnlyColumn
-from .enums import SelectCol, BitCol, RegCol
+from .enums import BitCol, RegCol
 from .module_tab import ModuleTabs
 from .parameter_list import ParameterList
 from .reg_description import RegisterDescription
@@ -52,7 +50,7 @@ from .register_list import RegisterModel, RegisterList
 from .summary_window import SummaryWindow
 from .filter_mgr import FilterManager
 from .file_dialogs import get_new_filename
-from .select_model import SelectModel
+from .select_sidebar import SelectSidebar
 
 
 class RegSetWidgets:
@@ -118,198 +116,122 @@ class RegSetStatus:
         self.node = node
 
 
-class RegSetList:
-    """Register List list manager"""
-
-    def __init__(self, obj: Gtk.TreeView, selection_callback: Callable):
-
-        self.prj: Optional[RegProject] = None
-
-        self.__obj = obj
-        self.__obj.get_selection().connect("changed", selection_callback)
-        self.__obj.set_reorderable(True)
-        self.__model: Optional[SelectModel] = None
-        self.__build_prj_window()
-
-        # self.factory = Gtk.IconFactory()
-        # filename = Path(INSTALL_PATH) / "media" / "ModifiedIcon.png"
-        # pixbuf = GdkPixbuf.Pixbuf.new_from_file(str(filename))
-        # iconset = Gtk.IconSet(pixbuf)
-        # self.factory.add("out-of-date", iconset)
-        # self.factory.add_default()
-
-    def set_model(self, model: SelectModel):
-        """Sets the model"""
-
-        self.__model = model
-        self.__obj.set_model(model)
-
-    def __build_prj_window(self):
-        """Build the project window"""
-
-        column = ReadOnlyColumn("Register Sets", 1)
-        column.renderer.set_property("ellipsize", Pango.EllipsizeMode.END)
-        column.renderer.set_padding(6, 3)
-        column.set_min_width(140)
-        column.set_cell_data_func(column.renderer, self.set_format)
-        self.__obj.append_column(column)
-
-    def set_format(self, _col, renderer, model, titer, data):
-        val = model.get_value(titer, 0)
-
-        if val:
-            renderer.set_property("weight", Pango.Weight.BOLD)
-            renderer.set_property("style", Pango.Style.ITALIC)
-        else:
-            renderer.set_property("weight", Pango.Weight.NORMAL)
-            renderer.set_property("style", Pango.Style.NORMAL)
-
-    def get_selected(self) -> Tuple[SelectModel, Gtk.TreeIter]:
-        """Return the selected object"""
-        return self.__obj.get_selection().get_selected()
-
-    def select(self, node: Gtk.TreeIter) -> None:
-        """Select the specified row"""
-
-        selection = self.__obj.get_selection()
-        if node and selection:
-            selection.select_iter(node)
-
-    def select_path(self, path: str) -> None:
-        """Select based on path"""
-
-        selection = self.__obj.get_selection()
-        selection.select_path(path)
-
-    def change_project(self, prj: RegProject) -> None:
-        "Change the project"
-        self.prj = prj
-
-
 class RegSetTab:
+    "Register set tab"
+
     def __init__(
         self,
-        find_obj,
-        modified,
-        db_selected_action,
-        reg_selected_action,
-        field_selected_action,
+        find_obj: Callable,
+        modified: Callable,
+        db_selected_action: Gtk.ActionGroup,
+        reg_selected_action: Gtk.ActionGroup,
+        field_selected_action: Gtk.ActionGroup,
     ):
-        self.modified_callback = modified
-        self.db_selected_action = db_selected_action
-        self.reg_selected_action = reg_selected_action
-        self.field_selected_action = field_selected_action
+        self._modified_callback = modified
+        self._db_selected_action = db_selected_action
+        self._reg_selected_action = reg_selected_action
+        self._field_selected_action = field_selected_action
 
-        self.reg_model: Optional[RegisterModel] = None
-        self.modelsort: Optional[Gtk.TreeModelSort] = None
+        self._reg_model: Optional[RegisterModel] = None
+        self._modelsort: Optional[Gtk.TreeModelSort] = None
 
-        self.skip_changes = False
-        self.reg_set_model = None
-        self.widgets = RegSetWidgets(find_obj)
+        self._skip_changes = False
+        self._widgets = RegSetWidgets(find_obj)
 
-        self.widgets.reg_notebook.set_sensitive(False)
-        self.widgets.reg_notebook.hide()
-        self.reg_selected_action.set_sensitive(False)
+        self._regset_select_notebook = find_obj("regset_select_notebook")
 
-        self.connect_signals()
-
-        self.regset_select_notebook = find_obj("regset_select_notebook")
-        self.regset_select_notebook.set_show_tabs(False)
-        self.regset_select_help = find_obj("regset_select_help")
-        help_path = Path(HELP_PATH) / "regset_select_help.html"
-        try:
-            with help_path.open() as ifile:
-                self.regset_select_help.load_html(ifile.read(), "text/html")
-        except IOError:
-            pass
-
-        self.reg_set_obj = RegSetList(
-            self.widgets.regset_list, self.regset_sel_changed
+        self._sidebar = SelectSidebar(
+            find_obj("regset_sidebar"),
+            "Register Sets",
+            "regset_select_help.html",
+            self.new_regset_callback,
+            self.add_regset_callback,
+            self.remove_regset_callback,
+            self.add_model_callback,
         )
-        self.module_tabs = ModuleTabs(find_obj, self.set_modified)
+        self._sidebar.set_selection_changed_callback(self._regset_sel_changed)
 
-        self.parameter_list = ParameterList(
-            self.widgets.parameter_list,
-            self.widgets.add_regset_param,
-            self.widgets.remove_regset_param,
+        self._widgets.reg_notebook.set_sensitive(False)
+        self._widgets.reg_notebook.hide()
+        self._reg_selected_action.set_sensitive(False)
+
+        self._connect_signals()
+
+        self._module_tabs = ModuleTabs(find_obj, self.set_modified)
+
+        self._parameter_list = ParameterList(
+            self._widgets.parameter_list,
+            self._widgets.add_regset_param,
+            self._widgets.remove_regset_param,
             self.set_parameters_modified,
         )
 
-        self.reglist_obj = RegisterList(
-            self.widgets.reglist,
-            self.selected_reg_changed,
+        self._reglist_obj = RegisterList(
+            self._widgets.reglist,
+            self._selected_reg_changed,
             self.set_modified,
             self.update_register_addr,
             self.set_register_warn_flags,
         )
 
-        self.bitfield_obj = BitList(
-            self.widgets.bitfield_list,
+        self._bitfield_obj = BitList(
+            self._widgets.bitfield_list,
             self.bit_changed,
             self.set_modified,
         )
 
         self.reg_description = RegisterDescription(
-            self.widgets.descript,
-            self.widgets.regset_preview,
+            self._widgets.descript,
+            self._widgets.regset_preview,
             self.reg_descript_callback,
         )
 
-        self.regset: Optional[RegisterDb] = None
-        self.project: Optional[RegProject] = None
-        self.name2status: Dict[str, RegSetStatus] = {}
+        self._regset: Optional[RegisterDb] = None
+        self._project: Optional[RegProject] = None
+        self._name2status: Dict[str, RegSetStatus] = {}
 
-        self.widgets.filter_obj.set_placeholder_text("Signal Filter")
-        self.filter_manage = FilterManager(self.widgets.filter_obj)
+        self._widgets.filter_obj.set_placeholder_text("Signal Filter")
+        self._filter_manage = FilterManager(self._widgets.filter_obj)
 
         self.clear()
 
-    def connect_signals(self) -> None:
+    def _connect_signals(self) -> None:
         "Connect signals to the elements"
 
-        self.widgets.notebook.connect("switch-page", self.reg_page_changed)
-        self.widgets.add_regset_button.connect(
-            "clicked", self.add_regset_callback
-        )
-        self.widgets.remove_regset_button.connect(
-            "clicked", self.remove_regset_callback
-        )
-        self.widgets.new_regset_button.connect(
-            "clicked", self.new_regset_callback
-        )
-        self.widgets.add_field_button.connect(
+        self._widgets.notebook.connect("switch-page", self.reg_page_changed)
+        self._widgets.add_field_button.connect(
             "clicked",
             self.add_bit_callback,
         )
-        self.widgets.remove_field_button.connect(
+        self._widgets.remove_field_button.connect(
             "clicked",
             self.remove_bit_callback,
         )
-        self.widgets.edit_field_button.connect(
+        self._widgets.edit_field_button.connect(
             "clicked",
             self.edit_bit_callback,
         )
-        self.widgets.copy_reg_button.connect(
+        self._widgets.copy_reg_button.connect(
             "clicked", self.duplicate_register_callback
         )
-        self.widgets.no_sharing.connect(
+        self._widgets.no_sharing.connect(
             "toggled", self.no_sharing_toggle_callback
         )
-        self.widgets.read_access.connect(
+        self._widgets.read_access.connect(
             "toggled", self.read_access_toggle_callback
         )
-        self.widgets.write_access.connect(
+        self._widgets.write_access.connect(
             "toggled", self.write_access_toggle_callback
         )
-        self.widgets.preview_button.connect(
+        self._widgets.preview_button.connect(
             "clicked",
             self.show_preview_callback,
         )
-        self.widgets.add_reg_button.connect(
+        self._widgets.add_reg_button.connect(
             "clicked",
             self.add_register_callback,
         )
-        self.widgets.remove_reg_button.connect(
+        self._widgets.remove_reg_button.connect(
             "clicked",
             self.remove_register_callback,
         )
@@ -317,11 +239,11 @@ class RegSetTab:
     def filter_visible(self, visible: bool) -> None:
         "Shows or hides the filter object"
         if visible:
-            self.widgets.filter_obj.show()
+            self._widgets.filter_obj.show()
         else:
-            self.widgets.filter_obj.hide()
+            self._widgets.filter_obj.hide()
 
-    def reg_page_changed(self, obj, page, page_num):
+    def reg_page_changed(self, _obj, _page, _page_num: int) -> None:
         """When the notebook page changes, update any fields that are
         out of date due to parameter name changes"""
 
@@ -330,7 +252,7 @@ class RegSetTab:
 
     def update_field_parameters(self):
         "Update any displayed parameter names if they have changed"
-        for row in self.bit_model:
+        for row in self._bit_model:
             field = row[BitCol.FIELD]
             if field.reset_type == ResetType.PARAMETER:
                 if field.reset_parameter != row[BitCol.RESET]:
@@ -338,10 +260,10 @@ class RegSetTab:
 
     def update_size_parameters(self):
         "Change the reset parameters, updating for any name changes"
-        if self.reg_model is None:
+        if self._reg_model is None:
             return
 
-        for row in self.reg_model:
+        for row in self._reg_model:
             reg = row[-1]
             if (
                 reg.dimension.is_parameter
@@ -351,178 +273,190 @@ class RegSetTab:
 
     def set_parameters_modified(self):
         self.set_modified()
-        self.reglist_obj.set_parameters(self.regset.parameters.get())
-        self.bitfield_obj.set_parameters(self.regset.parameters.get())
-        self.selected_reg_changed(None)
+        self._reglist_obj.set_parameters(self._regset.parameters.get())
+        self._bitfield_obj.set_parameters(self._regset.parameters.get())
+        self._selected_reg_changed(None)
 
     def set_modified(self):
         "Sets the modified flag"
 
-        if not self.skip_changes:
-            self.regset.modified = True
-            self.reg_set_model.set_markup(self.node, True)
+        if not self._skip_changes:
+            self._regset.modified = True
+            self._sidebar.update()
+            self._modified_callback()
 
-            # update register set names in the register model
-            for row in self.reg_set_model:
-                row[1] = row[-1].name
-
-            self.modified_callback()
-
-    def enable_registers(self, value: bool) -> None:
+    def _enable_registers(self, value: bool) -> None:
         """
         Enables UI items when a database has been loaded. This includes
         enabling the register window, the register related buttons, and
         the export menu.
         """
-        self.widgets.notebook.set_sensitive(value)
-        self.db_selected_action.set_sensitive(value)
+        self._widgets.notebook.set_sensitive(value)
+        self._db_selected_action.set_sensitive(value)
         if value:
-            self.widgets.reg_notebook.show()
+            self._widgets.reg_notebook.show()
         else:
-            self.widgets.reg_notebook.hide()
+            self._widgets.reg_notebook.hide()
 
     def new_regset(self, regset: RegisterDb) -> Optional[Gtk.TreeIter]:
         "Inserts the register set into the tree"
 
-        node = self.reg_set_model.add(regset)
-        self.reg_model = RegisterModel()
-        mdl = self.reg_model.filter_new()
-        self.modelsort = Gtk.TreeModelSort(mdl)
-        self.filter_manage.change_filter(mdl, True)
-        self.reglist_obj.set_model(self.modelsort)
+        self._reg_model = RegisterModel()
+        filter_model = self._reg_model.filter_new()
+        self._modelsort = Gtk.TreeModelSort(filter_model)
+        self._filter_manage.change_filter(filter_model, True)
+
+        self._reglist_obj.set_model(self._modelsort)
 
         for key in regset.get_keys():
             reg = regset.get_register(key)
             if reg:
-                self.reg_model.append_register(reg)
+                self._reg_model.append_register(reg)
 
         bit_model = BitModel()
 
+        node = self._sidebar.add(regset)
         status = RegSetStatus(
             regset,
-            self.reg_model,
-            self.modelsort,
-            self.filter_manage.get_model(),
+            self._reg_model,
+            self._modelsort,
+            self._filter_manage.get_model(),
             bit_model,
             node,
         )
 
-        self.name2status[regset.uuid] = status
+        self._name2status[regset.uuid] = status
         return node
 
     def array_changed(self, obj):
         "Callback for the array_is_reg value"
-        if self.regset:
-            self.regset.array_is_reg = obj.get_active()
+        if self._regset:
+            self._regset.array_is_reg = obj.get_active()
             self.set_modified()
 
-    def change_project(self, prj):
+    def change_project(self, prj: RegProject) -> None:
         "Change the project"
 
-        if id(prj) != id(self.project):
-            self.reg_set_obj.change_project(prj)
-            self.project = prj
-            self.name2status = {}
-            self.rebuild_model()
+        self._project = prj
+        self._sidebar.set_items(prj.regsets.values())
+        self.rebuild_model()
         self.update_display(False)
-        self.reg_set_obj.select_path(0)
+        self._sidebar.select_path(0)
 
-    def rebuild_model(self):
+    def rebuild_model(self) -> None:
         "Rebuild the model in the register set"
         if (
-            len(self.project.regsets) != len(self.reg_set_model)
-            or len(self.project.regsets) == 0
+            len(self._project.regsets) != self._sidebar.size()
+            or len(self._project.regsets) == 0
         ):
-            self.reg_set_model.clear()
+            self._sidebar.clear()
 
             sorted_dict = {
                 key: value
                 for key, value in sorted(
-                    self.project.regsets.items(), key=lambda item: item[1].name
+                    self._project.regsets.items(),
+                    key=lambda item: item[1].name,
                 )
             }
 
             for rsid in sorted_dict:
-                regset = self.project.regsets[rsid]
+                regset = self._project.regsets[rsid]
                 self.new_regset(regset)
 
-    def reg_descript_callback(self, reg):
+    def reg_descript_callback(self, reg: Register):
         self.set_modified()
         self.set_register_warn_flags(reg)
 
     def update_display(self, show_msg=False):
-        old_skip = self.skip_changes
-        self.skip_changes = True
+        old_skip = self._skip_changes
+        self._skip_changes = True
         self.redraw(show_msg)
-        self.skip_changes = old_skip
+        self._skip_changes = old_skip
 
-    def redraw(self, show_msg=False):
+    def redraw(self, _show_msg=False):
         """Redraws the information in the register list."""
-        if self.regset:
-            self.module_tabs.change_db(self.regset, self.project)
-            self.parameter_list.set_db(self.regset)
-            self.reglist_obj.set_parameters(self.regset.parameters.get())
-            self.bitfield_obj.set_parameters(self.regset.parameters.get())
-            if self.regset.array_is_reg:
-                self.widgets.register_notation.set_active(True)
+        if self._regset:
+            self._module_tabs.change_db(self._regset, self._project)
+            self._parameter_list.set_db(self._regset)
+            self._reglist_obj.set_parameters(self._regset.parameters.get())
+            self._bitfield_obj.set_parameters(self._regset.parameters.get())
+            if self._regset.array_is_reg:
+                self._widgets.register_notation.set_active(True)
             else:
-                self.widgets.array_notation.set_active(True)
+                self._widgets.array_notation.set_active(True)
         else:
-            self.module_tabs.change_db(None, None)
-        self.rebuild_model()
+            self._module_tabs.change_db(None, None)
 
-        if self.project.regsets:
-            self.regset_select_notebook.set_current_page(0)
+        if self._project.regsets:
+            self._regset_select_notebook.set_current_page(0)
         else:
-            self.regset_select_notebook.set_current_page(1)
+            self._regset_select_notebook.set_current_page(1)
 
         self.update_bit_count()
         self.set_description_warn_flag()
 
     def get_selected_register(self):
-        return self.reglist_obj.get_selected_register()
+        return self._reglist_obj.get_selected_register()
+
+    def add_model_callback(self, regset: RegisterDb, node: Gtk.TreeIter):
+        if regset.uuid not in self._name2status:
+
+            self._reg_model = RegisterModel()
+            filter_model = self._reg_model.filter_new()
+            self._modelsort = Gtk.TreeModelSort(filter_model)
+            self._filter_manage.change_filter(filter_model, True)
+
+            for key in regset.get_keys():
+                reg = regset.get_register(key)
+                if reg:
+                    self._reg_model.append_register(reg)
+
+            bit_model = BitModel()
+
+            status = RegSetStatus(
+                regset,
+                self._reg_model,
+                self._modelsort,
+                self._filter_manage.get_model(),
+                bit_model,
+                node,
+            )
+
+            self._name2status[regset.uuid] = status
 
     def clear(self):
-        self.reg_set_model = SelectModel()
-        self.reg_set_obj.set_model(self.reg_set_model)
+        self._sidebar.clear()
 
-    def regset_sel_changed(self, _obj):
-        model, node = self.reg_set_obj.get_selected()
-        if node:
-            self.regset = model[node][SelectCol.OBJ]
-        else:
-            self.regset = None
+    def _regset_sel_changed(self, _obj: Gtk.TreeSelection) -> None:
 
-        old_skip = self.skip_changes
-        self.skip_changes = True
+        self._regset = self._sidebar.get_selected_object()
 
-        if self.regset:
-            self.regset.reg_select = self.reglist_obj.get_selected_row()
-            self.regset.bit_select = self.bitfield_obj.get_selected_row()
+        old_skip = self._skip_changes
+        self._skip_changes = True
 
-            status = self.name2status[self.regset.uuid]
-            self.reg_model = status.reg_model
-            self.filter_manage.change_filter(status.modelfilter)
-            self.modelsort = status.modelsort
+        if self._regset:
+            status = self._name2status[self._regset.uuid]
+            self._reg_model = status.reg_model
+            self._filter_manage.change_filter(status.modelfilter)
+            self._modelsort = status.modelsort
             self.node = status.node
 
-            self.reg_description.set_project(self.project)
+            self.reg_description.set_project(self._project)
 
-            status = self.name2status[self.regset.uuid]
-            self.filter_manage.change_filter(status.modelfilter)
-            self.reglist_obj.set_model(status.modelsort)
+            status = self._name2status[self._regset.uuid]
+            self._filter_manage.change_filter(status.modelfilter)
+            self._reglist_obj.set_model(status.modelsort)
 
-            self.bit_model = status.bit_model
-            self.bitfield_obj.set_model(self.bit_model)
+            self._bit_model = status.bit_model
+            self._bitfield_obj.set_model(self._bit_model)
 
-            self.redraw()
-            self.enable_registers(True)
+            self.update_display()
+            self._enable_registers(True)
         else:
-            self.regset = None
-            self.dbase = None
-            self.reglist_obj.set_model(None)
-            self.enable_registers(False)
-        self.skip_changes = old_skip
+            self._regset = None
+            self._reglist_obj.set_model(None)
+            self._enable_registers(False)
+        self._skip_changes = old_skip
 
     def set_register_warn_flags(self, reg, mark=True):
         warn_reg = warn_bit = False
@@ -554,78 +488,77 @@ class RegSetTab:
                     txt = f"Missing reset parameter name for '{field.name}'"
                     msg.append(txt)
                     warn_bit = True
-        # if mark and not self.loading_project:
         if mark:
-            self.widgets.descript_warn.set_property("visible", warn_reg)
-            self.widgets.bit_warn.set_property("visible", warn_bit)
-        self.reg_model.set_warning_for_register(reg, warn_reg or warn_bit)
+            self._widgets.descript_warn.set_property("visible", warn_reg)
+            self._widgets.bit_warn.set_property("visible", warn_bit)
+        self._reg_model.set_warning_for_register(reg, warn_reg or warn_bit)
         if msg:
             tip = "\n".join(msg)
         else:
             tip = None
-        self.reg_model.set_tooltip(reg, tip)
+        self._reg_model.set_tooltip(reg, tip)
 
-    def selected_reg_changed(self, _obj):
+    def _selected_reg_changed(self, _obj):
         """
         GTK callback that checks the selected objects, and then enables the
         appropriate buttons on the interface.
         """
-        old_skip = self.skip_changes
-        self.skip_changes = True
+        old_skip = self._skip_changes
+        self._skip_changes = True
         reg = self.get_selected_register()
         self.reg_description.set_register(reg)
         if reg:
-            self.widgets.reg_notebook.show()
-            self.widgets.reg_notebook.set_sensitive(True)
-            self.reg_selected_action.set_sensitive(True)
-            self.bit_model.clear()
-            self.bit_model.register = reg
-            self.bitfield_obj.set_mode(reg.share)
+            self._widgets.reg_notebook.show()
+            self._widgets.reg_notebook.set_sensitive(True)
+            self._reg_selected_action.set_sensitive(True)
+            self._bit_model.clear()
+            self._bit_model.register = reg
+            self._bitfield_obj.set_mode(reg.share)
             for key in reg.get_bit_field_keys():
                 field = reg.get_bit_field(key)
-                self.bit_model.append_field(field)
+                self._bit_model.append_field(field)
 
-            self.widgets.no_rtl.set_active(reg.flags.do_not_generate_code)
-            self.widgets.no_uvm.set_active(reg.flags.do_not_use_uvm)
-            self.widgets.no_test.set_active(reg.flags.do_not_test)
-            self.widgets.no_reset_test.set_active(reg.flags.do_not_reset_test)
-            self.widgets.no_cover.set_active(reg.flags.do_not_cover)
-            self.widgets.hide_doc.set_active(reg.flags.hide)
+            self._widgets.no_rtl.set_active(reg.flags.do_not_generate_code)
+            self._widgets.no_uvm.set_active(reg.flags.do_not_use_uvm)
+            self._widgets.no_test.set_active(reg.flags.do_not_test)
+            self._widgets.no_reset_test.set_active(reg.flags.do_not_reset_test)
+            self._widgets.no_cover.set_active(reg.flags.do_not_cover)
+            self._widgets.hide_doc.set_active(reg.flags.hide)
 
             self.set_register_warn_flags(reg)
             self.set_bits_warn_flag()
             self.set_share(reg)
         else:
-            self.widgets.reg_notebook.hide()
-            self.widgets.reg_notebook.set_sensitive(False)
-            self.reg_selected_action.set_sensitive(False)
-        self.skip_changes = old_skip
+            self._widgets.reg_notebook.hide()
+            self._widgets.reg_notebook.set_sensitive(False)
+            self._reg_selected_action.set_sensitive(False)
+        self._skip_changes = old_skip
 
     def set_share(self, reg):
         if reg.share == ShareType.NONE:
-            self.widgets.no_sharing.set_active(True)
+            self._widgets.no_sharing.set_active(True)
         elif reg.share == ShareType.READ:
-            self.widgets.read_access.set_active(True)
+            self._widgets.read_access.set_active(True)
         else:
-            self.widgets.write_access.set_active(True)
+            self._widgets.write_access.set_active(True)
 
     def remove_register_callback(self, _obj: Gtk.Button) -> None:
         self.remove_register()
 
     def remove_register(self) -> None:
-        row = self.reglist_obj.get_selected_position()
+        row = self._reglist_obj.get_selected_position()
         reg = self.get_selected_register()
-        if reg and self.regset:
-            self.reglist_obj.delete_selected_node()
-            self.regset.delete_register(reg)
-            self.reglist_obj.select_row(row)
+        if reg and self._regset:
+            self._reglist_obj.delete_selected_node()
+            self._regset.delete_register(reg)
+            self._reglist_obj.select_row(row)
             self.set_modified()
 
     def add_register_callback(self, _obj: Gtk.Button) -> None:
         self.new_register()
 
     def new_register(self) -> None:
-        dbase = self.regset
+        dbase = self._regset
         if dbase:
             register = Register()
             register.width = dbase.ports.data_bus_width
@@ -633,9 +566,9 @@ class RegSetTab:
             self.insert_new_register(register)
 
     def insert_new_register(self, register):
-        if self.widgets.notebook.get_current_page() == 0:
-            self.reglist_obj.add_new_register(register)
-            self.regset.add_register(register)
+        if self._widgets.notebook.get_current_page() == 0:
+            self._reglist_obj.add_new_register(register)
+            self._regset.add_register(register)
             self.set_register_warn_flags(register)
             self.set_modified()
 
@@ -658,26 +591,26 @@ class RegSetTab:
 
         register.add_bit_field(field)
 
-        self.bitfield_obj.add_new_field(field)
+        self._bitfield_obj.add_new_field(field)
         self.set_modified()
         self.set_register_warn_flags(register)
 
     def remove_bit_callback(self, _obj: Gtk.Button):
         register = self.get_selected_register()
-        row = self.bitfield_obj.get_selected_row()
-        field = self.bit_model.get_bitfield_at_path(row[0])
+        row = self._bitfield_obj.get_selected_row()
+        field = self._bit_model.get_bitfield_at_path(row[0])
         register.delete_bit_field(field)
-        node = self.bit_model.get_iter(row[0])
-        self.bit_model.remove(node)
+        node = self._bit_model.get_iter(row[0])
+        self._bit_model.remove(node)
         self.set_register_warn_flags(register)
         self.set_modified()
 
     def edit_bit_callback(self, _obj: Gtk.Button):
         register = self.get_selected_register()
-        field = self.bitfield_obj.select_field()
-        if field and self.regset:
+        field = self._bitfield_obj.select_field()
+        if field and self._regset:
             BitFieldEditor(
-                self.regset,
+                self._regset,
                 register,
                 field,
                 self.set_field_modified,
@@ -686,7 +619,7 @@ class RegSetTab:
             )
 
     def update_register_addr(self, register, new_addr, new_length=0):
-        self.regset.delete_register(register)
+        self._regset.delete_register(register)
         register.address = new_addr
         register.ram_size = new_length
         share_reg = self.find_shared_address(register)
@@ -696,10 +629,10 @@ class RegSetTab:
             else:
                 register.share = ShareType.READ
             self.set_share(register)
-        self.regset.add_register(register)
+        self._regset.add_register(register)
 
     def find_shared_address(self, reg):
-        for shared_reg in self.regset.get_all_registers():
+        for shared_reg in self._regset.get_all_registers():
             if shared_reg != reg and shared_reg.address == reg.address:
                 return shared_reg
         return None
@@ -712,7 +645,7 @@ class RegSetTab:
 
     def set_bits_warn_flag(self):
         warn = False
-        for row in self.bit_model:
+        for row in self._bit_model:
             field = row[BitCol.FIELD]
             icon = check_field(field)
             row[BitCol.ICON] = icon
@@ -721,18 +654,18 @@ class RegSetTab:
         return warn
 
     def update_bit_count(self):
-        if self.regset:
-            text = f"{self.regset.total_bits()}"
+        if self._regset:
+            text = f"{self._regset.total_bits()}"
         else:
             text = ""
-        self.widgets.reg_count.set_text(text)
+        self._widgets.reg_count.set_text(text)
 
     def set_description_warn_flag(self):
-        if self.regset:
-            warn = self.regset.overview_text == ""
+        if self._regset:
+            warn = self._regset.overview_text == ""
         else:
             warn = False
-        self.widgets.mod_descr_warn.set_property("visible", warn)
+        self._widgets.mod_descr_warn.set_property("visible", warn)
 
     def no_sharing_toggle_callback(self, obj):
         if obj.get_active():
@@ -747,7 +680,7 @@ class RegSetTab:
             else:
                 register.share = ShareType.NONE
                 self.set_modified()
-            self.bitfield_obj.set_mode(register.share)
+            self._bitfield_obj.set_mode(register.share)
 
     def read_access_toggle_callback(self, obj):
         if obj.get_active():
@@ -763,7 +696,7 @@ class RegSetTab:
             else:
                 self.set_share(register)
                 LOGGER.error("All bits in the register must be read only")
-            self.bitfield_obj.set_mode(register.share)
+            self._bitfield_obj.set_mode(register.share)
 
     def write_access_toggle_callback(self, obj):
         if obj.get_active():
@@ -779,26 +712,26 @@ class RegSetTab:
             else:
                 self.set_share(register)
                 LOGGER.error("All bits in the register must be write only")
-            self.bitfield_obj.set_mode(register.share)
+            self._bitfield_obj.set_mode(register.share)
 
     def duplicate_address(self, reg_addr):
         cnt = 0
-        for reg in self.regset.get_all_registers():
+        for reg in self._regset.get_all_registers():
             if reg.address == reg_addr:
                 cnt += 1
         return cnt > 1
 
     def duplicate_register_callback(self, _obj: Gtk.Button):
         reg = self.get_selected_register()
-        if reg and self.regset:
-            reg_copy = duplicate_register(self.regset, reg)
-            self.reglist_obj.add_new_register(reg_copy)
-            self.regset.add_register(reg_copy)
+        if reg and self._regset:
+            reg_copy = duplicate_register(self._regset, reg)
+            self._reglist_obj.add_new_register(reg_copy)
+            self._regset.add_register(reg_copy)
             self.set_register_warn_flags(reg_copy)
             self.set_modified()
 
     def bit_changed(self, _obj):
-        self.field_selected_action.set_sensitive(True)
+        self._field_selected_action.set_sensitive(True)
 
     def remove_regset_callback(self, _obj: Gtk.Button):
         """
@@ -806,28 +739,23 @@ class RegSetTab:
         create_selector method, then runs the dialog, and calls the
         open_xml routine with the result.
         """
-        data = self.reg_set_obj.get_selected()
-        if not data:
-            return
-        old_skip = self.skip_changes
-        self.skip_changes = True
+        old_skip = self._skip_changes
+        self._skip_changes = True
 
-        (store, node) = data
-        base = store.get_value(node, SelectCol.OBJ)
-        store.remove(node)
-        self.remove_regset_from_project(base.uuid)
-        self.remove_regset_from_groups(base.uuid)
+        uuid = self._sidebar.remove_selected()
+        self.remove_regset_from_project(uuid)
+        self.remove_regset_from_groups(uuid)
         self.set_modified()
-        self.skip_changes = old_skip
-        self.reg_set_obj.select_path(0)
+        self._skip_changes = old_skip
+        self._sidebar.select(0)
 
     def remove_regset_from_project(self, uuid: str):
-        if self.project:
-            self.project.remove_register_set(uuid)
+        if self._project:
+            self._project.remove_register_set(uuid)
 
     def remove_regset_from_groups(self, uuid: str):
-        if self.project:
-            for block in self.project.blocks.values():
+        if self._project:
+            for block in self._project.blocks.values():
                 block.remove_register_set(uuid)
 
     def new_regset_callback(self, _obj: Gtk.Button):
@@ -835,7 +763,7 @@ class RegSetTab:
         Creates a new database, and initializes the interface.
         """
         name_str = get_new_filename()
-        if not name_str or not self.project:
+        if not name_str or not self._project:
             return
 
         name = Path(name_str).with_suffix(REG_EXT)
@@ -845,10 +773,9 @@ class RegSetTab:
         dbase.filename = name
         dbase.modified = True
 
-        self.project.new_register_set(dbase, name)
+        self._project.new_register_set(dbase, name)
         node = self.new_regset(dbase)
-        self.reg_set_obj.select(node)
-
+        self._sidebar.select(node)
         # self.set_project_modified()
         return
 
@@ -868,16 +795,15 @@ class RegSetTab:
         if response == Gtk.ResponseType.OK:
             for filename in choose.get_filenames():
 
-                if self.project:
+                if self._project:
                     name = Path(filename)
                     dbase = RegisterDb(name)
                     dbase.filename = name
                     dbase.modified = True
 
-                    self.project.new_register_set(dbase, name)
+                    self._project.new_register_set(dbase, name)
                     node = self.new_regset(dbase)
-                    self.reg_set_obj.select(node)
-                # self.set_project_modified()
+                    self._sidebar.select(node)
         choose.destroy()
 
     def create_open_selector(self, title, mime_name=None, mime_regex=None):
@@ -923,9 +849,13 @@ class RegSetTab:
     def show_preview_callback(self, _obj: Gtk.Button) -> None:
         reg = self.get_selected_register()
 
-        if reg and self.regset:
+        if reg and self._regset:
             SummaryWindow(
-                self.widgets, reg, self.regset.name, self.project, self.regset
+                self._widgets,
+                reg,
+                self._regset.name,
+                self._project,
+                self._regset,
             )
 
 
