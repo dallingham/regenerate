@@ -387,7 +387,7 @@ class MainWindow(BaseWindow):
 
         if page_num == 1:
             self.regset_tab.update_bit_count()
-        if self.regset_tab.get_selected_register():
+        if self.regset_tab.get_selected_registers():
             self.reg_selected.set_sensitive(page_num == 0)
         else:
             self.reg_selected.set_sensitive(False)
@@ -721,7 +721,7 @@ class MainWindow(BaseWindow):
         self.regset_tab.array_changed(obj)
 
     def button_toggle(self, attr, obj):
-        reg = self.regset_tab.get_selected_register()
+        reg = self.regset_tab.get_selected_registers()[0]
         state = obj.get_active()
         if reg:
             setattr(reg.flags, attr, state)

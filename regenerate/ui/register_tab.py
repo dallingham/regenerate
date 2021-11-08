@@ -398,8 +398,8 @@ class RegSetTab:
         self.update_bit_count()
         self.set_description_warn_flag()
 
-    def get_selected_register(self):
-        return self._reglist_obj.get_selected_register()
+    def get_selected_registers(self):
+        return self._reglist_obj.get_selected_registers()
 
     def add_model_callback(self, regset: RegisterDb, node: Gtk.TreeIter):
         if regset.uuid not in self._name2status:
@@ -508,7 +508,12 @@ class RegSetTab:
         """
         old_skip = self._skip_changes
         self._skip_changes = True
-        reg = self.get_selected_register()
+        reglist = self.get_selected_registers()
+        if len(reglist) != 1:
+            reg = None
+        else:
+            reg = reglist[0]
+            
         self.reg_description.set_register(reg)
         if reg:
             self._widgets.reg_notebook.show()
@@ -549,12 +554,11 @@ class RegSetTab:
         self.remove_register()
 
     def remove_register(self) -> None:
-        row = self._reglist_obj.get_selected_position()
-        reg = self.get_selected_register()
-        if reg and self._regset:
+        if self._regset:
+            reglist = self._reglist_obj.get_selected_registers()
             self._reglist_obj.delete_selected_node()
-            self._regset.delete_register(reg)
-            self._reglist_obj.select_row(row)
+            for reg in reglist:
+                self._regset.delete_register(reg)
             self.set_modified()
 
     def add_register_callback(self, _obj: Gtk.Button) -> None:
@@ -576,7 +580,7 @@ class RegSetTab:
             self.set_modified()
 
     def add_bit_callback(self, _obj: Gtk.Button):
-        register = self.get_selected_register()
+        register = self.get_selected_registers()[0]
         next_pos = register.find_next_unused_bit()
 
         if next_pos == -1:
@@ -599,7 +603,7 @@ class RegSetTab:
         self.set_register_warn_flags(register)
 
     def remove_bit_callback(self, _obj: Gtk.Button):
-        register = self.get_selected_register()
+        register = self.get_selected_registers()[0]
         row = self._bitfield_obj.get_selected_row()
         field = self._bit_model.get_bitfield_at_path(row[0])
         register.delete_bit_field(field)
@@ -609,7 +613,7 @@ class RegSetTab:
         self.set_modified()
 
     def edit_bit_callback(self, _obj: Gtk.Button):
-        register = self.get_selected_register()
+        register = self.get_selected_registers()[0]
         field = self._bitfield_obj.select_field()
         if field and self._regset:
             BitFieldEditor(
@@ -641,7 +645,7 @@ class RegSetTab:
         return None
 
     def set_field_modified(self):
-        reg = self.get_selected_register()
+        reg = self.get_selected_registers()[0]
         self.set_register_warn_flags(reg)
         self.set_bits_warn_flag()
         self.set_modified()
@@ -672,7 +676,7 @@ class RegSetTab:
 
     def no_sharing_toggle_callback(self, obj):
         if obj.get_active():
-            register = self.get_selected_register()
+            register = self.get_selected_registers()[0]
 
             if self.duplicate_address(register.address):
                 self.set_share(register)
@@ -687,7 +691,7 @@ class RegSetTab:
 
     def read_access_toggle_callback(self, obj):
         if obj.get_active():
-            register = self.get_selected_register()
+            register = self.get_selected_registers()[0]
 
             other = self.find_shared_address(register)
             if other and other.share != ShareType.WRITE:
@@ -703,7 +707,7 @@ class RegSetTab:
 
     def write_access_toggle_callback(self, obj):
         if obj.get_active():
-            register = self.get_selected_register()
+            register = self.get_selected_registers()[0]
 
             other = self.find_shared_address(register)
             if other and other.share != ShareType.READ:
@@ -725,7 +729,7 @@ class RegSetTab:
         return cnt > 1
 
     def duplicate_register_callback(self, _obj: Gtk.Button):
-        reg = self.get_selected_register()
+        reg = self.get_selected_registers()[0]
         if reg and self._regset:
             reg_copy = duplicate_register(self._regset, reg)
             self._reglist_obj.add_new_register(reg_copy)
@@ -850,7 +854,7 @@ class RegSetTab:
         return choose
 
     def show_preview_callback(self, _obj: Gtk.Button) -> None:
-        reg = self.get_selected_register()
+        reg = self.get_selected_registers()[0]
 
         if reg and self._regset:
             SummaryWindow(

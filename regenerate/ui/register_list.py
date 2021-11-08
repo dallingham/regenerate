@@ -268,6 +268,7 @@ class RegisterList:
         self._icon_col = None
         self._icon_renderer = None
         self._selection = self._obj.get_selection()
+        self._selection.set_mode(Gtk.SelectionMode.MULTIPLE)
         self._set_modified = mod_function
         self._update_addr = update_addr
         self._set_warn_flags = set_warn_flags
@@ -307,8 +308,8 @@ class RegisterList:
         """
         Deletes the selected from from the table
         """
-        reg = self.get_selected_register()
-        self._model.delete_register(reg)
+        for reg in self.get_selected_registers():
+            self._model.delete_register(reg)
 
     def select_row(self, row):
         """
@@ -386,17 +387,29 @@ class RegisterList:
         self._obj.set_cursor(path, self._col, start_editing=True)
         return path
 
-    def get_selected_register(self):
+    def get_selected_registers(self):
         """
         Returns the register associated with the selected row
         """
-        data = self._selection.get_selected()
-        if data:
-            (store, node) = data
-            if node:
-                return store.get_value(node, RegCol.OBJ)
-        return None
+        registers = []
+        store, path_list = self._selection.get_selected_rows()
+        if path_list:
+            for path in path_list:
+                registers.append(store[path][RegCol.OBJ])
+        return registers
 
+    def get_selected_reg_iters(self):
+        """
+        Returns the register associated with the selected row
+        """
+        registers = []
+        store, path_list = self._selection.get_selected_rows()
+        if path_list:
+            for path in reversed(path_list):
+                registers.append((path, store[path][RegCol.OBJ]))
+                print(store.get_iter(path), store[path][RegCol.OBJ])
+        return registers
+    
     def _ram_update_addr(self, reg: Register, path: str, text: str):
         """
         Updates the address associated with a RAM address
