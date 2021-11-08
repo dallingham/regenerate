@@ -586,7 +586,7 @@ class MainWindow(BaseWindow):
             self.prj.save()
             self.project_modified(False)
             self.block_tab.clear_flags()
-            self.regset_tab.reg_set_model.update()
+            self.regset_tab.update_sidebar()
         except IOError as msg:
             os.rename(backup_path, current_path)
             ErrorMsg(

@@ -343,6 +343,9 @@ class RegSetTab:
         self.update_display(False)
         self._sidebar.select_path(0)
 
+    def update_sidebar(self):
+        self._sidebar.update()
+        
     def rebuild_model(self) -> None:
         "Rebuild the model in the register set"
         if (
