@@ -34,6 +34,7 @@ from gi.repository import Gtk, GdkPixbuf, Gdk
 from regenerate.settings.version import PROGRAM_NAME, PROGRAM_VERSION
 from regenerate.db import (
     RegProject,
+    Register,
     LOGGER,
     TYPES,
     remove_default_handler,
@@ -81,8 +82,8 @@ class MainWindow(BaseWindow):
         self.modelsort = None
         self.prj = None
         self.dbmap = {}
-        self.register = None
-
+        self.copy_source = None
+        self.copy_registers = []
         self.builder = Gtk.Builder()
         self.builder.add_from_file(str(GLADE_TOP))
 
@@ -823,6 +824,33 @@ class MainWindow(BaseWindow):
             )
         else:
             self.top_window.set_title(f"{self.prj.name} ({name}) - regenerate")
+
+    def on_copy_registers(self, _button: Gtk.Button):
+        self.copy_source = self.regset_tab.current_regset()
+        self.copy_registers = self.regset_tab.get_selected_registers()
+
+    def on_paste_registers(self, _button: Gtk.Button):
+        dest = self.regset_tab.current_regset()
+        if self.copy_source and self.copy_source.uuid != dest.uuid:
+            for reg in self.copy_registers:
+                new_reg = Register()
+                a = reg.json()
+                new_reg.json_decode(a)
+                new_reg.uuid = 0
+                for field in new_reg.get_bit_fields():
+                    field.uuid = 0
+                self.regset_tab.insert_new_register(new_reg)
+
+    def on_compact_addresses(self, _button: Gtk.Button):
+        regset = self.regset_tab.current_regset()
+        size = regset.ports.data_bus_width // 8
+        addr = 0
+
+        for reg in regset.get_all_registers():
+            reg_width = reg.width // 8
+            reg.address = addr
+            addr += size
+        self.regset_tab.force_reglist_rebuild()
 
 
 def check_field(field):

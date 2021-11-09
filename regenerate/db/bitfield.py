@@ -335,7 +335,7 @@ class BitField(NameBase):
             "control_signal": self.control_signal,
             "field_type": self.field_type,
             "lsb": self.lsb,
-            "msb": self.msb,
+            "msb": self.msb.json(),
             "output_has_side_effect": self.output_has_side_effect,
             "output_is_static": self.output_is_static,
             "reset_input": self.reset_input,

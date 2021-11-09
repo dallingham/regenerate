@@ -469,11 +469,13 @@ class Register(NameBase):
             "description": self.description,
             "token": self._token,
             "address": f"{self.address}",
-            "flags": self.flags,
+            "flags": self.flags.json(),
             "ram_size": self.ram_size,
             "share": self.share,
             "width": self.width,
-            "bitfields": [field for index, field in self._bit_fields.items()],
+            "bitfields": [
+                field.json() for index, field in self._bit_fields.items()
+            ],
         }
         val["dimension"] = self.dimension.json()
         return val

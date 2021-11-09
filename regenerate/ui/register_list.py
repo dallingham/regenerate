@@ -378,6 +378,12 @@ class RegisterList:
         else:
             self._model = None
 
+    def clear(self):
+        self._model.clear()
+
+    def load_reg_into_model(self, register: Register) -> None:
+        self._model.append_register(register)
+
     def add_new_register(self, register: Register) -> str:
         """
         Addes a new register to the model and set it to edit the
@@ -409,7 +415,7 @@ class RegisterList:
                 registers.append((path, store[path][RegCol.OBJ]))
                 print(store.get_iter(path), store[path][RegCol.OBJ])
         return registers
-    
+
     def _ram_update_addr(self, reg: Register, path: str, text: str):
         """
         Updates the address associated with a RAM address

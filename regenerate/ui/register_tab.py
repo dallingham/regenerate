@@ -277,6 +277,11 @@ class RegSetTab:
         self._bitfield_obj.set_parameters(self._regset.parameters.get())
         self._selected_reg_changed(None)
 
+    def force_reglist_rebuild(self):
+        self._reglist_obj.clear()
+        for reg in self._regset.get_all_registers():
+            self._reglist_obj.load_reg_into_model(reg)
+
     def set_modified(self):
         "Sets the modified flag"
 
@@ -345,7 +350,7 @@ class RegSetTab:
 
     def update_sidebar(self):
         self._sidebar.update()
-        
+
     def rebuild_model(self) -> None:
         "Rebuild the model in the register set"
         if (
@@ -430,6 +435,9 @@ class RegSetTab:
     def clear(self):
         self._sidebar.clear()
 
+    def current_regset(self) -> Optional[RegisterDb]:
+        return self._regset
+
     def _regset_sel_changed(self, _obj: Gtk.TreeSelection) -> None:
 
         self._regset = self._sidebar.get_selected_object()
@@ -513,7 +521,7 @@ class RegSetTab:
             reg = None
         else:
             reg = reglist[0]
-            
+
         self.reg_description.set_register(reg)
         if reg:
             self._widgets.reg_notebook.show()
