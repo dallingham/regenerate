@@ -29,12 +29,15 @@ import xml
 import os
 from pathlib import Path
 
-from typing import List, Union, Optional
+from typing import List, Union, Optional, Set
+from copy import deepcopy
+
 from gi.repository import Gtk, GdkPixbuf, Gdk
 from regenerate.settings.version import PROGRAM_NAME, PROGRAM_VERSION
 from regenerate.db import (
     RegProject,
     Register,
+    ParameterFinder,
     LOGGER,
     TYPES,
     remove_default_handler,
@@ -828,18 +831,25 @@ class MainWindow(BaseWindow):
     def on_copy_registers(self, _button: Gtk.Button):
         self.copy_source = self.regset_tab.current_regset()
         self.copy_registers = self.regset_tab.get_selected_registers()
+        LOGGER.warn(f"Copied {len(self.copy_registers)} registers")
 
     def on_paste_registers(self, _button: Gtk.Button):
         dest = self.regset_tab.current_regset()
+
         if self.copy_source and self.copy_source.uuid != dest.uuid:
-            for reg in self.copy_registers:
-                new_reg = Register()
-                a = reg.json()
-                new_reg.json_decode(a)
-                new_reg.uuid = 0
-                for field in new_reg.get_bit_fields():
-                    field.uuid = 0
+            new_list, new_params = copy_registers(dest, self.copy_registers)
+
+            finder = ParameterFinder()
+            for param_uuid in new_params:
+                param = finder.find(param_uuid)
+                new_param = deepcopy(param)
+                new_param.uuid = 0
+                dest.parameters.add(new_param)
+                print(new_param.uuid, param.uuid)
+
+            for new_reg in new_list:
                 self.regset_tab.insert_new_register(new_reg)
+            LOGGER.warn(f"Inserted {len(new_list)} registers")
 
     def on_compact_addresses(self, _button: Gtk.Button):
         regset = self.regset_tab.current_regset()
@@ -921,3 +931,57 @@ def check_address_ranges(project):
         prev_stop = new_stop
 
     return True
+
+
+def copy_registers(dest_regset, register_list):
+
+    used_addrs = build_used_addresses(dest_regset.get_all_registers())
+
+    parameter_set = set()
+    new_reglist: List[Register] = []
+    for reg in register_list:
+        new_reg = Register()
+        new_reg.json_decode(reg.json())
+        new_reg.uuid = 0
+        for field in new_reg.get_bit_fields():
+            field.uuid = 0
+
+        reg_addrs = get_addresses(new_reg)
+
+        while reg_addrs.intersection(used_addrs):
+            new_reg.address = new_reg.address + new_reg.width // 8
+            reg_addrs = get_addresses(new_reg)
+
+        new_reglist.append(new_reg)
+        used_addrs = used_addrs.union(reg_addrs)
+
+        if reg.dimension.is_parameter:
+            parameter_set.add(reg.dimension.txt_value)
+
+    return new_reglist, parameter_set
+
+
+def build_used_addresses(register_list) -> Set[int]:
+
+    used_addrs: Set[int] = set()
+    for reg in register_list:
+        used_addrs = used_addrs.union(get_addresses(reg))
+    return used_addrs
+
+
+def get_addresses(reg: Register) -> Set[int]:
+    used_addrs: Set[int] = set()
+    used_addrs.add(reg.address)
+
+    if reg.width >= 16:
+        used_addrs.add(reg.address + 1)
+    if reg.width >= 32:
+        used_addrs.add(reg.address + 2)
+        used_addrs.add(reg.address + 3)
+    if reg.width == 64:
+        used_addrs.add(reg.address + 4)
+        used_addrs.add(reg.address + 5)
+        used_addrs.add(reg.address + 6)
+        used_addrs.add(reg.address + 7)
+
+    return used_addrs
