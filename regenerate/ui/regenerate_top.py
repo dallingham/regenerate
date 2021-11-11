@@ -756,6 +756,13 @@ class MainWindow(BaseWindow):
         """
         self.regset_tab.new_register()
 
+    def on_register_list_button_press_event(self, _obj, event):
+        if event.button == 3:
+            menu = self.find_obj("reglist_menu")
+            menu.popup(None, None, None, 1, 0, Gtk.get_current_event_time())
+            return True
+        return False
+        
     def cb_open_recent(self, chooser):
         """
         Called when a file is chosen from the open recent dialog
@@ -835,8 +842,10 @@ class MainWindow(BaseWindow):
 
     def on_paste_registers(self, _button: Gtk.Button):
         dest = self.regset_tab.current_regset()
+        if dest is None:
+            return
 
-        param_old_to_new = {}
+        param_old_to_new: Dict[str, str] = {}
 
         if self.copy_source and self.copy_source.uuid != dest.uuid:
             new_list, new_params = copy_registers(dest, self.copy_registers)
@@ -845,11 +854,12 @@ class MainWindow(BaseWindow):
             for param_uuid in new_params:
                 if param_uuid not in param_old_to_new:
                     param = finder.find(param_uuid)
-                    new_param = deepcopy(param)
-                    new_param.uuid = 0
-                    finder.register(new_param)
-                    param_old_to_new[param.uuid] = new_param.uuid
-                    dest.add_parameter(new_param)
+                    if param is not None:
+                        new_param = deepcopy(param)
+                        new_param.uuid = ""
+                        finder.register(new_param)
+                        param_old_to_new[param.uuid] = new_param.uuid
+                        dest.add_parameter(new_param)
 
             for new_reg in new_list:
                 replace_parameter_uuids(param_old_to_new, new_reg)
@@ -865,8 +875,11 @@ class MainWindow(BaseWindow):
                 LOGGER.warning("Inserted %d registers", len(new_list))
             self.regset_tab.update_display()
 
-    def on_compact_addresses(self, _button: Gtk.Button):
+    def on_align_addresses(self, _button: Gtk.Button):
         regset = self.regset_tab.current_regset()
+        if regset is None:
+            return
+        
         size = regset.ports.data_bus_width // 8
         addr = 0
 
@@ -876,6 +889,14 @@ class MainWindow(BaseWindow):
             addr += size
         self.regset_tab.force_reglist_rebuild()
 
+    def on_compact_tightly(self, _button: Gtk.Button):
+        regset = self.regset_tab.current_regset()
+        if regset is None:
+            return
+
+        print(self.regset_tab.get_selected_registers())
+
+        
 
 def replace_parameter_uuids(uuid_map: Dict[str, str], reg: Register) -> None:
     if reg.dimension.is_parameter:
@@ -969,9 +990,9 @@ def copy_registers(dest_regset, register_list):
     for reg in register_list:
         new_reg = Register()
         new_reg.json_decode(reg.json())
-        new_reg.uuid = 0
+        new_reg.uuid = ""
         for field in new_reg.get_bit_fields():
-            field.uuid = 0
+            field.uuid = ""
 
         reg_addrs = get_addresses(new_reg)
 

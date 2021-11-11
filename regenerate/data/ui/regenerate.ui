@@ -126,6 +126,46 @@ create a new project by selecting
   </object>
   <object class="GtkTextBuffer" id="register_description_buffer"/>
   <object class="GtkTextBuffer" id="register_text_buffer"/>
+  <object class="GtkMenu" id="reglist_menu">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <child>
+      <object class="GtkMenuItem">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Copy selected registers</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_copy_registers" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Paste copied registers</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_paste_registers" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Align selected addresses to bus width</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_align_addresses" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Compact selected addresses</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_compact_tightly" swapped="no"/>
+      </object>
+    </child>
+  </object>
   <object class="GtkAction" id="remove_set_action">
     <property name="label" translatable="yes">Remove Register Set</property>
     <property name="short_label" translatable="yes">Remove Set</property>
@@ -344,47 +384,6 @@ create a new project by selecting
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
                         <signal name="activate" handler="on_quit_activate" swapped="no"/>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-              </object>
-            </child>
-            <child>
-              <object class="GtkMenuItem">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">_Edit</property>
-                <property name="use_underline">True</property>
-                <child type="submenu">
-                  <object class="GtkMenu">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <child>
-                      <object class="GtkMenuItem">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Copy Selected Registers</property>
-                        <property name="use_underline">True</property>
-                        <signal name="activate" handler="on_copy_registers" swapped="no"/>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkMenuItem">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Paste Copied Registers</property>
-                        <property name="use_underline">True</property>
-                        <signal name="activate" handler="on_paste_registers" swapped="no"/>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkMenuItem">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Compact Addresses</property>
-                        <property name="use_underline">True</property>
-                        <signal name="activate" handler="on_compact_addresses" swapped="no"/>
                       </object>
                     </child>
                   </object>
@@ -768,6 +767,7 @@ create a new project by selecting
                                       <object class="GtkTreeView" id="register_list">
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
+                                        <signal name="button-press-event" handler="on_register_list_button_press_event" swapped="no"/>
                                         <child internal-child="selection">
                                           <object class="GtkTreeSelection"/>
                                         </child>

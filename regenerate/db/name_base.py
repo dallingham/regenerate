@@ -69,7 +69,7 @@ class NameBase(JSONEncodable):
     def uuid(self) -> str:
         """Returns the UUID or creates a new unique one if one doesn't exist"""
 
-        if not self._id:
+        if self._id == "":
             self._id = secrets.token_hex(6)
         return self._id
 

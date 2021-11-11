@@ -22,7 +22,7 @@ import os
 from typing import Dict, Optional, Callable
 from pathlib import Path
 
-from gi.repository import Gtk
+from gi.repository import Gtk, Gdk
 from regenerate.db import (
     Register,
     BitField,
@@ -173,7 +173,7 @@ class RegSetTab:
             self.update_register_addr,
             self.set_register_warn_flags,
         )
-
+        
         self._bitfield_obj = BitList(
             self._widgets.bitfield_list,
             self.bit_changed,
@@ -195,6 +195,7 @@ class RegSetTab:
 
         self.clear()
 
+            
     def _connect_signals(self) -> None:
         "Connect signals to the elements"
 
