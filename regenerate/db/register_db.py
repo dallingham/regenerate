@@ -37,6 +37,7 @@ from .param_container import ParameterContainer
 from .name_base import NameBase
 from .utils import save_json
 from .doc_pages import DocPages
+from .param_data import ParameterData
 
 
 class RegisterDb(NameBase):
@@ -177,6 +178,10 @@ class RegisterDb(NameBase):
         if pnames:
             return self.doc_pages.get_page(pnames[0])[0]
         return ""
+
+    def add_parameter(self, new_param: ParameterData):
+        print("Added", new_param)
+        self.parameters.add(new_param)
 
     @property
     def descriptive_title(self) -> str:

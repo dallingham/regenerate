@@ -29,7 +29,7 @@ import xml
 import os
 from pathlib import Path
 
-from typing import List, Union, Optional, Set
+from typing import List, Union, Optional, Set, Dict
 from copy import deepcopy
 
 from gi.repository import Gtk, GdkPixbuf, Gdk
@@ -831,25 +831,39 @@ class MainWindow(BaseWindow):
     def on_copy_registers(self, _button: Gtk.Button):
         self.copy_source = self.regset_tab.current_regset()
         self.copy_registers = self.regset_tab.get_selected_registers()
-        LOGGER.warn(f"Copied {len(self.copy_registers)} registers")
+        LOGGER.warning(f"Copied {len(self.copy_registers)} registers")
 
     def on_paste_registers(self, _button: Gtk.Button):
         dest = self.regset_tab.current_regset()
+
+        param_old_to_new = {}
 
         if self.copy_source and self.copy_source.uuid != dest.uuid:
             new_list, new_params = copy_registers(dest, self.copy_registers)
 
             finder = ParameterFinder()
             for param_uuid in new_params:
-                param = finder.find(param_uuid)
-                new_param = deepcopy(param)
-                new_param.uuid = 0
-                dest.parameters.add(new_param)
-                print(new_param.uuid, param.uuid)
+                if param_uuid not in param_old_to_new:
+                    param = finder.find(param_uuid)
+                    new_param = deepcopy(param)
+                    new_param.uuid = 0
+                    finder.register(new_param)
+                    param_old_to_new[param.uuid] = new_param.uuid
+                    dest.add_parameter(new_param)
 
             for new_reg in new_list:
+                replace_parameter_uuids(param_old_to_new, new_reg)
                 self.regset_tab.insert_new_register(new_reg)
-            LOGGER.warn(f"Inserted {len(new_list)} registers")
+
+            if len(param_old_to_new) > 0:
+                LOGGER.warning(
+                    "Inserted %d registers, %d parameters",
+                    len(new_list),
+                    len(param_old_to_new),
+                )
+            else:
+                LOGGER.warning("Inserted %d registers", len(new_list))
+            self.regset_tab.update_display()
 
     def on_compact_addresses(self, _button: Gtk.Button):
         regset = self.regset_tab.current_regset()
@@ -861,6 +875,19 @@ class MainWindow(BaseWindow):
             reg.address = addr
             addr += size
         self.regset_tab.force_reglist_rebuild()
+
+
+def replace_parameter_uuids(uuid_map: Dict[str, str], reg: Register) -> None:
+    if reg.dimension.is_parameter:
+        if reg.dimension.txt_value in uuid_map:
+            reg.dimension.txt_value = uuid_map[reg.dimension.txt_value]
+    for field in reg.get_bit_fields():
+        if field.reset_type == ResetType.PARAMETER:
+            if field.reset_parameter in uuid_map:
+                field.reset_parameter = uuid_map[field.reset_parameter]
+        if field.msb.is_parameter:
+            if field.msb.txt_value in uuid_map:
+                field.msb.txt_value = uuid_map[field.msb.txt_value]
 
 
 def check_field(field):

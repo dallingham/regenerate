@@ -170,8 +170,11 @@ class RegisterModel(Gtk.ListStore):
         """
         Sets the tooltip for the register.
         """
-        path = self.get_path_from_register(reg)
-        self[path][RegCol.TOOLTIP] = msg
+        try:
+            path = self.get_path_from_register(reg)
+            self[path][RegCol.TOOLTIP] = msg
+        except IndexError:
+            pass
 
     def get_register_at_path(self, path: str) -> Register:
         """
@@ -184,11 +187,14 @@ class RegisterModel(Gtk.ListStore):
         """
         Sets the warning icon for the register in the table
         """
-        path = self.reg2path[register]
-        if flag:
-            self[path][RegCol.ICON] = Gtk.STOCK_DIALOG_WARNING
-        else:
-            self[path][RegCol.ICON] = None
+        try:
+            path = self.reg2path[register]
+            if flag:
+                self[path][RegCol.ICON] = Gtk.STOCK_DIALOG_WARNING
+            else:
+                self[path][RegCol.ICON] = None
+        except IndexError:
+            pass
 
     def get_path_from_register(self, register: Register) -> str:
         """
