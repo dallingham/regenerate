@@ -568,7 +568,7 @@ class MainWindow(BaseWindow):
     def update_display(self):
         old_skip = self.skip_changes
         self.skip_changes = True
-        self.redraw()
+        self._redraw()
         self.regset_tab.redraw(False)
         self.block_tab.redraw()
         self.skip_changes = old_skip
@@ -632,9 +632,9 @@ class MainWindow(BaseWindow):
         self.on_save_clicked(obj)
 
     def import_data(self, _obj, data):
-        """Imports the data using the specified data importer."""
-        choose = self.create_open_selector(data[1][1], data[2], "*" + data[3])
+        "Imports the data using the specified data importer."
 
+        choose = self.create_open_selector(data[1][1], data[2], "*" + data[3])
         response = choose.run()
         if response == Gtk.ResponseType.OK:
             choose.hide()
@@ -647,7 +647,8 @@ class MainWindow(BaseWindow):
         choose.destroy()
 
     def import_using_importer(self, name, importer_class):
-        """Saves the file using the specified writer class."""
+        "Saves the file using the specified writer class."
+
         importer = importer_class(self.dbase)
         try:
             importer.import_data(name)
@@ -656,8 +657,9 @@ class MainWindow(BaseWindow):
         except IOError as msg:
             ErrorMsg("Could not create %s " % name, str(msg), self.top_window)
 
-    def redraw(self):
-        """Redraws the information in the register list."""
+    def _redraw(self):
+        "Redraws the information in the register list."
+
         self.regset_tab.parameter_list.set_db(self.dbase)
         self.regset_tab.reglist_obj.set_parameters(self.dbase.parameters.get())
         self.regset_tab.bitfield_obj.set_parameters(
@@ -711,9 +713,7 @@ class MainWindow(BaseWindow):
         return True
 
     def on_remove_register_action_activate(self, _obj):
-        """
-        Deletes the selected object (either a register or a bit range)
-        """
+        "Deletes the selected object (either a register or a bit range)"
         self.regset_tab.remove_register()
 
     def set_db_value(self, attr, val):
@@ -757,23 +757,23 @@ class MainWindow(BaseWindow):
         self.regset_tab.new_register()
 
     def on_register_list_button_press_event(self, _obj, event):
+        "Callback for a button press on the register list. Display the menu"
+
         if event.button == 3:
             menu = self.find_obj("reglist_menu")
             menu.popup(None, None, None, 1, 0, Gtk.get_current_event_time())
             return True
         return False
-        
+
     def cb_open_recent(self, chooser):
-        """
-        Called when a file is chosen from the open recent dialog
-        """
+        "Called when a file is chosen from the open recent dialog"
+
         fname = chooser.get_current_uri()
         self.open_project(fname.replace("file://", ""), fname)
 
-    def create_recent_menu_item(self):
-        """
-        Builds the recent menu, applying the filter
-        """
+    def create_recent_menu_item(self) -> None:
+        "Builds the recent menu, applying the filter"
+
         recent_menu = Gtk.RecentChooserMenu()
         recent_menu.set_show_not_found(False)
         recent_menu.set_show_numbers(True)
@@ -788,10 +788,9 @@ class MainWindow(BaseWindow):
         recent_menu_item.show()
         return recent_menu_item
 
-    def create_recent_menu(self):
-        """
-        Builds the recent menu, applying the filter
-        """
+    def create_recent_menu(self) -> None:
+        "Builds the recent menu, applying the filter"
+
         recent_menu = Gtk.RecentChooserMenu()
         recent_menu.set_show_not_found(False)
         recent_menu.set_show_numbers(True)
@@ -802,10 +801,9 @@ class MainWindow(BaseWindow):
         recent_menu.set_filter(filt)
         return recent_menu
 
-    def on_about_activate(self, _obj):
-        """
-        Displays the About box, describing the program
-        """
+    def on_about_activate(self, _obj) -> None:
+        "Displays the About box, describing the program"
+
         box = Gtk.AboutDialog()
         box.set_name(PROGRAM_NAME)
         box.set_version(PROGRAM_VERSION)
@@ -820,13 +818,15 @@ class MainWindow(BaseWindow):
         box.run()
         box.destroy()
 
-    def set_description_warn_flag(self):
+    def set_description_warn_flag(self) -> None:
         if not self.loading_project:
             self.find_obj("mod_descr_warn").set_property(
                 "visible", self.dbase.overview_text == ""
             )
 
-    def set_title(self, modified):
+    def set_title(self, modified: bool) -> None:
+        "Changes the title of the window to indicate if it is modified"
+
         name = self.prj.path.name
         if modified:
             self.top_window.set_title(
@@ -835,12 +835,16 @@ class MainWindow(BaseWindow):
         else:
             self.top_window.set_title(f"{self.prj.name} ({name}) - regenerate")
 
-    def on_copy_registers(self, _button: Gtk.Button):
+    def on_copy_registers(self, _button: Gtk.Button) -> None:
+        "Stores references to the registers to be copied"
+
         self.copy_source = self.regset_tab.current_regset()
         self.copy_registers = self.regset_tab.get_selected_registers()
         LOGGER.warning(f"Copied {len(self.copy_registers)} registers")
 
-    def on_paste_registers(self, _button: Gtk.Button):
+    def on_paste_registers(self, _button: Gtk.Button) -> None:
+        "Inserts the stored registers into current register set"
+
         dest = self.regset_tab.current_regset()
         if dest is None:
             return
@@ -873,30 +877,78 @@ class MainWindow(BaseWindow):
                 )
             else:
                 LOGGER.warning("Inserted %d registers", len(new_list))
+            self.regset_tab.set_modified()
             self.regset_tab.update_display()
 
-    def on_align_addresses(self, _button: Gtk.Button):
+    def on_align_addresses(self, _button: Gtk.Button) -> None:
+        "Aligns each register on a bus width boundary"
+
         regset = self.regset_tab.current_regset()
         if regset is None:
             return
-        
+
         size = regset.ports.data_bus_width // 8
         addr = 0
 
         for reg in regset.get_all_registers():
-            reg_width = reg.width // 8
             reg.address = addr
             addr += size
+        self.regset_tab.set_modified()
         self.regset_tab.force_reglist_rebuild()
 
-    def on_compact_tightly(self, _button: Gtk.Button):
+    def _sequential_greater_than_2(self, regtab: RegSetTab) -> bool:
+        "Checks that the list is sequential and has more than two elements"
+
+        if not _is_contiguous(regtab.get_selected_reg_paths()):
+            LOGGER.error(
+                "Selected registers must be contiguous to be compacted"
+            )
+            return False
+
+        if len(regtab.get_selected_registers()) < 2:
+            LOGGER.error(
+                "Compaction requires a minimum of 2 registers be selected"
+            )
+            return False
+
+        return True
+
+    def on_compact_tightly(self, _button: Gtk.Button) -> None:
+        "Packs the selected registers tightly together"
+
         regset = self.regset_tab.current_regset()
         if regset is None:
             return
 
-        print(self.regset_tab.get_selected_registers())
+        if not self._sequential_greater_than_2(self.regset_tab):
+            return
 
-        
+        reglist = self.regset_tab.get_selected_registers()
+
+        address = reglist[0].address
+        size = reglist[0].width // 8
+        bus_width = regset.ports.data_bus_width // 8
+
+        for reg in reglist[1:]:
+            if address + size <= _next_boundary(address, bus_width):
+                reg.address = address + size
+            else:
+                reg.address = _next_boundary(address, bus_width)
+            address += size
+            size = reg.width // 8
+        self.regset_tab.force_reglist_rebuild()
+        self.regset_tab.set_modified()
+
+
+def _next_boundary(address: int, width: int) -> int:
+    "Returns next bus width boundary"
+    return ((address // width) * width) + width
+
+
+def _is_contiguous(path_list) -> bool:
+    "Returns True if the numbers in the list are sequential"
+    return sorted(path_list) == list(range(min(path_list), max(path_list) + 1))
+
 
 def replace_parameter_uuids(uuid_map: Dict[str, str], reg: Register) -> None:
     if reg.dimension.is_parameter:
@@ -1006,6 +1058,7 @@ def copy_registers(dest_regset, register_list):
         if reg.dimension.is_parameter:
             parameter_set.add(reg.dimension.txt_value)
 
+    self.regset_tab.set_modified()
     return new_reglist, parameter_set
 
 

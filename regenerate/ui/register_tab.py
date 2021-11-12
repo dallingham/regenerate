@@ -173,7 +173,7 @@ class RegSetTab:
             self.update_register_addr,
             self.set_register_warn_flags,
         )
-        
+
         self._bitfield_obj = BitList(
             self._widgets.bitfield_list,
             self.bit_changed,
@@ -195,7 +195,6 @@ class RegSetTab:
 
         self.clear()
 
-            
     def _connect_signals(self) -> None:
         "Connect signals to the elements"
 
@@ -406,6 +405,9 @@ class RegSetTab:
 
     def get_selected_registers(self):
         return self._reglist_obj.get_selected_registers()
+
+    def get_selected_reg_paths(self):
+        return self._reglist_obj.get_selected_reg_paths()
 
     def add_model_callback(self, regset: RegisterDb, node: Gtk.TreeIter):
         if regset.uuid not in self._name2status:

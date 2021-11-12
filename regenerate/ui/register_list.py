@@ -419,7 +419,17 @@ class RegisterList:
         if path_list:
             for path in reversed(path_list):
                 registers.append((path, store[path][RegCol.OBJ]))
-                print(store.get_iter(path), store[path][RegCol.OBJ])
+        return registers
+
+    def get_selected_reg_paths(self):
+        """
+        Returns the register associated with the selected row
+        """
+        registers = []
+        _, path_list = self._selection.get_selected_rows()
+        if path_list:
+            for path in path_list:
+                registers.append(int(str(path)))
         return registers
 
     def _ram_update_addr(self, reg: Register, path: str, text: str):
