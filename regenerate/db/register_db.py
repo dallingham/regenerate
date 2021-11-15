@@ -180,7 +180,6 @@ class RegisterDb(NameBase):
         return ""
 
     def add_parameter(self, new_param: ParameterData):
-        print("Added", new_param)
         self.parameters.add(new_param)
 
     @property

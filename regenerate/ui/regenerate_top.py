@@ -30,9 +30,8 @@ import os
 from pathlib import Path
 
 from typing import List, Union, Optional, Set, Dict
-from copy import deepcopy
 
-from gi.repository import Gtk, GdkPixbuf, Gdk
+from gi.repository import Gtk, GdkPixbuf
 from regenerate.settings.version import PROGRAM_NAME, PROGRAM_VERSION
 from regenerate.db import (
     RegProject,
@@ -47,7 +46,7 @@ from regenerate.db import (
 )
 from regenerate.importers import IMPORTERS
 from regenerate.settings import ini
-from regenerate.settings.paths import GLADE_TOP, INSTALL_PATH, HELP_PATH
+from regenerate.settings.paths import GLADE_TOP, INSTALL_PATH
 
 from .addr_edit import AddrMapEdit
 from .addrmap_list import AddrMapList
@@ -60,7 +59,7 @@ from .project_tab import ProjectTabs
 from .register_tab import RegSetTab
 from .status_logger import StatusHandler
 from .top_level_tab import TopLevelTab
-
+from .reg_movement import insert_registers, copy_parameters
 
 TYPE_ENB = {}
 for data_type in TYPES:
@@ -137,6 +136,7 @@ class MainWindow(BaseWindow):
         self.status_obj = self.find_obj("statusbar")
         remove_default_handler()
         LOGGER.addHandler(StatusHandler(self.status_obj))
+        LOGGER.propagate = False
 
     def setup_recent_menu(self) -> None:
         """Setup the recent files management system"""
@@ -840,7 +840,7 @@ class MainWindow(BaseWindow):
 
         self.copy_source = self.regset_tab.current_regset()
         self.copy_registers = self.regset_tab.get_selected_registers()
-        LOGGER.warning(f"Copied {len(self.copy_registers)} registers")
+        LOGGER.warning("Copied %d registers", len(self.copy_registers))
 
     def on_paste_registers(self, _button: Gtk.Button) -> None:
         "Inserts the stored registers into current register set"
@@ -852,22 +852,18 @@ class MainWindow(BaseWindow):
         param_old_to_new: Dict[str, str] = {}
 
         if self.copy_source and self.copy_source.uuid != dest.uuid:
+
             new_list, new_params = copy_registers(dest, self.copy_registers)
+            param_old_to_new = copy_parameters(dest, new_params)
 
-            finder = ParameterFinder()
-            for param_uuid in new_params:
-                if param_uuid not in param_old_to_new:
-                    param = finder.find(param_uuid)
-                    if param is not None:
-                        new_param = deepcopy(param)
-                        new_param.uuid = ""
-                        finder.register(new_param)
-                        param_old_to_new[param.uuid] = new_param.uuid
-                        dest.add_parameter(new_param)
+            selected_regs = self.regset_tab.get_selected_registers()
 
-            for new_reg in new_list:
-                replace_parameter_uuids(param_old_to_new, new_reg)
-                self.regset_tab.insert_new_register(new_reg)
+            if selected_regs:
+                insert_registers(
+                    dest, new_list, selected_regs[0], param_old_to_new
+                )
+            else:
+                insert_registers(dest, new_list, None, param_old_to_new)
 
             if len(param_old_to_new) > 0:
                 LOGGER.warning(
@@ -876,7 +872,12 @@ class MainWindow(BaseWindow):
                     len(param_old_to_new),
                 )
             else:
-                LOGGER.warning("Inserted %d registers", len(new_list))
+                if len(new_list) == 1:
+                    LOGGER.warning("Inserted 1 register")
+                else:
+                    LOGGER.warning("Inserted %d registers", len(new_list))
+
+            self.regset_tab.force_reglist_rebuild()
             self.regset_tab.set_modified()
             self.regset_tab.update_display()
 
@@ -1058,7 +1059,6 @@ def copy_registers(dest_regset, register_list):
         if reg.dimension.is_parameter:
             parameter_set.add(reg.dimension.txt_value)
 
-    self.regset_tab.set_modified()
     return new_reglist, parameter_set
 
 

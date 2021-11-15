@@ -271,6 +271,9 @@ class RegSetTab:
             ):
                 row[RegCol.DIM] = reg.dimension.int_str()
 
+    def selected_regset(self):
+        return self._regset
+
     def set_parameters_modified(self):
         self.set_modified()
         self._reglist_obj.set_parameters(self._regset.parameters.get())

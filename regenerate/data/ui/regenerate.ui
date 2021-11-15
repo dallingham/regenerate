@@ -575,6 +575,7 @@ create a new project by selecting
                       <object class="GtkNotebook" id="regset_select_notebook">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
+                        <property name="show_border">False</property>
                         <child>
                           <object class="GtkScrolledWindow" id="scrolledwindow3">
                             <property name="visible">True</property>
@@ -2683,6 +2684,7 @@ loading an existing &lt;b&gt;&lt;tt&gt;.regb&lt;/tt&gt;&lt;/b&gt; file.</propert
                           <object class="GtkButtonBox">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
+                            <property name="halign">start</property>
                             <property name="margin_left">6</property>
                             <property name="margin_right">6</property>
                             <property name="orientation">vertical</property>
@@ -2765,7 +2767,7 @@ loading an existing &lt;b&gt;&lt;tt&gt;.regb&lt;/tt&gt;&lt;/b&gt; file.</propert
                             </child>
                           </object>
                           <packing>
-                            <property name="left_attach">5</property>
+                            <property name="left_attach">3</property>
                             <property name="top_attach">4</property>
                           </packing>
                         </child>
@@ -2777,14 +2779,16 @@ loading an existing &lt;b&gt;&lt;tt&gt;.regb&lt;/tt&gt;&lt;/b&gt; file.</propert
                             <property name="margin_top">12</property>
                             <property name="margin_bottom">12</property>
                             <property name="vexpand">False</property>
-                            <property name="label" translatable="yes">&lt;b&gt;Register Sets&lt;/b&gt;</property>
-                            <property name="use_markup">True</property>
+                            <property name="label" translatable="yes">Register Sets</property>
                             <property name="xalign">0</property>
+                            <attributes>
+                              <attribute name="weight" value="bold"/>
+                            </attributes>
                           </object>
                           <packing>
                             <property name="left_attach">0</property>
                             <property name="top_attach">3</property>
-                            <property name="width">6</property>
+                            <property name="width">4</property>
                           </packing>
                         </child>
                         <child>
@@ -2795,7 +2799,6 @@ loading an existing &lt;b&gt;&lt;tt&gt;.regb&lt;/tt&gt;&lt;/b&gt; file.</propert
                             <property name="halign">start</property>
                             <property name="margin_left">6</property>
                             <property name="hexpand">False</property>
-                            <property name="vexpand">False</property>
                             <property name="label" translatable="yes">Block Name:</property>
                             <property name="xalign">0</property>
                             <attributes>
@@ -2814,7 +2817,6 @@ loading an existing &lt;b&gt;&lt;tt&gt;.regb&lt;/tt&gt;&lt;/b&gt; file.</propert
                             <property name="halign">start</property>
                             <property name="margin_left">6</property>
                             <property name="hexpand">False</property>
-                            <property name="vexpand">False</property>
                             <property name="label" translatable="yes">Description:</property>
                             <property name="xalign">0</property>
                             <attributes>
@@ -2833,7 +2835,6 @@ loading an existing &lt;b&gt;&lt;tt&gt;.regb&lt;/tt&gt;&lt;/b&gt; file.</propert
                             <property name="halign">start</property>
                             <property name="margin_left">6</property>
                             <property name="hexpand">False</property>
-                            <property name="vexpand">False</property>
                             <property name="label" translatable="yes">Address Space Size:</property>
                             <property name="xalign">0</property>
                             <attributes>
@@ -2849,13 +2850,11 @@ loading an existing &lt;b&gt;&lt;tt&gt;.regb&lt;/tt&gt;&lt;/b&gt; file.</propert
                           <object class="ValidWordEntry" id="block_name">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
-                            <property name="halign">start</property>
                             <property name="margin_left">6</property>
                             <property name="margin_right">6</property>
                             <property name="margin_top">6</property>
                             <property name="margin_bottom">6</property>
-                            <property name="hexpand">False</property>
-                            <property name="vexpand">False</property>
+                            <property name="hexpand">True</property>
                           </object>
                           <packing>
                             <property name="left_attach">1</property>
@@ -2871,35 +2870,22 @@ loading an existing &lt;b&gt;&lt;tt&gt;.regb&lt;/tt&gt;&lt;/b&gt; file.</propert
                             <property name="margin_top">6</property>
                             <property name="margin_bottom">6</property>
                             <property name="hexpand">True</property>
-                            <property name="vexpand">False</property>
                           </object>
                           <packing>
                             <property name="left_attach">1</property>
                             <property name="top_attach">0</property>
-                            <property name="width">4</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkLabel">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                          </object>
-                          <packing>
-                            <property name="left_attach">5</property>
-                            <property name="top_attach">0</property>
+                            <property name="width">2</property>
                           </packing>
                         </child>
                         <child>
                           <object class="ValidHexEntry" id="blk_addr_size">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
-                            <property name="halign">start</property>
                             <property name="margin_left">6</property>
                             <property name="margin_right">6</property>
                             <property name="margin_top">6</property>
                             <property name="margin_bottom">6</property>
-                            <property name="hexpand">False</property>
-                            <property name="vexpand">False</property>
+                            <property name="hexpand">True</property>
                           </object>
                           <packing>
                             <property name="left_attach">1</property>
@@ -2971,17 +2957,8 @@ loading an existing &lt;b&gt;&lt;tt&gt;.regb&lt;/tt&gt;&lt;/b&gt; file.</propert
                           <packing>
                             <property name="left_attach">0</property>
                             <property name="top_attach">4</property>
-                            <property name="width">5</property>
+                            <property name="width">3</property>
                           </packing>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
-                        </child>
-                        <child>
-                          <placeholder/>
                         </child>
                         <child>
                           <placeholder/>

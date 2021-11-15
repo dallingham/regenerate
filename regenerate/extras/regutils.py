@@ -23,7 +23,7 @@ Register utilities
 
 import copy
 import re
-from typing import Set, List
+from typing import Set
 
 from regenerate.db import Register, RegisterDb
 from .remap import REMAP_NAME
@@ -123,6 +123,22 @@ def calculate_next_address(dbase: RegisterDb, width: int) -> int:
                 addr += addr % byte_width
             return addr
     return 0
+
+
+def following_address(
+    address: int, dimension, reg_width: int, bus_width: int
+) -> int:
+    "Calculates the next address based on the last address that was used."
+
+    dim = max(dimension.resolve(), 1)
+    if dim == 0:
+        dim = 1
+    byte_width = reg_width // 8
+    addr = address + (dim * byte_width)
+    byte_width = bus_width // 8
+    if addr % byte_width != 0:
+        addr += addr % byte_width
+    return addr
 
 
 def signal_from_source(source_name: str, existing_list: Set[str]) -> str:
