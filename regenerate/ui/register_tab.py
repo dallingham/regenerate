@@ -51,6 +51,7 @@ from .summary_window import SummaryWindow
 from .filter_mgr import FilterManager
 from .file_dialogs import get_new_filename
 from .select_sidebar import SelectSidebar
+from .reg_movement import insert_registers, copy_parameters, copy_registers
 
 
 class RegSetWidgets:
@@ -193,6 +194,9 @@ class RegSetTab:
         self._widgets.filter_obj.set_placeholder_text("Signal Filter")
         self._filter_manage = FilterManager(self._widgets.filter_obj)
 
+        self._copy_source = None
+        self._copy_registers = []
+
         self.clear()
 
     def _connect_signals(self) -> None:
@@ -235,6 +239,29 @@ class RegSetTab:
             "clicked",
             self.remove_register_callback,
         )
+        self._widgets.reglist.connect(
+            "key-press-event",
+            self.treeview_key_press,
+        )
+
+    def treeview_key_press(
+        self, _obj: Gtk.TreeView, event: Gdk.EventKey
+    ) -> bool:
+        "Catch C-c to copy registers and C-v to paste_registers"
+
+        if (
+            event.keyval == Gdk.keyval_from_name("c")
+            and event.state == Gdk.ModifierType.CONTROL_MASK
+        ):
+            self.copy_registers()
+            return True
+        if (
+            event.keyval == Gdk.keyval_from_name("v")
+            and event.state == Gdk.ModifierType.CONTROL_MASK
+        ):
+            self.paste_registers()
+            return True
+        return False
 
     def filter_visible(self, visible: bool) -> None:
         "Shows or hides the filter object"
@@ -377,6 +404,48 @@ class RegSetTab:
     def reg_descript_callback(self, reg: Register):
         self.set_modified()
         self.set_register_warn_flags(reg)
+
+    def copy_registers(self):
+        self._copy_source = self.current_regset()
+        self._copy_registers = self.get_selected_registers()
+        LOGGER.warning("Copied %d registers", len(self._copy_registers))
+
+    def paste_registers(self):
+        dest = self.current_regset()
+        if dest is None:
+            return
+
+        param_old_to_new: Dict[str, str] = {}
+
+        if self._copy_source and self._copy_source.uuid != dest.uuid:
+
+            new_list, new_params = copy_registers(dest, self._copy_registers)
+            param_old_to_new = copy_parameters(dest, new_params)
+
+            selected_regs = self.get_selected_registers()
+
+            if selected_regs:
+                insert_registers(
+                    dest, new_list, selected_regs[0], param_old_to_new
+                )
+            else:
+                insert_registers(dest, new_list, None, param_old_to_new)
+
+            if len(param_old_to_new) > 0:
+                LOGGER.warning(
+                    "Inserted %d registers, %d parameters",
+                    len(new_list),
+                    len(param_old_to_new),
+                )
+            else:
+                if len(new_list) == 1:
+                    LOGGER.warning("Inserted 1 register")
+                else:
+                    LOGGER.warning("Inserted %d registers", len(new_list))
+
+            self.force_reglist_rebuild()
+            self.set_modified()
+            self.update_display()
 
     def update_display(self, show_msg=False):
         old_skip = self._skip_changes

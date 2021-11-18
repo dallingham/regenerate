@@ -29,14 +29,13 @@ import xml
 import os
 from pathlib import Path
 
-from typing import List, Union, Optional, Set, Dict
+from typing import List, Union, Optional, Dict
 
 from gi.repository import Gtk, GdkPixbuf
 from regenerate.settings.version import PROGRAM_NAME, PROGRAM_VERSION
 from regenerate.db import (
     RegProject,
     Register,
-    ParameterFinder,
     LOGGER,
     TYPES,
     remove_default_handler,
@@ -59,7 +58,7 @@ from .project_tab import ProjectTabs
 from .register_tab import RegSetTab
 from .status_logger import StatusHandler
 from .top_level_tab import TopLevelTab
-from .reg_movement import insert_registers, copy_parameters
+
 
 TYPE_ENB = {}
 for data_type in TYPES:
@@ -84,8 +83,6 @@ class MainWindow(BaseWindow):
         self.modelsort = None
         self.prj = None
         self.dbmap = {}
-        self.copy_source = None
-        self.copy_registers = []
         self.builder = Gtk.Builder()
         self.builder.add_from_file(str(GLADE_TOP))
 
@@ -837,49 +834,11 @@ class MainWindow(BaseWindow):
 
     def on_copy_registers(self, _button: Gtk.Button) -> None:
         "Stores references to the registers to be copied"
-
-        self.copy_source = self.regset_tab.current_regset()
-        self.copy_registers = self.regset_tab.get_selected_registers()
-        LOGGER.warning("Copied %d registers", len(self.copy_registers))
+        self.regset_tab.copy_registers()
 
     def on_paste_registers(self, _button: Gtk.Button) -> None:
         "Inserts the stored registers into current register set"
-
-        dest = self.regset_tab.current_regset()
-        if dest is None:
-            return
-
-        param_old_to_new: Dict[str, str] = {}
-
-        if self.copy_source and self.copy_source.uuid != dest.uuid:
-
-            new_list, new_params = copy_registers(dest, self.copy_registers)
-            param_old_to_new = copy_parameters(dest, new_params)
-
-            selected_regs = self.regset_tab.get_selected_registers()
-
-            if selected_regs:
-                insert_registers(
-                    dest, new_list, selected_regs[0], param_old_to_new
-                )
-            else:
-                insert_registers(dest, new_list, None, param_old_to_new)
-
-            if len(param_old_to_new) > 0:
-                LOGGER.warning(
-                    "Inserted %d registers, %d parameters",
-                    len(new_list),
-                    len(param_old_to_new),
-                )
-            else:
-                if len(new_list) == 1:
-                    LOGGER.warning("Inserted 1 register")
-                else:
-                    LOGGER.warning("Inserted %d registers", len(new_list))
-
-            self.regset_tab.force_reglist_rebuild()
-            self.regset_tab.set_modified()
-            self.regset_tab.update_display()
+        self.regset_tab.paste_registers()
 
     def on_align_addresses(self, _button: Gtk.Button) -> None:
         "Aligns each register on a bus width boundary"
@@ -1032,57 +991,3 @@ def check_address_ranges(project):
         prev_stop = new_stop
 
     return True
-
-
-def copy_registers(dest_regset, register_list):
-
-    used_addrs = build_used_addresses(dest_regset.get_all_registers())
-
-    parameter_set = set()
-    new_reglist: List[Register] = []
-    for reg in register_list:
-        new_reg = Register()
-        new_reg.json_decode(reg.json())
-        new_reg.uuid = ""
-        for field in new_reg.get_bit_fields():
-            field.uuid = ""
-
-        reg_addrs = get_addresses(new_reg)
-
-        while reg_addrs.intersection(used_addrs):
-            new_reg.address = new_reg.address + new_reg.width // 8
-            reg_addrs = get_addresses(new_reg)
-
-        new_reglist.append(new_reg)
-        used_addrs = used_addrs.union(reg_addrs)
-
-        if reg.dimension.is_parameter:
-            parameter_set.add(reg.dimension.txt_value)
-
-    return new_reglist, parameter_set
-
-
-def build_used_addresses(register_list) -> Set[int]:
-
-    used_addrs: Set[int] = set()
-    for reg in register_list:
-        used_addrs = used_addrs.union(get_addresses(reg))
-    return used_addrs
-
-
-def get_addresses(reg: Register) -> Set[int]:
-    used_addrs: Set[int] = set()
-    used_addrs.add(reg.address)
-
-    if reg.width >= 16:
-        used_addrs.add(reg.address + 1)
-    if reg.width >= 32:
-        used_addrs.add(reg.address + 2)
-        used_addrs.add(reg.address + 3)
-    if reg.width == 64:
-        used_addrs.add(reg.address + 4)
-        used_addrs.add(reg.address + 5)
-        used_addrs.add(reg.address + 6)
-        used_addrs.add(reg.address + 7)
-
-    return used_addrs
