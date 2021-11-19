@@ -19,7 +19,7 @@
 
 import os
 
-from typing import Dict, Optional, Callable
+from typing import Dict, Optional, Callable, List, Tuple
 from pathlib import Path
 
 from gi.repository import Gtk, Gdk
@@ -195,7 +195,7 @@ class RegSetTab:
         self._filter_manage = FilterManager(self._widgets.filter_obj)
 
         self._copy_source = None
-        self._copy_registers = []
+        self._copy_registers: List[Register] = []
 
         self.clear()
 
@@ -277,7 +277,7 @@ class RegSetTab:
         self.update_size_parameters()
         self.update_field_parameters()
 
-    def update_field_parameters(self):
+    def update_field_parameters(self) -> None:
         "Update any displayed parameter names if they have changed"
         for row in self._bit_model:
             field = row[BitCol.FIELD]
@@ -285,7 +285,7 @@ class RegSetTab:
                 if field.reset_parameter != row[BitCol.RESET]:
                     row[BitCol.RESET] = field.reset_parameter
 
-    def update_size_parameters(self):
+    def update_size_parameters(self) -> None:
         "Change the reset parameters, updating for any name changes"
         if self._reg_model is None:
             return
@@ -298,21 +298,28 @@ class RegSetTab:
             ):
                 row[RegCol.DIM] = reg.dimension.int_str()
 
-    def selected_regset(self):
+    def selected_regset(self) -> Optional[RegisterDb]:
         return self._regset
 
-    def set_parameters_modified(self):
+    def set_parameters(self, parameters) -> None:
+        self._reglist_obj.set_parameters(parameters)
+        self._bitfield_obj.set_parameters(parameters)
+
+    def set_parameters_regset(self, regset: RegisterDb) -> None:
+        self._parameter_list.set_db(regset)
+
+    def set_parameters_modified(self) -> None:
         self.set_modified()
         self._reglist_obj.set_parameters(self._regset.parameters.get())
         self._bitfield_obj.set_parameters(self._regset.parameters.get())
         self._selected_reg_changed(None)
 
-    def force_reglist_rebuild(self):
+    def force_reglist_rebuild(self) -> None:
         self._reglist_obj.clear()
         for reg in self._regset.get_all_registers():
             self._reglist_obj.load_reg_into_model(reg)
 
-    def set_modified(self):
+    def set_modified(self) -> None:
         "Sets the modified flag"
 
         if not self._skip_changes:
@@ -363,7 +370,7 @@ class RegSetTab:
         self._name2status[regset.uuid] = status
         return node
 
-    def array_changed(self, obj):
+    def array_changed(self, obj) -> None:
         "Callback for the array_is_reg value"
         if self._regset:
             self._regset.array_is_reg = obj.get_active()
@@ -378,7 +385,7 @@ class RegSetTab:
         self.update_display(False)
         self._sidebar.select_path(0)
 
-    def update_sidebar(self):
+    def update_sidebar(self) -> None:
         self._sidebar.update()
 
     def rebuild_model(self) -> None:
@@ -401,16 +408,21 @@ class RegSetTab:
                 regset = self._project.regsets[rsid]
                 self.new_regset(regset)
 
-    def reg_descript_callback(self, reg: Register):
+    def reg_descript_callback(self, reg: Register) -> None:
+        "Called when the description field has been edited"
         self.set_modified()
         self.set_register_warn_flags(reg)
 
-    def copy_registers(self):
+    def copy_registers(self) -> None:
+        "Copy the selected registers from the active register set"
+
         self._copy_source = self.current_regset()
         self._copy_registers = self.get_selected_registers()
         LOGGER.warning("Copied %d registers", len(self._copy_registers))
 
-    def paste_registers(self):
+    def paste_registers(self) -> None:
+        "Insert the copied registers at the selected point in the active set"
+
         dest = self.current_regset()
         if dest is None:
             return
@@ -447,7 +459,9 @@ class RegSetTab:
             self.set_modified()
             self.update_display()
 
-    def update_display(self, show_msg=False):
+    def update_display(self, show_msg=False) -> None:
+        "Redraw the display, turning off changes"
+
         old_skip = self._skip_changes
         self._skip_changes = True
         self.redraw(show_msg)
@@ -455,6 +469,7 @@ class RegSetTab:
 
     def redraw(self, _show_msg=False):
         """Redraws the information in the register list."""
+
         if self._regset:
             self._module_tabs.change_db(self._regset, self._project)
             self._parameter_list.set_db(self._regset)
@@ -475,13 +490,21 @@ class RegSetTab:
         self.update_bit_count()
         self.set_description_warn_flag()
 
-    def get_selected_registers(self):
+    def get_selected_registers(self) -> List[Register]:
+        "Returns the list of selected registers"
+
         return self._reglist_obj.get_selected_registers()
 
-    def get_selected_reg_paths(self):
+    def get_selected_reg_paths(self) -> List[Tuple[Gtk.TreePath, Register]]:
+        "Returns a list of the tree paths and the associated register"
+
         return self._reglist_obj.get_selected_reg_paths()
 
-    def add_model_callback(self, regset: RegisterDb, node: Gtk.TreeIter):
+    def add_model_callback(
+        self, regset: RegisterDb, node: Gtk.TreeIter
+    ) -> None:
+        "Called when a new register set has been added to the sidebar"
+
         if regset.uuid not in self._name2status:
 
             self._reg_model = RegisterModel()
@@ -507,13 +530,18 @@ class RegSetTab:
 
             self._name2status[regset.uuid] = status
 
-    def clear(self):
+    def clear(self) -> None:
+        "Clears the sidebar model"
+
         self._sidebar.clear()
 
     def current_regset(self) -> Optional[RegisterDb]:
+        "Returns the selected register set"
+
         return self._regset
 
     def _regset_sel_changed(self, _obj: Gtk.TreeSelection) -> None:
+        "Called when the register set selection has changed"
 
         self._regset = self._sidebar.get_selected_object()
 
@@ -544,7 +572,9 @@ class RegSetTab:
             self._enable_registers(False)
         self._skip_changes = old_skip
 
-    def set_register_warn_flags(self, reg, mark=True):
+    def set_register_warn_flags(self, reg, mark=True) -> None:
+        "Sets the warning messages and flags"
+
         warn_reg = warn_bit = False
         msg = []
         if not reg.description:
@@ -584,7 +614,7 @@ class RegSetTab:
             tip = None
         self._reg_model.set_tooltip(reg, tip)
 
-    def _selected_reg_changed(self, _obj):
+    def _selected_reg_changed(self, _obj) -> None:
         """
         GTK callback that checks the selected objects, and then enables the
         appropriate buttons on the interface.
@@ -625,7 +655,9 @@ class RegSetTab:
             self._reg_selected_action.set_sensitive(False)
         self._skip_changes = old_skip
 
-    def set_share(self, reg):
+    def set_share(self, reg: Register) -> None:
+        "Sets the sharing radio button based off the register value"
+
         if reg.share == ShareType.NONE:
             self._widgets.no_sharing.set_active(True)
         elif reg.share == ShareType.READ:
@@ -634,9 +666,12 @@ class RegSetTab:
             self._widgets.write_access.set_active(True)
 
     def remove_register_callback(self, _obj: Gtk.Button) -> None:
+        "Called when the remove register button has been pressed"
         self.remove_register()
 
     def remove_register(self) -> None:
+        "Removes the selected register from the interface and database"
+
         if self._regset:
             reglist = self._reglist_obj.get_selected_registers()
             self._reglist_obj.delete_selected_node()
@@ -645,9 +680,12 @@ class RegSetTab:
             self.set_modified()
 
     def add_register_callback(self, _obj: Gtk.Button) -> None:
+        "Called when the add register button has been pressed"
         self.new_register()
 
     def new_register(self) -> None:
+        "Adds a new, empty register to the interface and database"
+
         dbase = self._regset
         if dbase:
             register = Register()

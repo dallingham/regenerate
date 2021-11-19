@@ -382,31 +382,9 @@ class Build(BaseWindow):
         to add to the builder.
         """
 
-        rlist = [
-            (item.description, ProjectType.REGSET, item.file_extension)
-            for item in EXPORTERS
-        ]
-        blist = [
-            (item.description, ProjectType.BLOCK, item.file_extension)
-            for item in GRP_EXPORTERS
-        ]
-        plist = [
-            (item.description, ProjectType.PROJECT, item.file_extension)
-            for item in PRJ_EXPORTERS
-        ]
-
-        optlist = rlist + blist + plist
-
-        # reglist = [(i.name, i.uuid) for i in self.__prj.regsets.values()]
-
-        # groups = [
-        #     (group.name, group.uuid) for group in self.__prj.blocks.values()
-        # ]
-
         assistant = RuleBuilder(
             self.__prj,
             self.add_callback,
-            # self.__build_top,
         )
         assistant.show_all()
 

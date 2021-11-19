@@ -21,7 +21,7 @@
 Utilities for copying and moving registers within a register set
 """
 
-from typing import List, Dict, Set
+from typing import List, Dict, Set, Tuple
 from copy import deepcopy
 
 from regenerate.db import RegisterDb, Register, ParameterFinder, ResetType
@@ -63,7 +63,7 @@ def insert_registers(
             reg.width,
             dest.ports.data_bus_width,
         )
-        replace_parameter_uuids(param_old_to_new, reg)
+        _replace_parameter_uuids(param_old_to_new, reg)
 
     if below_reg:
         for reg in dest.get_all_registers():
@@ -82,7 +82,57 @@ def insert_registers(
         dest.add_register(reg)
 
 
-def get_addresses(reg: Register) -> Set[int]:
+def copy_registers(
+    dest_regset: RegisterDb, register_list: List[Register]
+) -> Tuple[List[Register], Set[str]]:
+    "Copies the register list to the destination register set"
+    used_addrs = _build_used_addresses(dest_regset.get_all_registers())
+
+    parameter_set = set()
+    new_reglist: List[Register] = []
+    for reg in register_list:
+        new_reg = Register()
+        new_reg.json_decode(reg.json())
+        new_reg.uuid = ""
+        for field in new_reg.get_bit_fields():
+            field.uuid = ""
+
+        reg_addrs = _get_addresses(new_reg)
+
+        while reg_addrs.intersection(used_addrs):
+            new_reg.address = new_reg.address + new_reg.width // 8
+            reg_addrs = _get_addresses(new_reg)
+
+        new_reglist.append(new_reg)
+        used_addrs = used_addrs.union(reg_addrs)
+
+        if reg.dimension.is_parameter:
+            parameter_set.add(reg.dimension.txt_value)
+
+    return new_reglist, parameter_set
+
+
+def copy_parameters(dest: RegisterDb, param_list: Set[str]) -> Dict[str, str]:
+    "Copies the parameters to the target register set"
+
+    param_map: Dict[str, str] = {}
+
+    finder = ParameterFinder()
+    for param_uuid in param_list:
+        if param_uuid not in param_map:
+            param = finder.find(param_uuid)
+            if param is not None:
+                new_param = deepcopy(param)
+                new_param.uuid = ""
+                finder.register(new_param)
+                param_map[param.uuid] = new_param.uuid
+                dest.add_parameter(new_param)
+    return param_map
+
+
+def _get_addresses(reg: Register) -> Set[int]:
+    "Returns the set of addresses that the register occupies"
+
     used_addrs: Set[int] = set()
     used_addrs.add(reg.address)
 
@@ -100,43 +150,16 @@ def get_addresses(reg: Register) -> Set[int]:
     return used_addrs
 
 
-def build_used_addresses(register_list) -> Set[int]:
+def _build_used_addresses(register_list) -> Set[int]:
+    "Builds the used address from the register list"
 
     used_addrs: Set[int] = set()
     for reg in register_list:
-        used_addrs = used_addrs.union(get_addresses(reg))
+        used_addrs = used_addrs.union(_get_addresses(reg))
     return used_addrs
 
 
-def copy_registers(dest_regset, register_list):
-
-    used_addrs = build_used_addresses(dest_regset.get_all_registers())
-
-    parameter_set = set()
-    new_reglist: List[Register] = []
-    for reg in register_list:
-        new_reg = Register()
-        new_reg.json_decode(reg.json())
-        new_reg.uuid = ""
-        for field in new_reg.get_bit_fields():
-            field.uuid = ""
-
-        reg_addrs = get_addresses(new_reg)
-
-        while reg_addrs.intersection(used_addrs):
-            new_reg.address = new_reg.address + new_reg.width // 8
-            reg_addrs = get_addresses(new_reg)
-
-        new_reglist.append(new_reg)
-        used_addrs = used_addrs.union(reg_addrs)
-
-        if reg.dimension.is_parameter:
-            parameter_set.add(reg.dimension.txt_value)
-
-    return new_reglist, parameter_set
-
-
-def replace_parameter_uuids(uuid_map: Dict[str, str], reg: Register) -> None:
+def _replace_parameter_uuids(uuid_map: Dict[str, str], reg: Register) -> None:
     if reg.dimension.is_parameter:
         if reg.dimension.txt_value in uuid_map:
             reg.dimension.txt_value = uuid_map[reg.dimension.txt_value]
@@ -147,19 +170,3 @@ def replace_parameter_uuids(uuid_map: Dict[str, str], reg: Register) -> None:
         if field.msb.is_parameter:
             if field.msb.txt_value in uuid_map:
                 field.msb.txt_value = uuid_map[field.msb.txt_value]
-
-
-def copy_parameters(dest: RegisterDb, param_list) -> Dict[str, str]:
-    param_map: Dict[str, str] = {}
-
-    finder = ParameterFinder()
-    for param_uuid in param_list:
-        if param_uuid not in param_map:
-            param = finder.find(param_uuid)
-            if param is not None:
-                new_param = deepcopy(param)
-                new_param.uuid = ""
-                finder.register(new_param)
-                param_map[param.uuid] = new_param.uuid
-                dest.add_parameter(new_param)
-    return param_map

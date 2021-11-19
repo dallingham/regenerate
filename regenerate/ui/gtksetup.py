@@ -26,11 +26,12 @@ import sys
 
 try:
     import gi
-except ImportError as msg:
-    sys.stderr.write("Fatal Error: Cannot start import the GTK libraries. Exiting.\n")
+except ImportError:
+    sys.stderr.write(
+        "Fatal Error: Cannot start import the GTK libraries. Exiting.\n"
+    )
     sys.exit()
 
 gi.require_version("Gtk", "3.0")
 gi.require_version("Pango", "1.0")
 gi.require_version("GtkSource", "3.0")
-

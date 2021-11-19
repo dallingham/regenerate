@@ -186,10 +186,7 @@ class MainWindow(BaseWindow):
 
     def set_parameters_modified(self) -> None:
         self.set_project_modified()
-        self.regset_tab.reglist_obj.set_parameters(self.dbase.parameters.get())
-        self.regset_tab.bitfield_obj.set_parameters(
-            self.dbase.parameters.get()
-        )
+        self.regset_tab.set_parameters(self.dbase.parameters.get())
 
     def set_project_modified(self) -> None:
         "Sets the project modified flag"
@@ -274,7 +271,7 @@ class MainWindow(BaseWindow):
         """Display the help window"""
         HelpWindow("regenerate_help.html", "Overview")
 
-    def on_help_block_inst_clicked(self, obj: Gtk.Button) -> None:
+    def on_help_block_inst_clicked(self, _obj: Gtk.Button) -> None:
         "Display the help window for the Block Inst display"
         HelpWindow("block_inst_help.html", "Block Instances")
 
@@ -657,11 +654,8 @@ class MainWindow(BaseWindow):
     def _redraw(self):
         "Redraws the information in the register list."
 
-        self.regset_tab.parameter_list.set_db(self.dbase)
-        self.regset_tab.reglist_obj.set_parameters(self.dbase.parameters.get())
-        self.regset_tab.bitfield_obj.set_parameters(
-            self.dbase.parameters.get()
-        )
+        self.regset_tab.set_parameters_regset(self.dbase)
+        self.regset_tab.set_parameters(self.dbase.parameters.get())
         self.regset_tab.update_display(False)
         self.set_description_warn_flag()
 

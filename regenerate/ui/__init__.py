@@ -19,4 +19,3 @@
 """
 Define the editors
 """
-

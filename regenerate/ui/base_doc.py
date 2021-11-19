@@ -152,7 +152,7 @@ class BaseDoc:
         self.links = {}
         self.notebook.connect("switch-page", self.switch_page)
 
-    def _preview(self, obj: Gtk.Button) -> None:
+    def _preview(self, _obj: Gtk.Button) -> None:
         info = self.page_map[self.notebook.get_current_page()]
         PreviewDisplay(info.textbuf)
 
@@ -260,8 +260,8 @@ class BaseDoc:
         handler = text_buffer.connect("changed", self._text_changed_callback)
         Spell(text_buffer)
 
-        preview_window = Gtk.ScrolledWindow()
-        self.preview = PreviewEditor(text_buffer, preview_window, False)
+        # preview_window = Gtk.ScrolledWindow()
+        # self.preview = PreviewEditor(text_buffer, preview_window, False)
         edit_window.show_all()
 
         hbox = Gtk.HBox()
