@@ -343,7 +343,7 @@ class MainWindow(BaseWindow):
         self.field_selected = self.build_group("field_selected", fld_acn)
 
     def on_build_action_activate(self, _obj: Gtk.Action) -> None:
-        Build(self.prj)
+        Build(self.prj, self.top_window)
 
     def on_autoload_toggled(self, _obj) -> None:
         ini.set("user", "load_last_project", int(bool(_obj.get_active())))

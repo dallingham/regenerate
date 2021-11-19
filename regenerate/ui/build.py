@@ -22,7 +22,7 @@ keeps track of when an output file should be rebuilt.
 """
 
 import os
-from typing import Tuple, Dict, List, NamedTuple, Any
+from typing import Tuple, Dict, List, NamedTuple, Any, Optional, Type
 from pathlib import Path
 
 from gi.repository import Gtk, Pango
@@ -63,7 +63,9 @@ class Build(BaseWindow):
     as to what should be built.
     """
 
-    def __init__(self, project: RegProject):
+    def __init__(
+            self, project: RegProject, top_window: Optional[Type[Gtk.Window]] = None
+    ):
         super().__init__()
 
         self.__prj = project
@@ -76,7 +78,7 @@ class Build(BaseWindow):
             base_path = os.path.splitext(os.path.basename(item))
             self.__base2path[base_path[0]] = item
 
-        self.__build_interface(None)
+        self.__build_interface(top_window)
         self.__build_export_maps()
         self.__populate()
 
