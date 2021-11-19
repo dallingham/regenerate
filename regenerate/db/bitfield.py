@@ -26,6 +26,8 @@ from .name_base import NameBase
 from .enums import BitType, ResetType
 from .bit_values import BitValues
 from .param_value import ParamValue
+from .param_data import ParameterFinder
+from .param_resolver import ParameterResolver
 from .json_base import JSONEncodable
 
 
@@ -222,7 +224,14 @@ class BitField(NameBase):
         assume that the value is zero.
         """
         if self.reset_type == ResetType.PARAMETER:
-            return BitField.PARAMETERS.get(self.reset_parameter, 0)
+            finder = ParameterFinder()
+            resolver = ParameterResolver()
+            param = finder.find(self.reset_parameter)
+            if param:
+                val = resolver.resolve(param)
+                return val
+            else:
+                return 0
         if self.reset_type == ResetType.INPUT:
             return 0
         return self._reset_value
@@ -241,7 +250,9 @@ class BitField(NameBase):
     def reset_string(self) -> Optional[str]:
         "Returns the reset value as a string"
         if self.reset_type == ResetType.PARAMETER:
-            return self.reset_parameter
+            finder = ParameterFinder()
+            param = finder.find(self.reset_parameter)
+            return param.name
         elif self.reset_type == ResetType.INPUT:
             return self.reset_input
         return hex(self._reset_value)
@@ -249,7 +260,9 @@ class BitField(NameBase):
     def reset_vstr(self) -> Optional[str]:
         "Returns the reset value as a string in verilog format"
         if self.reset_type == ResetType.PARAMETER:
-            return self.reset_parameter
+            finder = ParameterFinder()
+            param = finder.find(self.reset_parameter)
+            return param.name
         if self.reset_type == ResetType.INPUT:
             return self.reset_input
         if self.msb.is_parameter:

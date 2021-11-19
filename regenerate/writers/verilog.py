@@ -373,7 +373,6 @@ class Verilog(RegsetWriter):
         # TODO: fix 64 bit registers with 32 bit width
 
         signal_list = self.build_signal_list()
-
         reg_data_list = self.build_flop_info()
 
         if self._regset.ports.reset_active_level:
@@ -871,7 +870,6 @@ def add_signal(
 ) -> None:
     "Adds the signal to the signal set, handling dimensions"
 
-    print(type(dimension))
     if dimension.is_parameter:
         signal_set.add(
             Scalar(f"{signal_name}[{dimension.param_name()}]", vector)

@@ -38,7 +38,7 @@ class AddrMapEdit(BaseWindow):
     def __init__(
         self,
         map_name: str,
-        subsystem_list: List[Tuple[BlockInst, bool]],
+        blk_inst_list: List[Tuple[BlockInst, bool]],
         project: RegProject,
         parent: Gtk.Window,
         callback: Callable,
@@ -57,7 +57,7 @@ class AddrMapEdit(BaseWindow):
         ]
 
         dialog = self.build_dialog(parent)
-        self.populate(subsystem_list)
+        self.populate(blk_inst_list)
 
         response = dialog.run()
 
@@ -70,13 +70,13 @@ class AddrMapEdit(BaseWindow):
         "Builds the dialog window"
 
         label = Gtk.Label(
-            f'Select subsystems for the "{self.map_name}" address map'
+            f'Select blk_insts for the "{self.map_name}" address map'
         )
         label.set_padding(6, 6)
         label.show()
 
         dialog = Gtk.Dialog(
-            "Address Map Subsystem Selection",
+            "Address Map Block Selection",
             None,
             Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT,
             (
@@ -115,7 +115,7 @@ class AddrMapEdit(BaseWindow):
 
         self.view.append_column(col)
 
-        col = EditableColumn("Subsystem", None, 1)
+        col = EditableColumn("Block Instance", None, 1)
         col.set_min_width(200)
         self.view.append_column(col)
 
@@ -132,10 +132,10 @@ class AddrMapEdit(BaseWindow):
         scrolled_window.add(self.view)
         return dialog
 
-    def populate(self, subsystem_list: List[Tuple[BlockInst, bool]]):
-        "Populate the model with the subsystem information"
+    def populate(self, blk_inst_list: List[Tuple[BlockInst, bool]]):
+        "Populate the model with the block instance information"
 
-        for val in subsystem_list:
+        for val in blk_inst_list:
             blk_inst, active = val
             title = blk_inst.name
             top = self.model.append(

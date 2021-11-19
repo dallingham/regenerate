@@ -19,7 +19,7 @@
 
 """
 Provides the ability to resolve parameters into their final integer
-values based of the default value and any overrides.
+ovalues based of the default value and any overrides.
 """
 
 from typing import Dict

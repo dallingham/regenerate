@@ -32,6 +32,7 @@ from regenerate.ui.columns import (
     SwitchComboMapColumn,
 )
 from regenerate.ui.enums import BitCol
+from regenerate.db import ParameterFinder
 
 #
 # Types conversions
@@ -134,7 +135,7 @@ class BitList:
         self.selection_changed(obj)
 
     def set_parameters(self, parameters):
-        my_parameters = sorted([(p.name, p.name) for p in parameters])
+        my_parameters = sorted([(p.name, p.uuid) for p in parameters])
         self.reset_column.update_menu(my_parameters)
 
         msb_parameters = sorted([(f"{p.name}-1", p.uuid) for p in parameters])
@@ -297,11 +298,12 @@ class BitList:
         model = cell.get_property("model")
         field = self.__model.get_bitfield_at_path(path)
         field.reset_type = ResetType.PARAMETER
-        new_val = model.get_value(node, 0)
+        new_val = model.get_value(node, 1)
+        new_text = model. get_value(node, 0)
         field.reset_parameter = new_val
 
         if self.__model:
-            self.__model[path][BitCol.RESET] = new_val
+            self.__model[path][BitCol.RESET] = new_text
             self.__modified()
 
     def field_type_edit(self, cell, path, node, col) -> None:
@@ -509,5 +511,7 @@ def get_field_reset_data(field: BitField) -> str:
     elif field.reset_type == ResetType.INPUT:
         reset = field.reset_input
     else:
-        reset = field.reset_parameter
+        finder = ParameterFinder()
+        param = finder.find(field.reset_parameter)
+        reset = param.name
     return reset
