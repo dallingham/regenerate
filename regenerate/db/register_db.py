@@ -22,13 +22,13 @@ Provides the container database for a set of registers.
 
 import os
 import re
+import json
 from io import BytesIO as StringIO
 from pathlib import Path
 from typing import Union, List, Optional, Dict, Iterator, Any
 
 from .register import Register
 from .reg_parser import RegParser
-from .reg_parser_json import RegParserJSON
 from .signals import Signals
 from .const import OLD_REG_EXT, REG_EXT
 from .export import ExportData
@@ -47,7 +47,7 @@ class RegisterDb(NameBase):
 
     def __init__(self, filename=None):
         super().__init__("", "")
-        self._title = ""
+        self.descriptive_title = ""
         self._registers: Dict[str, Register] = {}
         self.parameters = ParameterContainer()
         self.exports: List[ExportData] = []
@@ -143,15 +143,14 @@ class RegisterDb(NameBase):
         return self
 
     def read_json(self, filename: Path):
-        """Reads the XML file, loading the databsae."""
+        """Reads the JSON file, loading the databsae."""
 
         self.filename = filename.resolve()
 
         LOGGER.info("Reading JSON register file %s", str(self.filename))
         with self.filename.open("r") as ifile:
             self.name = filename.stem
-            parser = RegParserJSON(self)
-            parser.parse(ifile)
+            self.json_decode(json.loads(ifile.read()))
         return self
 
     def loads(self, data, filename):
@@ -180,21 +179,9 @@ class RegisterDb(NameBase):
         return ""
 
     def add_parameter(self, new_param: ParameterData):
+        "Adds a parameter to the register set"
+
         self.parameters.add(new_param)
-
-    @property
-    def descriptive_title(self) -> str:
-        """
-        Gets _title, which is accessed via the descriptive_title property
-        """
-        return self._title
-
-    @descriptive_title.setter
-    def descriptive_title(self, name: str) -> None:
-        """
-        Sets _title, which is accessed via the descriptive_title property
-        """
-        self._title = name.strip()
 
     def find_register_by_name(self, name: str) -> Optional[Register]:
         """Finds a register with the given name, or None if not found"""
@@ -233,7 +220,7 @@ class RegisterDb(NameBase):
             "name": self.name,
             "uuid": self._id,
             "parameters": self.parameters,
-            "title": self._title,
+            "title": self.descriptive_title,
             "ports": self.ports,
             "memory": self.memory,
             "array_is_reg": self.array_is_reg,
@@ -260,7 +247,7 @@ class RegisterDb(NameBase):
     def json_decode(self, data: Dict[str, Any]) -> None:
         self.parameters = ParameterContainer()
         self.parameters.json_decode(data["parameters"])
-        self._title = data["title"]
+        self.descriptive_title = data["title"]
 
         ports = Signals()
         ports.json_decode(data["ports"])

@@ -21,6 +21,8 @@ Provides the editing interface to the register table
 """
 
 from collections import namedtuple
+from typing import List, Tuple
+
 from gi.repository import Gtk
 from regenerate.db import LOGGER, Register, ShareType
 from regenerate.extras.regutils import build_define
@@ -95,6 +97,33 @@ REPLACE = {
 }
 
 
+class BitWidth:
+    "Handles the bit with selection text/mappings"
+
+    def __init__(self, size: int):
+        self.bit2str = []
+        self.str2bit = {}
+
+        if size >= 8:
+            self.bit2str.append(("8-bits", 8))
+            self.str2bit[8] = "8-bits"
+        if size >= 16:
+            self.bit2str.append(("16-bits", 16))
+            self.str2bit[16] = "16-bits"
+        if size >= 32:
+            self.bit2str.append(("32-bits", 32))
+            self.str2bit[32] = "32-bits"
+        if size == 64:
+            self.bit2str.append(("64-bits", 64))
+            self.str2bit[64] = "64-bits"
+
+    def get_list(self) -> List[Tuple[str, int]]:
+        return self.bit2str
+
+    def get_text(self, size: int) -> str:
+        return self.str2bit[size]
+
+
 class RegisterModel(Gtk.ListStore):
     """
     A derivation of the ListStore that defines the columns. The columsn are:
@@ -106,18 +135,10 @@ class RegisterModel(Gtk.ListStore):
     address.
     """
 
-    BIT2STR = (
-        ("8 bits", 8),
-        ("16 bits", 16),
-        ("32 bits", 32),
-        ("64 bits", 64),
-    )
-
-    STR2BIT = {8: "8 bits", 16: "16 bits", 32: "32 bits", 64: "64 bits"}
-
-    def __init__(self):
+    def __init__(self, size):
         super().__init__(str, str, str, str, str, str, int, str, object)
         self.reg2path = {}
+        self.bit_width = BitWidth(size)
 
     def append_register(self, register: Register) -> str:
         """
@@ -136,7 +157,7 @@ class RegisterModel(Gtk.ListStore):
             register.name,
             register.token,
             register.dimension.int_str(),
-            self.STR2BIT[register.width],
+            self.bit_width.get_text(register.width),
             register.address,
             None,
             register,
@@ -184,9 +205,7 @@ class RegisterModel(Gtk.ListStore):
         return self[path][RegCol.OBJ]
 
     def set_warning_for_register(self, register: Register, flag: bool) -> None:
-        """
-        Sets the warning icon for the register in the table
-        """
+        "Sets the warning icon for the register in the table"
         try:
             path = self.reg2path[register]
             if flag:
@@ -197,10 +216,7 @@ class RegisterModel(Gtk.ListStore):
             pass
 
     def get_path_from_register(self, register: Register) -> str:
-        """
-        Given a path (row) in the ListStore, we return the corresponding
-        Register.
-        """
+        "Returns the path in the list associated with the register"
         return self.reg2path[register]
 
     def set_address_at_path(self, path: str, addr: int, length: int) -> None:
@@ -282,6 +298,12 @@ class RegisterList:
         self._build_columns()
         self._parameter_names = set()
 
+    def update_bit_width(self, size: int):
+        "Updates the bit width"
+
+        self._model.bit_width = BitWidth(size)
+        self.width_column.update_menu(self._model.bit_width.get_list())
+
     def set_parameters(self, parameters):
         "Sets the parameters"
 
@@ -341,13 +363,18 @@ class RegisterList:
                     column.set_resizable(True)
                     self.dim_column = column
                 else:
+                    if self._model:
+                        options = self._model.bit_width.get_list()
+                    else:
+                        options = []
                     column = ComboMapColumn(
                         col.title,
                         self._combo_edited,
-                        RegisterModel.BIT2STR,
+                        options,
                         i,
                     )
                     column.set_resizable(True)
+                    self.width_column = column
             elif col.type == RegColType.TEXT:
                 column = EditableColumn(
                     col.title,

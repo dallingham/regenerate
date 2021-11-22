@@ -111,10 +111,10 @@ class ParamValue:
         if not self.is_parameter:
             return self.int_value
 
-        resolver = ParameterResolver()
         finder = ParameterFinder()
         value = finder.find(self.txt_value)
         if value:
+            resolver = ParameterResolver()
             return resolver.resolve(value) + self.offset
         return 0
 

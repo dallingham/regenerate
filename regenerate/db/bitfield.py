@@ -21,7 +21,7 @@
 Provides the definition of a Bit Field.
 """
 
-from typing import List, Optional, Dict, Any, Union
+from typing import List, Optional, Dict, Any
 from .name_base import NameBase
 from .enums import BitType, ResetType
 from .bit_values import BitValues
@@ -230,8 +230,7 @@ class BitField(NameBase):
             if param:
                 val = resolver.resolve(param)
                 return val
-            else:
-                return 0
+            return 0
         if self.reset_type == ResetType.INPUT:
             return 0
         return self._reset_value
@@ -249,20 +248,26 @@ class BitField(NameBase):
 
     def reset_string(self) -> Optional[str]:
         "Returns the reset value as a string"
+
         if self.reset_type == ResetType.PARAMETER:
             finder = ParameterFinder()
             param = finder.find(self.reset_parameter)
-            return param.name
-        elif self.reset_type == ResetType.INPUT:
+            if param:
+                return param.name
+            return ""
+        if self.reset_type == ResetType.INPUT:
             return self.reset_input
         return hex(self._reset_value)
 
     def reset_vstr(self) -> Optional[str]:
         "Returns the reset value as a string in verilog format"
+
         if self.reset_type == ResetType.PARAMETER:
             finder = ParameterFinder()
             param = finder.find(self.reset_parameter)
-            return param.name
+            if param:
+                return param.name
+            return ""
         if self.reset_type == ResetType.INPUT:
             return self.reset_input
         if self.msb.is_parameter:

@@ -21,10 +21,9 @@ Provides the Address List interface
 """
 
 from gi.repository import Gtk
-from regenerate.db import LOGGER, ParameterData, Block
+from regenerate.db import LOGGER, ParameterData
 from regenerate.ui.columns import EditableColumn
 from regenerate.ui.enums import ParameterCol
-from regenerate.db.enums import ResetType
 from regenerate.ui.utils import check_hex
 
 

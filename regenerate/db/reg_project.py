@@ -169,6 +169,14 @@ class RegProject:
             for _, reg_set in block.regsets.items():
                 self.regsets[reg_set.uuid] = reg_set
 
+    def get_blkinst_from_id(self, uuid: str) -> Optional[BlockInst]:
+        "Returns the block instance from the uuid"
+
+        results = [inst for inst in self.block_insts if inst.uuid == uuid]
+        if results:
+            return results[0]
+        return None
+
     def remove_block(self, blk_id: str) -> None:
         "Removes a block from the database"
 
@@ -380,23 +388,25 @@ class RegProject:
         return 16
 
     def set_access(
-        self, map_id: str, group_name: str, block_name: str, access
+        self, map_id: str, blkinst_uuid: str, reginst_uuid: str, access
     ):
         """Sets the access mode"""
-        self.access_map[map_id][group_name][block_name] = access
+        self.access_map[map_id][blkinst_uuid][reginst_uuid] = access
 
-    def get_access_items(self, map_id, group_name):
+    def get_access_items(self, map_id, blkinst_uuid):
         """Gets the access items for the map/group"""
 
-        grp_map = self.access_map[map_id][group_name]
+        grp_map = self.access_map[map_id][blkinst_uuid]
         return [(key, grp_map[key]) for key in grp_map]
 
-    def get_access(self, map_id, group_name, block_name):
+    def get_access(self, map_id, blkinst_uuid, reginst_uuid):
         """Gets the access mode"""
 
         try:
-            return self.access_map[map_id][group_name][block_name]
+            return self.access_map[map_id][blkinst_uuid][reginst_uuid]
         except KeyError:
+            return 0
+        except TypeError:
             return 0
 
     def add_or_replace_address_map(self, addr_map):
@@ -486,7 +496,6 @@ class RegProject:
             "overrides",
             "block_insts",
         )
-
         data = {}
         for key in json_keys:
             if key[0] == "_":
@@ -531,7 +540,9 @@ class RegProject:
         self.doc_pages = DocPages()
         self.doc_pages.json_decode(data["doc_pages"])
         self.company_name = data["company_name"]
-        self.access_map = data["access_map"]
+        self.access_map = data.get("access_map")
+        if self.access_map is None:
+            self.access_map = nested_dict(3, int)
 
         self.block_insts = data["block_insts"]
         self._filelist = []
@@ -543,37 +554,64 @@ class RegProject:
                     Path(os.path.relpath(full_path, self.path.parent))
                 )
 
-        if data["address_maps"]:
-            for name, addr_data_json in data["address_maps"].items():
+        self._load_address_maps_from_json_data(data["address_maps"])
+
+        if not skip:
+            self._load_exports_from_json_data(data["exports"])
+
+        self._load_block_insts_from_json_data(data["block_insts"])
+        self._load_blocks_from_json_data(data["blocks"])
+
+        self.parameters = ParameterContainer()
+        self.parameters.json_decode(data["parameters"])
+
+        self._load_overrides_from_json_data(data["overrides"])
+        self._load_missing_register_sets()
+
+    def _load_address_maps_from_json_data(self, data: Dict[str, Any]) -> None:
+        "Loads the address map information from JSON data"
+
+        if data:
+            for name, addr_data_json in data.items():
                 addr_data = AddressMap()
                 addr_data.json_decode(addr_data_json)
                 self.address_maps[name] = addr_data
 
-        if not skip:
-            self.exports = []
-            for item in data["exports"]:
-                exporter = item["exporter"]
-                target = self.path.parent / item["target"]
+    def _load_exports_from_json_data(self, data: List[Dict[str, Any]]) -> None:
+        "Loads the export information from JSON data"
 
-                exp_data = ExportData(
-                    exporter,
-                    str(target.resolve()),
-                )
-                exp_data.options = item["options"]
+        self.exports = []
+        for item in data:
+            exporter = item["exporter"]
+            target = self.path.parent / item["target"]
 
-                self.exports.append(exp_data)
+            exp_data = ExportData(
+                exporter,
+                str(target.resolve()),
+            )
+            exp_data.options = item["options"]
+
+            self.exports.append(exp_data)
+
+    def _load_block_insts_from_json_data(
+        self, data: List[Dict[str, Any]]
+    ) -> None:
+        "Loads the block instances from JSON data"
 
         self.block_insts = []
-        for blk_inst_data_json in data["block_insts"]:
+        for blk_inst_data_json in data:
             blk_inst_data = BlockInst()
             blk_inst_data.json_decode(blk_inst_data_json)
             self.block_insts.append(blk_inst_data)
 
+    def _load_blocks_from_json_data(self, data: Dict[str, Any]) -> None:
+        "Loads the blocks from JSON data"
+
         self.blocks = {}
-        if data["blocks"]:
-            for key in data["blocks"]:
+        if data:
+            for key in data:
                 blk_data = Block()
-                base_path = data["blocks"][key]["filename"]
+                base_path = data[key]["filename"]
 
                 if self.reader_class:
                     rdr = self.reader_class
@@ -594,17 +632,25 @@ class RegProject:
 
                 self.blocks[key] = blk_data
 
-        self.parameters = ParameterContainer()
-        self.parameters.json_decode(data["parameters"])
+    def _load_overrides_from_json_data(
+        self, data: List[Dict[str, Any]]
+    ) -> None:
+        "Loads the overrides from the JSON data"
 
         self.overrides = []
         try:
-            for override in data["overrides"]:
+            for override in data:
                 item = Overrides()
                 item.json_decode(override)
                 self.overrides.append(item)
         except KeyError:
             ...
+
+    def _load_missing_register_sets(self):
+        """
+        Loads any registers sets not loaded by the blocks, but listed in
+        the filelist
+        """
 
         for filename in self._filelist:
             full_path = (self.path.parent / filename).resolve()

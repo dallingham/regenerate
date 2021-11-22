@@ -42,6 +42,7 @@ class EntryWidth:
         self.modified = modified
         self.widget.connect("changed", self.on_change)
         self.build_data_width_box()
+        self._in_prog = False
 
     def build_data_width_box(self):
         """
@@ -54,10 +55,10 @@ class EntryWidth:
         """
 
         self.options = (
-            (8, "8 bits"),
-            (16, "16 bits"),
-            (32, "32 bits"),
-            (64, "64 bits"),
+            (8, "8-bits"),
+            (16, "16-bits"),
+            (32, "32-bits"),
+            (64, "64-bits"),
         )
 
         store = Gtk.ListStore(str, int)
@@ -85,9 +86,15 @@ class EntryWidth:
     def on_change(self, obj):
         """Called on the change event"""
 
-        if self.data_obj:
-            setattr(self.data_obj, self.field_name, 8 << obj.get_active())
-            self.modified()
+        if not self._in_prog:
+            self._in_prog = True
+            if self.data_obj:
+                old_val = getattr(self.data_obj, self.field_name)
+                setattr(self.data_obj, self.field_name, 8 << obj.get_active())
+                if not self.modified():
+                    setattr(self.data_obj, self.field_name, old_val)
+                    obj.set_active(self.convert_value_to_index(old_val))
+            self._in_prog = False
 
     def convert_value_to_index(self, value):
         """Convert the bit size to an index"""

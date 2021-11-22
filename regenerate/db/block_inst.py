@@ -29,22 +29,14 @@ from .name_base import NameBase
 class BlockInst(NameBase):
     """Basic block instance information."""
 
-    def __init__(
-        self,
-        name="",
-        blkid="",
-        address_base=0,
-        hdl_path="",
-        repeat=1,
-        description="",
-    ) -> None:
+    def __init__(self, name="", blkid="") -> None:
         """Initialize the group data item."""
         super().__init__(name, "")
         self.blkid = blkid
-        self.address_base = address_base
-        self.hdl_path = hdl_path
-        self.repeat = repeat
-        self.description = description
+        self.address_base = 0
+        self.hdl_path = ""
+        self.repeat = 1
+        self.description = ""
 
     def __repr__(self) -> str:
         return f"BlockInst({self.name}, {self.blkid})"
@@ -52,20 +44,6 @@ class BlockInst(NameBase):
     def __ne__(self, other) -> bool:
         """Compare for inequality."""
         return not self.__eq__(other)
-
-    # def __eq__(self, other) -> bool:
-    #     """Compare for equality."""
-    #     if (
-    #         other is None
-    #         or self.name != other.name
-    #         or self.blkid != other.blkid
-    #         or self.address_base != other.address_base
-    #         or self.hdl_path != other.hdl_path
-    #         or self.description != other.description
-    #         or self.repeat != other.repeat
-    #     ):
-    #         return False
-    #     return True
 
     def json_decode(self, data: Dict[str, Any]) -> None:
         self.name = data["name"]

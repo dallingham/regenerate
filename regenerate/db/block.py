@@ -22,7 +22,7 @@ Holds the information for a group. This includes the name, base address,
 HDL path, the repeat count, repeat offset, and the title.
 """
 
-from typing import List, Dict, Union, Any
+from typing import List, Dict, Union, Any, Optional
 from pathlib import Path
 import os
 import json
@@ -68,6 +68,14 @@ class Block(NameBase):
         self.parameters = ParameterContainer()
         self.overrides: List[Overrides] = []
         self.exports: List[ExportData] = []
+
+    def get_reginst_from_id(self, uuid: str) -> Optional[RegisterInst]:
+        "Returns the register instance based on the uuid"
+
+        results = [inst for inst in self.regset_insts if inst.uuid == uuid]
+        if results:
+            return results[0]
+        return None
 
     def get_regset_insts(self) -> List[RegisterInst]:
         "Returns a list of register instances"

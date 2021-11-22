@@ -74,49 +74,45 @@ class MainWindow(BaseWindow):
 
         super().__init__()
 
-        self.skip_changes = False
+        self._skip_changes = False
         self.filename = None
-        self.loading_project = False
-        self.active = None
-        self.dbase = None
-        self.bit_model = None
-        self.modelsort = None
+        self._loading_project = False
+        self._regset = None
         self.prj = None
-        self.dbmap = {}
-        self.builder = Gtk.Builder()
-        self.builder.add_from_file(str(GLADE_TOP))
+        self._builder = Gtk.Builder()
+        self._builder.add_from_file(str(GLADE_TOP))
 
-        self.setup_main_window()
+        self._setup_main_window()
         self.build_actions()
 
-        self.top_notebook = self.find_obj("main_notebook")
+        self.top_notebook = self._find_obj("main_notebook")
         self.top_notebook.set_current_page(2)
         self.enable_controls(False)
 
         autoload = bool(int(ini.get("user", "load_last_project", "0")))
-        self.find_obj("autoload").set_active(autoload)
+        self._find_obj("autoload").set_active(autoload)
 
-        self.setup_project()
-        self.setup_recent_menu()
+        self._setup_project()
+        self._setup_recent_menu()
 
         self.top_level_tab = TopLevelTab(
-            self.find_obj,
+            self._find_obj,
             self.check_subsystem_addresses,
             self.project_modified,
         )
 
-        self.new_popup()
+        self._new_popup()
 
-        self.restore_position_and_size()
-        self.top_window.show()
-        self.initial_popup.show()
-        self.builder.connect_signals(self)
-        self.build_import_menu()
+        self._restore_position_and_size()
+        self._top_window.show()
+        self._initial_popup.show()
+        self._builder.connect_signals(self)
+        self._build_import_menu()
 
-    def new_popup(self):
-        open_btn = self.find_obj("open_btn")
-        self.initial_popup = self.find_obj("no_project_popover")
-        self.initial_popup.set_relative_to(open_btn)
+    def _new_popup(self):
+        open_btn = self._find_obj("open_btn")
+        self._initial_popup = self._find_obj("no_project_popover")
+        self._initial_popup.set_relative_to(open_btn)
 
     def check_subsystem_addresses(self) -> bool:
         "Checks the address ranges"
@@ -125,33 +121,32 @@ class MainWindow(BaseWindow):
             return True
         return False
 
-    def setup_main_window(self) -> None:
+    def _setup_main_window(self) -> None:
         "Sets up the main window and set up the status bar"
 
-        self.top_window = self.find_obj("regenerate")
-        self.configure(self.top_window)
-        self.status_obj = self.find_obj("statusbar")
+        self._top_window = self._find_obj("regenerate")
+        self.configure(self._top_window)
         remove_default_handler()
-        LOGGER.addHandler(StatusHandler(self.status_obj))
+        LOGGER.addHandler(StatusHandler(self._find_obj("statusbar")))
         LOGGER.propagate = False
 
-    def setup_recent_menu(self) -> None:
+    def _setup_recent_menu(self) -> None:
         """Setup the recent files management system"""
 
-        self.recent_manager = Gtk.RecentManager.get_default()
-        self.find_obj("file_menu").insert(self.create_recent_menu_item(), 2)
-        self.find_obj("open_btn").set_menu(self.create_recent_menu())
+        self._recent_manager = Gtk.RecentManager.get_default()
+        self._find_obj("file_menu").insert(self.create_recent_menu_item(), 2)
+        self._find_obj("open_btn").set_menu(self.create_recent_menu())
 
-    def find_obj(self, name):
+    def _find_obj(self, name):
         "Convenience function to find an object"
-        return self.builder.get_object(name)
+        return self._builder.get_object(name)
 
     def on_addrmap_cursor_changed(self, obj: Gtk.TreeView) -> None:
         """Called when the row of the treeview changes."""
 
         mdl, node = obj.get_selection().get_selected()
-        ebtn = self.find_obj("edit_map")
-        rbtn = self.find_obj("remove_map")
+        ebtn = self._find_obj("edit_map")
+        rbtn = self._find_obj("remove_map")
         if node:
             path = mdl.get_path(node)
             ebtn.set_sensitive(len(path) == 1)
@@ -160,15 +155,15 @@ class MainWindow(BaseWindow):
             ebtn.set_sensitive(False)
             rbtn.set_sensitive(False)
 
-    def setup_project(self) -> None:
+    def _setup_project(self) -> None:
         "Sets up the project, register, and block tabs"
 
         self.project_tabs = ProjectTabs(
-            self.builder, self.set_project_modified
+            self._builder, self.set_project_modified
         )
 
         self.regset_tab = RegSetTab(
-            self.find_obj,
+            self._find_obj,
             self.set_project_modified,
             self.db_selected,
             self.reg_selected,
@@ -176,17 +171,17 @@ class MainWindow(BaseWindow):
         )
 
         self.block_tab = BlockTab(
-            self.find_obj,
+            self._find_obj,
             self.delete_block_callback,
         )
 
         self.addr_map_list = AddrMapList(
-            self.find_obj("address_tree"), self.set_project_modified
+            self._find_obj("address_tree"), self.set_project_modified
         )
 
     def set_parameters_modified(self) -> None:
         self.set_project_modified()
-        self.regset_tab.set_parameters(self.dbase.parameters.get())
+        self.regset_tab.set_parameters(self._regset.parameters.get())
 
     def set_project_modified(self) -> None:
         "Sets the project modified flag"
@@ -199,11 +194,11 @@ class MainWindow(BaseWindow):
 
     def enable_controls(self, value):
         self.top_notebook.set_sensitive(value)
-        self.find_obj("save_btn").set_sensitive(value)
-        self.find_obj("build").set_sensitive(value)
-        self.find_obj("save_project").set_sensitive(value)
-        self.find_obj("build_button").set_sensitive(value)
-        self.find_obj("import_menu").set_sensitive(value)
+        self._find_obj("save_btn").set_sensitive(value)
+        self._find_obj("build").set_sensitive(value)
+        self._find_obj("save_project").set_sensitive(value)
+        self._find_obj("build_button").set_sensitive(value)
+        self._find_obj("import_menu").set_sensitive(value)
 
     def load_project_tab(self) -> None:
         self.enable_controls(True)
@@ -226,10 +221,10 @@ class MainWindow(BaseWindow):
         ]
 
         dialog = AddrMapEdit(
-            addr_map.name,
+            addr_map,
             new_list,
             self.prj,
-            self.top_window,
+            self._top_window,
             self.set_project_modified,
         )
 
@@ -282,7 +277,7 @@ class MainWindow(BaseWindow):
             "Register Interface Protocol",
         )
 
-    def restore_position_and_size(self) -> None:
+    def _restore_position_and_size(self) -> None:
         "Restore the desired position and size from the user's config file"
 
         height = int(ini.get("user", "height", 0))
@@ -291,17 +286,19 @@ class MainWindow(BaseWindow):
         hpos = int(ini.get("user", "hpos", 140))
         block_hpos = int(ini.get("user", "block_hpos", 140))
         if height and width:
-            self.top_window.resize(width, height)
+            self._top_window.resize(width, height)
         if vpos:
-            self.find_obj("vpaned").set_position(vpos)
+            self._find_obj("vpaned").set_position(vpos)
         if hpos:
-            self.find_obj("hpaned").set_position(hpos)
+            self._find_obj("hpaned").set_position(hpos)
         if block_hpos:
-            self.find_obj("bpaned").set_position(block_hpos)
+            self._find_obj("bpaned").set_position(block_hpos)
 
     def build_group(
         self, group_name: str, _action_names: List[str]
     ) -> Gtk.ActionGroup:
+        "Builds an action group"
+
         return Gtk.ActionGroup(group_name)
 
     def build_actions(self) -> None:
@@ -343,23 +340,24 @@ class MainWindow(BaseWindow):
         self.field_selected = self.build_group("field_selected", fld_acn)
 
     def on_build_action_activate(self, _obj: Gtk.Action) -> None:
-        Build(self.prj, self.top_window)
+        Build(self.prj, self._top_window)
 
     def on_autoload_toggled(self, _obj) -> None:
+        "Called when the load last project flag changed"
         ini.set("user", "load_last_project", int(bool(_obj.get_active())))
 
-    def build_import_menu(self) -> None:
+    def _build_import_menu(self) -> None:
         """
         Builds the export menu from the items in writers.IMPORTERS. The export
         menu is extracted from the glade description, the submenu is built,
         and added to the export menu.
         """
-        menu = self.find_obj("import_menu")
+        menu = self._find_obj("import_menu")
         submenu = Gtk.Menu()
         menu.set_submenu(submenu)
         for item in IMPORTERS:
             menu_item = Gtk.MenuItem(label=item[1])
-            menu_item.connect("activate", self.import_data, item)
+            menu_item.connect("activate", self._import_data, item)
             menu_item.show()
             submenu.append(menu_item)
         submenu.show()
@@ -405,7 +403,7 @@ class MainWindow(BaseWindow):
 
         choose = Gtk.FileChooserDialog(
             title,
-            self.top_window,
+            self._top_window,
             action,
             (
                 Gtk.STOCK_CANCEL,
@@ -459,7 +457,8 @@ class MainWindow(BaseWindow):
             Gtk.STOCK_OPEN,
         )
 
-    def on_new_project_clicked(self, _obj):
+    def on_new_project_clicked(self, _obj: Gtk.ImageMenuItem):
+        "Select a new filename with the button is clicked"
 
         choose = self.create_save_selector(
             "New Project", "Regenerate Project", DEF_MIME
@@ -485,20 +484,21 @@ class MainWindow(BaseWindow):
 
             self.project_modified(False)
             self.add_recent(str(filename.resolve()))
-            self.find_obj("save_btn").set_sensitive(True)
+            self._find_obj("save_btn").set_sensitive(True)
             self.prj_loaded.set_sensitive(True)
-            if self.initial_popup.get_visible():
-                self.initial_popup.hide()
+            if self._initial_popup.get_visible():
+                self._initial_popup.hide()
         choose.destroy()
 
     def add_recent(self, path: str):
         "Adds the path th the recent manager. Must be an absolute path"
 
-        if self.recent_manager:
+        if self._recent_manager:
             name = f"file://{path}"
-            self.recent_manager.add_item(name)
+            self._recent_manager.add_item(name)
 
-    def on_open_action_activate(self, _obj):
+    def on_open_action_activate(self, _obj: Gtk.Action):
+        "Called when the Open button clicked"
 
         choose = self.create_open_selector(
             "Open Project", "Regenerate Project", [DEF_MIME, f"*{OLD_PRJ_EXT}"]
@@ -512,24 +512,25 @@ class MainWindow(BaseWindow):
             self.open_project(filename, uri)
             self.add_recent(Path(filename).resolve())
 
-    def open_project(self, filename, _uri):
-        self.loading_project = True
+    def open_project(self, filename: str, _uri: str):
+        "Opens the selected project"
+
+        self._loading_project = True
         self.regset_tab.clear()
 
         try:
             self.prj = RegProject(filename)
             self.project_tabs.change_db(self.prj)
             self.top_level_tab.change_project(self.prj)
-        #            self.initialize_project_address_maps()
         except xml.parsers.expat.ExpatError as msg:
             ErrorMsg(
                 f"{filename} was not a valid project file",
                 str(msg),
-                self.top_window,
+                self._top_window,
             )
             return
         except IOError as msg:
-            ErrorMsg(f"Could not open {filename}", str(msg), self.top_window)
+            ErrorMsg(f"Could not open {filename}", str(msg), self._top_window)
             return
 
         filepath = Path(filename)
@@ -548,24 +549,26 @@ class MainWindow(BaseWindow):
         self.regset_tab.change_project(self.prj)
 
         self.add_recent(str(filepath.resolve()))
-        self.find_obj("save_btn").set_sensitive(True)
+        self._find_obj("save_btn").set_sensitive(True)
 
         self.set_title(False)
 
         self.load_project_tab()
         self.prj_loaded.set_sensitive(True)
-        self.loading_project = False
-        self.skip_changes = False
-        if self.initial_popup.get_visible():
-            self.initial_popup.hide()
+        self._loading_project = False
+        self._skip_changes = False
+        if self._initial_popup.get_visible():
+            self._initial_popup.hide()
 
     def update_display(self):
-        old_skip = self.skip_changes
-        self.skip_changes = True
+        "Updates the display"
+
+        old_skip = self._skip_changes
+        self._skip_changes = True
         self._redraw()
         self.regset_tab.redraw(False)
         self.block_tab.redraw()
-        self.skip_changes = old_skip
+        self._skip_changes = old_skip
 
     def on_save_clicked(self, _obj):
         """
@@ -590,7 +593,7 @@ class MainWindow(BaseWindow):
             ErrorMsg(
                 f"Could not save {current_path}, restoring original",
                 str(msg),
-                self.top_window,
+                self._top_window,
             )
 
         self.regset_tab.update_display(False)
@@ -601,12 +604,12 @@ class MainWindow(BaseWindow):
         Save the window size, along with the positions of the paned windows,
         then exit.
         """
-        (width, height) = self.top_window.get_size()
+        (width, height) = self._top_window.get_size()
         ini.set("user", "width", width)
         ini.set("user", "height", height)
-        ini.set("user", "vpos", self.find_obj("vpaned").get_position())
-        ini.set("user", "hpos", self.find_obj("hpaned").get_position())
-        ini.set("user", "block_hpos", self.find_obj("bpaned").get_position())
+        ini.set("user", "vpos", self._find_obj("vpaned").get_position())
+        ini.set("user", "hpos", self._find_obj("hpaned").get_position())
+        ini.set("user", "block_hpos", self._find_obj("bpaned").get_position())
         Gtk.main_quit()
 
     def save_and_quit(self):
@@ -625,7 +628,7 @@ class MainWindow(BaseWindow):
         self.filename = None
         self.on_save_clicked(obj)
 
-    def import_data(self, _obj, data):
+    def _import_data(self, _obj, data):
         "Imports the data using the specified data importer."
 
         choose = self.create_open_selector(data[1][1], data[2], "*" + data[3])
@@ -637,32 +640,36 @@ class MainWindow(BaseWindow):
 
             filename = choose.get_filename()
             if filename:
-                self.import_using_importer(filename, data[0])
+                self._import_using_importer(filename, data[0])
         choose.destroy()
 
-    def import_using_importer(self, name, importer_class):
+    def _import_using_importer(self, name, importer_class):
         "Saves the file using the specified writer class."
 
-        importer = importer_class(self.dbase)
+        importer = importer_class(self._regset)
         try:
             importer.import_data(name)
             self.update_display()
             self.set_project_modified()
         except IOError as msg:
-            ErrorMsg("Could not create %s " % name, str(msg), self.top_window)
+            ErrorMsg("Could not create %s " % name, str(msg), self._top_window)
 
     def _redraw(self):
         "Redraws the information in the register list."
 
-        self.regset_tab.set_parameters_regset(self.dbase)
-        self.regset_tab.set_parameters(self.dbase.parameters.get())
+        self.regset_tab.set_parameters_regset(self._regset)
+        self.regset_tab.set_parameters(self._regset.parameters.get())
         self.regset_tab.update_display(False)
         self.set_description_warn_flag()
 
     def delete_block_callback(self):
+        "Called with a block is deleted"
+
         self.top_level_tab.blkinst_list.populate()
 
     def on_regenerate_delete_event(self, obj, _event):
+        "Called with the delete event occurs"
+
         return self.on_quit_activate(obj)
 
     def on_quit_activate(self, *_obj):
@@ -688,7 +695,7 @@ class MainWindow(BaseWindow):
             dialog = Question(
                 "Save Changes?",
                 "Modifications have been made. Do you want to save your changes?",
-                self.top_window,
+                self._top_window,
             )
 
             status = dialog.run()
@@ -708,11 +715,15 @@ class MainWindow(BaseWindow):
         self.regset_tab.remove_register()
 
     def set_db_value(self, attr, val):
-        if self.dbase:
-            setattr(self.dbase, attr, val)
+        "Sets the class item to the specified value"
+
+        if self._regset:
+            setattr(self._regset, attr, val)
         self.regset_tab.set_modified()
 
     def on_array_changed(self, obj):
+        "Called when the array item changed"
+
         self.regset_tab.array_changed(obj)
 
     def button_toggle(self, attr, obj):
@@ -722,25 +733,37 @@ class MainWindow(BaseWindow):
             setattr(reg.flags, attr, state)
             self.regset_tab.set_modified()
 
-    def on_no_rtl_toggled(self, obj):
+    def on_no_rtl_toggled(self, obj: Gtk.CheckButton) -> None:
+        "Called with the no_rtl checkbox clicked"
+
         self.button_toggle("do_not_generate_code", obj)
 
-    def on_no_uvm_toggled(self, obj):
+    def on_no_uvm_toggled(self, obj: Gtk.CheckButton) -> None:
+        "Called with the no_uvm checkbox clicked"
+
         self.button_toggle("do_not_use_uvm", obj)
 
-    def on_no_test_toggled(self, obj):
+    def on_no_test_toggled(self, obj: Gtk.CheckButton) -> None:
+        "Called with the do_not_test checkbox clicked"
+
         self.button_toggle("do_not_test", obj)
 
-    def on_no_reset_test_toggled(self, obj):
+    def on_no_reset_test_toggled(self, obj: Gtk.CheckButton) -> None:
+        "Called with the no_reset_test checkbox clicked"
+
         self.button_toggle("do_not_reset_test", obj)
 
-    def on_no_cover_toggled(self, obj):
+    def on_no_cover_toggled(self, obj: Gtk.CheckButton) -> None:
+        "Called with the no_cover checkbox clicked"
+
         self.button_toggle("do_not_cover", obj)
 
-    def on_hide_doc_toggled(self, obj):
+    def on_hide_doc_toggled(self, obj: Gtk.CheckButton) -> None:
+        "Called with the hide_doc checkbox clicked"
+
         self.button_toggle("hide", obj)
 
-    def on_add_register_action_activate(self, _obj):
+    def on_add_register_action_activate(self, _obj: Gtk.CheckButton):
         """
         Adds a new register, seeding the address with the next available
         address
@@ -751,12 +774,12 @@ class MainWindow(BaseWindow):
         "Callback for a button press on the register list. Display the menu"
 
         if event.button == 3:
-            menu = self.find_obj("reglist_menu")
+            menu = self._find_obj("reglist_menu")
             menu.popup(None, None, None, 1, 0, Gtk.get_current_event_time())
             return True
         return False
 
-    def cb_open_recent(self, chooser):
+    def cb_open_recent(self, chooser: Gtk.RecentChooserMenu) -> None:
         "Called when a file is chosen from the open recent dialog"
 
         fname = chooser.get_current_uri()
@@ -810,9 +833,9 @@ class MainWindow(BaseWindow):
         box.destroy()
 
     def set_description_warn_flag(self) -> None:
-        if not self.loading_project:
-            self.find_obj("mod_descr_warn").set_property(
-                "visible", self.dbase.overview_text == ""
+        if not self._loading_project:
+            self._find_obj("mod_descr_warn").set_property(
+                "visible", self._regset.overview_text == ""
             )
 
     def set_title(self, modified: bool) -> None:
@@ -820,19 +843,21 @@ class MainWindow(BaseWindow):
 
         name = self.prj.path.name
         if modified:
-            self.top_window.set_title(
+            self._top_window.set_title(
                 f"{self.prj.name} ({name}*) - regenerate"
             )
         else:
-            self.top_window.set_title(f"{self.prj.name} ({name}) - regenerate")
+            self._top_window.set_title(
+                f"{self.prj.name} ({name}) - regenerate"
+            )
 
     def on_copy_registers(self, _button: Gtk.Button) -> None:
         "Stores references to the registers to be copied"
-        self.regset_tab.copy_registers()
+        self.regset_tab.copy_selected_registers()
 
     def on_paste_registers(self, _button: Gtk.Button) -> None:
         "Inserts the stored registers into current register set"
-        self.regset_tab.paste_registers()
+        self.regset_tab.paste_copied_registers()
 
     def on_align_addresses(self, _button: Gtk.Button) -> None:
         "Aligns each register on a bus width boundary"
@@ -850,23 +875,6 @@ class MainWindow(BaseWindow):
         self.regset_tab.set_modified()
         self.regset_tab.force_reglist_rebuild()
 
-    def _sequential_greater_than_2(self, regtab: RegSetTab) -> bool:
-        "Checks that the list is sequential and has more than two elements"
-
-        if not _is_contiguous(regtab.get_selected_reg_paths()):
-            LOGGER.error(
-                "Selected registers must be contiguous to be compacted"
-            )
-            return False
-
-        if len(regtab.get_selected_registers()) < 2:
-            LOGGER.error(
-                "Compaction requires a minimum of 2 registers be selected"
-            )
-            return False
-
-        return True
-
     def on_compact_tightly(self, _button: Gtk.Button) -> None:
         "Packs the selected registers tightly together"
 
@@ -874,7 +882,7 @@ class MainWindow(BaseWindow):
         if regset is None:
             return
 
-        if not self._sequential_greater_than_2(self.regset_tab):
+        if not _sequential_greater_than_2(self.regset_tab):
             return
 
         reglist = self.regset_tab.get_selected_registers()
@@ -915,6 +923,22 @@ def replace_parameter_uuids(uuid_map: Dict[str, str], reg: Register) -> None:
         if field.msb.is_parameter:
             if field.msb.txt_value in uuid_map:
                 field.msb.txt_value = uuid_map[field.msb.txt_value]
+
+
+def _sequential_greater_than_2(regtab: RegSetTab) -> bool:
+    "Checks that the list is sequential and has more than two elements"
+
+    if not _is_contiguous(regtab.get_selected_reg_paths()):
+        LOGGER.error("Selected registers must be contiguous to be compacted")
+        return False
+
+    if len(regtab.get_selected_registers()) < 2:
+        LOGGER.error(
+            "Compaction requires a minimum of 2 registers be selected"
+        )
+        return False
+
+    return True
 
 
 def check_field(field):

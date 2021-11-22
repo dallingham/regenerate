@@ -35,7 +35,7 @@ class XmlBase:
         Called every time an XML element begins
         """
         self._token_list = []
-        mname = "start_" + tag
+        mname = "_start_" + tag
         if hasattr(self, mname):
             method = getattr(self, mname)
             method(attrs)
@@ -44,7 +44,7 @@ class XmlBase:
         """Called every time an XML element end """
 
         text = "".join(self._token_list)
-        mname = "end_" + tag
+        mname = "_end_" + tag
         if hasattr(self, mname):
             method = getattr(self, mname)
             method(text)

@@ -86,20 +86,20 @@ class ProjectReader(XmlBase):
         parser.ParseFile(ofile)
         self.prj.modified = True
 
-    def start_project(self, attrs: Dict[str, str]) -> None:
+    def _start_project(self, attrs: Dict[str, str]) -> None:
         """Called when a project tag is found"""
         self.prj.name = attrs["name"]
         self.prj.short_name = attrs.get("short_name", "")
         self.prj.company_name = attrs.get("company_name", "")
 
-    def start_registerset(self, attrs: Dict[str, str]) -> None:
+    def _start_registerset(self, attrs: Dict[str, str]) -> None:
         """Called when a registerset tag is found"""
         self.current = attrs["name"]
         reg_path = self.path.parent / self.current
         reg_path_xml = reg_path.with_suffix(OLD_REG_EXT).resolve()
         self.prj.append_register_set_to_list(reg_path_xml)
 
-    def start_export(self, attrs: Dict[str, str]) -> None:
+    def _start_export(self, attrs: Dict[str, str]) -> None:
         """Called when an export tag is found"""
 
         db_path = self.path.parent / Path(self.current).with_suffix(REG_EXT)
@@ -109,7 +109,7 @@ class ProjectReader(XmlBase):
             ExportData(attrs["option"], str(target.resolve()))
         )
 
-    def start_project_export(self, attrs: Dict[str, str]) -> None:
+    def _start_project_export(self, attrs: Dict[str, str]) -> None:
         """Called when a project_export tag is found"""
 
         target = Path(self.path.parent) / attrs["path"]
@@ -117,7 +117,7 @@ class ProjectReader(XmlBase):
             attrs["option"], str(target.resolve())
         )
 
-    def start_grouping(self, attrs: Dict[str, str]) -> None:
+    def _start_grouping(self, attrs: Dict[str, str]) -> None:
         """Called when a grouping tag is found"""
 
         if attrs["name"] not in self.name_to_blk_id:
@@ -140,7 +140,7 @@ class ProjectReader(XmlBase):
         self.current_blk_inst.repeat = int(attrs.get("repeat", "1"))
         self.current_blk_inst.hdl_path = attrs.get("hdl", "")
 
-    def start_map(self, attrs: Dict[str, str]) -> None:
+    def _start_map(self, attrs: Dict[str, str]) -> None:
         """Called when a map tag is found"""
 
         sname = attrs["set"]
@@ -159,28 +159,29 @@ class ProjectReader(XmlBase):
         )
         self.new_block.regset_insts.append(data)
 
-    def start_address_map(self, attrs: Dict[str, str]) -> None:
+    def _start_address_map(self, attrs: Dict[str, str]) -> None:
         """Called when an address tag is found"""
         address_map = AddressMap(
             attrs["name"],
             int(attrs.get("base", "0"), 16),
             int(attrs.get("width", "4")),
-            bool(int(attrs.get("fixed", 1))),
-            bool(int(attrs.get("no_uvm", 0))),
         )
+
+        address_map.fixed = bool(int(attrs.get("fixed", 1)))
+        address_map.uvm = bool(int(attrs.get("no_uvm", 0)))
 
         self.prj.set_address_map(address_map)
         self.current_map = address_map.uuid
         self.current_map_group = None
 
-    def end_documentation(self, text: str) -> None:
+    def _end_documentation(self, text: str) -> None:
         """
         Called when the documentation XML tag is encountered. Assigns the
         current text string to the documentation variable
         """
         self.prj.doc_pages.update_page("Overview", text, ["Confidential"])
 
-    def end_overview(self, text: str) -> None:
+    def _end_overview(self, text: str) -> None:
         """
         Called when the overview XML tag is encountered. Assigns the
         current text string to the current group's docs variable
@@ -191,7 +192,7 @@ class ProjectReader(XmlBase):
             "Overview", text, ["Confidential"]
         )
 
-    def start_map_group(self, attrs: Dict[str, str]) -> None:
+    def _start_map_group(self, attrs: Dict[str, str]) -> None:
         """
         Called when the map_group XML tag is encountered. Assigns the
         current text string to the current group's docs variable
@@ -207,12 +208,12 @@ class ProjectReader(XmlBase):
         else:
             self.map_id_to_name[self.current_map] = [name]
 
-    def start_access(self, attrs: Dict[str, str]) -> None:
+    def _start_access(self, attrs: Dict[str, str]) -> None:
         "Starts the access type"
 
         self.current_access = int(attrs.get("type", "0"))
 
-    def end_access(self, text: str) -> None:
+    def _end_access(self, text: str) -> None:
         "Ends the access type"
 
         self.prj.set_access(
@@ -222,12 +223,12 @@ class ProjectReader(XmlBase):
             self.current_access,
         )
 
-    def start_parameter(self, attrs: Dict[str, str]) -> None:
+    def _start_parameter(self, attrs: Dict[str, str]) -> None:
         "Starts a parameter"
 
         self.prj.add_parameter(attrs["name"], int(attrs["value"]))
 
-    def end_project(self, _text: str) -> None:
+    def _end_project(self, _text: str) -> None:
         """
         Called when the project file has been loaded. At this point, we need
         to do some cleanup. This includes:

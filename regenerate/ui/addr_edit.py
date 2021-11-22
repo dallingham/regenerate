@@ -24,7 +24,7 @@ information.
 from typing import List, Tuple, Callable, Optional
 
 from gi.repository import Gtk
-from regenerate.db import BlockInst, RegProject
+from regenerate.db import BlockInst, RegProject, AddressMap
 from regenerate.ui.columns import ToggleColumn, EditableColumn, ComboMapColumn
 from regenerate.ui.base_window import BaseWindow
 
@@ -37,7 +37,7 @@ class AddrMapEdit(BaseWindow):
 
     def __init__(
         self,
-        map_name: str,
+        addr_map: AddressMap,
         blk_inst_list: List[Tuple[BlockInst, bool]],
         project: RegProject,
         parent: Gtk.Window,
@@ -48,7 +48,8 @@ class AddrMapEdit(BaseWindow):
         self.project = project
         self.callback = callback
         self.cb_list: Optional[List[str]] = None
-        self.map_name = map_name
+        self.map_id = addr_map.uuid
+        self.map_name = addr_map.name
         self.options = [
             ("Full Access", 0),
             ("Read Only", 1),
@@ -110,7 +111,7 @@ class AddrMapEdit(BaseWindow):
             "Enabled",
             self._enable_changed,
             0,
-            visible_callback=self.enable_visible_callback,
+            visible_callback=_enable_visible_callback,
         )
 
         self.view.append_column(col)
@@ -124,7 +125,7 @@ class AddrMapEdit(BaseWindow):
             self._access_changed,
             self.options,
             2,
-            visible_callback=self.access_visible_callback,
+            visible_callback=_access_visible_callback,
         )
 
         self.view.append_column(col)
@@ -142,9 +143,9 @@ class AddrMapEdit(BaseWindow):
                 None, row=(active, title, "", None, blk_inst)
             )
             blk = self.project.blocks[blk_inst.blkid]
-            for item in blk.regsets.values():
+            for item in blk.regset_insts:
                 access = self.project.get_access(
-                    self.map_name, blk_inst.name, item.name
+                    self.map_id, blk_inst.uuid, item.uuid
                 )
                 self.model.append(
                     top,
@@ -156,18 +157,6 @@ class AddrMapEdit(BaseWindow):
                         blk_inst,
                     ),
                 )
-
-    def access_visible_callback(self, _column, cell, model, *obj):
-        """Determines if the cell is visible"""
-
-        node = obj[0]
-        cell.set_property("visible", len(model.get_path(node)) != 1)
-
-    def enable_visible_callback(self, _column, cell, model, *obj):
-        """Determines if the cell is visible"""
-
-        node = obj[0]
-        cell.set_property("visible", len(model.get_path(node)) == 1)
 
     def _enable_changed(self, _cell, path, _source):
         """Called when enable changed"""
@@ -183,8 +172,10 @@ class AddrMapEdit(BaseWindow):
         val_int = mdl.get_value(node, 1)
         self.model[path][2] = val
 
+        blkinst = self.model[path][-1]
+        reginst = self.model[path][-2]
         self.project.set_access(
-            self.map_name, self.model[path][-1], self.model[path][1], val_int
+            self.map_id, blkinst.uuid, reginst.uuid, val_int
         )
         self.callback()
 
@@ -192,3 +183,27 @@ class AddrMapEdit(BaseWindow):
         """Return the callback list"""
 
         return self.cb_list
+
+
+def _access_visible_callback(
+    _column: ComboMapColumn,
+    cell: Gtk.CellRendererCombo,
+    model: Gtk.TreeStore,
+    node: Gtk.TreeIter,
+    _data,
+):
+    """Determines if the cell is visible"""
+
+    cell.set_property("visible", len(model.get_path(node)) != 1)
+
+
+def _enable_visible_callback(
+    _column: ComboMapColumn,
+    cell: Gtk.CellRendererCombo,
+    model: Gtk.TreeStore,
+    node: Gtk.TreeIter,
+    _data,
+):
+    """Determines if the cell is visible"""
+
+    cell.set_property("visible", len(model.get_path(node)) == 1)

@@ -28,19 +28,12 @@ from .name_base import NameBase
 class AddressMap(NameBase):
     """Address map data"""
 
-    def __init__(
-        self,
-        name: str = "",
-        base: int = 0,
-        width: int = 0,
-        fixed: bool = False,
-        uvm: bool = False,
-    ):
+    def __init__(self, name: str = "", base: int = 0, width: int = 0):
         super().__init__(name, "")
         self.base = base
         self.width = width
-        self._fixed = fixed
-        self._uvm = uvm
+        self._fixed = False
+        self._uvm = False
         self.blocks: List[str] = []
 
     @property

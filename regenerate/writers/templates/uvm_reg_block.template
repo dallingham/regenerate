@@ -26,17 +26,19 @@ package {{prj.short_name}}_reg_pkg;
     * on their own.
     */
    bit s_relaxed_volatile = 1'b0;
-
    int s_access_map[string][string] = '{
 {% for map in prj.get_address_maps() %}
       "{{map.name}}" : '{
-{%    for grp in prj.access_map[map.name] %}
-{%      for block in prj.access_map[map.name][grp] %}
-{%        if prj.access_map[map.name][grp][block] %}
-         "{{grp}}.{{block}}" : {{prj.access_map[map.name][grp][block]}},
-{%        endif %}
-{%      endfor %}
-{%    endfor %}
+  {% for blkinst_uuid in prj.access_map[map.name] %}
+    {% for reginst_uuid in prj.access_map[map.name][blkinst_uuid] %}
+      {% if prj.access_map[map.name][blkinst_uuid][reginst_uuid] %}
+	{% set blkinst = prj.get_blkinst_from_id(blkinst_uuid) %}
+	{% set block = prj.get_block_from_block_inst(blkinst) %}
+	{% set reginst = block.get_reginst_from_id(reginst_uuid) %}
+        "{{blkinst.name}}.{{reginst.name}}" : {{prj.access_map[map.name][blkinst_uuid][reginst_uuid]}},
+      {% endif %}
+    {% endfor %}
+  {% endfor %}
          default: 0
       }{% if not loop.last %},{% endif %}
 
@@ -479,11 +481,11 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
    {% if grp_map|length == 1 %}
      {% for map in grp_map %}
 
-      {{map.name}}_map = build_address_map("{{map.name}}_map", {{8 * prj.get_address_width(map.uuid)}}, s_access_map["{{map.uuid}}"][extract_path(get_full_name())]);
+      {{map.name}}_map = build_address_map("{{map.name}}_map", {{8 * prj.get_address_width(map.uuid)}}, s_access_map["{{map.name}}"][extract_path(get_full_name())]);
      {% endfor %}
    {% else %}
      {% for map in grp_map %}
-      if (!disable_{{map.name}}_map) {{map.name}}_map = build_address_map("{{map.name}}_map", {{8 * prj.get_address_width(map.uuid)}}, s_access_map["{{map.uuid}}"][extract_path(get_full_name())]);
+      if (!disable_{{map.name}}_map) {{map.name}}_map = build_address_map("{{map.name}}_map", {{8 * prj.get_address_width(map.uuid)}}, s_access_map["{{map.name}}"][extract_path(get_full_name())]);
      {% endfor %}
 
    {% endif %}

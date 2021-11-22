@@ -262,7 +262,7 @@ class Verilog(RegsetWriter):
 
         self.lang = LanguageTerms("input", "output", "always", "reg")
 
-        self._cell_info = {}
+        self._cell_info: Dict[BitType, CellInfo] = {}
         for i in TYPES:
             self._cell_info[i.type] = CellInfo(
                 i.id.lower(),
@@ -343,9 +343,7 @@ class Verilog(RegsetWriter):
         container blocks.
         """
 
-        template = find_template(
-            "verilog.template", [("drop_write_share", drop_write_share)]
-        )
+        template = find_template("verilog.template")
 
         word_fields = self.generate_group_list(
             self.build_register_list(), self._regset.ports.data_bus_width
@@ -595,11 +593,6 @@ class Verilog2001(Verilog):
         super().__init__(project, regset, options)
 
 
-def drop_write_share(list_in: List[Register]) -> List[Register]:
-    "Drops the write-share registers from the list"
-    return [l for l in list_in if l[6].share != ShareType.WRITE]
-
-
 def make_byte_info(
     field: BitField,
     register: Register,
@@ -673,7 +666,7 @@ def build_write_address_selects(
 def build_read_address_selects(
     regset: RegisterDb,
     word_fields: Dict[int, List[ByteInfo]],
-    cell_info: CellInfo,
+    cell_info: Dict[BitType, CellInfo],
 ) -> List[DecodeInfo]:
     "Returns the information needed to create the read selects"
 
@@ -700,7 +693,7 @@ def build_read_address_selects(
 
 
 def build_output_signals(
-    regset: RegisterDb, cell_info: CellInfo
+    regset: RegisterDb, cell_info: Dict[BitType, CellInfo]
 ) -> List[Scalar]:
     "Builds the output signal list"
 
@@ -835,7 +828,7 @@ def build_logic_list(_regset, word_fields, cell_info) -> List[RegDecl]:
 
 
 def build_input_signals(
-    regset: RegisterDb, cell_info: CellInfo
+    regset: RegisterDb, cell_info: Dict[BitType, CellInfo]
 ) -> List[Scalar]:
     "Builds the input list"
 

@@ -82,11 +82,14 @@ class TopLevelTab:
 
     def connect_signals(self, find_obj: Callable):
         "Connect the signals to the widgets"
+
         find_obj("instance_delete_btn").connect(
             "clicked", self.delete_instance_callback
         )
 
     def update_buttons(self):
+        "Enables/disables delete button based on the selection"
+
         if self.blkinst_list.get_selected_instance()[1]:
             self.instance_delete_btn.set_sensitive(True)
         else:

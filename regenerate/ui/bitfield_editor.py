@@ -66,7 +66,6 @@ class BitFieldEditor(BaseWindow):
         register: Register,
         bit_field: BitField,
         modified_func: Callable,
-        top_builder,
         parent: Gtk.Window,
     ):
         super().__init__()
@@ -78,7 +77,6 @@ class BitFieldEditor(BaseWindow):
         self.builder = Gtk.Builder()
         self.builder.add_from_file(str(GLADE_BIT))
 
-        self.top_builder = top_builder
         self.control_obj = self.builder.get_object("control")
         self.output_obj = self.builder.get_object("output")
         self.output_enable_obj = self.builder.get_object("outen")

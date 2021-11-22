@@ -2340,6 +2340,7 @@ create a new project by selecting
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">False</property>
                                     <property name="draw_indicator">True</property>
+                                    <property name="group">reset_low</property>
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>

@@ -25,7 +25,7 @@ from typing import Callable, List, Optional
 
 from gi.repository import Gtk
 
-from regenerate.db import RegisterDb, RegProject
+from regenerate.db import RegisterDb, RegProject, LOGGER
 
 from .entry import (
     EntryWidth,
@@ -86,24 +86,45 @@ class ModuleTabs:
                 "interface_name",
                 EntryWord,
                 "Missing interface name",
+                None,
             ),
             (
                 "addr_width",
                 "address_bus_width",
                 EntryInt,
                 "Missing address bus width",
+                None,
             ),
-            ("modport", "modport_name", EntryWord, "Missing modport name"),
-            ("imodport", "imodport_name", EntryWord, "Missing modport name"),
+            (
+                "modport",
+                "modport_name",
+                EntryWord,
+                "Missing modport name",
+                None,
+            ),
+            (
+                "imodport",
+                "imodport_name",
+                EntryWord,
+                "Missing modport name",
+                None,
+            ),
             (
                 ("reset_low", "reset_high"),
                 "reset_active_level",
                 EntryRadio,
                 None,
+                None,
             ),
-            ("sync_reset", "sync_reset", EntrySwitch, None),
-            ("secondary_reset", "secondary_reset", EntrySwitch, None),
-            ("data_width", "data_bus_width", EntryWidth, None),
+            ("sync_reset", "sync_reset", EntrySwitch, None, None),
+            ("secondary_reset", "secondary_reset", EntrySwitch, None, None),
+            (
+                "data_width",
+                "data_bus_width",
+                EntryWidth,
+                None,
+                self.width_changed,
+            ),
         ]
 
         item_list = [
@@ -138,7 +159,13 @@ class ModuleTabs:
             "notify::active", self.on_sysv_intf_toggled
         )
 
-        for (widget_name, db_name, class_type, placeholder) in port_list:
+        for (
+            widget_name,
+            db_name,
+            class_type,
+            placeholder,
+            callback,
+        ) in port_list:
             if placeholder is not None:
                 self.port_object_list.append(
                     class_type(
@@ -161,13 +188,22 @@ class ModuleTabs:
                         )
                     )
                 else:
-                    self.port_object_list.append(
-                        class_type(
-                            find_obj(widget_name),
-                            db_name,
-                            self.after_modified,
+                    if callback:
+                        self.port_object_list.append(
+                            class_type(
+                                find_obj(widget_name),
+                                db_name,
+                                callback,
+                            )
                         )
-                    )
+                    else:
+                        self.port_object_list.append(
+                            class_type(
+                                find_obj(widget_name),
+                                db_name,
+                                self.after_modified,
+                            )
+                        )
 
         for (widget_name, db_name, class_type, placeholder) in item_list:
             if placeholder is not None:
@@ -203,7 +239,23 @@ class ModuleTabs:
         self.imodport_label_field = find_obj("imodport_label")
         self.interface_label_field = find_obj("interface_label")
 
+    def width_changed(self) -> bool:
+        if self.dbase is None:
+            return False
+        new_width = self.dbase.ports.data_bus_width
+        for reg in self.dbase.get_all_registers():
+            if reg.width > new_width:
+                LOGGER.error(
+                    "Width cannot be changed - registers exist that are larger than %d bits",
+                    reg.width,
+                )
+                return False
+        self.after_modified()
+        return True
+
     def on_sysv_intf_toggled(self, button, state):
+        "Enable/disable fields if the SystemVerilog interface is enabled"
+
         enable = button.get_active()
         self.modport_field.set_sensitive(enable)
         self.modport_label_field.set_sensitive(enable)

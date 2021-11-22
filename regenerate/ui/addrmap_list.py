@@ -260,7 +260,7 @@ class AddrMapList:
             return
 
         name = self._create_new_map_name()
-        obj = AddressMap(name, 0, 8, False, False)
+        obj = AddressMap(name, 0, 8)
         node = self._model.append(row=get_row_data(obj))
 
         path = self._model.get_path(node)
