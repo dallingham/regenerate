@@ -38,7 +38,7 @@ from regenerate.db import (
     RegProject,
     ParameterFinder,
 )
-from regenerate.db.enums import ShareType, ResetType
+from regenerate.db.enums import ResetType
 from regenerate.settings.version import PROGRAM_VERSION
 
 from .writer_base import (
@@ -410,6 +410,7 @@ class Verilog(RegsetWriter):
             self.write_register_modules(ofile)
 
     def build_signal_list(self):
+        "Builds the list of signals"
 
         input_signals = build_input_signals(self._regset, self._cell_info)
         output_signals = build_output_signals(self._regset, self._cell_info)

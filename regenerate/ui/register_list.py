@@ -118,9 +118,13 @@ class BitWidth:
             self.str2bit[64] = "64-bits"
 
     def get_list(self) -> List[Tuple[str, int]]:
+        "Returns the list of string/int mappings"
+
         return self.bit2str
 
     def get_text(self, size: int) -> str:
+        "Returns the text associated with size"
+
         return self.str2bit[size]
 
 
@@ -180,7 +184,7 @@ class RegisterModel(Gtk.ListStore):
         """
         old_path = self.reg2path[register]
 
-        del self[self.reg2path[register]]
+        self.remove(self[old_path].iter)
         del self.reg2path[register]
 
         for reg in self.reg2path:
@@ -241,41 +245,6 @@ ColDef = namedtuple(
 class RegisterList:
     "Provides the interface to the register table"
 
-    _COLS = (  # Title,   Size, Column, Expand, Type, Monospace
-        ColDef("", 30, RegCol.ICON, False, RegColType.ICON, False, None),
-        ColDef(
-            "Address",
-            100,
-            RegCol.SORT,
-            False,
-            RegColType.TEXT,
-            True,
-            "Address",
-        ),
-        ColDef(
-            "Name",
-            200,
-            RegCol.NAME,
-            True,
-            RegColType.TEXT,
-            False,
-            "Missing Register Descriptive Name",
-        ),
-        ColDef(
-            "Token",
-            150,
-            RegCol.DEFINE,
-            True,
-            RegColType.TEXT,
-            True,
-            "Missing Register Token Name",
-        ),
-        ColDef(
-            "Dimension", 150, RegCol.DIM, False, RegColType.COMBO, False, None
-        ),
-        ColDef("Width", 150, -1, False, RegColType.COMBO, False, None),
-    )
-
     def __init__(
         self,
         obj,
@@ -286,15 +255,13 @@ class RegisterList:
     ):
         self._obj = obj
         self._model = None
-        self._col = None
-        self._icon_col = None
-        self._icon_renderer = None
+        self._addr_col = None
         self._selection = self._obj.get_selection()
         self._selection.set_mode(Gtk.SelectionMode.MULTIPLE)
+        self._selection.connect("changed", select_change_function)
         self._set_modified = mod_function
         self._update_addr = update_addr
         self._set_warn_flags = set_warn_flags
-        self._selection.connect("changed", select_change_function)
         self._build_columns()
         self._parameter_names = set()
 
@@ -302,13 +269,13 @@ class RegisterList:
         "Updates the bit width"
 
         self._model.bit_width = BitWidth(size)
-        self.width_column.update_menu(self._model.bit_width.get_list())
+        self._width_column.update_menu(self._model.bit_width.get_list())
 
     def set_parameters(self, parameters):
         "Sets the parameters"
 
         self._parameter_names = set({(p.name, p.uuid) for p in parameters})
-        self.dim_column.update_menu(sorted(list(self._parameter_names)))
+        self._dim_column.update_menu(sorted(list(self._parameter_names)))
 
     def get_selected_row(self):
         """
@@ -345,61 +312,83 @@ class RegisterList:
         """
         self._selection.select_path(row)
 
+    def _build_text_column(
+        self, name: str, width: int, data_col: int, sort_col: int, mono: bool
+    ):
+        "Builds a editable text column"
+
+        col = EditableColumn(
+            name,
+            self._text_edited,
+            data_col,
+            mono,
+            placeholder=name,
+        )
+        col.set_resizable(True)
+        col.set_min_width(width)
+        col.set_expand(False)
+        col.set_sort_column_id(sort_col)
+        return col
+
+    def _build_dimension_col(self):
+        "Builds the dimension column"
+
+        col = MenuEditColumn(
+            "Dimension",
+            self._dimension_menu,
+            self._dimension_text,
+            [],
+            RegCol.DIM,
+        )
+        col.set_resizable(True)
+        col.set_min_width(125)
+        col.set_expand(False)
+        return col
+
+    def _build_width_column(self):
+        "Builds the width column"
+
+        col = ComboMapColumn(
+            "Width",
+            self._combo_edited,
+            [],
+            RegCol.WIDTH,
+        )
+        col.set_resizable(True)
+        col.set_min_width(150)
+        col.set_expand(False)
+        return col
+
     def _build_columns(self):
         """
         Builds the columns for the tree view. First, removes the old columns in
         the column list. The builds new columns and inserts them into the tree.
         """
-        for (i, col) in enumerate(self._COLS):
-            if col.type == RegColType.COMBO:
-                if col.title == "Dimension":
-                    column = MenuEditColumn(
-                        col.title,
-                        self._dimension_menu,
-                        self._dimension_text,
-                        [],
-                        i,
-                    )
-                    column.set_resizable(True)
-                    self.dim_column = column
-                else:
-                    if self._model:
-                        options = self._model.bit_width.get_list()
-                    else:
-                        options = []
-                    column = ComboMapColumn(
-                        col.title,
-                        self._combo_edited,
-                        options,
-                        i,
-                    )
-                    column.set_resizable(True)
-                    self.width_column = column
-            elif col.type == RegColType.TEXT:
-                column = EditableColumn(
-                    col.title,
-                    self._text_edited,
-                    i,
-                    col.mono,
-                    placeholder=col.placeholder,
-                )
-                column.set_resizable(True)
-            else:
-                self._icon_renderer = Gtk.CellRendererPixbuf()
-                column = Gtk.TreeViewColumn(
-                    "", self._icon_renderer, stock_id=i
-                )
-                column.set_resizable(True)
-                self._icon_col = column
 
-            column.set_min_width(col.size)
-            column.set_expand(col.expand)
-            if i == 1:
-                self._col = column
-            if col.sort_column >= 0:
-                column.set_sort_column_id(col.sort_column)
-            self._obj.append_column(column)
-        self._obj.set_search_column(3)
+        self._obj.append_column(_build_icon_col())
+
+        self._addr_col = self._build_text_column(
+            "Address", 100, 1, RegCol.SORT, True
+        )
+        self._obj.append_column(self._addr_col)
+
+        self._name_col = self._build_text_column(
+            "Name", 350, 2, RegCol.NAME, False
+        )
+        self._obj.append_column(self._name_col)
+
+        self._token_col = self._build_text_column(
+            "Token", 300, 3, RegCol.DEFINE, True
+        )
+        self._obj.append_column(self._token_col)
+
+        self._dim_column = self._build_dimension_col()
+        self._obj.append_column(self._dim_column)
+
+        self._width_column = self._build_width_column()
+        self._obj.append_column(self._width_column)
+
+        self._obj.set_search_column(RegCol.NAME)
         self._obj.set_tooltip_column(RegCol.TOOLTIP)
 
     def set_model(self, model):
@@ -412,9 +401,11 @@ class RegisterList:
             self._model = None
 
     def clear(self):
+        "Clears the associated model"
         self._model.clear()
 
     def load_reg_into_model(self, register: Register) -> None:
+        "Loads the register into the model"
         self._model.append_register(register)
 
     def add_new_register(self, register: Register) -> str:
@@ -423,7 +414,7 @@ class RegisterList:
         default column
         """
         path = self._model.append_register(register)
-        self._obj.set_cursor(path, self._col, start_editing=True)
+        self._obj.set_cursor(path, self._addr_col, start_editing=True)
         return path
 
     def get_selected_registers(self):
@@ -702,6 +693,17 @@ class RegisterList:
             self._model[path][col] = model.get_value(node, 0)
             register.width = new_width
             self._set_modified()
+
+
+def _build_icon_col():
+    "Builds the icon column"
+
+    renderer = Gtk.CellRendererPixbuf()
+    col = Gtk.TreeViewColumn("", renderer, stock_id=RegColType.ICON)
+    col.set_resizable(True)
+    col.set_min_width(30)
+    col.set_expand(False)
+    return col
 
 
 def check_address_align(address: int, width: int) -> bool:

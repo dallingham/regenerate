@@ -70,82 +70,84 @@ class BitFieldEditor(BaseWindow):
     ):
         super().__init__()
 
-        self.dbase = dbase
+        self._regset = dbase
         self.modified = modified_func
-        self.register = register
-        self.bit_field = bit_field
-        self.builder = Gtk.Builder()
-        self.builder.add_from_file(str(GLADE_BIT))
+        self._bit_field = bit_field
+        self._builder = Gtk.Builder()
+        self._builder.add_from_file(str(GLADE_BIT))
 
-        self.control_obj = self.builder.get_object("control")
-        self.output_obj = self.builder.get_object("output")
-        self.output_enable_obj = self.builder.get_object("outen")
-        self.alt_reset_obj = self.builder.get_object("alt_reset")
-        self.input_obj = self.builder.get_object("input")
-        self.value_obj = self.builder.get_object("values")
-        self.col = None
+        self._control_obj = self._builder.get_object("control")
+        self._output_obj = self._builder.get_object("output")
+        self._output_enable_obj = self._builder.get_object("outen")
+        self._input_obj = self._builder.get_object("input")
+        self._value_obj = self._builder.get_object("values")
+        self._col = None
 
         pango_font = Pango.FontDescription("monospace")
-        self.setup_description(pango_font)
+        self._setup_description(pango_font)
 
         (input_enb, control_enb) = TYPE_TO_ENABLE[bit_field.field_type]
-        self.input_obj.set_sensitive(input_enb)
-        self.control_obj.set_sensitive(control_enb)
+        self._input_obj.set_sensitive(input_enb)
+        self._control_obj.set_sensitive(control_enb)
 
-        self.build_values_list()
+        self._build_values_list()
 
-        self.initialize_from_data(bit_field)
-        self.output_obj.set_sensitive(self.get_active("outen"))
+        self._initialize_from_data(bit_field)
+        self._output_obj.set_sensitive(self._get_active("outen"))
 
-        self.check_data()
+        self._check_data()
 
-        verilog_obj = self.builder.get_object("verilog_code")
+        verilog_obj = self._builder.get_object("verilog_code")
         highlight_text(
-            self.build_register_text(bit_field), verilog_obj.get_buffer()
+            self._build_register_text(bit_field), verilog_obj.get_buffer()
         )
         verilog_obj.modify_font(pango_font)
 
-        self.builder.connect_signals(self)
-        self.configure_window(register, parent)
-        self.parent = parent
+        self._builder.connect_signals(self)
+        self._configure_window(register, parent)
+        self._parent = parent
 
-    def setup_description(self, pango_font: Pango.FontDescription) -> None:
+    def _setup_description(self, pango_font: Pango.FontDescription) -> None:
         """
         Finds the bitfield description object, sets the font to a monospace
         font, and attaches the spell checker to the buffere
         """
-        descr = self.builder.get_object("descr")
+        descr = self._builder.get_object("descr")
         descr.modify_font(pango_font)
         self.spell = Spell(descr)
 
-    def configure_window(self, register: Register, parent: Gtk.Window) -> None:
+    def _configure_window(
+        self, register: Register, parent: Gtk.Window
+    ) -> None:
         """
         Sets up the dialog window, setting the title, parent,
         and window icon
         """
-        self.top_window = self.builder.get_object("editfield")
-        self.top_window.set_transient_for(parent)
-        self.top_window.set_title(
+        self._top_window = self._builder.get_object("editfield")
+        self._top_window.set_transient_for(parent)
+        self._top_window.set_title(
             f"Edit Bit Field - [{register.address:02x}] {register.name}"
         )
-        self.configure(self.top_window)
-        self.top_window.show_all()
+        self.configure(self._top_window)
+        self._top_window.show_all()
 
-    def build_register_text(self, bit_field: BitField) -> str:
+    def _build_register_text(self, bit_field: BitField) -> str:
         """Returns the type of the verilog instantiation of the type"""
         try:
             edge = (
-                "posedge" if self.dbase.ports.reset_active_level else "negedge"
+                "posedge"
+                if self._regset.ports.reset_active_level
+                else "negedge"
             )
-            condition = "" if self.dbase.ports.reset_active_level else "~"
+            condition = "" if self._regset.ports.reset_active_level else "~"
 
-            if self.dbase.ports.sync_reset:
+            if self._regset.ports.sync_reset:
                 trigger = ""
             else:
                 trigger = f" or {edge} RSTn"
 
             name_map = {
-                "MODULE": self.dbase.name,
+                "MODULE": self._regset.name,
                 "RESET_CONDITION": condition,
                 "RESET_TRIGGER": trigger,
                 "RESET_EDGE": edge,
@@ -155,16 +157,16 @@ class BitFieldEditor(BaseWindow):
             text = ""
         return text
 
-    def initialize_from_data(self, bit_field: BitField) -> None:
+    def _initialize_from_data(self, bit_field: BitField) -> None:
         """Initializes the dialog's data fields from the object"""
 
-        self.set_text("field_name", bit_field.full_field_name())
-        self.set_text("type", TYPE_TO_DESCR[bit_field.field_type])
+        self._set_text("field_name", bit_field.full_field_name())
+        self._set_text("type", TYPE_TO_DESCR[bit_field.field_type])
 
         if bit_field.reset_type == ResetType.NUMERIC:
-            self.set_text("reset_value", f"{bit_field.reset_value:x}")
+            self._set_text("reset_value", f"{bit_field.reset_value:x}")
         else:
-            self.set_text("reset_value", bit_field.reset_parameter)
+            self._set_text("reset_value", bit_field.reset_parameter)
 
         (input_enb, control_enb) = TYPE_TO_ENABLE[bit_field.field_type]
         if input_enb and not bit_field.input_signal:
@@ -173,25 +175,25 @@ class BitFieldEditor(BaseWindow):
         if control_enb and not bit_field.control_signal:
             bit_field.control_signal = f"{bit_field.name}_LOAD"
 
-        self.output_obj.set_text(bit_field.output_signal)
-        self.input_obj.set_text(bit_field.input_signal)
+        self._output_obj.set_text(bit_field.output_signal)
+        self._input_obj.set_text(bit_field.input_signal)
 
-        self.set_active("volatile", bit_field.flags.volatile)
-        self.set_active("random", bit_field.flags.can_randomize)
-        self.set_active("error_bit", bit_field.flags.is_error_field)
-        self.set_active("static", bit_field.output_is_static)
-        self.set_active("side_effect", bit_field.output_has_side_effect)
-        self.set_active("outen", bit_field.use_output_enable)
-        self.set_active("alt_reset", bit_field.use_alternate_reset)
-        self.builder.get_object("alt_reset").set_sensitive(
-            self.dbase.ports.secondary_reset
+        self._set_active("volatile", bit_field.flags.volatile)
+        self._set_active("random", bit_field.flags.can_randomize)
+        self._set_active("error_bit", bit_field.flags.is_error_field)
+        self._set_active("static", bit_field.output_is_static)
+        self._set_active("side_effect", bit_field.output_has_side_effect)
+        self._set_active("outen", bit_field.use_output_enable)
+        self._set_active("alt_reset", bit_field.use_alternate_reset)
+        self._builder.get_object("alt_reset").set_sensitive(
+            self._regset.ports.secondary_reset
         )
 
-        text_buffer = self.builder.get_object("descr").get_buffer()
+        text_buffer = self._builder.get_object("descr").get_buffer()
         text_buffer.connect("changed", self._description_changed)
         text_buffer.set_text(bit_field.description)
 
-        self.control_obj.set_text(self.bit_field.control_signal)
+        self._control_obj.set_text(self._bit_field.control_signal)
 
     def on_help_clicked(self, _obj: Gtk.Button) -> None:
         "Display the help window"
@@ -207,23 +209,23 @@ class BitFieldEditor(BaseWindow):
 
     def _set_field_value(self, val: str, obj: Gtk.CheckButton) -> None:
         "Sets the field value"
-        setattr(self.bit_field, val, obj.get_active())
+        setattr(self._bit_field, val, obj.get_active())
 
     def _set_flag_value(self, val: str, obj: Gtk.CheckButton) -> None:
         "Sets the field value"
-        setattr(self.bit_field.flags, val, obj.get_active())
+        setattr(self._bit_field.flags, val, obj.get_active())
 
     @modified
     def on_output_changed(self, obj: Gtk.Entry) -> None:
         "Called with the output signal changed"
-        self.bit_field.output_signal = obj.get_text()
-        self.check_data()
+        self._bit_field.output_signal = obj.get_text()
+        self._check_data()
 
     @modified
     def on_input_changed(self, obj: Gtk.Entry) -> None:
         "Called with the input signal changed"
-        self.bit_field.input_signal = obj.get_text()
-        self.check_data()
+        self._bit_field.input_signal = obj.get_text()
+        self._check_data()
 
     @modified
     def on_volatile_changed(self, obj: Gtk.ToggleButton) -> None:
@@ -248,9 +250,10 @@ class BitFieldEditor(BaseWindow):
     @modified
     def on_control_changed(self, obj: Gtk.Entry) -> None:
         "Called with the control signal changed"
-        self.bit_field.control_signal = obj.get_text()
-        self.check_data()
+        self._bit_field.control_signal = obj.get_text()
+        self._check_data()
 
+    @modified
     def on_add_clicked(self, _obj: Gtk.Button) -> None:
         """
         Called with the add button is clicked. Search the existing values
@@ -258,13 +261,13 @@ class BitFieldEditor(BaseWindow):
         """
 
         last = len(self.value_model)
-        max_values = 2 ** self.bit_field.width
+        max_values = 2 ** self._bit_field.width
 
         if last >= max_values:
             ErrorMsg(
                 "Maximum number of values reached",
                 f"The width of the field only allows for {last} values",
-                parent=self.parent,
+                parent=self._parent,
             )
             return
 
@@ -283,52 +286,51 @@ class BitFieldEditor(BaseWindow):
         else:
             path = (last,)
 
-        focus_column = self.col
-        self.value_obj.set_cursor(path, focus_column, start_editing=True)
-        self.modified()
+        focus_column = self._col
+        self._value_obj.set_cursor(path, focus_column, start_editing=True)
 
     @modified
     def on_remove_clicked(self, _obj: Gtk.Button) -> None:
         "Called with the remove button is clicked"
         self.value_model.remove(self.model_selection.get_selected()[1])
-        self.update_values()
+        self._update_values()
 
     @modified
     def on_side_effect_toggled(self, obj: Gtk.CheckButton) -> None:
         "Called with the side effect flag toggled"
-        self.bit_field.output_has_side_effect = obj.get_active()
+        self._bit_field.output_has_side_effect = obj.get_active()
 
-    def update_values(self) -> None:
+    def _update_values(self) -> None:
         "Update the bit field values from the model"
-        self.bit_field.values = [
+        self._bit_field.values = [
             BitValues(val[0], val[1], val[2]) for val in self.value_model
         ]
-        self.bit_field.values = []
+        self._bit_field.values = []
         for val in self.value_model:
             bfval = BitValues()
             bfval.value = int(val[0])
             bfval.token = val[1]
             bfval.description = val[2]
-            self.bit_field.values.append(bfval)
+            self._bit_field.values.append(bfval)
 
     @modified
     def on_output_enable_toggled(self, obj: Gtk.CheckButton) -> None:
         """
         Enables the output field based on the output enable field
         """
-        active = self.output_enable_obj.get_active()
-        self.bit_field.use_output_enable = active
-        self.output_obj.set_sensitive(obj.get_active())
-        self.check_data()
+        active = self._output_enable_obj.get_active()
+        self._bit_field.use_output_enable = active
+        self._output_obj.set_sensitive(obj.get_active())
+        self._check_data()
 
     @modified
-    def on_alt_reset_toggled(self, obj: Gtk.CheckButton) -> None:
+    def on_alt_reset_toggled(self, button: Gtk.CheckButton) -> None:
         """
         Enables the output field based on the output enable field
         """
-        active = self.alt_reset_obj.get_active()
-        self.bit_field.use_alternate_reset = active
-        self.check_data()
+        active = button.get_active()
+        self._bit_field.use_alternate_reset = active
+        self._check_data()
 
     def on_descr_key_press_event(
         self, text_view: Gtk.TextView, event: Gdk.EventKey
@@ -355,67 +357,67 @@ class BitFieldEditor(BaseWindow):
         """
         Saves the data from the interface to the internal BitField structure
         """
-        self.top_window.destroy()
+        self._top_window.destroy()
 
     @modified
     def _description_changed(self, obj: Gtk.TextBuffer) -> None:
         "Called with the description changes"
-        self.bit_field.description = obj.get_text(
+        self._bit_field.description = obj.get_text(
             obj.get_start_iter(), obj.get_end_iter(), False
         )
 
-    def check_data(self) -> None:
+    def _check_data(self) -> None:
         "Checks the input signal validity"
         input_error = False
         output_error = False
         control_error = False
 
         if control_error is False:
-            clear_error(self.control_obj)
+            clear_error(self._control_obj)
         if input_error is False:
-            clear_error(self.input_obj)
+            clear_error(self._input_obj)
         if output_error is False:
-            clear_error(self.output_obj)
+            clear_error(self._output_obj)
 
-    def set_active(self, name: str, value: bool) -> None:
+    def _set_active(self, name: str, value: bool) -> None:
         "Set the active flag"
-        self.builder.get_object(name).set_active(value)
+        self._builder.get_object(name).set_active(value)
 
-    def get_active(self, name: str) -> bool:
+    def _get_active(self, name: str) -> bool:
         "Get the active flag"
-        return self.builder.get_object(name).get_active()
+        return self._builder.get_object(name).get_active()
 
-    def set_text(self, name: str, value: str) -> None:
+    def _set_text(self, name: str, value: str) -> None:
         "Set the text"
-        self.builder.get_object(name).set_text(value)
+        self._builder.get_object(name).set_text(value)
 
-    def build_values_list(self) -> None:
+    def _build_values_list(self) -> None:
         """
         Builds the columns associated with the list view
         """
-        self.col = build_column("Value", 0, 50, self.change_val)
-        self.value_obj.append_column(self.col)
+        self._col = build_column("Value", 0, 50, self._change_val)
+        self._value_obj.append_column(self._col)
 
-        self.value_obj.append_column(
-            build_column("Token", 1, 100, self.change_text)
+        self._value_obj.append_column(
+            build_column("Token", 1, 100, self._change_text)
         )
 
-        self.value_obj.append_column(
+        self._value_obj.append_column(
             build_column("Description", 2, 0, self.change_description)
         )
 
         self.value_model = Gtk.ListStore(str, str, str)
-        self.model_selection = self.value_obj.get_selection()
-        self.value_obj.set_model(self.value_model)
+        self.model_selection = self._value_obj.get_selection()
+        self._value_obj.set_model(self.value_model)
 
         self.used_tokens = set()
-        for value in self.bit_field.values:
+        for value in self._bit_field.values:
             self.used_tokens.add(value.token)
             self.value_model.append(
                 row=(str(value.value), value.token, value.description)
             )
 
-    def change_text(self, _text, path, new_text):
+    def _change_text(self, _text, path, new_text):
         """
         Updates the data model when the text value is changed in the model.
         """
@@ -423,7 +425,7 @@ class BitFieldEditor(BaseWindow):
             ErrorMsg(
                 "Duplicate token",
                 f'The token "{new_text}" has already been used',
-                parent=self.parent,
+                parent=self._parent,
             )
         else:
             node = self.value_model.get_iter(path)
@@ -434,7 +436,7 @@ class BitFieldEditor(BaseWindow):
                 self.used_tokens.remove(old_text)
             if new_text:
                 self.used_tokens.add(new_text)
-            self.update_values()
+            self._update_values()
             self.modified()
 
     def change_description(self, _text, path, new_text):
@@ -450,21 +452,21 @@ class BitFieldEditor(BaseWindow):
                 "Look for strange punctuations, like dashs and "
                 "quotes that look valid, but are not actual "
                 "ascii characters.",
-                parent=self.parent,
+                parent=self._parent,
             )
         self.value_model.set_value(node, 2, new_text)
-        self.update_values()
+        self._update_values()
         self.modified()
 
-    def change_val(self, _text, path, new_text):
+    def _change_val(self, _text, path, new_text):
         """
         Called with the value has changed value field. Checks to make sure that
         value is a valid hex value, and within the correct range.
         """
         new_text = new_text.strip()
 
-        start = self.bit_field.lsb
-        stop = self.bit_field.msb.resolve()
+        start = self._bit_field.lsb
+        stop = self._bit_field.msb.resolve()
         maxval = (2 ** (stop - start + 1)) - 1
 
         try:
@@ -475,7 +477,7 @@ class BitFieldEditor(BaseWindow):
 
         node = self.value_model.get_iter(path)
         self.value_model.set_value(node, 0, new_text)
-        self.update_values()
+        self._update_values()
         self.modified()
 
 

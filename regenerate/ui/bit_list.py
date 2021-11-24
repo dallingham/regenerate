@@ -51,6 +51,8 @@ for data_type in TYPES:
 
 
 class BitModelCol(IntEnum):
+    "Model column IDs"
+
     TITLE = 0
     SIZE = 1
     SORT = 2
@@ -135,6 +137,7 @@ class BitList:
         self.selection_changed(obj)
 
     def set_parameters(self, parameters):
+        "Sets the parameters for the bitlist"
         my_parameters = sorted([(p.name, p.uuid) for p in parameters])
         self.reset_column.update_menu(my_parameters)
 
@@ -183,7 +186,7 @@ class BitList:
                     col[BitModelCol.TITLE],
                     self.field_name_edit,
                     i,
-                    col[BitModelCol.MONO],
+                    monospace=False,
                 )
             elif i == BitCol.MSB:
                 column = MenuEditColumn(
@@ -192,7 +195,6 @@ class BitList:
                     self._msb_text,
                     [],
                     i,
-                    col[BitModelCol.MONO],
                 )
                 self.msb_column = column
             elif i == BitCol.LSB:
@@ -200,7 +202,7 @@ class BitList:
                     col[BitModelCol.TITLE],
                     self.update_lsb,
                     i,
-                    col[BitModelCol.MONO],
+                    monospace=True,
                 )
                 self.__col = column
 
@@ -264,18 +266,20 @@ class BitList:
                 field.name = new_text
                 self.__modified()
             else:
-                self.show_msg(
-                    '"%s" has already been used as a field name' % new_text
+                LOGGER.warning(
+                    '"%s" has already been used as a field name', new_text
                 )
 
     def reset_text_edit(self, _cell, path, new_val, col) -> None:
+        "Called when the text of the reset field has been altered"
+
         if self.__model is None:
             return
 
         field = self.__model.get_bitfield_at_path(path)
 
         if re.match(r"^(0x)?[a-fA-F0-9]+$", new_val):
-            if self.check_reset(field, int(new_val, 0)) is False:
+            if _check_reset(field, int(new_val, 0)) is False:
                 return
             field.reset_value = int(new_val, 0)
             field.reset_type = ResetType.NUMERIC
@@ -287,11 +291,14 @@ class BitList:
             self.__model[path][BitCol.RESET] = new_val
             self.__modified()
         else:
-            self.show_msg(
-                f'"{new_val}" is not a valid constant, parameter, or signal name'
+            LOGGER.warning(
+                '"%s" is not a valid constant, parameter, or signal name',
+                new_val,
             )
 
     def reset_menu_edit(self, cell, path, node, _col) -> None:
+        "Called with the reset field has been altered by the menu"
+
         if self.__model is None:
             return
 
@@ -299,7 +306,7 @@ class BitList:
         field = self.__model.get_bitfield_at_path(path)
         field.reset_type = ResetType.PARAMETER
         new_val = model.get_value(node, 1)
-        new_text = model. get_value(node, 0)
+        new_text = model.get_value(node, 0)
         field.reset_parameter = new_val
 
         if self.__model:
@@ -321,6 +328,7 @@ class BitList:
             self.__modified()
 
     def update_type_info(self, field: BitField, model, _path, node):
+        "Updates the bit field type info"
 
         if self.__model is None:
             return
@@ -407,27 +415,18 @@ class BitList:
         self.__model[path][BitCol.LSB] = f"{field.lsb}"
         self.__model[path][BitCol.SORT] = field.start_position
 
-    def show_msg(self, text: str) -> None:
-        LOGGER.warning(text)
-
     def check_for_width(self, _start: int, stop: int) -> bool:
+        "Checks to make sure the bit position is with the valid range"
+
         if self.__model is None:
             return False
 
         reg = self.__model.register
         if stop >= reg.width:
-            self.show_msg(
-                f"Bit position ({stop}) is greater than register width ({reg.width})"
-            )
-            return False
-        return True
-
-    def check_reset(self, field: BitField, value: int) -> bool:
-        maxval = (1 << ((field.msb.resolve() - field.lsb) + 1)) - 1
-        if value > maxval:
-            self.show_msg(
-                "Reset value (0x%x) is greater than the maximum value (0x%x)"
-                % (value, maxval)
+            LOGGER.warning(
+                "Bit position (%d) is greater than register width (%d)",
+                stop,
+                reg.width,
             )
             return False
         return True
@@ -435,6 +434,8 @@ class BitList:
     def check_for_overlaps(
         self, field: BitField, start: int, stop: int
     ) -> bool:
+        "Checks for overlapping bit fields"
+
         if self.__model is None:
             return False
 
@@ -448,8 +449,8 @@ class BitList:
 
         for bit in range(start, stop + 1):
             if bit in used:
-                self.show_msg(
-                    f"Bit {bit} overlaps with the bits in another register"
+                LOGGER.warning(
+                    "Bit %d overlaps with the bits in another register", bit
                 )
                 return False
         return True
@@ -495,6 +496,20 @@ class BitList:
             self.__modified()
         except ValueError:
             ...
+
+
+def _check_reset(field: BitField, value: int) -> bool:
+    "Checks the reset value for validity"
+
+    maxval = (1 << ((field.msb.resolve() - field.lsb) + 1)) - 1
+    if value > maxval:
+        LOGGER.warning(
+            "Reset value (0x%x) is greater than the maximum value (0x%x)",
+            value,
+            maxval,
+        )
+        return False
+    return True
 
 
 def reset_value(field: BitField) -> str:

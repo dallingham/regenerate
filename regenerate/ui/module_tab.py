@@ -34,7 +34,6 @@ from .entry import (
     EntryText,
     EntryWord,
     EntryInt,
-    ValidIntEntry,
 )
 from .base_doc import BaseDoc
 
@@ -51,28 +50,29 @@ class ModuleDoc(BaseDoc):
             notebook,
             modified,
         )
-        self.dbase: Optional[RegisterDb] = None
+        self.regset: Optional[RegisterDb] = None
         self.changing = False
 
-    def change_db(self, dbase: RegisterDb, _project: Optional[RegProject]):
-        self.dbase = dbase
+    def change_db(self, regset: RegisterDb, _project: Optional[RegProject]):
+        "Changes the register set associated with the object"
+        self.regset = regset
 
         self.changing = True
         self.remove_pages()
-        if dbase:
-            for page in dbase.doc_pages.get_page_names():
-                text = dbase.doc_pages.get_page(page)
+        if regset:
+            for page in regset.doc_pages.get_page_names():
+                text = regset.doc_pages.get_page(page)
                 if text is not None:
                     self.add_page(page, text)
         self.changing = False
 
     def remove_page_from_doc(self, title: str):
-        if self.dbase is not None:
-            self.dbase.doc_pages.remove_page(title)
+        if self.regset is not None:
+            self.regset.doc_pages.remove_page(title)
 
     def update_page_from_doc(self, title: str, text: str, tags: List[str]):
-        if not self.changing and self.dbase is not None:
-            self.dbase.doc_pages.update_page(title, text, tags)
+        if not self.changing and self.regset is not None:
+            self.regset.doc_pages.update_page(title, text, tags)
 
 
 class ModuleTabs:
@@ -176,7 +176,7 @@ class ModuleTabs:
                     )
                 )
             else:
-                if type(widget_name) is tuple:
+                if isinstance(widget_name, tuple):
                     self.port_object_list.append(
                         class_type(
                             (
@@ -227,7 +227,7 @@ class ModuleTabs:
             self.after_modified,
         )
 
-        self.dbase = None
+        self.regset = None
         self.set_modified = modified
         self.sync_reset = find_obj("sync_reset")
         self.secondary_reset = find_obj("secondary_reset")
@@ -240,10 +240,12 @@ class ModuleTabs:
         self.interface_label_field = find_obj("interface_label")
 
     def width_changed(self) -> bool:
-        if self.dbase is None:
+        "Called when the data bus with is changing"
+
+        if self.regset is None:
             return False
-        new_width = self.dbase.ports.data_bus_width
-        for reg in self.dbase.get_all_registers():
+        new_width = self.regset.ports.data_bus_width
+        for reg in self.regset.get_all_registers():
             if reg.width > new_width:
                 LOGGER.error(
                     "Width cannot be changed - registers exist that are larger than %d bits",
@@ -253,7 +255,7 @@ class ModuleTabs:
         self.after_modified()
         return True
 
-    def on_sysv_intf_toggled(self, button, state):
+    def on_sysv_intf_toggled(self, button, _state):
         "Enable/disable fields if the SystemVerilog interface is enabled"
 
         enable = button.get_active()
@@ -264,16 +266,16 @@ class ModuleTabs:
         self.interface_field.set_sensitive(enable)
         self.interface_label_field.set_sensitive(enable)
 
-    def change_db(self, dbase, project) -> None:
+    def change_db(self, regset, project) -> None:
         "Changes the register set to a new register set"
 
-        self.dbase = dbase
-        if dbase:
+        self.regset = regset
+        if regset:
             for obj in self.port_object_list:
-                obj.change_db(dbase.ports)
+                obj.change_db(regset.ports)
             for obj in self.top_object_list:
-                obj.change_db(dbase)
-            self.preview.change_db(dbase, project)
+                obj.change_db(regset)
+            self.preview.change_db(regset, project)
         else:
             for obj in self.port_object_list:
                 obj.change_db(None)
@@ -286,11 +288,11 @@ class ModuleTabs:
         warn = False
         msgs: List[str] = []
 
-        if self.dbase is not None:
-            if self.dbase.descriptive_title == "":
+        if self.regset is not None:
+            if self.regset.descriptive_title == "":
                 warn = True
                 msgs.append("No title was provided for the register set.")
-            if self.dbase.name == "":
+            if self.regset.name == "":
                 warn = True
                 msgs.append("No register set name was provided.")
             self.icon.set_property("visible", warn)

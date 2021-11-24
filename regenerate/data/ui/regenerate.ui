@@ -3822,7 +3822,7 @@ loading an existing &lt;b&gt;&lt;tt&gt;.regb&lt;/tt&gt;&lt;/b&gt; file.</propert
                         <property name="orientation">vertical</property>
                         <property name="layout_style">start</property>
                         <child>
-                          <object class="GtkButton" id="top_param_add">
+                          <object class="GtkButton" id="prj_param_add">
                             <property name="label">gtk-add</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
@@ -3836,7 +3836,7 @@ loading an existing &lt;b&gt;&lt;tt&gt;.regb&lt;/tt&gt;&lt;/b&gt; file.</propert
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkButton" id="top_param_remove">
+                          <object class="GtkButton" id="prj_param_remove">
                             <property name="label">gtk-remove</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
@@ -3877,7 +3877,7 @@ loading an existing &lt;b&gt;&lt;tt&gt;.regb&lt;/tt&gt;&lt;/b&gt; file.</propert
                         <property name="orientation">vertical</property>
                         <property name="layout_style">start</property>
                         <child>
-                          <object class="GtkMenuButton" id="override_add">
+                          <object class="GtkMenuButton" id="prj_override_add">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="focus_on_click">False</property>
@@ -3921,7 +3921,7 @@ loading an existing &lt;b&gt;&lt;tt&gt;.regb&lt;/tt&gt;&lt;/b&gt; file.</propert
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkButton" id="override_remove">
+                          <object class="GtkButton" id="prj_override_remove">
                             <property name="label">gtk-remove</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
@@ -3963,7 +3963,7 @@ loading an existing &lt;b&gt;&lt;tt&gt;.regb&lt;/tt&gt;&lt;/b&gt; file.</propert
                         <property name="vexpand">True</property>
                         <property name="shadow_type">in</property>
                         <child>
-                          <object class="GtkTreeView" id="prj_subparam_list">
+                          <object class="GtkTreeView" id="prj_override_list">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="hexpand">True</property>

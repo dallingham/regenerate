@@ -26,8 +26,6 @@ from typing import Optional
 from regenerate.db import RegProject
 from regenerate.db.utils import get_register_paths
 
-from regenerate.ui.preview import html_string
-
 
 class PreviewEditor:
     """

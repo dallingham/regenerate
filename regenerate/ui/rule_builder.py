@@ -80,7 +80,9 @@ class RuleBuilder(Gtk.Assistant):
         self._source_mdl = Gtk.ListStore(str, str, object)
         self._reginst_mdl = Gtk.ListStore(bool, str, str, object)
         self._addrmap_mdl = Gtk.ListStore(str, str, object)
+        self._addrmaps_mdl = Gtk.ListStore(bool, str, str, object)
         self._addrmap_table = Gtk.TreeView()
+        self._addrmaps_table = Gtk.TreeView()
 
         self._setup_buttons()
         self._build_intro()
@@ -284,11 +286,11 @@ class RuleBuilder(Gtk.Assistant):
         """Called when enable changed"""
         self._reginst_mdl[path][0] = not self._reginst_mdl[path][0]
 
-    def _addrmap_toggle_changed(
+    def _addrmaps_toggle_changed(
         self, _cell: Gtk.CellRendererToggle, path: str, _source: int
     ) -> None:
         """Called when enable changed"""
-        self._addrmap_mdl[path][0] = not self._addrmap_mdl[path][0]
+        self._addrmaps_mdl[path][0] = not self._addrmaps_mdl[path][0]
 
     def _build_options_reginsts(self) -> Gtk.Box:
         exporter, _ = self._get_exporter()
@@ -322,7 +324,7 @@ class RuleBuilder(Gtk.Assistant):
         box.show_all()
         return box
 
-    def _build_options_addrmaps(self) -> Gtk.Box:
+    def _build_options_addrmap(self) -> Gtk.Box:
         exporter, _ = self._get_exporter()
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         label = Gtk.Label(label=exporter.options["addrmaps"])
@@ -350,6 +352,38 @@ class RuleBuilder(Gtk.Assistant):
         box.show_all()
         return box
 
+    def _build_options_addrmaps(self) -> Gtk.Box:
+        exporter, _ = self._get_exporter()
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        label = Gtk.Label(label=exporter.options["addrmaps"])
+        box.pack_start(label, False, False, 6)
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_shadow_type(Gtk.ShadowType.IN)
+
+        column = ToggleColumn("Select", self._addrmaps_toggle_changed, 0)
+        column.set_min_width(100)
+        self._addrmaps_table.append_column(column)
+
+        column = ReadOnlyColumn("Address Map", 1)
+        column.set_min_width(300)
+        self._addrmaps_table.append_column(column)
+        self._addrmaps_table.append_column(ReadOnlyColumn("Base Address", 2))
+        scroll.add(self._addrmaps_table)
+        box.pack_start(scroll, True, True, 6)
+
+        for addrmap in self._project.get_address_maps():
+            self._addrmaps_mdl.append(
+                row=[
+                    True,
+                    addrmap.name,
+                    f"0x{addrmap.base:x}",
+                    addrmap,
+                ]
+            )
+        self._addrmaps_table.set_model(self._addrmaps_mdl)
+        box.show_all()
+        return box
+
     def _get_source(self) -> str:
         selection = self.source_list.get_selection()
         model, node = selection.get_selected()
@@ -369,10 +403,15 @@ class RuleBuilder(Gtk.Assistant):
             options["reginsts"] = [
                 row[3].uuid for row in self._reginst_mdl if row[0]
             ]
-        if "addrmaps" in info.options:
+        if "addrmap" in info.options:
             model, node = self._addrmap_table.get_selection().get_selected()
             selected = model.get_value(node, 2)
-            options["addrmaps"] = [selected.uuid]
+            options["addrmap"] = [selected.uuid]
+        if "addrmaps" in info.options:
+            options["addrmaps"] = []
+            for row in self._addrmaps_mdl:
+                if row[0]:
+                    options["addrmaps"].append(row[-1].uuid)
         for option in info.options:
             if option.startswith("bool:"):
                 options[option] = self._widgets[option].get_active()
@@ -468,6 +507,9 @@ class RuleBuilder(Gtk.Assistant):
             box.pack_start(widget, True, True, 6)
         if "addrmaps" in exporter.options:
             widget = self._build_options_addrmaps()
+            box.pack_start(widget, True, True, 6)
+        if "addrmap" in exporter.options:
+            widget = self._build_options_addrmap()
             box.pack_start(widget, True, True, 6)
         for option in exporter.options:
             if option.startswith("bool:"):

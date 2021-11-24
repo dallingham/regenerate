@@ -248,7 +248,7 @@ EXPORTERS = [
             "{}_const.sv",
             {
                 "bool:pkg": "Wrap in a SystemVerilog package",
-                "addrmaps": "Select the Address Map",
+                "addrmap": "Select an Address Map",
             },
             "headers-system-verilog",
         ),

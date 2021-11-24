@@ -17,9 +17,13 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""
+Provides the common base for the register and block sidebars
+"""
+
 from typing import Callable, List, Type, Optional
-from gi.repository import Gtk, Pango
 from pathlib import Path
+from gi.repository import Gtk, Pango
 
 from regenerate.db import NameBase
 from regenerate.settings.paths import HELP_PATH
@@ -69,7 +73,7 @@ class SelectModel(Gtk.ListStore):
 
 
 class SelectList:
-    """Block list"""
+    "List for the sidebar"
 
     def __init__(self, obj: Gtk.TreeView, title: str):
         self._obj = obj
@@ -78,6 +82,7 @@ class SelectList:
         self._build_window(title)
 
     def set_selection_callback(self, selection_callback: Callable):
+        "Called with the selection is changed"
         self._obj.get_selection().connect("changed", selection_callback)
 
     def update_data(self):
@@ -138,6 +143,8 @@ class SelectList:
 
 
 class SelectSidebar:
+    "Provides the sidebar for the block and register set tabs"
+
     def __init__(
         self,
         sidebar_obj: Gtk.Box,
@@ -168,30 +175,26 @@ class SelectSidebar:
         self._list.set_model(self._model)
 
         help_win = children[1]
-        self._load_help(help_win, help_html)
+        _load_help(help_win, help_html)
 
     def set_selection_changed_callback(self, callback: Callable):
+        "Sets the callback for the list"
         self._list.set_selection_callback(callback)
 
-    def _load_help(self, help_win, help_html: str) -> None:
-
-        help_path = Path(HELP_PATH) / help_html
-        try:
-            with help_path.open() as ifile:
-                help_win.load_html(ifile.read(), "text/html")
-        except IOError:
-            pass
-
     def set_items(self, name_list: List[NameBase]) -> None:
+        "Sets the items in the sidebar"
         self._list.set_items(name_list)
 
     def clear(self) -> None:
+        "Clear the model"
         self._model.clear()
 
     def size(self) -> int:
+        "Returns the number of entries in the list"
         return len(self._model)
 
     def add(self, item: NameBase) -> Gtk.TreeIter:
+        "Adds a new item to the list"
         return self._model.add(item)
 
     def get_selected(self):
@@ -203,12 +206,15 @@ class SelectSidebar:
         return self._list.get_selected_object()
 
     def select_path(self, path: int) -> None:
+        "Select an item in the list by the path"
         self._list.select_path(path)
 
     def select(self, node: Gtk.TreeIter) -> None:
+        "Select an item based on the TreeIter"
         self._list.select(node)
 
     def update(self) -> None:
+        "Update the model"
         self._model.update()
 
     def remove_selected(self) -> str:
@@ -220,10 +226,21 @@ class SelectSidebar:
         return obj.uuid
 
 
-def _set_format(_col, renderer, model, titer, data):
-    val = model.get_value(titer, 0)
+def _load_help(help_win, help_html: str) -> None:
+    "Load the help HTML file"
 
-    if val:
+    help_path = Path(HELP_PATH) / help_html
+    try:
+        with help_path.open() as ifile:
+            help_win.load_html(ifile.read(), "text/html")
+    except IOError:
+        pass
+
+
+def _set_format(_col, renderer, model, node, _data):
+    "Sets the format based on if the item has been modfied"
+
+    if model.get_value(node, 0):
         renderer.set_property("weight", Pango.Weight.BOLD)
         renderer.set_property("style", Pango.Style.ITALIC)
     else:

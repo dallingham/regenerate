@@ -35,6 +35,7 @@ from .block import Block
 from .block_inst import BlockInst
 from .register_inst import RegisterInst
 from .const import REG_EXT, PRJ_EXT, OLD_PRJ_EXT, OLD_REG_EXT
+from .param_resolver import ParameterResolver
 
 from .doc_pages import DocPages
 from .export import ExportData
@@ -645,6 +646,12 @@ class RegProject:
                 self.overrides.append(item)
         except KeyError:
             ...
+
+        resolver = ParameterResolver()
+        for override in self.overrides:
+            resolver.add_blockinst_override(
+                override.path, override.parameter, override.value
+            )
 
     def _load_missing_register_sets(self):
         """

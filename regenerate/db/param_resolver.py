@@ -24,8 +24,7 @@ ovalues based of the default value and any overrides.
 
 from typing import Dict
 
-from .param_data import ParameterData
-from .param_data import ParameterFinder
+from .param_data import ParameterData, ParameterFinder
 
 
 class ParameterResolver:
@@ -40,16 +39,21 @@ class ParameterResolver:
 
     top_overrides: Dict[str, Dict[str, int]] = {}
     reginst_overrides: Dict[str, Dict[str, int]] = {}
-    blk_inst = ""
-    reg_inst = ""
+    blkinst_id = ""
+    reginst_id = ""
 
     def __init__(self):
         ...
 
-    def set_reginst(self, name: str) -> None:
+    def set_reginst(self, uuid: str) -> None:
         "Sets the instance name"
 
-        self.reg_inst = name
+        self.reginst_id = uuid
+
+    def set_blkinst(self, uuid: str) -> None:
+        "Sets the instance name"
+
+        self.blkinst_id = uuid
 
     def clear(self) -> None:
         """
@@ -63,58 +67,63 @@ class ParameterResolver:
         return "ParameterResolver()"
 
     def add_regset_override(
-        self, reg_inst_id: str, param_id: str, data: int
+        self, reginst_id: str, param_id: str, data: int
     ) -> None:
         "Adds an override for a parameter in a register set"
 
-        if reg_inst_id not in self.reginst_overrides:
-            self.reginst_overrides[reg_inst_id] = {param_id: data}
+        if reginst_id not in self.reginst_overrides:
+            self.reginst_overrides[reginst_id] = {param_id: data}
         else:
-            self.reginst_overrides[reg_inst_id][param_id] = data
+            self.reginst_overrides[reginst_id][param_id] = data
 
     def add_blockinst_override(
-        self, blk_inst_id: str, param_id: str, data: int
+        self, blkinst_id: str, param_id: str, data: int
     ) -> None:
         "Adds an override for a parameter a block instance"
 
-        if blk_inst_id not in self.top_overrides:
-            self.top_overrides[blk_inst_id] = {param_id: data}
+        if blkinst_id not in self.top_overrides:
+            self.top_overrides[blkinst_id] = {param_id: data}
         else:
-            self.top_overrides[blk_inst_id][param_id] = data
+            self.top_overrides[blkinst_id][param_id] = data
 
     def resolve_reg(self, param: ParameterData) -> int:
         "Resolve a parameter looking for overrides"
 
-        if not self.reg_inst:
+        if not self.reginst_id:
             return param.value
         if (
-            self.reg_inst in self.reginst_overrides
-            and param.uuid in self.reginst_overrides[self.reg_inst]
+            self.reginst_id in self.reginst_overrides
+            and param.uuid in self.reginst_overrides[self.reginst_id]
         ):
-            val = self.reginst_overrides[self.reg_inst][param.uuid]
+            val = self.reginst_overrides[self.reginst_id][param.uuid]
             return val
         return param.value
 
-    def resolve_blk(self, param) -> int:
+    def resolve_blk(self, value) -> int:
         "Resolve a parameter looking for overrides"
 
-        if not self.blk_inst:
-            if param.is_parameter:
-                new_param = ParameterFinder().find(param.txt_value)
+        if not self.blkinst_id:
+            if value.is_parameter:
+                new_param = ParameterFinder().find(value.txt_value)
                 if new_param:
                     return new_param.value
                 return 0
-            return param.int_value
+            return value.int_value
         if (
-            self.blk_inst in self.top_overrides
-            and param.uuid in self.top_overrides[self.blk_inst]
+            self.blkinst_id in self.top_overrides
+            and value.is_parameter
+            and value.txt_value in self.top_overrides[self.blkinst_id]
         ):
-            return self.top_overrides[self.blk_inst][param.uuid]
-        return param.value
+            new_val = self.top_overrides[self.blkinst_id][value.txt_value]
+            if new_val.is_parameter:
+                new_param = ParameterFinder().find(new_val.txt_value)
+                return new_param.value
+            else:
+                return new_val.int_value
+        return value.value
 
     def resolve(self, param: ParameterData) -> int:
         "Resolve a parameter looking for overrides"
-
         val = self.resolve_reg(param)
         if isinstance(val, int):
             return val

@@ -144,7 +144,7 @@ class BaseDoc:
         preview.connect("clicked", self._preview)
         add.connect("clicked", self._add_notebook_page_callback)
         add_tag.connect("clicked", self._add_tag)
-        help_btn.connect("clicked", self._help)
+        help_btn.connect("clicked", _help)
 
         self.page_map: List[PageInfo] = []
         self.remove_pages()
@@ -153,6 +153,7 @@ class BaseDoc:
         self.notebook.connect("switch-page", self.switch_page)
 
     def _preview(self, _obj: Gtk.Button) -> None:
+        "Display the preview window"
         info = self.page_map[self.notebook.get_current_page()]
         PreviewDisplay(info.textbuf)
 
@@ -165,9 +166,6 @@ class BaseDoc:
                 self.notebook.remove_page(0)
         if self.page_map:
             self.page_map = []
-
-    def _help(self, _button: Gtk.Button) -> None:
-        HelpWindow("doc.html", "Documentation")
 
     def _add_tag(self, _button: Gtk.Button) -> None:
         "GTK callback to adds tag to the page"
@@ -260,8 +258,6 @@ class BaseDoc:
         handler = text_buffer.connect("changed", self._text_changed_callback)
         Spell(text_buffer)
 
-        # preview_window = Gtk.ScrolledWindow()
-        # self.preview = PreviewEditor(text_buffer, preview_window, False)
         edit_window.show_all()
 
         hbox = Gtk.HBox()
@@ -277,31 +273,29 @@ class BaseDoc:
 
         button_align = Gtk.Alignment(xscale=0, xalign=1)
         button_align.add(button)
-        button_align.show()
 
         hbox.pack_start(label, True, True, 6)
         hbox.pack_start(button_align, False, False, 0)
-        hbox.show()
+        hbox.show_all()
 
-        self.flow = Gtk.HBox()
+        flow = Gtk.HBox()
         for tag in data[1]:
-            frame = self.make_tag(tag, data[1])
-            self.flow.pack_start(frame, False, False, 3)
-        self.flow.show()
+            flow.pack_start(self.make_tag(tag, data[1]), False, False, 3)
+        flow.show()
 
         top_box = Gtk.VBox()
         top_box.pack_start(edit_window, True, True, 0)
-        top_box.pack_start(self.flow, False, False, 3)
+        top_box.pack_start(flow, False, False, 3)
         top_box.show()
 
-        page_info = PageInfo(
-            handler, button, text_buffer, self.flow, name, data[1]
-        )
+        page_info = PageInfo(handler, button, text_buffer, flow, name, data[1])
         self.page_map.append(page_info)
         self.notebook.append_page(top_box, hbox)
         button.connect("clicked", self.delete_page, page_info)
 
     def delete_tag(self, _button: Gtk.Button, extra):
+        "Deletes the tag associated with the button"
+
         data, tag, frame = extra
         if tag in data:
             data.remove(tag)
@@ -309,6 +303,7 @@ class BaseDoc:
         self.callback()
 
     def make_tag(self, name: str, data) -> Gtk.Frame:
+        "Creates a tag and adds it"
 
         label = Gtk.Label()
         label.set_markup(f"<b>{name}</b>")
@@ -329,6 +324,8 @@ class BaseDoc:
         return frame
 
     def switch_page(self, notebook, _obj, page):
+        "Called with the page switches, changing the buttons"
+
         current = notebook.get_current_page()
         try:
             old_info = self.page_map[current]
@@ -338,6 +335,8 @@ class BaseDoc:
         self.page_map[page].button.show()
 
     def delete_page(self, _button: Gtk.Button, info: PageInfo):
+        "Delete the current document page"
+
         page = 0
         for i in range(0, self.notebook.get_n_pages()):
             if self.page_map[i] == info:
@@ -407,3 +406,8 @@ class BaseDoc:
         class.
         """
         return
+
+
+def _help(_button: Gtk.Button) -> None:
+    "Display the help window"
+    HelpWindow("doc.html", "Documentation")

@@ -83,11 +83,11 @@ class MainWindow(BaseWindow):
         self._builder.add_from_file(str(GLADE_TOP))
 
         self._setup_main_window()
-        self.build_actions()
+        self._build_actions()
 
         self.top_notebook = self._find_obj("main_notebook")
         self.top_notebook.set_current_page(2)
-        self.enable_controls(False)
+        self._enable_controls(False)
 
         autoload = bool(int(ini.get("user", "load_last_project", "0")))
         self._find_obj("autoload").set_active(autoload)
@@ -97,7 +97,7 @@ class MainWindow(BaseWindow):
 
         self.top_level_tab = TopLevelTab(
             self._find_obj,
-            self.check_subsystem_addresses,
+            self._check_subsystem_addresses,
             self.project_modified,
         )
 
@@ -110,11 +110,12 @@ class MainWindow(BaseWindow):
         self._build_import_menu()
 
     def _new_popup(self):
+        "Displays the help popup when no project is loaded"
         open_btn = self._find_obj("open_btn")
         self._initial_popup = self._find_obj("no_project_popover")
         self._initial_popup.set_relative_to(open_btn)
 
-    def check_subsystem_addresses(self) -> bool:
+    def _check_subsystem_addresses(self) -> bool:
         "Checks the address ranges"
         if check_address_ranges(self.prj):
             self.set_project_modified()
@@ -134,8 +135,8 @@ class MainWindow(BaseWindow):
         """Setup the recent files management system"""
 
         self._recent_manager = Gtk.RecentManager.get_default()
-        self._find_obj("file_menu").insert(self.create_recent_menu_item(), 2)
-        self._find_obj("open_btn").set_menu(self.create_recent_menu())
+        self._find_obj("file_menu").insert(self._create_recent_menu_item(), 2)
+        self._find_obj("open_btn").set_menu(self._create_recent_menu())
 
     def _find_obj(self, name):
         "Convenience function to find an object"
@@ -172,7 +173,7 @@ class MainWindow(BaseWindow):
 
         self.block_tab = BlockTab(
             self._find_obj,
-            self.delete_block_callback,
+            self._delete_block_callback,
         )
 
         self.addr_map_list = AddrMapList(
@@ -180,6 +181,7 @@ class MainWindow(BaseWindow):
         )
 
     def set_parameters_modified(self) -> None:
+        "Called when the parameters are modified"
         self.set_project_modified()
         self.regset_tab.set_parameters(self._regset.parameters.get())
 
@@ -192,7 +194,8 @@ class MainWindow(BaseWindow):
         self.set_title(value)
         self.prj.modified = value
 
-    def enable_controls(self, value):
+    def _enable_controls(self, value):
+        "Sets the menu sensitivity"
         self.top_notebook.set_sensitive(value)
         self._find_obj("save_btn").set_sensitive(value)
         self._find_obj("build").set_sensitive(value)
@@ -200,8 +203,9 @@ class MainWindow(BaseWindow):
         self._find_obj("build_button").set_sensitive(value)
         self._find_obj("import_menu").set_sensitive(value)
 
-    def load_project_tab(self) -> None:
-        self.enable_controls(True)
+    def _load_project_tab(self) -> None:
+        "Sets up the project's tabs"
+        self._enable_controls(True)
         self.block_tab.set_project(self.prj)
         self.project_tabs.change_db(self.prj)
         self.addr_map_list.set_project(self.prj)
@@ -209,6 +213,8 @@ class MainWindow(BaseWindow):
         self.project_modified(False)
 
     def on_edit_map_clicked(self, _obj):
+        "Called when the edit map button is clicked"
+
         addr_map = self.addr_map_list.get_selected()
         if addr_map is None:
             return
@@ -235,6 +241,8 @@ class MainWindow(BaseWindow):
             self.set_project_modified()
 
     def on_block_select_changed(self, _obj: Gtk.TreeSelection) -> None:
+        "Callback the occurs when the block select changes"
+
         self.top_level_tab.update_buttons()
 
     def on_block_regset_help_clicked(self, _obj: Gtk.Button) -> None:
@@ -246,24 +254,24 @@ class MainWindow(BaseWindow):
         HelpWindow("addr_map_help.html", "Address Map Help")
 
     def on_param_help_clicked(self, _obj: Gtk.Button) -> None:
-        """Display the parameter help"""
+        "Display the parameter help"
         HelpWindow("parameter_help.html", "Parameter Help")
 
     def on_prj_param_help_clicked(self, _obj: Gtk.Button) -> None:
-        """Display the project parameter help"""
+        "Display the project parameter help"
         HelpWindow("prj_parameter_help.rst")
 
     def on_remove_map_clicked(self, _obj: Gtk.Button) -> None:
-        """Remove the selected map with clicked"""
+        "Remove the selected map with clicked"
         self.project_modified(True)
         self.addr_map_list.remove_selected()
 
     def on_add_map_clicked(self, _obj: Gtk.Button) -> None:
-        """Add a new map when clicked"""
+        "Add a new map when clicked"
         self.addr_map_list.add_new_map()
 
     def on_general_help_activate(self, _obj: Gtk.MenuItem) -> None:
-        """Display the help window"""
+        "Display the help window"
         HelpWindow("regenerate_help.html", "Overview")
 
     def on_help_block_inst_clicked(self, _obj: Gtk.Button) -> None:
@@ -294,14 +302,14 @@ class MainWindow(BaseWindow):
         if block_hpos:
             self._find_obj("bpaned").set_position(block_hpos)
 
-    def build_group(
+    def _build_group(
         self, group_name: str, _action_names: List[str]
     ) -> Gtk.ActionGroup:
         "Builds an action group"
 
         return Gtk.ActionGroup(group_name)
 
-    def build_actions(self) -> None:
+    def _build_actions(self) -> None:
         """
         Builds the action groups. These groups are used to control which
         buttons/functions are active at any given time. The groups are:
@@ -334,12 +342,13 @@ class MainWindow(BaseWindow):
 
         prj_acn.append("preview_action")
 
-        self.prj_loaded = self.build_group("project_loaded", prj_acn)
-        self.reg_selected = self.build_group("reg_selected", reg_acn)
-        self.db_selected = self.build_group("database_selected", db_acn)
-        self.field_selected = self.build_group("field_selected", fld_acn)
+        self.prj_loaded = self._build_group("project_loaded", prj_acn)
+        self.reg_selected = self._build_group("reg_selected", reg_acn)
+        self.db_selected = self._build_group("database_selected", db_acn)
+        self.field_selected = self._build_group("field_selected", fld_acn)
 
     def on_build_action_activate(self, _obj: Gtk.Action) -> None:
+        "Launch the builder when the build button is pushed"
         Build(self.prj, self._top_window)
 
     def on_autoload_toggled(self, _obj) -> None:
@@ -388,7 +397,7 @@ class MainWindow(BaseWindow):
         else:
             self.reg_selected.set_sensitive(False)
 
-    def create_file_selector(
+    def _create_file_selector(
         self,
         title: str,
         m_name: Optional[str],
@@ -427,14 +436,14 @@ class MainWindow(BaseWindow):
         choose.show()
         return choose
 
-    def create_save_selector(
+    def _create_save_selector(
         self, title: str, mime_name=None, mime_regex=None
     ) -> Gtk.FileChooserDialog:
         """
         Creates a file save selector, using the mime type and regular
         expression to control the selector.
         """
-        return self.create_file_selector(
+        return self._create_file_selector(
             title,
             mime_name,
             mime_regex,
@@ -442,14 +451,14 @@ class MainWindow(BaseWindow):
             Gtk.STOCK_SAVE,
         )
 
-    def create_open_selector(
+    def _create_open_selector(
         self, title: str, mime_name=None, mime_regex=None
     ) -> Gtk.FileChooserDialog:
         """
         Creates a file save selector, using the mime type and regular
         expression to control the selector.
         """
-        return self.create_file_selector(
+        return self._create_file_selector(
             title,
             mime_name,
             mime_regex,
@@ -460,7 +469,7 @@ class MainWindow(BaseWindow):
     def on_new_project_clicked(self, _obj: Gtk.ImageMenuItem):
         "Select a new filename with the button is clicked"
 
-        choose = self.create_save_selector(
+        choose = self._create_save_selector(
             "New Project", "Regenerate Project", DEF_MIME
         )
 
@@ -480,17 +489,17 @@ class MainWindow(BaseWindow):
 
             self.regset_tab.change_project(self.prj)
             self.block_tab.clear_flags()
-            self.load_project_tab()
+            self._load_project_tab()
 
             self.project_modified(False)
-            self.add_recent(str(filename.resolve()))
+            self._add_resent(str(filename.resolve()))
             self._find_obj("save_btn").set_sensitive(True)
             self.prj_loaded.set_sensitive(True)
             if self._initial_popup.get_visible():
                 self._initial_popup.hide()
         choose.destroy()
 
-    def add_recent(self, path: str):
+    def _add_resent(self, path: str):
         "Adds the path th the recent manager. Must be an absolute path"
 
         if self._recent_manager:
@@ -500,7 +509,7 @@ class MainWindow(BaseWindow):
     def on_open_action_activate(self, _obj: Gtk.Action):
         "Called when the Open button clicked"
 
-        choose = self.create_open_selector(
+        choose = self._create_open_selector(
             "Open Project", "Regenerate Project", [DEF_MIME, f"*{OLD_PRJ_EXT}"]
         )
 
@@ -510,7 +519,7 @@ class MainWindow(BaseWindow):
         choose.destroy()
         if response == Gtk.ResponseType.OK:
             self.open_project(filename, uri)
-            self.add_recent(Path(filename).resolve())
+            self._add_resent(Path(filename).resolve())
 
     def open_project(self, filename: str, _uri: str):
         "Opens the selected project"
@@ -548,12 +557,12 @@ class MainWindow(BaseWindow):
 
         self.regset_tab.change_project(self.prj)
 
-        self.add_recent(str(filepath.resolve()))
+        self._add_resent(str(filepath.resolve()))
         self._find_obj("save_btn").set_sensitive(True)
 
         self.set_title(False)
 
-        self.load_project_tab()
+        self._load_project_tab()
         self.prj_loaded.set_sensitive(True)
         self._loading_project = False
         self._skip_changes = False
@@ -631,7 +640,7 @@ class MainWindow(BaseWindow):
     def _import_data(self, _obj, data):
         "Imports the data using the specified data importer."
 
-        choose = self.create_open_selector(data[1][1], data[2], "*" + data[3])
+        choose = self._create_open_selector(data[1][1], data[2], "*" + data[3])
         response = choose.run()
         if response == Gtk.ResponseType.OK:
             choose.hide()
@@ -660,9 +669,9 @@ class MainWindow(BaseWindow):
         self.regset_tab.set_parameters_regset(self._regset)
         self.regset_tab.set_parameters(self._regset.parameters.get())
         self.regset_tab.update_display(False)
-        self.set_description_warn_flag()
+        self._set_description_warn_flag()
 
-    def delete_block_callback(self):
+    def _delete_block_callback(self):
         "Called with a block is deleted"
 
         self.top_level_tab.blkinst_list.populate()
@@ -714,19 +723,14 @@ class MainWindow(BaseWindow):
         "Deletes the selected object (either a register or a bit range)"
         self.regset_tab.remove_register()
 
-    def set_db_value(self, attr, val):
-        "Sets the class item to the specified value"
-
-        if self._regset:
-            setattr(self._regset, attr, val)
-        self.regset_tab.set_modified()
-
     def on_array_changed(self, obj):
         "Called when the array item changed"
 
         self.regset_tab.array_changed(obj)
 
-    def button_toggle(self, attr, obj):
+    def _button_toggle(self, attr, obj):
+        "Sets the attribute on the regset's flags when the button is toggled"
+
         reg = self.regset_tab.get_selected_registers()[0]
         state = obj.get_active()
         if reg:
@@ -736,32 +740,32 @@ class MainWindow(BaseWindow):
     def on_no_rtl_toggled(self, obj: Gtk.CheckButton) -> None:
         "Called with the no_rtl checkbox clicked"
 
-        self.button_toggle("do_not_generate_code", obj)
+        self._button_toggle("do_not_generate_code", obj)
 
     def on_no_uvm_toggled(self, obj: Gtk.CheckButton) -> None:
         "Called with the no_uvm checkbox clicked"
 
-        self.button_toggle("do_not_use_uvm", obj)
+        self._button_toggle("do_not_use_uvm", obj)
 
     def on_no_test_toggled(self, obj: Gtk.CheckButton) -> None:
         "Called with the do_not_test checkbox clicked"
 
-        self.button_toggle("do_not_test", obj)
+        self._button_toggle("do_not_test", obj)
 
     def on_no_reset_test_toggled(self, obj: Gtk.CheckButton) -> None:
         "Called with the no_reset_test checkbox clicked"
 
-        self.button_toggle("do_not_reset_test", obj)
+        self._button_toggle("do_not_reset_test", obj)
 
     def on_no_cover_toggled(self, obj: Gtk.CheckButton) -> None:
         "Called with the no_cover checkbox clicked"
 
-        self.button_toggle("do_not_cover", obj)
+        self._button_toggle("do_not_cover", obj)
 
     def on_hide_doc_toggled(self, obj: Gtk.CheckButton) -> None:
         "Called with the hide_doc checkbox clicked"
 
-        self.button_toggle("hide", obj)
+        self._button_toggle("hide", obj)
 
     def on_add_register_action_activate(self, _obj: Gtk.CheckButton):
         """
@@ -785,7 +789,7 @@ class MainWindow(BaseWindow):
         fname = chooser.get_current_uri()
         self.open_project(fname.replace("file://", ""), fname)
 
-    def create_recent_menu_item(self) -> None:
+    def _create_recent_menu_item(self) -> None:
         "Builds the recent menu, applying the filter"
 
         recent_menu = Gtk.RecentChooserMenu()
@@ -802,7 +806,7 @@ class MainWindow(BaseWindow):
         recent_menu_item.show()
         return recent_menu_item
 
-    def create_recent_menu(self) -> None:
+    def _create_recent_menu(self) -> None:
         "Builds the recent menu, applying the filter"
 
         recent_menu = Gtk.RecentChooserMenu()
@@ -832,7 +836,8 @@ class MainWindow(BaseWindow):
         box.run()
         box.destroy()
 
-    def set_description_warn_flag(self) -> None:
+    def _set_description_warn_flag(self) -> None:
+        "Sets the description warning flag if the description is empty"
         if not self._loading_project:
             self._find_obj("mod_descr_warn").set_property(
                 "visible", self._regset.overview_text == ""
@@ -913,6 +918,8 @@ def _is_contiguous(path_list) -> bool:
 
 
 def replace_parameter_uuids(uuid_map: Dict[str, str], reg: Register) -> None:
+    "Replaces the parameter UUIDs with the new ones in the map"
+
     if reg.dimension.is_parameter:
         if reg.dimension.txt_value in uuid_map:
             reg.dimension.txt_value = uuid_map[reg.dimension.txt_value]
@@ -942,12 +949,16 @@ def _sequential_greater_than_2(regtab: RegSetTab) -> bool:
 
 
 def check_field(field):
+    "Returns the warning icon if the description is empty"
+
     if field.description.strip() == "":
         return Gtk.STOCK_DIALOG_WARNING
     return None
 
 
 def check_reset(field):
+    "Returns the warning icon parameter name is missing"
+
     if (
         field.reset_type == ResetType.PARAMETER
         and field.reset_parameter.strip() == ""
@@ -956,11 +967,8 @@ def check_reset(field):
     return None
 
 
-def sort_regset(rset):
-    return os.path.basename(rset)
-
-
 def check_address_ranges(project):
+    "Checks the address ranges for overlaps"
 
     glist = []
 

@@ -24,6 +24,8 @@ from gi.repository import Gtk, Pango
 
 
 class BaseColumn(Gtk.TreeViewColumn):
+    "Base class for all columns"
+
     def __init__(self, title, cell_renderer, tooltip=None, **kwargs):
 
         super().__init__(cell_renderer=cell_renderer, **kwargs)
@@ -88,31 +90,31 @@ class EditableColumn(BaseColumn):
         ellipsize=Pango.EllipsizeMode.END,
     ):
 
-        self.renderer = Gtk.CellRendererText()
+        self._renderer = Gtk.CellRendererText()
         if change_callback:
-            self.renderer.set_property("editable", True)
-            self.renderer.connect("edited", change_callback, source_column)
+            self._renderer.set_property("editable", True)
+            self._renderer.connect("edited", change_callback, source_column)
         if placeholder:
             try:
-                self.renderer.set_property("placeholder-text", placeholder)
+                self._renderer.set_property("placeholder-text", placeholder)
             except TypeError:
                 pass
 
-        self.renderer.set_property("ellipsize", ellipsize)
+        self._renderer.set_property("ellipsize", ellipsize)
         if monospace:
-            self.renderer.set_property("family", "Monospace")
+            self._renderer.set_property("family", "Monospace")
 
         super().__init__(
-            title, self.renderer, text=source_column, tooltip=tooltip
+            title, self._renderer, text=source_column, tooltip=tooltip
         )
 
-        self.renderer.connect("editing-canceled", self.edit_canceled)
-        self.renderer.connect("editing-started", self.edit_started)
+        self._renderer.connect("editing-canceled", self.edit_canceled)
+        self._renderer.connect("editing-started", self.edit_started)
         self.path = 0
         self.entry = None
 
         if visible_callback:
-            self.set_cell_data_func(self.renderer, visible_callback)
+            self.set_cell_data_func(self._renderer, visible_callback)
 
     def edit_started(self, _cell, entry, path):
         """Called when editing of the cell begins"""
@@ -125,7 +127,7 @@ class EditableColumn(BaseColumn):
         to restore the original value.
         """
         val = self.entry.get_text()
-        self.renderer.emit("edited", self.path, val)
+        self._renderer.emit("edited", self.path, val)
 
 
 class ReadOnlyColumn(BaseColumn):
@@ -144,19 +146,19 @@ class ReadOnlyColumn(BaseColumn):
         tooltip=None,
     ):
 
-        self.renderer = Gtk.CellRendererText()
+        self._renderer = Gtk.CellRendererText()
         super().__init__(
-            title, self.renderer, text=source_column, tooltip=tooltip
+            title, self._renderer, text=source_column, tooltip=tooltip
         )
 
-        self.renderer.set_property("editable", False)
-        self.renderer.set_property("ellipsize", Pango.EllipsizeMode.END)
+        self._renderer.set_property("editable", False)
+        self._renderer.set_property("ellipsize", Pango.EllipsizeMode.END)
 
         if monospace:
-            self.renderer.set_property("family", "Monospace")
+            self._renderer.set_property("family", "Monospace")
 
         if visible_callback:
-            self.set_cell_data_func(self.renderer, visible_callback)
+            self.set_cell_data_func(self._renderer, visible_callback)
 
 
 class ComboMapColumn(BaseColumn):
@@ -176,24 +178,24 @@ class ComboMapColumn(BaseColumn):
         tooltip=None,
     ):
 
-        self.renderer = Gtk.CellRendererCombo()
+        self._renderer = Gtk.CellRendererCombo()
         super().__init__(
-            title, self.renderer, tooltip=tooltip, text=source_column
+            title, self._renderer, tooltip=tooltip, text=source_column
         )
 
         self.model = Gtk.ListStore(str, dtype)
-        for item in data_list:
-            self.model.append(row=item)
 
-        self.renderer.set_property("text-column", 0)
-        self.renderer.set_property("model", self.model)
-        self.renderer.set_property("has-entry", False)
-        self.renderer.set_property("editable", True)
+        self.update_menu(data_list)
+
+        self._renderer.set_property("text-column", 0)
+        self._renderer.set_property("model", self.model)
+        self._renderer.set_property("has-entry", False)
+        self._renderer.set_property("editable", True)
         if callback:
-            self.renderer.connect("changed", callback, source_column)
+            self._renderer.connect("changed", callback, source_column)
 
         if visible_callback:
-            self.set_cell_data_func(self.renderer, visible_callback)
+            self.set_cell_data_func(self._renderer, visible_callback)
 
     def update_menu(self, item_list):
         """Update the menu with the supplied items."""
@@ -216,28 +218,27 @@ class MenuEditColumn(BaseColumn):
         text_callback,
         data_list,
         source_column,
-        _dtype=str,
         visible_callback=None,
         tooltip=None,
     ):
 
-        self.renderer = Gtk.CellRendererCombo()
+        self._renderer = Gtk.CellRendererCombo()
         self._model = Gtk.ListStore(str, str)
         self.update_menu(data_list)
-        self.renderer.set_property("text-column", 0)
-        self.renderer.set_property("model", self._model)
-        self.renderer.set_property("has-entry", True)
-        self.renderer.set_property("editable", True)
-        self.renderer.set_property("family", "Monospace")
-        self.renderer.connect("changed", menu_callback, source_column)
-        self.renderer.connect("edited", text_callback, source_column)
+        self._renderer.set_property("text-column", 0)
+        self._renderer.set_property("model", self._model)
+        self._renderer.set_property("has-entry", True)
+        self._renderer.set_property("editable", True)
+        self._renderer.set_property("family", "Monospace")
+        self._renderer.connect("changed", menu_callback, source_column)
+        self._renderer.connect("edited", text_callback, source_column)
 
         super().__init__(
-            title, self.renderer, tooltip=tooltip, text=source_column
+            title, self._renderer, tooltip=tooltip, text=source_column
         )
 
         if visible_callback:
-            self.set_cell_data_func(self.renderer, visible_callback)
+            self.set_cell_data_func(self._renderer, visible_callback)
 
     def update_menu(self, item_list):
         """Update the menu with the supplied items."""
@@ -265,24 +266,24 @@ class EditComboMapColumn(BaseColumn):
     ):
 
         self.dtype = dtype
-        self.renderer = Gtk.CellRendererText()
-        self.renderer.set_property("editable", True)
+        self._renderer = Gtk.CellRendererText()
+        self._renderer.set_property("editable", True)
         self.path = None
         self.update_menu(data_list)
 
         if callback:
-            self.renderer.connect("edited", callback, source_column)
+            self._renderer.connect("edited", callback, source_column)
 
         super().__init__(
-            title, self.renderer, tooltip=tooltip, text=source_column
+            title, self._renderer, tooltip=tooltip, text=source_column
         )
 
-        self.renderer.connect(
-            "editing-started", self.renderer_text_editing_started
+        self._renderer.connect(
+            "editing-started", self._renderer_text_editing_started
         )
 
         if visible_callback:
-            self.set_cell_data_func(self.renderer, visible_callback)
+            self.set_cell_data_func(self._renderer, visible_callback)
 
     def update_menu(self, item_list):
         """Update the menu from the passed list"""
@@ -293,9 +294,11 @@ class EditComboMapColumn(BaseColumn):
 
         self.completion = Gtk.EntryCompletion(model=self.model)
         self.completion.set_text_column(1)
-        self.completion.connect("match-selected", self.renderer_match_selected)
+        self.completion.connect(
+            "match-selected", self._renderer_match_selected
+        )
 
-    def renderer_match_selected(self, _completion, model, tree_iter):
+    def _renderer_match_selected(self, _completion, model, tree_iter):
         """
         The model and tree_iter passed in here are the model from the
         EntryCompletion, which may or may not be the same as the model of the
@@ -304,7 +307,7 @@ class EditComboMapColumn(BaseColumn):
         text_match = self.model[tree_iter][1]
         model[self.path][1] = text_match
 
-    def renderer_text_editing_started(self, _renderer, editable, path):
+    def _renderer_text_editing_started(self, _renderer, editable, path):
         """since the editable widget gets created for every edit, we need to
         connect the completion to every editable upon creation"""
         editable.set_completion(self.completion)
@@ -329,7 +332,7 @@ class SwitchComboMapColumn(BaseColumn):
         tooltip=None,
     ):
 
-        self.renderer = Gtk.CellRendererCombo()
+        self._renderer = Gtk.CellRendererCombo()
 
         self.model = []
 
@@ -345,16 +348,16 @@ class SwitchComboMapColumn(BaseColumn):
         for item in data_list2:
             self.model[2].append(row=item)
 
-        self.renderer.set_property("text-column", 0)
-        self.renderer.set_property("model", self.model[0])
-        self.renderer.set_property("has-entry", False)
-        self.renderer.set_property("editable", True)
-        self.renderer.connect("changed", callback, source_column)
+        self._renderer.set_property("text-column", 0)
+        self._renderer.set_property("model", self.model[0])
+        self._renderer.set_property("has-entry", False)
+        self._renderer.set_property("editable", True)
+        self._renderer.connect("changed", callback, source_column)
 
         super().__init__(
-            title, self.renderer, tooltip=tooltip, text=source_column
+            title, self._renderer, tooltip=tooltip, text=source_column
         )
 
     def set_mode(self, i):
         """Set the model for the renderer"""
-        self.renderer.set_property("model", self.model[i])
+        self._renderer.set_property("model", self.model[i])

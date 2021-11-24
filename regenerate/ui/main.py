@@ -29,13 +29,10 @@ import logging
 from pathlib import Path
 from argparse import ArgumentParser
 
-from regenerate.db import LOGGER
-from regenerate.db.logger import remove_default_handler
-from regenerate.settings import ini
-
 from .gtksetup import *
 from gi.repository import Gtk
 
+from regenerate.settings import ini
 from .regenerate_top import MainWindow
 
 

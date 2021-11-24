@@ -54,11 +54,9 @@ class HelpWindow(BaseWindow):
             HelpWindow.window = builder.get_object("help_win")
             self.configure(HelpWindow.window)
             HelpWindow.wkit = builder.get_object("html_view")
-            builder.get_object("go_back").connect("clicked", self._go_back)
+            builder.get_object("go_back").connect("clicked", _go_back)
             builder.get_object("go_home").connect("clicked", self._go_home)
-            builder.get_object("go_forward").connect(
-                "clicked", self._go_forward
-            )
+            builder.get_object("go_forward").connect("clicked", _go_forward)
             HelpWindow.window.connect("destroy", _destroy)
             HelpWindow.window.connect("delete_event", _delete)
             HelpWindow.window.show_all()
@@ -78,7 +76,7 @@ class HelpWindow(BaseWindow):
             return
 
         if Path(self._filename).suffix == ".rst":
-            data = self.load_file(self._filename)
+            data = _load_file(self._filename)
             try:
                 HelpWindow.wkit.load_html(html_string(data), "text/html")
             except:
@@ -89,30 +87,33 @@ class HelpWindow(BaseWindow):
             full_path = str(Path(HELP_PATH) / self._filename)
             HelpWindow.wkit.load_uri(f"file:///{full_path}")
 
-    def _go_back(self, _obj: Gtk.Button) -> None:
-        "Goes back to the previous page"
-        if HelpWindow.wkit:
-            HelpWindow.wkit.go_back()
-
     def _go_home(self, _obj: Gtk.Button) -> None:
         "Reloads the home page"
         self.load_home_page()
 
-    def _go_forward(self, _obj: Gtk.Button) -> None:
-        "Goes forward"
-        if HelpWindow.wkit:
-            HelpWindow.wkit.go_forward()
 
-    def load_file(self, filename: str) -> str:
-        "Loads the file if found"
+def _load_file(filename: str) -> str:
+    "Loads the file if found"
 
-        try:
-            fname = Path(HELP_PATH) / filename
-            with fname.open() as ifile:
-                data = ifile.read()
-        except IOError as msg:
-            data = f"Help file '{fname}' could not be found\n{str(msg)}"
-        return data
+    try:
+        fname = Path(HELP_PATH) / filename
+        with fname.open() as ifile:
+            data = ifile.read()
+    except IOError as msg:
+        data = f"Help file '{fname}' could not be found\n{str(msg)}"
+    return data
+
+
+def _go_back(_obj: Gtk.Button) -> None:
+    "Goes back to the previous page"
+    if HelpWindow.wkit:
+        HelpWindow.wkit.go_back()
+
+
+def _go_forward(_obj: Gtk.Button) -> None:
+    "Goes forward"
+    if HelpWindow.wkit:
+        HelpWindow.wkit.go_forward()
 
 
 def _destroy(_obj) -> bool:

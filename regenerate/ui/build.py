@@ -64,7 +64,9 @@ class Build(BaseWindow):
     """
 
     def __init__(
-            self, project: RegProject, top_window: Optional[Type[Gtk.Window]] = None
+        self,
+        project: RegProject,
+        top_window: Optional[Type[Gtk.Window]] = None,
     ):
         super().__init__()
 
@@ -448,12 +450,11 @@ class Build(BaseWindow):
             self.__build_notebook.set_current_page(1)
 
     def on_close_clicked(self, _obj: Gtk.Button):
-        """
-        Closes the builder.
-        """
+        "Closes the builder"
         self.__build_top.destroy()
 
     def on_help_build_clicked(self, _obj: Gtk.Button):
+        "Display the help window"
         HelpWindow("builder_help.html", "Using the builder")
 
 

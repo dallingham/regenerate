@@ -105,7 +105,7 @@ class BlockTab:
 
         self._preview = BlockDoc(
             self._block_docs,
-            self.after_modified,
+            self.modified,
         )
 
         self._overrides_list = BlockOverridesList(
@@ -124,8 +124,8 @@ class BlockTab:
         )
 
         self.build()
-        self._block_reg_remove.connect("clicked", self.on_remove_clicked)
-        self._block_notebook.connect("switch-page", self.page_changed)
+        self._block_reg_remove.connect("clicked", self._on_remove_clicked)
+        self._block_notebook.connect("switch-page", self._page_changed)
 
     def clear(self) -> None:
         "Clears data from the tab"
@@ -138,7 +138,7 @@ class BlockTab:
         self._block_size.change_db(None)
         self._preview.change_block(None, None)
 
-    def page_changed(
+    def _page_changed(
         self, _obj: Gtk.Notebook, _page: Gtk.Grid, page_num: int
     ) -> None:
         "Called when the notebook page changes"
@@ -149,7 +149,7 @@ class BlockTab:
         "Redraw the screen"
 
         self._sidebar.update()
-        self.build_add_regset_menu()
+        self._build_add_regset_menu()
         if self._block:
             self.set_parameters(self._block.parameters.get())
             self._overrides_list.set_parameters(self._block.parameters.get())
@@ -166,20 +166,24 @@ class BlockTab:
         self._block_size_obj.set_sensitive(self._block is not None)
 
         self._overrides_list.update_display()
-        self.build_add_regset_menu()
-        self.update_block_selection()
+        self._build_add_regset_menu()
+        self._update_block_selection()
 
     def clear_flags(self) -> None:
+        "Updates the sidebar to set flags correctly"
         self._sidebar.update()
 
     def _overrides_modified(self) -> None:
+        "Called when the overrides are modified"
         self.modified()
 
     def _block_selection_changed(self, _obj: Gtk.TreeSelection) -> None:
         "Called with the block selection changes"
-        self.update_block_selection()
+        self._update_block_selection()
 
-    def update_block_selection(self):
+    def _update_block_selection(self):
+        "Updates the block selection"
+
         model, node = self._sidebar.get_selected()
 
         if node:
@@ -198,13 +202,10 @@ class BlockTab:
         else:
             self._block_select_notebook.set_current_page(1)
 
-    def after_modified(self) -> None:
-        self.modified()
-
     def build(self) -> None:
         "Build the interface"
 
-        column = EditableColumn("Instance", self.instance_changed, 1)
+        column = EditableColumn("Instance", self._instance_changed, 1)
         self._block_regsets.append_column(column)
         column.set_min_width(175)
         column.set_expand(False)
@@ -217,7 +218,7 @@ class BlockTab:
         column.set_resizable(True)
 
         column = EditableColumn(
-            "Offset", self.address_changed, 2, monospace=True
+            "Offset", self._address_changed, 2, monospace=True
         )
         self._block_regsets.append_column(column)
         column.set_min_width(125)
@@ -225,7 +226,7 @@ class BlockTab:
         column.set_resizable(True)
 
         column = MenuEditColumn(
-            "Repeat", self.repeat_menu, self.repeat_text, [], 3
+            "Repeat", self._repeat_menu, self._repeat_text, [], 3
         )
         self._block_regsets.append_column(column)
         column.set_min_width(150)
@@ -233,7 +234,7 @@ class BlockTab:
         column.set_resizable(True)
         self.repeat_col = column
 
-        column = EditableColumn("HDL path", self.hdl_path_changed, 4)
+        column = EditableColumn("HDL path", self._hdl_path_changed, 4)
         self._block_regsets.append_column(column)
         column.set_expand(True)
         column.set_resizable(True)
@@ -247,7 +248,7 @@ class BlockTab:
         self._sidebar.update()
         self._block.modified = True
 
-    def instance_changed(
+    def _instance_changed(
         self, _cell: Gtk.CellRendererText, path: str, text: str, col: int
     ) -> None:
         "Called when the instance name changed for a register instance"
@@ -263,7 +264,7 @@ class BlockTab:
                 rset.name = text
                 self.modified()
 
-    def address_changed(
+    def _address_changed(
         self, _cell: Gtk.CellRendererText, path: str, new_text: str, col: int
     ) -> None:
         "Called with the address changed"
@@ -284,7 +285,7 @@ class BlockTab:
                 rset.offset = value
                 self.modified()
 
-    def repeat_menu(
+    def _repeat_menu(
         self,
         cell: Gtk.CellRendererCombo,
         path: str,
@@ -309,7 +310,7 @@ class BlockTab:
         self._reg_model[int(path)][col] = new_text
         self.modified()
 
-    def repeat_text(
+    def _repeat_text(
         self, _cell: Gtk.CellRendererCombo, path: str, new_text: str, col: int
     ) -> None:
         "Called with the repeat value changes due to text being edited"
@@ -341,7 +342,7 @@ class BlockTab:
                 self._reg_model[row][col] = rset.repeat.int_str()
         self.modified()
 
-    def hdl_path_changed(
+    def _hdl_path_changed(
         self, _cell: Gtk.CellRendererText, path: str, new_text: str, col: int
     ) -> None:
         "Called with the HDL path changes"
@@ -369,11 +370,11 @@ class BlockTab:
             key_list = project.blocks.keys()
             if key_list:
                 self.select_block(list(key_list)[0])
-            self.build_add_regset_menu()
+            self._build_add_regset_menu()
             self._sidebar.set_items(list(self._project.blocks.values()))
             self.disable_modified = False
 
-    def build_add_regset_menu(self):
+    def _build_add_regset_menu(self):
         "Builds the menu to add a register set to a block"
 
         page = 1
@@ -381,16 +382,16 @@ class BlockTab:
         if self._project and self._block:
             reg_menu = Gtk.Menu()
 
-            sorted_dict = {
-                key: value
+            sorted_keys = [
+                key
                 for key, value in sorted(
                     self._project.regsets.items(),
                     key=lambda item: item[1].name,
                 )
-            }
+            ]
 
             empty = True
-            for regset_id in sorted_dict:
+            for regset_id in sorted_keys:
                 empty = False
                 regset = self._project.regsets[regset_id]
                 menu_item = Gtk.MenuItem(regset.name)
@@ -439,7 +440,7 @@ class BlockTab:
         self.modified()
         self.set_parameters(self._block.parameters.get())
 
-    def find_name_inst_name(self, regset_name: str) -> str:
+    def _find_name_inst_name(self, regset_name: str) -> str:
         "Finds the next available instance name"
 
         if self._block is None:
@@ -472,7 +473,7 @@ class BlockTab:
         if self._reg_model is None or self._project is None:
             return
 
-        new_name = self.find_name_inst_name(regset.name)
+        new_name = self._find_name_inst_name(regset.name)
 
         reginst = RegisterInst(rset=regset.uuid, inst=new_name)
         reg_cont = self._project.regsets[regset.uuid]
@@ -492,7 +493,7 @@ class BlockTab:
         )
         self.modified()
 
-    def on_remove_clicked(self, _obj: Gtk.Button) -> None:
+    def _on_remove_clicked(self, _obj: Gtk.Button) -> None:
         "Called when the remove button has been clicked"
 
         if self._block is None:
@@ -574,7 +575,7 @@ class BlockTab:
 
             self.modified()
             self._project.modified = True
-        self.update_block_selection()
+        self._update_block_selection()
 
     def add_block_clicked(self, _obj: Gtk.Button) -> None:
         """
@@ -609,7 +610,7 @@ class BlockTab:
                     if regset not in self._project.regsets:
                         self._project.regsets[regset] = blk.regsets[regset]
             self._project.modified = True
-        self.update_block_selection()
+        self._update_block_selection()
 
     def remove_block_clicked(self, _obj: Gtk.Button) -> None:
         "Called with the remove block button has been pressed"
@@ -621,7 +622,7 @@ class BlockTab:
         self._project.remove_block(uuid)
         self._block_remove_callback()
         self._project.modified = True
-        self.update_block_selection()
+        self._update_block_selection()
 
 
 class BlockDoc(BaseDoc):
@@ -642,6 +643,8 @@ class BlockDoc(BaseDoc):
     def change_block(
         self, block: Optional[Block], _project: Optional[RegProject]
     ):
+        "Changes the active block"
+
         self._block = block
 
         self.changing = True

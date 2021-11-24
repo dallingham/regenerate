@@ -229,6 +229,7 @@ class BitField(NameBase):
             param = finder.find(self.reset_parameter)
             if param:
                 val = resolver.resolve(param)
+                print(val)
                 return val
             return 0
         if self.reset_type == ResetType.INPUT:

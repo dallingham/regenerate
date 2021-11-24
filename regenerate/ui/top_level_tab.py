@@ -49,6 +49,9 @@ class TopLevelTab:
         self.block_or_help = find_obj("block_or_help")
         self.block_or_help.set_show_tabs(False)
 
+        self.notebook = find_obj("notebook2")
+        self.notebook.connect("switch-page", self._page_changed)
+
         self.top_get_started = find_obj("top_get_started")
 
         help_path = Path(HELP_PATH) / "top_get_started.html"
@@ -64,21 +67,29 @@ class TopLevelTab:
             check_subsystem_addresses,
         )
         self.project_modified = modified
-        self.overrides_list = OverridesList(
-            find_obj("prj_subparam_list"),
-            find_obj("override_add"),
-            find_obj("override_remove"),
+        self._overrides_list = OverridesList(
+            find_obj("prj_override_list"),
+            find_obj("prj_override_add"),
+            find_obj("prj_override_remove"),
             self.overrides_modified,
         )
+        self._parameter_names: Set[Tuple[str, str]] = set()
         self.parameter_list = find_obj("prj_param_list")
         self.parameter_list = ParameterList(
             self.parameter_list,
-            find_obj("top_param_add"),
-            find_obj("top_param_remove"),
+            find_obj("prj_param_add"),
+            find_obj("prj_param_remove"),
             self.param_list_modified,
         )
         self.instance_delete_btn = find_obj("instance_delete_btn")
         self.connect_signals(find_obj)
+
+    def _page_changed(
+        self, _obj: Gtk.Notebook, _page: Gtk.Grid, page_num: int
+    ) -> None:
+        "Called when the notebook page changes"
+        if page_num == 1:
+            self._overrides_list.update_display()
 
     def connect_signals(self, find_obj: Callable):
         "Connect the signals to the widgets"
@@ -112,6 +123,16 @@ class TopLevelTab:
         self.blkinst_list.update()
         self.build_add_block_menu()
         self.update_buttons()
+        if self.prj:
+            self.set_parameters(self.prj.parameters.get())
+            self._overrides_list.set_parameters(self.prj.parameters.get())
+            self._overrides_list.update_display()
+
+    def set_parameters(self, parameters) -> None:
+        "Sets the parameters"
+
+        self._parameter_names = set({(p.name, p.uuid) for p in parameters})
+        self._overrides_list.set_parameters(parameters)
 
     def change_project(self, prj: RegProject) -> None:
         "Change the project, updating the displays"
@@ -121,7 +142,7 @@ class TopLevelTab:
         self.blkinst_list.set_model(self.blkinst_model)
         self.blkinst_list.set_project(self.prj)
         self.build_add_block_menu()
-        self.overrides_list.set_project(self.prj)
+        self._overrides_list.set_project(self.prj)
         self.parameter_list.set_db(self.prj)
 
     def delete_blkinst(self) -> None:

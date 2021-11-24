@@ -168,7 +168,6 @@ class ProjectReader(XmlBase):
         )
 
         address_map.fixed = bool(int(attrs.get("fixed", 1)))
-        address_map.uvm = bool(int(attrs.get("no_uvm", 0)))
 
         self.prj.set_address_map(address_map)
         self.current_map = address_map.uuid

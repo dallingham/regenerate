@@ -289,11 +289,11 @@ class AddrMapList:
 
 
 def get_flags(map_obj: AddressMap) -> str:
+    "Returns the flags associated with the address map"
+
     flag_str = []
     if map_obj.fixed:
         flag_str.append("fixed address")
-    if map_obj.uvm:
-        flag_str.append("exclude from UVM")
     return ", ".join(flag_str)
 
 

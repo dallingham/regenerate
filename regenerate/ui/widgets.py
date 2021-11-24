@@ -22,17 +22,16 @@ Data entry classes.
 """
 import re
 
-from gi.repository import GObject, Gtk
+from gi.repository import Gtk
 
 
 class ValidWordEntry(Gtk.Entry, Gtk.Editable):
+    "Valid word entry for Glade. Make sure that the text is a single word"
 
     __gtype_name__ = "ValidWordEntry"
 
-    def __init__(self):
-        super(ValidWordEntry, self).__init__()
-
-    def do_insert_text(self, new_text, length, position):
+    def do_insert_text(self, new_text: str, length: int, position: int) -> int:
+        "Catch the insert text to perform validation"
         regexp = re.compile("^[A-Za-z0-9_]+$")
 
         if regexp.match(new_text) is not None:
@@ -43,13 +42,12 @@ class ValidWordEntry(Gtk.Entry, Gtk.Editable):
 
 
 class ValidHexEntry(Gtk.Entry, Gtk.Editable):
+    "Valid hex entry for Glade. Make sure that the text is a valid hex number"
 
     __gtype_name__ = "ValidHexEntry"
 
-    def __init__(self):
-        super(ValidHexEntry, self).__init__()
-
     def do_insert_text(self, new_text, length, position):
+        "Catch the insert text to perform validation"
         regexp = re.compile("^[xA-Fa-f0-9_]+$")
 
         if regexp.match(new_text) is not None:
@@ -60,13 +58,12 @@ class ValidHexEntry(Gtk.Entry, Gtk.Editable):
 
 
 class ValidIntEntry(Gtk.Entry, Gtk.Editable):
+    "Valid integer entry for Glade. Make sure that the text is a valid integer"
 
     __gtype_name__ = "ValidIntEntry"
 
-    def __init__(self):
-        super(ValidIntEntry, self).__init__()
-
     def do_insert_text(self, new_text, length, position):
+        "Catch the insert text to perform validation"
         regexp = re.compile("^[0-9]+$")
 
         if regexp.match(new_text) is not None:

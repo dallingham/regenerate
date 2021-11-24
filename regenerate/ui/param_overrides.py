@@ -68,9 +68,7 @@ class OverridesListMdl(Gtk.ListStore):
 
 
 class OverridesList:
-    """
-    Container for the Parameter List control logic.
-    """
+    "Container for the Parameter List control logic"
 
     def __init__(self, obj, add, remove, callback):
         self.finder = ParameterFinder()
@@ -105,14 +103,15 @@ class OverridesList:
         self.populate()
 
     def update_display(self):
-        self.set_menu()
+        finder = ParameterFinder()
         for row in self._model:
             data = row[OverrideCol.OBJ]
-            path = self.prj.reginst[data.path].name
-            param = data.parameter.name
-            new_name = f"{path}.{param}"
+            path = self.prj.get_blkinst_from_id(data.path).name
+            param = finder.find(data.parameter)
+            new_name = f"{path}.{param.name}"
             if row[OverrideCol.NAME] != new_name:
                 row[OverrideCol.NAME] = new_name
+        self.set_menu()
 
     def populate(self):
         """
@@ -122,7 +121,7 @@ class OverridesList:
         self._used = set()
         for override in self.prj.overrides:
             path = ""
-            for inst in self.prj.regset_insts:
+            for inst in self.prj.block_insts:
                 if inst.uuid == override.path:
                     path = inst.name
             self._model.append_instance(path, override)
@@ -132,7 +131,7 @@ class OverridesList:
     def build_used(self):
         self._used = set()
         for row in self._model:
-            self._used.add(row[-1].uuid)
+            self._used.add(row[-1].parameter)
 
     def set_menu(self):
         count = 0
@@ -183,7 +182,7 @@ class OverridesList:
         override.path = info[0].uuid
         override.parameter = info[1].uuid
         override.value = ParamValue()
-        override.value.set_param(info[1].uuid)
+        override.value.set_int(info[1].value)
         self._model.append(row=get_row_data(info[0].name, override))
         self._used.add(override.parameter)
         self.prj.overrides.append(override)
@@ -298,7 +297,7 @@ class OverridesList:
 
         (model, node) = select_data
         obj = model.get_value(node, OverrideCol.OBJ)
-        self._used.remove(obj.parameter.uuid)
+        self._used.remove(obj.parameter)
         model.remove(node)
 
     def set_parameters(self, parameters):
@@ -309,6 +308,7 @@ class OverridesList:
         total = 0
         self.build_used()
         param_list = []
+
         for blkinst in project.block_insts:
             blkinst_name = blkinst.name
             block = project.blocks[blkinst.blkid]
@@ -321,6 +321,33 @@ class OverridesList:
 
 
 class BlockOverridesList(OverridesList):
+    "Overrides list for blocks"
+
+    def populate(self):
+        """
+        Loads the data from the project
+        """
+        self._model.clear()
+        self._used = set()
+        for override in self.prj.overrides:
+            path = ""
+            for inst in self.prj.regset_insts:
+                if inst.uuid == override.path:
+                    path = inst.name
+            self._model.append_instance(path, override)
+            self._used.add(override.parameter)
+        self.set_menu()
+
+    def update_display(self):
+        self.set_menu()
+        for row in self._model:
+            data = row[OverrideCol.OBJ]
+            path = self.prj.reginst[data.path].name
+            param = data.parameter.name
+            new_name = f"{path}.{param}"
+            if row[OverrideCol.NAME] != new_name:
+                row[OverrideCol.NAME] = new_name
+
     def build_overrides_list(self, block):
         total = 0
         param_list = []

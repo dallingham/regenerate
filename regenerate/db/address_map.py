@@ -33,7 +33,6 @@ class AddressMap(NameBase):
         self.base = base
         self.width = width
         self._fixed = False
-        self._uvm = False
         self.blocks: List[str] = []
 
     @property
@@ -48,18 +47,6 @@ class AddressMap(NameBase):
 
         self._fixed = bool(val)
 
-    @property
-    def uvm(self) -> bool:
-        "Returns the UVM flag"
-
-        return self._uvm
-
-    @uvm.setter
-    def uvm(self, val: Union[int, bool]):
-        "Sets the UVM flag, converting to a boolean type"
-
-        self._uvm = bool(val)
-
     def json_decode(self, data: Dict[str, Any]) -> None:
         "Convert the incoming JSON data to the class variables"
 
@@ -68,7 +55,6 @@ class AddressMap(NameBase):
         self.base = int(data["base"], 0)
         self.width = data["width"]
         self.fixed = data["fixed"]
-        self.uvm = data["uvm"]
         self.blocks = data["block_insts"]
 
     def json(self) -> Dict[str, Any]:
@@ -80,6 +66,5 @@ class AddressMap(NameBase):
             "base": f"{self.base}",
             "width": self.width,
             "fixed": self.fixed,
-            "uvm": self.uvm,
             "block_insts": self.blocks,
         }

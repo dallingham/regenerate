@@ -22,11 +22,9 @@ Data entry classes.
 """
 from typing import Callable, Optional, Tuple
 import string
-import re
 
 from gi.repository import GObject, Gtk
-from regenerate.db import LOGGER
-from .widgets import ValidHexEntry, ValidIntEntry, ValidWordEntry
+from .widgets import ValidWordEntry
 
 
 class EntryWidth:
@@ -76,7 +74,7 @@ class EntryWidth:
         self.data_obj = data_obj
         if data_obj:
             self.widget.set_active(
-                self.convert_value_to_index(
+                _convert_value_to_index(
                     getattr(self.data_obj, self.field_name)
                 )
             )
@@ -93,24 +91,25 @@ class EntryWidth:
                 setattr(self.data_obj, self.field_name, 8 << obj.get_active())
                 if not self.modified():
                     setattr(self.data_obj, self.field_name, old_val)
-                    obj.set_active(self.convert_value_to_index(old_val))
+                    obj.set_active(_convert_value_to_index(old_val))
             self._in_prog = False
-
-    def convert_value_to_index(self, value):
-        """Convert the bit size to an index"""
-
-        if value == 8:
-            return 0
-        if value == 16:
-            return 1
-        if value == 32:
-            return 2
-        return 3
 
     def convert_index_to_value(self, index):
         """Converts the index back to a bit size value"""
 
         return self.options[index][0]
+
+
+def _convert_value_to_index(value):
+    """Convert the bit size to an index"""
+
+    if value == 8:
+        return 0
+    if value == 16:
+        return 1
+    if value == 32:
+        return 2
+    return 3
 
 
 class EntryBool:

@@ -75,7 +75,15 @@ class UVMRegBlockRegisters(ProjectWriter):
     def uvm_address_maps(self) -> List[AddressMap]:
         "Return a list of all the address maps that are not excluded from UVM"
 
-        return [d for d in self._project.get_address_maps() if not d.uvm]
+        if "addrmaps" in self.options and self.options["addrmaps"]:
+            uvm_maps = [
+                d
+                for d in self._project.get_address_maps()
+                if d.uuid in self.options["addrmaps"]
+            ]
+        else:
+            uvm_maps = list(self._project.get_address_maps())
+        return uvm_maps
 
     def _block_inst_to_address_map(self) -> Dict[BlockInst, Set[AddressMap]]:
         "Returns the map of block instances to address maps"
@@ -247,7 +255,12 @@ EXPORTERS = [
             "UVM register class hierarchy for verification",
             ".sv",
             "{}_reg_pkg.sv",
-            {},
+            {
+                "addrmaps": (
+                    "Select one or more Address Maps. If no maps are "
+                    "selected, all maps will be used."
+                ),
+            },
             "proj-uvm",
         ),
     )

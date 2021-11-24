@@ -153,6 +153,8 @@ class InstanceList:
         self.__model.callback = self.modified_callback
 
     def update(self) -> None:
+        "updates the rows of the model from the items associated them"
+
         if self.__project and self.__model:
             for row in self.__model:
                 item = row[InstCol.OBJ]

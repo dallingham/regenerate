@@ -51,13 +51,13 @@ package {{prj.short_name}}_reg_pkg;
     *
     *-------------------------------------------------------------------------
     */
-{% for regset_inst in dblist %}
+{% for db, regset_inst, blk_inst, grp_map, tag in db_grp_maps %}
   {{- resolver.set_reginst(regset_inst.uuid) or '' -}}
-  {% set db = prj.regsets[regset_inst.regset_id] %}
+  {{- resolver.set_blkinst(blk_inst.uuid) or '' -}}
   {%- if db.coverage %}
-   class {{regset_inst.name}}_reg_access_wrapper extends uvm_object;
+   class {{blk_inst.name}}__{{regset_inst.name}}__reg_access_wrapper extends uvm_object;
 
-      `uvm_object_utils({{regset_inst.name}}_reg_access_wrapper)
+      `uvm_object_utils({{blk_inst.name}}__{{regset_inst.name}}__reg_access_wrapper)
 
       static int s_num = 0;
 
@@ -94,25 +94,32 @@ package {{prj.short_name}}_reg_pkg;
 
       endgroup : cov_addr
 
-      function new(string name = "{{regset_inst.name}}_reg_access_wrapper");
+      function new(
+         string name = "{{blk_inst.name}}__{{regset_inst.name}}__reg_access_wrapper"
+      );
          cov_addr = new($sformatf("%s_%0d", name, s_num++));
       endfunction : new
 
-      function void sample(uvm_reg_addr_t offset, bit is_read);
+      function void sample(
+         uvm_reg_addr_t offset,
+         bit            is_read
+      );
          cov_addr.sample(offset, is_read);
       endfunction: sample
 
-   endclass : {{regset_inst.name}}_reg_access_wrapper
+   endclass : {{blk_inst.name}}__{{regset_inst.name}}__reg_access_wrapper
   {% endif %}
 
   {% for reg in db.get_all_registers() | remove_no_uvm %}
     {% if reg.ram_size %}
       {% set num_bytes = reg.width // 8 %}
-   class mem_{{regset_inst.name}}_{{fix_reg(reg)}} extends uvm_mem;
+   class mem_{{blk_inst.name}}__{{regset_inst.name}}_{{fix_reg(reg)}} extends uvm_mem;
 
-      `uvm_object_utils(mem_{{regset_inst.name}}_{{fix_reg(reg)}})
+      `uvm_object_utils(mem_{{blk_inst.name}}__{{regset_inst.name}}_{{fix_reg(reg)}})
 
-      function new (string name = "mem_{{regset_inst.name}}_{{fix_reg(reg)}}");
+      function new (
+         string name = "mem_{{blk_inst.name}}__{{regset_inst.name}}_{{fix_reg(reg)}}"
+      );
          super.new(
 	    .name(name),
 	    .size({{reg.ram_size // num_bytes}}),
@@ -122,13 +129,13 @@ package {{prj.short_name}}_reg_pkg;
 	 );
       endfunction : new
 
-   endclass : mem_{{regset_inst.name}}_{{fix_reg(reg)}}
+   endclass : mem_{{blk_inst.name}}__{{regset_inst.name}}_{{fix_reg(reg)}}
 
     {% else %}
 
-   class reg_{{regset_inst.name}}_{{fix_reg(reg)}} extends uvm_reg;
+   class reg__{{blk_inst.name}}__{{regset_inst.name}}__{{fix_reg(reg)}} extends uvm_reg;
 
-      `uvm_object_utils(reg_{{regset_inst.name}}_{{fix_reg(reg)}})
+      `uvm_object_utils(reg__{{blk_inst.name}}__{{regset_inst.name}}__{{fix_reg(reg)}})
 
      {% for field in reg.get_bit_fields() %}
       rand uvm_reg_field {{fix_name(field)}};
@@ -186,7 +193,9 @@ package {{prj.short_name}}_reg_pkg;
       endgroup : cov_bits
      {% endif %}
 
-      function new(string name = "{{fix_reg(reg)}}");
+      function new(
+         string name = "{{fix_reg(reg)}}"
+      );
          super.new(
 	    .name(name),
 	    .n_bits({{reg.width}}),
@@ -210,8 +219,11 @@ package {{prj.short_name}}_reg_pkg;
       endfunction : new
 
      {% if db.coverage and reg.flags.do_not_cover == False %}
-      function void sample(uvm_reg_data_t data, uvm_reg_data_t byte_en,
-                           bit is_read, uvm_reg_map map);
+      function void sample(
+         uvm_reg_data_t data, uvm_reg_data_t byte_en,
+         bit is_read,
+         uvm_reg_map map
+      );
          super.sample(data, byte_en, is_read, map);
        {% if reg.get_bit_fields() | length > 0 %}
          if (get_coverage(UVM_CVR_REG_BITS)) begin
@@ -246,9 +258,12 @@ package {{prj.short_name}}_reg_pkg;
 	{%- if field.reset_type == 1 %}
 	{%-   set has_reset = 0 %}
 	{%-   set reset = "'0" %}
+	{%- elif field.reset_type == 2 %}
+	{%-   set has_reset = 0 %}
+        {%   set reset = "%d'h%x" % (field.width, field.reset_value) %}
 	{%- else %}
-        {%-   set has_reset = 1 %}
-        {%-   set reset = "%d'h%x" % (field.width, field.reset_value) %}
+        {%   set has_reset = 1 %}
+        {%   set reset = "%d'h%x" % (field.width, field.reset_value) %}
 	{%- endif %}
         {%- set ind_access = individual_access(field, reg) %}
         {%- set access = ACCESS_MAP[field.field_type] %}
@@ -317,7 +332,7 @@ package {{prj.short_name}}_reg_pkg;
       {% endif %}
       endfunction : build
 
-   endclass : reg_{{regset_inst.name}}_{{fix_reg(reg)}}
+   endclass : reg__{{blk_inst.name}}__{{regset_inst.name}}__{{fix_reg(reg)}}
     {% endif %}
    {% endfor %}
 {% endfor %}
@@ -336,12 +351,12 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
 
    {% for reg in db.get_all_registers()|remove_no_uvm %}
      {% if reg.ram_size %}
-    mem_{{regset_inst.name}}_{{fix_reg(reg)}} {{fix_reg(reg)}};
+    mem_{{regset_inst.name}}__{{fix_reg(reg)}} {{fix_reg(reg)}};
      {% else %}
        {% if reg.dimension.resolve() > 1 %}
-    rand reg_{{regset_inst.name}}_{{fix_reg(reg)}} {{fix_reg(reg)}}[{{reg.dimension.resolve()}}];
+    rand reg__{{grp.name}}__{{regset_inst.name}}__{{fix_reg(reg)}} {{fix_reg(reg)}}[{{reg.dimension.resolve()}}];
        {% else %}
-    rand reg_{{regset_inst.name}}_{{fix_reg(reg)}} {{fix_reg(reg)}};
+    rand reg__{{grp.name}}__{{regset_inst.name}}__{{fix_reg(reg)}} {{fix_reg(reg)}};
        {% endif %}
      {% endif %}
    {% endfor %}
@@ -349,20 +364,22 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
    {% for map in grp_map %}
     uvm_reg_map {{map.name}}_map;
    {% endfor %}
-   {% for map in grp_map %}
-    bit disable_{{map.name}}_map = 1'b0;
-   {% endfor %}
    
    {% if db.coverage %}
-    {{regset_inst.name}}_reg_access_wrapper {{regset_inst.name}}_access_cg;
+    {{grp.name}}__{{regset_inst.name}}__reg_access_wrapper {{regset_inst.name}}_access_cg;
    {% endif %}
 
-    function new(string name = "{{grp.name}}__{{regset_inst.name}}__regset");
+    function new(
+       string name = "{{grp.name}}__{{regset_inst.name}}__regset"
+    );
        super.new(name, build_coverage(UVM_CVR_ADDR_MAP));
        add_coverage(build_coverage(UVM_CVR_ADDR_MAP));
     endfunction
 
-    function string access_mode(string def, int force_mode);
+    function string access_mode(
+       string def,
+       int force_mode
+    );
        if (force_mode == 0) begin
           return def;
        end else if (force_mode == 1) begin
@@ -372,8 +389,10 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
        end
     endfunction : access_mode	       
 
-    virtual protected function uvm_reg_map build_address_map(string map_name, int unsigned width,
-                                                             int force_mode);
+    virtual protected function uvm_reg_map build_address_map(
+       string map_name, int unsigned width,
+       int force_mode
+    );
        uvm_reg_map rmap;
 
        if ({{db.ports.data_bus_width}} > width) begin
@@ -418,7 +437,9 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
        return rmap;
     endfunction : build_address_map
 
-    function string extract_path(string msg);
+    function string extract_path(
+       string msg
+    );
        int start, stop;
 
        for (int i = 0; i < msg.len(); i++) begin
@@ -485,7 +506,7 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
      {% endfor %}
    {% else %}
      {% for map in grp_map %}
-      if (!disable_{{map.name}}_map) {{map.name}}_map = build_address_map("{{map.name}}_map", {{8 * prj.get_address_width(map.uuid)}}, s_access_map["{{map.name}}"][extract_path(get_full_name())]);
+      {{map.name}}_map = build_address_map("{{map.name}}_map", {{8 * prj.get_address_width(map.uuid)}}, s_access_map["{{map.name}}"][extract_path(get_full_name())]);
      {% endfor %}
 
    {% endif %}
@@ -493,7 +514,11 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
     endfunction : build
 
    {% if db.coverage %}
-    function void sample(uvm_reg_addr_t offset, bit is_read, uvm_reg_map  map);
+    function void sample(
+       uvm_reg_addr_t offset,
+       bit is_read,
+       uvm_reg_map map
+    );
        if (get_coverage(UVM_CVR_ADDR_MAP)) begin
           {{regset_inst.name}}_access_cg.sample(offset, is_read);
        end
@@ -528,9 +553,6 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
   {% for item in group_maps[grp] %}
      uvm_reg_map {{item.name}}_map;
   {% endfor %}
-  {% for map in group_maps[grp] %}
-     bit disable_{{map.name}}_map = 1'b0;
-  {% endfor %}
 
      function new(string name = "{{grp.name}}__blk");
         super.new(name, build_coverage(UVM_NO_COVERAGE));
@@ -539,9 +561,7 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
      function void build();
   {% if group_maps[grp]|length > 1 %}
     {% for map in group_maps[grp] %}
-        if (!disable_{{map.name}}_map) begin
-           {{map.name}}_map = create_map("{{map.name}}_map", 0, {{prj.get_address_width(map.uuid)}}, UVM_LITTLE_ENDIAN);
-        end
+        {{map.name}}_map = create_map("{{map.name}}_map", 0, {{prj.get_address_width(map.uuid)}}, UVM_LITTLE_ENDIAN);
     {% endfor %}
   {% else %}
     {% for map in group_maps[grp] %}
@@ -564,16 +584,10 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
            {{regset_inst.name}}[i].configure(this);
       {% endif %}
       
-      {% for item in group_maps[grp] %}
-           {{regset_inst.name}}[i].disable_{{item.name}}_map = disable_{{item.name}}_map;
-      {% endfor %}
-      
            {{regset_inst.name}}[i].build();
       {% for item in group_maps[grp] %}
         {% if group_maps[grp]| length > 1 %}
-           if (!disable_{{item.name}}_map) begin
-              {{item.name}}_map.add_submap({{regset_inst.name}}[i].{{item.name}}_map, 'h{{"%x" % regset_inst.offset}} + (i * 'h{{"%x" % (2 ** regset.ports.address_bus_width,)}}));
-           end
+           {{item.name}}_map.add_submap({{regset_inst.name}}[i].{{item.name}}_map, 'h{{"%x" % regset_inst.offset}} + (i * 'h{{"%x" % (2 ** regset.ports.address_bus_width,)}}));
         {% else %}
            {{item.name}}_map.add_submap({{regset_inst.name}}[i].{{item.name}}_map, 'h{{"%x" % regset_inst.offset}} + (i * 'h{{"%x" % (2 ** regset.ports.address_bus_width,)}}));
         {% endif %}
@@ -591,14 +605,10 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
         {{regset_inst.name}} = new("{{regset_inst.name}}");
         {{regset_inst.name}}.configure(this, "{{regset_inst.hdl}}");
 	
-      {% for item in group_maps[grp] %}
-        {{regset_inst.name}}.disable_{{item.name}}_map = disable_{{item.name}}_map;
-      {% endfor %}
-      
         {{regset_inst.name}}.build();
       {% for item in group_maps[grp] %}
         {% if group_maps[grp]| length > 1 %}
-        if (!disable_{{item.name}}_map) {{item.name}}_map.add_submap({{regset_inst.name}}.{{item.name}}_map, 'h{{"%x" % regset_inst.offset}});
+        {{item.name}}_map.add_submap({{regset_inst.name}}.{{item.name}}_map, 'h{{"%x" % regset_inst.offset}});
         {% else %}
         {{item.name}}_map.add_submap({{regset_inst.name}}.{{item.name}}_map, 'h{{"%x" % regset_inst.offset}});
         {% endif %}
@@ -631,11 +641,6 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
 {% for data in used_maps %}
      uvm_reg_map {{data.name}}_map;
 {% endfor %}
-{% if used_maps|length > 1 %}
-  {% for data in used_maps %}
-     bit disable_{{data.name}}_map = 1'b0;
-  {% endfor %}
-{% endif %}
 
      function new(string name = "{{prj.short_name}}_reg_block");
         super.new(name, build_coverage(UVM_NO_COVERAGE));
@@ -644,34 +649,19 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
      function void build();
 
 {% for map in used_maps %}
-  {% if used_maps|length > 1 %}
-        if (!disable_{{map.name}}_map) {{map.name}}_map = create_map("{{map.name}}_map", 'h{{"%x" % map.base}}, {{prj.get_address_width(map.uuid)}}, UVM_LITTLE_ENDIAN);
-  {% else %}
         {{map.name}}_map = create_map("{{map.name}}_map", 'h{{"%x" % map.base}}, {{prj.get_address_width(map.uuid)}}, UVM_LITTLE_ENDIAN);
-  {% endif %}
 {% endfor %}
 
 {% for grp in group_maps %}
   {% if grp.repeat <= 1 %}
         {{grp.name}} = new("{{grp.name}}");
         {{grp.name}}.configure(this, "{{grp.hdl_path}}");
-    {% if used_maps|length > 1 %}
-      {% for set in group_maps[grp] %}
-        {{grp.name}}.disable_{{set.name}}_map = disable_{{set.name}}_map;
-      {% endfor %}
-    {% endif %}
         {{grp.name}}.build();
 
-    {% if used_maps|length > 1 %}
-      {%- for mset in group_maps[grp] %}
-        if (!disable_{{mset.name}}_map) {{mset.name}}_map.add_submap({{grp.name}}.{{mset.name}}_map, 'h{{"%x" % grp.address_base}});
-      {% endfor %}
-    {%- else -%}
-      {% for mset in group_maps[grp] %}
+    {%- for mset in group_maps[grp] %}
         {{mset.name}}_map.add_submap({{grp.name}}.{{mset.name}}_map, 'h{{"%x" % grp.address_base}});
-      {% endfor %}
+    {% endfor %}
 
-    {% endif %}
   {% else %}
 
         foreach ({{grp.name}}[i]) begin
@@ -685,14 +675,11 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
     {% else %}
            {{grp.name}}[i].configure(this);
     {% endif %}
-    {% for map in group_maps[grp] %}
-           {{grp.name}}[i].disable_{{map.name}}_map = disable_{{map.name}}_map;
-    {% endfor %}
            {{grp.name}}[i].build();
 
     {% for map in group_maps[grp] %}
       {% set addr_size = prj.blocks[grp.blkid].address_size %}
-           if (!disable_{{map.name}}_map) {{map.name}}_map.add_submap({{grp.name}}[i].{{map.name}}_map, 'h{{"%x" % grp.address_base}} + (i * 'h{{"%x" % addr_size}}));
+           {{map.name}}_map.add_submap({{grp.name}}[i].{{map.name}}_map, 'h{{"%x" % grp.address_base}} + (i * 'h{{"%x" % addr_size}}));
     {% endfor %}
         end
 
