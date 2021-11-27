@@ -68,6 +68,7 @@ class ParameterList:
         obj.get_selection().connect("changed", self.selection_changed)
 
     def selection_changed(self, obj):
+        "Set the remove button's sensitivity when the selection changes"
         _, node = obj.get_selected()
         if node:
             self.remove.set_sensitive(True)
@@ -127,7 +128,6 @@ class ParameterList:
             self._model[path][ParameterCol.NAME] = new_text
             self._model[path][ParameterCol.OBJ].name = new_text
             self._callback()
-        self.update_db(name, new_text)
 
     def _value_changed(self, _cell, path, new_text, _col):
         """Called when the base address field is changed."""
@@ -160,7 +160,6 @@ class ParameterList:
         name = self._model[path][ParameterCol.NAME]
         min_val = int(new_text, 16)
         value = int(self._model[path][ParameterCol.VALUE], 0)
-        max_val = int(self._model[path][ParameterCol.MAX], 0)
 
         if min_val > value:
             LOGGER.warning(
@@ -181,7 +180,6 @@ class ParameterList:
 
         name = self._model[path][ParameterCol.NAME]
         max_val = int(new_text, 0)
-        min_val = int(self._model[path][ParameterCol.MIN], 0)
         value = int(self._model[path][ParameterCol.VALUE], 0)
 
         if max_val < value:
@@ -279,19 +277,6 @@ class ParameterList:
             _ = model.get_value(node, ParameterCol.NAME)
             model.remove(node)
             self._callback()
-
-    def update_db(self, name, new_text):
-        return
-        # print("UPDATE", name, new_text)
-        # if type(self._db) != Block:
-        #     for reg in self._db.get_all_registers():
-        #         if reg.dimension.is_parameter:
-        #             if reg.dimension.param_name() != new_text:
-        #                 reg.dimension. = new_text
-        #         for field in reg.get_bit_fields():
-        #             if field.reset_type == ResetType.PARAMETER:
-        #                 if name == field.reset_parameter:
-        #                     field.reset_parameter = new_text
 
 
 def get_row_data(map_obj):

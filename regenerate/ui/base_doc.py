@@ -189,7 +189,9 @@ class BaseDoc:
         name = Gtk.Entry()
         name.set_activates_default(True)
 
-        vbox = dialog.vbox
+        # pylint: disable=E1101
+
+        vbox = dialog.get_content_area()
         vbox.pack_start(label, False, False, 6)
         vbox.pack_start(name, False, False, 6)
 
@@ -229,7 +231,9 @@ class BaseDoc:
         name = Gtk.Entry()
         name.set_activates_default(True)
 
-        vbox = dialog.vbox
+        # pylint: disable=E1101
+
+        vbox = dialog.get_content_area()
         vbox.pack_start(label, False, False, 6)
         vbox.pack_start(name, False, False, 6)
 

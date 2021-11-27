@@ -20,9 +20,13 @@
 Provides the Address List interface
 """
 
+from typing import Tuple
 from gi.repository import Gtk
 from regenerate.db import (
     RegProject,
+    RegisterInst,
+    Block,
+    ParameterData,
     Overrides,
     ParameterFinder,
     ParamValue,
@@ -54,18 +58,6 @@ class OverridesListMdl(Gtk.ListStore):
         """Adds the specified instance to the InstanceList"""
         return self.append(row=get_row_data(path, inst))
 
-    def get_values(self):
-        """Returns the list of instance tuples from the model."""
-        val_list = []
-        for val in self:
-            if val[0]:
-                try:
-                    def_val = int(val[1], 0)
-                except ValueError:
-                    def_val = 1
-                val_list.append((val[0], def_val, val[2]))
-        return val_list
-
 
 class OverridesList:
     "Container for the Parameter List control logic"
@@ -87,13 +79,14 @@ class OverridesList:
         self._obj.get_selection().connect("changed", self.selection_changed)
 
     def selection_changed(self, obj):
+        "Set the remove button's sensitivity when the selection changes"
         _, node = obj.get_selected()
         if node:
             self.remove.set_sensitive(True)
         else:
             self.remove.set_sensitive(False)
 
-    def set_project(self, prj):
+    def set_project(self, prj) -> None:
         """
         Sets the database for the paramter list, and repopulates the list
         from the database.
@@ -102,7 +95,8 @@ class OverridesList:
         self._obj.set_sensitive(True)
         self.populate()
 
-    def update_display(self):
+    def update_display(self) -> None:
+        "Update parameter names in the display"
         finder = ParameterFinder()
         for row in self._model:
             data = row[OverrideCol.OBJ]
@@ -113,10 +107,8 @@ class OverridesList:
                 row[OverrideCol.NAME] = new_name
         self.set_menu()
 
-    def populate(self):
-        """
-        Loads the data from the project
-        """
+    def populate(self) -> None:
+        "Loads the data from the project"
         self._model.clear()
         self._used = set()
         for override in self.prj.overrides:
@@ -128,29 +120,37 @@ class OverridesList:
             self._used.add(override.parameter)
         self.set_menu()
 
-    def build_used(self):
+    def build_used(self) -> None:
+        """
+        Builds the set of parameters used in the display. Used to prevent
+        adding a parameter twice.
+        """
         self._used = set()
         for row in self._model:
             self._used.add(row[-1].parameter)
 
-    def set_menu(self):
-        count = 0
+    def set_menu(self) -> None:
+        """
+        Sets the menu for the Add button, showing parameters that are
+        not yet in the parameter list
+        """
         menu = Gtk.Menu()
         override_list, total = self.build_overrides_list(self.prj)
+        overrides_exist = len(override_list) != 0
+
         for override in override_list:
-            count = count + 1
             menu_item = Gtk.MenuItem(override[0])
             menu_item.connect("activate", self.menu_selected, override)
             menu_item.show()
             menu.append(menu_item)
 
-        self.add.set_sensitive(count)
-        self.remove.set_sensitive(count)
-        if count > 0:
+        self.add.set_sensitive(overrides_exist)
+        self.remove.set_sensitive(overrides_exist)
+        if overrides_exist:
             self.add.set_popup(menu)
 
         if total > 0:
-            if count == 0:
+            if not overrides_exist:
                 self._obj.set_tooltip_text(
                     "There are no additional lower level parameters that "
                     "can be overridden"
@@ -169,14 +169,23 @@ class OverridesList:
         else:
             self.remove.set_sensitive(False)
 
-    def remove_clicked(self, _obj):
+    def remove_clicked(self, _button: Gtk.Button) -> None:
+        "Removes the selected parameter when the button is clicked"
         name = self.get_selected()
         self.prj.parameters.remove(name)
         self.remove_selected()
         self.set_menu()
         self._callback()
 
-    def menu_selected(self, _obj, data):
+    def menu_selected(
+        self,
+        _obj: Gtk.MenuItem,
+        data: Tuple[str, Tuple[RegisterInst, ParameterData]],
+    ) -> None:
+        """
+        Called when a menu entry has been selected, adding the selected
+        data to the parameter list
+        """
         _, info = data
         override = Overrides()
         override.path = info[0].uuid
@@ -189,7 +198,7 @@ class OverridesList:
         self.set_menu()
         self._callback()
 
-    def _value_changed(self, _cell, path, new_text, _col):
+    def _value_changed(self, _cell, path, new_text, _col) -> None:
         """Called when the base address field is changed."""
         if check_hex(new_text) is False:
             return
@@ -268,17 +277,8 @@ class OverridesList:
         """
         self._model.clear()
 
-    # def append(self, name, value, max_val, min_val):
-    #     """
-    #     Add the data to the list.
-    #     """
-    #     obj = ParameterData(name, value, min_val, max_val)
-    #     self._model.append(row=get_row_data(obj))
-
     def get_selected(self):
-        """
-        Removes the selected node from the list
-        """
+        "Removes the selected node from the list"
         (model, node) = self._obj.get_selection().get_selected()
         if node is None:
             return None
@@ -288,9 +288,7 @@ class OverridesList:
         return model.get_value(node, ParameterCol.NAME)
 
     def remove_selected(self):
-        """
-        Removes the selected node from the list
-        """
+        "Removes the selected node from the list"
         select_data = self._obj.get_selection().get_selected()
         if select_data is None or select_data[1] is None:
             return
@@ -301,10 +299,13 @@ class OverridesList:
         model.remove(node)
 
     def set_parameters(self, parameters):
+        "Sets the parameters to be used"
         my_parameters = sorted([(p.name, p.uuid) for p in parameters])
         self.menu_column.update_menu(my_parameters)
 
     def build_overrides_list(self, project: RegProject):
+        "Builds the overrides list from the project"
+
         total = 0
         self.build_used()
         param_list = []
@@ -338,17 +339,7 @@ class BlockOverridesList(OverridesList):
             self._used.add(override.parameter)
         self.set_menu()
 
-    def update_display(self):
-        self.set_menu()
-        for row in self._model:
-            data = row[OverrideCol.OBJ]
-            path = self.prj.reginst[data.path].name
-            param = data.parameter.name
-            new_name = f"{path}.{param}"
-            if row[OverrideCol.NAME] != new_name:
-                row[OverrideCol.NAME] = new_name
-
-    def build_overrides_list(self, block):
+    def build_overrides_list(self, block: Block) -> None:
         total = 0
         param_list = []
         if block is not None:
@@ -377,10 +368,12 @@ class BlockOverridesList(OverridesList):
 
 
 def get_row_data(path, map_obj):
+    "Returns the row data from an object"
+
     finder = ParameterFinder()
     data = (
         f"{path}.{finder.find(map_obj.parameter).name}",
-        str(map_obj.value),
+        f"{map_obj.value.int_str()}",
         map_obj,
     )
     return data

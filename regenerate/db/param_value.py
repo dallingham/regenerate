@@ -78,7 +78,7 @@ class ParamValue:
                     return f"{pval.name}{self.offset}"
                 return f"{pval.name}"
             return ""
-        return f"{self.int_value:}"
+        return f"0x{self.int_value:x}"
 
     def int_vstr(self) -> str:
         "Prints the parameter with integers in Verilog hex format"

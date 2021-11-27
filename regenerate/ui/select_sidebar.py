@@ -45,6 +45,7 @@ class SelectModel(Gtk.ListStore):
 
     def update(self):
         "Update the EDIT flag"
+        # pylint: disable=E1133
 
         for row in self:
             row[SelectCol.NAME] = row[SelectCol.OBJ].name

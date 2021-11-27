@@ -390,6 +390,10 @@ class RuleBuilder(Gtk.Assistant):
         return model.get_value(node, 2).uuid
 
     def _on_apply_clicked(self, *_args) -> None:
+        "Saves the rule"
+
+        # pylint: disable=E1133
+
         info, level = self._get_exporter()
 
         if level != ProjectType.PROJECT:

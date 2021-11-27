@@ -24,6 +24,7 @@ keeps track of when an output file should be rebuilt.
 import os
 from typing import Tuple, Dict, List, NamedTuple, Any, Optional, Type
 from pathlib import Path
+from io import StringIO
 
 from gi.repository import Gtk, Pango
 from regenerate.settings.paths import INSTALL_PATH, HELP_PATH
@@ -37,6 +38,7 @@ from regenerate.writers import (
     ProjectType,
 )
 
+from .show_trace import TraceBack
 from .base_window import BaseWindow
 from .columns import EditableColumn, ToggleColumn
 from .rule_builder import RuleBuilder
@@ -165,7 +167,7 @@ class Build(BaseWindow):
         database, except we have to compare dates on all files in the project,
         not just a single file.
         """
-        local_dest = self.__prj.path.parent / dest
+        local_dest = self.__prj.filename.parent / dest
 
         mod = file_needs_rebuilt(local_dest, self.__prj, self.__prj.regsets)
         self.__modlist.append(mod)
@@ -194,7 +196,7 @@ class Build(BaseWindow):
         timestamps.
         """
         regset = self.__prj.regsets[regset_name]
-        local_dest = os.path.join(os.path.dirname(self.__prj.path), dest)
+        local_dest = os.path.join(os.path.dirname(self.__prj.filename), dest)
         mod = file_needs_rebuilt(local_dest, self.__prj, self.__prj.regsets)
         self.__modlist.append(mod)
         info = self.__optmap[exporter]
@@ -338,6 +340,7 @@ class Build(BaseWindow):
         Called with the menu item has been selected to select all
         targets for rebuild. Simply sets all the modified flags to True.
         """
+        # pylint: disable=E1133
         for item in self.__model:
             item[BuildCol.MODIFIED] = True
 
@@ -346,6 +349,7 @@ class Build(BaseWindow):
         Called with the menu item has been selected to unselect all
         targets for rebuild. Simply sets all the modified flags to False.
         """
+        # pylint: disable=E1133
         for item in self.__model:
             item[BuildCol.MODIFIED] = False
 
@@ -363,6 +367,7 @@ class Build(BaseWindow):
         """
         Called when the build button is pressed.
         """
+        # pylint: disable=E1133
         for item in [item for item in self.__model if item[BuildCol.MODIFIED]]:
             writer_class = item[BuildCol.CLASS]
             dbase = item[BuildCol.DBASE]
@@ -377,8 +382,31 @@ class Build(BaseWindow):
                 gen = writer_class(self.__prj, dbase, options)
             else:
                 gen = writer_class(self.__prj, options)
-            gen.write(dest)
+            self.run_writer(gen, dest)
             item[BuildCol.MODIFIED] = False
+
+    def run_writer(self, gen, dest):
+        try:
+            gen.write(dest)
+        except:
+            TraceBack(dest)
+            # show_traceback(dest)
+            # builder = Gtk.Builder()
+            # bfile = os.path.join(INSTALL_PATH, "ui", "traceback.ui")
+            # builder.add_from_file(bfile)
+            # dialog = builder.get_object("traceback_top")
+            # buffer = builder.get_object("textbuffer")
+
+            # fname = builder.get_object("filename")
+            # fname.set_text(str(dest))
+            # data = StringIO()
+            # traceback.print_exc(file=data)
+            # buffer.set_text(data.getvalue())
+            # dialog.show_all()
+            # print("Start Run")
+            # dialog.run()
+            # print("Done Run")
+            # dialog.destroy()
 
     def on_add_build_clicked(self, _obj: Gtk.Button) -> None:
         """

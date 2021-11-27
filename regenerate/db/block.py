@@ -33,16 +33,21 @@ from .const import BLK_EXT
 from .register_inst import RegisterInst
 from .register_db import RegisterDb
 from .doc_pages import DocPages
-from .name_base import NameBase
+from .base_file import BaseFile
 from .logger import LOGGER
 from .param_container import ParameterContainer
 from .param_resolver import ParameterResolver
 from .regset_finder import RegsetFinder
-from .utils import save_json
 from .export import ExportData
+from .exceptions import (
+    CorruptBlockFile,
+    IoErrorBlockFile,
+    CorruptRegsetFile,
+    IoErrorRegsetFile,
+)
 
 
-class Block(NameBase):
+class Block(BaseFile):
     """Basic group information."""
 
     def __init__(
@@ -53,7 +58,7 @@ class Block(NameBase):
     ) -> None:
         """Initialize the block item."""
 
-        super().__init__(name)
+        super().__init__(name, "")
         self.finder = RegsetFinder()
         self.address_size = address_size
         self.description = description
@@ -63,8 +68,6 @@ class Block(NameBase):
 
         self.regset_insts: List[RegisterInst] = []
         self.regsets: Dict[str, RegisterDb] = {}
-        self.modified = False
-        self._filename = Path("")
         self.parameters = ParameterContainer()
         self.overrides: List[Overrides] = []
         self.exports: List[ExportData] = []
@@ -97,20 +100,9 @@ class Block(NameBase):
             inst for inst in self.regset_insts if inst.regset_id != uuid
         ]
 
-    @property
-    def filename(self) -> Path:
-        "Returns the filename as a path"
-        return self._filename
-
-    @filename.setter
-    def filename(self, value: Union[str, Path]) -> None:
-        "Sets the filename, converting to a path, and fixing the suffix"
-
-        self._filename = Path(value).with_suffix(BLK_EXT)
-
     def save(self) -> None:
         "Save the file as a JSON file"
-        save_json(self.json(), self._filename)
+        self.save_json(self.json(), self._filename)
 
     def __ne__(self, other) -> bool:
         """Compare for inequality."""
@@ -137,9 +129,17 @@ class Block(NameBase):
 
         LOGGER.info("Reading block file %s", str(self._filename))
 
-        with self._filename.open() as ofile:
-            data = ofile.read()
-        self.json_decode(json.loads(data))
+        try:
+            with self._filename.open() as ofile:
+                data = ofile.read()
+                self.json_decode(json.loads(data))
+        except json.decoder.JSONDecodeError as msg:
+            raise CorruptBlockFile(self._filename.name, str(msg))
+        except OSError as msg:
+            raise IoErrorBlockFile(self._filename.name, msg)
+
+    #        except IOError as msg:
+    #            raise IoErrorBlockFile(self._filename.name, str(msg))
 
     def get_address_size(self) -> int:
         "Returns the size of the address space"
@@ -179,7 +179,15 @@ class Block(NameBase):
                 else:
                     rdr = self.reader_class
 
-                json_data = json.loads(rdr.read_bytes(filename))
+                try:
+                    json_data = json.loads(rdr.read_bytes(filename))
+                except json.decoder.JSONDecodeError as msg:
+                    raise CorruptRegsetFile(filename.name, str(msg))
+                except OSError as msg:
+                    raise IoErrorRegsetFile(self._filename.name, msg)
+                #                except IOError as msg:
+                #                    raise IoErrorRegsetFile(filename.name, str(msg))
+
                 regset.filename = filename
                 regset.json_decode(json_data)
                 self.finder.register(regset)

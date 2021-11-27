@@ -118,8 +118,7 @@ class ParameterResolver:
             if new_val.is_parameter:
                 new_param = ParameterFinder().find(new_val.txt_value)
                 return new_param.value
-            else:
-                return new_val.int_value
+            return new_val.int_value
         return value.value
 
     def resolve(self, param: ParameterData) -> int:

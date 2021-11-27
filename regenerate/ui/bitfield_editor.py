@@ -302,6 +302,8 @@ class BitFieldEditor(BaseWindow):
 
     def _update_values(self) -> None:
         "Update the bit field values from the model"
+        # pylint: disable=E1133
+
         self._bit_field.values = [
             BitValues(val[0], val[1], val[2]) for val in self.value_model
         ]

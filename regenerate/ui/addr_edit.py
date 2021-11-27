@@ -43,6 +43,7 @@ class AddrMapEdit(BaseWindow):
         parent: Gtk.Window,
         callback: Callable,
     ):
+        # pylint: disable=E1133
 
         super().__init__()
         self.project = project

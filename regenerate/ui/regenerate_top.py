@@ -28,8 +28,8 @@ regenerate
 import xml
 import os
 from pathlib import Path
-
 from typing import List, Union, Optional, Dict
+import json
 
 from gi.repository import Gtk, GdkPixbuf
 from regenerate.settings.version import PROGRAM_NAME, PROGRAM_VERSION
@@ -42,6 +42,14 @@ from regenerate.db import (
     ResetType,
     PRJ_EXT,
     OLD_PRJ_EXT,
+)
+from regenerate.db.exceptions import (
+    CorruptBlockFile,
+    CorruptProjectFile,
+    CorruptRegsetFile,
+    IoErrorBlockFile,
+    IoErrorProjectFile,
+    IoErrorRegsetFile,
 )
 from regenerate.importers import IMPORTERS
 from regenerate.settings import ini
@@ -481,7 +489,7 @@ class MainWindow(BaseWindow):
                 filename = filename.with_suffix(PRJ_EXT)
 
             self.prj = RegProject()
-            self.prj.path = filename
+            self.prj.filename = filename
             self.top_level_tab.change_project(self.prj)
             self.prj.name = ""
             self.prj.short_name = filename.stem
@@ -521,16 +529,59 @@ class MainWindow(BaseWindow):
             self.open_project(filename, uri)
             self._add_resent(Path(filename).resolve())
 
-    def open_project(self, filename: str, _uri: str):
+    def open_project(self, filepath: str, _uri: str):
         "Opens the selected project"
 
         self._loading_project = True
         self.regset_tab.clear()
+        filename = Path(filepath)
 
         try:
             self.prj = RegProject(filename)
             self.project_tabs.change_db(self.prj)
             self.top_level_tab.change_project(self.prj)
+        except CorruptProjectFile as msg:
+            ErrorMsg(
+                "Could not load the project",
+                str(msg),
+                self._top_window,
+            )
+            return
+        except IoErrorProjectFile as msg:
+            ErrorMsg(
+                "Could not load the project",
+                str(msg),
+                self._top_window,
+            )
+            return
+        except CorruptBlockFile as msg:
+            ErrorMsg(
+                "Could not load a block file",
+                str(msg),
+                self._top_window,
+            )
+            return
+        except IoErrorBlockFile as msg:
+            ErrorMsg(
+                "Could not load a block file",
+                str(msg),
+                self._top_window,
+            )
+            return
+        except CorruptRegsetFile as msg:
+            ErrorMsg(
+                "Could not load a register set file",
+                str(msg),
+                self._top_window,
+            )
+            return
+        except IoErrorRegsetFile as msg:
+            ErrorMsg(
+                "Could not load a register set file",
+                str(msg),
+                self._top_window,
+            )
+            return
         except xml.parsers.expat.ExpatError as msg:
             ErrorMsg(
                 f"{filename} was not a valid project file",
@@ -584,7 +635,7 @@ class MainWindow(BaseWindow):
         Called with the save button is clicked (gtk callback). Saves the
         database.
         """
-        current_path = Path(self.prj.path)
+        current_path = Path(self.prj.filename)
         backup_path = Path(f"{current_path}.bak")
 
         if current_path.suffix != OLD_PRJ_EXT:
@@ -846,7 +897,7 @@ class MainWindow(BaseWindow):
     def set_title(self, modified: bool) -> None:
         "Changes the title of the window to indicate if it is modified"
 
-        name = self.prj.path.name
+        name = self.prj.filename.name
         if modified:
             self._top_window.set_title(
                 f"{self.prj.name} ({name}*) - regenerate"

@@ -36,7 +36,7 @@ from .block_inst import BlockInst
 from .register_inst import RegisterInst
 from .const import REG_EXT, PRJ_EXT, OLD_PRJ_EXT, OLD_REG_EXT
 from .param_resolver import ParameterResolver
-
+from .exceptions import CorruptProjectFile, IoErrorProjectFile
 from .doc_pages import DocPages
 from .export import ExportData
 from .logger import LOGGER
@@ -46,6 +46,7 @@ from .proj_reader import ProjectReader
 from .register_db import RegisterDb
 from .textutils import clean_text
 from .regset_finder import RegsetFinder
+from .base_file import BaseFile
 
 
 def nested_dict(depth: int, dict_type):
@@ -60,7 +61,7 @@ def cleanup(data: str) -> str:
     return xml.sax.saxutils.escape(clean_text(data))
 
 
-class RegProject:
+class RegProject(BaseFile):
     """
     RegProject is the container object for a regenerate project. The project
     consists of several different types. General project information (name,
@@ -70,8 +71,8 @@ class RegProject:
 
     def __init__(self, path: Optional[Path] = None):
 
+        super().__init__("unnamed", "")
         self.short_name = "unnamed"
-        self.name = "unnamed"
         self.doc_pages = DocPages()
         self.doc_pages.update_page("Overview", "", ["Confidential"])
         self.company_name = ""
@@ -94,20 +95,18 @@ class RegProject:
         self._modified = False
 
         if path:
-            self.path = Path(path)
-            self.open(self.path)
+            self._filename = Path(path)
+            self.open(self._filename)
         else:
-            self.path = Path(".")
+            self._filename = Path(".")
 
     def save(self) -> None:
         """Saves the project to the JSON file"""
 
-        new_path = Path(self.path).with_suffix(PRJ_EXT)
+        new_path = Path(self._filename).with_suffix(PRJ_EXT)
         self.block_data_path = str(new_path.parent)
 
-        with new_path.open("w") as ofile:
-            ofile.write(json.dumps(self, default=methodcaller("json")))
-        self.modified = False
+        self.save_json(self.json(), new_path)
 
         for blkid in self.blocks:
             blk = self.blocks[blkid]
@@ -131,18 +130,26 @@ class RegProject:
         """Opens and reads a project file. The project could be in either
         the legacy XML format or the current JSON format"""
 
-        self.path = Path(name)
+        self._filename = Path(name)
 
-        if self.path.suffix == OLD_PRJ_EXT:
-            LOGGER.info("Loading XML project file '%s'", str(self.path))
+        if self._filename.suffix == OLD_PRJ_EXT:
+            LOGGER.info("Loading XML project file '%s'", str(self._filename))
 
-            with self.path.open("rb") as xfile:
-                self.loads(xfile.read(), str(self.path))
+            with self._filename.open("rb") as xfile:
+                self.loads(xfile.read(), str(self._filename))
         else:
-            LOGGER.info("Loading JSON project file '%s'", str(self.path))
+            LOGGER.info("Loading JSON project file '%s'", str(self._filename))
 
-            with open(str(self.path)) as jfile:
-                self.json_loads(jfile.read())
+            try:
+                with open(str(self._filename)) as jfile:
+                    self.json_loads(jfile.read())
+            except json.decoder.JSONDecodeError as msg:
+                raise CorruptProjectFile(self._filename.name, str(msg))
+            except OSError as msg:
+                raise IoErrorProjectFile(self._filename.name, msg)
+
+    #            except IOError as msg:
+    #                raise IoErrorProjectFile(self._filename.name, str(msg))
 
     def xml_loads(self, data: bytes, name: str) -> None:
         "Load the XML data from the passed string"
@@ -164,7 +171,7 @@ class RegProject:
 
         reader = ProjectReader(self)
         reader.loads(data, name)
-        self.path = Path(name)
+        self._filename = Path(name)
 
         for _, block in self.blocks.items():
             for _, reg_set in block.regsets.items():
@@ -197,7 +204,7 @@ class RegProject:
         self._modified = True
 
         if self.reader_class is None:
-            rdr = FileReader(self.path)
+            rdr = FileReader(self._filename)
         else:
             rdr = self.reader_class
 
@@ -206,11 +213,10 @@ class RegProject:
         regset = self.finder.find_by_file(str(filename))
         if not regset:
             regset = RegisterDb()
+            data = rdr.read_bytes(filename)
             if Path(filename).suffix == OLD_REG_EXT:
-                data = rdr.read_bytes(filename)
                 regset.loads(data, filename)
             else:
-                data = rdr.read_bytes(filename)
                 regset.json_decode(json.loads(data))
             self.finder.register(regset)
             self.new_register_set(regset, new_file_path)
@@ -311,9 +317,9 @@ class RegProject:
         Returns the register databases (XML files) referenced by the project
         file.
         """
-        if self.path is None:
+        if self._filename is None:
             return self._filelist
-        base = self.path.parent
+        base = self._filename.parent
         return [Path(base / i).resolve() for i in self._filelist]
 
     def get_address_maps(self) -> ValuesView[AddressMap]:
@@ -358,7 +364,7 @@ class RegProject:
             return True
         return False
 
-    def get_address_base(self, map_id: str):
+    def get_address_base(self, map_id: str) -> int:
         """Returns the base address  of the address map"""
         return self.address_maps[map_id].base
 
@@ -506,7 +512,9 @@ class RegProject:
             data[token] = self.__getattribute__(key)
 
         data["filelist"] = [
-            os.path.relpath(Path(fname).with_suffix(REG_EXT), self.path.parent)
+            os.path.relpath(
+                Path(fname).with_suffix(REG_EXT), self._filename.parent
+            )
             for fname in set(self._filelist)
         ]
         data["address_maps"] = self.address_maps
@@ -515,7 +523,7 @@ class RegProject:
         for exp in self.exports:
             info = {
                 "options": exp.options,
-                "target": os.path.relpath(exp.target, self.path.parent),
+                "target": os.path.relpath(exp.target, self._filename.parent),
                 "exporter": exp.exporter,
             }
             data["exports"].append(info)
@@ -524,7 +532,7 @@ class RegProject:
         for blk in self.blocks:
             data["blocks"][blk] = {
                 "filename": os.path.relpath(
-                    str(self.blocks[blk].filename), self.path.parent
+                    str(self.blocks[blk].filename), self._filename.parent
                 ),
             }
 
@@ -533,7 +541,7 @@ class RegProject:
     def json_decode(self, data: Dict[str, Any]) -> None:
         """Convert the JSON data back classes"""
 
-        self.block_data_path = str(self.path.parent)
+        self.block_data_path = str(self._filename.parent)
         skip = False
 
         self.short_name = data["short_name"]
@@ -550,9 +558,9 @@ class RegProject:
 
         if not skip:
             for path in data["filelist"]:
-                full_path = Path(self.path.parent / path).resolve()
+                full_path = Path(self._filename.parent / path).resolve()
                 self._filelist.append(
-                    Path(os.path.relpath(full_path, self.path.parent))
+                    Path(os.path.relpath(full_path, self._filename.parent))
                 )
 
         self._load_address_maps_from_json_data(data["address_maps"])
@@ -584,7 +592,7 @@ class RegProject:
         self.exports = []
         for item in data:
             exporter = item["exporter"]
-            target = self.path.parent / item["target"]
+            target = self._filename.parent / item["target"]
 
             exp_data = ExportData(
                 exporter,
@@ -628,7 +636,7 @@ class RegProject:
                     )
                     blk_data.json_decode(json_data)
                 else:
-                    path = self.path.parent / base_path
+                    path = self._filename.parent / base_path
                     blk_data.open(path)
 
                 self.blocks[key] = blk_data
@@ -660,7 +668,7 @@ class RegProject:
         """
 
         for filename in self._filelist:
-            full_path = (self.path.parent / filename).resolve()
+            full_path = (self._filename.parent / filename).resolve()
             regset = self.finder.find_by_file(str(full_path))
             if not regset and full_path.exists():
                 regset = RegisterDb()

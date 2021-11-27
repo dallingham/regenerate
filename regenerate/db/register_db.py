@@ -34,13 +34,13 @@ from .const import OLD_REG_EXT, REG_EXT
 from .export import ExportData
 from .logger import LOGGER
 from .param_container import ParameterContainer
-from .name_base import NameBase
-from .utils import save_json
+from .base_file import BaseFile
 from .doc_pages import DocPages
 from .param_data import ParameterData
+from .exceptions import CorruptRegsetFile, IoErrorRegsetFile
 
 
-class RegisterDb(NameBase):
+class RegisterDb(BaseFile):
     """
     Container database for a set of registers.
     """
@@ -61,8 +61,6 @@ class RegisterDb(NameBase):
         self.organization = ""
         self.use_interface = False
         self.coverage = True
-        self._filename = None
-        self.modified = False
         self.doc_pages = DocPages()
         self.doc_pages.update_page("Overview", "", ["Confidential"])
 
@@ -72,6 +70,12 @@ class RegisterDb(NameBase):
 
     def __repr__(self) -> str:
         return f"RegisterDb(name={self.name}, uuid={self.uuid})"
+
+    def last_saved(self) -> int:
+        "Returns the modified timestamp of the file"
+        if self._filename:
+            return self._filename.stat().st_mtime_ns
+        return 0
 
     @property
     def filename(self) -> Path:
@@ -148,9 +152,16 @@ class RegisterDb(NameBase):
         self.filename = filename.resolve()
 
         LOGGER.info("Reading JSON register file %s", str(self.filename))
-        with self.filename.open("r") as ifile:
-            self.name = filename.stem
-            self.json_decode(json.loads(ifile.read()))
+        try:
+            with self.filename.open("r") as ifile:
+                self.name = filename.stem
+                self.json_decode(json.loads(ifile.read()))
+        except json.decoder.JSONDecodeError as msg:
+            raise CorruptRegsetFile(self.filename.name, str(msg))
+        except OSError as msg:
+            raise IoErrorRegsetFile(self._filename.name, msg)
+        #        except IOError as msg:
+        #            raise IoErrorRegsetFile(self.filename.name, str(msg))
         return self
 
     def loads(self, data, filename):
@@ -167,7 +178,7 @@ class RegisterDb(NameBase):
 
     def save(self) -> None:
         "Save the data to the specified file as a JSON file"
-        save_json(self.json(), self.filename)
+        self.save_json(self.json(), self.filename)
 
     @property
     def overview_text(self) -> str:

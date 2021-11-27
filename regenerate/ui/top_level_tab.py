@@ -21,7 +21,7 @@
 Top level tabxs
 """
 
-from typing import Callable, Optional
+from typing import Callable, Optional, Set, Tuple
 from pathlib import Path
 from gi.repository import Gtk
 

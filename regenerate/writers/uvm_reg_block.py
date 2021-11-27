@@ -75,7 +75,12 @@ class UVMRegBlockRegisters(ProjectWriter):
     def uvm_address_maps(self) -> List[AddressMap]:
         "Return a list of all the address maps that are not excluded from UVM"
 
-        if "addrmaps" in self.options and self.options["addrmaps"]:
+        print(1 / 0)
+        if (
+            self.options
+            and "addrmaps" in self.options
+            and self.options["addrmaps"]
+        ):
             uvm_maps = [
                 d
                 for d in self._project.get_address_maps()
