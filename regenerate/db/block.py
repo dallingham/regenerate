@@ -27,6 +27,7 @@ from pathlib import Path
 import os
 import json
 
+from .name_base import Uuid
 from .data_reader import FileReader
 from .overrides import Overrides
 from .register_inst import RegisterInst
@@ -51,13 +52,13 @@ class Block(BaseFile):
 
     def __init__(
         self,
-        name="",
-        address_size=0x10000,
-        description="",
+        name: str = "",
+        address_size: int = 0x10000,
+        description: str = "",
     ) -> None:
         """Initialize the block item."""
 
-        super().__init__(name, "")
+        super().__init__(name, Uuid(""))
         self.finder = RegsetFinder()
         self.address_size = address_size
         self.description = description
@@ -71,7 +72,7 @@ class Block(BaseFile):
         self.overrides: List[Overrides] = []
         self.exports: List[ExportData] = []
 
-    def get_reginst_from_id(self, uuid: str) -> Optional[RegisterInst]:
+    def get_reginst_from_id(self, uuid: Uuid) -> Optional[RegisterInst]:
         "Returns the register instance based on the uuid"
 
         results = [inst for inst in self.regset_insts if inst.uuid == uuid]
@@ -91,7 +92,7 @@ class Block(BaseFile):
         "Returns the register set connected to the register instance"
         return self.regsets[reg_inst.regset_id]
 
-    def remove_register_set(self, uuid: str) -> None:
+    def remove_register_set(self, uuid: Uuid) -> None:
         "Removes the register set using the UUID"
         if uuid in self.regsets:
             del self.regsets[uuid]
@@ -103,8 +104,10 @@ class Block(BaseFile):
         "Save the file as a JSON file"
         self.save_json(self.json(), self._filename)
 
-    def __ne__(self, other) -> bool:
+    def __ne__(self, other: object) -> bool:
         """Compare for inequality."""
+        if not isinstance(other, Block):
+            return NotImplemented
         return not self.__eq__(other)
 
     def __eq__(self, other: object) -> bool:
@@ -208,7 +211,7 @@ class Block(BaseFile):
         "Compare for equality."
 
         self.name = data["name"]
-        self.uuid = data["uuid"]
+        self.uuid = Uuid(data["uuid"])
         self.description = data["description"]
         self.address_size = int(data["address_size"], 0)
         self.doc_pages = DocPages()
@@ -247,7 +250,7 @@ class Block(BaseFile):
     def json(self) -> Dict[str, Any]:
         data: Dict[str, Any] = {
             "name": self.name,
-            "uuid": self.uuid,
+            "uuid": Uuid(self.uuid),
             "parameters": self.parameters,
             "overrides": self.overrides,
             "address_size": f"{self.address_size}",

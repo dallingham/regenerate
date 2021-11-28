@@ -25,9 +25,10 @@ from collections import defaultdict
 from pathlib import Path
 import json
 import os.path
-from typing import List, Dict, ValuesView, Any, Optional, Union
+from typing import List, Dict, ValuesView, Any, Optional, Union, Tuple
 import xml.sax.saxutils
 
+from .name_base import Uuid
 from .data_reader import FileReader
 from .address_map import AddressMap
 from .block import Block
@@ -48,11 +49,11 @@ from .regset_finder import RegsetFinder
 from .base_file import BaseFile
 
 
-def nested_dict(depth: int, dict_type):
+def nested_dict(depth: int) -> Dict[Uuid, Any]:
     """Builds a nested dictionary"""
     if depth == 1:
-        return defaultdict(dict_type)
-    return defaultdict(lambda: nested_dict(depth - 1, dict_type))
+        return defaultdict(int)
+    return defaultdict(lambda: nested_dict(depth - 1))
 
 
 def cleanup(data: str) -> str:
@@ -70,12 +71,12 @@ class RegProject(BaseFile):
 
     def __init__(self, path: Optional[Path] = None):
 
-        super().__init__("unnamed", "")
+        super().__init__("unnamed", Uuid(""))
         self.short_name = "unnamed"
         self.doc_pages = DocPages()
         self.doc_pages.update_page("Overview", "", ["Confidential"])
         self.company_name = ""
-        self.access_map = nested_dict(3, int)
+        self.access_map = nested_dict(3)
         self.finder = RegsetFinder()
         self._filelist: List[Path] = []
         self.reader_class = None
@@ -83,11 +84,11 @@ class RegProject(BaseFile):
 
         self.parameters = ParameterContainer()
         self.overrides: List[Overrides] = []
-        self.address_maps: Dict[str, AddressMap] = {}
+        self.address_maps: Dict[Uuid, AddressMap] = {}
 
         self.block_insts: List[BlockInst] = []
-        self.blocks: Dict[str, Block] = {}
-        self.regsets: Dict[str, RegisterDb] = {}
+        self.blocks: Dict[Uuid, Block] = {}
+        self.regsets: Dict[Uuid, RegisterDb] = {}
 
         self.exports: List[ExportData] = []
 
@@ -145,9 +146,6 @@ class RegProject(BaseFile):
             except OSError as msg:
                 raise IoErrorProjectFile(self._filename.name, msg)
 
-    #            except IOError as msg:
-    #                raise IoErrorProjectFile(self._filename.name, str(msg))
-
     def xml_loads(self, data: bytes, name: str) -> None:
         "Load the XML data from the passed string"
 
@@ -174,7 +172,7 @@ class RegProject(BaseFile):
             for _, reg_set in block.regsets.items():
                 self.regsets[reg_set.uuid] = reg_set
 
-    def get_blkinst_from_id(self, uuid: str) -> Optional[BlockInst]:
+    def get_blkinst_from_id(self, uuid: Uuid) -> Optional[BlockInst]:
         "Returns the block instance from the uuid"
 
         results = [inst for inst in self.block_insts if inst.uuid == uuid]
@@ -182,7 +180,7 @@ class RegProject(BaseFile):
             return results[0]
         return None
 
-    def remove_block(self, blk_id: str) -> None:
+    def remove_block(self, blk_id: Uuid) -> None:
         "Removes a block from the database"
 
         del self.blocks[blk_id]
@@ -231,7 +229,7 @@ class RegProject(BaseFile):
         """
         self.append_register_set_to_list(path)
 
-    def remove_register_set(self, uuid: str) -> None:
+    def remove_register_set(self, uuid: Uuid) -> None:
         """Removes the specified register set from the project."""
 
         self.modified = True
@@ -243,7 +241,7 @@ class RegProject(BaseFile):
         except ValueError:
             LOGGER.debug("Failed removing %s from filelist", regset.filename)
 
-    def get_exports(self, path: str):
+    def get_exports(self, path: str) -> Tuple[ExportData, ...]:
         """
         Converts the exports to be relative to the passed path. Returns a
         read-only tuple
@@ -253,7 +251,7 @@ class RegProject(BaseFile):
                 return tuple(regset.exports)
         return tuple([])
 
-    def get_project_exports(self):
+    def get_project_exports(self) -> Tuple[ExportData, ...]:
         """Returns the export project list, returns a read-only tuple"""
         return tuple(self.exports)
 
@@ -271,7 +269,7 @@ class RegProject(BaseFile):
         self.exports.append(exp)
 
     def add_to_project_export_list(
-        self, exporter: str, dest: str, options
+        self, exporter: str, dest: str, options: Dict[str, str]
     ) -> None:
         """
         Adds a export to the project export list. Project exporters operation
@@ -323,7 +321,7 @@ class RegProject(BaseFile):
         """Returns a list of the existing address maps"""
         return self.address_maps.values()
 
-    def get_blocks_in_address_map(self, map_id: str) -> List[BlockInst]:
+    def get_blocks_in_address_map(self, map_id: Uuid) -> List[BlockInst]:
         """Returns the address maps associated with the specified group."""
         addr_map = self.address_maps.get(map_id)
         if addr_map:
@@ -336,40 +334,40 @@ class RegProject(BaseFile):
                 ]
         return self.block_insts
 
-    def get_address_maps_used_by_block(self, blk_id: str) -> List[str]:
+    def get_address_maps_used_by_block(self, blk_id: Uuid) -> List[Uuid]:
         """Returns the address maps associated with the specified group."""
 
-        map_list = []
+        map_list: List[Uuid] = []
         for key in self.address_maps:
             if blk_id in self.address_maps[key].blocks:
                 map_list.append(key)
         return map_list
 
-    def change_address_map_name(self, map_id: str, new_name: str) -> None:
+    def change_address_map_name(self, map_id: Uuid, new_name: str) -> None:
         """Changes the name of an address map"""
 
         self.address_maps[map_id].name = new_name
         self.modified = True
 
-    def add_address_map_to_block(self, map_id: str, blk_id: str) -> bool:
+    def add_address_map_to_block(self, map_id: Uuid, blk_id: Uuid) -> bool:
         """Adds an address map to a group if it does not already exist"""
         if blk_id not in self.address_maps[map_id].blocks:
             self.address_maps[map_id].blocks.append(blk_id)
             return True
         return False
 
-    def get_address_base(self, map_id: str) -> int:
+    def get_address_base(self, map_id: Uuid) -> int:
         """Returns the base address  of the address map"""
         return self.address_maps[map_id].base
 
-    def get_address_fixed(self, map_id: str):
+    def get_address_fixed(self, map_id: Uuid):
         """Indicates if the specified address map is at a fixed location"""
         return next(
             (d.fixed for d in self.address_maps.values() if map_id == d.uuid),
             None,
         )
 
-    def get_address_width(self, map_id: str):
+    def get_address_width(self, map_id: Uuid) -> int:
         """Returns the width of the address group"""
         try:
             return self.address_maps[map_id].width
@@ -382,18 +380,18 @@ class RegProject(BaseFile):
         return 16
 
     def set_access(
-        self, map_id: str, blkinst_uuid: str, reginst_uuid: str, access
-    ):
+        self,
+        map_id: Uuid,
+        blkinst_uuid: Uuid,
+        reginst_uuid: Uuid,
+        access: int,
+    ) -> None:
         """Sets the access mode"""
         self.access_map[map_id][blkinst_uuid][reginst_uuid] = access
 
-    def get_access_items(self, map_id, blkinst_uuid):
-        """Gets the access items for the map/group"""
-
-        grp_map = self.access_map[map_id][blkinst_uuid]
-        return [(key, grp_map[key]) for key in grp_map]
-
-    def get_access(self, map_id, blkinst_uuid, reginst_uuid):
+    def get_access(
+        self, map_id: Uuid, blkinst_uuid: Uuid, reginst_uuid: Uuid
+    ) -> int:
         """Gets the access mode"""
 
         try:
@@ -403,33 +401,35 @@ class RegProject(BaseFile):
         except TypeError:
             return 0
 
-    def add_or_replace_address_map(self, addr_map):
+    def add_or_replace_address_map(self, addr_map: AddressMap) -> None:
         """Sets the specififed address map"""
 
         self.modified = True
         self.address_maps[addr_map.uuid] = addr_map
 
-    def set_address_map(self, address_map):
+    def set_address_map(self, address_map: AddressMap) -> None:
         """Sets the specififed address map"""
         self.modified = True
         self.address_maps[address_map.uuid] = address_map
 
-    def set_address_map_block_list(self, map_id: str, new_list: List[str]):
+    def set_address_map_block_list(
+        self, map_id: Uuid, new_list: List[str]
+    ) -> None:
         """Sets the specififed address map"""
         self.modified = True
         self.address_maps[map_id].blocks = new_list
 
-    def remove_address_map(self, map_id: str) -> None:
+    def remove_address_map(self, map_id: Uuid) -> None:
         """Removes the address map"""
         if map_id in self.address_maps:
             del self.address_maps[map_id]
 
     @property
-    def files(self):
+    def files(self) -> Tuple[Path, ...]:
         """Returns the file list"""
         return tuple(self._filelist)
 
-    def change_file_suffix(self, original: str, new: str):
+    def change_file_suffix(self, original: str, new: str) -> None:
         """Changes the suffix of the files in the file list"""
 
         new_list = []
@@ -440,7 +440,7 @@ class RegProject(BaseFile):
             new_list.append(new_name.resolve())
         self._filelist = new_list
 
-    def blocks_containing_regset(self, regset_id: str) -> List[Block]:
+    def blocks_containing_regset(self, regset_id: Uuid) -> List[Block]:
         "Find all the blocks that contain the register set id"
         return [
             self.blocks[blk]
@@ -526,9 +526,10 @@ class RegProject(BaseFile):
         self.doc_pages = DocPages()
         self.doc_pages.json_decode(data["doc_pages"])
         self.company_name = data["company_name"]
-        self.access_map = data.get("access_map")
-        if self.access_map is None:
-            self.access_map = nested_dict(3, int)
+        if "access_map" in data:
+            self.access_map = data["access_map"]
+        else:
+            self.access_map = nested_dict(3)
 
         self.block_insts = data["block_insts"]
         self._filelist = []
@@ -558,10 +559,10 @@ class RegProject(BaseFile):
         "Loads the address map information from JSON data"
 
         if data:
-            for name, addr_data_json in data.items():
+            for uuid, addr_data_json in data.items():
                 addr_data = AddressMap()
                 addr_data.json_decode(addr_data_json)
-                self.address_maps[name] = addr_data
+                self.address_maps[Uuid(uuid)] = addr_data
 
     def _load_exports_from_json_data(self, data: List[Dict[str, Any]]) -> None:
         "Loads the export information from JSON data"
@@ -616,7 +617,7 @@ class RegProject(BaseFile):
                     path = self._filename.parent / base_path
                     blk_data.open(path)
 
-                self.blocks[key] = blk_data
+                self.blocks[Uuid(key)] = blk_data
 
     def _load_overrides_from_json_data(
         self, data: List[Dict[str, Any]]

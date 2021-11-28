@@ -277,7 +277,6 @@ class BlockTab:
         except ValueError:
             return
 
-        reg_name = self._reg_model[int(path)][0]
         inst = self._reg_model[int(path)][-1]
         self._reg_model[int(path)][col] = f"0x{int(new_text,0):08x}"
         self._block.modified = True

@@ -23,15 +23,15 @@ HDL path, the repeat count, repeat offset, and the title.
 """
 
 from typing import Dict, Any
-from .name_base import NameBase
+from .name_base import NameBase, Uuid
 
 
 class BlockInst(NameBase):
     """Basic block instance information."""
 
-    def __init__(self, name="", blkid="") -> None:
+    def __init__(self, name: str = "", blkid: Uuid = Uuid("")) -> None:
         """Initialize the group data item."""
-        super().__init__(name, "")
+        super().__init__(name, Uuid(""))
         self.blkid = blkid
         self.address_base = 0
         self.hdl_path = ""
@@ -41,13 +41,9 @@ class BlockInst(NameBase):
     def __repr__(self) -> str:
         return f"BlockInst({self.name}, {self.blkid})"
 
-    def __ne__(self, other) -> bool:
-        """Compare for inequality."""
-        return not self.__eq__(other)
-
     def json_decode(self, data: Dict[str, Any]) -> None:
         self.name = data["name"]
-        self.uuid = data["id"]
+        self.uuid = Uuid(data["id"])
         self.blkid = data["blkid"]
         self.address_base = int(data["address_base"], 0)
         self.hdl_path = data["hdl_path"]

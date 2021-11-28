@@ -24,6 +24,7 @@ Manages overriding parameter values from a lower level.
 from typing import Dict, Any
 from .param_data import ParameterFinder
 from .param_value import ParamValue
+from .name_base import Uuid
 
 
 class Overrides:
@@ -31,15 +32,17 @@ class Overrides:
 
     def __init__(self):
         self.finder = ParameterFinder()
-        self.path: str = ""
-        self.parameter: str = ""
+        self.path: Uuid = Uuid("")
+        self.parameter: Uuid = Uuid("")
         self.value = ParamValue()
         self.temp_name = ""
 
     def __repr__(self) -> str:
         param = self.finder.find(self.parameter)
         pval_str = str(self.value)
-        return f"Overrides(path={self.path}, parameter={param.name}, value={pval_str})"
+        if param:
+            return f"Overrides(path={self.path}, parameter={param.name}, value={pval_str})"
+        return f"Overrides(path={self.path}, parameter=<unknown>, value={pval_str})"
 
     def json(self) -> Dict[str, Any]:
         "Convert data to a dict for JSON export"
@@ -53,8 +56,8 @@ class Overrides:
     def json_decode(self, data: Dict[str, Any]) -> None:
         "Load the object from JSON data"
 
-        self.path = data["path"]
-        self.parameter = data["parameter"]
+        self.path = Uuid(data["path"])
+        self.parameter = Uuid(data["parameter"])
         val = data["value"]
         if isinstance(val, int):
             self.value = ParamValue(val)

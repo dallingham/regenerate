@@ -252,7 +252,8 @@ class RegParser(XmlBase):
         else:
             try:
                 self.__reset_info = ResetInfo(
-                    int(attrs.get("type", "0")), attrs.get("parameter", "")
+                    ResetType(int(attrs.get("type", "0"))),
+                    attrs.get("parameter", ""),
                 )
             except ValueError:
                 self.__reset_info = ResetInfo(ResetType.NUMERIC, "")

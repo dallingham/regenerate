@@ -23,7 +23,7 @@ Manages the instance of a register within a group.
 from typing import Union, Dict, Any
 
 from .param_value import ParamValue
-from .name_base import NameBase
+from .name_base import NameBase, Uuid
 
 
 class RegisterInst(NameBase):
@@ -31,7 +31,7 @@ class RegisterInst(NameBase):
 
     def __init__(
         self,
-        rset: str = "",
+        rset: Uuid = Uuid(""),
         inst: str = "",
         offset: int = 0,
         repeat: int = 1,
@@ -42,16 +42,16 @@ class RegisterInst(NameBase):
         array: bool = False,
         single_decode: bool = False,
     ) -> None:
-        super().__init__(inst, "")
+        super().__init__(inst, Uuid(""))
         self.regset_id = rset
         self.offset = offset
         self.repeat = ParamValue(repeat)
         self.repeat_offset = repeat_offset
         self.hdl = hdl
-        self.no_uvm = no_uvm
-        self.no_decode = no_decode
-        self.array = array
-        self.single_decode = single_decode
+        self._no_uvm = no_uvm
+        self._no_decode = no_decode
+        self._array = array
+        self._single_decode = single_decode
 
     def __repr__(self) -> str:
         return f"RegisterInst(name={self.name}, uuid={self.uuid})"
@@ -102,8 +102,8 @@ class RegisterInst(NameBase):
         self._array = bool(val)
 
     def json_decode(self, data: Dict[str, Any]) -> None:
-        self.regset_id = data["regset_id"]
-        self._id = data["uuid"]
+        self.regset_id = Uuid(data["regset_id"])
+        self._id = Uuid(data["uuid"])
         self.name = data["name"]
         self.offset = data["offset"]
         self.repeat = ParamValue()

@@ -21,7 +21,6 @@
 Provides the signals for a module
 """
 from typing import Dict, Any
-from regenerate.settings import rules
 
 DEF_CLK_NAME = "CLK"
 DEF_RST_NAME_P = "RST"
@@ -56,13 +55,9 @@ class Signals:
 
     def __init__(self):
         self.clock_name = DEF_CLK_NAME
-        self._interface = rules.get(
-            "rules", "interface_default", DEF_INTERFACE
-        )
-        self._modport = rules.get("rules", "modport_default", DEF_MODPORT)
-        self._imodport = rules.get(
-            "rules", "initiator_modport_default", DEF_IMODPORT
-        )
+        self._interface = DEF_INTERFACE
+        self._modport = DEF_MODPORT
+        self._imodport = DEF_IMODPORT
         self.write_data_name = DEF_WDATA_NAME
         self.read_data_name = DEF_RDATA_NAME
         self.write_strobe_name = DEF_WR_NAME

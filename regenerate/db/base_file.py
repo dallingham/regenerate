@@ -28,13 +28,15 @@ import json
 
 from .logger import LOGGER
 from .const import BLK_EXT
-from .name_base import NameBase
+from .name_base import NameBase, Uuid
 
 
 class BaseFile(NameBase):
     "Base class for file based data"
 
-    def __init__(self, name: str = "", uuid: str = "", filename: str = ""):
+    def __init__(
+        self, name: str = "", uuid: Uuid = Uuid(""), filename: str = ""
+    ):
         super().__init__(name, uuid)
 
         self._modified = False
@@ -63,11 +65,11 @@ class BaseFile(NameBase):
         return self._modified
 
     @modified.setter
-    def modified(self, value: bool):
+    def modified(self, value: bool) -> None:
         """Clears the modified flag"""
         self._modified = bool(value)
 
-    def save_json(self, data: Dict[str, Any], path: Path):
+    def save_json(self, data: Dict[str, Any], path: Path) -> None:
         "Saves the data to the specifed file in JSON format"
         try:
             with path.open("w") as ofile:

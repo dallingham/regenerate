@@ -22,7 +22,7 @@ Provides the definition of a Bit Field.
 """
 
 from typing import List, Optional, Dict, Any
-from .name_base import NameBase
+from .name_base import NameBase, Uuid
 from .enums import BitType, ResetType
 from .bit_values import BitValues
 from .param_value import ParamValue
@@ -46,9 +46,11 @@ class BitFieldFlags(JSONEncodable):
         self.can_randomize: bool = False
         self.volatile: bool = False
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
         "Check for equality"
 
+        if not isinstance(other, BitFieldFlags):
+            return NotImplemented
         return (
             self.is_error_field == other.is_error_field
             and self.can_randomize == other.can_randomize
@@ -122,7 +124,7 @@ class BitField(NameBase):
     def __init__(self, stop: int = 0, start: int = 0):
         """Initialize the bitfield."""
 
-        super().__init__("", "")
+        super().__init__("", Uuid(""))
         self.modified = False
 
         self._input_signal = ""
@@ -130,7 +132,7 @@ class BitField(NameBase):
 
         self.field_type = BitType.READ_ONLY
 
-        self.flags = BitFieldFlags()
+        self.flags: BitFieldFlags = BitFieldFlags()
 
         self.lsb = start
         self._msb = ParamValue(stop)
@@ -143,7 +145,7 @@ class BitField(NameBase):
 
         self._reset_value = 0
         self.reset_input = ""
-        self.reset_parameter = ""
+        self.reset_parameter = Uuid("")
         self.reset_type = ResetType.NUMERIC
 
         self.values: List[BitValues] = []
@@ -163,18 +165,22 @@ class BitField(NameBase):
         return self._msb
 
     @msb.setter
-    def msb(self, value: ParamValue):
+    def msb(self, value: ParamValue) -> None:
         "Sets the MSB"
 
         self._msb = value
 
-    @staticmethod
-    def set_parameters(values) -> None:
-        """Set the parameter value list."""
-        BitField.PARAMETERS = values
+    # @staticmethod
+    # def set_parameters(values) -> None:
+    #     """Set the parameter value list."""
+    #     print(type(values))
+    #     BitField.PARAMETERS = values
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         """Compare for equality between two bitfieids."""
+
+        if not isinstance(other, BitField):
+            return NotImplemented
         return (
             all(
                 getattr(self, i) == getattr(other, i)
@@ -183,14 +189,21 @@ class BitField(NameBase):
             and self.flags == other.flags
         )
 
-    def __ne__(self, other) -> bool:
+    def __ne__(self, other: object) -> bool:
         """Compare for inequality between two bitfields."""
+
+        if not isinstance(other, BitField):
+            return NotImplemented
         return not self.__eq__(other)
 
-    def __lt__(self, other) -> bool:
+    def __lt__(self, other: object) -> bool:
+        if not isinstance(other, BitField):
+            return NotImplemented
         return self.lsb < other.lsb
 
-    def __gt__(self, other) -> bool:
+    def __gt__(self, other: object) -> bool:
+        if not isinstance(other, BitField):
+            return NotImplemented
         return self.lsb > other.lsb
 
     def is_constant(self) -> bool:
@@ -280,7 +293,7 @@ class BitField(NameBase):
         return self.msb
 
     @stop_position.setter
-    def stop_position(self, value: ParamValue):
+    def stop_position(self, value: ParamValue) -> None:
         "Set the most significant bit of the field."
         self.msb = value
 
@@ -290,7 +303,7 @@ class BitField(NameBase):
         return self.lsb
 
     @start_position.setter
-    def start_position(self, value: int):
+    def start_position(self, value: int) -> None:
         "Set the least significant bit of the field."
         self.lsb = value
 
@@ -368,7 +381,7 @@ class BitField(NameBase):
         "Decodes the JSON compatible dictionary into the object"
 
         self.name = data["name"]
-        self.uuid = data["uuid"]
+        self.uuid = Uuid(data["uuid"])
         self.description = data["description"]
 
         self._input_signal = data["input_signal"]
@@ -388,9 +401,9 @@ class BitField(NameBase):
         self.reset_input = data["reset_input"]
         rst_param = data["reset_parameter"]
         if rst_param is None:
-            self.reset_parameter = ""
+            self.reset_parameter = Uuid("")
         else:
-            self.reset_parameter = rst_param
+            self.reset_parameter = Uuid(rst_param)
 
         self.reset_type = data["reset_type"]
 

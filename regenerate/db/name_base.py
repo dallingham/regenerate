@@ -22,7 +22,10 @@ Provides the base cass for the register and bitfield
 """
 
 import secrets
+from typing import NewType
 from .json_base import JSONEncodable
+
+Uuid = NewType("Uuid", str)
 
 
 class NameBase(JSONEncodable):
@@ -30,24 +33,10 @@ class NameBase(JSONEncodable):
     Provides the command items between a Register and a BitField
     """
 
-    __slots__ = ("_name", "_id", "description")
-
-    def __init__(self, name: str = "", id_val: str = ""):
+    def __init__(self, name: str = "", id_val: Uuid = Uuid("")):
         self._name = name
-        self._id = id_val
+        self._id: Uuid = id_val
         self.description = ""
-
-    def __eq__(self, other):
-        """Compare for equality between two bitfieids."""
-        return (
-            self._name == other._name
-            and self._id == other._id
-            and self.description == other.description
-        )
-
-    def __ne__(self, other) -> bool:
-        """Compare for inequality between two bitfields."""
-        return not self.__eq__(other)
 
     @property
     def name(self) -> str:
@@ -66,15 +55,15 @@ class NameBase(JSONEncodable):
         self._name = name.strip()
 
     @property
-    def uuid(self) -> str:
+    def uuid(self) -> Uuid:
         """Returns the UUID or creates a new unique one if one doesn't exist"""
 
         if self._id == "":
-            self._id = secrets.token_hex(6)
+            self._id = Uuid(secrets.token_hex(6))
         return self._id
 
     @uuid.setter
-    def uuid(self, value: str) -> None:
+    def uuid(self, value: Uuid) -> None:
         """Sets the UUID"""
 
         self._id = value

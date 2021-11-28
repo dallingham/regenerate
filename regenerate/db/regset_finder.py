@@ -23,12 +23,13 @@ Register finder singleton
 
 from typing import Dict, Optional
 from .register_db import RegisterDb
+from .name_base import Uuid
 
 
 class RegsetFinder:
     "Singleton to allow the searching for register set by name or id"
 
-    idmap: Dict[str, RegisterDb] = {}
+    idmap: Dict[Uuid, RegisterDb] = {}
     filemap: Dict[str, RegisterDb] = {}
 
     def __new__(cls):
@@ -48,7 +49,7 @@ class RegsetFinder:
         "Display string"
         return "RegsetFinder()"
 
-    def find_by_id(self, uuid: str) -> Optional[RegisterDb]:
+    def find_by_id(self, uuid: Uuid) -> Optional[RegisterDb]:
         "Find the register set by UUID"
         return self.idmap.get(uuid)
 

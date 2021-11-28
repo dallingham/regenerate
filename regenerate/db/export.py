@@ -20,7 +20,7 @@
 """
 Provides the export rules for the builder
 """
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from .json_base import JSONEncodable
 
 
@@ -30,7 +30,12 @@ class ExportData(JSONEncodable):
     the exporter name (option) and the destination file (path).
     """
 
-    def __init__(self, exporter: str = "", target: str = "", options=None):
+    def __init__(
+        self,
+        exporter: str = "",
+        target: str = "",
+        options: Optional[Dict[str, str]] = None,
+    ):
         self.exporter: str = exporter
         self.target: str = str(target)
         self.options: Dict[str, str] = {}

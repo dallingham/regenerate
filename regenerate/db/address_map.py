@@ -22,14 +22,14 @@ Contains the data in the address map
 """
 
 from typing import List, Union, Dict, Any
-from .name_base import NameBase
+from .name_base import NameBase, Uuid
 
 
 class AddressMap(NameBase):
     """Address map data"""
 
     def __init__(self, name: str = "", base: int = 0, width: int = 0):
-        super().__init__(name, "")
+        super().__init__(name, Uuid(""))
         self.base = base
         self.width = width
         self._fixed = False
@@ -51,7 +51,7 @@ class AddressMap(NameBase):
         "Convert the incoming JSON data to the class variables"
 
         self.name = data["name"]
-        self.uuid = data["uuid"]
+        self.uuid = Uuid(data["uuid"])
         self.base = int(data["base"], 0)
         self.width = data["width"]
         self.fixed = data["fixed"]

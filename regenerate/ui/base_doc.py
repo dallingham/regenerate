@@ -52,7 +52,7 @@ class DeleteVerify(Gtk.MessageDialog):
             f'<span weight="bold" size="larger">Delete "{name}"</span>'
         )
         self.format_secondary_markup(
-            f"Do you wish to permanently delete this page?"
+            "Do you wish to permanently delete this page?"
         )
         self.add_button("Delete Page", self.DISCARD)
         self.add_button(Gtk.STOCK_CANCEL, self.CANCEL)

@@ -23,11 +23,11 @@ register, including the list of bit fields.
 """
 
 from typing import List, Dict, Optional, Any, Union
-from .name_base import NameBase
+from .name_base import NameBase, Uuid
 from .enums import ResetType, ShareType
 from .bitfield import BitField
-from .param_data import ParameterData
 from .param_value import ParamValue
+from .param_container import ParameterContainer
 
 
 class RegisterFlags:
@@ -185,18 +185,6 @@ class RegisterFlags:
 class Register(NameBase):
     """Defines a hardware register."""
 
-    __slots__ = (
-        "_bit_fields",
-        "dimension",
-        "_parameter_list",
-        "_token",
-        "address",
-        "flags",
-        "ram_size",
-        "share",
-        "width",
-    )
-
     _full_compare = (
         "address",
         "ram_size",
@@ -222,12 +210,12 @@ class Register(NameBase):
 
     def __init__(self, address: int = 0, width: int = 32, name: str = ""):
 
-        super().__init__(name, "")
+        super().__init__(name, Uuid(""))
 
         self.dimension = ParamValue(1)
         self._token = ""
         self._bit_fields: Dict[int, BitField] = {}
-        self._parameter_list: List[ParameterData] = []
+        self._parameter_list: ParameterContainer = ParameterContainer()
 
         self.flags = RegisterFlags()
         self.address = address
@@ -248,22 +236,29 @@ class Register(NameBase):
 
         return hash(self.uuid)
 
-    def __ne__(self, other) -> bool:
+    def __ne__(self, other: object) -> bool:
         """Provides the not equal function"""
 
+        if not isinstance(other, Register):
+            return NotImplemented
         return not self.__eq__(other)
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Provides the equal function"""
 
+        if not isinstance(other, Register):
+            return NotImplemented
         if not all(
             getattr(self, i) == getattr(other, i) for i in self._full_compare
         ):
             return False
         return self.get_bit_fields() == other.get_bit_fields()
 
-    def array_cmp(self, other) -> bool:
+    def array_cmp(self, other: object) -> bool:
         """Array compare"""
+
+        if not isinstance(other, Register):
+            return NotImplemented
 
         if other is None:
             return False
@@ -275,9 +270,11 @@ class Register(NameBase):
             return False
         return self.get_bit_fields() == other.get_bit_fields()
 
-    def group_cmp(self, other) -> bool:
+    def group_cmp(self, other: object) -> bool:
         "Group compare"
 
+        if not isinstance(other, Register):
+            return NotImplemented
         if not all(
             getattr(self, i) == getattr(other, i) for i in self._array_compare
         ):
@@ -458,7 +455,8 @@ class Register(NameBase):
                 val |= 1 << i
         return val
 
-    def set_parameters(self, parameter_list: List[ParameterData]) -> None:
+    #    def set_parameters(self, parameter_list: List[ParameterData]) -> None:
+    def set_parameters(self, parameter_list: ParameterContainer) -> None:
         """Sets the parameter list"""
         self._parameter_list = parameter_list
 
@@ -482,7 +480,7 @@ class Register(NameBase):
 
     def json_decode(self, data: Dict[str, Any]) -> None:
         self.name = data["name"]
-        self._id = data["uuid"]
+        self._id = Uuid(data["uuid"])
         self.description = data["description"]
         self.dimension = ParamValue()
         self.dimension.json_decode(data["dimension"])

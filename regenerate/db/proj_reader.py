@@ -27,6 +27,7 @@ from pathlib import Path
 from typing import List, Dict, Union
 import xml.parsers.expat
 
+from .name_base import Uuid
 from .xml_base import XmlBase
 from .address_map import AddressMap
 from .block import Block
@@ -146,7 +147,7 @@ class ProjectReader(XmlBase):
         sname = attrs["set"]
 
         data = RegisterInst(
-            sname,
+            Uuid(sname),
             attrs.get("inst", sname),
             int(attrs["offset"], 16),
             int(attrs["repeat"]),

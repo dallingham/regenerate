@@ -25,6 +25,7 @@ ovalues based of the default value and any overrides.
 from typing import Dict, Any
 
 from .param_data import ParameterData, ParameterFinder
+from .name_base import Uuid
 
 
 class ParameterResolver:
@@ -38,19 +39,19 @@ class ParameterResolver:
         return cls.instance
 
     top_overrides: Dict[str, Dict[str, Any]] = {}
-    reginst_overrides: Dict[str, Dict[str, int]] = {}
-    blkinst_id = ""
-    reginst_id = ""
+    reginst_overrides: Dict[str, Dict[str, Any]] = {}
+    blkinst_id = Uuid("")
+    reginst_id = Uuid("")
 
     def __init__(self):
         ...
 
-    def set_reginst(self, uuid: str) -> None:
+    def set_reginst(self, uuid: Uuid) -> None:
         "Sets the instance name"
 
         self.reginst_id = uuid
 
-    def set_blkinst(self, uuid: str) -> None:
+    def set_blkinst(self, uuid: Uuid) -> None:
         "Sets the instance name"
 
         self.blkinst_id = uuid
@@ -67,7 +68,7 @@ class ParameterResolver:
         return "ParameterResolver()"
 
     def add_regset_override(
-        self, reginst_id: str, param_id: str, data: int
+        self, reginst_id: Uuid, param_id: Uuid, data  # ParamValue
     ) -> None:
         "Adds an override for a parameter in a register set"
         if reginst_id not in self.reginst_overrides:
@@ -76,7 +77,7 @@ class ParameterResolver:
             self.reginst_overrides[reginst_id][param_id] = data
 
     def add_blockinst_override(
-        self, blkinst_id: str, param_id: str, data: int
+        self, blkinst_id: Uuid, param_id: Uuid, data  # ParamValue
     ) -> None:
         "Adds an override for a parameter a block instance"
 

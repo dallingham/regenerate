@@ -17,6 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+from typing import List
 from collections import namedtuple
 from regenerate.db import RegProject
 
@@ -31,7 +32,7 @@ DEFAULT_FORMAT = "%(G)s_%(S)s%(D)s_%(R)s"
 
 def full_token(
     group_name: str, reg_name: str, set_name: str, index: int, fmt_string: str
-):
+) -> str:
 
     index_str = f"{index}" if index >= 0 else ""
 
@@ -48,7 +49,7 @@ def full_token(
     return fmt_string % name_data
 
 
-def uvm_name(group_name: str, reg_name: str, set_name: str, index: int):
+def uvm_name(group_name: str, reg_name: str, set_name: str, index: int) -> str:
 
     if index >= 0:
         return "<top>.%s.%s[%d].%s" % (
@@ -64,24 +65,24 @@ def uvm_name(group_name: str, reg_name: str, set_name: str, index: int):
     )
 
 
-def in_groups(name: str, project: RegProject):
+def in_groups(name: str, project: RegProject) -> List[InstData]:
     groups = []
     if name and project:
-        for group in project.block_insts:
-            block = project.blocks[group.blkid]
+        for blkinst in project.block_insts:
+            block = project.blocks[blkinst.blkid]
 
             for regset in [rs for rs in block.regset_insts if rs.name == name]:
                 fmt = DEFAULT_FORMAT
                 groups.append(
                     InstData(
-                        group,
+                        blkinst,
                         regset.name,
-                        group.address_base,
+                        blkinst.address_base,
                         regset.offset,
                         regset.repeat,
                         regset.repeat_offset,
                         fmt,
-                        group.repeat,
+                        blkinst.repeat,
                         block.address_size,
                         regset.array,
                     )

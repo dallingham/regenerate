@@ -146,7 +146,7 @@ class Build(BaseWindow):
         self.__build_top.show_all()
 
     def __add_item_to_list(
-        self, uuid: str, exporter: str, dest: str, options
+        self, uuid: str, exporter: str, dest: str, options: Dict[str, Any]
     ) -> None:
         """Adds the item to the list view."""
 
@@ -158,7 +158,7 @@ class Build(BaseWindow):
             self.__add_prj_item_to_list(exporter, dest, options)
 
     def __add_prj_item_to_list(
-        self, exporter: str, dest: str, options
+        self, exporter: str, dest: str, options: Dict[str, Any]
     ) -> None:
         """
         Adds a target to the list that is dependent on the entire project.
@@ -168,7 +168,9 @@ class Build(BaseWindow):
         """
         local_dest = self.__prj.filename.parent / dest
 
-        mod = file_needs_rebuilt(local_dest, self.__prj, self.__prj.regsets)
+        mod = file_needs_rebuilt(
+            str(local_dest), self.__prj, self.__prj.regsets
+        )
         self.__modlist.append(mod)
         info = self.__optmap[exporter]
         self.__build_notebook.set_current_page(0)
@@ -187,7 +189,11 @@ class Build(BaseWindow):
         )
 
     def __add_dbase_item_to_list(
-        self, regset_name: str, exporter: str, dest: str, options
+        self,
+        regset_name: str,
+        exporter: str,
+        dest: str,
+        options: Dict[str, Any],
     ) -> None:
         """
         Adds the specific item to the build list. We have to check to see
@@ -217,7 +223,7 @@ class Build(BaseWindow):
         )
 
     def __add_group_item_to_list(
-        self, blkid: str, exporter: str, dest: str, options
+        self, blkid: str, exporter: str, dest: str, options: Dict[str, Any]
     ) -> None:
         """
         Adds the specific item to the build list. We have to check to see
@@ -334,7 +340,7 @@ class Build(BaseWindow):
             menu = self.__builder.get_object("menu")
             menu.popup(None, None, None, 1, 0, Gtk.get_current_event_time())
 
-    def on_select_all_activate(self, _obj) -> None:
+    def on_select_all_activate(self, _obj: Gtk.ImageMenuItem) -> None:
         """
         Called with the menu item has been selected to select all
         targets for rebuild. Simply sets all the modified flags to True.
@@ -343,7 +349,7 @@ class Build(BaseWindow):
         for item in self.__model:
             item[BuildCol.MODIFIED] = True
 
-    def on_unselect_all_activate(self, _obj) -> None:
+    def on_unselect_all_activate(self, _obj: Gtk.ImageMenuItem) -> None:
         """
         Called with the menu item has been selected to unselect all
         targets for rebuild. Simply sets all the modified flags to False.
@@ -352,7 +358,7 @@ class Build(BaseWindow):
         for item in self.__model:
             item[BuildCol.MODIFIED] = False
 
-    def on_select_ood_activate(self, _obj) -> None:
+    def on_select_ood_activate(self, _obj: Gtk.ImageMenuItem) -> None:
         """
         Called when the menu item has been selected to select all out of
         data targets for rebuild. We have already determined this from
@@ -362,7 +368,7 @@ class Build(BaseWindow):
         for (count, item) in enumerate(self.__model):
             item[BuildCol.MODIFIED] = self.__modlist[count]
 
-    def on_run_build_clicked(self, _obj) -> None:
+    def on_run_build_clicked(self, _obj: Gtk.Button) -> None:
         """
         Called when the build button is pressed.
         """
@@ -384,28 +390,11 @@ class Build(BaseWindow):
             self.run_writer(gen, dest)
             item[BuildCol.MODIFIED] = False
 
-    def run_writer(self, gen, dest):
+    def run_writer(self, gen, dest: Path) -> None:
         try:
             gen.write(dest)
         except:
             TraceBack(dest)
-            # show_traceback(dest)
-            # builder = Gtk.Builder()
-            # bfile = os.path.join(INSTALL_PATH, "ui", "traceback.ui")
-            # builder.add_from_file(bfile)
-            # dialog = builder.get_object("traceback_top")
-            # buffer = builder.get_object("textbuffer")
-
-            # fname = builder.get_object("filename")
-            # fname.set_text(str(dest))
-            # data = StringIO()
-            # traceback.print_exc(file=data)
-            # buffer.set_text(data.getvalue())
-            # dialog.show_all()
-            # print("Start Run")
-            # dialog.run()
-            # print("Done Run")
-            # dialog.destroy()
 
     def on_add_build_clicked(self, _obj: Gtk.Button) -> None:
         """
@@ -425,7 +414,7 @@ class Build(BaseWindow):
         export_info: ExportInfo,
         uuid: str,
         project_type: ProjectType,
-        options,
+        options: Dict[str, Any],
     ) -> None:
         """
         Called when a item has been added to the builder, and is used
@@ -449,7 +438,7 @@ class Build(BaseWindow):
             self.__prj.modified = True
             self.__add_item_to_list(uuid, exporter, filename, options)
 
-    def on_remove_build_clicked(self, _obj: Gtk.Button):
+    def on_remove_build_clicked(self, _obj: Gtk.Button) -> None:
         """
         Called when the user had opted to delete an existing rule.
         Deletes the selected rule.
@@ -476,26 +465,24 @@ class Build(BaseWindow):
         if len(store) == 0:
             self.__build_notebook.set_current_page(1)
 
-    def on_close_clicked(self, _obj: Gtk.Button):
+    def on_close_clicked(self, _obj: Gtk.Button) -> None:
         "Closes the builder"
         self.__build_top.destroy()
 
-    def on_help_build_clicked(self, _obj: Gtk.Button):
+    def on_help_build_clicked(self, _obj: Gtk.Button) -> None:
         "Display the help window"
         HelpWindow("builder_help.html", "Using the builder")
 
 
-def base_and_modtime(dbase_full_path: Path):
+def base_and_modtime(dbase_full_path: Path) -> Tuple[str, int]:
     """
     Returns the base name of the register set, along with the modification
     time of the associated file.
     """
-    base = dbase_full_path.stem
     try:
-        db_file_mtime = os.path.getmtime(dbase_full_path)
-        return (base, db_file_mtime)
+        return (dbase_full_path.stem, dbase_full_path.stat().st_mtime_ns)
     except OSError:
-        return (base, 0)
+        return (dbase_full_path.stem, 0)
 
 
 def file_needs_rebuilt(

@@ -23,7 +23,7 @@ project parameters.
 """
 
 from typing import Dict, Any, Optional
-from .name_base import NameBase
+from .name_base import NameBase, Uuid
 
 
 class ParameterFinder:
@@ -36,9 +36,9 @@ class ParameterFinder:
             cls.instance = super(ParameterFinder, cls).__new__(cls)
         return cls.instance
 
-    data_map: Dict[str, "ParameterData"] = {}
+    data_map: Dict[Uuid, "ParameterData"] = {}
 
-    def find(self, uuid: str) -> Optional["ParameterData"]:
+    def find(self, uuid: Uuid) -> Optional["ParameterData"]:
         "Look up the UUID in the data map, returning None if not found"
         return self.data_map.get(uuid)
 
@@ -66,11 +66,12 @@ class ParameterData(NameBase):
         min_val: int = 0,
         max_val: int = 0xFFFF_FFFF,
     ):
-        super().__init__(name, "")
+        super().__init__(name, Uuid(""))
         self.value = value
         self.min_val = min_val
         self.max_val = max_val
-        ParameterFinder().register(self)
+        self.finder = ParameterFinder()
+        self.finder.register(self)
 
     def __repr__(self) -> str:
         return f"ParameterData(name={self.name}, id={self.uuid}, value={self.value})"
@@ -89,10 +90,10 @@ class ParameterData(NameBase):
     def json_decode(self, data: Dict[str, Any]) -> None:
         "Converts a JSON dict into the object"
 
-        ParameterFinder().unregister(self)
-        self.uuid = data["uuid"]
+        self.finder.unregister(self)
+        self.uuid = Uuid(data["uuid"])
         self.name = data["name"]
         self.value = data["value"]
         self.min_val = data["min_val"]
         self.max_val = data["max_val"]
-        ParameterFinder().register(self)
+        self.finder.register(self)

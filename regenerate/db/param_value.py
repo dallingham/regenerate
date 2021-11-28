@@ -21,9 +21,11 @@
 Provides an object that can either be an integer or a parameter
 """
 
+from typing import Union
 from .param_resolver import ParameterResolver
 from .param_data import ParameterFinder
 from .enums import ParamFunc
+from .name_base import Uuid
 
 
 class ParamValue:
@@ -34,7 +36,7 @@ class ParamValue:
         self.offset = 0
         self.func = ParamFunc.NONE
         self.int_value: int = value
-        self.txt_value: str = ""
+        self.txt_value: Uuid = Uuid("")
 
     def __repr__(self) -> str:
         if self.is_parameter:
@@ -113,7 +115,7 @@ class ParamValue:
         self.int_value = value
         self.is_parameter = False
 
-    def set_param(self, uuid: str, offset: int = 0) -> None:
+    def set_param(self, uuid: Uuid, offset: int = 0) -> None:
         "Set the parameter as parameter"
         self.txt_value = uuid
         self.offset = offset

@@ -35,15 +35,15 @@ class ParameterContainer:
         """Returns the parameter list"""
         return self._parameters
 
-    def add(self, parameter: ParameterData):
+    def add(self, parameter: ParameterData) -> None:
         """Adds a parameter to the list"""
         self._parameters.append(parameter)
 
-    def remove(self, name: str):
+    def remove(self, name: str) -> None:
         """Removes a parameter from the list if it exists"""
         self._parameters = [p for p in self._parameters if p.name != name]
 
-    def set(self, parameter_list: List[ParameterData]):
+    def set(self, parameter_list: List[ParameterData]) -> None:
         """Sets the parameter list"""
         self._parameters = parameter_list
 

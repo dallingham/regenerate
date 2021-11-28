@@ -38,6 +38,7 @@ from .base_file import BaseFile
 from .doc_pages import DocPages
 from .param_data import ParameterData
 from .exceptions import CorruptRegsetFile, IoErrorRegsetFile
+from .name_base import Uuid
 
 
 class RegisterDb(BaseFile):
@@ -48,7 +49,7 @@ class RegisterDb(BaseFile):
     def __init__(self, filename=None):
         super().__init__("", "")
         self.descriptive_title = ""
-        self._registers: Dict[str, Register] = {}
+        self._registers: Dict[Uuid, Register] = {}
         self.parameters = ParameterContainer()
         self.exports: List[ExportData] = []
 
@@ -112,7 +113,7 @@ class RegisterDb(BaseFile):
         """Returns the register keys, which is the address of the register"""
         return iter(sorted(self._registers.values(), key=lambda a: a.address))
 
-    def get_register(self, key: str) -> Optional[Register]:
+    def get_register(self, key: Uuid) -> Optional[Register]:
         """
         Returns the register from the specified key, which should be the
         address.
@@ -136,7 +137,7 @@ class RegisterDb(BaseFile):
         else:
             self.read_json(filename)
 
-    def read_xml(self, filename: Path):
+    def read_xml(self, filename: Path) -> "RegisterDb":
         """Reads the XML file, loading the databsae."""
 
         LOGGER.info("Reading XML register file %s", str(filename))
@@ -146,7 +147,7 @@ class RegisterDb(BaseFile):
             parser.parse(ifile)
         return self
 
-    def read_json(self, filename: Path):
+    def read_json(self, filename: Path) -> "RegisterDb":
         """Reads the JSON file, loading the databsae."""
 
         self.filename = filename.resolve()
@@ -160,8 +161,6 @@ class RegisterDb(BaseFile):
             raise CorruptRegsetFile(self.filename.name, str(msg))
         except OSError as msg:
             raise IoErrorRegsetFile(self._filename.name, msg)
-        #        except IOError as msg:
-        #            raise IoErrorRegsetFile(self.filename.name, str(msg))
         return self
 
     def loads(self, data, filename):
@@ -186,10 +185,12 @@ class RegisterDb(BaseFile):
 
         pnames = self.doc_pages.get_page_names()
         if pnames:
-            return self.doc_pages.get_page(pnames[0])[0]
+            data = self.doc_pages.get_page(pnames[0])
+            if data:
+                return data[0]
         return ""
 
-    def add_parameter(self, new_param: ParameterData):
+    def add_parameter(self, new_param: ParameterData) -> None:
         "Adds a parameter to the register set"
 
         self.parameters.add(new_param)
@@ -243,7 +244,8 @@ class RegisterDb(BaseFile):
             "use_interface": self.use_interface,
             "register_inst": [reg for index, reg in self._registers.items()],
         }
-        data["exports"] = []
+        export_list = []
+        #        data["exports"] = []
 
         for exp in self.exports:
             info = {
@@ -251,8 +253,8 @@ class RegisterDb(BaseFile):
                 "target": os.path.relpath(exp.target, self.filename.parent),
                 "options": exp.options,
             }
-            data["exports"].append(info)
-
+            export_list.append(info)
+        data["exports"] = export_list
         return data
 
     def json_decode(self, data: Dict[str, Any]) -> None:
@@ -265,7 +267,7 @@ class RegisterDb(BaseFile):
         self.ports = ports
 
         self.name = data["name"]
-        self._id = data["uuid"]
+        self._id = Uuid(data["uuid"])
         self.array_is_reg = data["array_is_reg"]
         self.memory = data.get("memory", False)
         self.coverage = data["coverage"]

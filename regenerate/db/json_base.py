@@ -46,6 +46,7 @@ class JSONEncodable:
     def json_decode(self, data: Dict[str, Any]) -> None:
         """Converts the dictionary back into local variables"""
 
+        key = ""
         try:
             for key in data:
                 self.__setattr__(key, data[key])

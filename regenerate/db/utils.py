@@ -27,9 +27,10 @@ import json
 from operator import methodcaller
 
 from .logger import LOGGER
+from .reg_project import RegProject
 
 
-def save_json(data: Dict[str, Any], path: Path):
+def save_json(data: Dict[str, Any], path: Path) -> None:
     "Saves the data to the specifed file in JSON format"
     try:
         with path.open("w") as ofile:
@@ -41,7 +42,7 @@ def save_json(data: Dict[str, Any], path: Path):
 
 
 def get_register_paths(
-    project: "RegProject",
+    project: RegProject,
 ) -> Dict[str, Tuple[str, str, str]]:
     "Builds the (blk_inst, reg_inst, reg_name) tuple for each register"
 

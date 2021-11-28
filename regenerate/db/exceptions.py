@@ -22,9 +22,6 @@ Provides the exceptions for reporting and handling I/O
 """
 
 
-from typing import Type
-
-
 class CorruptProjectFile(Exception):
     "Syntax error in the project file"
 
