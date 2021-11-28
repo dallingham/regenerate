@@ -161,13 +161,13 @@ class BlockTab:
                 )
             )
 
+        self._update_block_selection()
         self._block_name_obj.set_sensitive(self._block is not None)
         self._block_descr_obj.set_sensitive(self._block is not None)
         self._block_size_obj.set_sensitive(self._block is not None)
 
         self._overrides_list.update_display()
         self._build_add_regset_menu()
-        self._update_block_selection()
 
     def clear_flags(self) -> None:
         "Updates the sidebar to set flags correctly"
