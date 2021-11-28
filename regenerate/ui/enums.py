@@ -39,11 +39,13 @@ class InstCol(IntEnum):
 class AddrCol(IntEnum):
     """Address columns for the AddressMaps"""
 
-    NAME = 0
-    BASE = 1
-    FLAGS = 2
-    WIDTH = 3
-    OBJ = 4
+    ICON = 0
+    NAME = 1
+    BASE = 2
+    FLAGS = 3
+    WIDTH = 4
+    TOOLTIP = 5
+    OBJ = 6
 
 
 class BitCol(IntEnum):

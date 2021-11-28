@@ -267,6 +267,7 @@ package {{prj.short_name}}_reg_pkg;
 	{%- endif %}
         {%- set ind_access = individual_access(field, reg) %}
         {%- set access = ACCESS_MAP[field.field_type] %}
+
          {{fix_name(field)}}.configure(
 	    .parent(this),
 	    .size({{field.width}}),
@@ -338,7 +339,7 @@ package {{prj.short_name}}_reg_pkg;
 {% endfor %}
 
 
-/*--------------------------------------------------------------------------
+  /*--------------------------------------------------------------------------
    *
    * Regset instantiations
    *

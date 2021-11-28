@@ -297,7 +297,11 @@ class Verilog(RegsetWriter):
                 for lower in range(0, register.width, size):
                     if field.msb.is_parameter:
                         finder = ParameterFinder()
-                        msb = finder.find(field.msb.txt_value)
+                        param = finder.find(field.msb.txt_value)
+                        if param:
+                            msb = param.value
+                        else:
+                            msb = 0
                     else:
                         msb = field.msb.resolve()
                     if in_range(field.lsb, msb, lower, lower + size - 1):
@@ -367,8 +371,6 @@ class Verilog(RegsetWriter):
         read_address_selects = build_read_address_selects(
             self._regset, word_fields, self._cell_info
         )
-
-        # TODO: fix 64 bit registers with 32 bit width
 
         signal_list = self.build_signal_list()
         reg_data_list = self.build_flop_info()
@@ -698,9 +700,9 @@ def build_output_signals(
 ) -> List[Scalar]:
     "Builds the output signal list"
 
-    scalar_ports = []
+    scalar_ports: List[Tuple[str, str, str]] = []
     array_ports: Dict[str, list] = defaultdict(list)
-    dim = {}
+    dim: Dict[str, str] = {}
     signals = []
 
     reg_list = [
@@ -720,42 +722,20 @@ def build_output_signals(
             ):
                 continue
 
-            sig = field.output_signal
-            root = sig.split("[")
-            wild = sig.split("*")
-            if len(root) == 1:
-                if field.msb.is_parameter:
-                    scalar_ports.append(
-                        (
-                            sig,
-                            f"[{field.msb.int_str()}:{field.lsb}]",
-                            reg.dimension.param_name(),
-                        )
-                    )
-                elif field.msb.resolve() == field.lsb:
-                    scalar_ports.append((sig, "", reg.dimension.param_name()))
-                else:
-                    dim[sig] = reg.dimension.param_name()
-                    for i in range(field.lsb, field.msb.resolve() + 1):
-                        array_ports[sig].append(i)
-            elif len(wild) > 1:
-                dim[root[0]] = reg.dimension.param_name()
-                for i in range(field.lsb, field.msb.resolve() + 1):
-                    array_ports[root[0]].append(i)
-            else:
-                match = BUS_SLICE.match(sig)
-                if match:
-                    grp = match.groups()
-                    for i in range(int(grp[1]), int(grp[2])):
-                        array_ports[grp[0]].append(i)
-                    continue
-
-                match = BIT_SLICE.match(sig)
-                if match:
-                    grp = match.groups()
-                    dim[grp[0]] = reg.dimension.param_name()
-                    array_ports[grp[0]].append(int(grp[1]))
-                    continue
+            if not is_subscripted(field.output_signal):
+                add_scalar_output_signal(
+                    field, reg, scalar_ports, array_ports, dim
+                )
+            elif is_wildcard(field.output_signal):
+                add_wildcards(
+                    field.output_signal, dim, reg, field, array_ports
+                )
+            elif add_output_signal_bus_slice(field.output_signal, array_ports):
+                continue
+            elif add_output_signal_bit_slice(
+                field.output_signal, reg, dim, array_ports
+            ):
+                continue
 
     for key in array_ports:
         msb = max(array_ports[key])
@@ -765,10 +745,88 @@ def build_output_signals(
         else:
             scalar_ports.append((key, f"[{msb}:{lsb}]", dim[key]))
 
-    for (name, vect, dim) in scalar_ports:
-        signals.append(make_scalar(name, vect, dim))
+    for (name, vect, dimension) in scalar_ports:
+        signals.append(make_scalar(name, vect, dimension))
 
     return sorted(signals)
+
+
+def is_subscripted(signal_name: str):
+    "Returns True if the signal name contains bit selects"
+
+    return signal_name.find("[") != -1
+
+
+def is_wildcard(signal_name: str) -> bool:
+    "Returns True if the signal name contains a wildcard (*)"
+
+    return signal_name.find("*") != -1
+
+
+def add_scalar_output_signal(
+    field: BitField, reg: Register, scalar_ports, array_ports, dim
+):
+    "Adds the scalar output signal"
+
+    if field.msb.is_parameter:
+        scalar_ports.append(
+            (
+                field.output_signal,
+                f"[{field.msb.int_str()}:{field.lsb}]",
+                reg.dimension.param_name(),
+            )
+        )
+    elif field.msb.resolve() == field.lsb:
+        scalar_ports.append(
+            (field.output_signal, "", reg.dimension.param_name())
+        )
+    else:
+        dim[field.output_signal] = reg.dimension.param_name()
+        for i in range(field.lsb, field.msb.resolve() + 1):
+            array_ports[field.output_signal].append(i)
+
+
+def add_wildcards(
+    signal_name: str,
+    dim: Dict[str, str],
+    reg: Register,
+    field: BitField,
+    array_ports,
+):
+    """
+    Adds signals based on the wildcard - matching the indexes to the field
+    msb/lsb range.
+    """
+    root = signal_name.split("[")
+    dim[root[0]] = reg.dimension.param_name()
+    for i in range(field.lsb, field.msb.resolve() + 1):
+        array_ports[root[0]].append(i)
+
+
+def add_output_signal_bus_slice(sig: str, array_ports) -> bool:
+    "Adds the bus slices to the output list"
+
+    match = BUS_SLICE.match(sig)
+    if match:
+        grp = match.groups()
+        for i in range(int(grp[1]), int(grp[2])):
+            array_ports[grp[0]].append(i)
+        return True
+    return False
+
+
+def add_output_signal_bit_slice(
+    sig: str, reg: Register, dim, array_ports
+) -> bool:
+    "Adds the bit slices to the output list"
+
+    match = BIT_SLICE.match(sig)
+    if match:
+        grp = match.groups()
+        dim[grp[0]] = reg.dimension.param_name()
+        array_ports[grp[0]].append(int(grp[1]))
+        return True
+    return False
 
 
 def make_scalar(name, vect, dim) -> Scalar:

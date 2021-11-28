@@ -22,14 +22,13 @@ Holds the information for a group. This includes the name, base address,
 HDL path, the repeat count, repeat offset, and the title.
 """
 
-from typing import List, Dict, Union, Any, Optional
+from typing import List, Dict, Any, Optional
 from pathlib import Path
 import os
 import json
 
 from .data_reader import FileReader
 from .overrides import Overrides
-from .const import BLK_EXT
 from .register_inst import RegisterInst
 from .register_db import RegisterDb
 from .doc_pages import DocPages
@@ -138,9 +137,6 @@ class Block(BaseFile):
         except OSError as msg:
             raise IoErrorBlockFile(self._filename.name, msg)
 
-    #        except IOError as msg:
-    #            raise IoErrorBlockFile(self._filename.name, str(msg))
-
     def get_address_size(self) -> int:
         "Returns the size of the address space"
         base = 0
@@ -151,24 +147,23 @@ class Block(BaseFile):
             )
         return base
 
-    def json_decode(self, data: Dict[str, Any]) -> None:
-        "Compare for equality."
+    def _json_decode_reginsts(self, data: List[Any]) -> List[RegisterInst]:
+        "Decode the register instance section of the JSON data"
 
-        self.name = data["name"]
-        self.uuid = data["uuid"]
-        self.description = data["description"]
-        self.address_size = int(data["address_size"], 0)
-        self.doc_pages = DocPages()
-        self.doc_pages.json_decode(data["doc_pages"])
-
-        self.regset_insts = []
-        for rset in data["regset_insts"]:
+        reginst_list = []
+        for rset in data:
             ginst = RegisterInst()
             ginst.json_decode(rset)
-            self.regset_insts.append(ginst)
+            reginst_list.append(ginst)
+        return reginst_list
 
-        self.regsets = {}
-        for key, item in data["regsets"].items():
+    def _json_decode_regsets(
+        self, data: Dict[str, Any]
+    ) -> Dict[str, RegisterDb]:
+        "Decode the register sets section of the JSON data"
+
+        regsets = {}
+        for key, item in data.items():
             filename = Path(self._filename.parent / item["filename"]).resolve()
 
             regset = self.finder.find_by_file(str(filename))
@@ -185,28 +180,48 @@ class Block(BaseFile):
                     raise CorruptRegsetFile(filename.name, str(msg))
                 except OSError as msg:
                     raise IoErrorRegsetFile(self._filename.name, msg)
-                #                except IOError as msg:
-                #                    raise IoErrorRegsetFile(filename.name, str(msg))
 
                 regset.filename = filename
                 regset.json_decode(json_data)
                 self.finder.register(regset)
-            self.regsets[key] = regset
+            regsets[key] = regset
+        return regsets
+
+    def _json_decode_exports(
+        self, data: Optional[List[Dict[str, Any]]]
+    ) -> List[ExportData]:
+        "Decode the exports section of the JSON data"
+
+        exports = []
+        if data:
+            for exp_json in data:
+                exp = ExportData()
+                target = exp_json["target"]
+                exp.target = str((self.filename.parent / target).resolve())
+                exp.options = exp_json["options"]
+                exp.exporter = exp_json["exporter"]
+
+                exports.append(exp)
+        return exports
+
+    def json_decode(self, data: Dict[str, Any]) -> None:
+        "Compare for equality."
+
+        self.name = data["name"]
+        self.uuid = data["uuid"]
+        self.description = data["description"]
+        self.address_size = int(data["address_size"], 0)
+        self.doc_pages = DocPages()
+        self.doc_pages.json_decode(data["doc_pages"])
+
+        self.regset_insts = self._json_decode_reginsts(data["regset_insts"])
+
+        self.regsets = self._json_decode_regsets(data["regsets"])
 
         self.parameters = ParameterContainer()
         self.parameters.json_decode(data["parameters"])
 
-        self.exports = []
-        if "exports" in data:
-            for exp_json in data["exports"]:
-                exp = ExportData()
-                exp.target = str(
-                    Path(self.filename.parent / exp_json["target"]).resolve()
-                )
-                exp.options = exp_json["options"]
-                exp.exporter = exp_json["exporter"]
-
-                self.exports.append(exp)
+        self.exports = self._json_decode_exports(data.get("exports"))
 
         self.overrides = []
         resolver = ParameterResolver()
@@ -217,7 +232,6 @@ class Block(BaseFile):
                 for regset_inst in self.regset_insts:
                     if item.path != regset_inst.uuid:
                         continue
-                    regset = self.regsets[regset_inst.regset_id]
                     self.overrides.append(item)
                     break
         except KeyError:

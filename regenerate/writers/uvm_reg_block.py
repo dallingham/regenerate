@@ -75,7 +75,6 @@ class UVMRegBlockRegisters(ProjectWriter):
     def uvm_address_maps(self) -> List[AddressMap]:
         "Return a list of all the address maps that are not excluded from UVM"
 
-        print(1 / 0)
         if (
             self.options
             and "addrmaps" in self.options
@@ -94,15 +93,14 @@ class UVMRegBlockRegisters(ProjectWriter):
         "Returns the map of block instances to address maps"
 
         group_maps: Dict[BlockInst, Set[AddressMap]] = {}
-        id2blkinst = {}
-        for blkinst in self._project.block_insts:
-            id2blkinst[blkinst.uuid] = blkinst
 
         for map_id in self._project.address_maps:
             addr_map = self._project.address_maps[map_id]
 
             for blkid in addr_map.blocks:
-                blkinst = id2blkinst[blkid]
+                blkinst = self._project.get_blkinst_from_id(blkid)
+                if not blkinst:
+                    continue
                 if blkinst not in group_maps:
                     group_maps[blkinst] = set()
                 group_maps[blkinst].add(addr_map)

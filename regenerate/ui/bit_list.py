@@ -80,7 +80,7 @@ class BitModel(Gtk.ListStore):
         node = self.append(
             row=[
                 None,
-                field.msb.int_str(),
+                field.msb.int_decimal_str(),
                 str(field.lsb),
                 field.name,
                 TYPE2STR[field.field_type][0],
@@ -492,7 +492,7 @@ class BitList:
             field.msb.offset = 0
 
             field.msb.set_int(int(new_text, 0))
-            self.__model[path][BitCol.MSB] = f"{field.msb.int_str()}"
+            self.__model[path][BitCol.MSB] = f"{field.msb.int_decimal_str()}"
             self.__modified()
         except ValueError:
             ...

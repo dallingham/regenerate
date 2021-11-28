@@ -22,7 +22,6 @@ RegProject is the container object for a regenerate project
 """
 
 from collections import defaultdict
-from operator import methodcaller
 from pathlib import Path
 import json
 import os.path
@@ -91,8 +90,6 @@ class RegProject(BaseFile):
         self.regsets: Dict[str, RegisterDb] = {}
 
         self.exports: List[ExportData] = []
-
-        self._modified = False
 
         if path:
             self._filename = Path(path)
@@ -201,7 +198,7 @@ class RegProject(BaseFile):
     def append_register_set_to_list(self, name: Path) -> None:
         "Adds a register set"
 
-        self._modified = True
+        self.modified = True
 
         if self.reader_class is None:
             rdr = FileReader(self._filename)
@@ -237,7 +234,7 @@ class RegProject(BaseFile):
     def remove_register_set(self, uuid: str) -> None:
         """Removes the specified register set from the project."""
 
-        self._modified = True
+        self.modified = True
         regset = self.regsets[uuid]
         del self.regsets[uuid]
 
@@ -269,7 +266,7 @@ class RegProject(BaseFile):
         option - the chosen export option (exporter)
         dest - destination output name
         """
-        self._modified = True
+        self.modified = True
         exp = ExportData(exporter, dest)
         self.exports.append(exp)
 
@@ -284,14 +281,14 @@ class RegProject(BaseFile):
         exporter - the chosen export exporter (exporter)
         dest - destination output name
         """
-        self._modified = True
+        self.modified = True
         self.exports.append(ExportData(exporter, dest, options))
 
     def remove_from_project_export_list(
         self, exporter: str, dest: str
     ) -> None:
         """Removes the export from the project export list"""
-        self._modified = True
+        self.modified = True
         self.exports = [
             exp
             for exp in self.exports
@@ -342,12 +339,9 @@ class RegProject(BaseFile):
     def get_address_maps_used_by_block(self, blk_id: str) -> List[str]:
         """Returns the address maps associated with the specified group."""
 
-        used_in_uvm = set(
-            {m.uuid for m in self.address_maps.values() if m.uvm == 0}
-        )
         map_list = []
         for key in self.address_maps:
-            if key in used_in_uvm and blk_id in self.address_maps[key].blocks:
+            if blk_id in self.address_maps[key].blocks:
                 map_list.append(key)
         return map_list
 
@@ -355,7 +349,7 @@ class RegProject(BaseFile):
         """Changes the name of an address map"""
 
         self.address_maps[map_id].name = new_name
-        self._modified = True
+        self.modified = True
 
     def add_address_map_to_block(self, map_id: str, blk_id: str) -> bool:
         """Adds an address map to a group if it does not already exist"""
@@ -372,13 +366,6 @@ class RegProject(BaseFile):
         """Indicates if the specified address map is at a fixed location"""
         return next(
             (d.fixed for d in self.address_maps.values() if map_id == d.uuid),
-            None,
-        )
-
-    def get_address_uvm(self, map_id: str):
-        """Indicates if the specified address map is at a fixed location"""
-        return next(
-            (d.uvm for d in self.address_maps.values() if map_id == d.uuid),
             None,
         )
 
@@ -419,17 +406,17 @@ class RegProject(BaseFile):
     def add_or_replace_address_map(self, addr_map):
         """Sets the specififed address map"""
 
-        self._modified = True
+        self.modified = True
         self.address_maps[addr_map.uuid] = addr_map
 
     def set_address_map(self, address_map):
         """Sets the specififed address map"""
-        self._modified = True
+        self.modified = True
         self.address_maps[address_map.uuid] = address_map
 
     def set_address_map_block_list(self, map_id: str, new_list: List[str]):
         """Sets the specififed address map"""
-        self._modified = True
+        self.modified = True
         self.address_maps[map_id].blocks = new_list
 
     def remove_address_map(self, map_id: str) -> None:
@@ -441,16 +428,6 @@ class RegProject(BaseFile):
     def files(self):
         """Returns the file list"""
         return tuple(self._filelist)
-
-    @property
-    def modified(self):
-        """Sets the modified flag"""
-        return self._modified
-
-    @modified.setter
-    def modified(self, value: bool):
-        """Clears the modified flag"""
-        self._modified = bool(value)
 
     def change_file_suffix(self, original: str, new: str):
         """Changes the suffix of the files in the file list"""
@@ -656,9 +633,9 @@ class RegProject(BaseFile):
             ...
 
         resolver = ParameterResolver()
-        for override in self.overrides:
+        for override_val in self.overrides:
             resolver.add_blockinst_override(
-                override.path, override.parameter, override.value
+                override_val.path, override_val.parameter, override_val.value
             )
 
     def _load_missing_register_sets(self):

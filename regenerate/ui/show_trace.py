@@ -17,6 +17,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""
+Provides a dialog to hold a traceback should a report fail to genreate.
+"""
+
 from io import StringIO
 import traceback
 import os
@@ -26,6 +30,8 @@ from regenerate.settings.paths import INSTALL_PATH
 
 
 class TraceBack:
+    "Displays traceback information"
+
     def __init__(self, dest: str):
         builder = Gtk.Builder()
         bfile = os.path.join(INSTALL_PATH, "ui", "traceback.ui")
@@ -49,7 +55,9 @@ class TraceBack:
         self.dialog.show_all()
 
     def close_window(self, _button: Gtk.Button) -> None:
+        "Closes the dialog"
         self.dialog.destroy()
 
     def copy_text(self, _button: Gtk.Button) -> None:
+        "Copies the text to the clipboard"
         self.clipboard.set_text(self.data, -1)

@@ -75,6 +75,7 @@ class InstMdl(Gtk.TreeStore):
         obj = self.get_value(node, InstCol.OBJ)
         if obj:
             obj.address_base = int(text, 16)
+        print("Base changed", text)
         self.callback()
 
     def change_repeat(self, path: str, text: str) -> None:

@@ -24,7 +24,6 @@ keeps track of when an output file should be rebuilt.
 import os
 from typing import Tuple, Dict, List, NamedTuple, Any, Optional, Type
 from pathlib import Path
-from io import StringIO
 
 from gi.repository import Gtk, Pango
 from regenerate.settings.paths import INSTALL_PATH, HELP_PATH

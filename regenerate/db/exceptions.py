@@ -17,6 +17,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""
+Provides the exceptions for reporting and handling I/O
+"""
+
+
 from typing import Type
 
 
@@ -59,7 +64,7 @@ class CorruptRegsetFile(Exception):
 class IoErrorProjectFile(Exception):
     "I/O Error accessing the project file"
 
-    def __init__(self, filename: str, error: Type[OSError]):
+    def __init__(self, filename: str, error: OSError):
         super().__init__()
         self.filename = filename
         self.error = error
@@ -71,7 +76,7 @@ class IoErrorProjectFile(Exception):
 class IoErrorBlockFile(Exception):
     "I/O Error accessing the block file"
 
-    def __init__(self, filename: str, error: Type[OSError]):
+    def __init__(self, filename: str, error: OSError):
         super().__init__()
         self.filename = filename
         self.error = error
@@ -83,7 +88,7 @@ class IoErrorBlockFile(Exception):
 class IoErrorRegsetFile(Exception):
     "I/O Error accessing the register set file"
 
-    def __init__(self, filename: str, error: Type[OSError]):
+    def __init__(self, filename: str, error: OSError):
         super().__init__()
         self.filename = filename
         self.error = error

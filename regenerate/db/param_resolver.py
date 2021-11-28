@@ -22,7 +22,7 @@ Provides the ability to resolve parameters into their final integer
 ovalues based of the default value and any overrides.
 """
 
-from typing import Dict
+from typing import Dict, Any
 
 from .param_data import ParameterData, ParameterFinder
 
@@ -37,7 +37,7 @@ class ParameterResolver:
             cls.instance = super(ParameterResolver, cls).__new__(cls)
         return cls.instance
 
-    top_overrides: Dict[str, Dict[str, int]] = {}
+    top_overrides: Dict[str, Dict[str, Any]] = {}
     reginst_overrides: Dict[str, Dict[str, int]] = {}
     blkinst_id = ""
     reginst_id = ""
@@ -70,7 +70,6 @@ class ParameterResolver:
         self, reginst_id: str, param_id: str, data: int
     ) -> None:
         "Adds an override for a parameter in a register set"
-
         if reginst_id not in self.reginst_overrides:
             self.reginst_overrides[reginst_id] = {param_id: data}
         else:
@@ -117,7 +116,9 @@ class ParameterResolver:
             new_val = self.top_overrides[self.blkinst_id][value.txt_value]
             if new_val.is_parameter:
                 new_param = ParameterFinder().find(new_val.txt_value)
-                return new_param.value
+                if new_param:
+                    return new_param.value
+                return 0
             return new_val.int_value
         return value.value
 

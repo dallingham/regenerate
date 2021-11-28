@@ -278,12 +278,12 @@ class BlockTab:
             return
 
         reg_name = self._reg_model[int(path)][0]
+        inst = self._reg_model[int(path)][-1]
         self._reg_model[int(path)][col] = f"0x{int(new_text,0):08x}"
         self._block.modified = True
-        for rset in self._block.regset_insts:
-            if rset.name == reg_name:
-                rset.offset = value
-                self.modified()
+
+        inst.offset = value
+        self.modified()
 
     def _repeat_menu(
         self,

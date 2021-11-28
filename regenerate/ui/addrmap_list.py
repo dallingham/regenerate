@@ -58,7 +58,7 @@ class AddrMapMdl(Gtk.ListStore):
     """
 
     def __init__(self):
-        super().__init__(str, str, str, str, object)
+        super().__init__(str, str, str, str, str, str, object)
 
 
 class AddrMapList:
@@ -67,6 +67,7 @@ class AddrMapList:
     def __init__(self, obj: Gtk.TreeView, callback: Callable):
         self._obj = obj
         self._col: Optional[EditableColumn] = None
+        self._icon: Optional[Gtk.TreeViewColumn] = None
         self._prj: Optional[RegProject] = None
         self._model: Optional[AddrMapMdl] = None
         self._build_instance_table()
@@ -180,6 +181,12 @@ class AddrMapList:
         """
         Builds the columns, adding them to the address map list.
         """
+        self._icon = Gtk.TreeViewColumn(
+            "", Gtk.CellRendererPixbuf(), stock_id=AddrCol.ICON
+        )
+        self._obj.append_column(self._icon)
+        self._obj.set_tooltip_column(AddrCol.TOOLTIP)
+
         column = EditableColumn("Map Name", self._name_changed, AddrCol.NAME)
         column.set_min_width(175)
         column.set_sort_column_id(AddrCol.NAME)
@@ -261,9 +268,10 @@ class AddrMapList:
 
         name = self._create_new_map_name()
         obj = AddressMap(name, 0, 8)
-        node = self._model.append(row=get_row_data(obj))
 
+        node = self._model.append(row=get_row_data(obj))
         path = self._model.get_path(node)
+
         self._callback()
         self._prj.add_or_replace_address_map(obj)
         self._obj.set_cursor(path, self._col, start_editing=True)
@@ -299,10 +307,20 @@ def get_flags(map_obj: AddressMap) -> str:
 
 def get_row_data(map_obj: AddressMap) -> Tuple[str, str, str, str, AddressMap]:
     """Builds the data for the table row"""
+
+    if len(map_obj.blocks):
+        icon = None
+        tooltip = ""
+    else:
+        icon = Gtk.STOCK_DIALOG_WARNING
+        tooltip = "No blocks have been added to the address map"
+
     return (
+        icon,
         map_obj.name,
         f"0x{map_obj.base:08x}",
         get_flags(map_obj),
         INT2SIZE[map_obj.width],
+        tooltip,
         map_obj,
     )

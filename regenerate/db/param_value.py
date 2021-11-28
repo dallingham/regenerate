@@ -67,7 +67,7 @@ class ParamValue:
         return ""
 
     def int_str(self) -> str:
-        "Prints the parameter with integers in decimal format"
+        "Prints the parameter with integers in hex format"
 
         if self.is_parameter:
             pval = ParameterFinder().find(self.txt_value)
@@ -79,6 +79,20 @@ class ParamValue:
                 return f"{pval.name}"
             return ""
         return f"0x{self.int_value:x}"
+
+    def int_decimal_str(self) -> str:
+        "Prints the parameter with integers in decimal format"
+
+        if self.is_parameter:
+            pval = ParameterFinder().find(self.txt_value)
+            if pval:
+                if self.offset > 0:
+                    return f"{pval.name}+{self.offset}"
+                if self.offset < 0:
+                    return f"{pval.name}{self.offset}"
+                return f"{pval.name}"
+            return ""
+        return f"{self.int_value}"
 
     def int_vstr(self) -> str:
         "Prints the parameter with integers in Verilog hex format"

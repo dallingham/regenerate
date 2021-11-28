@@ -97,6 +97,7 @@ class OverridesList:
 
     def update_display(self) -> None:
         "Update parameter names in the display"
+        self.set_parameters(self.prj.parameters.get())
         finder = ParameterFinder()
         for row in self._model:
             data = row[OverrideCol.OBJ]
@@ -105,7 +106,7 @@ class OverridesList:
             new_name = f"{path}.{param.name}"
             if row[OverrideCol.NAME] != new_name:
                 row[OverrideCol.NAME] = new_name
-        self.set_menu()
+        self.set_add_menu()
 
     def populate(self) -> None:
         "Loads the data from the project"
@@ -118,7 +119,7 @@ class OverridesList:
                     path = inst.name
             self._model.append_instance(path, override)
             self._used.add(override.parameter)
-        self.set_menu()
+        self.set_add_menu()
 
     def build_used(self) -> None:
         """
@@ -129,7 +130,7 @@ class OverridesList:
         for row in self._model:
             self._used.add(row[-1].parameter)
 
-    def set_menu(self) -> None:
+    def set_add_menu(self) -> None:
         """
         Sets the menu for the Add button, showing parameters that are
         not yet in the parameter list
@@ -174,7 +175,7 @@ class OverridesList:
         name = self.get_selected()
         self.prj.parameters.remove(name)
         self.remove_selected()
-        self.set_menu()
+        self.set_add_menu()
         self._callback()
 
     def menu_selected(
@@ -195,7 +196,7 @@ class OverridesList:
         self._model.append(row=get_row_data(info[0].name, override))
         self._used.add(override.parameter)
         self.prj.overrides.append(override)
-        self.set_menu()
+        self.set_add_menu()
         self._callback()
 
     def _value_changed(self, _cell, path, new_text, _col) -> None:
@@ -337,7 +338,7 @@ class BlockOverridesList(OverridesList):
                     path = inst.name
             self._model.append_instance(path, override)
             self._used.add(override.parameter)
-        self.set_menu()
+        self.set_add_menu()
 
     def build_overrides_list(self, block: Block) -> None:
         total = 0
@@ -353,7 +354,7 @@ class BlockOverridesList(OverridesList):
         return param_list, total
 
     def update_display(self):
-        self.set_menu()
+        self.set_add_menu()
         for row in self._model:
             data = row[OverrideCol.OBJ]
             path = ""

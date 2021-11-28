@@ -135,7 +135,16 @@ class ParameterList:
             return
 
         name = self._model[path][ParameterCol.NAME]
-        value = int(new_text, 0)
+        try:
+            value = int(new_text, 0)
+        except ValueError:
+            LOGGER.warning(
+                "'%s' is not a valid number number. "
+                "Note: hexidecimal numbers must start with '0x'",
+                new_text,
+            )
+            return
+
         min_val = int(self._model[path][ParameterCol.MIN], 0)
         max_val = int(self._model[path][ParameterCol.MAX], 0)
 
@@ -158,8 +167,17 @@ class ParameterList:
             return
 
         name = self._model[path][ParameterCol.NAME]
-        min_val = int(new_text, 16)
-        value = int(self._model[path][ParameterCol.VALUE], 0)
+
+        try:
+            min_val = int(new_text, 0)
+            value = int(self._model[path][ParameterCol.VALUE], 0)
+        except ValueError:
+            LOGGER.warning(
+                "'%s' is not a valid number number. "
+                "Note: hexidecimal numbers must start with '0x'",
+                new_text,
+            )
+            return
 
         if min_val > value:
             LOGGER.warning(
@@ -179,8 +197,16 @@ class ParameterList:
             return
 
         name = self._model[path][ParameterCol.NAME]
-        max_val = int(new_text, 0)
         value = int(self._model[path][ParameterCol.VALUE], 0)
+        try:
+            max_val = int(new_text, 0)
+        except ValueError:
+            LOGGER.warning(
+                "'%s' is not a valid number number. "
+                "Note: hexidecimal numbers must start with '0x'",
+                new_text,
+            )
+            return
 
         if max_val < value:
             LOGGER.warning(

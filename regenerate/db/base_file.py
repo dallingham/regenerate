@@ -17,12 +17,17 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""
+Provides the base class for JSON based data
+"""
+
 from pathlib import Path
 from typing import Union, Dict, Any
 from operator import methodcaller
 import json
 
 from .logger import LOGGER
+from .const import BLK_EXT
 from .name_base import NameBase
 
 
@@ -32,7 +37,7 @@ class BaseFile(NameBase):
     def __init__(self, name: str = "", uuid: str = "", filename: str = ""):
         super().__init__(name, uuid)
 
-        self.modified = False
+        self._modified = False
         self._filename = Path(filename)
 
     def last_saved(self) -> int:
@@ -52,6 +57,16 @@ class BaseFile(NameBase):
 
         self._filename = Path(value).with_suffix(BLK_EXT)
 
+    @property
+    def modified(self):
+        """Sets the modified flag"""
+        return self._modified
+
+    @modified.setter
+    def modified(self, value: bool):
+        """Clears the modified flag"""
+        self._modified = bool(value)
+
     def save_json(self, data: Dict[str, Any], path: Path):
         "Saves the data to the specifed file in JSON format"
         try:
@@ -64,4 +79,4 @@ class BaseFile(NameBase):
         except FileNotFoundError as msg:
             LOGGER.error(str(msg))
 
-        self.modified = False
+        self._modified = False

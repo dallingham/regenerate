@@ -29,7 +29,6 @@ import xml
 import os
 from pathlib import Path
 from typing import List, Union, Optional, Dict
-import json
 
 from gi.repository import Gtk, GdkPixbuf
 from regenerate.settings.version import PROGRAM_NAME, PROGRAM_VERSION
@@ -641,7 +640,7 @@ class MainWindow(BaseWindow):
         if current_path.suffix != OLD_PRJ_EXT:
             if backup_path.is_file():
                 backup_path.unlink()
-            current_path.rename(backup_path)
+                current_path.rename(backup_path)
 
         try:
             self.prj.save()
