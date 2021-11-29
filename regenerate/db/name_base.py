@@ -18,7 +18,11 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
-Provides the base cass for the register and bitfield
+Provides the base class for the classes with names and UUIDs.
+
+All unique classes (registers, blocks, address maps, parameters, etc.)
+should inherit from this class to that the are all treated in a common
+manner.
 """
 
 import secrets
@@ -30,10 +34,19 @@ Uuid = NewType("Uuid", str)
 
 class NameBase(JSONEncodable):
     """
-    Provides the command items between a Register and a BitField
+    Base class for named objects.
+
+    Provides base for named objects in the design. These items all have a
+    name, a UUID, and a description.
     """
 
     def __init__(self, name: str = "", id_val: Uuid = Uuid("")):
+        """
+        Initialize the base with a name and UUID.
+
+        name - object's name
+        idval - UUID
+        """
         self._name = name
         self._id: Uuid = id_val
         self.description = ""
@@ -41,33 +54,48 @@ class NameBase(JSONEncodable):
     @property
     def name(self) -> str:
         """
-        Returns the value of the _name flag. This cannot be accessed
-        directly, but only via the property 'name'
+        Return the value of the _name flag.
+
+        This cannot be accessed directly, but only via the property 'name'.
         """
         return self._name
 
     @name.setter
     def name(self, name: str) -> None:
         """
-        Sets the __name flag. This cannot be accessed directly, but only
-        via the property 'name'
+        Set the _name value.
+
+        This cannot be accessed directly, but only via the property 'name'.
+        This function strips off leading and trailing spaces.
         """
         self._name = name.strip()
 
     @property
     def uuid(self) -> Uuid:
-        """Returns the UUID or creates a new unique one if one doesn't exist"""
+        """
+        Return the UUID.
 
+        The UUID is created using the secrets.token_hex function to create
+        a unique ID and assign it to the ID value.
+        """
         if self._id == "":
             self._id = Uuid(secrets.token_hex(6))
         return self._id
 
     @uuid.setter
     def uuid(self, value: Uuid) -> None:
-        """Sets the UUID"""
+        """
+        Set the UUID.
 
+        The value used for a UUID is a string, and should be created
+        by either loading from a file, or using secrets.token_hex
+        """
         self._id = value
 
     def __hash__(self) -> int:
-        "Return the ID as the hash for the instance"
+        """
+        Return the ID as the hash for the instance.
+
+        Create the hash id by using the built in id function
+        """
         return id(self.uuid)

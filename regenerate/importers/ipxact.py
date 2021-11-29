@@ -181,8 +181,8 @@ class IpXactParser:
 
     def end_field(self, _text):
         if not self._field.name.startswith("RESERVED"):
-            self._field.start_position = self._fld_start
-            self._field.stop_position = self._fld_start + self._fld_width - 1
+            self._field.lsb = self._fld_start
+            self._field.msb = self._fld_start + self._fld_width - 1
             self._reg.add_bit_field(self._field)
             if self._reg_reset[0]:
                 self._field.reset_value = (

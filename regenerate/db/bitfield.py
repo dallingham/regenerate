@@ -19,9 +19,12 @@
 
 """
 Provides the definition of a Bit Field.
+
+The BitField contains the information related to a single bit or bit slice
+within a register.
 """
 
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Union
 from .name_base import NameBase, Uuid
 from .enums import BitType, ResetType
 from .bit_values import BitValues
@@ -29,26 +32,56 @@ from .param_value import ParamValue
 from .param_data import ParameterFinder
 from .param_resolver import ParameterResolver
 from .json_base import JSONEncodable
+from .deprecated import deprecated
 
 
 def clean_signal(name: str) -> str:
-    "Remove white space from a string, replacing them with underscores."
+    """
+    Remove white space from a string, replacing them with underscore.
+
+    Parameters:
+       name (str): Original signal name
+
+    Returns:
+       name (str): Cleaned signal name
+
+    """
     return "_".join(name.strip().split())
 
 
 class BitFieldFlags(JSONEncodable):
-    "Flags for the bit field"
+    """
+    Flags for the bit field.
+
+    There are 3 flags for the bit field.
+
+    * is_error_field: Indicates if the bit represents an error condition
+    * can_randomize: Indicates that it is safe to randomize the bit for
+                     verification
+    * volatile: Indicates that the bit may change value between reads
+                without a write
+    """
 
     def __init__(self):
-        "Initialize the flags"
+        """
+        Initialize the flags.
 
+        Sets all the flags to False
+        """
         self.is_error_field: bool = False
         self.can_randomize: bool = False
         self.volatile: bool = False
 
     def __eq__(self, other: object) -> bool:
-        "Check for equality"
+        """
+        Check for equality.
 
+        Compares the object to itself.
+
+        Parameters:
+           other (object): Object to compare against
+
+        """
         if not isinstance(other, BitFieldFlags):
             return NotImplemented
         return (
@@ -59,19 +92,26 @@ class BitFieldFlags(JSONEncodable):
 
 
 class BitField(NameBase):
-    """Holds all the data of a bit field (one or more bits of a register)."""
+    """
+    Holds all the data of a bit field (one or more bits of a register).
 
-    PARAMETERS = {}  # type: ignore
+    A single bit bit field has the most signficant bit (MSB) equal to the
+    least signficant bit (LSB). A multiple bit bit field has different
+    values for the MSB and LSB. The MSB should always be greater than their
+    LSB.
+    """
 
-    read_only_types = (
+    read_only_types = {
         BitType.READ_ONLY,
         BitType.READ_ONLY_VALUE,
         BitType.READ_ONLY_LOAD,
         BitType.READ_ONLY_CLEAR_LOAD,
         BitType.READ_ONLY_VALUE_1S,
-    )
+    }
 
-    write_only_types = (BitType.WRITE_ONLY,)
+    write_only_types = {
+        BitType.WRITE_ONLY,
+    }
 
     _full_compare = (
         "_input_signal",
@@ -122,8 +162,18 @@ class BitField(NameBase):
     )
 
     def __init__(self, stop: int = 0, start: int = 0):
-        """Initialize the bitfield."""
+        """
+        Initialize the bitfield.
 
+        Sets the values to a default state, allowing the stop (MSB)
+        and start (LSB) bits to be set.
+
+        Parameters:
+           stop (int): MSB (most significant bit)
+
+           start (int): LSB (least significant bit)
+
+        """
         super().__init__("", Uuid(""))
         self.modified = False
 
@@ -150,8 +200,14 @@ class BitField(NameBase):
 
         self.values: List[BitValues] = []
 
-    def __repr__(self):
-        "Returns the string representation"
+    def __repr__(self) -> str:
+        """
+        Return the string representation.
+
+        Returns:
+           str: Representation of the object
+
+        """
         name = self.name
         msb = self.msb
         lsb = self.lsb
@@ -160,25 +216,32 @@ class BitField(NameBase):
 
     @property
     def msb(self) -> ParamValue:
-        "Returns the MSB"
+        """
+        Return the MSB.
 
+        Returns:
+           ParamValue: Parameter value representing either a parameter or an
+                       integer
+
+        """
         return self._msb
 
     @msb.setter
-    def msb(self, value: ParamValue) -> None:
-        "Sets the MSB"
+    def msb(self, value: Union[int, ParamValue]) -> None:
+        """
+        Set the MSB, creating a ParamValue from an int if needed.
 
-        self._msb = value
+        Parameters:
+           value (Union[int, ParamValue]): value to assign to the MSB
 
-    # @staticmethod
-    # def set_parameters(values) -> None:
-    #     """Set the parameter value list."""
-    #     print(type(values))
-    #     BitField.PARAMETERS = values
+        """
+        if isinstance(value, ParamValue):
+            self._msb = value
+        else:
+            self._msb = ParamValue(value)
 
     def __eq__(self, other: object) -> bool:
         """Compare for equality between two bitfieids."""
-
         if not isinstance(other, BitField):
             return NotImplemented
         return (
@@ -190,51 +253,94 @@ class BitField(NameBase):
         )
 
     def __ne__(self, other: object) -> bool:
-        """Compare for inequality between two bitfields."""
+        """
+        Compare for inequality between two bitfields.
 
+        Parameters:
+           other (object): Object to compare against
+
+        """
         if not isinstance(other, BitField):
             return NotImplemented
         return not self.__eq__(other)
 
     def __lt__(self, other: object) -> bool:
+        """
+        Compare for less than between two bitfields.
+
+        Parameters:
+           other (object): Object to compare against
+
+        """
         if not isinstance(other, BitField):
             return NotImplemented
         return self.lsb < other.lsb
 
     def __gt__(self, other: object) -> bool:
+        """
+        Compare for greater than between two bitfields.
+
+        Parameters:
+           other (object): Object to compare against
+
+        """
         if not isinstance(other, BitField):
             return NotImplemented
         return self.lsb > other.lsb
 
     def is_constant(self) -> bool:
-        """Indicate if the value is a constant value."""
+        """
+        Indicate if the value is a constant value.
+
+        Returns:
+           bool: True if the bit field type is a constant
+
+        """
         return self.field_type == BitType.READ_ONLY
 
     def is_read_only(self) -> bool:
-        """Indicate if the value is a read only type."""
+        """
+        Indicate if the value is a read only type.
+
+        Returns:
+           bool: True if the bit field type is read only
+
+        """
         return self.field_type in BitField.read_only_types
 
     def is_write_only(self) -> bool:
-        """Indicate if the value is a write only type."""
+        """
+        Indicate if the value is a write only type.
+
+        Returns:
+           bool: True if the bit field type is write only
+
+        """
         return self.field_type in BitField.write_only_types
 
     def full_field_name(self) -> str:
-        """Build the name of the field, including bit positions if needed."""
+        """
+        Build the name of the field.
+
+        Returns:
+           str: field name, including bit positions if needed
+
+        """
         if self.width == 1:
             return self.name
         return f"{self.name}[{self.msb.resolve()}:{self.lsb}]"
 
-    def bit_range(self) -> str:
-        """Return the bit range of the field."""
-        if self.width == 1:
-            return str(self.lsb)
-        return f"[{self.msb.resolve()}:{self.lsb}]"
-
     @property
     def reset_value(self) -> int:
         """
-        Return the reset value. If the source is an input signal
-        assume that the value is zero.
+        Return the reset value.
+
+        If the source is an input signal assume that the value is zero.
+
+        Returns:
+           int: Resolved value of the reset value, resolving parameters
+                if needed
+
         """
         if self.reset_type == ResetType.PARAMETER:
             finder = ParameterFinder()
@@ -251,17 +357,36 @@ class BitField(NameBase):
     @reset_value.setter
     def reset_value(self, value: int) -> None:
         """Set the reset value."""
+        self._reset_value_int(value)
+
+    @deprecated
+    def _reset_value_int(self, value: int) -> None:
         self._reset_value = value
 
     def reset_value_bit(self, bit: int) -> int:
-        """Check for a bit to be set."""
-        if self._reset_value & (1 << bit):
+        """
+        Return 1 if the bit in the resolved reset value is a 1.
+
+        Parameters:
+           bit (int): Bit position
+
+        Returns:
+           int: 1 or 0, depending of the bit is sets
+
+        """
+        if self.reset_value & (1 << bit):
             return 1
         return 0
 
-    def reset_string(self) -> Optional[str]:
-        "Returns the reset value as a string"
+    def reset_string(self) -> str:
+        """
+        Return the reset value as a string.
 
+        Returns:
+          str: String representation of the name, with integers displayed
+               in hex format
+
+        """
         if self.reset_type == ResetType.PARAMETER:
             finder = ParameterFinder()
             param = finder.find(self.reset_parameter)
@@ -273,8 +398,14 @@ class BitField(NameBase):
         return hex(self._reset_value)
 
     def reset_vstr(self) -> Optional[str]:
-        "Returns the reset value as a string in verilog format"
+        """
+        Return the reset value as a string.
 
+        Returns:
+          str: String representation of the name, with integers displayed
+               in Verilog format
+
+        """
         if self.reset_type == ResetType.PARAMETER:
             finder = ParameterFinder()
             param = finder.find(self.reset_parameter)
@@ -288,36 +419,28 @@ class BitField(NameBase):
         return f"{self.width}'h{self._reset_value:x}"
 
     @property
-    def stop_position(self) -> ParamValue:
-        "Return the most significant bit of the field."
-        return self.msb
-
-    @stop_position.setter
-    def stop_position(self, value: ParamValue) -> None:
-        "Set the most significant bit of the field."
-        self.msb = value
-
-    @property
-    def start_position(self) -> int:
-        "Return the least significant bit of the field."
-        return self.lsb
-
-    @start_position.setter
-    def start_position(self, value: int) -> None:
-        "Set the least significant bit of the field."
-        self.lsb = value
-
-    @property
     def width(self) -> int:
-        "Return the width in bits of the bit field."
+        """
+        Return the width in bits of the bit field.
+
+        Returns:
+          int: resolved width of the bit field
+
+        """
         return self.msb.resolve() - self.lsb + 1
 
     def resolved_output_signal(self) -> str:
         """
         Get the output signal associated with the bit range.
 
-        If the user has not specified the name, assume that it is the same as
-        the name of the bit field.
+        If the signal contains a wild card, the using the MSB/LSB
+        range to pull off the bit selects. The wildcard indicates
+        that the bit range in the signal matches the bit range in
+        the field.
+
+        Returns:
+           str: Resolved output signal name
+
         """
         nlist = self._output_signal.split("*")
         if len(nlist) == 1:
@@ -333,29 +456,53 @@ class BitField(NameBase):
         """
         Get the output signal associated with the bit range.
 
-        If the user has not specified the name, assume that it is the same as
-        the name of the bit field.
+        Returns:
+           str: Output signal as specified in the database
+
         """
         return self._output_signal
 
     @output_signal.setter
-    def output_signal(self, output: str) -> None:
-        "Set the output signal associated with the bit range."
+    def output_signal(self, signal_name: str) -> None:
+        """
+        Set the output signal associated with the bit range.
+
+        Parameters:
+           signal_name (str): Output signal name
+
+        """
         self._output_signal = clean_signal(output)
 
     @property
     def input_signal(self) -> str:
-        "Get the name of the input signal, if it exists."
+        """
+        Get the name of the input signal.
+
+        Returns:
+           str: Input signal name
+
+        """
         return self._input_signal
 
     @input_signal.setter
     def input_signal(self, signal: str) -> None:
-        "Set the name of the input signal."
+        """
+        Set the name of the input signal.
+
+        Parameters:
+           signal (str): Input signal name
+
+        """
         self._input_signal = clean_signal(signal)
 
     def json(self) -> Dict[str, Any]:
-        "Converts the object to a JSON compatible dictionary"
+        """
+        Convert the object to a JSON compatible dictionary.
 
+        Returns:
+           Dict[str, Any]: Dictionary of JSON compatible data
+
+        """
         return {
             "name": self.name,
             "uuid": self.uuid,
@@ -378,8 +525,13 @@ class BitField(NameBase):
         }
 
     def json_decode(self, data: Dict[str, Any]) -> None:
-        "Decodes the JSON compatible dictionary into the object"
+        """
+        Decode the JSON compatible dictionary into the object.
 
+        Parameters:
+           data (Dict[str, Any]): JSON data
+
+        """
         self.name = data["name"]
         self.uuid = Uuid(data["uuid"])
         self.description = data["description"]

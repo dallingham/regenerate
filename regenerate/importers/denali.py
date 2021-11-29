@@ -290,8 +290,8 @@ class DenaliRDLParser:
                 field.field_type = lookup.get(
                     item.software_access, BitField.READ_ONLY
                 )
-                field.start_position = item.start - delta
-                field.stop_position = item.stop - delta
+                field.lsb = item.start - delta
+                field.msb = item.stop - delta
                 field.reset_value = item.reset
                 field.flags = item.flags
                 field.description = item.description

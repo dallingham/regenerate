@@ -177,8 +177,8 @@ class RDLParser:
                 except IndexError:
                     field.field_type = BitType.READ_ONLY
 
-                field.start_position = item.start
-                field.stop_position = item.stop
+                field.lsb = item.start
+                field.msb = item.stop
                 field.reset_value = item.reset
                 field.description = item.description
                 register.add_bit_field(field)

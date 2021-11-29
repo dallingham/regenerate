@@ -17,7 +17,25 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
-Provides the Address List interface
+Provides the Address Map TreeView and ListStore interface.
+
+Manages the address map through the Gtk.TreeView and Gtk.ListStore
+interfaces. The TreeView is created in Glade, and passed to AddrMapList,
+while the AddrMapMdl inherits from Gtk.ListStore.
+
+The model constists of
+
+  * icon - either emtpy, or showing in warning icon
+  * name - name of the address map_base
+  * address - the base address of the map_base
+  * flags - any boolean flags (such as fixed base)
+  * width - address map width (32/64 bits)
+  * tooltip - the warning message for errors
+  * AddressMap object - the actual AddressMap object
+
+Only the first 5 fields are displayed in the TreeView.
+
+
 """
 
 from typing import Callable, Optional, Tuple
@@ -30,10 +48,10 @@ from regenerate.ui.columns import (
 )
 from regenerate.ui.enums import AddrCol
 
-_BITS8 = "8 bits"
-_BITS16 = "16 bits"
-_BITS32 = "32 bits"
-_BITS64 = "64 bits"
+_BITS8 = "8-bits"
+_BITS16 = "16-bits"
+_BITS32 = "32-bits"
+_BITS64 = "64-bits"
 
 SIZE2STR = ((_BITS8, 1), (_BITS16, 2), (_BITS32, 4), (_BITS64, 8))
 
@@ -53,11 +71,23 @@ STR2ACCESS = dict((_i[0], _i[1]) for _i in ACCESS2STR)
 
 class AddrMapMdl(Gtk.ListStore):
     """
-    Provides the list of instances for the module. Instances consist of the
-    symbolic ID name and the base address.
+    Provides the list of AddressMaps for the module. The model consists of:
+
+    * icon (str) - either emtpy, or showing in warning icon
+    * name (str) - name of the address map_base
+    * address (str) - the base address of the map_base
+    * flags (str) - any boolean flags (such as fixed base)
+    * width (str) - address map width (32/64 bits)
+    * tooltip (str) - the warning message for errors
+    * AddressMap object (object) - the actual AddressMap object
     """
 
     def __init__(self):
+        """
+        Construct the ListStore.
+
+        Initialize the parent class class with the data columns needed.
+        """
         super().__init__(str, str, str, str, str, str, object)
 
 
@@ -308,7 +338,7 @@ def get_flags(map_obj: AddressMap) -> str:
 def get_row_data(map_obj: AddressMap) -> Tuple[str, str, str, str, AddressMap]:
     """Builds the data for the table row"""
 
-    if len(map_obj.blocks):
+    if map_obj.block_insts:
         icon = None
         tooltip = ""
     else:

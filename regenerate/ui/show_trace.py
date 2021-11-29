@@ -23,7 +23,6 @@ Provides a dialog to hold a traceback should a report fail to genreate.
 
 from io import StringIO
 import traceback
-import os
 from pathlib import Path
 
 from gi.repository import Gtk, Gdk
@@ -36,7 +35,7 @@ class TraceBack:
     def __init__(self, dest: Path):
         builder = Gtk.Builder()
         bfile = Path(INSTALL_PATH) / "ui" / "traceback.ui"
-        builder.add_from_file(bfile)
+        builder.add_from_file(str(bfile))
         self.dialog = builder.get_object("traceback_top")
         close_btn = builder.get_object("trace_close")
         copy_btn = builder.get_object("copy_btn")

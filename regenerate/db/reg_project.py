@@ -526,7 +526,7 @@ class RegProject(BaseFile):
         self.doc_pages = DocPages()
         self.doc_pages.json_decode(data["doc_pages"])
         self.company_name = data["company_name"]
-        if "access_map" in data:
+        if "access_map" in data and data["access_map"] is not None:
             self.access_map = data["access_map"]
         else:
             self.access_map = nested_dict(3)

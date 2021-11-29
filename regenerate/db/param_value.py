@@ -21,7 +21,6 @@
 Provides an object that can either be an integer or a parameter
 """
 
-from typing import Union
 from .param_resolver import ParameterResolver
 from .param_data import ParameterFinder
 from .enums import ParamFunc

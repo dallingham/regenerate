@@ -226,7 +226,7 @@ class MainWindow(BaseWindow):
         if addr_map is None:
             return
 
-        current = self.prj.address_maps[addr_map.uuid].blocks
+        current = self.prj.address_maps[addr_map.uuid].block_insts
 
         new_list = [
             (blk_inst, blk_inst.uuid in current)

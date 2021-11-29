@@ -97,7 +97,7 @@ class UVMRegBlockRegisters(ProjectWriter):
         for map_id in self._project.address_maps:
             addr_map = self._project.address_maps[map_id]
 
-            for blkid in addr_map.blocks:
+            for blkid in addr_map.block_insts:
                 blkinst = self._project.get_blkinst_from_id(blkid)
                 if not blkinst:
                     continue
