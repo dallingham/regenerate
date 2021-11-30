@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 #
 # Copyright (C) 2017  Donald N. Allingham
 #
@@ -28,6 +28,7 @@ import re
 import argparse
 import math
 import sre_constants
+from pathlib import Path
 
 if os.path.dirname(sys.argv[0]) != ".":
     if sys.argv[0][0] == "/":
@@ -38,9 +39,8 @@ else:
     FULLPATH = os.getcwd()
 sys.path.insert(0, os.path.dirname(FULLPATH))
 
+from regenerate.db import Register, BitField, RegisterDb, ResetType, BitType
 
-from regenerate.db import Register, BitField, LOGGER, RegisterDb
-from regenerate.db.enums import BitType
 
 ARRAY_ELEMENT = re.compile(r"^(.*[^d])(\d+)(_reg)?\s*$", re.I)
 
@@ -101,12 +101,13 @@ class IpXactParser:
         self._in_reg_reset = False
         self._reg_reset = (False, 0)
         self._last_reg = None
-        self._last_index = -1
+        self._last_index = -11
         self._ignore_count = 0
         self.reglist = []
         self._grp = False
         self.vendor = ""
         self._keep_reserved = keep_reserved
+        self.scope = ""
 
     def import_data(self, input_file):
         """
@@ -115,118 +116,98 @@ class IpXactParser:
         tree = ET.parse(input_file)
         root = tree.getroot()
 
-        scope = root.tag.split("}")[0] + "}"
-        count = 0
+        self.filename = Path(input_file).with_suffix(".regp")
 
-        self.vendor = root.find(scope + "vendor").text
-        self.db_title = root.find(scope + "name").text
+        self.scope = root.tag.split("}")[0] + "}"
+        self.count = 0
 
-        for mem_map in root.find(scope + "memoryMaps"):
+        self.vendor = root.find(self.scope + "vendor").text
+        self.db_title = root.find(self.scope + "name").text
 
-            if count > 0:
-                continue
-            name = mem_map.find(scope + "name")
-            descr = mem_map.find(scope + "description")
+        for mem_maps in root.findall(self.scope + "memoryMaps"):
+            for mem_map in mem_maps.findall(self.scope + "memoryMap"):
+                self.parse_mem_map(mem_map)
 
-            count = 0
-            for addrblk in mem_map.findall(scope + "addressBlock"):
-                blkname = addrblk.find(scope + "name").text
-                width = addrblk.find(scope + "width").text
-                base = addrblk.find(scope + "baseAddress")
-                for register in addrblk.findall(scope + "register"):
-                    self.start_register()
-                    name_tag = register.find(scope + "name")
-                    disp_tag = register.find(scope + "displayName")
-                    size_tag = register.find(scope + "size")
-                    descr_tag = register.find(scope + "description")
-                    addr_tag = register.find(scope + "addressOffset")
+    def parse_mem_map(self, mem_map):
+        name = mem_map.find(self.scope + "name")
+        descr = mem_map.find(self.scope + "description")
 
-                    if disp_tag is not None:
-                        self._reg.name = disp_tag.text
-                    else:
-                        self._reg.name = name_tag.text.replace("_", " ")
+        for addrblk in mem_map.findall(self.scope + "addressBlock"):
+            self.parse_address_block(addrblk, 0)
 
-                    if descr_tag is not None:
-                        self._reg.description = descr_tag.text
-
-                    if addr_tag is not None:
-                        self._reg.address = int(addr_tag.text, 16)
-
-                    self._reg.token = name_tag.text.upper()
-
-                    self._reg.width = int(size_tag.text)
-
-                    for field in register.findall(scope + "field"):
-                        self.start_field()
-                        self._field.name = field.find(
-                            scope + "name"
-                        ).text.upper()
-                        self._field.description = field.find(
-                            scope + "description"
-                        ).text
-                        self._field.start_position = int(
-                            field.find(scope + "bitOffset").text
-                        )
-                        self._field.stop_position = (
-                            self._field.start_position
-                            + int(field.find(scope + "bitWidth").text)
-                            - 1
-                        )
-                        if self._field.field_type not in (
-                            BitType.WRITE_1_TO_SET,
-                            BitType.WRITE_1_TO_CLEAR_SET,
-                        ):
-                            self._field.field_type = TEXT2FIELD.get(
-                                field.find(scope + "access").text,
-                                BitType.READ_ONLY,
-                            )
-                        self.end_field()
-
-                    self.end_register()
-                    count += 1
-
-        # crossreference(self._db)
-        if self._ignore_count:
-            LOGGER.info(
-                "Ignored %0d registers that contained no useful fields"
-                % self._ignore_count
-            )
-
-    def start_element(self, tag, attrs):
-        """
-        Called every time an XML element begins
-        """
-        self._token_list = []
-
-        fields = tag.split(":")
-        if len(fields) == 1:
-            t = tag
+    def parse_address_block(self, addrblk, original_base):
+        base = addrblk.find(self.scope + "baseAddress")
+        if base is not None:
+            base_addr = int(base.text, 0) + original_base
         else:
-            t = fields[1]
+            base_addr = original_base
 
-        mname = "start_" + t
-        if hasattr(self, mname):
-            method = getattr(self, mname)
-            method(attrs)
+        for register in addrblk.findall(self.scope + "register"):
+            self.start_register()
+            name_tag = register.find(self.scope + "name")
+            disp_tag = register.find(self.scope + "displayName")
+            size_tag = register.find(self.scope + "size")
+            descr_tag = register.find(self.scope + "description")
+            addr_tag = register.find(self.scope + "addressOffset")
 
-    def end_vendor(self, _tag):
-        self.vendor = "".join(self._token_list)
+            if disp_tag is not None:
+                self._reg.name = disp_tag.text
+            else:
+                self._reg.name = name_tag.text.replace("_", " ")
 
-    def end_element(self, tag):
-        """
-        Called every time an XML element end
-        """
-        text = "".join(self._token_list)
-        fields = tag.split(":")
-        if len(fields) == 1:
-            t = tag
-        else:
-            t = fields[1]
+            if descr_tag is not None:
+                self._reg.description = descr_tag.text
 
-        mname = "end_" + t
-        if hasattr(self, mname):
-            method = getattr(self, mname)
-            method(text)
+            if addr_tag is not None:
+                self._reg.address = int(addr_tag.text, 16) + base_addr
+
+            self._reg.token = name_tag.text.upper()
+
+            self._reg.width = int(size_tag.text)
+
+            for field in register.findall(self.scope + "field"):
+                self.start_field()
+
+                element = field.find(self.scope + "name")
+                if element is not None:
+                    self._field.name = element.text.upper()
+                else:
+                    self._field.name = "UNNAMED"
+
+                element = field.find(self.scope + "description")
+                if element:
+                    self._field.description = element.text
+
+                self._field.lsb = int(
+                    field.find(self.scope + "bitOffset").text
+                )
+                self._field.msb = (
+                    self._field.lsb
+                    + int(field.find(self.scope + "bitWidth").text)
+                    - 1
+                )
+                if self._field.field_type not in (
+                    BitType.WRITE_1_TO_SET,
+                    BitType.WRITE_1_TO_CLEAR_SET,
+                ):
+                    self._field.field_type = TEXT2FIELD.get(
+                        field.find(self.scope + "access").text,
+                        BitType.READ_ONLY,
+                    )
+                self.end_field()
+
+            self.end_register()
+            self.count += 1
+
+        for blk in addrblk.findall(self.scope + "addressBlock"):
+            self.parse_address_block(blk, base_addr)
+
+        # # crossreference(self._db)
+        # if self._ignore_count:
+        #     LOGGER.info(
+        #         "Ignored %0d registers that contained no useful fields"
+        #         % self._ignore_count
+        #     )
 
     def start_register(self):
         self._reg = Register()
@@ -244,15 +225,15 @@ class IpXactParser:
             new_name = name_from_token(new_token)
             if new_token[-1] == "_":
                 new_token = new_token[:-1]
-            index = int(name_match.groups()[1])
+            idx = int(name_match.groups()[1])
         else:
             new_name = self._reg.name
             new_token = self._reg.token
-            index = -1
+            idx = -1
 
         if (
-            index >= 1
-            and self._last_index + 1 == index
+            idx >= 1
+            and self._last_index + 1 == idx
             and self._last_reg
             and self._reg.array_cmp(self._last_reg)
         ):
@@ -267,48 +248,10 @@ class IpXactParser:
                 self._last_reg = None
                 self._ignore_count += 1
                 self.reglist.append(self._reg)
-        self._last_index = index
+        self._last_index = idx
 
         self._reg = None
         self._reg_reset = (False, 0)
-
-    def end_addressOffset(self, text):
-        if self._reg:
-            self._reg.address = int(text, 0) + self._block_offset
-
-    def end_dim(self, text):
-        if self._reg:
-            self._reg.dimension = int(text, 0)
-
-    def end_addressBlock(self, text):
-        self._block_offset = self._block_list.pop()
-
-    def end_baseAddress(self, text):
-        self._block_list.append(self._block_offset)
-        self._block_offset = self._block_offset + int(text, 0)
-
-    def end_size(self, text):
-        size = int(text, 0)
-        if self._reg:
-            self._reg.width = size
-
-    def start_reset(self, attrs):
-        if self._field:
-            self._in_field_reset = True
-        elif self._reg:
-            self._in_reg_reset = True
-
-    def end_reset(self, text):
-        self._in_field_reset = False
-        self._in_reg_reset = False
-
-    def end_value(self, text):
-        if self._in_field_reset:
-            if self._field:
-                self._field.reset_value = int(text, 16)
-                self._field.reset_type = BitField.RESET_NUMERIC
-        elif self._in_reg_reset:
-            self._reg_reset = (True, int(text, 16))
 
     def start_field(self):
         self._field = BitField()
@@ -318,56 +261,11 @@ class IpXactParser:
             self._reg.add_bit_field(self._field)
             if self._reg_reset[0]:
                 self._field.reset_value = (
-                    self._reg_reset[1] >> self._field.start_position
+                    self._reg_reset[1] >> self._field.lsb
                 ) & ((1 << self._field.width) - 1)
-                self._field.reset_type = BitField.RESET_NUMERIC
+                self._field.reset_type = ResetType.NUMERIC
 
         self._field = None
-
-    def end_access(self, text):
-        if self._field:
-            if self._field.field_type not in (
-                BitType.WRITE_1_TO_SET,
-                BitType.WRITE_1_TO_CLEAR_SET,
-            ):
-                self._field.field_type = TEXT2FIELD.get(
-                    text, BitType.READ_ONLY
-                )
-
-    def end_modifiedWriteValue(self, text):
-        if self._field:
-            self._field.field_type = TEXT2WRITE.get(
-                text, BitType.WRITE_1_TO_CLEAR_SET
-            )
-
-    def end_name(self, text):
-        if self._field:
-            self._field.name = text.upper()
-        elif self._reg:
-            self._reg.token = text.upper()
-            self._reg.name = name_from_token(text.upper())
-        elif not self._in_maps and not self.db_title:
-            self.db_title = text.strip()
-
-    def end_description(self, text):
-        new_text = " ".join([t for t in text.split() if t != ""])
-
-        if self._field:
-            self._field.description = new_text
-        elif self._reg:
-            self._reg.description = new_text
-
-    def end_bitOffset(self, text):
-        self._fld_start = int(text, 0)
-
-    def end_bitWidth(self, text):
-        self._fld_width = int(text, 0)
-
-    def start_memoryMaps(self, attrs):
-        self._in_maps = True
-
-    def end_memoryMaps(self, text):
-        self._in_maps = False
 
 
 class Groupings:
@@ -392,9 +290,9 @@ class Groupings:
         counter = Counter()
         newlist = defaultdict(RegGroup)
 
-        for (i, key) in enumerate(sorted(reglist.keys())):
+        for (cnt, key) in enumerate(sorted(reglist.keys())):
 
-            if i == 0:
+            if cnt == 0:
                 counter[key] += 1
                 newlist[key].set_reg_list(reglist[key])
                 newlist[key].addr = key
@@ -418,22 +316,22 @@ class Groupings:
 
             # Found duplicate
             if old_count == -1 or count > 1:
-                grp = RegGroup()
-                grp.addr = key
-                grp.set_reg_list(newlist[key].get_regs())
-                grp.repeat = count
-                reglist.append(grp)
+                rgrp = RegGroup()
+                rgrp.addr = key
+                rgrp.set_reg_list(newlist[key].get_regs())
+                rgrp.repeat = count
+                reglist.append(rgrp)
             else:
-                grp.append_reg_list(newlist[key].get_regs())
-                grp.repeat = 1
+                rgrp.append_reg_list(newlist[key].get_regs())
+                rgrp.repeat = 1
             old_count = count
 
         return (counter, reglist)
 
 
-def crossreference(db):
+def crossreference(regset):
     names = sorted(
-        [reg.name for reg in db.get_all_registers()],
+        [reg.name for reg in regset.get_all_registers()],
         key=len,
         reverse=True,
     )
@@ -442,7 +340,7 @@ def crossreference(db):
 
     print("Cross Referencing...")
 
-    for reg in db.get_all_registers():
+    for reg in regset.get_all_registers():
         for regex in re_list:
             reg.description = re.sub(regex, r"\1`\2`_ \3", reg.description)
         for field in reg.get_bit_fields():
@@ -467,15 +365,6 @@ def identical(list1, list2):
     return True
 
 
-def copy_from_db(db, db2):
-
-    db.owner = db2.owner
-    db.organization = db2.organization
-    db.descriptive_title = db2.descriptive_title
-    db.overview_text = db2.overview_text
-    db.module_name = db2.module_name
-
-
 def ignore_by_field_name(field):
 
     if field.field_type != BitType.READ_ONLY or field.reset_value != 0:
@@ -496,12 +385,6 @@ if __name__ == "__main__":
         description="Convert IPXACT files to regenerate files"
     )
     parser.add_argument("input_file", help="IPXACT XML input file")
-    parser.add_argument(
-        "--output",
-        dest="root",
-        default="reg",
-        help="Base filename (no extension) of the output files",
-    )
     parser.add_argument(
         "--xref",
         dest="xref",
@@ -580,31 +463,34 @@ if __name__ == "__main__":
 
     # Save files
 
+    if not data:
+        sys.stderr.write("No registers were found\n")
+
     for index, rgrp in enumerate(sorted(data)):
 
         if index == 0:
             title = ip.db_title
-            filename = os.path.join(args.root + ".xml")
+            filename = Path(title).with_suffix(".regr")
         else:
-            title = "%s_%d" % (ip.db_title, index)
-            filename = os.path.join(args.root + "_%d" % index + ".xml")
+            title = f"{ip.db_title}_{index}"
+            filename = Path(title).stem + f"_{index}.regr"
 
-        db = RegisterDb()
+        regset = RegisterDb()
+        regset.filename = filename
 
-        # copy data from old db, or create our own
+        # copy data from old regset, or create our own
 
-        if os.path.exists(filename) and args.update:
-            db2 = RegisterDb(filename)
-            copy_from_db(db, db2)
-        else:
-            db2 = None
-            db.owner = ip.vendor
-            db.organization = ip.vendor
-            db.descriptive_title = title
-            db.module_name = title.lower()
-            db.overview_text = (
-                "Imported from IPXACT data provided by %s." % ip.vendor
-            )
+        regset.owner = ip.vendor
+        regset.organization = ip.vendor
+        regset.descriptive_title = title
+        regset.module_name = title.lower()
+        regset.name = title.lower()
+        regset.doc_pages.update_page("Overview", "", [])
+        regset.doc_pages.update_page(
+            "Import",
+            f"Imported from IPXACT data provided by {ip.vendor}.",
+            [],
+        )
 
         max_addr = 0
         for r in rgrp.get_regs():
@@ -612,24 +498,22 @@ if __name__ == "__main__":
                 for i, s in enumerate(src):
                     r.token = re.sub(s, dest[i], r.token, flags=re.I)
                     r.name = re.sub(s, dest[i], r.name, flags=re.I)
-            if db2 is not None:
-                old_reg = db2.find_register_by_token(r.token)
-                if old_reg:
-                    r.name = old_reg.name
 
             max_addr = max(r.address, max_addr)
 
-            db.add_register(r)
+            regset.add_register(r)
 
         if rgrp.repeat == 1:
-            db.address_bus_width = int(math.ceil(math.log(max_addr, 2)))
+            regset.address_bus_width = int(math.ceil(math.log(max_addr, 2)))
         else:
-            db.address_bus_width = int(math.ceil(math.log(args.boundary, 2)))
+            regset.address_bus_width = int(
+                math.ceil(math.log(args.boundary, 2))
+            )
 
         if args.xref:
-            crossreference(db)
+            crossreference(regset)
 
-        db.save_xml(filename)
+        regset.save()
 
     if len(data) > 1:
         print("%-20s %-8s Repeat" % ("Register Set", "Address"))
