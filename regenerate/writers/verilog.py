@@ -83,7 +83,6 @@ class CellInfo(NamedTuple):
     has_control: bool
     has_oneshot: bool
     type_descr: str
-    allows_wide: bool
     has_rd: bool
     is_read_only: bool
 
@@ -270,7 +269,6 @@ class Verilog(RegsetWriter):
                 i.control,
                 i.oneshot,
                 i.description,
-                i.wide,
                 i.read,
                 i.readonly,
             )
