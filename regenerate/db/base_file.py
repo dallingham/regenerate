@@ -18,7 +18,10 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
-Provides the base class for JSON based data
+Provides the base class for JSON based data.
+
+The base class inherits from NameBase, adding the modified flag and the
+file path.
 """
 
 from pathlib import Path
@@ -32,45 +35,96 @@ from .name_base import NameBase, Uuid
 
 
 class BaseFile(NameBase):
-    "Base class for file based data"
+    """
+    Base class for file based data.
+
+    Contains the modified flag and the filename, along with the information
+    contained in the parent NameBase class.
+    """
 
     def __init__(
         self, name: str = "", uuid: Uuid = Uuid(""), filename: str = ""
     ):
+        """
+        Initialize the class.
+
+        Parameters:
+           name: Name of the object
+           uuid: Unique ID, should either be loaded from a save file, or generated
+                 by the object itself.
+
+        """
         super().__init__(name, uuid)
 
         self._modified = False
         self._filename = Path(filename)
 
     def last_saved(self) -> int:
-        "Returns the modified timestamp of the file"
+        """
+        Return the modified timestamp of the file.
+
+        Return:
+           int: modified time of the file in nanoseconds
+
+        """
         if self._filename:
             return self._filename.stat().st_mtime_ns
         return 0
 
     @property
     def filename(self) -> Path:
-        "Returns the filename as a path"
+        """
+        Return the filename as a path.
+
+        Returns:
+           Path: path associated with the object
+
+        """
         return self._filename
 
     @filename.setter
     def filename(self, value: Union[str, Path]) -> None:
-        "Sets the filename, converting to a path, and fixing the suffix"
+        """
+        Set the filename, converting to a path, and fixing the suffix.
 
+        Parameters:
+           Union[str, Path]: Path of the file object
+
+        """
         self._filename = Path(value).with_suffix(BLK_EXT)
 
     @property
     def modified(self):
-        """Sets the modified flag"""
+        """
+        Set the flag that indicates that the file has been modified.
+
+        Returns:
+           bool: Modification status
+
+        """
         return self._modified
 
     @modified.setter
     def modified(self, value: bool) -> None:
-        """Clears the modified flag"""
+        """
+        Set the value of the modified flag.
+
+        Parameters:
+           value (bool): New value of the modified flag
+
+        """
         self._modified = bool(value)
 
     def save_json(self, data: Dict[str, Any], path: Path) -> None:
-        "Saves the data to the specifed file in JSON format"
+        """
+        Save the data in JSON format to the specifed file.
+
+        Parameters:
+           data (Dict[str, Any]): data to save
+
+           path (Path): Path to save the file
+
+        """
         try:
             with path.open("w") as ofile:
                 ofile.write(

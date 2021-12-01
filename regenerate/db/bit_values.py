@@ -18,7 +18,14 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
-Provides the bit values for a bit field
+Provides the bit values for a bit field.
+
+Bit values consist of 3 bits of information:
+
+  * value
+  * token
+  * description
+
 """
 
 from typing import Dict, Any
@@ -26,29 +33,50 @@ from typing import Dict, Any
 
 class BitValues:
     """
-    Provides the bit values for a field - roughly the equivalent
-    to and enumerated type. This BitValue consists of:
+    Provides the bit values for a field.
+
+    This is roughly the equivalent to an enumerated type in the
+    bit field. This BitValue consists of:
 
     value - numerical value
     token - a symbolic name
     description - a description of the value
     """
 
-    def __init__(self, value=0, token="", descript=""):
+    def __init__(self, value=0, token="", description=""):
+        """
+        Initialize the object.
+
+        Parameters:
+           value (int): numerical value
+           token (str): symbolic name
+           description (str): text description of the value
+
+        """
         self.value: int = value
         self.token: str = token
-        self.description: str = descript
+        self.description: str = description
 
     def json_decode(self, data: Dict[str, Any]) -> None:
-        """Converts the json data into a BitValue"""
+        """
+        Convert the json data into a BitValue.
 
+        Parameters:
+           data (Dict[str, Any]): data to decode
+
+        """
         self.value = int(data["value"], 0)
         self.token = data["token"]
         self.description = data["description"]
 
     def json(self) -> Dict[str, Any]:
-        "Convert BitValue into a Dict for JSON encoding"
+        """
+        Convert the object into a Dict for JSON encoding.
 
+        Returns:
+           Dict[str, Any]: encoded data in JSON format
+
+        """
         return {
             "value": f"{self.value}",
             "token": self.token,
