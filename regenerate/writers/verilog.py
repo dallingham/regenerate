@@ -770,7 +770,7 @@ def add_scalar_output_signal(
         scalar_ports.append(
             (
                 field.output_signal,
-                f"[{field.msb.int_str()}:{field.lsb}]",
+                f"[{field.msb.int_decimal_str()}:{field.lsb}]",
                 reg.dimension.param_name(),
             )
         )
@@ -861,7 +861,7 @@ def build_logic_list(_regset, word_fields, cell_info) -> List[RegDecl]:
                 else:
                     new_reg = RegDecl(name, "")
             else:
-                vect = f"[{msb.int_str()}:{lsb}] "
+                vect = f"[{msb.int_decimal_str()}:{lsb}] "
                 if dim.is_parameter:
                     new_reg = RegDecl(f"{name}[{dim.param_name()}]", vect)
                 else:
@@ -934,7 +934,7 @@ def make_vector(field: BitField) -> str:
     "Build the vector indices if needed"
     if field.width == 1:
         return ""
-    return f"[{field.msb.int_str()}:{field.lsb}]"
+    return f"[{field.msb.int_decimal_str()}:{field.lsb}]"
 
 
 def build_oneshot_assignments(word_fields, cell_info) -> List[OneShots]:
@@ -1060,7 +1060,7 @@ def register_output_definitions(regset: RegisterDb) -> List[LogicDefResolved]:
                 local_param = copy.copy(field_info.msb)
                 local_param.offset = local_param.offset + 1
                 new_wire.field_list.append(
-                    f"{{({start}-{local_param.int_str()}){{1'b0}}}}"
+                    f"{{({start}-{local_param.int_decimal_str()}){{1'b0}}}}"
                 )
             else:
                 if (start - field_info.msb.resolve()) > 1:

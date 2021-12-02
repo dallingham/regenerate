@@ -109,7 +109,7 @@ module {{db.name}}
 /*------------------------------------------------------------------------------
  * Field       : {{ri.field.name}}
  * Type        : {{ri.type_descr}}
- * MSB         : {{ri.msb.int_str()}}
+ * MSB         : {{ri.msb.int_decimal_str()}}
  * LSB         : {{ri.lsb}}
  * Register    : {{ri.reg_name}}
  * Address     : {{"%08x" % ri.reg_addr}}
@@ -117,7 +117,7 @@ module {{db.name}}
  *------------------------------------------------------------------------------
  */
 {%   if (ri.field.msb.is_parameter or ri.field.width != 1) and not ri.reset_from_input %}
-   localparam bit [{{ri.msb.int_str()}}:{{ri.lsb}}] {{ri.rval}} = {{ri.field.reset_vstr()}};
+   localparam bit [{{ri.msb.int_decimal_str()}}:{{ri.lsb}}] {{ri.rval}} = {{ri.field.reset_vstr()}};
 
 {%   endif %}
 {%   if ri.dim_param %}
@@ -134,7 +134,7 @@ generate
 {%   else %}
 {%     if ri.generate %}  
 generate
-   for (bitpos = {{ri.lsb}}; bitpos <= {{ri.msb.int_str()}}; bitpos++) begin : g_{{ri.name}}
+   for (bitpos = {{ri.lsb}}; bitpos <= {{ri.msb.int_decimal_str()}}; bitpos++) begin : g_{{ri.name}}
 
 {%     endif %}
    {{ri.cell_type}} {{ri.name}}_reg
