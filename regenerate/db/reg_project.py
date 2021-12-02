@@ -538,7 +538,11 @@ class RegProject(BaseFile):
             for path in data["filelist"]:
                 full_path = Path(self._filename.parent / path).resolve()
                 self._filelist.append(
-                    Path(os.path.relpath(full_path, self._filename.parent))
+                    Path(
+                        os.path.relpath(
+                            full_path, self._filename.parent
+                        )
+                    )
                 )
 
         self._load_address_maps_from_json_data(data["address_maps"])
