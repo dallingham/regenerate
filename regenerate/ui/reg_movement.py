@@ -63,7 +63,7 @@ def insert_registers(
             reg.width,
             dest.ports.data_bus_width,
         )
-        _replace_parameter_uuids(param_old_to_new, reg)
+        replace_parameter_uuids(param_old_to_new, reg)
 
     if below_reg:
         for reg in dest.get_all_registers():
@@ -159,7 +159,7 @@ def _build_used_addresses(register_list) -> Set[int]:
     return used_addrs
 
 
-def _replace_parameter_uuids(uuid_map: Dict[str, str], reg: Register) -> None:
+def replace_parameter_uuids(uuid_map: Dict[str, str], reg: Register) -> None:
     if reg.dimension.is_parameter:
         if reg.dimension.txt_value in uuid_map:
             reg.dimension.txt_value = uuid_map[reg.dimension.txt_value]

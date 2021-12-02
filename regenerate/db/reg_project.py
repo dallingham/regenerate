@@ -417,7 +417,7 @@ class RegProject(BaseFile):
     ) -> None:
         """Sets the specififed address map"""
         self.modified = True
-        self.address_maps[map_id].blocks = new_list
+        self.address_maps[map_id].block_insts = new_list
 
     def remove_address_map(self, map_id: Uuid) -> None:
         """Removes the address map"""

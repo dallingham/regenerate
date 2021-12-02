@@ -471,7 +471,7 @@ class BitField(NameBase):
            signal_name (str): Output signal name
 
         """
-        self._output_signal = clean_signal(output)
+        self._output_signal = clean_signal(signal_name)
 
     @property
     def input_signal(self) -> str:
@@ -485,7 +485,7 @@ class BitField(NameBase):
         return self._input_signal
 
     @input_signal.setter
-    def input_signal(self, signal: str) -> None:
+    def input_signal(self, signal_name: str) -> None:
         """
         Set the name of the input signal.
 
@@ -493,7 +493,7 @@ class BitField(NameBase):
            signal (str): Input signal name
 
         """
-        self._input_signal = clean_signal(signal)
+        self._input_signal = clean_signal(signal_name)
 
     def json(self) -> Dict[str, Any]:
         """

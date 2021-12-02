@@ -103,24 +103,14 @@ class ParameterResolver:
         "Resolve a parameter looking for overrides"
 
         if not self.blkinst_id:
-            if value.is_parameter:
-                new_param = ParameterFinder().find(value.txt_value)
-                if new_param:
-                    return new_param.value
-                return 0
-            return value.int_value
+            return _resolve_blk_value(value)
         if (
             self.blkinst_id in self.top_overrides
             and value.is_parameter
             and value.txt_value in self.top_overrides[self.blkinst_id]
         ):
             new_val = self.top_overrides[self.blkinst_id][value.txt_value]
-            if new_val.is_parameter:
-                new_param = ParameterFinder().find(new_val.txt_value)
-                if new_param:
-                    return new_param.value
-                return 0
-            return new_val.int_value
+            return _resolve_blk_value(new_val)
         return value.value
 
     def resolve(self, param: ParameterData) -> int:
@@ -130,3 +120,19 @@ class ParameterResolver:
             return val
         new_val = self.resolve_blk(val)
         return new_val
+
+
+def _resolve_blk_value(value):
+    """
+    Return the parameter value if a parameter, otherwise return the integer.
+
+    Parameters:
+       value (ParamValue): Source value for the data
+
+    """
+    if value.is_parameter:
+        new_param = ParameterFinder().find(value.txt_value)
+        if new_param:
+            return new_param.value
+        return 0
+    return value.int_value

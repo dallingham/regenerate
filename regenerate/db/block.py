@@ -150,16 +150,6 @@ class Block(BaseFile):
             )
         return base
 
-    def _json_decode_reginsts(self, data: List[Any]) -> List[RegisterInst]:
-        "Decode the register instance section of the JSON data"
-
-        reginst_list = []
-        for rset in data:
-            ginst = RegisterInst()
-            ginst.json_decode(rset)
-            reginst_list.append(ginst)
-        return reginst_list
-
     def _json_decode_regsets(
         self, data: Dict[str, Any]
     ) -> Dict[str, RegisterDb]:
@@ -217,7 +207,7 @@ class Block(BaseFile):
         self.doc_pages = DocPages()
         self.doc_pages.json_decode(data["doc_pages"])
 
-        self.regset_insts = self._json_decode_reginsts(data["regset_insts"])
+        self.regset_insts = _json_decode_reginsts(data["regset_insts"])
 
         self.regsets = self._json_decode_regsets(data["regsets"])
 
@@ -279,3 +269,14 @@ class Block(BaseFile):
             }
 
         return data
+
+
+def _json_decode_reginsts(data: List[Any]) -> List[RegisterInst]:
+    "Decode the register instance section of the JSON data"
+
+    reginst_list = []
+    for rset in data:
+        ginst = RegisterInst()
+        ginst.json_decode(rset)
+        reginst_list.append(ginst)
+    return reginst_list

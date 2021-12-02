@@ -22,7 +22,7 @@ Provides both the GTK ListStore and ListView for the bit fields.
 
 import re
 from enum import IntEnum
-from typing import Optional, Callable
+from typing import Optional, Callable, List, Union
 from gi.repository import Gtk
 
 from regenerate.db import TYPES, LOGGER, ResetType, BitField
@@ -32,7 +32,7 @@ from regenerate.ui.columns import (
     SwitchComboMapColumn,
 )
 from regenerate.ui.enums import BitCol
-from regenerate.db import ParameterFinder
+from regenerate.db import ParameterFinder, ShareType, ParameterData
 
 #
 # Types conversions
@@ -74,9 +74,19 @@ class BitModel(Gtk.ListStore):
         super().__init__(str, str, str, str, str, str, int, object)
         self.register = None
 
-    def append_field(self, field: BitField):
-        "Adds the field to the model, filling out the fields in the model."
+    def append_field(self, field: BitField) -> Gtk.TreePath:
+        """
+        Add the field to the model.
 
+        Fills out the fields of the model from the field parameters.
+
+        Parameters:
+           field (BitField): Bit field to add to the model
+
+        Returns:
+           Gtk.TreePath: Path of the row that was added
+
+        """
         node = self.append(
             row=[
                 None,
@@ -91,11 +101,18 @@ class BitModel(Gtk.ListStore):
         )
         return self.get_path(node)
 
-    def get_bitfield_at_path(self, path: str):
+    def get_bitfield_at_path(self, path: Union[Gtk.TreePath, str]) -> BitField:
         """
-        Returns the field object associated with a ListModel path.
+        Return the field object associated with a ListModel path.
+
+        Parameters:
+           path: The path in the model that holds the field
+
+        Returns:
+           BitField: Bit field associated with the row
+
         """
-        return self[path][-1]
+        return self[path][BitCol.FIELD]
 
 
 class BitList:
@@ -115,44 +132,70 @@ class BitList:
         ("Reset", 130, -1, False, True),
     )
 
-    def __init__(self, obj, selection_changed: Callable, modified: Callable):
+    def __init__(
+        self,
+        treeview: Gtk.TreeView,
+        selection_changed: Callable,
+        modified: Callable,
+    ):
         """
-        Creates the object, connecting it to the ListView (obj). Three
-        callbacks are associated with the object.
+        Initializes the object.
 
-        text_edit - called when a text field is edited
-        selection_changed - called when the selected field is changed
+        Creates the object, connecting it to the ListView (obj).
+
+        Parameters:
+           treeview (Gtk.TreeView): treeview interface object
+           selection_changed (Callable): function that is called when the
+                selection changed
+           modified (Callable): function that is called when the data has
+                been modified
+
         """
-        self.__obj = obj
-        self.__col = None
-        self.__model: Optional[BitModel] = None
-        self.__modified = modified
-        self.__build_bitfield_columns()
-        self.__obj.get_selection().connect(
-            "changed", self.my_selection_changed
-        )
+        self._treeview = treeview
+        self._lsb_col = None
+        self._model: Optional[BitModel] = None
+        self._modified = modified
+        self._build_bitfield_columns()
         self.selection_changed = selection_changed
+        self._treeview.get_selection().connect(
+            "changed", self.selection_changed
+        )
 
-    def my_selection_changed(self, obj):
-        self.selection_changed(obj)
+    def set_parameters(self, parameters: List[ParameterData]) -> None:
+        """
+        Set the parameters for the bitlist.
 
-    def set_parameters(self, parameters):
-        "Sets the parameters for the bitlist"
-        my_parameters = sorted([(p.name, p.uuid) for p in parameters])
-        self.reset_column.update_menu(my_parameters)
+        Updates the menus for the reset column and the msb column - the two
+        columns that use parameters.
 
-        msb_parameters = sorted([(f"{p.name}-1", p.uuid) for p in parameters])
-        self.msb_column.update_menu(msb_parameters)
+        Parameters:
+           parameters (List[ParameterData]): parameter data list
+
+        """
+        self.reset_column.update_menu(
+            sorted([(p.name, p.uuid) for p in parameters])
+        )
+
+        self.msb_column.update_menu(
+            sorted([(f"{p.name}-1", p.uuid) for p in parameters])
+        )
 
     def set_model(self, model):
         "Associates a List Model with the list view."
-        self.__model = model
-        self.__obj.set_model(model)
+        self._model = model
+        self._treeview.set_model(model)
 
-    def set_mode(self, mode):
+    def set_mode(self, mode: ShareType) -> None:
+        """
+        Sets the mode of the type column
+
+        Parameters:
+           mode (ShareType): sets the share type of the column
+
+        """
         self.type_column.set_mode(mode)
 
-    def __build_bitfield_columns(self):
+    def _build_bitfield_columns(self):
         """
         Builds the columns for the tree view. First, removes the old columns in
         the column list. The builds new columns and inserts them into the tree.
@@ -204,18 +247,18 @@ class BitList:
                     i,
                     monospace=True,
                 )
-                self.__col = column
+                self._lsb_col = column
 
             if col[BitModelCol.SORT] >= 0:
                 column.set_sort_column_id(col[BitModelCol.SORT])
             column.set_min_width(col[BitModelCol.SIZE])
             column.set_expand(col[BitModelCol.EXPAND])
             column.set_resizable(True)
-            self.__obj.append_column(column)
+            self._treeview.append_column(column)
 
     def get_selected_row(self):
         "Returns the path of the selected row"
-        value = self.__obj.get_selection().get_selected_rows()
+        value = self._treeview.get_selection().get_selected_rows()
         if value:
             return value[1]
         return None
@@ -223,48 +266,75 @@ class BitList:
     def select_row(self, path):
         "Selectes the row associated with the path"
         if path:
-            self.__obj.get_selection().select_path(path)
+            self._treeview.get_selection().select_path(path)
 
-    def select_field(self):
-        "Returns the field object associated with selected row."
+    def select_field(self) -> Optional[BitField]:
+        """
+        Return the field object associated with selected row.
 
-        data = self.__obj.get_selection().get_selected()
+        Returns:
+           Optional[BitField]: selected object, or None if no object
+
+        """
+        data = self._treeview.get_selection().get_selected()
         if data:
             (store, node) = data
             if node:
                 return store.get_value(node, BitCol.FIELD)
         return None
 
-    def add_new_field(self, field: BitField):
-        "Adds a new field to the model, and sets editing to begin"
-        if self.__model:
-            path = self.__model.append_field(field)
-            self.__obj.set_cursor(path, self.__col, start_editing=True)
-
-    def field_name_edit(self, _cell, path, new_text, _col) -> None:
+    def add_new_field(self, field: BitField) -> None:
         """
+        Add a new field to the model.
+
+        Appends the field to the model, set start editing the LSB column.
+
+        Parameters:
+           field (BitField): New bitfield to add
+
+        """
+        if self._model:
+            path = self._model.append_field(field)
+            self._treeview.set_cursor(path, self._lsb_col, start_editing=True)
+
+    def field_name_edit(
+        self,
+        _cell: Gtk.CellRendererText,
+        path: Gtk.TreePath,
+        new_text: str,
+        _col: int,
+    ) -> None:
+        """
+        Update the field name when edited.
+
         Primary callback when a text field is edited in the BitList. Based off
         the column, we pass it to a function to handle the data.
-        """
 
-        if self.__model is None:
+        Parameters:
+           _cell (Gtk.CellRendererText): cell renderer, unused
+           path (Gtk.TreePath): path of the edited row
+           new_text (str): new text value
+           _col: column number, unused
+
+        """
+        if self._model is None:
             return
 
-        field = self.__model.get_bitfield_at_path(path)
+        field = self._model.get_bitfield_at_path(path)
         if new_text != field.name:
             new_text = new_text.upper().replace(" ", "_")
             new_text = new_text.replace("/", "_").replace("-", "_")
 
-            register = self.__model.register
+            register = self._model.register
 
             current_names = [
                 f.name for f in register.get_bit_fields() if f != field
             ]
 
             if new_text not in current_names:
-                self.__model[path][BitCol.NAME] = new_text
+                self._model[path][BitCol.NAME] = new_text
                 field.name = new_text
-                self.__modified()
+                self._modified()
             else:
                 LOGGER.warning(
                     '"%s" has already been used as a field name', new_text
@@ -273,23 +343,23 @@ class BitList:
     def reset_text_edit(self, _cell, path, new_val, col) -> None:
         "Called when the text of the reset field has been altered"
 
-        if self.__model is None:
+        if self._model is None:
             return
 
-        field = self.__model.get_bitfield_at_path(path)
+        field = self._model.get_bitfield_at_path(path)
 
         if re.match(r"^(0x)?[a-fA-F0-9]+$", new_val):
             if _check_reset(field, int(new_val, 0)) is False:
                 return
             field.reset_value = int(new_val, 0)
             field.reset_type = ResetType.NUMERIC
-            self.__model[path][col] = reset_value(field)
-            self.__modified()
+            self._model[path][col] = reset_value(field)
+            self._modified()
         elif re.match(r"""^[A-Za-z]\w*$""", new_val):
             field.reset_input = new_val
             field.reset_type = ResetType.INPUT
-            self.__model[path][BitCol.RESET] = new_val
-            self.__modified()
+            self._model[path][BitCol.RESET] = new_val
+            self._modified()
         else:
             LOGGER.warning(
                 '"%s" is not a valid constant, parameter, or signal name',
@@ -299,19 +369,19 @@ class BitList:
     def reset_menu_edit(self, cell, path, node, _col) -> None:
         "Called with the reset field has been altered by the menu"
 
-        if self.__model is None:
+        if self._model is None:
             return
 
         model = cell.get_property("model")
-        field = self.__model.get_bitfield_at_path(path)
+        field = self._model.get_bitfield_at_path(path)
         field.reset_type = ResetType.PARAMETER
         new_val = model.get_value(node, 1)
         new_text = model.get_value(node, 0)
         field.reset_parameter = new_val
 
-        if self.__model:
-            self.__model[path][BitCol.RESET] = new_text
-            self.__modified()
+        if self._model:
+            self._model[path][BitCol.RESET] = new_text
+            self._modified()
 
     def field_type_edit(self, cell, path, node, col) -> None:
         """
@@ -320,36 +390,36 @@ class BitList:
         and the path tells us the row. So [path][col] is the index into the
         table.
         """
-        if self.__model:
+        if self._model:
             model = cell.get_property("model")
-            field = self.__model.get_bitfield_at_path(path)
-            self.__model[path][col] = model.get_value(node, 0)
+            field = self._model.get_bitfield_at_path(path)
+            self._model[path][col] = model.get_value(node, 0)
             self.update_type_info(field, model, path, node)
-            self.__modified()
+            self._modified()
 
     def update_type_info(self, field: BitField, model, _path, node):
         "Updates the bit field type info"
 
-        if self.__model is None:
+        if self._model is None:
             return
 
         field.field_type = model.get_value(node, 1)
 
         if not field.output_signal:
             field.output_signal = "%s_%s_OUT" % (
-                self.__model.register.token,
+                self._model.register.token,
                 field.name,
             )
 
         if TYPE_ENB[field.field_type][0] and not field.input_signal:
             field.input_signal = "%s_%s_IN" % (
-                self.__model.register.token,
+                self._model.register.token,
                 field.name,
             )
 
         if TYPE_ENB[field.field_type][1] and not field.control_signal:
             field.control_signal = "%s_%s_LD" % (
-                self.__model.register.token,
+                self._model.register.token,
                 field.name,
             )
 
@@ -363,10 +433,10 @@ class BitList:
         corresponding field.
         """
 
-        if self.__model is None:
+        if self._model is None:
             return
 
-        field = self.__model.get_bitfield_at_path(path)
+        field = self._model.get_bitfield_at_path(path)
         try:
             stop = int(new_text, 0)
         except ValueError:
@@ -380,10 +450,10 @@ class BitList:
 
         if stop != field.msb.resolve():
             field.msb.set_int(stop)
-            self.__model.register.change_bit_field(field)
-            self.__modified()
+            self._model.register.change_bit_field(field)
+            self._modified()
 
-        self.__model[path][BitCol.MSB] = f"{field.msb.int_str()}"
+        self._model[path][BitCol.MSB] = f"{field.msb.int_str()}"
 
     def update_lsb(self, _cell, path, new_text, _col):
         """
@@ -395,10 +465,10 @@ class BitList:
         corresponding field.
         """
 
-        if self.__model is None:
+        if self._model is None:
             return
 
-        field = self.__model.get_bitfield_at_path(path)
+        field = self._model.get_bitfield_at_path(path)
         start = int(new_text, 0)
 
         if self.check_for_overlaps(field, start, field.msb.resolve()) is False:
@@ -409,19 +479,19 @@ class BitList:
 
         if start != field.lsb:
             field.lsb = start
-            self.__model.register.change_bit_field(field)
-            self.__modified()
+            self._model.register.change_bit_field(field)
+            self._modified()
 
-        self.__model[path][BitCol.LSB] = f"{field.lsb}"
-        self.__model[path][BitCol.SORT] = field.start_position
+        self._model[path][BitCol.LSB] = f"{field.lsb}"
+        self._model[path][BitCol.SORT] = field.start_position
 
     def check_for_width(self, _start: int, stop: int) -> bool:
         "Checks to make sure the bit position is with the valid range"
 
-        if self.__model is None:
+        if self._model is None:
             return False
 
-        reg = self.__model.register
+        reg = self._model.register
         if stop >= reg.width:
             LOGGER.warning(
                 "Bit position (%d) is greater than register width (%d)",
@@ -436,10 +506,10 @@ class BitList:
     ) -> bool:
         "Checks for overlapping bit fields"
 
-        if self.__model is None:
+        if self._model is None:
             return False
 
-        register = self.__model.register
+        register = self._model.register
 
         used = set()
         for fld in register.get_bit_fields():
@@ -460,26 +530,26 @@ class BitList:
         Called when text has been edited. Selects the correct function
         depending on the edited column
         """
-        if self.__model is None:
+        if self._model is None:
             return
 
         model = cell.get_property("model")
-        field = self.__model[path][-1]
+        field = self._model[path][-1]
         descript = model.get_value(node, 0)
         uuid = model.get_value(node, 1)
         field.msb.set_param(uuid, -1)
-        self.__model[path][BitCol.MSB] = descript
-        self.__modified()
+        self._model[path][BitCol.MSB] = descript
+        self._modified()
 
     def _msb_text(self, _cell, path, new_text, _col) -> None:
         """
         Called when text has been edited. Selects the correct function
         depending on the edited column
         """
-        if self.__model is None:
+        if self._model is None:
             return
 
-        field = self.__model[path][-1]
+        field = self._model[path][-1]
         new_text = new_text.strip()
         try:
             value = int(new_text, 0)
@@ -492,8 +562,8 @@ class BitList:
             field.msb.offset = 0
 
             field.msb.set_int(int(new_text, 0))
-            self.__model[path][BitCol.MSB] = f"{field.msb.int_decimal_str()}"
-            self.__modified()
+            self._model[path][BitCol.MSB] = f"{field.msb.int_decimal_str()}"
+            self._modified()
         except ValueError:
             ...
 

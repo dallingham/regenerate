@@ -28,13 +28,12 @@ regenerate
 import xml
 import os
 from pathlib import Path
-from typing import List, Union, Optional, Dict
+from typing import List, Union, Optional
 
 from gi.repository import Gtk, GdkPixbuf
 from regenerate.settings.version import PROGRAM_NAME, PROGRAM_VERSION
 from regenerate.db import (
     RegProject,
-    Register,
     LOGGER,
     TYPES,
     remove_default_handler,
@@ -65,7 +64,6 @@ from .project_tab import ProjectTabs
 from .register_tab import RegSetTab
 from .status_logger import StatusHandler
 from .top_level_tab import TopLevelTab
-
 
 TYPE_ENB = {}
 for data_type in TYPES:
@@ -965,21 +963,6 @@ def _next_boundary(address: int, width: int) -> int:
 def _is_contiguous(path_list) -> bool:
     "Returns True if the numbers in the list are sequential"
     return sorted(path_list) == list(range(min(path_list), max(path_list) + 1))
-
-
-def replace_parameter_uuids(uuid_map: Dict[str, str], reg: Register) -> None:
-    "Replaces the parameter UUIDs with the new ones in the map"
-
-    if reg.dimension.is_parameter:
-        if reg.dimension.txt_value in uuid_map:
-            reg.dimension.txt_value = uuid_map[reg.dimension.txt_value]
-    for field in reg.get_bit_fields():
-        if field.reset_type == ResetType.PARAMETER:
-            if field.reset_parameter in uuid_map:
-                field.reset_parameter = uuid_map[field.reset_parameter]
-        if field.msb.is_parameter:
-            if field.msb.txt_value in uuid_map:
-                field.msb.txt_value = uuid_map[field.msb.txt_value]
 
 
 def _sequential_greater_than_2(regtab: RegSetTab) -> bool:

@@ -387,14 +387,13 @@ class Build(BaseWindow):
                 gen = writer_class(self.__prj, dbase, options)
             else:
                 gen = writer_class(self.__prj, options)
-            self.run_writer(gen, dest)
-            item[BuildCol.MODIFIED] = False
 
-    def run_writer(self, gen, dest: Path) -> None:
-        try:
-            gen.write(dest)
-        except:
-            TraceBack(dest)
+            try:
+                gen.write(dest)
+            except:
+                TraceBack(dest)
+
+            item[BuildCol.MODIFIED] = False
 
     def on_add_build_clicked(self, _obj: Gtk.Button) -> None:
         """

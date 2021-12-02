@@ -1,3 +1,7 @@
+"""
+Flag functions as deprecated.
+"""
+
 import warnings
 import functools
 

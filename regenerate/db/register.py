@@ -492,7 +492,7 @@ class Register(NameBase):
         self.flags.json_decode(data["flags"])
 
         self.ram_size = data["ram_size"]
-        self.share = data["share"]
+        self.share = ShareType(data["share"])
         self.width = data["width"]
 
         self._bit_fields = {}
