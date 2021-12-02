@@ -113,6 +113,9 @@ class BaseDoc:
         self.project: Optional[RegProject] = None
         self.preview: Optional[PreviewEditor] = None
 
+        search = Gtk.SearchEntry()
+        search.show()
+
         add = Gtk.ToolButton()
         add.set_stock_id(Gtk.STOCK_ADD)
         add.set_tooltip_text("Add a new page")
@@ -134,6 +137,7 @@ class BaseDoc:
         help_btn.show()
 
         hbox = Gtk.HBox()
+        hbox.pack_start(search, True, True, 0)
         hbox.pack_start(add, True, True, 0)
         hbox.pack_start(add_tag, True, True, 0)
         hbox.pack_start(preview, True, True, 0)
@@ -145,13 +149,29 @@ class BaseDoc:
         add.connect("clicked", self._add_notebook_page_callback)
         add_tag.connect("clicked", self._add_tag)
         help_btn.connect("clicked", _help)
-
+        search.connect('next-match', self._next_match)
+        search.connect('previous-match', self._prev_match)
+        search.connect('search-changed', self._search_changed)
+        search.connect('stop-search', self._stop_search)
+        
         self.page_map: List[PageInfo] = []
         self.remove_pages()
         self.callback = modified
         self.links = {}
         self.notebook.connect("switch-page", self.switch_page)
 
+    def _next_match(self, *obj):
+        print("next_match", obj)
+
+    def _prev_match(self, *obj):
+        print("prev_match", *obj)
+
+    def _search_changed(self, *obj):
+        print("search_changed", *obj)
+
+    def _stop_search(self, *obj):
+        print("stop_search", *obj)
+        
     def _preview(self, _obj: Gtk.Button) -> None:
         "Display the preview window"
         info = self.page_map[self.notebook.get_current_page()]
