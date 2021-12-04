@@ -109,12 +109,20 @@ class BaseDoc:
         modified: Callable,
     ):
         self.notebook = notebook
-
         self.project: Optional[RegProject] = None
         self.preview: Optional[PreviewEditor] = None
 
         search = Gtk.SearchEntry()
-        search.show()
+        self.search_bar = Gtk.SearchBar()
+        self.search_bar.connect_entry(search)
+        self.search_bar.add(search)
+        self.search_bar.show_all()
+        self.search_bar.set_search_mode(True)
+
+        # next_btn = Gtk.ToolButton()
+        # next_btn.set_stock_id(Gtk.STOCK_GO_DOWN)
+        # next_btn.set_tooltip_text("Find next")
+        # next_btn.show()
 
         add = Gtk.ToolButton()
         add.set_stock_id(Gtk.STOCK_ADD)
@@ -137,11 +145,11 @@ class BaseDoc:
         help_btn.show()
 
         hbox = Gtk.HBox()
-        hbox.pack_start(search, True, True, 0)
-        hbox.pack_start(add, True, True, 0)
-        hbox.pack_start(add_tag, True, True, 0)
-        hbox.pack_start(preview, True, True, 0)
-        hbox.pack_start(help_btn, True, True, 0)
+        hbox.pack_start(self.search_bar, False, True, 0)
+        hbox.pack_start(add, False, True, 0)
+        hbox.pack_start(add_tag, False, True, 0)
+        hbox.pack_start(preview, False, True, 0)
+        hbox.pack_start(help_btn, False, True, 0)
         hbox.show()
         self.notebook.set_action_widget(hbox, Gtk.PackType.END)
 
@@ -149,29 +157,56 @@ class BaseDoc:
         add.connect("clicked", self._add_notebook_page_callback)
         add_tag.connect("clicked", self._add_tag)
         help_btn.connect("clicked", _help)
-        search.connect('next-match', self._next_match)
-        search.connect('previous-match', self._prev_match)
-        search.connect('search-changed', self._search_changed)
-        search.connect('stop-search', self._stop_search)
-        
+        search.connect("next-match", self._next_match, search)
+        search.connect("previous-match", self._prev_match)
+        search.connect("search-changed", self._search_changed)
+        search.connect("stop-search", self._stop_search)
+
         self.page_map: List[PageInfo] = []
         self.remove_pages()
         self.callback = modified
-        self.links = {}
         self.notebook.connect("switch-page", self.switch_page)
 
-    def _next_match(self, *obj):
-        print("next_match", obj)
+    def _next_match(self, button, obj):
+        page_num = self.notebook.get_current_page()
+        info = self.page_map[page_num]
+        widget = self.notebook.get_nth_page(page_num)
+        textview = widget.get_children()[0].get_children()[0]
+
+        last_pos = info.textbuf.get_mark("last_pos")
+        if last_pos is None:
+            return
+
+        text_iter = info.textbuf.get_iter_at_mark(last_pos)
+        search_str = obj.get_text()
+        found = text_iter.forward_search(search_str, 0, None)
+        if found:
+            match_start, match_end = found
+            info.textbuf.select_range(match_start, match_end)
+            last_pos = info.textbuf.create_mark("last_pos", match_end, False)
+            textview.scroll_to_mark(last_pos, 0, True, 0.0, 0.5)
 
     def _prev_match(self, *obj):
         print("prev_match", *obj)
 
-    def _search_changed(self, *obj):
-        print("search_changed", *obj)
+    def _search_changed(self, obj):
+        page_num = self.notebook.get_current_page()
+        info = self.page_map[page_num]
+        widget = self.notebook.get_nth_page(page_num)
+        textview = widget.get_children()[0].get_children()[0]
+
+        search_str = obj.get_text()
+        start_iter = info.textbuf.get_start_iter()
+        found = start_iter.forward_search(search_str, 0, None)
+        if found:
+            match_start, match_end = found
+            info.textbuf.select_range(match_start, match_end)
+            last_pos = info.textbuf.create_mark("last_pos", match_end, False)
+            textview.scroll_to_mark(last_pos, 0, True, 0.0, 0.5)
 
     def _stop_search(self, *obj):
         print("stop_search", *obj)
-        
+
     def _preview(self, _obj: Gtk.Button) -> None:
         "Display the preview window"
         info = self.page_map[self.notebook.get_current_page()]
@@ -357,6 +392,9 @@ class BaseDoc:
         except IndexError:
             pass
         self.page_map[page].button.show()
+        widget = self.notebook.get_nth_page(page)
+        textview = widget.get_children()[0].get_children()[0]
+        # self.search_bar.set_key_capture_widget(textview)
 
     def delete_page(self, _button: Gtk.Button, info: PageInfo):
         "Delete the current document page"

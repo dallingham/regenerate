@@ -101,6 +101,28 @@ class BitModel(Gtk.ListStore):
         )
         return self.get_path(node)
 
+    def update_fields(self) -> None:
+        """
+        Add the field to the model.
+
+        Fills out the fields of the model from the field parameters.
+
+        Parameters:
+           field (BitField): Bit field to add to the model
+
+        Returns:
+           Gtk.TreePath: Path of the row that was added
+
+        """
+        for row in self:
+            field = row[BitCol.FIELD]
+            row[BitCol.MSB] = field.msb.int_decimal_str()
+            row[BitCol.LSB] = str(field.lsb)
+            row[BitCol.NAME] = field.name
+            row[BitCol.TYPE] = TYPE2STR[field.field_type][0]
+            row[BitCol.RESET] = get_field_reset_data(field)
+            row[BitCol.SORT] = field.lsb
+
     def get_bitfield_at_path(self, path: Union[Gtk.TreePath, str]) -> BitField:
         """
         Return the field object associated with a ListModel path.
@@ -157,9 +179,119 @@ class BitList:
         self._modified = modified
         self._build_bitfield_columns()
         self.selection_changed = selection_changed
+        self._treeview.get_selection().set_mode(Gtk.SelectionMode.MULTIPLE)
         self._treeview.get_selection().connect(
             "changed", self.selection_changed
         )
+        self._treeview.connect(
+            "button-press-event", self.on_button_press_event
+        )
+        self._menu = self._build_menu()
+
+    def _build_menu(self) -> Gtk.Menu:
+        menu = Gtk.Menu()
+
+        item = Gtk.MenuItem("Compact selected fields")
+        item.connect("activate", self.compact_selected_fields)
+        item.show()
+        menu.add(item)
+
+        item = Gtk.MenuItem("Push fields down")
+        item.connect("activate", self.push_fields_down)
+        item.show()
+        menu.add(item)
+        return menu
+
+    def push_fields_down(self, _menuitem: Gtk.MenuItem) -> None:
+        rows = self.get_selected_rows()
+        if len(rows) != 1:
+            LOGGER.error(
+                "Only a single field can be selected to push fields down"
+            )
+            return
+
+        selected_field = self._model[rows[0]][BitCol.FIELD]
+        reg_width = self._model.register.width
+
+        field_list = self._model.register.get_bit_fields()
+        next_list = []
+
+        field = field_list.pop(0)
+        while field != selected_field:
+            next_list.append((field.msb, field.lsb))
+            field = field_list.pop(0)
+
+        next_expected = field.msb.resolve() + 1
+
+        if field.msb.resolve() + 1 >= reg_width:
+            LOGGER.error("Pushing down would exceed register size")
+            return
+        else:
+            next_list.append((field.msb.resolve() + 1, field.lsb + 1))
+
+        while len(field_list):
+            field = field_list.pop(0)
+            if next_expected + field.width > reg_width:
+                LOGGER.error("Pushing down would exceed register size")
+                return
+
+            if field.lsb == next_expected:
+                next_list.append(
+                    (next_expected + 1, next_expected + field.width)
+                )
+                print(lsb, next_expected)
+                next_expected = next_expected + 1 + field.width
+            else:
+                next_expected = -1
+                next_list.append((field.msb.resolve(), field.lsb))
+
+        for field in self._model.register.get_bit_fields():
+            new_msb, new_lsb = next_list.pop(0)
+            field.lsb = new_lsb
+            field.msb.set_int(new_msb)
+
+        self._modified()
+        self._model.update_fields()
+
+    def compact_selected_fields(self, _menuitem: Gtk.MenuItem) -> None:
+        rows = self.get_selected_rows()
+        if len(rows) < 2:
+            return
+
+        rowlist = [int(str(row)) for row in rows]
+        if rowlist != list(range(rowlist[0], rowlist[0] + len(rowlist))):
+            LOGGER.error("Fields must be contiguous to be compacted")
+            return
+
+        fields = [self._model[row][BitCol.FIELD] for row in rows]
+
+        for field in fields:
+            if field.msb.is_parameter:
+                LOGGER.error(
+                    "Fields with a parameterized MSB cannot be compacted"
+                )
+                return
+
+        next_lsb = fields[0].lsb + fields[0].width
+
+        for field in fields[1:]:
+            width = field.width
+            field.lsb = next_lsb
+            field.msb.set_int(next_lsb + width - 1)
+            next_lsb = next_lsb + width
+
+        self.update_display()
+        self._modified()
+
+    def redraw(self) -> None:
+        if self._model:
+            self._model.clear()
+            for field in self._model.register.get_bit_fields():
+                self._model.append_field(field)
+
+    def update_display(self) -> None:
+        if self._model:
+            self._model.update_fields()
 
     def set_parameters(self, parameters: List[ParameterData]) -> None:
         """
@@ -263,12 +395,16 @@ class BitList:
             return value[1]
         return None
 
+    def get_selected_rows(self) -> List[Gtk.TreePath]:
+        "Returns the path of the selected row"
+        return self._treeview.get_selection().get_selected_rows()[1]
+
     def select_row(self, path):
         "Selectes the row associated with the path"
         if path:
             self._treeview.get_selection().select_path(path)
 
-    def select_field(self) -> Optional[BitField]:
+    def selected_fields(self) -> List[BitField]:
         """
         Return the field object associated with selected row.
 
@@ -276,12 +412,14 @@ class BitList:
            Optional[BitField]: selected object, or None if no object
 
         """
-        data = self._treeview.get_selection().get_selected()
+        data = self._treeview.get_selection().get_selected_rows()
         if data:
-            (store, node) = data
-            if node:
-                return store.get_value(node, BitCol.FIELD)
-        return None
+            (store, row_list) = data
+            return [
+                store.get_value(store.get_iter(row), BitCol.FIELD)
+                for row in row_list
+            ]
+        return []
 
     def add_new_field(self, field: BitField) -> None:
         """
@@ -566,6 +704,16 @@ class BitList:
             self._modified()
         except ValueError:
             ...
+
+    def on_button_press_event(self, _obj, event):
+        "Callback for a button press on the register list. Display the menu"
+
+        if event.button == 3:
+            self._menu.popup(
+                None, None, None, 1, 0, Gtk.get_current_event_time()
+            )
+            return True
+        return False
 
 
 def _check_reset(field: BitField, value: int) -> bool:

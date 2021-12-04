@@ -507,27 +507,31 @@ class RegSetTab:
         self.set_modified()
         self._set_register_warn_flags(register)
 
-    def _remove_bit_callback(self, _obj: Gtk.Button):
+    def _remove_bit_callback(self, _obj: Gtk.Button) -> None:
         register = self.get_selected_registers()[0]
-        row = self._bitfield_obj.get_selected_row()
-        field = self._bit_model.get_bitfield_at_path(row[0])
-        register.delete_bit_field(field)
-        node = self._bit_model.get_iter(row[0])
-        self._bit_model.remove(node)
-        self._set_register_warn_flags(register)
-        self.set_modified()
+        field_list = self._bitfield_obj.selected_fields()
+        if self._regset:
+            for field in field_list:
+                register.delete_bit_field(field)
 
-    def _edit_bit_callback(self, _obj: Gtk.Button):
+            for row in reversed(self._bitfield_obj.get_selected_rows()):
+                node = self._bit_model.get_iter(row)
+                self._bit_model.remove(node)
+            self._set_register_warn_flags(register)
+            self.set_modified()
+
+    def _edit_bit_callback(self, _obj: Gtk.Button) -> None:
         register = self.get_selected_registers()[0]
-        field = self._bitfield_obj.select_field()
-        if field and self._regset:
-            BitFieldEditor(
-                self._regset,
-                register,
-                field,
-                self._set_field_modified,
-                self._widgets.top_window,
-            )
+        field_list = self._bitfield_obj.selected_fields()
+        if self._regset:
+            for field in field_list:
+                BitFieldEditor(
+                    self._regset,
+                    register,
+                    field,
+                    self._set_field_modified,
+                    self._widgets.top_window,
+                )
 
     def _find_shared_address(self, reg):
         for shared_reg in self._regset.get_all_registers():
