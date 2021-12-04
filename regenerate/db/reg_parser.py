@@ -327,10 +327,10 @@ class RegParser(XmlBase):
             self.__field.reset_input = text.strip()
         elif self.__reset_info.reset_type == ResetType.PARAMETER:
             self.__field.reset_parameter = self.__reset_info.parameter
-            self.__field.reset_value = int(text, 16)
+            self.__field.set_reset_value_int(int(text, 16))
             self.__found_parameters.add(self.__reset_info.parameter)
         else:
-            self.__field.reset_value = int(text, 16)
+            self.__field.set_reset_value_int(int(text, 16))
 
     def _end_token(self, text: str) -> None:
         """

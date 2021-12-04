@@ -621,7 +621,7 @@ class BitList:
             self._modified()
 
         self._model[path][BitCol.LSB] = f"{field.lsb}"
-        self._model[path][BitCol.SORT] = field.start_position
+        self._model[path][BitCol.SORT] = field.lsb
 
     def check_for_width(self, _start: int, stop: int) -> bool:
         "Checks to make sure the bit position is with the valid range"

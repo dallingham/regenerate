@@ -189,8 +189,8 @@ class RegProject(BaseFile):
         ]
         for addr_id in self.address_maps:
             addr_map = self.address_maps[addr_id]
-            addr_map.blocks = [
-                map_id for map_id in addr_map.blocks if addr_id != blk_id
+            addr_map.block_insts = [
+                map_id for map_id in addr_map.block_insts if addr_id != blk_id
             ]
 
     def append_register_set_to_list(self, name: Path) -> None:
@@ -325,7 +325,7 @@ class RegProject(BaseFile):
         """Returns the address maps associated with the specified group."""
         addr_map = self.address_maps.get(map_id)
         if addr_map:
-            blocks = addr_map.blocks
+            blocks = addr_map.block_insts
             if blocks:
                 return [
                     blk_inst
@@ -339,7 +339,7 @@ class RegProject(BaseFile):
 
         map_list: List[Uuid] = []
         for key in self.address_maps:
-            if blk_id in self.address_maps[key].blocks:
+            if blk_id in self.address_maps[key].block_insts:
                 map_list.append(key)
         return map_list
 
@@ -351,8 +351,8 @@ class RegProject(BaseFile):
 
     def add_address_map_to_block(self, map_id: Uuid, blk_id: Uuid) -> bool:
         """Adds an address map to a group if it does not already exist"""
-        if blk_id not in self.address_maps[map_id].blocks:
-            self.address_maps[map_id].blocks.append(blk_id)
+        if blk_id not in self.address_maps[map_id].block_insts:
+            self.address_maps[map_id].block_insts.append(blk_id)
             return True
         return False
 

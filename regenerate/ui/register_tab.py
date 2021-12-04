@@ -62,7 +62,7 @@ class RegSetWidgets:
     "Track the widgets uses in the register tab"
 
     def __init__(self, find_obj):
-        self.top_window = find_obj("top_window")
+        self.top_window = find_obj("regenerate")
         self.reglist = find_obj("register_list")
         self.regset_list = find_obj("project_list")
         self.notebook = find_obj("module_notebook")
