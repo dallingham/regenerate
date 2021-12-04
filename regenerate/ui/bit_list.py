@@ -213,12 +213,12 @@ class BitList:
         selected_field = self._model[rows[0]][BitCol.FIELD]
         reg_width = self._model.register.width
 
-        field_list = self._model.register.get_bit_fields()
         next_list = []
+        field_list = self._model.register.get_bit_fields()
 
         field = field_list.pop(0)
         while field != selected_field:
-            next_list.append((field.msb, field.lsb))
+            next_list.append((field.msb.resolve(), field.lsb))
             field = field_list.pop(0)
 
         next_expected = field.msb.resolve() + 1
@@ -226,21 +226,20 @@ class BitList:
         if field.msb.resolve() + 1 >= reg_width:
             LOGGER.error("Pushing down would exceed register size")
             return
-        else:
-            next_list.append((field.msb.resolve() + 1, field.lsb + 1))
+
+        next_list.append((field.msb.resolve() + 1, field.lsb + 1))
 
         while len(field_list):
             field = field_list.pop(0)
-            if next_expected + field.width > reg_width:
+            if next_expected + field.width >= reg_width:
                 LOGGER.error("Pushing down would exceed register size")
                 return
 
             if field.lsb == next_expected:
                 next_list.append(
-                    (next_expected + 1, next_expected + field.width)
+                    (next_expected + field.width, next_expected + 1)
                 )
-                print(lsb, next_expected)
-                next_expected = next_expected + 1 + field.width
+                next_expected = next_expected + field.width
             else:
                 next_expected = -1
                 next_list.append((field.msb.resolve(), field.lsb))
