@@ -363,6 +363,9 @@ class BitField(NameBase):
     def _reset_value_int(self, value: int) -> None:
         self._reset_value = value
 
+    def set_reset_value_int(self, value: int) -> None:
+        self._reset_value = value
+        
     def reset_value_bit(self, bit: int) -> int:
         """
         Return 1 if the bit in the resolved reset value is a 1.
