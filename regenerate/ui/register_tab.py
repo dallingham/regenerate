@@ -55,7 +55,12 @@ from .summary_window import SummaryWindow
 from .filter_mgr import FilterManager
 from .file_dialogs import get_new_filename
 from .select_sidebar import SelectSidebar
-from .reg_movement import insert_registers, copy_parameters, copy_registers
+from .reg_movement import (
+    insert_registers_after,
+    insert_register_at,
+    copy_parameters,
+    copy_registers,
+)
 
 
 class RegSetWidgets:
@@ -153,13 +158,12 @@ class RegSetTab:
             "regset_select_help.html",
             self._new_regset_callback,
             self._add_regset_callback,
-            self._remove_regset_callbackk,
+            self._remove_regset_callback,
             self._add_model_callback,
         )
         self._sidebar.set_selection_changed_callback(self._regset_sel_changed)
 
         self._widgets.reg_notebook.set_sensitive(False)
-        self._widgets.reg_notebook.hide()
         self._reg_selected_action.set_sensitive(False)
 
         self._connect_signals()
@@ -179,6 +183,10 @@ class RegSetTab:
             self.set_modified,
             self._update_register_address,
             self._set_register_warn_flags,
+        )
+
+        self._widgets.reglist.connect(
+            "button-press-event", self.on_button_press_event
         )
 
         self._bitfield_obj = BitList(
@@ -202,6 +210,8 @@ class RegSetTab:
 
         self._copied_source = None
         self._copied_registers: List[Register] = []
+
+        self._menu = self._build_menu()
 
         self.clear()
 
@@ -247,6 +257,117 @@ class RegSetTab:
             "key-press-event",
             self._treeview_key_press_callback,
         )
+
+    def on_button_press_event(self, _obj, event):
+        "Callback for a button press on the register list. Display the menu"
+
+        if event.button == 3:
+            self._menu.popup(
+                None, None, None, 1, 0, Gtk.get_current_event_time()
+            )
+            return True
+        return False
+
+    def _build_menu(self) -> Gtk.Menu:
+        menu = Gtk.Menu()
+
+        item = Gtk.MenuItem("Add new register at selected address")
+        item.connect("activate", self.on_insert_new_register)
+        item.show()
+        menu.add(item)
+
+        item = Gtk.MenuItem("Copy selected registers")
+        item.connect("activate", self.on_copy_registers)
+        item.show()
+        menu.add(item)
+
+        item = Gtk.MenuItem("Paste copied registers")
+        item.connect("activate", self.on_paste_registers)
+        item.show()
+        menu.add(item)
+
+        item = Gtk.MenuItem("Align selected addresses to bus width")
+        item.connect("activate", self.on_align_addresses)
+        item.show()
+        menu.add(item)
+
+        item = Gtk.MenuItem("Compact selected addresses")
+        item.connect("activate", self.on_compact_tightly)
+        item.show()
+        menu.add(item)
+
+        return menu
+
+    def on_insert_new_register(self, _button: Gtk.Button) -> None:
+
+        if self._regset is None or self._reg_model is None:
+            return
+
+        selected_list = self.get_selected_registers()
+
+        if len(selected_list) != 1:
+            LOGGER.error(
+                "Inserting a register requires a sinle register to be selected"
+            )
+            return
+        selected_reg = selected_list[0]
+
+        new_register = insert_register_at(self._regset, selected_reg)
+
+        self.force_reglist_rebuild()
+        path = self._reg_model.get_path_from_register(new_register)
+        self._reglist_obj.select_row(path)
+        self._widgets.reglist.scroll_to_cell(path, None, True, 0.5, 0.0)
+
+    def on_copy_registers(self, _button: Gtk.Button) -> None:
+        "Stores references to the registers to be copied"
+        self.copy_selected_registers()
+
+    def on_paste_registers(self, _button: Gtk.Button) -> None:
+        "Inserts the stored registers into current register set"
+        self.paste_copied_registers()
+
+    def on_align_addresses(self, _button: Gtk.Button) -> None:
+        "Aligns each register on a bus width boundary"
+
+        regset = self.current_regset()
+        if regset is None:
+            return
+
+        size = regset.ports.data_bus_width // 8
+        addr = 0
+
+        for reg in regset.get_all_registers():
+            reg.address = addr
+            addr += size
+        self.set_modified()
+        self.force_reglist_rebuild()
+
+    def on_compact_tightly(self, _button: Gtk.Button) -> None:
+        "Packs the selected registers tightly together"
+
+        regset = self.current_regset()
+        if regset is None:
+            return
+
+        if not _sequential_greater_than_2(self):
+            return
+
+        reglist = self.get_selected_registers()
+
+        address = reglist[0].address
+        size = reglist[0].width // 8
+        bus_width = regset.ports.data_bus_width // 8
+
+        for reg in reglist[1:]:
+            if address + size <= _next_boundary(address, bus_width):
+                reg.address = address + size
+            else:
+                reg.address = _next_boundary(address, bus_width)
+            address += size
+            size = reg.width // 8
+        self.force_reglist_rebuild()
+        self.set_modified()
 
     def _treeview_key_press_callback(
         self, _obj: Gtk.TreeView, event: Gdk.EventKey
@@ -298,16 +419,19 @@ class RegSetTab:
 
     def _enable_registers(self, value: bool) -> None:
         """
-        Enables UI items when a database has been loaded. This includes
-        enabling the register window, the register related buttons, and
-        the export menu.
+        Enables UI items when a database has been loaded.
+
+        This includes enabling the register window, the register
+        related buttons, and the export menu.
+
+        Parameters:
+           value (bool): True enables the register elements
         """
         self._widgets.notebook.set_sensitive(value)
         self._db_selected_action.set_sensitive(value)
-        if value:
-            self._widgets.reg_notebook.show()
-        else:
-            self._widgets.reg_notebook.hide()
+        self._widgets.reg_notebook.set_sensitive(value)
+        if not value:
+            self._widgets.bitfield_list.get_model().clear()
 
     def _reg_descript_callback(self, reg: Register) -> None:
         "Called when the description field has been edited"
@@ -452,9 +576,9 @@ class RegSetTab:
             self._set_bits_warn_flag()
             self._set_share(reg)
         else:
-            self._widgets.reg_notebook.hide()
             self._widgets.reg_notebook.set_sensitive(False)
             self._reg_selected_action.set_sensitive(False)
+            self._widgets.bitfield_list.get_model().clear()
         self._skip_changes = old_skip
 
     def _set_share(self, reg: Register) -> None:
@@ -660,7 +784,7 @@ class RegSetTab:
     def _bit_changed(self, _obj) -> None:
         self._field_selected_action.set_sensitive(True)
 
-    def _remove_regset_callbackk(self, _obj: Gtk.Button):
+    def _remove_regset_callback(self, _obj: Gtk.Button):
         """
         GTK callback that creates a file open selector using the
         create_selector method, then runs the dialog, and calls the
@@ -729,7 +853,6 @@ class RegSetTab:
 
     def filter_visible(self, visible: bool) -> None:
         "Shows or hides the filter object"
-
         if visible:
             self._widgets.filter_obj.show()
         else:
@@ -933,11 +1056,11 @@ class RegSetTab:
             selected_regs = self.get_selected_registers()
 
             if selected_regs:
-                insert_registers(
+                insert_registers_after(
                     self._regset, new_list, selected_regs[0], param_old_to_new
                 )
             else:
-                insert_registers(
+                insert_registers_after(
                     self._regset, new_list, None, param_old_to_new
                 )
 
@@ -956,6 +1079,32 @@ class RegSetTab:
             self.force_reglist_rebuild()
             self.set_modified()
             self.update_display()
+
+
+def _next_boundary(address: int, width: int) -> int:
+    "Returns next bus width boundary"
+    return ((address // width) * width) + width
+
+
+def _is_contiguous(path_list) -> bool:
+    "Returns True if the numbers in the list are sequential"
+    return sorted(path_list) == list(range(min(path_list), max(path_list) + 1))
+
+
+def _sequential_greater_than_2(regtab: RegSetTab) -> bool:
+    "Checks that the list is sequential and has more than two elements"
+
+    if not _is_contiguous(regtab.get_selected_reg_paths()):
+        LOGGER.error("Selected registers must be contiguous to be compacted")
+        return False
+
+    if len(regtab.get_selected_registers()) < 2:
+        LOGGER.error(
+            "Compaction requires a minimum of 2 registers be selected"
+        )
+        return False
+
+    return True
 
 
 def _check_field(field):

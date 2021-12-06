@@ -51,6 +51,8 @@ class AddrMapEdit(BaseWindow):
         self.cb_list: Optional[List[str]] = None
         self.map_id = addr_map.uuid
         self.map_name = addr_map.name
+        self.model = Gtk.TreeStore(bool, str, str, object, object)
+        self.view = Gtk.TreeView()
         self.options = [
             ("Full Access", 0),
             ("Read Only", 1),
@@ -103,8 +105,6 @@ class AddrMapEdit(BaseWindow):
         scrolled_window.show()
         box.pack_end(scrolled_window, True, True, 12)
 
-        self.view = Gtk.TreeView()
-        self.model = Gtk.TreeStore(bool, str, str, object, object)
         self.view.set_model(self.model)
 
         self.view.show()

@@ -61,15 +61,30 @@ class ParamValue:
         return self.int_str()
 
     def param_name(self):
-        "Returns the parameter name"
+        """
+        Return the parameter name
+
+        Returns:
+           str: name of the parameter
+
+        """
         if self.is_parameter:
             pval = ParameterFinder().find(self.txt_value)
             return pval.name
         return ""
 
     def int_str(self) -> str:
-        "Prints the parameter with integers in hex format"
+        """
+        Print as a string or integer value in C format.
 
+        If the value is a parameter, return the parameter name as a string
+        (along with any modifications). If the value is an integer, return
+        the value as a string in C hex format (0x<value>).
+
+        Returns:
+           String representation of the value
+
+        """
         if self.is_parameter:
             pval = ParameterFinder().find(self.txt_value)
             if pval:
@@ -82,8 +97,17 @@ class ParamValue:
         return f"0x{self.int_value:x}"
 
     def int_decimal_str(self) -> str:
-        "Prints the parameter with integers in decimal format"
+        """
+        Print as a string or integer value.
 
+        If the value is a parameter, return the parameter name as a string
+        (along with any modifications). If the value is an integer, return
+        the value as a string in decimal format.
+
+        Returns:
+           String representation of the value
+
+        """
         if self.is_parameter:
             pval = ParameterFinder().find(self.txt_value)
             if pval:
@@ -96,7 +120,17 @@ class ParamValue:
         return f"{self.int_value}"
 
     def int_vstr(self) -> str:
-        "Prints the parameter with integers in Verilog hex format"
+        """
+        Print as a string or integer value in Verilog format.
+
+        If the value is a parameter, return the parameter name as a string
+        (along with any modifications). If the value is an integer, return
+        the value as a string in Verilog hex format ('h<value>).
+
+        Returns:
+           String representation of the value
+
+        """
 
         if self.is_parameter:
             pval = ParameterFinder().find(self.txt_value)
@@ -110,18 +144,46 @@ class ParamValue:
         return f"'h{self.int_value:x}"
 
     def set_int(self, value: int) -> None:
-        "Set the value as an integer value"
+        """
+        Set the value as an integer value.
+
+        Sets the value and marks it as not being a parameter.
+
+        Parameters:
+           value (int): Integer value to assign
+
+        """
         self.int_value = value
         self.is_parameter = False
 
     def set_param(self, uuid: Uuid, offset: int = 0) -> None:
-        "Set the parameter as parameter"
+        """
+        Set the value as a parameter.
+
+        Sets the value and marks it as being a parameter.
+
+        Parameters:
+           uuid (Uuid): UUID of the associated parameter
+           offset (int): Integer offset for the parameter
+
+        """
         self.txt_value = uuid
         self.offset = offset
         self.is_parameter = True
 
     def resolve(self) -> int:
-        "Map the parameter to an integer file, resolving references"
+        """
+        Return the integer value that the value represents.
+
+        If the value is not a parameter, return the integer value. If the value
+        is a parameter, resolve the value. If the value is overridden at the
+        block or top level, resolve the value. If it is not, take the default
+        value of the parameter.
+
+        Returns:
+           int: Resolved value of the object
+
+        """
 
         if not self.is_parameter:
             return self.int_value

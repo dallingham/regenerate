@@ -229,7 +229,7 @@ class BitList:
 
         next_list.append((field.msb.resolve() + 1, field.lsb + 1))
 
-        while len(field_list):
+        while field_list:
             field = field_list.pop(0)
             if next_expected + field.width >= reg_width:
                 LOGGER.error("Pushing down would exceed register size")

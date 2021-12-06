@@ -822,15 +822,6 @@ class MainWindow(BaseWindow):
         """
         self.regset_tab.new_register()
 
-    def on_register_list_button_press_event(self, _obj, event):
-        "Callback for a button press on the register list. Display the menu"
-
-        if event.button == 3:
-            menu = self._find_obj("reglist_menu")
-            menu.popup(None, None, None, 1, 0, Gtk.get_current_event_time())
-            return True
-        return False
-
     def cb_open_recent(self, chooser: Gtk.RecentChooserMenu) -> None:
         "Called when a file is chosen from the open recent dialog"
 
@@ -903,82 +894,6 @@ class MainWindow(BaseWindow):
             self._top_window.set_title(
                 f"{self.prj.name} ({name}) - regenerate"
             )
-
-    def on_copy_registers(self, _button: Gtk.Button) -> None:
-        "Stores references to the registers to be copied"
-        self.regset_tab.copy_selected_registers()
-
-    def on_paste_registers(self, _button: Gtk.Button) -> None:
-        "Inserts the stored registers into current register set"
-        self.regset_tab.paste_copied_registers()
-
-    def on_align_addresses(self, _button: Gtk.Button) -> None:
-        "Aligns each register on a bus width boundary"
-
-        regset = self.regset_tab.current_regset()
-        if regset is None:
-            return
-
-        size = regset.ports.data_bus_width // 8
-        addr = 0
-
-        for reg in regset.get_all_registers():
-            reg.address = addr
-            addr += size
-        self.regset_tab.set_modified()
-        self.regset_tab.force_reglist_rebuild()
-
-    def on_compact_tightly(self, _button: Gtk.Button) -> None:
-        "Packs the selected registers tightly together"
-
-        regset = self.regset_tab.current_regset()
-        if regset is None:
-            return
-
-        if not _sequential_greater_than_2(self.regset_tab):
-            return
-
-        reglist = self.regset_tab.get_selected_registers()
-
-        address = reglist[0].address
-        size = reglist[0].width // 8
-        bus_width = regset.ports.data_bus_width // 8
-
-        for reg in reglist[1:]:
-            if address + size <= _next_boundary(address, bus_width):
-                reg.address = address + size
-            else:
-                reg.address = _next_boundary(address, bus_width)
-            address += size
-            size = reg.width // 8
-        self.regset_tab.force_reglist_rebuild()
-        self.regset_tab.set_modified()
-
-
-def _next_boundary(address: int, width: int) -> int:
-    "Returns next bus width boundary"
-    return ((address // width) * width) + width
-
-
-def _is_contiguous(path_list) -> bool:
-    "Returns True if the numbers in the list are sequential"
-    return sorted(path_list) == list(range(min(path_list), max(path_list) + 1))
-
-
-def _sequential_greater_than_2(regtab: RegSetTab) -> bool:
-    "Checks that the list is sequential and has more than two elements"
-
-    if not _is_contiguous(regtab.get_selected_reg_paths()):
-        LOGGER.error("Selected registers must be contiguous to be compacted")
-        return False
-
-    if len(regtab.get_selected_registers()) < 2:
-        LOGGER.error(
-            "Compaction requires a minimum of 2 registers be selected"
-        )
-        return False
-
-    return True
 
 
 def check_field(field):

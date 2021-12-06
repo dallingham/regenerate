@@ -136,9 +136,9 @@ class Block(BaseFile):
                 data = ofile.read()
                 self.json_decode(json.loads(data))
         except json.decoder.JSONDecodeError as msg:
-            raise CorruptBlockFile(self._filename.resolve(), str(msg))
+            raise CorruptBlockFile(str(self._filename.resolve()), str(msg))
         except OSError as msg:
-            raise IoErrorBlockFile(self._filename.resolve(), msg)
+            raise IoErrorBlockFile(str(self._filename.resolve()), msg)
 
     def get_address_size(self) -> int:
         "Returns the size of the address space"
@@ -170,9 +170,9 @@ class Block(BaseFile):
                 try:
                     json_data = json.loads(rdr.read_bytes(filename))
                 except json.decoder.JSONDecodeError as msg:
-                    raise CorruptRegsetFile(filename.resolve(), str(msg))
+                    raise CorruptRegsetFile(str(filename.resolve()), str(msg))
                 except OSError as msg:
-                    raise IoErrorRegsetFile(filename.resolve(), msg)
+                    raise IoErrorRegsetFile(str(filename.resolve()), msg)
 
                 regset.filename = filename
                 regset.json_decode(json_data)

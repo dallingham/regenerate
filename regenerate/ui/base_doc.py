@@ -113,16 +113,12 @@ class BaseDoc:
         self.preview: Optional[PreviewEditor] = None
 
         search = Gtk.SearchEntry()
+        # search.show()
         self.search_bar = Gtk.SearchBar()
         self.search_bar.connect_entry(search)
         self.search_bar.add(search)
         self.search_bar.show_all()
         self.search_bar.set_search_mode(True)
-
-        # next_btn = Gtk.ToolButton()
-        # next_btn.set_stock_id(Gtk.STOCK_GO_DOWN)
-        # next_btn.set_tooltip_text("Find next")
-        # next_btn.show()
 
         add = Gtk.ToolButton()
         add.set_stock_id(Gtk.STOCK_ADD)
@@ -145,7 +141,7 @@ class BaseDoc:
         help_btn.show()
 
         hbox = Gtk.HBox()
-        hbox.pack_start(self.search_bar, False, True, 0)
+        hbox.pack_start(self.search_bar, True, True, 0)
         hbox.pack_start(add, False, True, 0)
         hbox.pack_start(add_tag, False, True, 0)
         hbox.pack_start(preview, False, True, 0)
@@ -167,7 +163,10 @@ class BaseDoc:
         self.callback = modified
         self.notebook.connect("switch-page", self.switch_page)
 
-    def _next_match(self, button, obj):
+    def _next_match(self, _button: Gtk.Button, obj):
+        """
+        Find the next search match.
+        """
         page_num = self.notebook.get_current_page()
         info = self.page_map[page_num]
         widget = self.notebook.get_nth_page(page_num)
@@ -187,9 +186,11 @@ class BaseDoc:
             textview.scroll_to_mark(last_pos, 0, True, 0.0, 0.5)
 
     def _prev_match(self, *obj):
+        "Previous match"
         print("prev_match", *obj)
 
     def _search_changed(self, obj):
+        "Search changed"
         page_num = self.notebook.get_current_page()
         info = self.page_map[page_num]
         widget = self.notebook.get_nth_page(page_num)
@@ -205,6 +206,7 @@ class BaseDoc:
             textview.scroll_to_mark(last_pos, 0, True, 0.0, 0.5)
 
     def _stop_search(self, *obj):
+        "Stop search"
         print("stop_search", *obj)
 
     def _preview(self, _obj: Gtk.Button) -> None:

@@ -361,11 +361,26 @@ class BitField(NameBase):
 
     @deprecated
     def _reset_value_int(self, value: int) -> None:
+        """
+        Sets the reset value to an integer. Deprecated function,
+        used to warn when the reset_value setter is used.
+
+        Parameters:
+           value (int): Value to which to set the reset value
+
+        """
         self._reset_value = value
 
     def set_reset_value_int(self, value: int) -> None:
+        """
+        Sets the reset value to an integer.
+
+        Parameters:
+           value (int): Value to which to set the reset value
+
+        """
         self._reset_value = value
-        
+
     def reset_value_bit(self, bit: int) -> int:
         """
         Return 1 if the bit in the resolved reset value is a 1.
@@ -524,7 +539,7 @@ class BitField(NameBase):
             "reset_type": self.reset_type,
             "use_output_enable": self.use_output_enable,
             "use_alternate_reset": self.use_alternate_reset,
-            "values": self.values,
+            "values": [value.json() for value in self.values],
         }
 
     def json_decode(self, data: Dict[str, Any]) -> None:

@@ -372,10 +372,10 @@ class RegisterList:
         )
         self._obj.append_column(self._addr_col)
 
-        self._name_col = self._build_text_column(
+        self.name_col = self._build_text_column(
             "Name", 350, 2, RegCol.NAME, False
         )
-        self._obj.append_column(self._name_col)
+        self._obj.append_column(self.name_col)
 
         self._token_col = self._build_text_column(
             "Token", 300, 3, RegCol.DEFINE, True

@@ -24,14 +24,20 @@ Utilities for copying and moving registers within a register set
 from typing import List, Dict, Set, Tuple
 from copy import deepcopy
 
-from regenerate.db import RegisterDb, Register, ParameterFinder, ResetType
+from regenerate.db import (
+    RegisterDb,
+    Register,
+    ParameterFinder,
+    ResetType,
+    Uuid,
+)
 from regenerate.extras.regutils import (
     calculate_next_address,
     following_address,
 )
 
 
-def insert_registers(
+def insert_registers_after(
     dest: RegisterDb,
     registers: List[Register],
     below_reg: Register,
@@ -67,7 +73,7 @@ def insert_registers(
 
     if below_reg:
         for reg in dest.get_all_registers():
-            if below_reg.address <= reg.address <= start_addr:
+            if below_reg.address < reg.address <= start_addr:
                 reg.address = start_addr
                 start_addr = following_address(
                     start_addr,
@@ -82,6 +88,43 @@ def insert_registers(
         dest.add_register(reg)
 
 
+def insert_register_at(dest: RegisterDb, source_reg: Register) -> Register:
+    """
+    Insert a new register at the selected register's address.
+
+    Alters the address of the selected register and any other register
+    until there are no overlaps.
+
+    Parameters:
+       dest (RegisterDb): target register set
+       source_reg (Register): register that marks where the new register
+          should go
+
+    Returns:
+       Register: New register with the address the source reg originally
+          had
+
+    """
+
+    start_addr = source_reg.address
+    register = Register()
+    register.address = source_reg.address
+    register.width = source_reg.width
+
+    for reg in dest.get_all_registers():
+        if reg.address >= register.address and reg.address <= start_addr:
+            start_addr = following_address(
+                start_addr,
+                reg.dimension,
+                reg.width,
+                dest.ports.data_bus_width,
+            )
+            reg.address = start_addr
+
+    dest.add_register(register)
+    return register
+
+
 def copy_registers(
     dest_regset: RegisterDb, register_list: List[Register]
 ) -> Tuple[List[Register], Set[str]]:
@@ -93,9 +136,9 @@ def copy_registers(
     for reg in register_list:
         new_reg = Register()
         new_reg.json_decode(reg.json())
-        new_reg.uuid = ""
+        new_reg.uuid = Uuid("")
         for field in new_reg.get_bit_fields():
-            field.uuid = ""
+            field.uuid = Uuid("")
 
         reg_addrs = _get_addresses(new_reg)
 

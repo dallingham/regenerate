@@ -413,7 +413,7 @@ class RegProject(BaseFile):
         self.address_maps[address_map.uuid] = address_map
 
     def set_address_map_block_list(
-        self, map_id: Uuid, new_list: List[str]
+        self, map_id: Uuid, new_list: List[Uuid]
     ) -> None:
         """Sets the specififed address map"""
         self.modified = True
@@ -538,11 +538,7 @@ class RegProject(BaseFile):
             for path in data["filelist"]:
                 full_path = Path(self._filename.parent / path).resolve()
                 self._filelist.append(
-                    Path(
-                        os.path.relpath(
-                            full_path, self._filename.parent
-                        )
-                    )
+                    Path(os.path.relpath(full_path, self._filename.parent))
                 )
 
         self._load_address_maps_from_json_data(data["address_maps"])

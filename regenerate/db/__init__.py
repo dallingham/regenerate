@@ -30,7 +30,7 @@ from .reg_parser import RegParser
 from .reg_project import RegProject
 from .const import OLD_PRJ_EXT, PRJ_EXT, REG_EXT, BLK_EXT, OLD_REG_EXT
 from .register_inst import RegisterInst
-from .name_base import NameBase
+from .name_base import NameBase, Uuid
 from .register_db import RegisterDb
 from .param_resolver import ParameterResolver
 from .proj_reader import ProjectReader
