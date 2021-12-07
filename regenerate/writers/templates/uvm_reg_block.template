@@ -260,7 +260,7 @@ package {{prj.short_name}}_reg_pkg;
 	{%-   set has_reset = 0 %}
 	{%-   set reset = "'0" %}
 	{%- elif field.reset_type == 2 %}
-	{%-  set has_reset = 0 %}
+	{%-  set has_reset = 1 %}
         {%   set reset = "%d'h%x" % (field.width, field.reset_value.__and__(mask)) %}
 	{%- else %}
         {%   set has_reset = 1 %}
