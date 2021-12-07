@@ -25,7 +25,7 @@ import copy
 import re
 from typing import Set
 
-from regenerate.db import Register, RegisterDb
+from regenerate.db import Register, RegisterDb, Uuid
 from .remap import REMAP_NAME
 
 REGNAME = re.compile(r"^(.*)(\d+)(.*)$")
@@ -71,7 +71,7 @@ def duplicate_register(dbase: RegisterDb, reg: Register) -> Register:
 
     new_reg = copy.deepcopy(reg)
     # force the generation of a new UUID
-    new_reg.uuid = ""
+    new_reg.uuid = Uuid("")
 
     for key in reg.get_bit_field_keys():
         fld = reg.get_bit_field(key)

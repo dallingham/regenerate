@@ -26,7 +26,19 @@ from .token import in_groups
 from regenerate.db import Register, RegProject
 
 
-def _reg_addr(register: Register, offset: int):
+def _reg_addr(register: Register, offset: int) -> int:
+    """
+    Return address of the register with the offset added.
+
+    Parameters:
+        register (Register): source register
+
+        offset (int): offset
+
+    Returns:
+        int: register's address with the offset added
+
+    """
     return register.address + offset
 
 

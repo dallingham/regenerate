@@ -102,7 +102,7 @@ class RegisterDb(BaseFile):
                 bits += field.width
         return bits
 
-    def get_keys(self) -> List[str]:
+    def get_keys(self) -> List[Uuid]:
         """Returns the register keys, which is the address of the register"""
         return [
             a.uuid

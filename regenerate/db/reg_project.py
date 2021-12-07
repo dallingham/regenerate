@@ -25,7 +25,16 @@ from collections import defaultdict
 from pathlib import Path
 import json
 import os.path
-from typing import List, Dict, ValuesView, Any, Optional, Union, Tuple
+from typing import (
+    List,
+    Dict,
+    ValuesView,
+    Any,
+    Optional,
+    Union,
+    Tuple,
+    Iterator,
+)
 import xml.sax.saxutils
 
 from .name_base import Uuid
@@ -359,13 +368,6 @@ class RegProject(BaseFile):
     def get_address_base(self, map_id: Uuid) -> int:
         """Returns the base address  of the address map"""
         return self.address_maps[map_id].base
-
-    def get_address_fixed(self, map_id: Uuid):
-        """Indicates if the specified address map is at a fixed location"""
-        return next(
-            (d.fixed for d in self.address_maps.values() if map_id == d.uuid),
-            None,
-        )
 
     def get_address_width(self, map_id: Uuid) -> int:
         """Returns the width of the address group"""

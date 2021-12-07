@@ -18,10 +18,13 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
-Utilities for copying and moving registers within a register set
+Utilities for copying and moving registers within a register set.
+
+Provides routines to copy and move registers and parameters from one register
+set to another register set.
 """
 
-from typing import List, Dict, Set, Tuple
+from typing import List, Dict, Set, Tuple, Union, Iterator
 from copy import deepcopy
 
 from regenerate.db import (
@@ -41,13 +44,28 @@ def insert_registers_after(
     dest: RegisterDb,
     registers: List[Register],
     below_reg: Register,
-    param_old_to_new,
-):
+    param_old_to_new: Dict[Uuid, Uuid],
+) -> None:
     """
+    Insert registers after the specified register in the register set.
+
     Inserts the registers into the target register set after the specified
     register in the target register set, incrementing the addresses to
     compact the address space, and move down any registers that overlap
     with the target.
+
+    Parameters:
+        dest (RegisterDb): register set to insert into
+
+        registers (List[Register]): source registers to insert copies of into
+           the destination register set
+
+        below_reg (Register): register in the target register set after which
+           the new registers should be inserted.
+
+        param_old_to_new (Dict[Uuid, Uuid]): uuid map of old parameters to new
+            parameters
+
     """
     if below_reg:
         initial_addr = following_address(
@@ -105,7 +123,6 @@ def insert_register_at(dest: RegisterDb, source_reg: Register) -> Register:
           had
 
     """
-
     start_addr = source_reg.address
     register = Register()
     register.address = source_reg.address
@@ -140,28 +157,29 @@ def copy_registers(
           the set of parameter uuids associated with them
 
     """
-    used_addrs = _build_used_addresses(dest_regset.get_all_registers())
-
     parameter_set = set()
     new_reglist: List[Register] = []
-    for reg in register_list:
-        new_reg = Register()
-        new_reg.json_decode(reg.json())
-        new_reg.uuid = Uuid("")
-        for field in new_reg.get_bit_fields():
-            field.uuid = Uuid("")
 
-        reg_addrs = _get_addresses(new_reg)
+    if dest_regset:
+        used_addrs = _build_used_addresses(dest_regset.get_all_registers())
+        for reg in register_list:
+            new_reg = Register()
+            new_reg.json_decode(reg.json())
+            new_reg.uuid = Uuid("")
+            for field in new_reg.get_bit_fields():
+                field.uuid = Uuid("")
 
-        while reg_addrs.intersection(used_addrs):
-            new_reg.address = new_reg.address + new_reg.width // 8
             reg_addrs = _get_addresses(new_reg)
 
-        new_reglist.append(new_reg)
-        used_addrs = used_addrs.union(reg_addrs)
+            while reg_addrs.intersection(used_addrs):
+                new_reg.address = new_reg.address + new_reg.width // 8
+                reg_addrs = _get_addresses(new_reg)
 
-        if reg.dimension.is_parameter:
-            parameter_set.add(reg.dimension.txt_value)
+            new_reglist.append(new_reg)
+            used_addrs = used_addrs.union(reg_addrs)
+
+            if reg.dimension.is_parameter:
+                parameter_set.add(reg.dimension.txt_value)
 
     return new_reglist, parameter_set
 
@@ -170,11 +188,15 @@ def copy_parameters(
     dest: RegisterDb, param_list: Set[Uuid]
 ) -> Dict[Uuid, Uuid]:
     """
-    Copies the parameters to the target register set.
+    Copy the parameters to the target register set.
 
     Parameters:
        dest (RegisterDb): destination register set
        param_list (List[Uuid]): parameters to copy to the destination
+
+    Returns:
+       Dict[Uuid, Uuid]: returns a map of the old parameters to the
+          new parameters
 
     """
     param_map: Dict[Uuid, Uuid] = {}
@@ -185,7 +207,7 @@ def copy_parameters(
             param = finder.find(param_uuid)
             if param is not None:
                 new_param = deepcopy(param)
-                new_param.uuid = ""
+                new_param.uuid = Uuid("")
                 finder.register(new_param)
                 param_map[param.uuid] = new_param.uuid
                 dest.add_parameter(new_param)
@@ -193,8 +215,16 @@ def copy_parameters(
 
 
 def _get_addresses(reg: Register) -> Set[int]:
-    "Returns the set of addresses that the register occupies"
+    """
+    Return the set of addresses that the register occupies.
 
+    Parameters:
+       reg (Register): Source register
+
+    Returns:
+       List of all byte addresses used by the register
+
+    """
     used_addrs: Set[int] = set()
     used_addrs.add(reg.address)
 
@@ -212,16 +242,38 @@ def _get_addresses(reg: Register) -> Set[int]:
     return used_addrs
 
 
-def _build_used_addresses(register_list) -> Set[int]:
-    "Builds the used address from the register list"
+def _build_used_addresses(
+    register_list: Union[Iterator[Register], List[Register]]
+) -> Set[int]:
+    """
+    Build the used byte address from the register list.
 
+    Parameters:
+       register_list (List[Register]): List of source registers
+
+    Returns:
+       List of all byte addresses used by the registers
+
+    """
     used_addrs: Set[int] = set()
     for reg in register_list:
         used_addrs = used_addrs.union(_get_addresses(reg))
     return used_addrs
 
 
-def replace_parameter_uuids(uuid_map: Dict[str, str], reg: Register) -> None:
+def replace_parameter_uuids(uuid_map: Dict[Uuid, Uuid], reg: Register) -> None:
+    """
+    Replace the parameter uuids with the new mapped version.
+
+    Go through the register, changing any parameter UUID with the new UUID
+    from the map.
+
+    Parameters:
+       uuid_map (Dict[Uuid, Uuid]): map of old UUIDs to new UUIDs
+
+       reg (Register): Register to alter
+
+    """
     if reg.dimension.is_parameter:
         if reg.dimension.txt_value in uuid_map:
             reg.dimension.txt_value = uuid_map[reg.dimension.txt_value]

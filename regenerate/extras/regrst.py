@@ -24,9 +24,9 @@ HTML is supported now.
 
 import re
 import sys
-from typing import Set
+from typing import Set, Optional
 
-from regenerate.db import TYPE_TO_SIMPLE_TYPE, Register
+from regenerate.db import TYPE_TO_SIMPLE_TYPE, Register, RegProject, RegisterDb
 from regenerate.extras.token import full_token, in_groups, uvm_name
 
 try:
@@ -231,26 +231,23 @@ class RegisterRst:
     def __init__(
         self,
         register: Register,
-        project=None,
+        project: RegProject = None,
         inst=None,
         highlight=None,
-        show_defines=True,
-        show_uvm=False,
+        show_defines: bool = True,
+        show_uvm: bool = False,
         decode=None,
         group=None,
-        maxlines=9999999,
-        dbase=None,
-        max_values=24,
-        bootstrap=False,
-        header_level=1,
+        maxlines: int = 9999999,
+        dbase: Optional[RegisterDb] = None,
+        max_values: int = 24,
+        bootstrap: bool = False,
+        header_level: int = 1,
     ):
-
         self._max_values = max_values
         self._reg = register
         self._highlight = highlight
         self._prj = project
-        self._regset_id = dbase.uuid
-        self._regset_name = dbase.name
         self._show_defines = show_defines
         self._show_uvm = show_uvm
         self._group = group
@@ -263,6 +260,8 @@ class RegisterRst:
             self.reglist = set()
         else:
             self.reglist = set(list(dbase.get_all_registers()))
+            self._regset_id = dbase.uuid
+            self._regset_name = dbase.name
 
         if decode:
             try:
