@@ -127,8 +127,19 @@ def insert_register_at(dest: RegisterDb, source_reg: Register) -> Register:
 
 def copy_registers(
     dest_regset: RegisterDb, register_list: List[Register]
-) -> Tuple[List[Register], Set[str]]:
-    "Copies the register list to the destination register set"
+) -> Tuple[List[Register], Set[Uuid]]:
+    """
+    Return the copies of the registers and parameters.
+
+    Parameters:
+       dest_regset (RegisterDb): destination register set_access
+       register_list (List[Registers]: Source registers to copy
+
+    Returns:
+       Tuple[List[Register], Set[Uuid]]: List of copied registers and
+          the set of parameter uuids associated with them
+
+    """
     used_addrs = _build_used_addresses(dest_regset.get_all_registers())
 
     parameter_set = set()
@@ -155,10 +166,18 @@ def copy_registers(
     return new_reglist, parameter_set
 
 
-def copy_parameters(dest: RegisterDb, param_list: Set[str]) -> Dict[str, str]:
-    "Copies the parameters to the target register set"
+def copy_parameters(
+    dest: RegisterDb, param_list: Set[Uuid]
+) -> Dict[Uuid, Uuid]:
+    """
+    Copies the parameters to the target register set.
 
-    param_map: Dict[str, str] = {}
+    Parameters:
+       dest (RegisterDb): destination register set
+       param_list (List[Uuid]): parameters to copy to the destination
+
+    """
+    param_map: Dict[Uuid, Uuid] = {}
 
     finder = ParameterFinder()
     for param_uuid in param_list:

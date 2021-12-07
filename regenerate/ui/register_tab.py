@@ -116,11 +116,10 @@ class RegSetStatus:
     rows in the models.
     """
 
-    def __init__(self, container, reg_model, mdlsort, mdlfilter, bmodel, node):
+    def __init__(self, container, reg_model, mdlfilter, bmodel, node):
         self.container = container
         self.reg_model = reg_model
         self.modelfilter = mdlfilter
-        self.modelsort = mdlsort
         self.bit_model = bmodel
         self.reg_select = None
         self.bit_select = None
@@ -144,7 +143,6 @@ class RegSetTab:
         self._field_selected_action = field_selected_action
 
         self._reg_model: Optional[RegisterModel] = None
-        self._modelsort: Optional[Gtk.TreeModelSort] = None
         self._bit_model = BitModel()
 
         self._skip_changes = False
@@ -314,7 +312,7 @@ class RegSetTab:
 
         new_register = insert_register_at(self._regset, selected_reg)
 
-        self.force_reglist_rebuild()
+        self.force_reglist_rebuild(new_register)
         path = self._reg_model.get_path_from_register(new_register)
         self._reglist_obj.select_row(path)
         self._widgets.reglist.scroll_to_cell(path, None, True, 0.5, 0.0)
@@ -341,7 +339,11 @@ class RegSetTab:
             reg.address = addr
             addr += size
         self.set_modified()
-        self.force_reglist_rebuild()
+        reg_list = self._reglist_obj.get_selected_registers()
+        if reg_list:
+            self.force_reglist_rebuild(reg_list[0])
+        else:
+            self.force_reglist_rebuild(None)
 
     def on_compact_tightly(self, _button: Gtk.Button) -> None:
         "Packs the selected registers tightly together"
@@ -366,7 +368,7 @@ class RegSetTab:
                 reg.address = _next_boundary(address, bus_width)
             address += size
             size = reg.width // 8
-        self.force_reglist_rebuild()
+        self.force_reglist_rebuild(reglist[0])
         self.set_modified()
 
     def _treeview_key_press_callback(
@@ -447,7 +449,6 @@ class RegSetTab:
 
             self._reg_model = RegisterModel(regset.ports.data_bus_width)
             filter_model = self._reg_model.filter_new()
-            self._modelsort = Gtk.TreeModelSort(filter_model)
             self._filter_manage.change_filter(filter_model, True)
 
             for key in regset.get_keys():
@@ -458,7 +459,6 @@ class RegSetTab:
             status = RegSetStatus(
                 regset,
                 self._reg_model,
-                self._modelsort,
                 self._filter_manage.get_model(),
                 BitModel(),
                 node,
@@ -478,14 +478,13 @@ class RegSetTab:
             status = self._name2status[self._regset.uuid]
             self._reg_model = status.reg_model
             self._filter_manage.change_filter(status.modelfilter)
-            self._modelsort = status.modelsort
             self.node = status.node
 
             self.reg_description.set_project(self._project)
 
             status = self._name2status[self._regset.uuid]
             self._filter_manage.change_filter(status.modelfilter)
-            self._reglist_obj.set_model(status.modelsort)
+            self._reglist_obj.set_model(status.modelfilter)
 
             self._bit_model = status.bit_model
             self._bitfield_obj.set_model(self._bit_model)
@@ -880,12 +879,9 @@ class RegSetTab:
         self._bitfield_obj.set_parameters(self._regset.parameters.get())
         self._selected_reg_changed(None)
 
-    def force_reglist_rebuild(self) -> None:
+    def force_reglist_rebuild(self, register: Optional[Register]) -> None:
         "Force a rebuild of the register model"
-
-        self._reglist_obj.clear()
-        for reg in self._regset.get_all_registers():
-            self._reglist_obj.load_reg_into_model(reg)
+        self._reglist_obj.rebuild_model(register)
 
     def set_modified(self) -> None:
         "Sets the modified flag"
@@ -900,10 +896,9 @@ class RegSetTab:
 
         self._reg_model = RegisterModel(regset.ports.data_bus_width)
         filter_model = self._reg_model.filter_new()
-        self._modelsort = Gtk.TreeModelSort(filter_model)
         self._filter_manage.change_filter(filter_model, True)
 
-        self._reglist_obj.set_model(self._modelsort)
+        self._reglist_obj.set_model(filter_model)
 
         for reg in regset.get_all_registers():
             self._reg_model.append_register(reg)
@@ -912,7 +907,6 @@ class RegSetTab:
         status = RegSetStatus(
             regset,
             self._reg_model,
-            self._modelsort,
             self._filter_manage.get_model(),
             BitModel(),
             node,
@@ -1055,6 +1049,8 @@ class RegSetTab:
 
             selected_regs = self.get_selected_registers()
 
+            first_reg = new_list[0]
+
             if selected_regs:
                 insert_registers_after(
                     self._regset, new_list, selected_regs[0], param_old_to_new
@@ -1063,6 +1059,8 @@ class RegSetTab:
                 insert_registers_after(
                     self._regset, new_list, None, param_old_to_new
                 )
+            for reg in new_list:
+                self._reglist_obj.load_reg_into_model(reg)
 
             if len(param_old_to_new) > 0:
                 LOGGER.warning(
@@ -1076,7 +1074,7 @@ class RegSetTab:
                 else:
                     LOGGER.warning("Inserted %d registers", len(new_list))
 
-            self.force_reglist_rebuild()
+            self.force_reglist_rebuild(first_reg)
             self.set_modified()
             self.update_display()
 

@@ -21,7 +21,7 @@ Provides the editing interface to the register table
 """
 
 from collections import namedtuple
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 from gi.repository import Gtk
 from regenerate.db import LOGGER, Register, ShareType
@@ -327,7 +327,6 @@ class RegisterList:
         col.set_resizable(True)
         col.set_min_width(width)
         col.set_expand(False)
-        col.set_sort_column_id(sort_col)
         return col
 
     def _build_dimension_col(self):
@@ -396,7 +395,7 @@ class RegisterList:
 
         self._obj.set_model(model)
         if model:
-            self._model = model.get_model().get_model()
+            self._model = model.get_model()
         else:
             self._model = None
 
@@ -439,6 +438,12 @@ class RegisterList:
                 registers.append((path, store[path][RegCol.OBJ]))
         return registers
 
+    def find_row_by_register(self, register: Register):
+        for row in self._model:
+            if row[RegCol.OBJ].uuid == register.uuid:
+                return row
+        return 0
+
     def get_selected_reg_paths(self):
         """
         Returns the register associated with the selected row
@@ -470,26 +475,33 @@ class RegisterList:
                 "to prevent any corruption to\n"
                 "your database and report this error.",
             )
+        self.rebuild_model(reg)
+
+    def rebuild_model(self, selected: Optional[Register]) -> None:
+
+        reglist = sorted(
+            [row[RegCol.OBJ] for row in self._model], key=lambda x: x.address
+        )
+        self._model.clear()
+        sel_row = 0
+        for i, reg in enumerate(reglist):
+            if selected and reg.uuid == selected.uuid:
+                sel_row = i
+            self._model.append_register(reg)
+        self.select_row(sel_row)
+        self._obj.scroll_to_cell(sel_row, None, True, 0.5, 0.0)
 
     def _reg_update_addr(self, reg: Register, path: str, text: str) -> None:
         """
         Updates the address associated with a register address
         """
-        try:
-            new_addr = int(text, 16)
-            new_length = 0
-            if new_addr != reg.address or new_length != reg.ram_size:
-                self._update_addr(reg, new_addr, new_length)
-                self._model.set_address_at_path(path, new_addr, new_length)
-                self._set_modified()
-        except KeyError:
-            ErrorMsg(
-                "Internal Error",
-                "Deleting the register caused an internal "
-                "inconsistency.\nPlease exit without saving to "
-                "prevent any corruption to\n"
-                "your database and report this error.",
-            )
+        new_addr = int(text, 16)
+        new_length = 0
+        if new_addr != reg.address or new_length != reg.ram_size:
+            self._update_addr(reg, new_addr, new_length)
+            self._model.set_address_at_path(path, new_addr, new_length)
+            self._set_modified()
+        self.rebuild_model(reg)
 
     def _reg_update_name(self, reg: Register, path: str, text: str) -> None:
         """
