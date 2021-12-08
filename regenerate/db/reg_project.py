@@ -33,7 +33,6 @@ from typing import (
     Optional,
     Union,
     Tuple,
-    Iterator,
 )
 import xml.sax.saxutils
 
@@ -72,10 +71,12 @@ def cleanup(data: str) -> str:
 
 class RegProject(BaseFile):
     """
-    RegProject is the container object for a regenerate project. The project
-    consists of several different types. General project information (name,
-    company_name, etc.), the list of register sets, groupings of instances,
-    and exports (register set and entire project exports), and address maps.
+    RegProject is the container object for a regenerate project.
+
+    The project consists of several different types. General project
+    information (name, company_name, etc.), the list of register sets,
+    groupings of instances, and exports (register set and entire
+    project exports), and address maps.
     """
 
     def __init__(self, path: Optional[Path] = None):
@@ -156,13 +157,25 @@ class RegProject(BaseFile):
                 raise IoErrorProjectFile(self._filename.name, msg)
 
     def xml_loads(self, data: bytes, name: str) -> None:
-        "Load the XML data from the passed string"
+        """
+        Load the XML data from the passed string.
 
+        Parameters:
+           data (bytes): data stream from the json file
+
+           name (str): name of the file
+
+        """
         self.loads(data, name)
 
     def json_loads(self, data: str) -> None:
-        "Loads the JSON data from the passed string"
+        """
+        Loads the JSON data from the passed string.
 
+        Parameters:
+           data (bytes): data stream from the json file
+
+        """
         json_data = json.loads(data)
         self.json_decode(json_data)
 
@@ -171,40 +184,72 @@ class RegProject(BaseFile):
                 self.regsets[reg_set.uuid] = reg_set
 
     def loads(self, data: bytes, name: str) -> None:
-        """Reads XML from a string"""
+        """
+        Read XML from a string.
 
+        Parameters:
+           data (bytes): data stream from the json file
+
+           name (str): name of the file
+
+        """
         reader = ProjectReader(self)
         reader.loads(data, name)
         self._filename = Path(name)
 
-        for _, block in self.blocks.items():
-            for _, reg_set in block.regsets.items():
+        for block in self.blocks.values():
+            for reg_set in block.regsets.values():
                 self.regsets[reg_set.uuid] = reg_set
 
     def get_blkinst_from_id(self, uuid: Uuid) -> Optional[BlockInst]:
-        "Returns the block instance from the uuid"
+        """
+        Return the block instance from the uuid.
 
+        Parameters:
+            uuid (Uuid): block instance's uuid
+
+        Returns:
+            Optional[BlockInst]: BlockInst if it exists, else None
+
+        """
         results = [inst for inst in self.block_insts if inst.uuid == uuid]
         if results:
             return results[0]
         return None
 
     def remove_block(self, blk_id: Uuid) -> None:
-        "Removes a block from the database"
+        """
+        Remove a block from the database.
 
+        Parameters:
+            blk_id (Uuid): uuid of the block to remove
+
+        """
         del self.blocks[blk_id]
         self.block_insts = [
             inst for inst in self.block_insts if inst.blkid != blk_id
         ]
-        for addr_id in self.address_maps:
-            addr_map = self.address_maps[addr_id]
+        for addr_id, addr_map in self.address_maps.items():
             addr_map.block_insts = [
                 map_id for map_id in addr_map.block_insts if addr_id != blk_id
             ]
 
     def append_register_set_to_list(self, name: Path) -> None:
-        "Adds a register set"
+        """
+        Add a register set to the project.
 
+        The register path is added to the project, and the file is loaded. Both
+        old style (.rprj XML) and new style (.regp JSON) files are supported
+        and loaded based on their extension.
+
+        The FileReader class is the default reader to use if the reader_class
+        variable has not been set. This exists so that other methods can be
+        used to load data (e.g. GitLab REST API).
+
+        Parameters:
+            name (Path): path to the register set to add
+
+        """
         self.modified = True
 
         if self.reader_class is None:
@@ -233,8 +278,12 @@ class RegProject(BaseFile):
 
     def add_register_set(self, path: Path) -> None:
         """
-        Adds a new register set to the project. Note that this only records
-        the filename, and does not actually keep a reference to the RegisterDb.
+        Adds a new register set to the project.
+
+        Alias for append_register_set_to_list
+
+        Parameters:
+            path (Path): path to the register set to add
         """
         self.append_register_set_to_list(path)
 

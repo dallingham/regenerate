@@ -595,8 +595,9 @@ class RegSetTab:
         self.remove_register()
 
     def remove_register(self) -> None:
-        "Removes the selected register from the interface and database"
-
+        """
+        Remove the selected register from the interface and database.
+        """
         if self._regset:
             for reg in self._reglist_obj.get_selected_registers():
                 self._regset.delete_register(reg)
@@ -604,10 +605,23 @@ class RegSetTab:
             self.set_modified()
 
     def _add_register_callback(self, _obj: Gtk.Button) -> None:
-        "Called when the add register button has been pressed"
+        """
+        Add a new register when the button is pressed
+
+        Parameters:
+            _obj (Gtk.Button): GTK button that caused the callback (unused)
+
+        """
         self.new_register()
 
-    def _add_bit_callback(self, _obj: Gtk.Button):
+    def _add_bit_callback(self, _obj: Gtk.Button) -> None:
+        """
+        Add a new bit field to the selected register when the button is pressed
+
+        Parameters:
+            _obj (Gtk.Button): GTK button that caused the callback (unused)
+
+        """
         register = self.get_selected_registers()[0]
         next_pos = register.find_next_unused_bit()
 
@@ -631,6 +645,13 @@ class RegSetTab:
         self._set_register_warn_flags(register)
 
     def _remove_bit_callback(self, _obj: Gtk.Button) -> None:
+        """
+        Remove the selected bits from the register when the button is pressed.
+
+        Parameters:
+            _obj (Gtk.Button): GTK button that caused the callback (unused)
+
+        """
         register = self.get_selected_registers()[0]
         field_list = self._bitfield_obj.selected_fields()
         if self._regset:
@@ -644,6 +665,13 @@ class RegSetTab:
             self.set_modified()
 
     def _edit_bit_callback(self, _obj: Gtk.Button) -> None:
+        """
+        Bring up the Edit Bitfield Window when the button is pressed
+
+        Parameters:
+            _obj (Gtk.Button): GTK button that caused the callback (unused)
+
+        """
         register = self.get_selected_registers()[0]
         field_list = self._bitfield_obj.selected_fields()
         if self._regset:
@@ -656,10 +684,29 @@ class RegSetTab:
                     self._widgets.top_window,
                 )
 
-    def _find_shared_address(self, reg):
-        for shared_reg in self._regset.get_all_registers():
-            if shared_reg != reg and shared_reg.address == reg.address:
-                return shared_reg
+    def _find_shared_address(self, reg: Register) -> Optional[Register]:
+        """
+        Finds the register that shares the same address.
+
+        Search the register list for a register that is not the same register,
+        yet shares the same address.
+
+        Parameters:
+           reg (Register): Register that is looking for its shared register
+
+        Returns:
+           Optional[Register]: Returns the register if found, else None
+
+        """
+        if self._regset:
+            reglist = self._regset.get_all_registers()
+            if reglist:
+                for shared_reg in reglist:
+                    if (
+                        shared_reg.uuid != reg.uuid
+                        and shared_reg.address == reg.address
+                    ):
+                        return shared_reg
         return None
 
     def _set_field_modified(self):
@@ -671,8 +718,7 @@ class RegSetTab:
     def _set_bits_warn_flag(self):
         warn = False
         for row in self._bit_model:
-            field = row[BitCol.FIELD]
-            icon = _check_field(field)
+            icon = _check_field(row[BitCol.FIELD])
             row[BitCol.ICON] = icon
             if icon:
                 warn = True
