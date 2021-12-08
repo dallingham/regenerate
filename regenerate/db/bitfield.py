@@ -530,6 +530,7 @@ class BitField(NameBase):
             "reset_value": f"{self._reset_value}",
             "control_signal": self.control_signal,
             "field_type": self.field_type,
+            "flags": self.flags.json(),
             "lsb": self.lsb,
             "msb": self.msb.json(),
             "output_has_side_effect": self.output_has_side_effect,
@@ -561,6 +562,8 @@ class BitField(NameBase):
         self.use_output_enable = data["use_output_enable"]
         self.use_alternate_reset = data.get("use_alternate_reset", False)
         self.field_type = data["field_type"]
+        if "flags" in data:
+            self.flags.json_decode(data["flags"])
         self.lsb = data["lsb"]
         self.msb = ParamValue()
         self.msb.json_decode(data["msb"])

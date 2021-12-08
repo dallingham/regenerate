@@ -598,9 +598,9 @@ class RegSetTab:
         "Removes the selected register from the interface and database"
 
         if self._regset:
-            self._reglist_obj.delete_selected_node()
             for reg in self._reglist_obj.get_selected_registers():
                 self._regset.delete_register(reg)
+            self._reglist_obj.delete_selected_node()
             self.set_modified()
 
     def _add_register_callback(self, _obj: Gtk.Button) -> None:
