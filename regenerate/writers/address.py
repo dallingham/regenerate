@@ -88,7 +88,7 @@ def build_map(project: RegProject, map_base: int) -> List[SignalPath]:
         block = project.get_block_from_block_inst(blk_inst)
 
         if blk_inst.repeat > 1:
-            for blkrpt in range(0, blk_inst.repeat):
+            for blkrpt in range(blk_inst.repeat):
                 address = (
                     (blkrpt * block.address_size)
                     + blk_inst.address_base
@@ -119,7 +119,7 @@ def dump_blkinst(
         repeat = reg_inst.repeat.resolve()
 
         if repeat > 1:
-            for i in range(0, repeat):
+            for i in range(repeat):
                 for reg in regset.get_all_registers():
                     base = reg.address + reg_inst.offset + address
                     addr = base + (i * (1 << regset.ports.address_bus_width))

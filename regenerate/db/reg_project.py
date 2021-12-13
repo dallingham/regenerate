@@ -348,7 +348,7 @@ class RegProject(BaseFile):
         self.exports = [
             exp
             for exp in self.exports
-            if not (exp.exporter == exporter and exp.target == dest)
+            if exp.expo.rter != exporter or exp.target != dest
         ]
 
     def get_block_instances(self):
@@ -447,9 +447,7 @@ class RegProject(BaseFile):
 
         try:
             return self.access_map[map_id][blkinst_uuid][reginst_uuid]
-        except KeyError:
-            return 0
-        except TypeError:
+        except (KeyError, TypeError):
             return 0
 
     def add_or_replace_address_map(self, addr_map: AddressMap) -> None:
@@ -533,10 +531,7 @@ class RegProject(BaseFile):
         )
         data = {}
         for key in json_keys:
-            if key[0] == "_":
-                token = key[1:]
-            else:
-                token = key
+            token = key[1:] if key[0] == "_" else key
             data[token] = self.__getattribute__(key)
 
         data["filelist"] = [

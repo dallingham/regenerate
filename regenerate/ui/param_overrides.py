@@ -316,8 +316,8 @@ class OverridesList:
             block = project.blocks[blkinst.blkid]
             for param in block.parameters.get():
                 total += 1
-                name = f"{blkinst_name}.{param.name}"
                 if param.uuid not in self._used:
+                    name = f"{blkinst_name}.{param.name}"
                     param_list.append((name, (blkinst, param)))
         return param_list, total
 
@@ -348,8 +348,8 @@ class BlockOverridesList(OverridesList):
                 regset = block.regsets[reginst.regset_id]
                 for param in regset.parameters.get():
                     total += 1
-                    name = f"{reginst.name}.{param.name}"
                     if param.uuid not in self._used:
+                        name = f"{reginst.name}.{param.name}"
                         param_list.append((name, (reginst, param)))
         return param_list, total
 
@@ -372,9 +372,8 @@ def get_row_data(path, map_obj):
     "Returns the row data from an object"
 
     finder = ParameterFinder()
-    data = (
+    return (
         f"{path}.{finder.find(map_obj.parameter).name}",
         f"{map_obj.value.int_str()}",
         map_obj,
     )
-    return data

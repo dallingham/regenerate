@@ -381,9 +381,7 @@ class Build(BaseWindow):
 
             dest = Path(item[BuildCol.DEST]).resolve()
 
-            if rtype == ProjectType.REGSET:
-                gen = writer_class(self.__prj, dbase, options)
-            elif rtype == ProjectType.BLOCK:
+            if rtype in [ProjectType.REGSET, ProjectType.BLOCK]:
                 gen = writer_class(self.__prj, dbase, options)
             else:
                 gen = writer_class(self.__prj, options)

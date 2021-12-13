@@ -225,9 +225,7 @@ def _get_addresses(reg: Register) -> Set[int]:
        List of all byte addresses used by the register
 
     """
-    used_addrs: Set[int] = set()
-    used_addrs.add(reg.address)
-
+    used_addrs: Set[int] = {reg.address}
     if reg.width >= 16:
         used_addrs.add(reg.address + 1)
     if reg.width >= 32:

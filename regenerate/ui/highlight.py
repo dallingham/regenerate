@@ -39,8 +39,7 @@ try:
             start = buf.get_end_iter()
             buf.insert_with_tags(start, value, styles[token])
 
-            for token0 in styles:
-                tag = styles[token0]
+            for token0, tag in styles.items():
                 style = emacs_style.style_for_token(token0)
                 if style["bgcolor"]:
                     tag.set_property("background", "#" + style["bgcolor"])

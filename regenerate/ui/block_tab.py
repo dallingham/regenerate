@@ -187,13 +187,7 @@ class BlockTab:
         model, node = self._sidebar.get_selected()
 
         if node:
-            self._block_notebook.set_sensitive(True)
-            block = model[node][-1]
-            self.disable_modified = True
-            self.select_block(block.uuid)
-            self.disable_modified = False
-            self.parameter_list.set_db(self._block)
-            self._preview.change_block(self._block, self._project)
+            self._setup_and_select_block(model, node)
         else:
             self._block_notebook.set_sensitive(False)
 
@@ -202,41 +196,43 @@ class BlockTab:
         else:
             self._block_select_notebook.set_current_page(1)
 
+    # TODO Rename this here and in `_update_block_selection`
+    def _setup_and_select_block(self, model, node):
+        self._block_notebook.set_sensitive(True)
+        block = model[node][-1]
+        self.disable_modified = True
+        self.select_block(block.uuid)
+        self.disable_modified = False
+        self.parameter_list.set_db(self._block)
+        self._preview.change_block(self._block, self._project)
+
     def build(self) -> None:
         "Build the interface"
 
         column = EditableColumn("Instance", self._instance_changed, 1)
-        self._block_regsets.append_column(column)
-        column.set_min_width(175)
-        column.set_expand(False)
-        column.set_resizable(True)
-
+        self._setup_column(column, 175)
         column = ReadOnlyColumn("Register Set", 0)
-        self._block_regsets.append_column(column)
-        column.set_min_width(175)
-        column.set_expand(False)
-        column.set_resizable(True)
-
+        self._setup_column(column, 175)
         column = EditableColumn(
             "Offset", self._address_changed, 2, monospace=True
         )
-        self._block_regsets.append_column(column)
-        column.set_min_width(125)
-        column.set_expand(False)
-        column.set_resizable(True)
-
+        self._setup_column(column, 125)
         column = MenuEditColumn(
             "Repeat", self._repeat_menu, self._repeat_text, [], 3
         )
-        self._block_regsets.append_column(column)
-        column.set_min_width(150)
-        column.set_expand(False)
-        column.set_resizable(True)
+        self._setup_column(column, 150)
         self.repeat_col = column
 
         column = EditableColumn("HDL path", self._hdl_path_changed, 4)
         self._block_regsets.append_column(column)
         column.set_expand(True)
+        column.set_resizable(True)
+
+    # TODO Rename this here and in `build`
+    def _setup_column(self, column, arg1):
+        self._block_regsets.append_column(column)
+        column.set_min_width(arg1)
+        column.set_expand(False)
         column.set_resizable(True)
 
     def modified(self) -> None:

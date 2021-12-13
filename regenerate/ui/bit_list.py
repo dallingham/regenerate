@@ -739,11 +739,9 @@ def get_field_reset_data(field: BitField) -> str:
     "Converts the fields reset value/type into a displayable value."
 
     if field.reset_type == ResetType.NUMERIC:
-        reset = reset_value(field)
-    elif field.reset_type == ResetType.INPUT:
-        reset = field.reset_input
-    else:
-        finder = ParameterFinder()
-        param = finder.find(field.reset_parameter)
-        reset = param.name
-    return reset
+        return reset_value(field)
+    if field.reset_type == ResetType.INPUT:
+        return field.reset_input
+    finder = ParameterFinder()
+    param = finder.find(field.reset_parameter)
+    return param.name

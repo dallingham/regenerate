@@ -47,7 +47,4 @@ class PreviewEditor:
     def set_project(self, project: Optional[RegProject]):
         """Sets the database"""
 
-        if project:
-            self.links = get_register_paths(project)
-        else:
-            self.links = {}
+        self.links = get_register_paths(project) if project else {}

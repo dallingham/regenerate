@@ -213,11 +213,7 @@ class TopLevelTab:
             count += 1
 
         address_set = set({blk.address_base for blk in self.prj.block_insts})
-        if address_set:
-            max_address = max(address_set) + 0x10000
-        else:
-            max_address = 0
-
+        max_address = max(address_set) + 0x10000 if address_set else 0
         block_inst.name = name
         block_inst.address_base = max_address
 

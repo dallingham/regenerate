@@ -175,35 +175,33 @@ class ModuleTabs:
                         placeholder=placeholder,
                     )
                 )
-            else:
-                if isinstance(widget_name, tuple):
-                    self.port_object_list.append(
-                        class_type(
-                            (
-                                find_obj(widget_name[0]),
-                                find_obj(widget_name[1]),
-                            ),
-                            db_name,
-                            self.after_modified,
-                        )
+            elif isinstance(widget_name, tuple):
+                self.port_object_list.append(
+                    class_type(
+                        (
+                            find_obj(widget_name[0]),
+                            find_obj(widget_name[1]),
+                        ),
+                        db_name,
+                        self.after_modified,
                     )
-                else:
-                    if callback:
-                        self.port_object_list.append(
-                            class_type(
-                                find_obj(widget_name),
-                                db_name,
-                                callback,
-                            )
-                        )
-                    else:
-                        self.port_object_list.append(
-                            class_type(
-                                find_obj(widget_name),
-                                db_name,
-                                self.after_modified,
-                            )
-                        )
+                )
+            elif callback:
+                self.port_object_list.append(
+                    class_type(
+                        find_obj(widget_name),
+                        db_name,
+                        callback,
+                    )
+                )
+            else:
+                self.port_object_list.append(
+                    class_type(
+                        find_obj(widget_name),
+                        db_name,
+                        self.after_modified,
+                    )
+                )
 
         for (widget_name, db_name, class_type, placeholder) in item_list:
             if placeholder is not None:
@@ -213,15 +211,13 @@ class ModuleTabs:
                     self.after_modified,
                     placeholder=placeholder,
                 )
-                self.top_object_list.append(obj)
             else:
                 obj = class_type(
                     find_obj(widget_name),
                     db_name,
                     self.after_modified,
                 )
-                self.top_object_list.append(obj)
-
+            self.top_object_list.append(obj)
         self.preview = ModuleDoc(
             find_obj("regset_doc_notebook"),
             self.after_modified,
@@ -286,9 +282,9 @@ class ModuleTabs:
         "Called after modification to set visible properties"
 
         warn = False
-        msgs: List[str] = []
-
         if self.regset is not None:
+            msgs: List[str] = []
+
             if self.regset.descriptive_title == "":
                 warn = True
                 msgs.append("No title was provided for the register set.")

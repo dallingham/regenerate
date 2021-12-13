@@ -402,9 +402,11 @@ class RegSetTab:
         "Update any displayed parameter names if they have changed"
         for row in self._bit_model:
             field = row[BitCol.FIELD]
-            if field.reset_type == ResetType.PARAMETER:
-                if field.reset_parameter != row[BitCol.RESET]:
-                    row[BitCol.RESET] = field.reset_parameter
+            if (
+                field.reset_type == ResetType.PARAMETER
+                and field.reset_parameter != row[BitCol.RESET]
+            ):
+                row[BitCol.RESET] = field.reset_parameter
 
     def _update_size_parameters(self) -> None:
         "Change the reset parameters, updating for any name changes"
@@ -475,27 +477,30 @@ class RegSetTab:
         self._skip_changes = True
 
         if self._regset:
-            status = self._name2status[self._regset.uuid]
-            self._reg_model = status.reg_model
-            self._filter_manage.change_filter(status.modelfilter)
-            self.node = status.node
-
-            self.reg_description.set_project(self._project)
-
-            status = self._name2status[self._regset.uuid]
-            self._filter_manage.change_filter(status.modelfilter)
-            self._reglist_obj.set_model(status.modelfilter)
-
-            self._bit_model = status.bit_model
-            self._bitfield_obj.set_model(self._bit_model)
-
-            self.update_display()
-            self._enable_registers(True)
+            self._update_on_selection_changed()
         else:
             self._regset = None
             self._reglist_obj.set_model(None)
             self._enable_registers(False)
         self._skip_changes = old_skip
+
+    def _update_on_selection_changed(self):
+        status = self._name2status[self._regset.uuid]
+        self._reg_model = status.reg_model
+        self._filter_manage.change_filter(status.modelfilter)
+        self.node = status.node
+
+        self.reg_description.set_project(self._project)
+
+        status = self._name2status[self._regset.uuid]
+        self._filter_manage.change_filter(status.modelfilter)
+        self._reglist_obj.set_model(status.modelfilter)
+
+        self._bit_model = status.bit_model
+        self._bitfield_obj.set_model(self._bit_model)
+
+        self.update_display()
+        self._enable_registers(True)
 
     def _set_register_warn_flags(self, reg, mark=True) -> None:
         "Sets the warning messages and flags"
@@ -547,38 +552,37 @@ class RegSetTab:
         old_skip = self._skip_changes
         self._skip_changes = True
         reglist = self.get_selected_registers()
-        if len(reglist) != 1:
-            reg = None
-        else:
-            reg = reglist[0]
-
+        reg = None if len(reglist) != 1 else reglist[0]
         self.reg_description.set_register(reg)
         if reg:
-            self._widgets.reg_notebook.show()
-            self._widgets.reg_notebook.set_sensitive(True)
-            self._reg_selected_action.set_sensitive(True)
-            self._bit_model.clear()
-            self._bit_model.register = reg
-            self._bitfield_obj.set_mode(reg.share)
-            for key in reg.get_bit_field_keys():
-                field = reg.get_bit_field(key)
-                self._bit_model.append_field(field)
-
-            self._widgets.no_rtl.set_active(reg.flags.do_not_generate_code)
-            self._widgets.no_uvm.set_active(reg.flags.do_not_use_uvm)
-            self._widgets.no_test.set_active(reg.flags.do_not_test)
-            self._widgets.no_reset_test.set_active(reg.flags.do_not_reset_test)
-            self._widgets.no_cover.set_active(reg.flags.do_not_cover)
-            self._widgets.hide_doc.set_active(reg.flags.hide)
-
-            self._set_register_warn_flags(reg)
-            self._set_bits_warn_flag()
-            self._set_share(reg)
+            self._update_on_selected_reg_change(reg)
         else:
             self._widgets.reg_notebook.set_sensitive(False)
             self._reg_selected_action.set_sensitive(False)
             self._widgets.bitfield_list.get_model().clear()
         self._skip_changes = old_skip
+
+    def _update_on_selected_reg_change(self, reg):
+        self._widgets.reg_notebook.show()
+        self._widgets.reg_notebook.set_sensitive(True)
+        self._reg_selected_action.set_sensitive(True)
+        self._bit_model.clear()
+        self._bit_model.register = reg
+        self._bitfield_obj.set_mode(reg.share)
+        for key in reg.get_bit_field_keys():
+            field = reg.get_bit_field(key)
+            self._bit_model.append_field(field)
+
+        self._widgets.no_rtl.set_active(reg.flags.do_not_generate_code)
+        self._widgets.no_uvm.set_active(reg.flags.do_not_use_uvm)
+        self._widgets.no_test.set_active(reg.flags.do_not_test)
+        self._widgets.no_reset_test.set_active(reg.flags.do_not_reset_test)
+        self._widgets.no_cover.set_active(reg.flags.do_not_cover)
+        self._widgets.hide_doc.set_active(reg.flags.hide)
+
+        self._set_register_warn_flags(reg)
+        self._set_bits_warn_flag()
+        self._set_share(reg)
 
     def _set_share(self, reg: Register) -> None:
         "Sets the sharing radio button based off the register value"
@@ -800,17 +804,11 @@ class RegSetTab:
             self.set_modified()
 
     def _set_description_warn_flag(self):
-        if self._regset:
-            warn = self._regset.overview_text == ""
-        else:
-            warn = False
+        warn = self._regset.overview_text == "" if self._regset else False
         self._widgets.mod_descr_warn.set_property("visible", warn)
 
     def _duplicate_address(self, reg_addr: int) -> int:
-        cnt = 0
-        for reg in self._regset.get_all_registers():
-            if reg.address == reg_addr:
-                cnt += 1
+        cnt = sum(reg.address == reg_addr for reg in self._regset.get_all_registers())
         return cnt > 1
 
     def _update_register_address(self, register, new_addr, new_length=0):
@@ -1010,17 +1008,7 @@ class RegSetTab:
         """Redraws the information in the register list."""
 
         if self._regset:
-            self._module_tabs.change_db(self._regset, self._project)
-            self._parameter_list.set_db(self._regset)
-            self._reglist_obj.set_parameters(self._regset.parameters.get())
-            self._reglist_obj.update_bit_width(
-                self._regset.ports.data_bus_width
-            )
-            self._bitfield_obj.set_parameters(self._regset.parameters.get())
-            if self._regset.array_is_reg:
-                self._widgets.register_notation.set_active(True)
-            else:
-                self._widgets.array_notation.set_active(True)
+            self._redraw_when_regset_active()
         else:
             self._module_tabs.change_db(None, None)
 
@@ -1031,6 +1019,19 @@ class RegSetTab:
 
         self.update_bit_count()
         self._set_description_warn_flag()
+
+    def _redraw_when_regset_active(self):
+        self._module_tabs.change_db(self._regset, self._project)
+        self._parameter_list.set_db(self._regset)
+        self._reglist_obj.set_parameters(self._regset.parameters.get())
+        self._reglist_obj.update_bit_width(
+            self._regset.ports.data_bus_width
+        )
+        self._bitfield_obj.set_parameters(self._regset.parameters.get())
+        if self._regset.array_is_reg:
+            self._widgets.register_notation.set_active(True)
+        else:
+            self._widgets.array_notation.set_active(True)
 
     def get_selected_registers(self) -> List[Register]:
         "Returns the list of selected registers"
@@ -1081,48 +1082,50 @@ class RegSetTab:
         if self._regset is None:
             return
 
-        param_old_to_new: Dict[str, str] = {}
-
         if (
             self._copied_source
             and self._copied_source.uuid != self._regset.uuid
         ):
 
-            new_list, new_params = copy_registers(
-                self._regset, self._copied_registers
+            param_old_to_new: Dict[str, str] = {}
+
+            self._paste_copied_registers_to_different_regset()
+
+    def _paste_copied_registers_to_different_regset(self):
+        new_list, new_params = copy_registers(
+            self._regset, self._copied_registers
+        )
+        param_old_to_new = copy_parameters(self._regset, new_params)
+
+        selected_regs = self.get_selected_registers()
+
+        first_reg = new_list[0]
+
+        if selected_regs:
+            insert_registers_after(
+                self._regset, new_list, selected_regs[0], param_old_to_new
             )
-            param_old_to_new = copy_parameters(self._regset, new_params)
+        else:
+            insert_registers_after(
+                self._regset, new_list, None, param_old_to_new
+            )
+        for reg in new_list:
+            self._reglist_obj.load_reg_into_model(reg)
 
-            selected_regs = self.get_selected_registers()
+        if len(param_old_to_new) > 0:
+            LOGGER.warning(
+                "Inserted %d registers, %d parameters",
+                len(new_list),
+                len(param_old_to_new),
+            )
+        elif len(new_list) == 1:
+            LOGGER.warning("Inserted 1 register")
+        else:
+            LOGGER.warning("Inserted %d registers", len(new_list))
 
-            first_reg = new_list[0]
-
-            if selected_regs:
-                insert_registers_after(
-                    self._regset, new_list, selected_regs[0], param_old_to_new
-                )
-            else:
-                insert_registers_after(
-                    self._regset, new_list, None, param_old_to_new
-                )
-            for reg in new_list:
-                self._reglist_obj.load_reg_into_model(reg)
-
-            if len(param_old_to_new) > 0:
-                LOGGER.warning(
-                    "Inserted %d registers, %d parameters",
-                    len(new_list),
-                    len(param_old_to_new),
-                )
-            else:
-                if len(new_list) == 1:
-                    LOGGER.warning("Inserted 1 register")
-                else:
-                    LOGGER.warning("Inserted %d registers", len(new_list))
-
-            self.force_reglist_rebuild(first_reg)
-            self.set_modified()
-            self.update_display()
+        self.force_reglist_rebuild(first_reg)
+        self.set_modified()
+        self.update_display()
 
 
 def _next_boundary(address: int, width: int) -> int:

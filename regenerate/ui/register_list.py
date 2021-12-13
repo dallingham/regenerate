@@ -212,10 +212,7 @@ class RegisterModel(Gtk.ListStore):
         "Sets the warning icon for the register in the table"
         try:
             path = self.reg2path[register]
-            if flag:
-                self[path][RegCol.ICON] = Gtk.STOCK_DIALOG_WARNING
-            else:
-                self[path][RegCol.ICON] = None
+            self[path][RegCol.ICON] = Gtk.STOCK_DIALOG_WARNING if flag else None
         except IndexError:
             pass
 
@@ -295,8 +292,7 @@ class RegisterList:
         """
         (model, node) = self._selection.get_selected()
         if model and node:
-            path = model.get_path(node)
-            return path
+            return model.get_path(node)
         return None
 
     def delete_selected_node(self):
@@ -394,10 +390,7 @@ class RegisterList:
         "Sets the active model."
 
         self._obj.set_model(model)
-        if model:
-            self._model = model.get_model()
-        else:
-            self._model = None
+        self._model = model.get_model() if model else None
 
     def clear(self):
         "Clears the associated model"
@@ -568,16 +561,13 @@ class RegisterList:
 
         data = new_text.split(":")
 
-        if len(data) == 1:
-            length = 1
-        else:
-            length = int(data[1], 16)
+        length = 1 if len(data) == 1 else int(data[1], 16)
         start_address = int(data[0], 16)
 
-        for addr in range(start_address, start_address + length):
-            if addr in addr_list or addr in wo_list and addr in ro_list:
-                return False
-        return True
+        return not any(
+            addr in addr_list or addr in wo_list and addr in ro_list
+            for addr in range(start_address, start_address + length)
+        )
 
     def _handle_edited_address(
         self, register: Register, path: str, text: str

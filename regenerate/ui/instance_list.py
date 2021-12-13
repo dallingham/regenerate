@@ -258,7 +258,7 @@ class InstanceList:
         if text == self.__model.get_value(node, InstCol.INST):
             return
 
-        items = set(row[InstCol.INST] for row in self.__model)
+        items = {row[InstCol.INST] for row in self.__model}
 
         if text in items:
             LOGGER.warning(

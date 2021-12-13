@@ -161,11 +161,8 @@ class EntryRadio:
         """Change the database"""
 
         self.data_obj = data_obj
-        if data_obj:
-            if getattr(data_obj, self.field_name):
-                self.widget2.set_active(1)
-            else:
-                self.widget1.set_active(1)
+        if data_obj and getattr(data_obj, self.field_name):
+            self.widget2.set_active(1)
         else:
             self.widget1.set_active(1)
 
