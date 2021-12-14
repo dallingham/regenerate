@@ -51,7 +51,7 @@ from .logger import LOGGER
 from .overrides import Overrides
 from .param_container import ParameterContainer
 from .proj_reader import ProjectReader
-from .register_db import RegisterDb
+from .register_set import RegisterSet
 from .textutils import clean_text
 from .regset_finder import RegsetFinder
 from .base_file import BaseFile
@@ -98,7 +98,7 @@ class RegProject(BaseFile):
 
         self.block_insts: List[BlockInst] = []
         self.blocks: Dict[Uuid, Block] = {}
-        self.regsets: Dict[Uuid, RegisterDb] = {}
+        self.regsets: Dict[Uuid, RegisterSet] = {}
 
         self.exports: List[ExportData] = []
 
@@ -261,7 +261,7 @@ class RegProject(BaseFile):
 
         regset = self.finder.find_by_file(str(filename))
         if not regset:
-            regset = RegisterDb()
+            regset = RegisterSet()
             data = rdr.read_bytes(filename)
             if Path(filename).suffix == OLD_REG_EXT:
                 regset.loads(data, filename)
@@ -270,7 +270,7 @@ class RegProject(BaseFile):
             self.finder.register(regset)
             self.new_register_set(regset, new_file_path)
 
-    def new_register_set(self, regset: RegisterDb, path: Path) -> None:
+    def new_register_set(self, regset: RegisterSet, path: Path) -> None:
         "Stores the register set and its path"
 
         self.regsets[regset.uuid] = regset
@@ -361,7 +361,7 @@ class RegProject(BaseFile):
 
     def get_regset_from_regset_inst(
         self, regset_inst: RegisterInst
-    ) -> RegisterDb:
+    ) -> RegisterSet:
         "Find the regset associated with a particular regset instance"
         return self.regsets[regset_inst.regset_id]
 
@@ -695,7 +695,7 @@ class RegProject(BaseFile):
             full_path = (self._filename.parent / filename).resolve()
             regset = self.finder.find_by_file(str(full_path))
             if not regset and full_path.exists():
-                regset = RegisterDb()
+                regset = RegisterSet()
                 if self.reader_class is None:
                     rdr = FileReader(full_path)
                 else:

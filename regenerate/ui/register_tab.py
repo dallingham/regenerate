@@ -31,7 +31,7 @@ from regenerate.db import (
     Register,
     BitField,
     LOGGER,
-    RegisterDb,
+    RegisterSet,
     ShareType,
     ResetType,
     RegProject,
@@ -199,7 +199,7 @@ class RegSetTab:
             self._reg_descript_callback,
         )
 
-        self._regset: Optional[RegisterDb] = None
+        self._regset: Optional[RegisterSet] = None
         self._project: Optional[RegProject] = None
         self._name2status: Dict[str, RegSetStatus] = {}
 
@@ -443,7 +443,7 @@ class RegSetTab:
         self._set_register_warn_flags(reg)
 
     def _add_model_callback(
-        self, regset: RegisterDb, node: Gtk.TreeIter
+        self, regset: RegisterSet, node: Gtk.TreeIter
     ) -> None:
         "Called when a new register set has been added to the sidebar"
 
@@ -808,7 +808,9 @@ class RegSetTab:
         self._widgets.mod_descr_warn.set_property("visible", warn)
 
     def _duplicate_address(self, reg_addr: int) -> int:
-        cnt = sum(reg.address == reg_addr for reg in self._regset.get_all_registers())
+        cnt = sum(
+            reg.address == reg_addr for reg in self._regset.get_all_registers()
+        )
         return cnt > 1
 
     def _update_register_address(self, register, new_addr, new_length=0):
@@ -858,7 +860,7 @@ class RegSetTab:
         """
         name_str = get_new_filename()
         if name_str and self._project:
-            regset = RegisterDb()
+            regset = RegisterSet()
             regset.filename = Path(name_str).with_suffix(REG_EXT)
             regset.name = regset.filename.stem
             regset.modified = True
@@ -885,7 +887,7 @@ class RegSetTab:
 
                 if self._project:
                     name = Path(filename)
-                    dbase = RegisterDb(name)
+                    dbase = RegisterSet(name)
                     dbase.filename = name
                     dbase.modified = True
 
@@ -901,7 +903,7 @@ class RegSetTab:
         else:
             self._widgets.filter_obj.hide()
 
-    def selected_regset(self) -> Optional[RegisterDb]:
+    def selected_regset(self) -> Optional[RegisterSet]:
         "Returns the selected register set"
         return self._regset
 
@@ -911,7 +913,7 @@ class RegSetTab:
         self._reglist_obj.set_parameters(parameters)
         self._bitfield_obj.set_parameters(parameters)
 
-    def set_parameters_regset(self, regset: RegisterDb) -> None:
+    def set_parameters_regset(self, regset: RegisterSet) -> None:
         "Sets the register set associated with the parameter list"
         self._parameter_list.set_db(regset)
 
@@ -935,7 +937,7 @@ class RegSetTab:
             self._sidebar.update()
             self._modified_callback()
 
-    def new_regset(self, regset: RegisterDb) -> Optional[Gtk.TreeIter]:
+    def new_regset(self, regset: RegisterSet) -> Optional[Gtk.TreeIter]:
         "Inserts the register set into the tree"
 
         self._reg_model = RegisterModel(regset.ports.data_bus_width)
@@ -1024,9 +1026,7 @@ class RegSetTab:
         self._module_tabs.change_db(self._regset, self._project)
         self._parameter_list.set_db(self._regset)
         self._reglist_obj.set_parameters(self._regset.parameters.get())
-        self._reglist_obj.update_bit_width(
-            self._regset.ports.data_bus_width
-        )
+        self._reglist_obj.update_bit_width(self._regset.ports.data_bus_width)
         self._bitfield_obj.set_parameters(self._regset.parameters.get())
         if self._regset.array_is_reg:
             self._widgets.register_notation.set_active(True)
@@ -1045,7 +1045,7 @@ class RegSetTab:
         "Clears the sidebar model"
         self._sidebar.clear()
 
-    def current_regset(self) -> Optional[RegisterDb]:
+    def current_regset(self) -> Optional[RegisterSet]:
         "Returns the selected register set"
         return self._regset
 
@@ -1086,9 +1086,6 @@ class RegSetTab:
             self._copied_source
             and self._copied_source.uuid != self._regset.uuid
         ):
-
-            param_old_to_new: Dict[str, str] = {}
-
             self._paste_copied_registers_to_different_regset()
 
     def _paste_copied_registers_to_different_regset(self):

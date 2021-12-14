@@ -24,7 +24,7 @@ XML files describing the registers.
 
 from typing import Dict, Any
 from pathlib import Path
-from regenerate.db import BitType, RegisterDb, RegProject
+from regenerate.db import BitType, RegisterSet, RegProject
 from .writer_base import RegsetWriter, ProjectType, find_template
 from .export_info import ExportInfo
 
@@ -81,7 +81,7 @@ class IpXactWriter(RegsetWriter):
     """
 
     def __init__(
-        self, project: RegProject, regset: RegisterDb, options: Dict[str, Any]
+        self, project: RegProject, regset: RegisterSet, options: Dict[str, Any]
     ):
         super().__init__(project, regset, options)
         self.scope = "ipxact"
@@ -115,7 +115,7 @@ class SpiritWriter(IpXactWriter):
     "Older Spirit generator"
 
     def __init__(
-        self, project: RegProject, regset: RegisterDb, options: Dict[str, Any]
+        self, project: RegProject, regset: RegisterSet, options: Dict[str, Any]
     ):
         super().__init__(project, regset, options)
         self.scope = "spirit"

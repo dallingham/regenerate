@@ -27,7 +27,7 @@ from pathlib import Path
 
 from gi.repository import Gtk, Pango
 from regenerate.settings.paths import INSTALL_PATH, HELP_PATH
-from regenerate.db import RegProject, RegisterDb, ExportData
+from regenerate.db import RegProject, RegisterSet, ExportData
 from regenerate.writers import (
     ExportInfo,
     BaseWriter,
@@ -483,7 +483,7 @@ def base_and_modtime(dbase_full_path: Path) -> Tuple[str, int]:
 
 
 def file_needs_rebuilt(
-    local_dest: str, prj: RegProject, db_paths: Dict[str, RegisterDb]
+    local_dest: str, prj: RegProject, db_paths: Dict[str, RegisterSet]
 ) -> bool:
     """
     Returns True if the associated database has been modified since the

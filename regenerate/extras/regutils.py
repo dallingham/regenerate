@@ -25,7 +25,7 @@ import copy
 import re
 from typing import Set
 
-from regenerate.db import Register, RegisterDb, Uuid
+from regenerate.db import Register, RegisterSet, Uuid
 from .remap import REMAP_NAME
 
 REGNAME = re.compile(r"^(.*)(\d+)(.*)$")
@@ -54,7 +54,7 @@ def build_define(text: str) -> str:
     return text
 
 
-def duplicate_register(dbase: RegisterDb, reg: Register) -> Register:
+def duplicate_register(dbase: RegisterSet, reg: Register) -> Register:
     """
     Returns a new register which is a dupilcate of the original register,
     changing the register description, signals, and token based on the original
@@ -89,7 +89,7 @@ def duplicate_register(dbase: RegisterDb, reg: Register) -> Register:
     return new_reg
 
 
-def build_signal_set(dbase: RegisterDb) -> Set[str]:
+def build_signal_set(dbase: RegisterSet) -> Set[str]:
     """
     Builds a set of all input, output and control signal name in
     the database.
@@ -106,7 +106,7 @@ def build_signal_set(dbase: RegisterDb) -> Set[str]:
     return signal_list
 
 
-def calculate_next_address(dbase: RegisterDb, width: int) -> int:
+def calculate_next_address(dbase: RegisterSet, width: int) -> int:
     """
     Calculates the next address based on the last address that was
     used.

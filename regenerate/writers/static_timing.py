@@ -25,7 +25,7 @@ import datetime
 from pathlib import Path
 from typing import NamedTuple, List, Tuple, Any, Dict
 
-from regenerate.db import RegProject, RegisterDb, BitField
+from regenerate.db import RegProject, RegisterSet, BitField
 from .writer_base import ProjectWriter, ProjectType, find_template
 from .export_info import ExportInfo
 
@@ -50,7 +50,7 @@ def fix_path(path: str) -> str:
     return path.replace(".", "/").replace("]/", "].")
 
 
-def get_static_ports(dbase: RegisterDb) -> List[Tuple[int, BitField]]:
+def get_static_ports(dbase: RegisterSet) -> List[Tuple[int, BitField]]:
     "Returns the list of static ports"
 
     fields = []

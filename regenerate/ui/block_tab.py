@@ -31,7 +31,7 @@ from regenerate.db import (
     BLK_EXT,
     LOGGER,
     RegProject,
-    RegisterDb,
+    RegisterSet,
 )
 from .columns import ReadOnlyColumn, EditableColumn, MenuEditColumn
 from .parameter_list import ParameterList
@@ -454,7 +454,7 @@ class BlockTab:
                 index += 1
         return new_name
 
-    def add_reginst_to_block(self, _obj, regset: RegisterDb) -> None:
+    def add_reginst_to_block(self, _obj, regset: RegisterSet) -> None:
         "Called when the menu entry has been selected"
 
         if self._block is None:

@@ -24,7 +24,7 @@ Handle the module tab
 from typing import Callable, List, Optional
 from gi.repository import Gtk
 
-from regenerate.db import RegProject, RegisterDb
+from regenerate.db import RegProject, RegisterSet
 from .base_doc import BaseDoc
 from .entry import EntryText, EntryWord
 
@@ -81,11 +81,11 @@ class ProjectTabs:
             self.after_modified,
         )
 
-        self.dbase: Optional[RegisterDb] = None
+        self.dbase: Optional[RegisterSet] = None
         self.set_modified = modified
         self.icon = builder.get_object("mod_def_warn")
 
-    def change_db(self, dbase: RegisterDb) -> None:
+    def change_db(self, dbase: RegisterSet) -> None:
         "Changes the register db used"
 
         self.dbase = dbase

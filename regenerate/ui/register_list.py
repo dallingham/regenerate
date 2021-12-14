@@ -212,7 +212,9 @@ class RegisterModel(Gtk.ListStore):
         "Sets the warning icon for the register in the table"
         try:
             path = self.reg2path[register]
-            self[path][RegCol.ICON] = Gtk.STOCK_DIALOG_WARNING if flag else None
+            self[path][RegCol.ICON] = (
+                Gtk.STOCK_DIALOG_WARNING if flag else None
+            )
         except IndexError:
             pass
 
@@ -309,7 +311,7 @@ class RegisterList:
         self._selection.select_path(row)
 
     def _build_text_column(
-        self, name: str, width: int, data_col: int, sort_col: int, mono: bool
+        self, name: str, width: int, data_col: int, mono: bool
     ):
         "Builds a editable text column"
 
@@ -362,19 +364,13 @@ class RegisterList:
 
         self._obj.append_column(_build_icon_col())
 
-        self._addr_col = self._build_text_column(
-            "Address", 100, 1, RegCol.SORT, True
-        )
+        self._addr_col = self._build_text_column("Address", 100, 1, True)
         self._obj.append_column(self._addr_col)
 
-        self.name_col = self._build_text_column(
-            "Name", 350, 2, RegCol.NAME, False
-        )
+        self.name_col = self._build_text_column("Name", 350, 2, False)
         self._obj.append_column(self.name_col)
 
-        self._token_col = self._build_text_column(
-            "Token", 300, 3, RegCol.DEFINE, True
-        )
+        self._token_col = self._build_text_column("Token", 300, 3, True)
         self._obj.append_column(self._token_col)
 
         self._dim_column = self._build_dimension_col()

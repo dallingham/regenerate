@@ -23,7 +23,7 @@ import string
 from typing import Dict, Any
 from pathlib import Path
 
-from regenerate.db import Register, RegisterDb, RegProject
+from regenerate.db import Register, RegisterSet, RegProject
 from regenerate.db.enums import BitType
 from regenerate.extras import find_addresses
 
@@ -227,7 +227,7 @@ def write_function(cfile, rlist, name, size, letter, suffix, size_suffix):
 
 class CTest(RegsetWriter):
     def __init__(
-        self, project: RegProject, regset: RegisterDb, options: Dict[str, Any]
+        self, project: RegProject, regset: RegisterSet, options: Dict[str, Any]
     ):
         super().__init__(project, regset, options)
         self._ofile = None

@@ -35,7 +35,6 @@ The model constists of
 
 Only the first 5 fields are displayed in the TreeView.
 
-
 """
 
 
@@ -49,12 +48,7 @@ from regenerate.ui.columns import (
 )
 from regenerate.ui.enums import AddrCol
 
-_BITS8 = "8-bits"
-_BITS16 = "16-bits"
-_BITS32 = "32-bits"
-_BITS64 = "64-bits"
-
-SIZE2STR = ((_BITS8, 1), (_BITS16, 2), (_BITS32, 4), (_BITS64, 8))
+SIZE2STR = (("8-bits", 1), ("16-bits", 2), ("32-bits", 4), ("64-bits", 8))
 
 ACCESS2STR = (
     ("Full Access", 0),
@@ -249,7 +243,6 @@ class AddrMapList:
         self._model = AddrMapMdl()
         self._obj.set_model(self._model)
 
-    # TODO Rename this here and in `_build_instance_table`
     def _setup_column(self, column, arg1):
         column.set_min_width(arg1)
         column.set_resizable(True)

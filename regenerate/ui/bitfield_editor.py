@@ -28,7 +28,7 @@ from typing import Callable
 
 from gi.repository import Gtk, Gdk, Pango
 from regenerate.db import (
-    RegisterDb,
+    RegisterSet,
     Register,
     BitField,
     TYPE_TO_ID,
@@ -62,7 +62,7 @@ class BitFieldEditor(BaseWindow):
 
     def __init__(
         self,
-        dbase: RegisterDb,
+        dbase: RegisterSet,
         register: Register,
         bit_field: BitField,
         modified_func: Callable,
@@ -141,7 +141,9 @@ class BitFieldEditor(BaseWindow):
             )
             condition = "" if self._regset.ports.reset_active_level else "~"
 
-            trigger = "" if self._regset.ports.sync_reset else f" or {edge} RSTn"
+            trigger = (
+                "" if self._regset.ports.sync_reset else f" or {edge} RSTn"
+            )
             name_map = {
                 "MODULE": self._regset.name,
                 "RESET_CONDITION": condition,

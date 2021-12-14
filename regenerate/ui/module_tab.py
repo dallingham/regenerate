@@ -25,7 +25,7 @@ from typing import Callable, List, Optional
 
 from gi.repository import Gtk
 
-from regenerate.db import RegisterDb, RegProject, LOGGER
+from regenerate.db import RegisterSet, RegProject, LOGGER
 
 from .entry import (
     EntryWidth,
@@ -50,10 +50,10 @@ class ModuleDoc(BaseDoc):
             notebook,
             modified,
         )
-        self.regset: Optional[RegisterDb] = None
+        self.regset: Optional[RegisterSet] = None
         self.changing = False
 
-    def change_db(self, regset: RegisterDb, _project: Optional[RegProject]):
+    def change_db(self, regset: RegisterSet, _project: Optional[RegProject]):
         "Changes the register set associated with the object"
         self.regset = regset
 

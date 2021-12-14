@@ -22,15 +22,15 @@ Register finder singleton
 """
 
 from typing import Dict, Optional
-from .register_db import RegisterDb
+from .register_set import RegisterSet
 from .name_base import Uuid
 
 
 class RegsetFinder:
     "Singleton to allow the searching for register set by name or id"
 
-    idmap: Dict[Uuid, RegisterDb] = {}
-    filemap: Dict[str, RegisterDb] = {}
+    idmap: Dict[Uuid, RegisterSet] = {}
+    filemap: Dict[str, RegisterSet] = {}
 
     def __new__(cls):
         if not hasattr(cls, "instance"):
@@ -49,15 +49,15 @@ class RegsetFinder:
         "Display string"
         return "RegsetFinder()"
 
-    def find_by_id(self, uuid: Uuid) -> Optional[RegisterDb]:
+    def find_by_id(self, uuid: Uuid) -> Optional[RegisterSet]:
         "Find the register set by UUID"
         return self.idmap.get(uuid)
 
-    def find_by_file(self, filename: str) -> Optional[RegisterDb]:
+    def find_by_file(self, filename: str) -> Optional[RegisterSet]:
         "Find the register set by the filename"
         return self.filemap.get(str(filename))
 
-    def register(self, regset: RegisterDb) -> None:
+    def register(self, regset: RegisterSet) -> None:
         "Map the register set by filename and uuid"
         self.filemap[str(regset.filename)] = regset
         self.idmap[regset.uuid] = regset

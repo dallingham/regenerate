@@ -5,7 +5,7 @@ SystemVerilog RTL register decoder generator
 from pathlib import Path
 from typing import List, NamedTuple, Dict
 
-from regenerate.db import RegProject, RegisterDb, Block
+from regenerate.db import RegProject, RegisterSet, Block
 from .writer_base import BlockWriter, ProjectType, find_template
 from .export_info import ExportInfo
 
@@ -21,7 +21,7 @@ class BlockInfo(NamedTuple):
     repeat: int
     offset: int
     single_decode: bool
-    db: RegisterDb
+    db: RegisterSet
 
 
 class RegDecode(BlockWriter):
