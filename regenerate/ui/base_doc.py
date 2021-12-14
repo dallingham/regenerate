@@ -265,7 +265,7 @@ class BaseDoc:
 
         page_count = self.notebook.get_n_pages()
         if page_count:
-            for _ in range(0, page_count):
+            for _ in range(page_count):
                 self.notebook.remove_page(0)
         if self.page_map:
             self.page_map = []
@@ -448,7 +448,7 @@ class BaseDoc:
         "Delete the current document page"
 
         page = 0
-        for i in range(0, self.notebook.get_n_pages()):
+        for i in range(self.notebook.get_n_pages()):
             if self.page_map[i] == info:
                 page = i
 

@@ -396,11 +396,7 @@ class RuleBuilder(Gtk.Assistant):
 
         info, level = self._get_exporter()
 
-        if level != ProjectType.PROJECT:
-            uuid = self._get_source()
-        else:
-            uuid = ""
-
+        uuid = self._get_source() if level != ProjectType.PROJECT else ""
         filename = self.choose.get_filename()
         options = {}
         if "reginsts" in info.options:

@@ -143,7 +143,7 @@ def calc_default_value(register: Register):
     for rng in [
         register.get_bit_field(key) for key in register.get_bit_field_keys()
     ]:
-        value = value | (rng.reset_value << rng.start_position)
+        value |= rng.reset_value << rng.start_position
     return value
 
 
@@ -172,7 +172,7 @@ def calc_ro_mask(register):
             BitType.READ_WRITE_CLR_1S_1,
         ):
             for i in range(rng.lsb, rng.msb.resolve() + 1):
-                value = value | (1 << i)
+                value |= 1 << i
     return value
 
 
@@ -241,8 +241,7 @@ class CTest(RegsetWriter):
         rdata32 = []
         rdata64 = []
 
-        for index, register in enumerate(regset.get_all_registers()):
-
+        for register in regset.get_all_registers():
             if register.flags.do_not_test:
                 continue
 
@@ -251,15 +250,15 @@ class CTest(RegsetWriter):
             width = register.width
 
             for addr in find_addresses(self._project, regset.name, register):
-                if width == 8:
-                    rdata8.append((addr, mask, default))
-                elif width == 16:
+                if width == 16:
                     rdata16.append((addr, mask, default))
                 elif width == 32:
                     rdata32.append((addr, mask, default))
                 elif width == 64:
                     rdata64.append((addr, mask, default))
 
+                elif width == 8:
+                    rdata8.append((addr, mask, default))
         cfile.write("\n")
 
         write_protos(cfile, rdata8, regset.name, "8")

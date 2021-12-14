@@ -72,7 +72,6 @@ def get_new_filename():
     selected file is added to the recent manager.
     """
 
-    name = None
     choose = Gtk.FileChooserDialog(
         "New",
         None,
@@ -88,7 +87,6 @@ def get_new_filename():
     choose.show()
 
     response = choose.run()
-    if response == Gtk.ResponseType.OK:
-        name = choose.get_filename()
+    name = choose.get_filename() if response == Gtk.ResponseType.OK else None
     choose.destroy()
     return name

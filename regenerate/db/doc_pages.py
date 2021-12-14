@@ -57,8 +57,8 @@ class DocPages:
     def json_decode(self, data: Dict[str, Any]) -> None:
         "Decode the JSON data"
         self.pages = {}
-        for page in data:
-            if isinstance(data[page], str):
+        for page, value in data.items():
+            if isinstance(value, str):
                 self.pages[page] = (data[page], ["Confidential"])
             else:
                 self.pages[page] = (data[page][0], data[page][1])

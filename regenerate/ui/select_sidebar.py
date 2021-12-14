@@ -49,10 +49,7 @@ class SelectModel(Gtk.ListStore):
 
         for row in self:
             row[SelectCol.NAME] = row[SelectCol.OBJ].name
-            if row[SelectCol.OBJ].modified:
-                row[SelectCol.ICON] = True
-            else:
-                row[SelectCol.ICON] = False
+            row[SelectCol.ICON] = bool(row[SelectCol.OBJ].modified)
 
     def set_markup(self, node, modified: bool) -> None:
         """Sets the icon if the project has been modified"""

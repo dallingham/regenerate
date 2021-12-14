@@ -480,29 +480,33 @@ class MainWindow(BaseWindow):
 
         response = choose.run()
         if response == Gtk.ResponseType.OK:
-            filename = Path(choose.get_filename())
-
-            if filename.suffix != PRJ_EXT:
-                filename = filename.with_suffix(PRJ_EXT)
-
-            self.prj = RegProject()
-            self.prj.filename = filename
-            self.top_level_tab.change_project(self.prj)
-            self.prj.name = ""
-            self.prj.short_name = filename.stem
-            self.prj.save()
-
-            self.regset_tab.change_project(self.prj)
-            self.block_tab.clear_flags()
-            self._load_project_tab()
-
-            self.project_modified(False)
-            self._add_resent(str(filename.resolve()))
-            self._find_obj("save_btn").set_sensitive(True)
-            self.prj_loaded.set_sensitive(True)
-            if self._initial_popup.get_visible():
-                self._initial_popup.hide()
+            self._setup_new_project(choose)
         choose.destroy()
+
+    # TODO Rename this here and in `on_new_project_clicked`
+    def _setup_new_project(self, choose):
+        filename = Path(choose.get_filename())
+
+        if filename.suffix != PRJ_EXT:
+            filename = filename.with_suffix(PRJ_EXT)
+
+        self.prj = RegProject()
+        self.prj.filename = filename
+        self.top_level_tab.change_project(self.prj)
+        self.prj.name = ""
+        self.prj.short_name = filename.stem
+        self.prj.save()
+
+        self.regset_tab.change_project(self.prj)
+        self.block_tab.clear_flags()
+        self._load_project_tab()
+
+        self.project_modified(False)
+        self._add_resent(str(filename.resolve()))
+        self._find_obj("save_btn").set_sensitive(True)
+        self.prj_loaded.set_sensitive(True)
+        if self._initial_popup.get_visible():
+            self._initial_popup.hide()
 
     def _add_resent(self, path: str):
         "Adds the path th the recent manager. Must be an absolute path"
@@ -635,10 +639,9 @@ class MainWindow(BaseWindow):
         current_path = Path(self.prj.filename)
         backup_path = Path(f"{current_path}.bak")
 
-        if current_path.suffix != OLD_PRJ_EXT:
-            if backup_path.is_file():
-                backup_path.unlink()
-                current_path.rename(backup_path)
+        if current_path.suffix != OLD_PRJ_EXT and backup_path.is_file():
+            backup_path.unlink()
+            current_path.rename(backup_path)
 
         try:
             self.prj.save()
@@ -748,23 +751,26 @@ class MainWindow(BaseWindow):
                         need_save = True
 
         if need_save:
-
-            dialog = Question(
-                "Save Changes?",
-                "Modifications have been made. Do you want to save your changes?",
-                self._top_window,
-            )
-
-            status = dialog.run()
-            if status == Question.DISCARD:
-                self.exit()
-                return False
-            if status == Question.SAVE:
-                self.save_and_quit()
-                return False
-            dialog.destroy()
-            return True
+            return self._run_save_verification_dialog()
         self.exit()
+        return True
+
+    # TODO Rename this here and in `on_quit_activate`
+    def _run_save_verification_dialog(self):
+        dialog = Question(
+            "Save Changes?",
+            "Modifications have been made. Do you want to save your changes?",
+            self._top_window,
+        )
+
+        status = dialog.run()
+        if status == Question.DISCARD:
+            self.exit()
+            return False
+        if status == Question.SAVE:
+            self.save_and_quit()
+            return False
+        dialog.destroy()
         return True
 
     def on_remove_register_action_activate(self, _obj):

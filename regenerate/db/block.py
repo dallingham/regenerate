@@ -114,15 +114,13 @@ class Block(BaseFile):
         """Compare for equality."""
         if not isinstance(other, Block):
             return NotImplemented
-        if (
-            self.name != other.name
-            or self.uuid != other.uuid
-            or self.description != other.description
-            or self.address_size != other.address_size
-            or self.doc_pages != other.doc_pages
-        ):
-            return False
-        return True
+        return (
+            self.name == other.name
+            and self.uuid == other.uuid
+            and self.description == other.description
+            and self.address_size == other.address_size
+            and self.doc_pages == other.doc_pages
+        )
 
     def open(self, name: Path) -> None:
         "Opens the filename and loads the object"
@@ -162,11 +160,7 @@ class Block(BaseFile):
             regset = self.finder.find_by_file(str(filename))
             if not regset:
                 regset = RegisterDb()
-                if self.reader_class is None:
-                    rdr = FileReader(filename)
-                else:
-                    rdr = self.reader_class
-
+                rdr = FileReader(filename) if self.reader_class is None else self.reader_class
                 try:
                     json_data = json.loads(rdr.read_bytes(filename))
                 except json.decoder.JSONDecodeError as msg:

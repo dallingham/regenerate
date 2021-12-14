@@ -109,7 +109,7 @@ class ParameterList:
 
         name = f"{base}{index}"
         while name in current:
-            index = index + 1
+            index += 1
             name = f"{base}{index}"
 
         new_item = ParameterData(name, 1, 0, 0xFFFFFFFF)

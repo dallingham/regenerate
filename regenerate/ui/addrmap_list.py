@@ -38,6 +38,7 @@ Only the first 5 fields are displayed in the TreeView.
 
 """
 
+
 from typing import Callable, Optional, Tuple
 from gi.repository import Gtk
 from regenerate.db import LOGGER, AddressMap, RegProject
@@ -62,11 +63,11 @@ ACCESS2STR = (
     ("No Access", 3),
 )
 
-INT2SIZE = dict((_i[1], _i[0]) for _i in SIZE2STR)
-STR2SIZE = dict((_i[0], _i[1]) for _i in SIZE2STR)
+INT2SIZE = {_i[1]: _i[0] for _i in SIZE2STR}
+STR2SIZE = {_i[0]: _i[1] for _i in SIZE2STR}
 
-INT2ACCESS = dict((_i[1], _i[0]) for _i in ACCESS2STR)
-STR2ACCESS = dict((_i[0], _i[1]) for _i in ACCESS2STR)
+INT2ACCESS = {_i[1]: _i[0] for _i in ACCESS2STR}
+STR2ACCESS = {_i[0]: _i[1] for _i in ACCESS2STR}
 
 
 class AddrMapMdl(Gtk.ListStore):
@@ -232,17 +233,11 @@ class AddrMapList:
             tooltip="Base address in hex format",
         )
         column.set_sort_column_id(AddrCol.BASE)
-        column.set_min_width(200)
-        column.set_resizable(True)
-        self._obj.append_column(column)
-
+        self._setup_column(column, 200)
         column = ComboMapColumn(
             "Access Width", self._width_changed, SIZE2STR, AddrCol.WIDTH
         )
-        column.set_min_width(150)
-        column.set_resizable(True)
-        self._obj.append_column(column)
-
+        self._setup_column(column, 150)
         column = ReadOnlyColumn(
             "Flags",
             AddrCol.FLAGS,
@@ -253,6 +248,12 @@ class AddrMapList:
 
         self._model = AddrMapMdl()
         self._obj.set_model(self._model)
+
+    # TODO Rename this here and in `_build_instance_table`
+    def _setup_column(self, column, arg1):
+        column.set_min_width(arg1)
+        column.set_resizable(True)
+        self._obj.append_column(column)
 
     def clear(self) -> None:
         "Clears the data from the list"
@@ -279,10 +280,7 @@ class AddrMapList:
 
         (model, node) = select_data
         path = model.get_path(node)
-        if len(path) > 1:
-            # remove block from address map
-            pass
-        else:
+        if len(path) <= 1:
             addr_map = model.get_value(node, AddrCol.OBJ)
             model.remove(node)
             self._callback()

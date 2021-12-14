@@ -141,11 +141,7 @@ class BitFieldEditor(BaseWindow):
             )
             condition = "" if self._regset.ports.reset_active_level else "~"
 
-            if self._regset.ports.sync_reset:
-                trigger = ""
-            else:
-                trigger = f" or {edge} RSTn"
-
+            trigger = "" if self._regset.ports.sync_reset else f" or {edge} RSTn"
             name_map = {
                 "MODULE": self._regset.name,
                 "RESET_CONDITION": condition,
@@ -374,11 +370,11 @@ class BitFieldEditor(BaseWindow):
         output_error = False
         control_error = False
 
-        if control_error is False:
+        if not control_error:
             clear_error(self._control_obj)
-        if input_error is False:
+        if not input_error:
             clear_error(self._input_obj)
-        if output_error is False:
+        if not output_error:
             clear_error(self._output_obj)
 
     def _set_active(self, name: str, value: bool) -> None:

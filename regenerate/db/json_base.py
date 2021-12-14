@@ -48,7 +48,7 @@ class JSONEncodable:
 
         key = ""
         try:
-            for key in data:
-                self.__setattr__(key, data[key])
+            for key, value in data.items():
+                self.__setattr__(key, value)
         except ValueError:
             LOGGER.error("JSON tag (%s) did not map to a variable", key)
