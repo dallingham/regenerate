@@ -649,6 +649,7 @@ class RegProject(BaseFile):
                 if self.reader_class:
                     rdr = self.reader_class
                     text = rdr.read_bytes(base_path)
+
                     json_data = json.loads(text)
                     blk_data.filename, _ = self.reader_class.resolve_path(
                         base_path

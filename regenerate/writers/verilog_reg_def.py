@@ -430,7 +430,7 @@ endmodule
          DO <= RVAL;
       end else begin
          if (WE & BE & DI) begin
-            DO <= 1'b0;
+            DO <= IN;
          end else begin
             DO <= IN | DO;
          end
