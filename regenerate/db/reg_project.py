@@ -348,7 +348,7 @@ class RegProject(BaseFile):
         self.exports = [
             exp
             for exp in self.exports
-            if exp.expo.rter != exporter or exp.target != dest
+            if exp.exporter != exporter or exp.target != dest
         ]
 
     def get_block_instances(self):
