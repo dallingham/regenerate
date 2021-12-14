@@ -25,7 +25,7 @@ import os
 import re
 from pathlib import Path
 from .writer_base import ProjectWriter, ExportInfo, ProjectType
-from ..db import RegisterDb
+from ..db import RegisterSet
 from ..extras import RegisterRst
 
 
@@ -90,7 +90,7 @@ class RstDoc(ProjectWriter):
 
         for fullpath in self.project.get_register_set():
             if reg_set == os.path.splitext(os.path.split(fullpath)[1])[0]:
-                return RegisterDb(fullpath)
+                return RegisterSet(fullpath)
         return None
 
     def write(self, filename: Path):

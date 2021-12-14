@@ -41,7 +41,7 @@ from .exceptions import CorruptRegsetFile, IoErrorRegsetFile
 from .name_base import Uuid
 
 
-class RegisterDb(BaseFile):
+class RegisterSet(BaseFile):
     """
     Container database for a set of registers.
     """
@@ -70,7 +70,7 @@ class RegisterDb(BaseFile):
             self.filename = Path(filename)
 
     def __repr__(self) -> str:
-        return f"RegisterDb(name={self.name}, uuid={self.uuid})"
+        return f"RegisterSet(name={self.name}, uuid={self.uuid})"
 
     def last_saved(self) -> int:
         "Returns the modified timestamp of the file"
@@ -137,7 +137,7 @@ class RegisterDb(BaseFile):
         else:
             self.read_json(filename)
 
-    def read_xml(self, filename: Path) -> "RegisterDb":
+    def read_xml(self, filename: Path) -> "RegisterSet":
         """Reads the XML file, loading the databsae."""
 
         LOGGER.info("Reading XML register file %s", str(filename))
@@ -147,7 +147,7 @@ class RegisterDb(BaseFile):
             parser.parse(ifile)
         return self
 
-    def read_json(self, filename: Path) -> "RegisterDb":
+    def read_json(self, filename: Path) -> "RegisterSet":
         """Reads the JSON file, loading the databsae."""
 
         self.filename = filename.resolve()

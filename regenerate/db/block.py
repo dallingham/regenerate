@@ -31,7 +31,7 @@ from .name_base import Uuid
 from .data_reader import FileReader
 from .overrides import Overrides
 from .register_inst import RegisterInst
-from .register_db import RegisterDb
+from .register_set import RegisterSet
 from .doc_pages import DocPages
 from .base_file import BaseFile
 from .logger import LOGGER
@@ -67,7 +67,7 @@ class Block(BaseFile):
         self.reader_class = None
 
         self.regset_insts: List[RegisterInst] = []
-        self.regsets: Dict[str, RegisterDb] = {}
+        self.regsets: Dict[str, RegisterSet] = {}
         self.parameters = ParameterContainer()
         self.overrides: List[Overrides] = []
         self.exports: List[ExportData] = []
@@ -84,11 +84,11 @@ class Block(BaseFile):
         "Returns a list of register instances"
         return self.regset_insts
 
-    def get_regsets_dict(self) -> Dict[str, RegisterDb]:
+    def get_regsets_dict(self) -> Dict[str, RegisterSet]:
         "Returns a dict of register sets"
         return self.regsets
 
-    def get_regset_from_reg_inst(self, reg_inst: RegisterInst) -> RegisterDb:
+    def get_regset_from_reg_inst(self, reg_inst: RegisterInst) -> RegisterSet:
         "Returns the register set connected to the register instance"
         return self.regsets[reg_inst.regset_id]
 
@@ -150,7 +150,7 @@ class Block(BaseFile):
 
     def _json_decode_regsets(
         self, data: Dict[str, Any]
-    ) -> Dict[str, RegisterDb]:
+    ) -> Dict[str, RegisterSet]:
         "Decode the register sets section of the JSON data"
 
         regsets = {}
@@ -159,8 +159,12 @@ class Block(BaseFile):
 
             regset = self.finder.find_by_file(str(filename))
             if not regset:
-                regset = RegisterDb()
-                rdr = FileReader(filename) if self.reader_class is None else self.reader_class
+                regset = RegisterSet()
+                rdr = (
+                    FileReader(filename)
+                    if self.reader_class is None
+                    else self.reader_class
+                )
                 try:
                     json_data = json.loads(rdr.read_bytes(filename))
                 except json.decoder.JSONDecodeError as msg:

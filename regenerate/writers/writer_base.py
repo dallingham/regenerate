@@ -29,7 +29,7 @@ from typing import List, Tuple, Callable, Dict, Any, Optional
 from enum import IntEnum
 from jinja2 import FileSystemLoader, Environment
 
-from regenerate.db import RegisterDb, RegProject, Block
+from regenerate.db import RegisterSet, RegProject, Block
 
 
 class ProjectType(IntEnum):
@@ -99,7 +99,7 @@ class RegsetWriter(BaseWriter):
     def __init__(
         self,
         project: RegProject,
-        regset: RegisterDb,
+        regset: RegisterSet,
         options: Dict[str, Any],
     ) -> None:
         super().__init__(project, options)

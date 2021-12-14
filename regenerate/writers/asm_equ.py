@@ -25,7 +25,7 @@ from pathlib import Path
 
 from .writer_base import RegsetWriter, ProjectType
 from .export_info import ExportInfo
-from ..db import RegisterDb, Register, RegProject
+from ..db import RegisterSet, Register, RegProject
 
 
 class AsmEqu(RegsetWriter):
@@ -35,7 +35,7 @@ class AsmEqu(RegsetWriter):
     """
 
     def __init__(
-        self, project: RegProject, regset: RegisterDb, options: Dict[str, Any]
+        self, project: RegProject, regset: RegisterSet, options: Dict[str, Any]
     ):
         super().__init__(project, regset, options)
 

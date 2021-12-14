@@ -28,7 +28,7 @@ from typing import List, Dict, Set, Tuple, Union, Iterator
 from copy import deepcopy
 
 from regenerate.db import (
-    RegisterDb,
+    RegisterSet,
     Register,
     ParameterFinder,
     ResetType,
@@ -41,7 +41,7 @@ from regenerate.extras.regutils import (
 
 
 def insert_registers_after(
-    dest: RegisterDb,
+    dest: RegisterSet,
     registers: List[Register],
     below_reg: Register,
     param_old_to_new: Dict[Uuid, Uuid],
@@ -55,7 +55,7 @@ def insert_registers_after(
     with the target.
 
     Parameters:
-        dest (RegisterDb): register set to insert into
+        dest (RegisterSet): register set to insert into
 
         registers (List[Register]): source registers to insert copies of into
            the destination register set
@@ -106,7 +106,7 @@ def insert_registers_after(
         dest.add_register(reg)
 
 
-def insert_register_at(dest: RegisterDb, source_reg: Register) -> Register:
+def insert_register_at(dest: RegisterSet, source_reg: Register) -> Register:
     """
     Insert a new register at the selected register's address.
 
@@ -114,7 +114,7 @@ def insert_register_at(dest: RegisterDb, source_reg: Register) -> Register:
     until there are no overlaps.
 
     Parameters:
-       dest (RegisterDb): target register set
+       dest (RegisterSet): target register set
        source_reg (Register): register that marks where the new register
           should go
 
@@ -143,13 +143,13 @@ def insert_register_at(dest: RegisterDb, source_reg: Register) -> Register:
 
 
 def copy_registers(
-    dest_regset: RegisterDb, register_list: List[Register]
+    dest_regset: RegisterSet, register_list: List[Register]
 ) -> Tuple[List[Register], Set[Uuid]]:
     """
     Return the copies of the registers and parameters.
 
     Parameters:
-       dest_regset (RegisterDb): destination register set_access
+       dest_regset (RegisterSet): destination register set_access
        register_list (List[Registers]: Source registers to copy
 
     Returns:
@@ -185,13 +185,13 @@ def copy_registers(
 
 
 def copy_parameters(
-    dest: RegisterDb, param_list: Set[Uuid]
+    dest: RegisterSet, param_list: Set[Uuid]
 ) -> Dict[Uuid, Uuid]:
     """
     Copy the parameters to the target register set.
 
     Parameters:
-       dest (RegisterDb): destination register set
+       dest (RegisterSet): destination register set
        param_list (List[Uuid]): parameters to copy to the destination
 
     Returns:

@@ -26,7 +26,12 @@ import re
 import sys
 from typing import Set, Optional
 
-from regenerate.db import TYPE_TO_SIMPLE_TYPE, Register, RegProject, RegisterDb
+from regenerate.db import (
+    TYPE_TO_SIMPLE_TYPE,
+    Register,
+    RegProject,
+    RegisterSet,
+)
 from regenerate.extras.token import full_token, in_groups, uvm_name
 
 try:
@@ -239,7 +244,7 @@ class RegisterRst:
         decode=None,
         group=None,
         maxlines: int = 9999999,
-        dbase: Optional[RegisterDb] = None,
+        dbase: Optional[RegisterSet] = None,
         max_values: int = 24,
         bootstrap: bool = False,
         header_level: int = 1,

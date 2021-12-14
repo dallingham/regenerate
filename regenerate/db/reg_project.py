@@ -51,7 +51,7 @@ from .logger import LOGGER
 from .overrides import Overrides
 from .param_container import ParameterContainer
 from .proj_reader import ProjectReader
-from .register_db import RegisterDb
+from .register_set import RegisterSet
 from .textutils import clean_text
 from .regset_finder import RegsetFinder
 from .base_file import BaseFile
@@ -98,7 +98,7 @@ class RegProject(BaseFile):
 
         self.block_insts: List[BlockInst] = []
         self.blocks: Dict[Uuid, Block] = {}
-        self.regsets: Dict[Uuid, RegisterDb] = {}
+        self.regsets: Dict[Uuid, RegisterSet] = {}
 
         self.exports: List[ExportData] = []
 
@@ -116,8 +116,7 @@ class RegProject(BaseFile):
 
         self.save_json(self.json(), new_path)
 
-        for blkid in self.blocks:
-            blk = self.blocks[blkid]
+        for blkid, blk in self.blocks.items():
             if blk.modified:
                 LOGGER.info(
                     "Saving block %s - %s", blk.name, str(blk.filename)
@@ -125,8 +124,7 @@ class RegProject(BaseFile):
                 blk.save()
                 blk.modified = False
 
-        for regid in self.regsets:
-            reg = self.regsets[regid]
+        for regid, reg in self.regsets.items():
             if reg.modified:
                 LOGGER.info(
                     "Saving register set %s - %s", reg.name, str(reg.filename)
@@ -149,7 +147,7 @@ class RegProject(BaseFile):
             LOGGER.info("Loading JSON project file '%s'", str(self._filename))
 
             try:
-                with open(str(self._filename)) as jfile:
+                with self._filename.open() as jfile:
                     self.json_loads(jfile.read())
             except json.decoder.JSONDecodeError as msg:
                 raise CorruptProjectFile(self._filename.name, str(msg))
@@ -179,8 +177,8 @@ class RegProject(BaseFile):
         json_data = json.loads(data)
         self.json_decode(json_data)
 
-        for _, block in self.blocks.items():
-            for _, reg_set in block.regsets.items():
+        for block in self.blocks.values():
+            for reg_set in block.regsets.values():
                 self.regsets[reg_set.uuid] = reg_set
 
     def loads(self, data: bytes, name: str) -> None:
@@ -261,7 +259,7 @@ class RegProject(BaseFile):
 
         regset = self.finder.find_by_file(str(filename))
         if not regset:
-            regset = RegisterDb()
+            regset = RegisterSet()
             data = rdr.read_bytes(filename)
             if Path(filename).suffix == OLD_REG_EXT:
                 regset.loads(data, filename)
@@ -270,7 +268,7 @@ class RegProject(BaseFile):
             self.finder.register(regset)
             self.new_register_set(regset, new_file_path)
 
-    def new_register_set(self, regset: RegisterDb, path: Path) -> None:
+    def new_register_set(self, regset: RegisterSet, path: Path) -> None:
         "Stores the register set and its path"
 
         self.regsets[regset.uuid] = regset
@@ -348,7 +346,7 @@ class RegProject(BaseFile):
         self.exports = [
             exp
             for exp in self.exports
-            if exp.expo.rter != exporter or exp.target != dest
+            if exp.exporter != exporter or exp.target != dest
         ]
 
     def get_block_instances(self):
@@ -361,7 +359,7 @@ class RegProject(BaseFile):
 
     def get_regset_from_regset_inst(
         self, regset_inst: RegisterInst
-    ) -> RegisterDb:
+    ) -> RegisterSet:
         "Find the regset associated with a particular regset instance"
         return self.regsets[regset_inst.regset_id]
 
@@ -394,7 +392,6 @@ class RegProject(BaseFile):
 
     def get_address_maps_used_by_block(self, blk_id: Uuid) -> List[Uuid]:
         """Returns the address maps associated with the specified group."""
-
         map_list: List[Uuid] = []
         for key in self.address_maps:
             if blk_id in self.address_maps[key].block_insts:
@@ -403,7 +400,6 @@ class RegProject(BaseFile):
 
     def change_address_map_name(self, map_id: Uuid, new_name: str) -> None:
         """Changes the name of an address map"""
-
         self.address_maps[map_id].name = new_name
         self.modified = True
 
@@ -452,7 +448,6 @@ class RegProject(BaseFile):
 
     def add_or_replace_address_map(self, addr_map: AddressMap) -> None:
         """Sets the specififed address map"""
-
         self.modified = True
         self.address_maps[addr_map.uuid] = addr_map
 
@@ -480,7 +475,6 @@ class RegProject(BaseFile):
 
     def change_file_suffix(self, original: str, new: str) -> None:
         """Changes the suffix of the files in the file list"""
-
         new_list = []
         for name in self._filelist:
             new_name = Path(name)
@@ -508,7 +502,6 @@ class RegProject(BaseFile):
     @property
     def documentation(self) -> str:
         "Backward compatible method torn the first doc string"
-
         page_names = self.doc_pages.get_page_names()
         if page_names:
             page = self.doc_pages.get_page(page_names[0])
@@ -518,7 +511,6 @@ class RegProject(BaseFile):
 
     def json(self) -> Dict[str, Any]:
         """Convert the data into a JSON compatible dict"""
-
         json_keys = (
             "short_name",
             "name",
@@ -603,7 +595,6 @@ class RegProject(BaseFile):
 
     def _load_address_maps_from_json_data(self, data: Dict[str, Any]) -> None:
         "Loads the address map information from JSON data"
-
         if data:
             for uuid, addr_data_json in data.items():
                 addr_data = AddressMap()
@@ -612,7 +603,6 @@ class RegProject(BaseFile):
 
     def _load_exports_from_json_data(self, data: List[Dict[str, Any]]) -> None:
         "Loads the export information from JSON data"
-
         self.exports = []
         for item in data:
             exporter = item["exporter"]
@@ -630,7 +620,6 @@ class RegProject(BaseFile):
         self, data: List[Dict[str, Any]]
     ) -> None:
         "Loads the block instances from JSON data"
-
         self.block_insts = []
         for blk_inst_data_json in data:
             blk_inst_data = BlockInst()
@@ -639,7 +628,6 @@ class RegProject(BaseFile):
 
     def _load_blocks_from_json_data(self, data: Dict[str, Any]) -> None:
         "Loads the blocks from JSON data"
-
         self.blocks = {}
         if data:
             for key in data:
@@ -670,7 +658,6 @@ class RegProject(BaseFile):
         self, data: List[Dict[str, Any]]
     ) -> None:
         "Loads the overrides from the JSON data"
-
         self.overrides = []
         try:
             for override in data:
@@ -691,12 +678,11 @@ class RegProject(BaseFile):
         Loads any registers sets not loaded by the blocks, but listed in
         the filelist
         """
-
         for filename in self._filelist:
             full_path = (self._filename.parent / filename).resolve()
             regset = self.finder.find_by_file(str(full_path))
             if not regset and full_path.exists():
-                regset = RegisterDb()
+                regset = RegisterSet()
                 if self.reader_class is None:
                     rdr = FileReader(full_path)
                 else:

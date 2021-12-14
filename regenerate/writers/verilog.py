@@ -34,7 +34,7 @@ from regenerate.db import (
     BitField,
     ParamValue,
     BitType,
-    RegisterDb,
+    RegisterSet,
     RegProject,
     ParameterFinder,
 )
@@ -255,7 +255,7 @@ class Verilog(RegsetWriter):
     """
 
     def __init__(
-        self, project: RegProject, regset: RegisterDb, options: Dict[str, Any]
+        self, project: RegProject, regset: RegisterSet, options: Dict[str, Any]
     ):
         super().__init__(project, regset, options)
 
@@ -624,7 +624,7 @@ def make_byte_info(
     )
 
 
-def build_port_widths(regset: RegisterDb):
+def build_port_widths(regset: RegisterSet):
     "Returns the port widths for the signals"
 
     awidth = regset.ports.address_bus_width - 1
@@ -644,7 +644,7 @@ def reg_field_name(reg: Register, field: BitField) -> str:
 
 
 def build_write_address_selects(
-    regset: RegisterDb, word_fields: Dict[int, List[ByteInfo]]
+    regset: RegisterSet, word_fields: Dict[int, List[ByteInfo]]
 ) -> List[DecodeInfo]:
     "Returns the information needed to create the write selects"
 
@@ -665,7 +665,7 @@ def build_write_address_selects(
 
 
 def build_read_address_selects(
-    regset: RegisterDb,
+    regset: RegisterSet,
     word_fields: Dict[int, List[ByteInfo]],
     cell_info: Dict[BitType, CellInfo],
 ) -> List[DecodeInfo]:
@@ -694,7 +694,7 @@ def build_read_address_selects(
 
 
 def build_output_signals(
-    regset: RegisterDb, cell_info: Dict[BitType, CellInfo]
+    regset: RegisterSet, cell_info: Dict[BitType, CellInfo]
 ) -> List[Scalar]:
     "Builds the output signal list"
 
@@ -885,7 +885,7 @@ def build_logic_list(_regset, word_fields, cell_info) -> List[RegDecl]:
 
 
 def build_input_signals(
-    regset: RegisterDb, cell_info: Dict[BitType, CellInfo]
+    regset: RegisterSet, cell_info: Dict[BitType, CellInfo]
 ) -> List[Scalar]:
     "Builds the input list"
 
@@ -1012,7 +1012,7 @@ def build_assignments(word_fields) -> List[AssignInfo]:
     return assign_list
 
 
-def register_output_definitions(regset: RegisterDb) -> List[LogicDefResolved]:
+def register_output_definitions(regset: RegisterSet) -> List[LogicDefResolved]:
     "Build the register output definitions"
 
     full_list: List[LogicDef] = []
@@ -1076,7 +1076,7 @@ def register_output_definitions(regset: RegisterDb) -> List[LogicDefResolved]:
     return new_list
 
 
-def build_standard_ports(regset: RegisterDb) -> PortInfo:
+def build_standard_ports(regset: RegisterSet) -> PortInfo:
     "Returns a dict that maps ports to the port names"
 
     ports = regset.ports
