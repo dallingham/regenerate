@@ -390,7 +390,7 @@ class Build(BaseWindow):
 
             try:
                 gen.write(dest)
-            except:
+            except Exception:
                 TraceBack(dest)
 
             item[BuildCol.MODIFIED] = False
@@ -508,7 +508,7 @@ def file_needs_rebuilt(
                     or prj.regsets[regset.name].modified
                 ):
                     mod = True
-            except:
+            except Exception:
                 pass
     return mod
 
