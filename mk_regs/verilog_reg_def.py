@@ -110,6 +110,46 @@ endmodule
 
 endmodule
 """,
+    "rwpri1s": """module %(MODULE)s_rwpri1s_reg
+   (
+    input      CLK,         // Clock
+    input      %(RST)s,        // Reset
+    input      RVAL,        // Value on reset
+    input      BE,          // Byte Enable
+    input      WE,          // Write Strobe
+    input      LD,          // Write protect when high
+    input      DI,          // Data In
+    output reg DO,          // Data Out
+    output     DO_1S        // One Shot
+    );
+
+   reg          ws;
+   reg          ws_d;
+
+   always @(posedge CLK%(RESET_TRIGGER)s) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
+         DO <= RVAL;
+      end else begin
+         if (WE & BE & ~LD) begin
+            DO <= DI;
+         end
+      end
+   end
+
+   assign DO_1S = ws & !ws_d;
+
+   always @(posedge CLK%(RESET_TRIGGER)s) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
+         ws <= 1'b0;
+         ws_d <= 1'b0;
+      end else begin
+         ws <= WE && BE && LD && (DI != DO);
+         ws_d <= ws;
+      end
+   end
+
+endmodule
+""",
     "rw1s": """module %(MODULE)s_rw1s_reg
    (
     input      CLK,         // Clock
@@ -430,7 +470,7 @@ endmodule
          DO <= RVAL;
       end else begin
          if (WE & BE & DI) begin
-            DO <= 1'b0;
+            DO <= IN;
          end else begin
             DO <= IN | DO;
          end
@@ -785,6 +825,41 @@ endmodule
       end else begin
          if (WE & BE) begin
             ws <= DI;
+         end else begin
+            ws <= 1'b0;
+         end
+         ws_d <= ws;
+      end
+   end
+
+endmodule
+""",
+    "wod": """module %(MODULE)s_wod_reg
+   (
+    input      CLK,         // Clock
+    input      %(RST)s,        // Reset
+    input      RVAL,        // Value on reset
+    input      BE,          // Byte Enable
+    input      WE,          // Write Strobe
+    input      DI,          // Data In
+    output reg DO,          // Data Out
+    output     DO_1S        // One shot
+    );
+
+   reg  ws;
+   reg  ws_d;
+
+   assign DO_1S = ws & ~ws_d;
+
+   always @(posedge CLK%(RESET_TRIGGER)s) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
+         ws <= 1'b0;
+         ws_d <= 1'b0;
+         DO <= 1'b0;
+      end else begin
+         if (WE & BE) begin
+            ws <= 1;
+            DO <= DI;
          end else begin
             ws <= 1'b0;
          end

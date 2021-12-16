@@ -162,7 +162,7 @@ class BitFieldEditor(BaseWindow):
         self._set_text("type", TYPE_TO_DESCR[bit_field.field_type])
 
         if bit_field.reset_type == ResetType.NUMERIC:
-            self._set_text("reset_value", f"{bit_field.reset_value:x}")
+            self._set_text("reset_value", bit_field.reset_string())
         else:
             self._set_text("reset_value", bit_field.reset_parameter)
 

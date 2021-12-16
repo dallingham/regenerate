@@ -488,7 +488,7 @@ class BitList:
         if re.match(r"^(0x)?[a-fA-F0-9]+$", new_val):
             if _check_reset(field, int(new_val, 0)) is False:
                 return
-            field.reset_value = int(new_val, 0)
+            field.set_reset_value_int(int(new_val, 0))
             field.reset_type = ResetType.NUMERIC
             self._model[path][col] = reset_value(field)
             self._modified()
@@ -732,7 +732,7 @@ def _check_reset(field: BitField, value: int) -> bool:
 def reset_value(field: BitField) -> str:
     "Returns a string representation of the reset value."
 
-    return f"0x{field.reset_value:04x}"
+    return f"0x{field.reset_value:x}"
 
 
 def get_field_reset_data(field: BitField) -> str:
