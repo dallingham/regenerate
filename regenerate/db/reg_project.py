@@ -116,7 +116,7 @@ class RegProject(BaseFile):
 
         self.save_json(self.json(), new_path)
 
-        for blkid, blk in self.blocks.items():
+        for blk in self.blocks.values():
             if blk.modified:
                 LOGGER.info(
                     "Saving block %s - %s", blk.name, str(blk.filename)
@@ -124,7 +124,7 @@ class RegProject(BaseFile):
                 blk.save()
                 blk.modified = False
 
-        for regid, reg in self.regsets.items():
+        for reg in self.regsets.values():
             if reg.modified:
                 LOGGER.info(
                     "Saving register set %s - %s", reg.name, str(reg.filename)

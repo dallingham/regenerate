@@ -60,10 +60,10 @@ class ModuleDoc(BaseDoc):
         self.changing = True
         self.remove_pages()
         if regset:
-            for page in regset.doc_pages.get_page_names():
-                text = regset.doc_pages.get_page(page)
-                if text is not None:
-                    self.add_page(page, text)
+            for page_name in regset.doc_pages.get_page_names():
+                page = regset.doc_pages.get_page(page_name)
+                if page is not None:
+                    self.add_page(page)
         self.changing = False
 
     def remove_page_from_doc(self, title: str):
@@ -73,6 +73,10 @@ class ModuleDoc(BaseDoc):
     def update_page_from_doc(self, title: str, text: str, tags: List[str]):
         if not self.changing and self.regset is not None:
             self.regset.doc_pages.update_page(title, text, tags)
+
+    def update_page_order(self) -> None:
+        if not self.changing and self.regset is not None:
+            self.regset.doc_pages.update_page_order(self.get_order())
 
 
 class ModuleTabs:

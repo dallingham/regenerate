@@ -645,16 +645,22 @@ class BlockDoc(BaseDoc):
         self.changing = True
         self.remove_pages()
         if block:
-            for page in block.doc_pages.get_page_names():
-                text = block.doc_pages.get_page(page)
-                if text is not None:
-                    self.add_page(page, text)
+            for page_name in block.doc_pages.get_page_names():
+                page = block.doc_pages.get_page(page_name)
+                if page is not None:
+                    self.add_page(page)
         self.changing = False
 
     def remove_page_from_doc(self, title: str):
         if self._block is not None:
             self._block.doc_pages.remove_page(title)
 
-    def update_page_from_doc(self, title: str, text: str, tags: List[str]):
+    def update_page_from_doc(
+        self, title: str, text: str, tags: List[str]
+    ) -> None:
         if not self.changing and self._block is not None:
             self._block.doc_pages.update_page(title, text, tags)
+
+    def update_page_order(self) -> None:
+        if not self.changing and self._block is not None:
+            self._block.doc_pages.update_page_order(self.get_order())

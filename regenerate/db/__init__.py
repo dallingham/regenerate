@@ -41,3 +41,4 @@ from .overrides import Overrides
 from .enums import *
 from .logger import *
 from .export import ExportData
+from .doc_pages import DocPages, Page

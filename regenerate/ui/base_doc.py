@@ -25,7 +25,7 @@ from pathlib import Path
 from typing import Optional, List, Tuple, Callable
 from gi.repository import Gtk, Gdk, GtkSource
 from regenerate.settings.paths import INSTALL_PATH
-from regenerate.db import RegProject
+from regenerate.db import RegProject, Page
 from .spell import Spell
 from .utils import clean_format_if_needed
 from .preview_editor import PreviewEditor
@@ -344,12 +344,16 @@ class BaseDoc:
         res = dialog.run()
         if res == Gtk.ResponseType.ACCEPT:
             title = name.get_text()
-            self.add_page(title, ("", ["Confidential"]))
-            self.update_page_from_doc(title, "", ["Confidential"])
+            page = Page()
+            page.title = title
+            page.page = ""
+            page.labels = ["Confidential"]
+            self.add_page(page)
+            self.update_page_from_doc(page.title, page.page, page.labels)
             self.callback()
         dialog.destroy()
 
-    def add_page(self, name: str, data: Tuple[str, List[str]]) -> None:
+    def add_page(self, page: Page) -> None:
         """
         Adds a page and creates a restructuredText editor associated with their
         page name.
@@ -361,14 +365,14 @@ class BaseDoc:
 
         text_buffer = text_editor.get_buffer()
         text_editor.set_wrap_mode(Gtk.WrapMode.WORD)
-        text_buffer.set_text(data[0])
+        text_buffer.set_text(page.page)
         handler = text_buffer.connect("changed", self._text_changed_callback)
         Spell(text_buffer)
 
         edit_window.show_all()
 
         hbox = Gtk.HBox()
-        label = Gtk.Label(name)
+        label = Gtk.Label(page.title)
         label.set_padding(3, 3)
         label.show()
 
@@ -386,8 +390,8 @@ class BaseDoc:
         hbox.show_all()
 
         flow = Gtk.HBox()
-        for tag in data[1]:
-            flow.pack_start(self.make_tag(tag, data[1]), False, False, 3)
+        for tag in page.labels:
+            flow.pack_start(self.make_tag(tag, page.labels), False, False, 3)
         flow.show()
 
         top_box = Gtk.VBox()
@@ -395,10 +399,42 @@ class BaseDoc:
         top_box.pack_start(flow, False, False, 3)
         top_box.show()
 
-        page_info = PageInfo(handler, button, text_buffer, flow, name, data[1])
+        page_info = PageInfo(
+            handler, button, text_buffer, flow, page.title, page.labels
+        )
         self.page_map.append(page_info)
         self.notebook.append_page(top_box, hbox)
+        self.notebook.set_tab_reorderable(top_box, True)
+        self.notebook.connect("page_reordered", self.reorder)
+
         button.connect("clicked", self.delete_page, page_info)
+
+    def reorder(self, *obj):
+        temp = {}
+        for i, page_map in enumerate(self.page_map):
+            temp[page_map.name] = page_map
+
+        new_page_map = []
+        new_doc_pages = []
+        for page in self.notebook:
+            label = (
+                self.notebook.get_tab_label(page).get_children()[0].get_text()
+            )
+            new_page_map.append(temp[label])
+            new_doc_pages.append(label)
+
+        self.page_map = new_page_map
+        self.update_page_order()
+        self.callback()
+
+    def get_order(self) -> List[str]:
+        order = []
+        for page in self.notebook:
+            label = (
+                self.notebook.get_tab_label(page).get_children()[0].get_text()
+            )
+            order.append(label)
+        return order
 
     def delete_tag(self, _button: Gtk.Button, extra):
         "Deletes the tag associated with the button"
@@ -504,6 +540,10 @@ class BaseDoc:
         Removes a page from the class. Must be overriden by the derived
         class.
         """
+        return
+
+    @abc.abstractmethod
+    def update_page_order(self, order: List[str]) -> None:
         return
 
     @abc.abstractmethod
