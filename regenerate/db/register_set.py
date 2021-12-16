@@ -187,7 +187,7 @@ class RegisterSet(BaseFile):
         if pnames:
             data = self.doc_pages.get_page(pnames[0])
             if data:
-                return data[0]
+                return data.page
         return ""
 
     def add_parameter(self, new_param: ParameterData) -> None:

@@ -22,6 +22,14 @@ Manages document pages, which are simply name to string dictionaries.
 """
 
 from typing import Dict, Any, List, Optional, Tuple
+from .json_base import JSONEncodable
+
+
+class Page(JSONEncodable):
+    def __init__(self):
+        self.page: str = ""
+        self.labels: List[str] = []
+        self.title: str = ""
 
 
 class DocPages:
@@ -31,34 +39,70 @@ class DocPages:
     """
 
     def __init__(self):
-        self.pages: Dict[str, Tuple[str, List[str]]] = {}
+        self.pages: List[Page] = []
 
     def update_page(self, name: str, text: str, tags: List[str]) -> None:
         "Adds or updates the page specified by the name"
-        self.pages[name] = (text, tags)
+        for page in self.pages:
+            if page.title == name:
+                page.labels = tags
+                page.page = text
+                return
+        page = Page()
+        page.title = name
+        page.labels = tags
+        page.page = text
+        self.pages.append(page)
 
     def remove_page(self, name: str) -> None:
         "Removes the page with the specified name"
-        if name in self.pages:
-            del self.pages[name]
+        for index, page in enumerate(self.pages):
+            if page.title == name:
+                break
+        self.pages.pop(index)
 
     def get_page_names(self) -> List[str]:
         "Returns a list of the page names"
-        return list(self.pages.keys())
+        return [page.title for page in self.pages]
 
-    def get_page(self, name: str) -> Optional[Tuple[str, List[str]]]:
+    def get_page(self, name: str) -> Optional[Page]:
         "Get the page associated with the name"
-        return self.pages.get(name)
+        for page in self.pages:
+            if page.title == name:
+                return page
+        return None
 
-    def json(self) -> Dict[str, Any]:
+    def update_page_order(self, order: List[str]) -> None:
+        page_dict = {}
+        for page in self.pages:
+            page_dict[page.title] = page
+
+        new_list = []
+        for item in order:
+            new_list.append(page_dict[item])
+
+        self.pages = new_list
+
+    def json(self) -> List[Dict[str, str]]:
         "Convert to a dictionary for JSON"
-        return self.pages
+        return [page.json() for page in self.pages]
 
-    def json_decode(self, data: Dict[str, Any]) -> None:
+    def json_decode(self, data) -> None:
         "Decode the JSON data"
-        self.pages = {}
-        for page, value in data.items():
-            if isinstance(value, str):
-                self.pages[page] = (data[page], ["Confidential"])
-            else:
-                self.pages[page] = (data[page][0], data[page][1])
+        self.pages = []
+        if type(data) == dict:
+            for page_name, value in data.items():
+                page = Page()
+                page.title = page_name
+                if isinstance(value, str):
+                    page.page = value
+                    page.labels = ["Confidential"]
+                else:
+                    page.page = value[0]
+                    page.labels = value[1]
+                self.pages.append(page)
+        else:
+            for item in data:
+                page = Page()
+                page.json_decode(item)
+                self.pages.append(page)

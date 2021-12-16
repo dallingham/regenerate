@@ -120,10 +120,10 @@ class ProjectDoc(BaseDoc):
         self.project = project
         self.remove_pages()
 
-        for page in project.doc_pages.get_page_names():
-            text = self.project.doc_pages.get_page(page)
-            if text is not None:
-                self.add_page(page, text)
+        for page_name in project.doc_pages.get_page_names():
+            page = self.project.doc_pages.get_page(page_name)
+            if page is not None:
+                self.add_page(page)
 
         self.changing = False
 
@@ -136,3 +136,7 @@ class ProjectDoc(BaseDoc):
     ) -> None:
         if not self.changing and self.project:
             self.project.doc_pages.update_page(title, text, tags)
+
+    def update_page_order(self) -> None:
+        if not self.changing and self.project:
+            self.project.doc_pages.update_page_order(self.get_order())
