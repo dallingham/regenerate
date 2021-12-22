@@ -107,7 +107,7 @@ class StaticTiming(ProjectWriter):
             block_data = BlockInstData(blk_inst.name, reglist)
 
             for regset_inst in block.regset_insts:
-                regset = block.regsets[regset_inst.regset_id]
+                regset = block._regsets[regset_inst.regset_id]
 
                 static_list: List[str] = []
                 regset_data = RegInstData(regset.name, static_list)

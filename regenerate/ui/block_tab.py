@@ -196,7 +196,6 @@ class BlockTab:
         else:
             self._block_select_notebook.set_current_page(1)
 
-    # TODO Rename this here and in `_update_block_selection`
     def _setup_and_select_block(self, model, node):
         self._block_notebook.set_sensitive(True)
         block = model[node][-1]
@@ -228,7 +227,6 @@ class BlockTab:
         column.set_expand(True)
         column.set_resizable(True)
 
-    # TODO Rename this here and in `build`
     def _setup_column(self, column, arg1):
         self._block_regsets.append_column(column)
         column.set_min_width(arg1)
@@ -474,7 +472,7 @@ class BlockTab:
         reg_cont = self._project.regsets[regset.uuid]
 
         self._block.regset_insts.append(reginst)
-        self._block.regsets[regset.uuid] = reg_cont
+        self._block.add_register_set(reg_cont)
 
         self._reg_model.append(
             row=(
@@ -524,7 +522,7 @@ class BlockTab:
         self._overrides_list.set_project(self._block)
 
         for reginst in self._block.regset_insts:
-            regset = self._block.regsets[reginst.regset_id]
+            regset = self._block.get_regset_from_id(reginst.regset_id)
             self._reg_model.append(
                 row=(
                     regset.name,
@@ -601,9 +599,11 @@ class BlockTab:
                 self._project.blocks[blk.uuid] = blk
                 self._sidebar.add(blk)
 
-                for regset in blk.regsets:
+                for regset in blk.get_regsets_dict():
                     if regset not in self._project.regsets:
-                        self._project.regsets[regset] = blk.regsets[regset]
+                        self._project.regsets[regset] = blk.get_regset_from_id(
+                            regset
+                        )
             self._project.modified = True
         self._update_block_selection()
 

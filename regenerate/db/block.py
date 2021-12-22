@@ -67,10 +67,20 @@ class Block(BaseFile):
         self.reader_class = None
 
         self.regset_insts: List[RegisterInst] = []
-        self.regsets: Dict[str, RegisterSet] = {}
+        self._regsets: Dict[str, RegisterSet] = {}
         self.parameters = ParameterContainer()
         self.overrides: List[Overrides] = []
         self.exports: List[ExportData] = []
+
+    def add_register_set(self, regset: RegisterSet) -> None:
+        """
+        Add a register to the block.
+
+        Parameters:
+            regiset (RegisterSet): register set to add
+
+        """
+        self._regsets[regset.uuid] = regset
 
     def get_reginst_from_id(self, uuid: Uuid) -> Optional[RegisterInst]:
         "Returns the register instance based on the uuid"
@@ -84,18 +94,22 @@ class Block(BaseFile):
         "Returns a list of register instances"
         return self.regset_insts
 
+    def get_regset_from_id(self, uuid: Uuid) -> Optional[RegisterSet]:
+        "Returns a list of register instances"
+        return self._regsets.get(uuid)
+
     def get_regsets_dict(self) -> Dict[str, RegisterSet]:
         "Returns a dict of register sets"
-        return self.regsets
+        return self._regsets
 
     def get_regset_from_reg_inst(self, reg_inst: RegisterInst) -> RegisterSet:
         "Returns the register set connected to the register instance"
-        return self.regsets[reg_inst.regset_id]
+        return self._regsets[reg_inst.regset_id]
 
     def remove_register_set(self, uuid: Uuid) -> None:
         "Removes the register set using the UUID"
-        if uuid in self.regsets:
-            del self.regsets[uuid]
+        if uuid in self._regsets:
+            del self._regsets[uuid]
         self.regset_insts = [
             inst for inst in self.regset_insts if inst.regset_id != uuid
         ]
@@ -142,7 +156,7 @@ class Block(BaseFile):
         "Returns the size of the address space"
         base = 0
         for reginst in self.regset_insts:
-            regset = self.regsets[reginst.regset_id]
+            regset = self._regsets[reginst.regset_id]
             base = max(
                 base, reginst.offset + (1 << regset.ports.address_bus_width)
             )
@@ -207,7 +221,7 @@ class Block(BaseFile):
 
         self.regset_insts = _json_decode_reginsts(data["regset_insts"])
 
-        self.regsets = self._json_decode_regsets(data["regsets"])
+        self._regsets = self._json_decode_regsets(data["regsets"])
 
         self.parameters = ParameterContainer()
         self.parameters.json_decode(data["parameters"])
@@ -250,16 +264,19 @@ class Block(BaseFile):
         }
 
         for exp in self.exports:
-            info = {
-                "exporter": exp.exporter,
-                "target": os.path.relpath(exp.target, self.filename.parent),
-                "options": exp.options,
-            }
-            data["exports"].append(info)
+            data["exports"].append(
+                {
+                    "exporter": exp.exporter,
+                    "target": os.path.relpath(
+                        exp.target, self.filename.parent
+                    ),
+                    "options": exp.options,
+                }
+            )
 
-        for name in self.regsets:
+        for name in self._regsets:
             new_path = os.path.relpath(
-                self.regsets[name].filename,
+                self._regsets[name].filename,
                 self._filename.parent,
             )
             data["regsets"][name] = {

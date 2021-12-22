@@ -100,8 +100,7 @@ class AddressMap(NameBase):
         Encode the class variables into a dictionary for JSON encoding.
 
         Returns:
-           JSON data (Dict[str, Any]): Dictionary of data in JSON
-           format
+           JSON data (Dict[str, Any]): Dictionary of data in JSON format
 
         """
         return {

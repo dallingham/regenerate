@@ -345,7 +345,7 @@ class BlockOverridesList(OverridesList):
         param_list = []
         if block is not None:
             for reginst in block.regset_insts:
-                regset = block.regsets[reginst.regset_id]
+                regset = block.get_regset_from_id(reginst.regset_id)
                 for param in regset.parameters.get():
                     total += 1
                     if param.uuid not in self._used:

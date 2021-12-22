@@ -178,7 +178,7 @@ class RegProject(BaseFile):
         self.json_decode(json_data)
 
         for block in self.blocks.values():
-            for reg_set in block.regsets.values():
+            for reg_set in block.get_regsets_dict().values():
                 self.regsets[reg_set.uuid] = reg_set
 
     def loads(self, data: bytes, name: str) -> None:
@@ -196,7 +196,7 @@ class RegProject(BaseFile):
         self._filename = Path(name)
 
         for block in self.blocks.values():
-            for reg_set in block.regsets.values():
+            for reg_set in block.get_regsets_dict().values():
                 self.regsets[reg_set.uuid] = reg_set
 
     def get_blkinst_from_id(self, uuid: Uuid) -> Optional[BlockInst]:
@@ -488,7 +488,7 @@ class RegProject(BaseFile):
         return [
             self.blocks[blk]
             for blk in self.blocks
-            if regset_id in self.blocks[blk].regsets
+            if regset_id in self.blocks[blk].get_regsets_dict()
         ]
 
     def instances_of_block(self, block: Block) -> List[BlockInst]:

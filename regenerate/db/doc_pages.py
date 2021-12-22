@@ -21,11 +21,15 @@
 Manages document pages, which are simply name to string dictionaries.
 """
 
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, List, Optional
 from .json_base import JSONEncodable
 
 
 class Page(JSONEncodable):
+    """
+    Data associated with a page - text, title, and labels.
+    """
+
     def __init__(self):
         self.page: str = ""
         self.labels: List[str] = []
@@ -41,56 +45,101 @@ class DocPages:
     def __init__(self):
         self.pages: List[Page] = []
 
-    def update_page(self, name: str, text: str, tags: List[str]) -> None:
-        "Adds or updates the page specified by the name"
+    def update_page(self, page_name: str, text: str, tags: List[str]) -> None:
+        """
+        Add or update the page specified by the page_name.
+
+        Parameters:
+            page_name (str): name of the page
+
+            text (str): text associated with the page
+
+            tags (List[str]): list of tags associated with the page
+
+        """
         for page in self.pages:
-            if page.title == name:
+            if page.title == page_name:
                 page.labels = tags
                 page.page = text
                 return
         page = Page()
-        page.title = name
+        page.title = page_name
         page.labels = tags
         page.page = text
         self.pages.append(page)
 
     def remove_page(self, name: str) -> None:
-        "Removes the page with the specified name"
-        for index, page in enumerate(self.pages):
-            if page.title == name:
-                break
-        self.pages.pop(index)
+        """
+        Remove the page with the specified name.
+
+        Parameters:
+            name (str): Name of the page to remove
+
+        """
+        if self.pages:
+            index = 0
+            for index, page in enumerate(self.pages):
+                if page.title == name:
+                    break
+            self.pages.pop(index)
 
     def get_page_names(self) -> List[str]:
-        "Returns a list of the page names"
+        """
+        Return a list of the page names.
+
+        Returns:
+            List[str]: list of page names in order of display
+
+        """
         return [page.title for page in self.pages]
 
     def get_page(self, name: str) -> Optional[Page]:
-        "Get the page associated with the name"
+        """
+        Return the page associated with the name.
+
+        Parameters:
+            name (str): Name of the page to retrieve
+
+        Returns:
+            Page: Page associated with the name, or None if it does not exist
+
+        """
         for page in self.pages:
             if page.title == name:
                 return page
         return None
 
     def update_page_order(self, order: List[str]) -> None:
-        page_dict = {}
-        for page in self.pages:
-            page_dict[page.title] = page
+        """
+        Rearrange the pages so that they match the order passed.
 
-        new_list = []
-        for item in order:
-            new_list.append(page_dict[item])
+        Parameter:
+            order (List[str]): new order of the pages
 
-        self.pages = new_list
+        """
+        page_dict = {page.title: page for page in self.pages}
+        self.pages = [page_dict[item] for item in order]
 
     def json(self) -> List[Dict[str, str]]:
-        "Convert to a dictionary for JSON"
+        """
+        Encode the class variables into a dictionary for JSON encoding.
+
+        Returns:
+           JSON data (Dict[str, Any]): Dictionary of data in JSON format
+
+        """
         return [page.json() for page in self.pages]
 
     def json_decode(self, data) -> None:
-        "Decode the JSON data"
+        """
+        Convert the incoming JSON data to the class variables.
+
+        Parameters:
+           data (Dict[str, Any]) - JSON data
+
+        """
         self.pages = []
-        if type(data) == dict:
+        if isinstance(data, dict):
             for page_name, value in data.items():
                 page = Page()
                 page.title = page_name
