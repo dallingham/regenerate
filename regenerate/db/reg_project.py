@@ -22,6 +22,7 @@ RegProject is the container object for a regenerate project
 """
 
 from collections import defaultdict
+import functools
 from pathlib import Path
 import json
 import os.path
@@ -57,11 +58,8 @@ from .regset_finder import RegsetFinder
 from .base_file import BaseFile
 
 
-def nested_dict(depth: int) -> Dict[Uuid, Any]:
-    """Builds a nested dictionary"""
-    if depth == 1:
-        return defaultdict(int)
-    return defaultdict(lambda: nested_dict(depth - 1))
+NEST_DICT_INT = functools.partial(defaultdict, int)
+NEST_DICT_STR = functools.partial(defaultdict, NEST_DICT_INT)
 
 
 def cleanup(data: str) -> str:
@@ -86,11 +84,12 @@ class RegProject(BaseFile):
         self.doc_pages = DocPages()
         self.doc_pages.update_page("Overview", "", ["Confidential"])
         self.company_name = ""
-        self.access_map = nested_dict(3)
         self.finder = RegsetFinder()
         self._filelist: List[Path] = []
         self.reader_class = None
         self.block_data_path = ""
+
+        self.access_map = defaultdict(NEST_DICT_STR)
 
         self.parameters = ParameterContainer()
         self.overrides: List[Overrides] = []
@@ -109,9 +108,13 @@ class RegProject(BaseFile):
             self._filename = Path(".")
 
     def save(self) -> None:
-        """Saves the project to the JSON file"""
-
+        """Save the project using the default name."""
         new_path = Path(self._filename).with_suffix(PRJ_EXT)
+        self.save_as(new_path)
+
+    def save_as(self, new_path: Path) -> None:
+        """Save the project to the JSON file"""
+
         self.block_data_path = str(new_path.parent)
 
         self.save_json(self.json(), new_path)
@@ -178,7 +181,7 @@ class RegProject(BaseFile):
         self.json_decode(json_data)
 
         for block in self.blocks.values():
-            for reg_set in block.regsets.values():
+            for reg_set in block.get_regsets_dict().values():
                 self.regsets[reg_set.uuid] = reg_set
 
     def loads(self, data: bytes, name: str) -> None:
@@ -196,7 +199,7 @@ class RegProject(BaseFile):
         self._filename = Path(name)
 
         for block in self.blocks.values():
-            for reg_set in block.regsets.values():
+            for reg_set in block.get_regsets_dict().values():
                 self.regsets[reg_set.uuid] = reg_set
 
     def get_blkinst_from_id(self, uuid: Uuid) -> Optional[BlockInst]:
@@ -488,7 +491,7 @@ class RegProject(BaseFile):
         return [
             self.blocks[blk]
             for blk in self.blocks
-            if regset_id in self.blocks[blk].regsets
+            if regset_id in self.blocks[blk].get_regsets_dict()
         ]
 
     def instances_of_block(self, block: Block) -> List[BlockInst]:
@@ -564,10 +567,14 @@ class RegProject(BaseFile):
         self.doc_pages = DocPages()
         self.doc_pages.json_decode(data["doc_pages"])
         self.company_name = data["company_name"]
-        if "access_map" in data and data["access_map"] is not None:
-            self.access_map = data["access_map"]
+        if "access_map" in data and data["access_map"]:
+            new_map = data["access_map"]
+            for key0 in new_map:
+                for key1 in new_map[key0]:
+                    for key2, val in new_map[key0][key1].items():
+                        self.access_map[key0][key1][key2] = val
         else:
-            self.access_map = nested_dict(3)
+            self.access_map = defaultdict(NEST_DICT_STR)
 
         self.block_insts = data["block_insts"]
         self._filelist = []

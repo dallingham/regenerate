@@ -196,7 +196,6 @@ class BlockTab:
         else:
             self._block_select_notebook.set_current_page(1)
 
-    # TODO Rename this here and in `_update_block_selection`
     def _setup_and_select_block(self, model, node):
         self._block_notebook.set_sensitive(True)
         block = model[node][-1]
@@ -228,7 +227,6 @@ class BlockTab:
         column.set_expand(True)
         column.set_resizable(True)
 
-    # TODO Rename this here and in `build`
     def _setup_column(self, column, arg1):
         self._block_regsets.append_column(column)
         column.set_min_width(arg1)
@@ -255,7 +253,7 @@ class BlockTab:
         old_text = self._reg_model[int(path)][col]
         self._reg_model[int(path)][col] = text
 
-        for rset in self._block.regset_insts:
+        for rset in self._block.get_regset_insts():
             if rset.name == old_text:
                 rset.name = text
                 self.modified()
@@ -298,7 +296,7 @@ class BlockTab:
         self._block.modified = True
 
         reg_name = self._reg_model[int(path)][1]
-        for rset in self._block.regset_insts:
+        for rset in self._block.get_regset_insts():
             if rset.name == reg_name:
                 rset.repeat.set_param(new_uuid)
                 break
@@ -326,7 +324,7 @@ class BlockTab:
         row = int(path)
         reg_name = self._reg_model[row][1]
         self._block.modified = True
-        for rset in self._block.regset_insts:
+        for rset in self._block.get_regset_insts():
             if rset.name == reg_name:
                 if (
                     rset.repeat.is_parameter
@@ -349,7 +347,7 @@ class BlockTab:
         reg_inst = self._reg_model[row][-1]
         self._reg_model[row][col] = new_text
         self._block.modified = True
-        for rset in self._block.regset_insts:
+        for rset in self._block.get_regset_insts():
             if rset.uuid == reg_inst.uuid:
                 rset.hdl = new_text
         self.modified()
@@ -441,7 +439,7 @@ class BlockTab:
         if self._block is None:
             return ""
 
-        names = set({rset.name for rset in self._block.regset_insts})
+        names = set({rset.name for rset in self._block.get_regset_insts()})
 
         if regset_name not in names:
             new_name = regset_name
@@ -473,8 +471,8 @@ class BlockTab:
         reginst = RegisterInst(rset=regset.uuid, inst=new_name)
         reg_cont = self._project.regsets[regset.uuid]
 
-        self._block.regset_insts.append(reginst)
-        self._block.regsets[regset.uuid] = reg_cont
+        self._block.add_regset_inst(reginst)
+        self._block.add_register_set(reg_cont)
 
         self._reg_model.append(
             row=(
@@ -500,7 +498,7 @@ class BlockTab:
 
         self._block.regset_insts = [
             regset
-            for regset in self._block.regset_insts
+            for regset in self._block.get_regset_insts()
             if regset.uuid != to_be_deleted.uuid
         ]
         model.remove(node)
@@ -523,8 +521,8 @@ class BlockTab:
         self._block_regsets.set_model(self._reg_model)
         self._overrides_list.set_project(self._block)
 
-        for reginst in self._block.regset_insts:
-            regset = self._block.regsets[reginst.regset_id]
+        for reginst in self._block.get_regset_insts():
+            regset = self._block.get_regset_from_id(reginst.regset_id)
             self._reg_model.append(
                 row=(
                     regset.name,
@@ -601,9 +599,11 @@ class BlockTab:
                 self._project.blocks[blk.uuid] = blk
                 self._sidebar.add(blk)
 
-                for regset in blk.regsets:
+                for regset in blk.get_regsets_dict():
                     if regset not in self._project.regsets:
-                        self._project.regsets[regset] = blk.regsets[regset]
+                        self._project.regsets[regset] = blk.get_regset_from_id(
+                            regset
+                        )
             self._project.modified = True
         self._update_block_selection()
 

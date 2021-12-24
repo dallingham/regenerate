@@ -25,12 +25,12 @@ import re
 import json
 from io import BytesIO as StringIO
 from pathlib import Path
-from typing import Union, List, Optional, Dict, Iterator, Any
+from typing import List, Optional, Dict, Iterator, Any
 
 from .register import Register
 from .reg_parser import RegParser
 from .signals import Signals
-from .const import OLD_REG_EXT, REG_EXT
+from .const import OLD_REG_EXT
 from .export import ExportData
 from .logger import LOGGER
 from .param_container import ParameterContainer
@@ -71,27 +71,6 @@ class RegisterSet(BaseFile):
 
     def __repr__(self) -> str:
         return f"RegisterSet(name={self.name}, uuid={self.uuid})"
-
-    def last_saved(self) -> int:
-        "Returns the modified timestamp of the file"
-        if self._filename:
-            return self._filename.stat().st_mtime_ns
-        return 0
-
-    @property
-    def filename(self) -> Path:
-        "Returns the filename as a Path"
-
-        return self._filename
-
-    @filename.setter
-    def filename(self, value: Union[str, Path]) -> None:
-        """
-        Sets the filename, converting it to a path, and setting the new suffix
-        name
-        """
-
-        self._filename = Path(value).with_suffix(REG_EXT)
 
     def total_bits(self) -> int:
         """Returns bits in register"""
@@ -230,7 +209,7 @@ class RegisterSet(BaseFile):
     def json(self) -> Dict[str, Any]:
         data = {
             "name": self.name,
-            "uuid": self._id,
+            "uuid": self.uuid,
             "parameters": self.parameters,
             "title": self.descriptive_title,
             "ports": self.ports,
@@ -241,20 +220,21 @@ class RegisterSet(BaseFile):
             "organization": self.organization,
             "doc_pages": self.doc_pages.json(),
             "owner": self.owner,
+            "exports": [],
             "use_interface": self.use_interface,
             "register_inst": [reg for index, reg in self._registers.items()],
         }
-        export_list = []
-        #        data["exports"] = []
 
         for exp in self.exports:
-            info = {
-                "exporter": exp.exporter,
-                "target": os.path.relpath(exp.target, self.filename.parent),
-                "options": exp.options,
-            }
-            export_list.append(info)
-        data["exports"] = export_list
+            data["exports"].append(
+                {
+                    "exporter": exp.exporter,
+                    "target": os.path.relpath(
+                        exp.target, self.filename.parent
+                    ),
+                    "options": exp.options,
+                }
+            )
         return data
 
     def json_decode(self, data: Dict[str, Any]) -> None:

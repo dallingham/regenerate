@@ -124,8 +124,13 @@ class BitWidth:
 
     def get_text(self, size: int) -> str:
         "Returns the text associated with size"
-
-        return self.str2bit[size]
+        try:
+            return self.str2bit[size]
+        except KeyError:
+            print(
+                f"{size}-bit register exceeds maximum size of the register set"
+            )
+            return "64-bits"
 
 
 class RegisterModel(Gtk.ListStore):
@@ -705,7 +710,6 @@ def _build_icon_col():
 
 
 def check_address_align(address: int, width: int) -> bool:
-    "Returns True if the address is aligned"
-
+    "Return True if the address is aligned"
     align = width >> 3
     return address % align == 0

@@ -18,11 +18,16 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
-Handle the module tab
+Handles the text editors that handle the doc pages.
+
+Provides the editor, tag management, and page management for the
+documentation.
+
 """
+
 import abc
 from pathlib import Path
-from typing import Optional, List, Tuple, Callable
+from typing import Optional, List, Callable
 from gi.repository import Gtk, Gdk, GtkSource
 from regenerate.settings.paths import INSTALL_PATH
 from regenerate.db import RegProject, Page
@@ -36,7 +41,9 @@ from .help_window import HelpWindow
 
 class DeleteVerify(Gtk.MessageDialog):
     """
-    Question message dialog box
+    Dialog box to verify that a page is to be deleted.
+
+    Prompt the user for permission to delete the selected page.
     """
 
     DISCARD = -1
@@ -65,8 +72,7 @@ class DeleteVerify(Gtk.MessageDialog):
 
     def run_dialog(self):
         """
-        Runs the dialog box, calls the appropriate callback,
-        then destroys the window
+        Run the dialog, saves the status, then destroys the window.
         """
         status = self.run()
         self.destroy()
@@ -74,7 +80,7 @@ class DeleteVerify(Gtk.MessageDialog):
 
 
 class PageInfo:
-    "Holds the textbuffer"
+    "Holds the textbuffer."
 
     def __init__(
         self,
@@ -95,12 +101,14 @@ class PageInfo:
 
 class BaseDoc:
     """
-    Connects a set of SourceViews to pages in the passed notebook. The initial
-    notebook should be empty. Connects the buttons to add or delete pages
-    from the set.
+    Connects a set of SourceViews to pages in the passed notebook.
 
-    This is an abstract class, and must be derived from in order to be able to
-    be used.
+        The initial notebook should be empty. Connects the buttons to add
+        or delete pages from the set.
+
+        This is an abstract class, and must be derived from in order to be able to
+        be used.
+
     """
 
     __metaclass__ = abc.ABCMeta
@@ -181,12 +189,10 @@ class BaseDoc:
             "previous-match", self._prev_match, self.search_bar
         )
         self.search_bar.connect("search-changed", self._search_changed)
-        self.search_bar.connect("stop-search", self._stop_search)
 
         self.page_map: List[PageInfo] = []
         self.remove_pages()
         self.callback = modified
-        self.notebook.connect("switch-page", self.switch_page)
 
     def _next_match(self, _button: Gtk.Button, obj):
         """
@@ -235,14 +241,20 @@ class BaseDoc:
             )
             textview.scroll_to_mark(start_pos, 0, True, 0.0, 0.5)
 
-    def _search_changed(self, obj):
-        "Search changed"
+    def _search_changed(self, search_box):
+        """
+        Called with the search string has changed.
+
+        Parameters:
+            search_box: the text box that holds the text
+
+        """
         page_num = self.notebook.get_current_page()
         info = self.page_map[page_num]
         widget = self.notebook.get_nth_page(page_num)
         textview = widget.get_children()[0].get_children()[0]
 
-        search_str = obj.get_text()
+        search_str = search_box.get_text()
         start_iter = info.textbuf.get_start_iter()
         found = start_iter.forward_search(search_str, 0, None)
         if found:
@@ -251,17 +263,13 @@ class BaseDoc:
             last_pos = info.textbuf.create_mark("last_pos", match_end, False)
             textview.scroll_to_mark(last_pos, 0, True, 0.0, 0.5)
 
-    def _stop_search(self, *obj):
-        "Stop search"
-        print("stop_search", *obj)
-
     def _preview(self, _obj: Gtk.Button) -> None:
-        "Display the preview window"
+        "Display the preview window."
         info = self.page_map[self.notebook.get_current_page()]
         PreviewDisplay(info.textbuf)
 
     def remove_pages(self) -> None:
-        "Removes all pages from the notebook"
+        "Removes all pages from the notebook."
 
         page_count = self.notebook.get_n_pages()
         if page_count:
@@ -271,7 +279,7 @@ class BaseDoc:
             self.page_map = []
 
     def _add_tag(self, _button: Gtk.Button) -> None:
-        "GTK callback to adds tag to the page"
+        "GTK callback to adds tag to the page."
 
         dialog = Gtk.Dialog(
             "Add a Tag",
@@ -313,7 +321,7 @@ class BaseDoc:
         dialog.destroy()
 
     def _add_notebook_page_callback(self, _obj: Gtk.Button) -> None:
-        "GTK callback to adds page to the notebook"
+        "GTK callback to adds page to the notebook."
 
         dialog = Gtk.Dialog(
             "New Documentation Category",
@@ -355,8 +363,7 @@ class BaseDoc:
 
     def add_page(self, page: Page) -> None:
         """
-        Adds a page and creates a restructuredText editor associated with their
-        page name.
+        Adds a page and creates an editor associated with the page name.
         """
 
         edit_window = Gtk.ScrolledWindow()
@@ -409,25 +416,30 @@ class BaseDoc:
 
         button.connect("clicked", self.delete_page, page_info)
 
-    def reorder(self, *obj):
-        temp = {}
-        for i, page_map in enumerate(self.page_map):
-            temp[page_map.name] = page_map
+    def reorder(
+        self, _notebook: Gtk.Notebook, _page_box: Gtk.VBox, _extra: int
+    ) -> None:
+        """
+        Reorder the pages in the doc_pages to match the new tab order.
 
-        new_page_map = []
-        new_doc_pages = []
-        for page in self.notebook:
-            label = (
-                self.notebook.get_tab_label(page).get_children()[0].get_text()
-            )
-            new_page_map.append(temp[label])
-            new_doc_pages.append(label)
+        Parameters:
+            _notebook (Gtk.Notebook): unused
+            _page_box (Gtk.VBox): unused
 
-        self.page_map = new_page_map
+        """
+        temp = {page_map.name: page_map for page_map in self.page_map}
+        self.page_map = [temp[label] for label in self.get_order()]
         self.update_page_order()
         self.callback()
 
     def get_order(self) -> List[str]:
+        """
+        Get the order of the tabs.
+
+        Returns:
+           List[str]: List of tab names
+
+        """
         order = []
         for page in self.notebook:
             label = (
@@ -436,18 +448,31 @@ class BaseDoc:
             order.append(label)
         return order
 
-    def delete_tag(self, _button: Gtk.Button, extra):
-        "Deletes the tag associated with the button"
+    def delete_tag(self, _button: Gtk.Button, extra) -> None:
+        """
+        Delete the tag associated with the button.
 
+        Parameters:
+            _button (Gtk.Button): unused
+            extra (Tuple[List[str], str, Gtk.Frame]): tuple consisting of
+               list of tags, the tag, and the Gtk.Frame
+
+        """
         data, tag, frame = extra
         if tag in data:
             data.remove(tag)
         frame.hide()
         self.callback()
 
-    def make_tag(self, name: str, data) -> Gtk.Frame:
-        "Creates a tag and adds it"
+    def make_tag(self, name: str, tag_list: List[str]) -> Gtk.Frame:
+        """
+        Create a tag and adds it to the tag list display.
 
+        Parameters:
+            name (str): Name of the new tag
+            tag_list (List[str]): List of tags
+
+        """
         label = Gtk.Label()
         label.set_markup(f"<b>{name}</b>")
         close = Gtk.Button.new_from_icon_name(
@@ -463,48 +488,35 @@ class BaseDoc:
         frame.set_shadow_type(Gtk.ShadowType.OUT)
         frame.add(box)
         frame.show_all()
-        close.connect("clicked", self.delete_tag, (data, name, frame))
+        close.connect("clicked", self.delete_tag, (tag_list, name, frame))
         return frame
 
-    def switch_page(self, notebook, _obj, page):
-        "Called with the page switches, changing the buttons"
+    def delete_page(self, _button: Gtk.Button, info: PageInfo) -> None:
+        """
+        Delete the current document page.
 
-        current = notebook.get_current_page()
-        try:
-            old_info = self.page_map[current]
-            old_info.button.hide()
-        except IndexError:
-            pass
-        self.page_map[page].button.show()
-        widget = self.notebook.get_nth_page(page)
-        textview = widget.get_children()[0].get_children()[0]
-        # self.search_bar.set_key_capture_widget(textview)
+        Parameters:
+            _button (Gtk.Button): unused
+            info (PageInfo): Page info to be deleted
 
-    def delete_page(self, _button: Gtk.Button, info: PageInfo):
-        "Delete the current document page"
-
-        page = 0
-        for i in range(self.notebook.get_n_pages()):
-            if self.page_map[i] == info:
-                page = i
-
+        """
         dialog = DeleteVerify(info.name)
         status = dialog.run_dialog()
-        if status == DeleteVerify.CANCEL:
-            return
-
-        self.notebook.remove_page(page)
-        info = self.page_map[page]
-
-        for i in range(page + 1, self.notebook.get_n_pages()):
-            self.page_map[i] = self.page_map[i + 1]
-        del self.page_map[self.notebook.get_n_pages()]
-        self.remove_page_from_doc(info.name)
-        self.callback()
+        if status != DeleteVerify.CANCEL:
+            page = self.page_map.index(info)
+            self.notebook.remove_page(page)
+            self.page_map.remove(info)
+            self.remove_page_from_doc(info.name)
+            self.callback()
 
     def _create_text_editor(self) -> RstEditor:
-        "Create the text editor and configure it"
+        """
+        Create the text editor and configure it.
 
+        Returns:
+            RstEditor: editor widget
+
+        """
         text_editor = RstEditor()
         text_editor.set_margin_left(10)
         text_editor.set_margin_right(10)
@@ -513,21 +525,35 @@ class BaseDoc:
         text_editor.show()
         return text_editor
 
-    def _text_changed_callback(self, obj: GtkSource.Buffer):
+    def _text_changed_callback(self, textbuf: GtkSource.Buffer) -> None:
         """
-        A change to the text occurred. Grab the text, update the data and
-        update the display.
-        """
+        Update when a change to the text occurred.
 
-        new_text = obj.get_text(
-            obj.get_start_iter(), obj.get_end_iter(), False
+        Grab the text, update the data and update the display.
+
+        Parameters:
+            textbuf (GtkSource.Buffer): text buffer that holds the data
+
+        """
+        text = textbuf.get_text(
+            textbuf.get_start_iter(), textbuf.get_end_iter(), False
         )
         info = self.page_map[self.notebook.get_current_page()]
-        self.update_page_from_doc(info.name, new_text, info.tags)
+        self.update_page_from_doc(info.name, text, info.tags)
         self.callback()
 
     def on_key_press_event(self, obj: RstEditor, event: Gdk.EventKey) -> bool:
-        """Look for the F12 key"""
+        """
+        Reformat selected text when the F12 key is pressed.
+
+        Parameters:
+            obj (RstEditor): Text editing widget
+            event (Gtk.EventKey): Key press event
+
+        Returns:
+            True if the F12 button was pressed
+
+        """
         if event.keyval == Gdk.KEY_F12:
             if clean_format_if_needed(obj):
                 self.callback()
@@ -537,26 +563,47 @@ class BaseDoc:
     @abc.abstractmethod
     def remove_page_from_doc(self, _title: str) -> None:
         """
-        Removes a page from the class. Must be overriden by the derived
-        class.
+        Remove a page from the class.
+
+        Must be overriden by the derived class.
+
+        Parameters:
+            _title (str): title of the page to be removed
+
         """
         return
 
     @abc.abstractmethod
-    def update_page_order(self, order: List[str]) -> None:
+    def update_page_order(self) -> None:
+        """
+        Update the page order.
+        """
         return
 
     @abc.abstractmethod
     def update_page_from_doc(
-        self, _title: str, _text: str, tags: List[str]
+        self, _title: str, _text: str, _tags: List[str]
     ) -> None:
         """
-        Adds/Updates a page from the class. Must be overriden by the derived
-        class.
+        Add or Update a page from the class.
+
+        Must be overriden by the derived class.
+
+        Parameters:
+            _title (str): Title of the page
+            _text (str): Text of the page
+            _tags (List[str]): List of tags
+
         """
         return
 
 
 def _help(_button: Gtk.Button) -> None:
-    "Display the help window"
+    """
+    Display the help window.
+
+    Parameters:
+        _button (Gtk.Button): unused
+
+    """
     HelpWindow("doc.html", "Documentation")

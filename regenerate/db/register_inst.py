@@ -103,7 +103,7 @@ class RegisterInst(NameBase):
 
     def json_decode(self, data: Dict[str, Any]) -> None:
         self.regset_id = Uuid(data["regset_id"])
-        self._id = Uuid(data["uuid"])
+        self.uuid = Uuid(data["uuid"])
         self.name = data["name"]
         self.offset = data["offset"]
         self.repeat = ParamValue()
@@ -118,7 +118,7 @@ class RegisterInst(NameBase):
         return {
             "regset_id": self.regset_id,
             "name": self.name,
-            "uuid": self._id,
+            "uuid": self.uuid,
             "offset": self.offset,
             "repeat": self.repeat,
             "hdl": self.hdl,

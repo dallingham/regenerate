@@ -66,38 +66,62 @@ class Block(BaseFile):
         self.doc_pages.update_page("Overview", "", ["Confidential"])
         self.reader_class = None
 
-        self.regset_insts: List[RegisterInst] = []
-        self.regsets: Dict[str, RegisterSet] = {}
+        self._regset_insts: List[RegisterInst] = []
+        self._regsets: Dict[str, RegisterSet] = {}
         self.parameters = ParameterContainer()
         self.overrides: List[Overrides] = []
         self.exports: List[ExportData] = []
 
+    def add_register_set(self, regset: RegisterSet) -> None:
+        """
+        Add a register set to the block.
+
+        Parameters:
+            regiset (RegisterSet): register set to add
+
+        """
+        self._regsets[regset.uuid] = regset
+
+    def add_regset_inst(self, reginst: RegisterInst) -> None:
+        """
+        Add a register set instance to the block.
+
+        Parameters:
+            regset_inst (RegisterInst): register set instance to add
+
+        """
+        self._regset_insts.append(reginst)
+
     def get_reginst_from_id(self, uuid: Uuid) -> Optional[RegisterInst]:
         "Returns the register instance based on the uuid"
 
-        results = [inst for inst in self.regset_insts if inst.uuid == uuid]
+        results = [inst for inst in self._regset_insts if inst.uuid == uuid]
         if results:
             return results[0]
         return None
 
     def get_regset_insts(self) -> List[RegisterInst]:
         "Returns a list of register instances"
-        return self.regset_insts
+        return self._regset_insts
+
+    def get_regset_from_id(self, uuid: Uuid) -> Optional[RegisterSet]:
+        "Returns a list of register instances"
+        return self._regsets.get(uuid)
 
     def get_regsets_dict(self) -> Dict[str, RegisterSet]:
         "Returns a dict of register sets"
-        return self.regsets
+        return self._regsets
 
     def get_regset_from_reg_inst(self, reg_inst: RegisterInst) -> RegisterSet:
         "Returns the register set connected to the register instance"
-        return self.regsets[reg_inst.regset_id]
+        return self._regsets[reg_inst.regset_id]
 
     def remove_register_set(self, uuid: Uuid) -> None:
         "Removes the register set using the UUID"
-        if uuid in self.regsets:
-            del self.regsets[uuid]
-        self.regset_insts = [
-            inst for inst in self.regset_insts if inst.regset_id != uuid
+        if uuid in self._regsets:
+            del self._regsets[uuid]
+        self._regset_insts = [
+            inst for inst in self._regset_insts if inst.regset_id != uuid
         ]
 
     def save(self) -> None:
@@ -141,8 +165,8 @@ class Block(BaseFile):
     def get_address_size(self) -> int:
         "Returns the size of the address space"
         base = 0
-        for reginst in self.regset_insts:
-            regset = self.regsets[reginst.regset_id]
+        for reginst in self._regset_insts:
+            regset = self._regsets[reginst.regset_id]
             base = max(
                 base, reginst.offset + (1 << regset.ports.address_bus_width)
             )
@@ -205,9 +229,9 @@ class Block(BaseFile):
         self.doc_pages = DocPages()
         self.doc_pages.json_decode(data["doc_pages"])
 
-        self.regset_insts = _json_decode_reginsts(data["regset_insts"])
+        self._regset_insts = _json_decode_reginsts(data["regset_insts"])
 
-        self.regsets = self._json_decode_regsets(data["regsets"])
+        self._regsets = self._json_decode_regsets(data["regsets"])
 
         self.parameters = ParameterContainer()
         self.parameters.json_decode(data["parameters"])
@@ -220,7 +244,7 @@ class Block(BaseFile):
             for override in data["overrides"]:
                 item = Overrides()
                 item.json_decode(override)
-                for regset_inst in self.regset_insts:
+                for regset_inst in self._regset_insts:
                     if item.path != regset_inst.uuid:
                         continue
                     self.overrides.append(item)
@@ -244,22 +268,25 @@ class Block(BaseFile):
             "address_size": f"{self.address_size}",
             "doc_pages": self.doc_pages.json(),
             "description": self.description,
-            "regset_insts": self.regset_insts,
+            "regset_insts": self._regset_insts,
             "exports": [],
             "regsets": {},
         }
 
         for exp in self.exports:
-            info = {
-                "exporter": exp.exporter,
-                "target": os.path.relpath(exp.target, self.filename.parent),
-                "options": exp.options,
-            }
-            data["exports"].append(info)
+            data["exports"].append(
+                {
+                    "exporter": exp.exporter,
+                    "target": os.path.relpath(
+                        exp.target, self.filename.parent
+                    ),
+                    "options": exp.options,
+                }
+            )
 
-        for name in self.regsets:
+        for name in self._regsets:
             new_path = os.path.relpath(
-                self.regsets[name].filename,
+                self._regsets[name].filename,
                 self._filename.parent,
             )
             data["regsets"][name] = {

@@ -53,7 +53,7 @@ class RegDecode(BlockWriter):
             else:
                 reginsts = [
                     inst
-                    for inst in block.regset_insts
+                    for inst in block.get_regset_insts()
                     if inst.uuid in reginst_id_list
                 ]
         else:

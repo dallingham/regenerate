@@ -71,7 +71,9 @@ def in_groups(name: str, project: RegProject) -> List[InstData]:
         for blkinst in project.block_insts:
             block = project.blocks[blkinst.blkid]
 
-            for regset in [rs for rs in block.regset_insts if rs.name == name]:
+            for regset in [
+                rs for rs in block.get_regset_insts() if rs.name == name
+            ]:
                 fmt = DEFAULT_FORMAT
                 groups.append(
                     InstData(
