@@ -151,7 +151,7 @@ class UVMRegBlockRegisters(ProjectWriter):
                 continue
             for regset_inst in self._project.blocks[
                 blk_inst.blkid
-            ].regset_insts:
+            ].get_regset_insts():
                 regset = self._project.regsets[regset_inst.regset_id]
 
                 tag = (regset.uuid, regset_inst.uuid, blk_inst.uuid)
@@ -174,7 +174,7 @@ class UVMRegBlockRegisters(ProjectWriter):
 
         regsets = set()
         for blk in self._project.blocks.values():
-            for regset in blk.regset_insts:
+            for regset in blk.get_regset_insts():
                 regsets.add(regset)
         return regsets
 

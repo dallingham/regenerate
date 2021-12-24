@@ -928,7 +928,7 @@ def check_address_ranges(project):
 
         block = project.blocks[block_inst.blkid]
 
-        for regset_inst in block.regset_insts:
+        for regset_inst in block.get_regset_insts():
             regset = block.get_regset_from_id(regset_inst.regset_id)
             space = 1 << regset.ports.address_bus_width
 

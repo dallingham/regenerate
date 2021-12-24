@@ -344,7 +344,7 @@ class BlockOverridesList(OverridesList):
         total = 0
         param_list = []
         if block is not None:
-            for reginst in block.regset_insts:
+            for reginst in block.get_regset_insts():
                 regset = block.get_regset_from_id(reginst.regset_id)
                 for param in regset.parameters.get():
                     total += 1

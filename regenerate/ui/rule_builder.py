@@ -311,7 +311,7 @@ class RuleBuilder(Gtk.Assistant):
         blkid = self._get_source()
         block = self._project.blocks[blkid]
 
-        for reginst in block.regset_insts:
+        for reginst in block.get_regset_insts():
             self._reginst_mdl.append(
                 row=[
                     True,

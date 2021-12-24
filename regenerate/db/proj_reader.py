@@ -158,7 +158,7 @@ class ProjectReader(XmlBase):
             bool(attrs.get("array", "0")),
             bool(attrs.get("single_decode", "0")),
         )
-        self.new_block.regset_insts.append(data)
+        self.new_block.get_regset_insts().append(data)
 
     def _start_address_map(self, attrs: Dict[str, str]) -> None:
         """Called when an address tag is found"""
@@ -249,7 +249,7 @@ class ProjectReader(XmlBase):
 
             self.prj.blocks[blkid] = blk
 
-            for reg_inst in blk.regset_insts:
+            for reg_inst in blk.get_regset_insts():
                 uuid = reg_inst.regset_id
                 blk.add_register_set(self.prj.regsets[uuid])
                 path = blk.get_regset_from_id(uuid).filename
@@ -292,7 +292,7 @@ class ProjectReader(XmlBase):
         """
 
         counter: Counter = Counter()
-        for rset_inst in self.id_to_block[blkid].regset_insts:
+        for rset_inst in self.id_to_block[blkid].get_regset_insts():
             try:
                 regset = self.prj.regsets[rset_inst.regset_id]
                 regset_dir = regset.filename.parent
@@ -323,7 +323,7 @@ class ProjectReader(XmlBase):
             name2id[rset.filename.stem] = rset.uuid
 
         for blk in self.id_to_block.values():
-            for reg_inst in blk.regset_insts:
+            for reg_inst in blk.get_regset_insts():
                 if reg_inst.name in name2id:
                     reg_inst.regset_id = name2id[reg_inst.name]
                 elif reg_inst.regset_id in name2id:

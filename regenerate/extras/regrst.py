@@ -748,7 +748,7 @@ class RegisterRst:
             block = self._prj.blocks[blk_inst.blkid]
             regset_list = [
                 rs
-                for rs in block.regset_insts
+                for rs in block.get_regset_insts()
                 if rs.regset_id == self._regset_id
             ]
             registers.append((blk_inst, regset_list))

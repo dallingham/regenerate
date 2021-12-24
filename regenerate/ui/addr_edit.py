@@ -136,7 +136,6 @@ class AddrMapEdit(BaseWindow):
 
     def populate(self, blk_inst_list: List[Tuple[BlockInst, bool]]):
         "Populate the model with the block instance information"
-
         for val in blk_inst_list:
             blk_inst, active = val
             title = blk_inst.name
@@ -144,7 +143,7 @@ class AddrMapEdit(BaseWindow):
                 None, row=(active, title, "", None, blk_inst)
             )
             blk = self.project.blocks[blk_inst.blkid]
-            for item in blk.regset_insts:
+            for item in blk.get_regset_insts():
                 access = self.project.get_access(
                     self.map_id, blk_inst.uuid, item.uuid
                 )

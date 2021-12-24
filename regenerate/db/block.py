@@ -66,7 +66,7 @@ class Block(BaseFile):
         self.doc_pages.update_page("Overview", "", ["Confidential"])
         self.reader_class = None
 
-        self.regset_insts: List[RegisterInst] = []
+        self._regset_insts: List[RegisterInst] = []
         self._regsets: Dict[str, RegisterSet] = {}
         self.parameters = ParameterContainer()
         self.overrides: List[Overrides] = []
@@ -74,7 +74,7 @@ class Block(BaseFile):
 
     def add_register_set(self, regset: RegisterSet) -> None:
         """
-        Add a register to the block.
+        Add a register set to the block.
 
         Parameters:
             regiset (RegisterSet): register set to add
@@ -82,17 +82,27 @@ class Block(BaseFile):
         """
         self._regsets[regset.uuid] = regset
 
+    def add_regset_inst(self, reginst: RegisterInst) -> None:
+        """
+        Add a register set instance to the block.
+
+        Parameters:
+            regset_inst (RegisterInst): register set instance to add
+
+        """
+        self._regset_insts.append(reginst)
+
     def get_reginst_from_id(self, uuid: Uuid) -> Optional[RegisterInst]:
         "Returns the register instance based on the uuid"
 
-        results = [inst for inst in self.regset_insts if inst.uuid == uuid]
+        results = [inst for inst in self._regset_insts if inst.uuid == uuid]
         if results:
             return results[0]
         return None
 
     def get_regset_insts(self) -> List[RegisterInst]:
         "Returns a list of register instances"
-        return self.regset_insts
+        return self._regset_insts
 
     def get_regset_from_id(self, uuid: Uuid) -> Optional[RegisterSet]:
         "Returns a list of register instances"
@@ -110,8 +120,8 @@ class Block(BaseFile):
         "Removes the register set using the UUID"
         if uuid in self._regsets:
             del self._regsets[uuid]
-        self.regset_insts = [
-            inst for inst in self.regset_insts if inst.regset_id != uuid
+        self._regset_insts = [
+            inst for inst in self._regset_insts if inst.regset_id != uuid
         ]
 
     def save(self) -> None:
@@ -155,7 +165,7 @@ class Block(BaseFile):
     def get_address_size(self) -> int:
         "Returns the size of the address space"
         base = 0
-        for reginst in self.regset_insts:
+        for reginst in self._regset_insts:
             regset = self._regsets[reginst.regset_id]
             base = max(
                 base, reginst.offset + (1 << regset.ports.address_bus_width)
@@ -219,7 +229,7 @@ class Block(BaseFile):
         self.doc_pages = DocPages()
         self.doc_pages.json_decode(data["doc_pages"])
 
-        self.regset_insts = _json_decode_reginsts(data["regset_insts"])
+        self._regset_insts = _json_decode_reginsts(data["regset_insts"])
 
         self._regsets = self._json_decode_regsets(data["regsets"])
 
@@ -234,7 +244,7 @@ class Block(BaseFile):
             for override in data["overrides"]:
                 item = Overrides()
                 item.json_decode(override)
-                for regset_inst in self.regset_insts:
+                for regset_inst in self._regset_insts:
                     if item.path != regset_inst.uuid:
                         continue
                     self.overrides.append(item)
@@ -258,7 +268,7 @@ class Block(BaseFile):
             "address_size": f"{self.address_size}",
             "doc_pages": self.doc_pages.json(),
             "description": self.description,
-            "regset_insts": self.regset_insts,
+            "regset_insts": self._regset_insts,
             "exports": [],
             "regsets": {},
         }

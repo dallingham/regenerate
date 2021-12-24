@@ -209,7 +209,7 @@ class RegisterSet(BaseFile):
     def json(self) -> Dict[str, Any]:
         data = {
             "name": self.name,
-            "uuid": self._id,
+            "uuid": self.uuid,
             "parameters": self.parameters,
             "title": self.descriptive_title,
             "ports": self.ports,
