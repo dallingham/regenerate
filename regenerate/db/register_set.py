@@ -25,12 +25,12 @@ import re
 import json
 from io import BytesIO as StringIO
 from pathlib import Path
-from typing import List, Optional, Dict, Iterator, Any
+from typing import List, Optional, Dict, Iterator, Any, Union
 
 from .register import Register
 from .reg_parser import RegParser
 from .signals import Signals
-from .const import OLD_REG_EXT
+from .const import OLD_REG_EXT, REG_EXT
 from .export import ExportData
 from .logger import LOGGER
 from .param_container import ParameterContainer
@@ -71,6 +71,28 @@ class RegisterSet(BaseFile):
 
     def __repr__(self) -> str:
         return f"RegisterSet(name={self.name}, uuid={self.uuid})"
+
+    @property
+    def filename(self) -> Path:
+        """
+        Return the filename as a path.
+
+        Returns:
+           Path: path associated with the object
+
+        """
+        return self._filename
+
+    @filename.setter
+    def filename(self, value: Union[str, Path]) -> None:
+        """
+        Set the filename, converting to a path, and fixing the suffix.
+
+        Parameters:
+           Union[str, Path]: Path of the file object
+
+        """
+        self._filename = Path(value).with_suffix(REG_EXT)
 
     def total_bits(self) -> int:
         """Returns bits in register"""

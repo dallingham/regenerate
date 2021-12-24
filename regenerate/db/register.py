@@ -18,8 +18,10 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
-Provides the register description. Contains the general information about the
-register, including the list of bit fields.
+Provides the register description.
+
+Contains the general information about the register, including the
+list of bit fields.
 """
 
 from typing import List, Dict, Optional, Any, Union
@@ -32,7 +34,15 @@ from .param_container import ParameterContainer
 
 class RegisterFlags:
     """
-    Contains the flags that control file and documentation generation
+    Contains the flags that control file and documentation generation.
+
+    These flags include:
+      * Do not use UVM
+      * Do not generate code
+      * Do not generate coverage
+      * Do not test
+      * Hide from documentation
+
     """
 
     __slots__ = (
@@ -52,7 +62,14 @@ class RegisterFlags:
         self._do_not_reset_test = False
         self._hide = False
 
-    def __str__(self) -> str:
+    def __repr__(self) -> str:
+        """
+        Return the string representaton of the flags.
+
+        Returns:
+           str: String describing the object
+
+        """
         return (
             f"RegisterFlags(uvm={self._do_not_use_uvm}, "
             f"code={self._do_not_generate_code},"
@@ -65,32 +82,54 @@ class RegisterFlags:
     @property
     def hide(self) -> bool:
         """
-        Returns the value of the _hide flag. This cannot be accessed
-        directly, but only via the property 'hide'
+        Return the value of the _hide flag.
+
+        This cannot be accessed directly, but only via the property 'hide'
+
+        Returns:
+            bool: True if the register should be hidden from the documentation
+
         """
         return self._hide
 
     @hide.setter
     def hide(self, val: Union[int, bool]) -> None:
         """
-        Sets the __hide flag. This cannot be accessed directly, but only
-        via the property 'hide'
+        Set the _hide flag, indicating if documenation should not be displayed.
+
+        This cannot be accessed directly, but only via the property 'hide'
+
+        Parameters:
+            val (Union[int,bool]): True to hide the documentation
+
         """
         self._hide = bool(val)
 
     @property
     def do_not_generate_code(self) -> bool:
         """
-        Returns the value of the _do_not_generate_code flag. This cannot
-        be accessed directly, but only via the property 'do_not_generate_code'
+        Return the value of the _do_not_generate_code flag.
+
+        Provides access to the '_do_not_generate_code' flag.
+
+        Returns:
+            bool: Indicates if the code generator should not generate code
+                  for this register.
+
         """
         return self._do_not_generate_code
 
     @do_not_generate_code.setter
     def do_not_generate_code(self, val: Union[int, bool]) -> None:
         """
-        Sets the __do_not_generate_code flag. This cannot be accessed
-        directly, but only via the property 'do_not_generate_code'
+        Set the _do_not_generate_code flag.
+
+        This flag cannot be accessed directly, but only via this property.
+        Handles the conversion of int/bool to bool.
+
+        Parameters:
+            val (Union[int, bool]): True if code should not be generated
+
         """
         self._do_not_generate_code = bool(val)
 
