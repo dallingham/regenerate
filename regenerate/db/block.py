@@ -18,8 +18,11 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
-Holds the information for a group. This includes the name, base address,
-HDL path, the repeat count, repeat offset, and the title.
+Holds the information for a block.
+
+This includes the name, base address, HDL path, the repeat count,
+repeat offset, and the title.
+
 """
 
 from typing import List, Dict, Any, Optional
@@ -48,7 +51,13 @@ from .exceptions import (
 
 
 class Block(BaseFile):
-    """Basic group information."""
+    """
+    Defines a Block.
+
+    A block is a collection of register instances and their address
+    offsets within the block.
+
+    """
 
     def __init__(
         self,
@@ -67,10 +76,20 @@ class Block(BaseFile):
         self.reader_class = None
 
         self._regset_insts: List[RegisterInst] = []
-        self._regsets: Dict[str, RegisterSet] = {}
+        self._regsets: Dict[Uuid, RegisterSet] = {}
         self.parameters = ParameterContainer()
         self.overrides: List[Overrides] = []
         self.exports: List[ExportData] = []
+
+    def __repr__(self) -> str:
+        """
+        Return a string representation of the block.
+
+        Returns:
+            str: string representation
+
+        """
+        return f'Block(name="{self.name}", uuid="{self.uuid}")'
 
     def add_register_set(self, regset: RegisterSet) -> None:
         """
@@ -93,31 +112,76 @@ class Block(BaseFile):
         self._regset_insts.append(reginst)
 
     def get_reginst_from_id(self, uuid: Uuid) -> Optional[RegisterInst]:
-        "Returns the register instance based on the uuid"
+        """
+        Return the register instance based on the uuid.
 
+        Parameters:
+            uuid: UUID of the register inst
+
+        Returns:
+            Optional[Registerinst]: The register instance if it exists.
+
+        """
         results = [inst for inst in self._regset_insts if inst.uuid == uuid]
         if results:
             return results[0]
         return None
 
     def get_regset_insts(self) -> List[RegisterInst]:
-        "Returns a list of register instances"
+        """
+        Return a list of register instances.
+
+        Returns:
+            List[RegisterInst]: All register instances in the block
+
+        """
         return self._regset_insts
 
     def get_regset_from_id(self, uuid: Uuid) -> Optional[RegisterSet]:
-        "Returns a list of register instances"
+        """
+        Return a list of register instances.
+
+        Parameters:
+            uuid: UUID of the desired register set_access
+
+        Returns:
+            Optional[RegisterSet]: The register set, if it exists
+
+        """
         return self._regsets.get(uuid)
 
-    def get_regsets_dict(self) -> Dict[str, RegisterSet]:
-        "Returns a dict of register sets"
+    def get_regsets_dict(self) -> Dict[Uuid, RegisterSet]:
+        """
+        Return a dict of register sets.
+
+        Returns:
+            Dict[Uuid, RegisterSet]: dictionary mapping the uuid to register
+                sets
+
+        """
         return self._regsets
 
     def get_regset_from_reg_inst(self, reg_inst: RegisterInst) -> RegisterSet:
-        "Returns the register set connected to the register instance"
+        """
+        Return the register set connected to the register instance.
+
+        Parameter:
+            reg_inst (RegisterInst): register instance
+
+        Returns:
+            RegisterSet: register set associated with the register instance
+
+        """
         return self._regsets[reg_inst.regset_id]
 
     def remove_register_set(self, uuid: Uuid) -> None:
-        "Removes the register set using the UUID"
+        """
+        Remove the register set using the UUID.
+
+        Parameter:
+            uuid: Register set to remove
+
+        """
         if uuid in self._regsets:
             del self._regsets[uuid]
         self._regset_insts = [
@@ -125,17 +189,40 @@ class Block(BaseFile):
         ]
 
     def save(self) -> None:
-        "Save the file as a JSON file"
+        """
+        Save the data as a JSON file.
+
+        Saves the data to the associated filename.
+
+        """
         self.save_json(self.json(), self._filename)
 
     def __ne__(self, other: object) -> bool:
-        """Compare for inequality."""
+        """
+        Compare for inequality.
+
+        Parameters:
+            other (object): Object to compare against
+
+        Returns:
+            bool: True if not equal
+
+        """
         if not isinstance(other, Block):
             return NotImplemented
         return not self.__eq__(other)
 
     def __eq__(self, other: object) -> bool:
-        """Compare for equality."""
+        """
+        Compare for equality.
+
+        Parameters:
+            other (object): Object to compare against
+
+        Returns:
+            bool: True if equal
+
+        """
         if not isinstance(other, Block):
             return NotImplemented
         return (
@@ -147,8 +234,13 @@ class Block(BaseFile):
         )
 
     def open(self, name: Path) -> None:
-        "Opens the filename and loads the object"
+        """
+        Open the filename and loads the data into the object.
 
+        Parameters:
+            name (Path): name of the file to save
+
+        """
         self._filename = name
 
         LOGGER.info("Reading block file %s", str(self._filename))
@@ -163,7 +255,13 @@ class Block(BaseFile):
             raise IoErrorBlockFile(str(self._filename.resolve()), msg)
 
     def get_address_size(self) -> int:
-        "Returns the size of the address space"
+        """
+        Return the size of the address space.
+
+        Returns:
+            int: address size in bytes
+
+        """
         base = 0
         for reginst in self._regset_insts:
             regset = self._regsets[reginst.regset_id]
@@ -175,8 +273,13 @@ class Block(BaseFile):
     def _json_decode_regsets(
         self, data: Dict[str, Any]
     ) -> Dict[str, RegisterSet]:
-        "Decode the register sets section of the JSON data"
+        """
+        Decode the register set section of the JSON data.
 
+        Parameters:
+            data (Dict[str, Any]): JSON data to decode
+
+        """
         regsets = {}
         for key, item in data.items():
             filename = Path(self._filename.parent / item["filename"]).resolve()
@@ -205,8 +308,13 @@ class Block(BaseFile):
     def _json_decode_exports(
         self, data: Optional[List[Dict[str, Any]]]
     ) -> List[ExportData]:
-        "Decode the exports section of the JSON data"
+        """
+        Decode the exports section of the JSON data.
 
+        Parameters:
+            data (Optional[List[Dict[str, Any]]): JSON data to decode
+
+        """
         exports = []
         if data:
             for exp_json in data:
@@ -220,8 +328,13 @@ class Block(BaseFile):
         return exports
 
     def json_decode(self, data: Dict[str, Any]) -> None:
-        "Compare for equality."
+        """
+        Decode the JSON data.
 
+        Parameters:
+            data (Dict[str, Any]): JSON data to decode
+
+        """
         self.name = data["name"]
         self.uuid = Uuid(data["uuid"])
         self.description = data["description"]
@@ -230,7 +343,6 @@ class Block(BaseFile):
         self.doc_pages.json_decode(data["doc_pages"])
 
         self._regset_insts = _json_decode_reginsts(data["regset_insts"])
-
         self._regsets = self._json_decode_regsets(data["regsets"])
 
         self.parameters = ParameterContainer()
@@ -260,6 +372,13 @@ class Block(BaseFile):
         self.modified = False
 
     def json(self) -> Dict[str, Any]:
+        """
+        Encode the object to a JSON dictionary.
+
+        Returns:
+            Dict[str, Any]: JSON-ish dictionary
+
+        """
         data: Dict[str, Any] = {
             "name": self.name,
             "uuid": Uuid(self.uuid),
@@ -273,16 +392,7 @@ class Block(BaseFile):
             "regsets": {},
         }
 
-        for exp in self.exports:
-            data["exports"].append(
-                {
-                    "exporter": exp.exporter,
-                    "target": os.path.relpath(
-                        exp.target, self.filename.parent
-                    ),
-                    "options": exp.options,
-                }
-            )
+        self._dump_exports(self.exports, data["exports"])
 
         for name in self._regsets:
             new_path = os.path.relpath(
@@ -297,8 +407,16 @@ class Block(BaseFile):
 
 
 def _json_decode_reginsts(data: List[Any]) -> List[RegisterInst]:
-    "Decode the register instance section of the JSON data"
+    """
+    Decode the register instance section of the JSON data.
 
+    Parameters:
+        data (List[Any]): JSON data
+
+    Returns:
+        List[RegisterInst]: list of register instances
+
+    """
     reginst_list = []
     for rset in data:
         ginst = RegisterInst()

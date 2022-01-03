@@ -18,9 +18,11 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
-Constants for file extensions
-"""
+Constants for file extensions.
 
+Contains both version 1.x and version 2.x file extensions.
+
+"""
 
 OLD_PRJ_EXT = ".rprj"
 OLD_REG_EXT = ".xml"

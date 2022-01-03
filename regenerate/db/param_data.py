@@ -74,7 +74,7 @@ class ParameterData(NameBase):
         self.finder.register(self)
 
     def __repr__(self) -> str:
-        return f"ParameterData(name={self.name}, id={self.uuid}, value={self.value})"
+        return f'ParameterData(name="{self.name}", uuid="{self.uuid}", value={self.value})'
 
     def json(self) -> Dict[str, Any]:
         "Converts the object to a dict for JSON serialization"

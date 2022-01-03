@@ -30,6 +30,13 @@ from .columns import EditableColumn, ReadOnlyColumn
 from .enums import InstCol
 
 
+def _null_callback():
+    """
+    Default callback that does nothing.
+    """
+    return
+
+
 class InstMdl(Gtk.TreeStore):
     """
     Provides the list of instances for the module. Instances consist of the
@@ -40,12 +47,8 @@ class InstMdl(Gtk.TreeStore):
 
         super().__init__(str, str, str, GObject.TYPE_UINT64, str, str, object)
 
-        self.callback = self.__null_callback
+        self.callback = _null_callback
         self.project = project
-
-    def __null_callback(self) -> None:
-        """Does nothing, should be overridden"""
-        return
 
     def change_hdl(self, path: str, text: str) -> None:
         """

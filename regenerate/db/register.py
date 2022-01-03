@@ -24,201 +24,13 @@ Contains the general information about the register, including the
 list of bit fields.
 """
 
-from typing import List, Dict, Optional, Any, Union
+from typing import List, Dict, Optional, Any
 from .name_base import NameBase, Uuid
 from .enums import ResetType, ShareType
 from .bitfield import BitField
 from .param_value import ParamValue
 from .param_container import ParameterContainer
-
-
-class RegisterFlags:
-    """
-    Contains the flags that control file and documentation generation.
-
-    These flags include:
-      * Do not use UVM
-      * Do not generate code
-      * Do not generate coverage
-      * Do not test
-      * Hide from documentation
-
-    """
-
-    __slots__ = (
-        "_do_not_use_uvm",
-        "_do_not_generate_code",
-        "_do_not_cover",
-        "_do_not_test",
-        "_do_not_reset_test",
-        "_hide",
-    )
-
-    def __init__(self):
-        self._do_not_use_uvm = False
-        self._do_not_generate_code = False
-        self._do_not_cover = False
-        self._do_not_test = False
-        self._do_not_reset_test = False
-        self._hide = False
-
-    def __repr__(self) -> str:
-        """
-        Return the string representaton of the flags.
-
-        Returns:
-           str: String describing the object
-
-        """
-        return (
-            f"RegisterFlags(uvm={self._do_not_use_uvm}, "
-            f"code={self._do_not_generate_code},"
-            f"cover={self._do_not_cover},"
-            f"test={self._do_not_test},"
-            f"reset={self._do_not_reset_test},"
-            f"hide={self._hide})"
-        )
-
-    @property
-    def hide(self) -> bool:
-        """
-        Return the value of the _hide flag.
-
-        This cannot be accessed directly, but only via the property 'hide'
-
-        Returns:
-            bool: True if the register should be hidden from the documentation
-
-        """
-        return self._hide
-
-    @hide.setter
-    def hide(self, val: Union[int, bool]) -> None:
-        """
-        Set the _hide flag, indicating if documenation should not be displayed.
-
-        This cannot be accessed directly, but only via the property 'hide'
-
-        Parameters:
-            val (Union[int,bool]): True to hide the documentation
-
-        """
-        self._hide = bool(val)
-
-    @property
-    def do_not_generate_code(self) -> bool:
-        """
-        Return the value of the _do_not_generate_code flag.
-
-        Provides access to the '_do_not_generate_code' flag.
-
-        Returns:
-            bool: Indicates if the code generator should not generate code
-                  for this register.
-
-        """
-        return self._do_not_generate_code
-
-    @do_not_generate_code.setter
-    def do_not_generate_code(self, val: Union[int, bool]) -> None:
-        """
-        Set the _do_not_generate_code flag.
-
-        This flag cannot be accessed directly, but only via this property.
-        Handles the conversion of int/bool to bool.
-
-        Parameters:
-            val (Union[int, bool]): True if code should not be generated
-
-        """
-        self._do_not_generate_code = bool(val)
-
-    @property
-    def do_not_use_uvm(self) -> bool:
-        """
-        Returns the value of the _do_not_use_uvm flag. This cannot
-        be accessed directly, but only via the property 'do_not_use_uvm'
-        """
-        return self._do_not_use_uvm
-
-    @do_not_use_uvm.setter
-    def do_not_use_uvm(self, val: Union[int, bool]) -> None:
-        """
-        Sets the __do_not_use_uvm flag. This cannot be accessed
-        directly, but only via the property 'do_not_use_uvm'
-        """
-        self._do_not_use_uvm = bool(val)
-
-    @property
-    def do_not_test(self) -> bool:
-        """
-        Returns the value of the _do_not_test flag. This
-        cannot be accessed directly, but only via the property 'do_not_test'
-        """
-        return self._do_not_test
-
-    @do_not_test.setter
-    def do_not_test(self, val: Union[int, bool]) -> None:
-        """
-        Sets the __do_not_test flag. This cannot be accessed
-        directly, but only via the property 'do_not_test'
-        """
-        self._do_not_test = bool(val)
-
-    @property
-    def do_not_reset_test(self) -> bool:
-        """
-        Returns the value of the _do_not_reset_test flag. This
-        cannot be accessed directly, but only via the property
-        'do_not_reset_test'
-        """
-        return self._do_not_reset_test
-
-    @do_not_reset_test.setter
-    def do_not_reset_test(self, val: Union[int, bool]) -> None:
-        """
-        Sets the __do_not_reset_test flag. This cannot be accessed
-        directly, but only via the property 'do_not_reset_test'
-        """
-        self._do_not_reset_test = bool(val)
-
-    @property
-    def do_not_cover(self) -> bool:
-        """
-        Returns the value of the _do_not_cover flag. This
-        cannot be accessed directly, but only via the property 'do_not_cover'
-        """
-        return self._do_not_cover
-
-    @do_not_cover.setter
-    def do_not_cover(self, val: Union[int, bool]) -> None:
-        """
-        Sets the __do_not_cover flag. This cannot be accessed
-        directly, but only via the property 'do_not_cover'
-        """
-        self._do_not_cover = bool(val)
-
-    def json(self) -> Dict[str, Any]:
-        "Convert the object to a JSON compatible dictionary"
-        return {
-            "do_not_use_uvm": self._do_not_use_uvm,
-            "do_not_generate_code": self._do_not_generate_code,
-            "do_not_cover": self._do_not_cover,
-            "do_not_test": self._do_not_test,
-            "do_not_reset_test": self._do_not_reset_test,
-            "hide": self._hide,
-        }
-
-    def json_decode(self, data: Dict[str, Any]) -> None:
-        "Load the object from JSON data"
-        self._do_not_use_uvm = data["do_not_use_uvm"]
-        self._do_not_generate_code = data["do_not_generate_code"]
-        self._do_not_cover = data["do_not_cover"]
-        self._do_not_test = data["do_not_test"]
-        self._do_not_reset_test = data.get(
-            "do_not_reset_test", self._do_not_test
-        )
-        self._hide = data["hide"]
+from .register_flags import RegisterFlags
 
 
 class Register(NameBase):
@@ -248,7 +60,15 @@ class Register(NameBase):
     )
 
     def __init__(self, address: int = 0, width: int = 32, name: str = ""):
+        """
+        Initialize the register.
 
+        Parameters:
+            address (int): address of the register
+            width (int): width of the register in bits
+            name (str): name of the register
+
+        """
         super().__init__(name, Uuid(""))
 
         self.dimension = ParamValue(1)
@@ -264,27 +84,55 @@ class Register(NameBase):
         self.share = ShareType.NONE
 
     def __repr__(self) -> str:
+        """
+        Return the string representation of the object.
+
+        Returns:
+            str: string representing the object
+
+        """
         name = self.name
         address = self.address
         width = self.width
         dim = self.dimension
-        return f"Register(name={name}, address={address}, width={width}, dimension={dim})"
+        return f'Register(name="{name}", address=0x{address:x}, width={width}, dimension={dim})'
 
     def __hash__(self) -> int:
-        """Provides the hash function so that the object can be hashed"""
+        """
+        Provide the hash function so that the object can be hashed.
 
+        Returns:
+            int: Returns the hash value of the UUID.
+
+        """
         return hash(self.uuid)
 
     def __ne__(self, other: object) -> bool:
-        """Provides the not equal function"""
+        """
+        Compare for inequality.
 
+        Parameters:
+            other (object): Object to compare against
+
+        Returns:
+            bool: True if not equal
+
+        """
         if not isinstance(other, Register):
             return NotImplemented
         return not self.__eq__(other)
 
     def __eq__(self, other: object) -> bool:
-        """Provides the equal function"""
+        """
+        Compare for equality.
 
+        Parameters:
+            other (object): Object to compare against
+
+        Returns:
+            bool: True if equal
+
+        """
         if not isinstance(other, Register):
             return NotImplemented
         if not all(
@@ -294,8 +142,16 @@ class Register(NameBase):
         return self.get_bit_fields() == other.get_bit_fields()
 
     def array_cmp(self, other: object) -> bool:
-        """Array compare"""
+        """
+        Array compare.
 
+        Parameters:
+            other (object): Object to compare against
+
+        Returns:
+            bool: True if equal
+
+        """
         if not isinstance(other, Register):
             return NotImplemented
 
@@ -310,8 +166,16 @@ class Register(NameBase):
         return self.get_bit_fields() == other.get_bit_fields()
 
     def group_cmp(self, other: object) -> bool:
-        "Group compare"
+        """
+        Group compare.
 
+        Parameters:
+            other (object): Object to compare against
+
+        Returns:
+            bool: True if equal
+
+        """
         if not isinstance(other, Register):
             return NotImplemented
         if not all(
@@ -321,8 +185,13 @@ class Register(NameBase):
         return self.get_bit_fields() == other.get_bit_fields()
 
     def find_first_unused_bit(self) -> int:
-        """Finds the first unused bit in a the register."""
+        """
+        Find the first unused bit in the register.
 
+        Returns:
+            int: index of the first unused bit, -1 if no bit unused
+
+        """
         bit_list = [0] * self.width
         for field in self._bit_fields.values():
             for val in range(field.lsb, field.msb.resolve() + 1):
@@ -342,8 +211,13 @@ class Register(NameBase):
         return -1
 
     def find_next_unused_bit(self) -> int:
-        """Finds the first unused bit in a the register."""
+        """
+        Find the first unused bit at the end of the register.
 
+        Returns:
+            int: index of the first unused bit, -1 if no bit unused
+
+        """
         bit = set()
         for field in self._bit_fields.values():
             for val in range(field.lsb, field.msb.resolve() + 1):
@@ -359,50 +233,86 @@ class Register(NameBase):
     @property
     def token(self) -> str:
         """
-        Returns the value of the _token flag. This cannot be accessed
-        directly, but only via the property 'token'
+        Return the value of the token value.
+
+        Returns:
+            str: token value of the register
+
         """
         return self._token
 
     @token.setter
     def token(self, val: str) -> None:
         """
-        Sets the __token flag. This cannot be accessed directly, but only
-        via the property 'token'
+        Set the token value.
+
+        Strips off any ending spaces and converts the value to all caps.
+
         """
         self._token = val.strip().upper()
 
     def get_bit_fields(self) -> List[BitField]:
         """
-        Returns a dictionary of bit fields. The key is msb of the
-        bit field.
+        Return the bit fields.
+
+        Returns:
+           List[BitFields]: list of the associated bit fields sorted by LSB
+
         """
         return sorted(self._bit_fields.values(), key=lambda x: x.lsb)
 
-    def get_bit_fields_with_values(self) -> List[BitField]:
-        """
-        Returns a dictionary of bit fields. The key is msb of the
-        bit field.
-        """
-        return sorted(
-            [s for s in self._bit_fields.values() if s.values],
-            key=lambda x: x.lsb,
-        )
+    # def get_bit_fields_with_values(self) -> List[BitField]:
+    #     """
+    #     Returns a dictionary of bit fields. The key is msb of the
+    #     bit field.
+    #     """
+    #     return sorted(
+    #         [s for s in self._bit_fields.values() if s.values],
+    #         key=lambda x: x.lsb,
+    #     )
 
     def get_bit_field(self, key: int) -> Optional[BitField]:
-        """Returns the bit field associated with the specified key."""
+        """
+        Return the bit field associated with the specified key.
+
+        The key is the MSB of the bit field.
+
+        Returns:
+            Optional[BitField]: bit field associated with the LSB, or None
+
+        """
         return self._bit_fields.get(key)
 
     def get_bit_field_keys(self) -> List[int]:
-        """Returns the list of keys associated with the bit fields"""
+        """
+        Return the list of keys associated with the bit fields.
+
+        Returns:
+            List[int]: sorted list of bit field keys (LSBs)
+
+        """
         return sorted(self._bit_fields.keys())
 
     def add_bit_field(self, field: BitField) -> None:
-        """Adds a bit field to the set of bit fields."""
+        """
+        Add a bit field to the set of bit fields.
+
+        Adds the bit field using the field's LSB as the key.
+
+        Parameters:
+            field (BitField): bit field to add
+
+        """
         self._bit_fields[field.lsb] = field
 
     def change_bit_field(self, field: BitField) -> None:
-        """Adds a bit field to the set of bit fields."""
+        """
+        Move the bit field to a different index.
+
+        Parameters:
+            field (BitField): bit field to change
+
+        """
         remove_val = None
         for current_field in self._bit_fields:
             if field == self._bit_fields[current_field]:
@@ -414,8 +324,11 @@ class Register(NameBase):
 
     def delete_bit_field(self, field: BitField) -> None:
         """
-        Removes the specified bit field from the dictionary. We cannot
-        use the msb, since it may have changed.
+        Remove the specified bit field from the register.
+
+        Parameters:
+            field (BitField): bit field to remove
+
         """
         delete_keys = [
             key for key in self._bit_fields if self._bit_fields[key] == field
@@ -424,16 +337,26 @@ class Register(NameBase):
             del self._bit_fields[key]
 
     def is_completely_read_only(self) -> bool:
-        """Returns True if all bitfields are read only"""
+        """
+        Indicate if all bits in the register are read only.
 
+        Returns:
+            bool: True if all bitfields are read only
+
+        """
         for key in self._bit_fields:
             if not self._bit_fields[key].is_read_only():
                 return False
         return True
 
     def is_completely_write_only(self) -> bool:
-        """Returns True if all bitfields are write only"""
+        """
+        Indicate if all bits in the register are write only.
 
+        Returns:
+            bool: True if all bitfields are write only
+
+        """
         for key in self._bit_fields:
             if not self._bit_fields[key].is_write_only():
                 return False
@@ -441,8 +364,11 @@ class Register(NameBase):
 
     def no_reset_test(self) -> bool:
         """
-        Indicates if no reset test should be done on the register.
-        If any field is a don't test, then we won't test the register
+        Indicate if no reset test should be done on the register.
+
+        Returns:
+            bool: True if the register should not be tested
+
         """
         if self.flags.do_not_reset_test:
             return True
@@ -453,10 +379,13 @@ class Register(NameBase):
 
     def strict_volatile(self) -> bool:
         """
-        Returns True if a field is marked as volatile or if there
-        is an input signal specified
-        """
+        Indicate if the register may have a different value between reads.
 
+        Returns:
+            bool: True if a field is marked as volatile or if there is an
+                  input signal specified
+
+        """
         for key in self._bit_fields:
             field = self._bit_fields[key]
             if field.flags.volatile or field.input_signal != "":
@@ -465,10 +394,12 @@ class Register(NameBase):
 
     def loose_volatile(self) -> bool:
         """
-        Returns True if a field is marked volatile, and disregards
-        if there is an input signal
-        """
+        Indicate if the register may have a different value between reads.
 
+        Returns:
+            bool: True if a field is marked as volatile
+
+        """
         for key in self._bit_fields:
             if self._bit_fields[key].flags.volatile:
                 return True
@@ -476,8 +407,13 @@ class Register(NameBase):
 
     def reset_value(self) -> int:
         """
-        Returns the reset value for the register from the reset values
-        in the bit fields.
+        Return the reset value for the register.
+
+        Builds the reset values from the bit fields.
+
+        Returns:
+            int: reset value of the register
+
         """
         val = 0
         for key in self._bit_fields:
@@ -486,7 +422,13 @@ class Register(NameBase):
         return val
 
     def reset_mask(self) -> int:
-        """Returns a mask of the active fields (not reserved fields)"""
+        """
+        Return a mask of the active fields (not reserved fields).
+
+        Returns:
+            int: reset mask
+
+        """
         val = 0
         for key in self._bit_fields:
             field = self._bit_fields[key]
@@ -494,12 +436,25 @@ class Register(NameBase):
                 val |= 1 << i
         return val
 
-    #    def set_parameters(self, parameter_list: List[ParameterData]) -> None:
     def set_parameters(self, parameter_list: ParameterContainer) -> None:
-        """Sets the parameter list"""
+        """
+        Set the parameter list.
+
+        Parameters:
+            parameter_list (ParameterContainer): Parameters associated with
+                the register
+
+        """
         self._parameter_list = parameter_list
 
     def json(self) -> Dict[str, Any]:
+        """
+        Convert the object to a JSON compatible dictionary.
+
+        Returns:
+            Dict[str, Any]: dictionary in JSON format
+
+        """
         val = {
             "name": self.name,
             "uuid": self._id,
@@ -518,6 +473,13 @@ class Register(NameBase):
         return val
 
     def json_decode(self, data: Dict[str, Any]) -> None:
+        """
+        Load the object from JSON data.
+
+        Parameters:
+            data (Dict[str, Any]): JSON data describing the object
+
+        """
         self.name = data["name"]
         self._id = Uuid(data["uuid"])
         self.description = data["description"]

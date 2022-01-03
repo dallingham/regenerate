@@ -18,8 +18,9 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
-Provides a base class for data access routines, allowing abstractions
-other than simple file based reading.
+Provides a base class for data access routines.
+
+Allows abstractions other than simple file based reading.
 """
 
 from abc import ABC, abstractmethod
@@ -31,53 +32,117 @@ from .const import REG_EXT
 
 class DataReader(ABC):
     """
-    Base class for reading data. Allows different sources to be used instead
-    of just files. Allows for applications to provide their own custom
-    data readers (e.g. git instead of files)
+    Abtrace base class for reading data.
+
+    Allows different sources to be used instead of just files. Allows for
+    applications to provide their own custom data readers (e.g. git
+    instead of files).
     """
 
     def __init__(self, top_path: Path):
+        """
+        Initialize the data reader.
+
+        Parameters:
+            top_path (Path): path to the source.
+
+        """
         self.path = top_path
 
     def resolve_path(self, _name: Path) -> Tuple[Path, Path]:
         """
-        Convert the specified path into something that makes sense to the
-        specific data reader.
+        Convert the path into a usable format.
+
+        Converts into something that makes sense to the specific data reader.
+
+        Parameters:
+            _name (Path): unused in the base class
+
+        Returns:
+            Tuple[Path, Path]: returns the resolved path and the original path
+
         """
         return Path(self.path), Path(self.path)
 
     @abstractmethod
     def read(self, _filename: Path) -> str:
-        "Read ASCII data"
+        """
+        Read ASCII data from the source.
+
+        Parameters:
+            _filename (Path): unused in the base class
+
+        Returns:
+            str: Stream of characters from the source
+
+        """
         return ""
 
     @abstractmethod
     def read_bytes(self, _filename: Path) -> bytes:
-        "Read binary data"
+        """
+        Read binary data from the source.
+
+        Parameters:
+            _filename (Path): unused in the base class
+
+        Returns:
+            bytes: Stream of bytes from the source
+
+        """
         return b""
 
 
 class FileReader(DataReader):
-    "Provides the standard file based reader"
+    """
+    Provide the standard file based reader.
+
+    The default reader, based on file system access. This is the only reader
+    provided by the core regenerate system.
+    """
 
     def resolve_path(self, name: Path) -> Tuple[Path, Path]:
-        "Resolves the relative path into a full path"
+        """
+        Resolve the relative path into a full path.
 
+        Parameters:
+            _name (Path): unused in the base class
+
+        Returns:
+            Tuple[Path, Path]: returns the resolved path and the original path
+
+        """
         filename = self.path.parent / name
         new_file_path = filename.with_suffix(REG_EXT).resolve()
         return filename, new_file_path
 
     def read(self, filename: Path) -> str:
-        "Read ASCII data"
+        """
+        Read ASCII data from the source.
 
+        Parameters:
+            filename (Path): filename to read
+
+        Returns:
+            str: Stream of characters from the source
+
+        """
         fullpath = Path(self.path) / filename
         with fullpath.open() as ofile:
             data = ofile.read()
         return data
 
     def read_bytes(self, filename: Path) -> bytes:
-        "Read binary data"
+        """
+        Read binary data from the source.
 
+        Parameters:
+            filename (Path): filename to read
+
+        Returns:
+            bytes: Stream of bytes from the source
+
+        """
         fullpath = self.path / filename
         with fullpath.open("rb") as ofile:
             data = ofile.read()

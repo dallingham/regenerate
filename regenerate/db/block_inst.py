@@ -65,7 +65,7 @@ class BlockInst(NameBase):
            str: Representation of the object
 
         """
-        return f"BlockInst({self.name}, {self.blkid})"
+        return f'BlockInst(name="{self.name}", uuid="{self.uuid}", blkid="{self.blkid}")'
 
     def json_decode(self, data: Dict[str, Any]) -> None:
         """

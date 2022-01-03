@@ -147,6 +147,7 @@ class RegSetTab:
 
         self._skip_changes = False
         self._widgets = RegSetWidgets(find_obj)
+        self.node: Optional[Gtk.TreeIter] = None
 
         self._regset_select_notebook = find_obj("regset_select_notebook")
 
@@ -297,7 +298,13 @@ class RegSetTab:
         return menu
 
     def on_insert_new_register(self, _button: Gtk.Button) -> None:
+        """
+        Insert a new, empty register when the button is clicked.
 
+        Parameters:
+            _button (Gtk.Button): button that triggered the event (unused)
+
+        """
         if self._regset is None or self._reg_model is None:
             return
 
@@ -484,7 +491,14 @@ class RegSetTab:
             self._enable_registers(False)
         self._skip_changes = old_skip
 
-    def _update_on_selection_changed(self):
+    def _update_on_selection_changed(self) -> None:
+        """
+        Update the display when the register set selection is changed.
+
+        Updates the register list and the bit model, and changes the
+        filter.
+
+        """
         status = self._name2status[self._regset.uuid]
         self._reg_model = status.reg_model
         self._filter_manage.change_filter(status.modelfilter)

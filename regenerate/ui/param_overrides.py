@@ -340,7 +340,10 @@ class BlockOverridesList(OverridesList):
             self._used.add(override.parameter)
         self.set_add_menu()
 
-    def build_overrides_list(self, block: Block) -> None:
+    def build_overrides_list(self, block: Block):
+        """
+        Build the parameter override list.
+        """
         total = 0
         param_list = []
         if block is not None:

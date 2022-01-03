@@ -28,10 +28,11 @@ from pathlib import Path
 from typing import Union, Dict, Any
 from operator import methodcaller
 import json
+import os
 
 from .logger import LOGGER
-from .const import BLK_EXT
 from .name_base import NameBase, Uuid
+from .const import REG_EXT, OLD_REG_EXT, BLK_EXT
 
 
 class BaseFile(NameBase):
@@ -43,7 +44,10 @@ class BaseFile(NameBase):
     """
 
     def __init__(
-        self, name: str = "", uuid: Uuid = Uuid(""), filename: str = ""
+        self,
+        name: str = "",
+        uuid: Uuid = Uuid(""),
+        filename: str = "",
     ):
         """
         Initialize the class.
@@ -58,6 +62,7 @@ class BaseFile(NameBase):
 
         self._modified = False
         self._filename = Path(filename)
+        self.original_name = Path(filename)
 
     def last_saved(self) -> int:
         """
@@ -91,7 +96,12 @@ class BaseFile(NameBase):
            Union[str, Path]: Path of the file object
 
         """
-        self._filename = Path(value).with_suffix(BLK_EXT)
+        self.original_name = Path(value)
+
+        if self.original_name.suffix == OLD_REG_EXT:
+            self._filename = self.original_name.with_suffix(REG_EXT)
+        else:
+            self._filename = self.original_name.with_suffix(BLK_EXT)
 
     @property
     def modified(self):
@@ -136,3 +146,15 @@ class BaseFile(NameBase):
             LOGGER.error(str(msg))
 
         self._modified = False
+
+    def _dump_exports(self, exports, json_data):
+        for exp in exports:
+            json_data.append(
+                {
+                    "exporter": exp.exporter,
+                    "target": os.path.relpath(
+                        exp.target, self.filename.parent
+                    ),
+                    "options": exp.options,
+                }
+            )

@@ -25,6 +25,7 @@ within a register.
 """
 
 from typing import List, Optional, Dict, Any, Union
+import warnings
 from .name_base import NameBase, Uuid
 from .enums import BitType, ResetType
 from .bit_values import BitValues
@@ -32,7 +33,6 @@ from .param_value import ParamValue
 from .param_data import ParameterFinder
 from .param_resolver import ParameterResolver
 from .json_base import JSONEncodable
-from .deprecated import deprecated
 
 
 def clean_signal(name: str) -> str:
@@ -212,7 +212,7 @@ class BitField(NameBase):
         msb = self.msb
         lsb = self.lsb
         ftype = str(self.field_type)
-        return f"BitField(name={name}, id={self.uuid} msb={msb}, lsb={lsb}, field_type={ftype})"
+        return f'BitField(name="{name}", id="{self.uuid}" msb={msb}, lsb={lsb}, field_type={ftype})'
 
     @property
     def msb(self) -> ParamValue:
@@ -356,24 +356,21 @@ class BitField(NameBase):
 
     @reset_value.setter
     def reset_value(self, value: int) -> None:
-        """Set the reset value."""
-        self._reset_value_int(value)
-
-    @deprecated
-    def _reset_value_int(self, value: int) -> None:
         """
-        Sets the reset value to an integer. Deprecated function,
-        used to warn when the reset_value setter is used.
+        Set the reset value to an integer.
+
+        Deprecated function, used to warn when the reset_value setter is used.
 
         Parameters:
            value (int): Value to which to set the reset value
 
         """
+        warnings.warn("Use set_reset_value_int() instead", DeprecationWarning)
         self._reset_value = value
 
     def set_reset_value_int(self, value: int) -> None:
         """
-        Sets the reset value to an integer.
+        Set the reset value to an integer.
 
         Parameters:
            value (int): Value to which to set the reset value

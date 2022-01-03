@@ -41,8 +41,8 @@ class Overrides:
         param = self.finder.find(self.parameter)
         pval_str = str(self.value)
         if param:
-            return f"Overrides(path={self.path}, parameter={param.name}, value={pval_str})"
-        return f"Overrides(path={self.path}, parameter=<unknown>, value={pval_str})"
+            return f'Overrides(path="{self.path}", parameter="{param.name}", value="{pval_str}")'
+        return f'Overrides(path="{self.path}", parameter=<unknown>, value="{pval_str}")'
 
     def json(self) -> Dict[str, Any]:
         "Convert data to a dict for JSON export"

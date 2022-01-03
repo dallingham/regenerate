@@ -20,17 +20,16 @@
 Provides the container database for a set of registers.
 """
 
-import os
 import re
 import json
 from io import BytesIO as StringIO
 from pathlib import Path
-from typing import List, Optional, Dict, Iterator, Any, Union
+from typing import List, Optional, Dict, Iterator, Any
 
 from .register import Register
 from .reg_parser import RegParser
 from .signals import Signals
-from .const import OLD_REG_EXT, REG_EXT
+from .const import OLD_REG_EXT
 from .export import ExportData
 from .logger import LOGGER
 from .param_container import ParameterContainer
@@ -47,7 +46,7 @@ class RegisterSet(BaseFile):
     """
 
     def __init__(self, filename=None):
-        super().__init__("", "")
+        super().__init__("", Uuid(""))
         self.descriptive_title = ""
         self._registers: Dict[Uuid, Register] = {}
         self.parameters = ParameterContainer()
@@ -70,29 +69,7 @@ class RegisterSet(BaseFile):
             self.filename = Path(filename)
 
     def __repr__(self) -> str:
-        return f"RegisterSet(name={self.name}, uuid={self.uuid})"
-
-    @property
-    def filename(self) -> Path:
-        """
-        Return the filename as a path.
-
-        Returns:
-           Path: path associated with the object
-
-        """
-        return self._filename
-
-    @filename.setter
-    def filename(self, value: Union[str, Path]) -> None:
-        """
-        Set the filename, converting to a path, and fixing the suffix.
-
-        Parameters:
-           Union[str, Path]: Path of the file object
-
-        """
-        self._filename = Path(value).with_suffix(REG_EXT)
+        return f'RegisterSet(name="{self.name}", uuid="{self.uuid}")'
 
     def total_bits(self) -> int:
         """Returns bits in register"""
@@ -247,16 +224,7 @@ class RegisterSet(BaseFile):
             "register_inst": [reg for index, reg in self._registers.items()],
         }
 
-        for exp in self.exports:
-            data["exports"].append(
-                {
-                    "exporter": exp.exporter,
-                    "target": os.path.relpath(
-                        exp.target, self.filename.parent
-                    ),
-                    "options": exp.options,
-                }
-            )
+        self._dump_exports(self.exports, data["exports"])
         return data
 
     def json_decode(self, data: Dict[str, Any]) -> None:

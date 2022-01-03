@@ -18,14 +18,21 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
-Enumerated types for the database
+Enumerated types for the database.
+
+All types are derived from IntEnum.
+
 """
 
 from enum import IntEnum
 
 
 class BitType(IntEnum):
-    """The bit field type"""
+    """
+    The bit field type.
+
+    Represents the different types of bit fields.
+    """
 
     READ_ONLY = 0
     READ_ONLY_VALUE = 1
@@ -63,7 +70,18 @@ class BitType(IntEnum):
 
 
 class OneShot(IntEnum):
-    "One shot type"
+    """
+    One shot type.
+
+    A bit field can have:
+
+    * No one shot signal
+    * A one shot signal asserted on a write of any value
+    * A one shot signal asserted on a write of a one
+    * A one shot signal asserted on a write of a zero
+    * A one shot signal asserted on a change in value
+
+    """
 
     NONE = 0
     ON_ANY = 1
@@ -88,7 +106,13 @@ class ParamFunc(IntEnum):
 
 
 class ResetType(IntEnum):
-    "Reset type"
+    """
+    Reset type.
+
+    Resets can be numerical (constants), from an input signal, or from a
+    parameter.
+
+    """
 
     NUMERIC = 0
     INPUT = 1
@@ -96,7 +120,12 @@ class ResetType(IntEnum):
 
 
 class InputFunction(IntEnum):
-    "Action taken on control signal"
+    """
+    Action taken on control signal.
+
+    Control signals can set or clear bits, serve as a parallel load,
+    or an assignment value.
+    """
 
     SET_BITS = 0
     CLEAR_BITS = 1
@@ -105,7 +134,13 @@ class InputFunction(IntEnum):
 
 
 class ShareType(IntEnum):
-    "Shared register type"
+    """
+    Shared register type.
+
+    Shared registers allow for two different registers to be a the same address
+    as long as one register is read only and the other register is write only.
+
+    """
 
     NONE = 0
     READ = 1

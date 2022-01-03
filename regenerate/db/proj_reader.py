@@ -252,10 +252,12 @@ class ProjectReader(XmlBase):
             for reg_inst in blk.get_regset_insts():
                 uuid = reg_inst.regset_id
                 blk.add_register_set(self.prj.regsets[uuid])
-                path = blk.get_regset_from_id(uuid).filename
-                blk.get_regset_from_id(uuid).exports = self.reg_exports[
-                    str(path)
-                ]
+                regset = blk.get_regset_from_id(uuid)
+                if regset:
+                    path = regset.filename
+                    blk_rset = blk.get_regset_from_id(uuid)
+                    if blk_rset:
+                        blk_rset.exports = self.reg_exports[str(path)]
 
         self.connect_address_maps()
 
