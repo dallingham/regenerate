@@ -18,77 +18,202 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
-Provides the exceptions for reporting and handling I/O
+Provides the exceptions for reporting and handling I/O.
+
+Custom extensions for reporting error when reading/writing regenerate
+files. File names are stored, so it can be determined which of the files
+caused the issue.
+
 """
 
 
 class CorruptProjectFile(Exception):
-    "Syntax error in the project file"
+    """
+    Syntax error in the project file.
+
+    Reported when an error parsing the file occurs.
+
+    """
 
     def __init__(self, filename: str, text: str):
+        """
+        Create the exception.
+
+        Parameters:
+            filename (str): file where the error occurred
+            text (str): message
+
+        """
         super().__init__()
         self.filename = filename
         self.msg = text
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """
+        Return a message describing the exception.
+
+        Returns:
+            str: message describing the problem
+
+        """
         return f"{self.filename} is corrupt\n{self.msg}"
 
 
 class CorruptBlockFile(Exception):
-    "Syntax error in the block file"
+    """
+    Syntax error in the block file.
+
+    Reported when an error parsing the file occurs.
+
+    """
 
     def __init__(self, filename: str, text: str):
+        """
+        Create the exception.
+
+        Parameters:
+            filename (str): file where the error occurred
+            text (str): message
+
+        """
         super().__init__()
         self.filename = filename
         self.msg = text
 
     def __str__(self):
+        """
+        Return a message describing the exception.
+
+        Returns:
+            str: message describing the problem
+
+        """
         return f"{self.filename} is corrupt\n{self.msg}"
 
 
 class CorruptRegsetFile(Exception):
-    "Syntax error in the register set file"
+    """
+    Syntax error in the register set file.
+
+    Reported when an error parsing the file occurs.
+
+    """
 
     def __init__(self, filename: str, text: str):
+        """
+        Create the exception.
+
+        Parameters:
+            filename (str): file where the error occurred
+            text (str): message
+
+        """
         super().__init__()
         self.filename = filename
         self.msg = text
 
     def __str__(self):
+        """
+        Return a message describing the exception.
+
+        Returns:
+            str: message describing the problem
+
+        """
         return f"{self.filename} is corrupt\n{self.msg}"
 
 
 class IoErrorProjectFile(Exception):
-    "I/O Error accessing the project file"
+    """
+    I/O Error accessing the project file.
+
+    Reported when an I/O error occurs while attempting to access the file.
+
+    """
 
     def __init__(self, filename: str, error: OSError):
+        """
+        Create the exception.
+
+        Parameters:
+            filename (str): file where the error occurred
+            error (OSError): exception that triggered the problem
+
+        """
         super().__init__()
         self.filename = filename
         self.error = error
 
     def __str__(self):
+        """
+        Return a message describing the exception.
+
+        Returns:
+            str: message describing the problem
+
+        """
         return f"Error accessing {self.filename}: {self.error.strerror}"
 
 
 class IoErrorBlockFile(Exception):
-    "I/O Error accessing the block file"
+    """
+    I/O Error accessing the block file.
+
+    Reported when an I/O error occurs while attempting to access the file.
+
+    """
 
     def __init__(self, filename: str, error: OSError):
+        """
+        Create the exception.
+
+        Parameters:
+            filename (str): file where the error occurred
+            error (OSError): exception that triggered the problem
+
+        """
         super().__init__()
         self.filename = filename
         self.error = error
 
     def __str__(self):
+        """
+        Return a message describing the exception.
+
+        Returns:
+            str: message describing the problem
+
+        """
         return f"Error accessing {self.filename}: {self.error.strerror}"
 
 
 class IoErrorRegsetFile(Exception):
-    "I/O Error accessing the register set file"
+    """
+    I/O Error accessing the register set file.
+
+    Reported when an I/O error occurs while attempting to access the file.
+
+    """
 
     def __init__(self, filename: str, error: OSError):
+        """
+        Create the exception.
+
+        Parameters:
+            filename (str): file where the error occurred
+            error (OSError): exception that triggered the problem
+
+        """
         super().__init__()
         self.filename = filename
         self.error = error
 
     def __str__(self):
+        """
+        Return a message describing the exception.
+
+        Returns:
+            str: message describing the problem
+
+        """
         return f"Error accessing {self.filename}: {self.error.strerror}"

@@ -18,8 +18,10 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
+Parameter Resolver.
+
 Provides the ability to resolve parameters into their final integer
-ovalues based of the default value and any overrides.
+values based of the default value and any overrides.
 """
 
 from typing import Dict, Any
@@ -30,36 +32,41 @@ from .name_base import Uuid
 
 class ParameterResolver:
     """
-    Resolves parameters into their final integer value
-    """
+    Parameter Resolver.
 
-    def __new__(cls):
-        if not hasattr(cls, "instance"):
-            cls.instance = super(ParameterResolver, cls).__new__(cls)
-        return cls.instance
+    Resolves parameters into their final integer value, based on default
+    values and overriding.
+
+    """
 
     top_overrides: Dict[str, Dict[str, Any]] = {}
     reginst_overrides: Dict[str, Dict[str, Any]] = {}
     blkinst_id = Uuid("")
     reginst_id = Uuid("")
 
+    def __new__(cls):
+        if not hasattr(cls, "instance"):
+            cls.instance = super(ParameterResolver, cls).__new__(cls)
+        return cls.instance
+
     def __init__(self):
         ...
 
     def set_reginst(self, uuid: Uuid) -> None:
-        "Sets the instance name"
+        "Set the instance name."
 
         self.reginst_id = uuid
 
     def set_blkinst(self, uuid: Uuid) -> None:
-        "Sets the instance name"
+        "Set the instance name."
 
         self.blkinst_id = uuid
 
     def clear(self) -> None:
         """
-        Clears out all overrides. Typically called when a new project is
-        loaded.
+        Clear out all overrides.
+
+        Typically called when a new project is loaded.
         """
         self.top_overrides = {}
         self.reginst_overrides = {}
@@ -70,7 +77,7 @@ class ParameterResolver:
     def add_regset_override(
         self, reginst_id: Uuid, param_id: Uuid, data  # ParamValue
     ) -> None:
-        "Adds an override for a parameter in a register set"
+        "Add an override for a parameter in a register set."
         if reginst_id not in self.reginst_overrides:
             self.reginst_overrides[reginst_id] = {param_id: data}
         else:
@@ -79,7 +86,7 @@ class ParameterResolver:
     def add_blockinst_override(
         self, blkinst_id: Uuid, param_id: Uuid, data  # ParamValue
     ) -> None:
-        "Adds an override for a parameter a block instance"
+        "Add an override for a parameter a block instance."
 
         if blkinst_id not in self.top_overrides:
             self.top_overrides[blkinst_id] = {param_id: data}
@@ -87,7 +94,7 @@ class ParameterResolver:
             self.top_overrides[blkinst_id][param_id] = data
 
     def resolve_reg(self, param: ParameterData) -> int:
-        "Resolve a parameter looking for overrides"
+        "Resolve a parameter looking for overrides."
 
         if not self.reginst_id:
             return param.value
@@ -100,7 +107,7 @@ class ParameterResolver:
         return param.value
 
     def resolve_blk(self, value) -> int:
-        "Resolve a parameter looking for overrides"
+        "Resolve a parameter looking for overrides."
 
         if not self.blkinst_id:
             return _resolve_blk_value(value)
@@ -114,7 +121,7 @@ class ParameterResolver:
         return value.value
 
     def resolve(self, param: ParameterData) -> int:
-        "Resolve a parameter looking for overrides"
+        "Resolve a parameter looking for overrides."
         val = self.resolve_reg(param)
         if isinstance(val, int):
             return val

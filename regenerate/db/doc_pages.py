@@ -18,7 +18,11 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
-Manages document pages, which are simply name to string dictionaries.
+Manages document pages.
+
+Document pages consist of the page (a text string holding the documentation),
+a list of labels or tags, and a title.
+
 """
 
 from typing import Dict, List, Optional
@@ -27,10 +31,18 @@ from .json_base import JSONEncodable
 
 class Page(JSONEncodable):
     """
-    Data associated with a page - text, title, and labels.
+    Data associated with a page.
+
+    Include text, title, and labels.
     """
 
     def __init__(self):
+        """
+        Initialize the object with empty values.
+
+        Sets page and title to empty strings, labels to an empty list.
+
+        """
         self.page: str = ""
         self.labels: List[str] = []
         self.title: str = ""
@@ -38,11 +50,17 @@ class Page(JSONEncodable):
 
 class DocPages:
     """
-    Manages the documenation pages, allowing pages to be updated,
-    deleted, or interated over.
+    Manages the documenation pages.
+
+    Allow pages to be updated, deleted, or interated over.
     """
 
     def __init__(self):
+        """
+        Initialize the object with empty values.
+
+        Creates an empty list of pages.
+        """
         self.pages: List[Page] = []
 
     def update_page(self, page_name: str, text: str, tags: List[str]) -> None:

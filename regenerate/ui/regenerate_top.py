@@ -540,42 +540,21 @@ class MainWindow(BaseWindow):
             self.prj = RegProject(filename)
             self.project_tabs.change_db(self.prj)
             self.top_level_tab.change_project(self.prj)
-        except CorruptProjectFile as msg:
+        except (CorruptProjectFile, IoErrorProjectFile) as msg:
             ErrorMsg(
                 "Could not load the project",
                 str(msg),
                 self._top_window,
             )
             return
-        except IoErrorProjectFile as msg:
-            ErrorMsg(
-                "Could not load the project",
-                str(msg),
-                self._top_window,
-            )
-            return
-        except CorruptBlockFile as msg:
+        except (CorruptBlockFile, IoErrorBlockFile) as msg:
             ErrorMsg(
                 "Could not load a block file",
                 str(msg),
                 self._top_window,
             )
             return
-        except IoErrorBlockFile as msg:
-            ErrorMsg(
-                "Could not load a block file",
-                str(msg),
-                self._top_window,
-            )
-            return
-        except CorruptRegsetFile as msg:
-            ErrorMsg(
-                "Could not load a register set file",
-                str(msg),
-                self._top_window,
-            )
-            return
-        except IoErrorRegsetFile as msg:
+        except (CorruptRegsetFile, IoErrorRegsetFile) as msg:
             ErrorMsg(
                 "Could not load a register set file",
                 str(msg),

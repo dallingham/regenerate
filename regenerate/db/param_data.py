@@ -18,46 +18,24 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
-Contains the information for register set parameters and
-project parameters.
+Contains the information for register set parameters and project parameters.
+
+ParameterData consists of default, min, and max values.
+
 """
 
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from .name_base import NameBase, Uuid
-
-
-class ParameterFinder:
-    """
-    Finds a parameter in the project based on its UUID.
-    """
-
-    def __new__(cls):
-        if not hasattr(cls, "instance"):
-            cls.instance = super(ParameterFinder, cls).__new__(cls)
-        return cls.instance
-
-    data_map: Dict[Uuid, "ParameterData"] = {}
-
-    def find(self, uuid: Uuid) -> Optional["ParameterData"]:
-        "Look up the UUID in the data map, returning None if not found"
-        return self.data_map.get(uuid)
-
-    def register(self, parameter: "ParameterData") -> None:
-        "Registers the parameter with the system"
-        self.data_map[parameter.uuid] = parameter
-
-    def unregister(self, parameter: "ParameterData") -> None:
-        "Removes the parameter with the system"
-        if parameter.uuid in self.data_map:
-            del self.data_map[parameter.uuid]
-
-    def dump(self) -> None:
-        "Dumps the data map to stdout"
-        print(self.data_map)
+from .param_finder import ParameterFinder
 
 
 class ParameterData(NameBase):
-    """Register set parameter data"""
+    """
+    Parameter data.
+
+    Parameters consist of min, max, and default values.
+
+    """
 
     def __init__(
         self,
@@ -66,6 +44,16 @@ class ParameterData(NameBase):
         min_val: int = 0,
         max_val: int = 0xFFFF_FFFF,
     ):
+        """
+        Initialize the object.
+
+        Parameters:
+            name (str): Parameter name
+            value (int): default value
+            min_val (int): minimum value the parameter can hold
+            max_val (int): maximum value the parameter can hold
+
+        """
         super().__init__(name, Uuid(""))
         self.value = value
         self.min_val = min_val
@@ -74,11 +62,23 @@ class ParameterData(NameBase):
         self.finder.register(self)
 
     def __repr__(self) -> str:
-        return f"ParameterData(name={self.name}, id={self.uuid}, value={self.value})"
+        """
+        Return the string representation of the object.
+
+        Returns:
+            str: string describing the object
+
+        """
+        return f'ParameterData(name="{self.name}", uuid="{self.uuid}", value={self.value})'
 
     def json(self) -> Dict[str, Any]:
-        "Converts the object to a dict for JSON serialization"
+        """
+        Encode the object to a JSON dictionary.
 
+        Returns:
+            Dict[str, Any]: JSON-ish dictionary
+
+        """
         return {
             "uuid": self.uuid,
             "name": self.name,
@@ -88,8 +88,13 @@ class ParameterData(NameBase):
         }
 
     def json_decode(self, data: Dict[str, Any]) -> None:
-        "Converts a JSON dict into the object"
+        """
+        Decode the JSON data.
 
+        Parameters:
+            data (Dict[str, Any]): JSON data to decode
+
+        """
         self.finder.unregister(self)
         self.uuid = Uuid(data["uuid"])
         self.name = data["name"]

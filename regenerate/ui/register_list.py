@@ -432,7 +432,17 @@ class RegisterList:
                 registers.append((path, store[path][RegCol.OBJ]))
         return registers
 
-    def find_row_by_register(self, register: Register):
+    def find_row_by_register(self, register: Register) -> int:
+        """
+        Search the model to find the position of the register.
+
+        Parameters:
+            register (Register): register to find
+
+        Returns:
+            int: row the contains the register
+
+        """
         for row in self._model:
             if row[RegCol.OBJ].uuid == register.uuid:
                 return row
@@ -472,7 +482,13 @@ class RegisterList:
         self.rebuild_model(reg)
 
     def rebuild_model(self, selected: Optional[Register]) -> None:
+        """
+        Rebuild the model, selecting the passed register, if supplied.
 
+        Parameters:
+            selected (Optional[Register]): register to select, if not None
+
+        """
         reglist = sorted(
             [row[RegCol.OBJ] for row in self._model], key=lambda x: x.address
         )

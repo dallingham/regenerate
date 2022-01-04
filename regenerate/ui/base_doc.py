@@ -367,7 +367,7 @@ class BaseDoc:
         """
 
         edit_window = Gtk.ScrolledWindow()
-        text_editor = self._create_text_editor()
+        text_editor = _create_text_editor()
         edit_window.add(text_editor)
 
         text_buffer = text_editor.get_buffer()
@@ -509,22 +509,6 @@ class BaseDoc:
             self.remove_page_from_doc(info.name)
             self.callback()
 
-    def _create_text_editor(self) -> RstEditor:
-        """
-        Create the text editor and configure it.
-
-        Returns:
-            RstEditor: editor widget
-
-        """
-        text_editor = RstEditor()
-        text_editor.set_margin_left(10)
-        text_editor.set_margin_right(10)
-        text_editor.set_margin_top(10)
-        text_editor.set_margin_bottom(10)
-        text_editor.show()
-        return text_editor
-
     def _text_changed_callback(self, textbuf: GtkSource.Buffer) -> None:
         """
         Update when a change to the text occurred.
@@ -596,6 +580,23 @@ class BaseDoc:
 
         """
         return
+
+
+def _create_text_editor() -> RstEditor:
+    """
+    Create the text editor and configure it.
+
+    Returns:
+        RstEditor: editor widget
+
+    """
+    text_editor = RstEditor()
+    text_editor.set_margin_left(10)
+    text_editor.set_margin_right(10)
+    text_editor.set_margin_top(10)
+    text_editor.set_margin_bottom(10)
+    text_editor.show()
+    return text_editor
 
 
 def _help(_button: Gtk.Button) -> None:

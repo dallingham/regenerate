@@ -57,6 +57,16 @@ class AddressMap(NameBase):
         self._fixed = False
         self.block_insts: List[Uuid] = []
 
+    def __repr__(self) -> str:
+        """
+        Return a string representation of the object.
+
+        Returns:
+            str: String representing the object's values
+
+        """
+        return f'AddressMap(name="{self.name}", uuid="{self.uuid}", base=0x{self.base:x})'
+
     @property
     def fixed(self) -> bool:
         """

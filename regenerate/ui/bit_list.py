@@ -114,6 +114,7 @@ class BitModel(Gtk.ListStore):
            Gtk.TreePath: Path of the row that was added
 
         """
+        # pylint: disable=E1133
         for row in self:
             field = row[BitCol.FIELD]
             row[BitCol.MSB] = field.msb.int_decimal_str()
@@ -189,6 +190,13 @@ class BitList:
         self._menu = self._build_menu()
 
     def _build_menu(self) -> Gtk.Menu:
+        """
+        Build the right click menu for the bit list table.
+
+        Returns:
+            Gtk.Menu: The menu to display
+
+        """
         menu = Gtk.Menu()
 
         item = Gtk.MenuItem("Compact selected fields")
@@ -203,6 +211,14 @@ class BitList:
         return menu
 
     def push_fields_down(self, _menuitem: Gtk.MenuItem) -> None:
+        """
+        Add 1 to the LSB/MSB of each bit field with an LSB equal to
+        or greater than the selected bit field.
+
+        Paramters:
+            _menuitem (Gtk.MenuItem): unused
+
+        """
         rows = self.get_selected_rows()
         if len(rows) != 1:
             LOGGER.error(
@@ -253,6 +269,13 @@ class BitList:
         self._model.update_fields()
 
     def compact_selected_fields(self, _menuitem: Gtk.MenuItem) -> None:
+        """
+        Compact the selected bit fields, removing any unused bit positions.
+
+        Parameters:
+            _menuitem (Gtk.MenuItem): unused
+
+        """
         rows = self.get_selected_rows()
         if len(rows) < 2:
             return
@@ -283,12 +306,18 @@ class BitList:
         self._modified()
 
     def redraw(self) -> None:
+        """
+        Clear the model and re-add the bit fields.
+        """
         if self._model:
             self._model.clear()
             for field in self._model.register.get_bit_fields():
                 self._model.append_field(field)
 
     def update_display(self) -> None:
+        """
+        Update the fields in the model if the model exists.
+        """
         if self._model:
             self._model.update_fields()
 

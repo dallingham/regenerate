@@ -18,7 +18,10 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
-Provides the export rules for the builder
+Provides the export rules for the builder.
+
+Exporters generate output files from the regenerate data.
+
 """
 from typing import Dict, Any, Optional
 from .json_base import JSONEncodable
@@ -26,8 +29,10 @@ from .json_base import JSONEncodable
 
 class ExportData(JSONEncodable):
     """
-    Provides the export rules for the builder. This includes
-    the exporter name (option) and the destination file (path).
+    Provides the export rules for the builder.
+
+    This includes the exporter name (option) and the destination file (path).
+
     """
 
     def __init__(
@@ -36,6 +41,15 @@ class ExportData(JSONEncodable):
         target: str = "",
         options: Optional[Dict[str, str]] = None,
     ):
+        """
+        Initialize the object.
+
+        Parameters:
+            exporter (str): exporter name
+            target (str): output file name
+            options (Optional[Dict[str, str]]): options structure
+
+        """
         self.exporter: str = exporter
         self.target: str = str(target)
         self.options: Dict[str, str] = {}
@@ -43,10 +57,23 @@ class ExportData(JSONEncodable):
             self.options = options
 
     def __repr__(self) -> str:
+        """
+        Convert object representation into a string.
+
+        Returns:
+            str: string representation of the object
+
+        """
         return f"ExportData(exporter={self.exporter}, target={self.target})"
 
     def json(self) -> Dict[str, Any]:
-        "Convert object into a Dict for json export"
+        """
+        Encode the object to a JSON dictionary.
+
+        Returns:
+            Dict[str, Any]: JSON-ish dictionary
+
+        """
         return {
             "exporter": self.exporter,
             "target": str(self.target),
@@ -54,7 +81,13 @@ class ExportData(JSONEncodable):
         }
 
     def json_decode(self, data: Dict[str, Any]) -> None:
-        """Convert JSON data back into an ExportData instance"""
+        """
+        Decode the JSON data.
+
+        Parameters:
+            data (Dict[str, Any]): JSON data to decode
+
+        """
         self.exporter = data["exporter"]
         self.target = str(data["target"])
         self.options = data["options"]

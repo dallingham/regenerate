@@ -107,6 +107,9 @@ class RegProject(BaseFile):
         else:
             self._filename = Path(".")
 
+    def __repr__(self) -> str:
+        return f'RegProject(name="{self.name}", uuid="{self.uuid}")'
+
     def save(self) -> None:
         """Save the project using the default name."""
         new_path = Path(self._filename).with_suffix(PRJ_EXT)
@@ -509,7 +512,7 @@ class RegProject(BaseFile):
         if page_names:
             page = self.doc_pages.get_page(page_names[0])
             if page:
-                return page[0]
+                return page.page
         return ""
 
     def json(self) -> Dict[str, Any]:
