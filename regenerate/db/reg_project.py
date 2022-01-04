@@ -606,7 +606,7 @@ class RegProject(BaseFile):
             for uuid, addr_data_json in data.items():
                 addr_data = AddressMap()
                 addr_data.json_decode(addr_data_json)
-                self.address_maps[Uuid(uuid)] = addr_data
+                self.address_maps[addr_data.uuid] = addr_data
 
     def _load_exports_from_json_data(self, data: List[Dict[str, Any]]) -> None:
         "Loads the export information from JSON data"
@@ -659,7 +659,7 @@ class RegProject(BaseFile):
                     path = self._filename.parent / base_path
                     blk_data.open(path)
 
-                self.blocks[Uuid(key)] = blk_data
+                self.blocks[blk_data.uuid] = blk_data
 
     def _load_overrides_from_json_data(
         self, data: List[Dict[str, Any]]
