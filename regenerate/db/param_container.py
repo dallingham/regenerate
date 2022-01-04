@@ -18,49 +18,118 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
-Container for parameters, allowing adding, removing, and searching
+Container for parameters.
+
+Allows adding, removing, and searching.
+
 """
 
 from typing import List, Optional
+from .name_base import Uuid
 from .param_data import ParameterData
 
 
 class ParameterContainer:
-    "Parameter containing class"
+    """
+    Class that manages parameters.
+
+    Allows the adding, removing, and searching for parameters.
+
+    """
 
     def __init__(self):
+        """
+        Initialize the object.
+
+        Sets the list to an empty list.
+
+        """
         self._parameters: List[ParameterData] = []
 
-    def get(self):
-        """Returns the parameter list"""
+    def get(self) -> List[ParameterData]:
+        """
+        Return the parameter list.
+
+        Returns:
+            List[ParameterData]: list of parameters
+
+        """
         return self._parameters
 
     def add(self, parameter: ParameterData) -> None:
-        """Adds a parameter to the list"""
+        """
+        Add a parameter to the list.
+
+        Parameter:
+            parameter (ParameterData): Parameter to add
+
+        """
         self._parameters.append(parameter)
 
     def remove(self, name: str) -> None:
-        """Removes a parameter from the list if it exists"""
+        """
+        Remove a parameter from the list if it exists.
+
+        Parameter:
+            name (str): Name of the parameter to remove
+
+        """
         self._parameters = [p for p in self._parameters if p.name != name]
 
+    def remove_by_uuid(self, uuid: Uuid) -> None:
+        """
+        Remove a parameter from the list if it exists.
+
+        Parameter:
+            name (str): Name of the parameter to remove
+
+        """
+        self._parameters = [p for p in self._parameters if p.uuid != uuid]
+
     def set(self, parameter_list: List[ParameterData]) -> None:
-        """Sets the parameter list"""
+        """
+        Set the parameter list.
+
+        Parameters:
+            parameter_list (List[ParameterData]): parameter list
+
+        """
         self._parameters = parameter_list
 
     def find(self, name: str) -> Optional[ParameterData]:
-        "Finds the parameter from its name"
+        """
+        Find a parameter from its name.
+
+        Parameters:
+            name (str): name to search for
+
+        Returns:
+            Optional[ParameterData]: the parameter data, if found
+
+        """
         for param in self._parameters:
             if param.name == name:
                 return param
         return None
 
     def json(self):
-        "Convert to a dictionary for serialization"
+        """
+        Encode the object to a JSON dictionary.
+
+        Returns:
+            Dict[str, Any]: JSON-ish dictionary
+
+        """
         return [parameter.json() for parameter in self._parameters]
 
     def json_decode(self, data):
-        "Load data from JSON data"
+        """
+        Decode the JSON data.
 
+        Parameters:
+            data (Dict[str, Any]): JSON data to decode
+
+        """
         self._parameters = []
         for item_json in data:
             item = ParameterData()

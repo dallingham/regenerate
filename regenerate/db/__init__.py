@@ -17,7 +17,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
-Includes the base instances in the module
+Package definition for the regenerate data.
+
+Imports the submodules.
 """
 
 from .bitfield import BitField

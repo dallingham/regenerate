@@ -18,8 +18,12 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
-Provides a simple JSON encode/decode function for use with very
-simple classes.
+Provides a simple JSON encode/decode function.
+
+Basic serialization from simple classes. The objects should not contain
+any class objects. If they do, then a custom encode/decode should be
+used instead of these.
+
 """
 
 from typing import Dict, Any
@@ -28,7 +32,9 @@ from .logger import LOGGER
 
 class JSONEncodable:
     """
-    JSON encoder base class. Only works if you are okay with:
+    JSON encoder base class.
+
+    Only works if you are okay with:
 
     * All class variables saved in JSON
     * Variable names match JSON names
@@ -39,13 +45,23 @@ class JSONEncodable:
     """
 
     def json(self) -> Dict[str, Any]:
-        """Converts the local variables to a dictionary"""
+        """
+        Encode the object to a JSON dictionary.
 
+        Returns:
+            Dict[str, Any]: JSON-ish dictionary
+
+        """
         return vars(self)
 
     def json_decode(self, data: Dict[str, Any]) -> None:
-        """Converts the dictionary back into local variables"""
+        """
+        Decode the JSON data.
 
+        Parameters:
+            data (Dict[str, Any]): JSON data to decode
+
+        """
         key = ""
         try:
             for key, value in data.items():
