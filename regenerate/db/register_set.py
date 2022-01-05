@@ -29,7 +29,7 @@ from typing import List, Optional, Dict, Iterator, Any
 from .register import Register
 from .reg_parser import RegParser
 from .signals import Signals
-from .const import OLD_REG_EXT
+from .const import OLD_REG_EXT, REG_EXT
 from .export import ExportData
 from .logger import LOGGER
 from .param_container import ParameterContainer
@@ -155,7 +155,7 @@ class RegisterSet(BaseFile):
 
     def save(self) -> None:
         "Save the data to the specified file as a JSON file"
-        self.save_json(self.json(), self.filename)
+        self.save_json(self.json(), self.filename.with_suffix(REG_EXT))
 
     @property
     def overview_text(self) -> str:
@@ -237,7 +237,7 @@ class RegisterSet(BaseFile):
         self.ports = ports
 
         self.name = data["name"]
-        self._id = Uuid(data["uuid"])
+        self.uuid = Uuid(data["uuid"])
         self.array_is_reg = data["array_is_reg"]
         self.memory = data.get("memory", False)
         self.coverage = data["coverage"]

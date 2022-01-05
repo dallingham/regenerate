@@ -159,6 +159,7 @@ class RegProject(BaseFile):
                 raise CorruptProjectFile(self._filename.name, str(msg))
             except OSError as msg:
                 raise IoErrorProjectFile(self._filename.name, msg)
+            self.check_uuids()
 
     def xml_loads(self, data: bytes, name: str) -> None:
         """
@@ -367,7 +368,12 @@ class RegProject(BaseFile):
         self, regset_inst: RegisterInst
     ) -> RegisterSet:
         "Find the regset associated with a particular regset instance"
-        return self.regsets[regset_inst.regset_id]
+        try:
+            return self.regsets[regset_inst.regset_id]
+        except KeyError:
+            print(f"inst {regset_inst.name}/{regset_inst.regset_id} didn't map")
+            print(self.regsets)
+            return None
 
     def get_register_set(self) -> List[Path]:
         """
@@ -703,3 +709,16 @@ class RegProject(BaseFile):
                 regset.json_decode(json_data)
                 self.finder.register(regset)
                 self.regsets[regset.uuid] = regset
+
+    def check_uuids(self):
+
+        for blkinst in self.block_insts:
+            if blkinst.blkid not in self.blocks.keys():
+                print("*** WARNING ***")
+                print(f"Block inst {blkinst.name}({blkinst.uuid}) referenced block {blkinst.blkid}, which does not exist")
+        for block in self.blocks.values():
+            for reginst in block.get_regset_insts():
+                if block.get_regset_from_id(reginst.regset_id) is None:
+                    print("*** WARNING ***")
+                    print(f"Register inst {reginst.name}({reginst.uuid}) referenced register set {reginst.regset_id}, which does not exist")
+                    

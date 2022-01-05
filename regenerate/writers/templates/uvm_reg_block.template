@@ -543,7 +543,7 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
 
      `uvm_object_utils({{grp.name}}__blk)
 
-  {% for regset_inst in prj.blocks[grp.blkid].regset_insts %}
+  {% for regset_inst in prj.blocks[grp.blkid].get_regset_insts() %}
   {%    set regset = prj.regsets[regset_inst.regset_id] %}
   {%    if regset_inst.repeat.resolve() > 1 %}
      {{grp.name}}__{{regset_inst.name}}__regset {{regset_inst.name}}[{{regset_inst.repeat.resolve()}}];
@@ -571,7 +571,7 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
     {% endfor %}
   {% endif %}
 
-  {% for regset_inst in prj.blocks[grp.blkid].regset_insts %}
+  {% for regset_inst in prj.blocks[grp.blkid].get_regset_insts() %}
    {% set regset = prj.regsets[regset_inst.regset_id] %}
    {% if regset_inst.repeat.resolve() > 1 or regset.array %}
         for (int i = 0; i < {{regset_inst.repeat.resolve()}}; i++) begin
