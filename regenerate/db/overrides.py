@@ -17,83 +17,82 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""
-Manages overriding parameter values from a lower level.
+# """
+# Manages overriding parameter values from a lower level.
 
-Maps the override values for parameters. The override could be a parameter
-or an integer.
+# Maps the override values for parameters. The override could be a parameter
+# or an integer.
 
-"""
+# """
 
-from typing import Dict, Any
-from .param_data import ParameterFinder
-from .param_value import ParamValue
-from .name_base import Uuid
+# from typing import Dict, Any
+# from .parameters import ParameterFinder, ParameterValue
+# from .name_base import Uuid
 
 
-class Overrides:
-    """
-    Stores the override information.
+# class Overrides:
+#     """
+#     Stores the override information.
 
-    This includes the ParameterFinder, the path UUID, parameter UUID,
-    and the parameter's value.
+#     This includes the ParameterFinder, the path UUID, parameter UUID,
+#     and the parameter's value.
 
-    """
+#     """
 
-    def __init__(self):
-        """
-        Initialize the object.
+#     def __init__(self):
+#         """
+#         Initialize the object.
 
-        Set the values to their default values.
+#         Set the values to their default values.
 
-        """
-        self.finder = ParameterFinder()
-        self.path: Uuid = Uuid("")
-        self.parameter: Uuid = Uuid("")
-        self.value = ParamValue()
-        self.temp_name = ""
+#         """
+#         self.finder = ParameterFinder()
+#         self.path: Uuid = Uuid("")
+#         self.parameter: Uuid = Uuid("")
+#         self.value = ParameterValue()
+#         self.temp_name = ""
 
-    def __repr__(self) -> str:
-        """
-        Provide the string representation of the object.
+#     def __repr__(self) -> str:
+#         """
+#         Provide the string representation of the object.
 
-        Returns:
-            str: string representation
+#         Returns:
+#             str: string representation
 
-        """
-        param = self.finder.find(self.parameter)
-        pval_str = str(self.value)
-        if param:
-            return f'Overrides(path="{self.path}", parameter="{param.name}", value="{pval_str}")'
-        return f'Overrides(path="{self.path}", parameter=<unknown>, value="{pval_str}")'
+#         """
+#         param = self.finder.find(self.parameter)
+#         pval_str = str(self.value)
+#         if param:
+#             return f'Overrides(path="{self.path}", parameter="{param.name}", value="{pval_str}")'
+#         return f'Overrides(path="{self.path}", parameter=<unknown>, value="{pval_str}")'
 
-    def json(self) -> Dict[str, Any]:
-        """
-        Encode the object to a JSON dictionary.
+#     def json(self) -> Dict[str, Any]:
+#         """
+#         Encode the object to a JSON dictionary.
 
-        Returns:
-            Dict[str, Any]: JSON-ish dictionary
+#         Returns:
+#             Dict[str, Any]: JSON-ish dictionary
 
-        """
-        return {
-            "path": self.path,
-            "parameter": self.parameter,
-            "value": self.value,
-        }
+#         """
+#         return {
+#             "path": self.path,
+#             "parameter": self.parameter,
+#             "value": self.value,
+#         }
 
-    def json_decode(self, data: Dict[str, Any]) -> None:
-        """
-        Decode the JSON data.
+#     def json_decode(self, data: Dict[str, Any]) -> None:
+#         """
+#         Decode the JSON data.
 
-        Parameters:
-            data (Dict[str, Any]): JSON data to decode
+#         Parameters:
+#             data (Dict[str, Any]): JSON data to decode
 
-        """
-        self.path = Uuid(data["path"])
-        self.parameter = Uuid(data["parameter"])
-        val = data["value"]
-        if isinstance(val, int):
-            self.value = ParamValue(val)
-        else:
-            self.value = ParamValue()
-            self.value.json_decode(val)
+#         """
+#         self.path = Uuid(data["path"])
+#         self.parameter = Uuid(data["parameter"])
+#         val = data["value"]
+#         if isinstance(val, int):
+#             self.value = ParameterValue(val)
+#         else:
+#             self.value = ParameterValue()
+#             self.value.json_decode(val)

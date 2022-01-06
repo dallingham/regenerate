@@ -22,7 +22,7 @@ Manages the instance of a register within a group.
 """
 from typing import Union, Dict, Any
 
-from .param_value import ParamValue
+from .parameters import ParameterValue
 from .name_base import NameBase, Uuid
 
 
@@ -45,7 +45,7 @@ class RegisterInst(NameBase):
         super().__init__(inst, Uuid(""))
         self.regset_id = rset
         self.offset = offset
-        self.repeat = ParamValue(repeat)
+        self.repeat = ParameterValue(repeat)
         self.repeat_offset = repeat_offset
         self.hdl = hdl
         self._no_uvm = no_uvm
@@ -106,7 +106,7 @@ class RegisterInst(NameBase):
         self.uuid = Uuid(data["uuid"])
         self.name = data["name"]
         self.offset = data["offset"]
-        self.repeat = ParamValue()
+        self.repeat = ParameterValue()
         self.repeat.json_decode(data["repeat"])
         self.hdl = data["hdl"]
         self.no_uvm = data["no_uvm"]

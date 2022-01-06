@@ -32,7 +32,7 @@ from regenerate.db import (
     TYPE_TO_OUTPUT,
     Register,
     BitField,
-    ParamValue,
+    ParameterValue,
     BitType,
     RegisterSet,
     RegProject,
@@ -133,7 +133,7 @@ class FieldInfo(NamedTuple):
 
     name: str
     lsb: int
-    msb: ParamValue
+    msb: ParameterValue
     offset: int
 
 
@@ -915,7 +915,7 @@ def build_input_signals(
 def add_signal(
     signal_name: str,
     vector: str,
-    dimension: ParamValue,
+    dimension: ParameterValue,
     signal_set: Set[Scalar],
 ) -> None:
     "Adds the signal to the signal set, handling dimensions"

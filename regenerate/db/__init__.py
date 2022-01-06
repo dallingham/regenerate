@@ -34,12 +34,15 @@ from .const import OLD_PRJ_EXT, PRJ_EXT, REG_EXT, BLK_EXT, OLD_REG_EXT
 from .register_inst import RegisterInst
 from .name_base import NameBase, Uuid
 from .register_set import RegisterSet
-from .param_resolver import ParameterResolver
 from .proj_reader import ProjectReader
 from .address_map import AddressMap
-from .param_data import ParameterData, ParameterFinder
-from .param_value import ParamValue
-from .overrides import Overrides
+from .parameters import (
+    ParameterDefinition,
+    ParameterFinder,
+    ParameterValue,
+    ParameterResolver,
+    Overrides,
+)
 from .enums import *
 from .logger import *
 from .export import ExportData

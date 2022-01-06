@@ -28,8 +28,9 @@ from typing import List, Dict, Optional, Any
 from .name_base import NameBase, Uuid
 from .enums import ResetType, ShareType
 from .bitfield import BitField
-from .param_value import ParamValue
-from .param_container import ParameterContainer
+from .parameters import ParameterValue, ParameterContainer
+
+# from .param_container import ParameterContainer
 from .register_flags import RegisterFlags
 
 
@@ -71,7 +72,7 @@ class Register(NameBase):
         """
         super().__init__(name, Uuid(""))
 
-        self.dimension = ParamValue(1)
+        self.dimension = ParameterValue(1)
         self._token = ""
         self._bit_fields: Dict[int, BitField] = {}
         self._parameter_list: ParameterContainer = ParameterContainer()
@@ -483,7 +484,7 @@ class Register(NameBase):
         self.name = data["name"]
         self._id = Uuid(data["uuid"])
         self.description = data["description"]
-        self.dimension = ParamValue()
+        self.dimension = ParameterValue()
         self.dimension.json_decode(data["dimension"])
 
         self._token = data["token"]

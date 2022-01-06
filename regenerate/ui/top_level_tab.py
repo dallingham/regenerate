@@ -29,7 +29,7 @@ from regenerate.db import BlockInst, RegProject, Block
 from regenerate.settings.paths import HELP_PATH
 from .instance_list import InstMdl, InstanceList
 from .enums import InstCol
-from .param_overrides import OverridesList
+from .param_overrides import ParameterOverridesList
 from .parameter_list import ParameterList
 
 
@@ -67,7 +67,7 @@ class TopLevelTab:
             check_subsystem_addresses,
         )
         self.project_modified = modified
-        self._overrides_list = OverridesList(
+        self._overrides_list = ParameterOverridesList(
             find_obj("prj_override_list"),
             find_obj("prj_override_add"),
             find_obj("prj_override_remove"),

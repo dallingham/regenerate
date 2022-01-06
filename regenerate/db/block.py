@@ -32,14 +32,21 @@ import json
 
 from .name_base import Uuid
 from .data_reader import FileReader
-from .overrides import Overrides
 from .register_inst import RegisterInst
 from .register_set import RegisterSet
 from .doc_pages import DocPages
 from .base_file import BaseFile
 from .logger import LOGGER
-from .param_container import ParameterContainer
-from .param_resolver import ParameterResolver
+
+# from .param_container import ParameterContainer
+# from .overrides import ParameterOverrides
+# from .param_resolver import ParameterResolver
+
+from .parameters import (
+    ParameterResolver,
+    ParameterContainer,
+    ParameterOverrides,
+)
 from .regset_finder import RegsetFinder
 from .export import ExportData
 from .exceptions import (
@@ -78,7 +85,7 @@ class Block(BaseFile):
         self._regset_insts: List[RegisterInst] = []
         self._regsets: Dict[Uuid, RegisterSet] = {}
         self.parameters = ParameterContainer()
-        self.overrides: List[Overrides] = []
+        self.overrides: List[ParameterOverrides] = []
         self.exports: List[ExportData] = []
 
     def __repr__(self) -> str:
@@ -271,8 +278,8 @@ class Block(BaseFile):
         return base
 
     def _json_decode_regsets(
-        self, data: Dict[str, Any]
-    ) -> Dict[str, RegisterSet]:
+        self, data: Dict[Uuid, Any]
+    ) -> Dict[Uuid, RegisterSet]:
         """
         Decode the register set section of the JSON data.
 
@@ -280,7 +287,7 @@ class Block(BaseFile):
             data (Dict[str, Any]): JSON data to decode
 
         """
-        regsets = {}
+        regsets: Dict[Uuid, RegisterSet] = {}
         for key, item in data.items():
             filename = Path(self._filename.parent / item["filename"]).resolve()
 
@@ -302,7 +309,7 @@ class Block(BaseFile):
                 regset.filename = filename
                 regset.json_decode(json_data)
                 self.finder.register(regset)
-            regsets[key] = regset
+            regsets[regset.uuid] = regset
         return regsets
 
     def _json_decode_exports(
@@ -354,7 +361,7 @@ class Block(BaseFile):
         resolver = ParameterResolver()
         try:
             for override in data["overrides"]:
-                item = Overrides()
+                item = ParameterOverrides()
                 item.json_decode(override)
                 for regset_inst in self._regset_insts:
                     if item.path != regset_inst.uuid:

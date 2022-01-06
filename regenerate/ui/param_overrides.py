@@ -26,10 +26,10 @@ from regenerate.db import (
     RegProject,
     RegisterInst,
     Block,
-    ParameterData,
-    Overrides,
+    ParameterDefinition,
+    ParameterOverrides,
     ParameterFinder,
-    ParamValue,
+    ParameterValue,
     LOGGER,
 )
 from regenerate.ui.columns import ReadOnlyColumn, MenuEditColumn
@@ -37,7 +37,7 @@ from regenerate.ui.utils import check_hex
 from regenerate.ui.enums import ParameterCol, OverrideCol
 
 
-class OverridesListMdl(Gtk.ListStore):
+class ParameterOverridesListMdl(Gtk.ListStore):
     """
     Provides the list of parameters for the module. The parameter information
     consists of name, default value, and the minimum and maximum values.
@@ -59,7 +59,7 @@ class OverridesListMdl(Gtk.ListStore):
         return self.append(row=get_row_data(path, inst))
 
 
-class OverridesList:
+class ParameterOverridesList:
     "Container for the Parameter List control logic"
 
     def __init__(self, obj, add, remove, callback):
@@ -181,17 +181,17 @@ class OverridesList:
     def menu_selected(
         self,
         _obj: Gtk.MenuItem,
-        data: Tuple[str, Tuple[RegisterInst, ParameterData]],
+        data: Tuple[str, Tuple[RegisterInst, ParameterDefinition]],
     ) -> None:
         """
         Called when a menu entry has been selected, adding the selected
         data to the parameter list
         """
         _, info = data
-        override = Overrides()
+        override = ParameterOverrides()
         override.path = info[0].uuid
         override.parameter = info[1].uuid
-        override.value = ParamValue()
+        override.value = ParameterValue()
         override.value.set_int(info[1].value)
         self._model.append(row=get_row_data(info[0].name, override))
         self._used.add(override.parameter)
@@ -234,7 +234,7 @@ class OverridesList:
         self.menu_column.set_min_width(150)
         self._obj.append_column(self.menu_column)
 
-        self._model = OverridesListMdl()
+        self._model = ParameterOverridesListMdl()
         self._obj.set_model(self._model)
 
     def _value_menu_callback(
@@ -322,8 +322,8 @@ class OverridesList:
         return param_list, total
 
 
-class BlockOverridesList(OverridesList):
-    "Overrides list for blocks"
+class BlockParameterOverridesList(ParameterOverridesList):
+    "ParameterOverrides list for blocks"
 
     def populate(self):
         """

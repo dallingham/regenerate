@@ -32,7 +32,7 @@ from regenerate.ui.columns import (
     SwitchComboMapColumn,
 )
 from regenerate.ui.enums import BitCol
-from regenerate.db import ParameterFinder, ShareType, ParameterData
+from regenerate.db import ParameterFinder, ShareType, ParameterDefinition
 
 #
 # Types conversions
@@ -321,7 +321,7 @@ class BitList:
         if self._model:
             self._model.update_fields()
 
-    def set_parameters(self, parameters: List[ParameterData]) -> None:
+    def set_parameters(self, parameters: List[ParameterDefinition]) -> None:
         """
         Set the parameters for the bitlist.
 
@@ -329,7 +329,7 @@ class BitList:
         columns that use parameters.
 
         Parameters:
-           parameters (List[ParameterData]): parameter data list
+           parameters (List[ParameterDefinition]): parameter data list
 
         """
         self.reset_column.update_menu(

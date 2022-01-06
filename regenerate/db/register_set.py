@@ -32,10 +32,11 @@ from .signals import Signals
 from .const import OLD_REG_EXT
 from .export import ExportData
 from .logger import LOGGER
-from .param_container import ParameterContainer
 from .base_file import BaseFile
 from .doc_pages import DocPages
-from .param_data import ParameterData
+from .parameters import ParameterDefinition, ParameterContainer
+
+# from .param_container import ParameterContainer
 from .exceptions import CorruptRegsetFile, IoErrorRegsetFile
 from .name_base import Uuid
 
@@ -168,7 +169,7 @@ class RegisterSet(BaseFile):
                 return data.page
         return ""
 
-    def add_parameter(self, new_param: ParameterData) -> None:
+    def add_parameter(self, new_param: ParameterDefinition) -> None:
         "Adds a parameter to the register set"
 
         self.parameters.add(new_param)

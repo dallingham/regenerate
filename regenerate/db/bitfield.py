@@ -29,9 +29,7 @@ import warnings
 from .name_base import NameBase, Uuid
 from .enums import BitType, ResetType
 from .bit_values import BitValues
-from .param_value import ParamValue
-from .param_data import ParameterFinder
-from .param_resolver import ParameterResolver
+from .parameters import ParameterValue, ParameterResolver, ParameterFinder
 from .json_base import JSONEncodable
 
 
@@ -185,7 +183,7 @@ class BitField(NameBase):
         self.flags: BitFieldFlags = BitFieldFlags()
 
         self.lsb = start
-        self._msb = ParamValue(stop)
+        self._msb = ParameterValue(stop)
 
         self._output_signal = ""
         self.output_has_side_effect = False
@@ -215,30 +213,30 @@ class BitField(NameBase):
         return f'BitField(name="{name}", id="{self.uuid}" msb={msb}, lsb={lsb}, field_type={ftype})'
 
     @property
-    def msb(self) -> ParamValue:
+    def msb(self) -> ParameterValue:
         """
         Return the MSB.
 
         Returns:
-           ParamValue: Parameter value representing either a parameter or an
+           ParameterValue: Parameter value representing either a parameter or an
                        integer
 
         """
         return self._msb
 
     @msb.setter
-    def msb(self, value: Union[int, ParamValue]) -> None:
+    def msb(self, value: Union[int, ParameterValue]) -> None:
         """
-        Set the MSB, creating a ParamValue from an int if needed.
+        Set the MSB, creating a ParameterValue from an int if needed.
 
         Parameters:
-           value (Union[int, ParamValue]): value to assign to the MSB
+           value (Union[int, ParameterValue]): value to assign to the MSB
 
         """
-        if isinstance(value, ParamValue):
+        if isinstance(value, ParameterValue):
             self._msb = value
         else:
-            self._msb = ParamValue(value)
+            self._msb = ParameterValue(value)
 
     def __eq__(self, other: object) -> bool:
         """Compare for equality between two bitfieids."""
@@ -562,7 +560,7 @@ class BitField(NameBase):
         if "flags" in data:
             self.flags.json_decode(data["flags"])
         self.lsb = data["lsb"]
-        self.msb = ParamValue()
+        self.msb = ParameterValue()
         self.msb.json_decode(data["msb"])
         self.output_has_side_effect = data["output_has_side_effect"]
         self.output_is_static = data["output_is_static"]

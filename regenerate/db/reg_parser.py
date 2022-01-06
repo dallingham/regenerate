@@ -29,8 +29,7 @@ from .bitfield import BitField
 from .bit_values import BitValues
 from .bitfield_types import ID_TO_TYPE
 from .enums import ResetType, ShareType
-from .param_data import ParameterData
-from .param_value import ParamValue
+from .parameters import ParameterDefinition, ParameterValue
 
 
 class ValueInfo(NamedTuple):
@@ -127,7 +126,7 @@ class RegParser(XmlBase):
         """Start a parameter read"""
 
         self.__db.parameters.add(
-            ParameterData(
+            ParameterDefinition(
                 attrs["name"],
                 int(attrs["value"], 0),
                 int(attrs["min"], 0),
@@ -141,7 +140,7 @@ class RegParser(XmlBase):
         current_params = set({n.name for n in self.__db.parameters.get()})
         for name in self.__found_parameters:
             if name not in current_params:
-                self.__db.parameters.add(ParameterData(name, 1, 0, 4096))
+                self.__db.parameters.add(ParameterDefinition(name, 1, 0, 4096))
 
     def _start_base(self, attrs: Dict[str, str]) -> None:
         """
@@ -344,7 +343,7 @@ class RegParser(XmlBase):
         Called when the token tag is terminated. The text is the
         register token value.
         """
-        self.__reg.dimension = ParamValue()
+        self.__reg.dimension = ParameterValue()
         self.__reg.dimension.set_int(int(text))
 
     def _end_ram_size(self, text: str) -> None:

@@ -44,13 +44,18 @@ from .block import Block
 from .block_inst import BlockInst
 from .register_inst import RegisterInst
 from .const import REG_EXT, PRJ_EXT, OLD_PRJ_EXT, OLD_REG_EXT
-from .param_resolver import ParameterResolver
+
+# from .param_valueresolver import ParameterResolver
+# from .param_container import ParameterContainer
+from .parameters import (
+    ParameterResolver,
+    ParameterContainer,
+    ParameterOverrides,
+)
 from .exceptions import CorruptProjectFile, IoErrorProjectFile
 from .doc_pages import DocPages
 from .export import ExportData
 from .logger import LOGGER
-from .overrides import Overrides
-from .param_container import ParameterContainer
 from .proj_reader import ProjectReader
 from .register_set import RegisterSet
 from .textutils import clean_text
@@ -92,7 +97,7 @@ class RegProject(BaseFile):
         self.access_map = defaultdict(NEST_DICT_STR)
 
         self.parameters = ParameterContainer()
-        self.overrides: List[Overrides] = []
+        self.overrides: List[ParameterOverrides] = []
         self.address_maps: Dict[Uuid, AddressMap] = {}
 
         self.block_insts: List[BlockInst] = []
@@ -671,7 +676,7 @@ class RegProject(BaseFile):
         self.overrides = []
         try:
             for override in data:
-                item = Overrides()
+                item = ParameterOverrides()
                 item.json_decode(override)
                 self.overrides.append(item)
         except KeyError:

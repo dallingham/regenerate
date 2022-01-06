@@ -21,7 +21,7 @@ Provides the Address List interface
 """
 
 from gi.repository import Gtk
-from regenerate.db import LOGGER, ParameterData
+from regenerate.db import LOGGER, ParameterDefinition
 from regenerate.ui.columns import EditableColumn
 from regenerate.ui.enums import ParameterCol
 from regenerate.ui.utils import check_hex
@@ -112,7 +112,7 @@ class ParameterList:
             index += 1
             name = f"{base}{index}"
 
-        new_item = ParameterData(name, 1, 0, 0xFFFFFFFF)
+        new_item = ParameterDefinition(name, 1, 0, 0xFFFFFFFF)
 
         self._model.new_instance(new_item)
         self._db.parameters.add(new_item)

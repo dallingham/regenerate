@@ -36,7 +36,7 @@ from regenerate.db import (
 from .columns import ReadOnlyColumn, EditableColumn, MenuEditColumn
 from .parameter_list import ParameterList
 from .base_doc import BaseDoc
-from .param_overrides import BlockOverridesList
+from .param_overrides import BlockParameterOverridesList
 from .entry import EntryText, EntryWord, EntryHex
 from .file_dialogs import create_file_selector
 from .select_sidebar import SelectSidebar
@@ -108,7 +108,7 @@ class BlockTab:
             self.modified,
         )
 
-        self._overrides_list = BlockOverridesList(
+        self._overrides_list = BlockParameterOverridesList(
             find_obj("block_override_list"),
             find_obj("block_override_add"),
             find_obj("block_override_remove"),
