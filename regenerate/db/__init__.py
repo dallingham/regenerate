@@ -41,7 +41,7 @@ from .parameters import (
     ParameterFinder,
     ParameterValue,
     ParameterResolver,
-    Overrides,
+    ParameterOverrides,
 )
 from .enums import *
 from .logger import *

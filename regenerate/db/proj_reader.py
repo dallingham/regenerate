@@ -25,6 +25,7 @@ from io import BytesIO
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import List, Dict, Union
+from hashlib import md5
 import xml.parsers.expat
 
 from .name_base import Uuid
@@ -127,12 +128,19 @@ class ProjectReader(XmlBase):
                 int(attrs.get("repeat_offset", 0x10000)),
                 attrs.get("title", ""),
             )
+            blk_str = f"{attrs['name']}blk{self.path.stem}"
+            self.new_block.uuid = mk_uuid(blk_str)
+            print("block", self.new_block.uuid)
             self.id_to_block[self.new_block.uuid] = self.new_block
             self.name_to_blk_id[self.new_block.name] = self.new_block.uuid
         else:
             self.new_block = self.id_to_block[self.new_block.uuid]
 
         self.current_blk_inst = BlockInst(attrs["name"])
+        core_str = f"{attrs['name']}inst{self.path.stem}"
+        self.current_blk_inst.uuid = mk_uuid(core_str)
+        print("blockinst", self.current_blk_inst.uuid)
+
         self.name_to_blkinst_id[attrs["name"]] = self.current_blk_inst.uuid
         self.prj.block_insts.append(self.current_blk_inst)
 
@@ -145,7 +153,6 @@ class ProjectReader(XmlBase):
         """Called when a map tag is found"""
 
         sname = attrs["set"]
-
         data = RegisterInst(
             Uuid(sname),
             attrs.get("inst", sname),
@@ -334,3 +341,20 @@ class ProjectReader(XmlBase):
                     LOGGER.error(
                         "Could not find mapping for %s", reg_inst.regset_id
                     )
+
+
+def mk_uuid(string: str) -> Uuid:
+    """
+    Convert the string into a UUID.
+
+    Take the hash value of the string and convert it to hex.
+
+    Parameters:
+        string (str): input string
+
+    Returns:
+
+    """
+    md5_func = md5()
+    md5_func.update(bytes(string, "ascii"))
+    return md5_func.hexdigest()

@@ -252,6 +252,16 @@ class Register(NameBase):
         """
         self._token = val.strip().upper()
 
+    def get_bit_fields_with_values(self) -> List[BitField]:
+        """
+        Returns a dictionary of bit fields. The key is msb of the
+        bit field.
+        """
+        return sorted(
+            [s for s in self._bit_fields.values() if s.values],
+            key=lambda x: x.lsb,
+        )
+
     def get_bit_fields(self) -> List[BitField]:
         """
         Return the bit fields.
@@ -458,7 +468,7 @@ class Register(NameBase):
         """
         val = {
             "name": self.name,
-            "uuid": self._id,
+            "uuid": self.uuid,
             "description": self.description,
             "token": self._token,
             "address": f"{self.address}",
@@ -482,7 +492,7 @@ class Register(NameBase):
 
         """
         self.name = data["name"]
-        self._id = Uuid(data["uuid"])
+        self.uuid = Uuid(data["uuid"])
         self.description = data["description"]
         self.dimension = ParameterValue()
         self.dimension.json_decode(data["dimension"])

@@ -38,15 +38,12 @@ from .doc_pages import DocPages
 from .base_file import BaseFile
 from .logger import LOGGER
 
-# from .param_container import ParameterContainer
-# from .overrides import ParameterOverrides
-# from .param_resolver import ParameterResolver
-
 from .parameters import (
     ParameterResolver,
     ParameterContainer,
     ParameterOverrides,
 )
+from .const import REG_EXT
 from .regset_finder import RegsetFinder
 from .export import ExportData
 from .exceptions import (
@@ -179,7 +176,10 @@ class Block(BaseFile):
             RegisterSet: register set associated with the register instance
 
         """
-        return self._regsets[reg_inst.regset_id]
+        try:
+            return self._regsets[reg_inst.regset_id]
+        except KeyError:
+            return None
 
     def remove_register_set(self, uuid: Uuid) -> None:
         """
@@ -290,7 +290,6 @@ class Block(BaseFile):
         regsets: Dict[Uuid, RegisterSet] = {}
         for key, item in data.items():
             filename = Path(self._filename.parent / item["filename"]).resolve()
-
             regset = self.finder.find_by_file(str(filename))
             if not regset:
                 regset = RegisterSet()
@@ -306,9 +305,16 @@ class Block(BaseFile):
                 except OSError as msg:
                     raise IoErrorRegsetFile(str(filename.resolve()), msg)
 
-                regset.filename = filename
+                regset.filename = filename.with_suffix(REG_EXT)
                 regset.json_decode(json_data)
                 self.finder.register(regset)
+                if key != regset.uuid:
+                    LOGGER.error(
+                        "Register set %s's UUID (%s) in %s does not match the UUID reference in the block file",
+                        regset.name,
+                        regset.uuid,
+                        regset.filename,
+                    )
             regsets[regset.uuid] = regset
         return regsets
 

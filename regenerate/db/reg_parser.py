@@ -22,7 +22,9 @@ Parses the register database, loading the database.
 
 import xml.parsers.expat
 from typing import Dict, NamedTuple
+from hashlib import md5
 
+from .name_base import Uuid
 from .xml_base import XmlBase
 from .register import Register
 from .bitfield import BitField
@@ -84,10 +86,13 @@ def cnv_str(attrs: Dict[str, str], key: str, default: str = "") -> str:
 class RegParser(XmlBase):
     "Parses the XML file, loading up the register database."
 
-    def __init__(self, dbase):
+    def __init__(self, dbase, name=None):
         super().__init__()
 
         self.__db = dbase
+        if name:
+            self.__db.uuid = _mk_uuid(name)
+
         self.__reg = None
         self.__field = None
         self.__in_ports = False
@@ -369,6 +374,17 @@ class RegParser(XmlBase):
         self.__reg.address = int(text)
         self.__db.add_register(self.__reg)
 
+    def _end_uuid(self, text: str) -> None:
+        """
+        Called when the register tag is terminated. The address is the
+        text value (base 10). At this point, the register can be added to
+        the database, since the address is used as the key.
+        """
+        if self.__field:
+            self.__field.uuid = text.strip()
+        elif self.__reg:
+            self.__reg.uuid = text.strip()
+
     def _end_signal(self, text: str) -> None:
         """
         Called when the signal tag is terminated. The text value is assigned
@@ -524,3 +540,20 @@ class RegParser(XmlBase):
         to the database's clock_name
         """
         self.__db.ports.clock_name = text
+
+
+def _mk_uuid(string: str) -> Uuid:
+    """
+    Convert the string into a UUID.
+
+    Take the hash value of the string and convert it to hex.
+
+    Parameters:
+        string (str): input string
+
+    Returns:
+
+    """
+    md5_func = md5()
+    md5_func.update(bytes(string, "ascii"))
+    return md5_func.hexdigest()
