@@ -22,10 +22,10 @@ Provides both the GTK ListStore and ListView for the bit fields.
 
 import re
 from enum import IntEnum
-from typing import Optional, Callable, List, Union
-from gi.repository import Gtk
+from typing import Optional, Callable, List, Union, Set
+from gi.repository import Gtk, Gdk
 
-from regenerate.db import TYPES, LOGGER, ResetType, BitField
+from regenerate.db import TYPES, LOGGER, ResetType, BitField, Uuid
 from regenerate.ui.columns import (
     EditableColumn,
     MenuEditColumn,
@@ -145,6 +145,10 @@ class BitList:
     model through the list model parameter passed into the constructor.
     """
 
+    TARGETS = [
+        ("text/plain", Gtk.TargetFlags.SAME_WIDGET, 0),
+    ]
+
     # Title, Size, Sort, Expand, Monospace
     BIT_COLS = (
         ("", 20, -1, False, False),
@@ -187,7 +191,72 @@ class BitList:
         self._treeview.connect(
             "button-press-event", self.on_button_press_event
         )
+        self._treeview.set_reorderable(True)
         self._menu = self._build_menu()
+
+        # Allow enable drag and drop of rows including row move
+        self._treeview.enable_model_drag_source(
+            Gdk.ModifierType.BUTTON1_MASK,
+            self.TARGETS,
+            Gdk.DragAction.DEFAULT | Gdk.DragAction.MOVE,
+        )
+        self._treeview.enable_model_drag_dest(
+            self.TARGETS, Gdk.DragAction.DEFAULT
+        )
+
+        self._treeview.connect("drag_data_get", self.drag_data_get_data)
+        self._treeview.connect(
+            "drag_data_received", self.drag_data_received_data
+        )
+
+    def drag_data_get_data(
+        self, treeview, drag_context, selection, target_id, etime
+    ):
+        tree_selection = treeview.get_selection()
+        model, selected_paths = tree_selection.get_selected_rows()
+        selected_iter = model.get_iter(selected_paths[0])
+
+        obj = self._model.get_value(selected_iter, BitCol.FIELD)
+        uuid = obj.uuid
+        selection.set_text(uuid, -1)
+
+    def drag_data_received_data(
+        self, treeview, context, x, y, selection, info, etime
+    ):
+        model = treeview.get_model()
+        data = selection.get_data()
+
+        drop_info = treeview.get_dest_row_at_pos(x, y)
+        dest_path, position = drop_info
+        dest_field = model[dest_path][BitCol.FIELD]
+
+        src_uuid = Uuid(str(data, "ascii"))
+        src_info = self._find_row_from_uuid(src_uuid)
+
+        src_row, src_field = src_info
+
+        dest_iter = self._model.get_iter(dest_path)
+        src_iter = src_row.iter
+
+        if position == Gtk.TreeViewDropPosition.BEFORE:
+            print(f"Move {src_field.name} before {dest_field.name}")
+            self._move_field_before(src_field, dest_field)
+        elif position in (
+            Gtk.TreeViewDropPosition.INTO_OR_BEFORE,
+            Gtk.TreeViewDropPosition.INTO_OR_AFTER,
+        ):
+            print(f"Move {src_field.name} to {dest_field.name}")
+            self._move_field_to(src_field, src_iter, dest_field, dest_iter)
+        else:
+            print(f"Move {src_field.name} after {dest_field.name}")
+            self._move_field_after(src_field, dest_field)
+        return
+
+    def _find_row_from_uuid(self, uuid: Uuid):
+        for row in self._model:
+            if row[BitCol.FIELD].uuid == str(uuid):
+                return (row, row[BitCol.FIELD])
+        return None
 
     def _build_menu(self) -> Gtk.Menu:
         """
@@ -344,6 +413,11 @@ class BitList:
         "Associates a List Model with the list view."
         self._model = model
         self._treeview.set_model(model)
+
+    # def on_drag_data_get(self, widget, drag_context, data, info, time):
+    #     selected_path = self.get_selected_items()[0]
+    #     selected_iter = self.get_model().get_iter(selected_path)
+    #     print(info)
 
     def set_mode(self, mode: ShareType) -> None:
         """
@@ -743,6 +817,91 @@ class BitList:
             return True
         return False
 
+    def _move_field_before(
+        self, src_field: BitField, dest_field: BitField
+    ) -> None:
+        bitlist = self._model.register.get_bit_fields()
+
+        if src_field.lsb > dest_field.lsb:
+            for field in bitlist:
+                if dest_field.lsb <= field.lsb <= src_field.lsb:
+                    print(field)
+        return
+
+    def _move_field_after(
+        self, src_field: BitField, dest_field: BitField
+    ) -> None:
+        return
+
+    def _move_field_to(
+        self,
+        src_field: BitField,
+        src_iter: Gtk.TreeIter,
+        dest_field: BitField,
+        dest_iter: Gtk.TreeIter,
+    ) -> None:
+        bitlist = self._model.register.get_bit_fields()
+
+        used = _get_used_bits(bitlist)
+
+        if src_field.lsb > dest_field.lsb:
+            dest_pos = dest_field.lsb
+            dest_width = dest_field.width
+            delta = src_field.width
+            src_lsb = src_field.lsb
+            src_width = src_field.width
+
+            for field in bitlist:
+                if dest_field.lsb <= field.lsb < src_lsb:
+                    print(
+                        f"{field.name} from {field.lsb} to {field.lsb+delta}"
+                    )
+                    new_delta = field.width
+                    field.lsb = field.lsb + delta
+                    field.msb.set_int(field.lsb + new_delta - 1)
+                    print(
+                        f" -> {field.name} from {field.msb.resolve()}:{field.lsb}"
+                    )
+                    delta = new_delta
+                    if not _is_range_used(
+                        field.lsb, field.msb.resolve(), used
+                    ):
+                        break
+
+            src_field.lsb = dest_pos
+            src_field.msb.set_int(dest_pos + src_width - 1)
+            self._model.move_before(src_iter, dest_iter)
+        else:
+            dest_pos = dest_field.lsb
+            dest_width = dest_field.width
+            delta = src_field.width
+            src_lsb = src_field.lsb
+            src_width = src_field.width
+            print(f"MOVE DOWN {src_field.name}")
+
+            print(f"Range {src_field.lsb} {dest_field.lsb}")
+            for field in bitlist:
+                print(f"{field.name} {field.msb.resolve()}:{field.lsb}")
+                if src_field.lsb < field.lsb <= dest_field.lsb:
+                    new_delta = field.width
+                    field.lsb = field.lsb - delta
+                    field.msb.set_int(field.lsb + new_delta - 1)
+                    delta = new_delta
+                    if not _is_range_used(
+                        field.lsb, field.msb.resolve(), used
+                    ):
+                        break
+                else:
+                    print(" - Skip")
+
+            src_field.lsb = dest_pos
+            src_field.msb = dest_pos + src_width - 1
+            self._model.move_after(src_iter, dest_iter)
+
+        self.update_display()
+        self._modified()
+        return
+
 
 def _check_reset(field: BitField, value: int) -> bool:
     "Checks the reset value for validity"
@@ -774,3 +933,20 @@ def get_field_reset_data(field: BitField) -> str:
     finder = ParameterFinder()
     param = finder.find(field.reset_parameter)
     return param.name
+
+
+def _get_used_bits(bitlist: List[BitField]) -> Set[int]:
+    used = set()
+
+    for field in bitlist:
+        for pos in range(field.lsb, field.msb.resolve() + 1):
+            used.add(pos)
+    return used
+
+
+def _is_range_used(start: int, stop: int, used: Set[int]) -> bool:
+
+    for val in range(start, stop + 1):
+        if val in used:
+            return True
+    return False

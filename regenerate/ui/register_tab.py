@@ -102,6 +102,7 @@ class RegSetWidgets:
         self.remove_regset_button = find_obj("remove_regset_button")
         self.add_field_button = find_obj("add_field")
         self.remove_field_button = find_obj("delete_field")
+        self.reorder_field_button = find_obj("reorder-fields")
         self.edit_field_button = find_obj("edit_field")
         self.copy_reg_button = find_obj("copy_reg_button")
         self.preview_button = find_obj("preview_button")
@@ -225,6 +226,10 @@ class RegSetTab:
         self._widgets.remove_field_button.connect(
             "clicked",
             self._remove_bit_callback,
+        )
+        self._widgets.reorder_field_button.connect(
+            "clicked",
+            self._reorder_callback,
         )
         self._widgets.edit_field_button.connect(
             "clicked",
@@ -576,16 +581,19 @@ class RegSetTab:
             self._widgets.bitfield_list.get_model().clear()
         self._skip_changes = old_skip
 
-    def _update_on_selected_reg_change(self, reg):
-        self._widgets.reg_notebook.show()
-        self._widgets.reg_notebook.set_sensitive(True)
-        self._reg_selected_action.set_sensitive(True)
+    def _redraw_bit_table(self, reg: Register) -> None:
         self._bit_model.clear()
         self._bit_model.register = reg
         self._bitfield_obj.set_mode(reg.share)
         for key in reg.get_bit_field_keys():
             field = reg.get_bit_field(key)
             self._bit_model.append_field(field)
+
+    def _update_on_selected_reg_change(self, reg):
+        self._widgets.reg_notebook.show()
+        self._widgets.reg_notebook.set_sensitive(True)
+        self._reg_selected_action.set_sensitive(True)
+        self._redraw_bit_table(reg)
 
         self._widgets.no_rtl.set_active(reg.flags.do_not_generate_code)
         self._widgets.no_uvm.set_active(reg.flags.do_not_use_uvm)
@@ -661,6 +669,15 @@ class RegSetTab:
         self._bitfield_obj.add_new_field(field)
         self.set_modified()
         self._set_register_warn_flags(register)
+
+    def _reorder_callback(self, _obj: Gtk.Button) -> None:
+        from .bit_reorder import ReorderFields
+
+        ReorderFields(self.get_selected_registers()[0], self._reorder_update)
+
+    def _reorder_update(self, register: Register) -> None:
+        self._redraw_bit_table(register)
+        self.set_modified()
 
     def _remove_bit_callback(self, _obj: Gtk.Button) -> None:
         """

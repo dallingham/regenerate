@@ -1,4 +1,10 @@
 *.pyc
 *~
 build/
+test/
 .mypy_cache
+.pyre*
+.watchmanconfig
+venv/
+TAGS
+mypy.ini

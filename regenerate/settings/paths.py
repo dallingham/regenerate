@@ -51,6 +51,7 @@ INSTALL_PATH = getdatapath()
 GLADE_TOP = INSTALL_PATH / "ui" / "regenerate.ui"
 GLADE_GTXT = INSTALL_PATH / "ui" / "group_text.ui"
 GLADE_BIT = INSTALL_PATH / "ui" / "bitfield.ui"
+GLADE_REORDER = INSTALL_PATH / "ui" / "bit_reorder.ui"
 GLADE_CHK = INSTALL_PATH / "ui" / "check.ui"
 GLADE_PREF = INSTALL_PATH / "ui" / "preferences.ui"
 GLADE_GRP = INSTALL_PATH / "ui" / "groupings.ui"

@@ -272,16 +272,6 @@ class Register(NameBase):
         """
         return sorted(self._bit_fields.values(), key=lambda x: x.lsb)
 
-    # def get_bit_fields_with_values(self) -> List[BitField]:
-    #     """
-    #     Returns a dictionary of bit fields. The key is msb of the
-    #     bit field.
-    #     """
-    #     return sorted(
-    #         [s for s in self._bit_fields.values() if s.values],
-    #         key=lambda x: x.lsb,
-    #     )
-
     def get_bit_field(self, key: int) -> Optional[BitField]:
         """
         Return the bit field associated with the specified key.
@@ -293,6 +283,21 @@ class Register(NameBase):
 
         """
         return self._bit_fields.get(key)
+
+    def get_bit_field_from_uuid(self, uuid: Uuid) -> Optional[BitField]:
+        """
+        Return the bit field associated with the specified key.
+
+        The key is the MSB of the bit field.
+
+        Returns:
+            Optional[BitField]: bit field associated with the LSB, or None
+
+        """
+        for field in self._bit_fields.values():
+            if field.uuid == uuid:
+                return field
+        return None
 
     def get_bit_field_keys(self) -> List[int]:
         """
@@ -332,6 +337,9 @@ class Register(NameBase):
         if remove_val is not None:
             del self._bit_fields[remove_val]
         self._bit_fields[field.lsb] = field
+
+    def remove_all_fields(self) -> None:
+        self._bit_fields = {}
 
     def delete_bit_field(self, field: BitField) -> None:
         """
