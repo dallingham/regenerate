@@ -191,66 +191,7 @@ class BitList:
         self._treeview.connect(
             "button-press-event", self.on_button_press_event
         )
-        self._treeview.set_reorderable(True)
         self._menu = self._build_menu()
-
-        # Allow enable drag and drop of rows including row move
-        self._treeview.enable_model_drag_source(
-            Gdk.ModifierType.BUTTON1_MASK,
-            self.TARGETS,
-            Gdk.DragAction.DEFAULT | Gdk.DragAction.MOVE,
-        )
-        self._treeview.enable_model_drag_dest(
-            self.TARGETS, Gdk.DragAction.DEFAULT
-        )
-
-        self._treeview.connect("drag_data_get", self.drag_data_get_data)
-        self._treeview.connect(
-            "drag_data_received", self.drag_data_received_data
-        )
-
-    def drag_data_get_data(
-        self, treeview, drag_context, selection, target_id, etime
-    ):
-        tree_selection = treeview.get_selection()
-        model, selected_paths = tree_selection.get_selected_rows()
-        selected_iter = model.get_iter(selected_paths[0])
-
-        obj = self._model.get_value(selected_iter, BitCol.FIELD)
-        uuid = obj.uuid
-        selection.set_text(uuid, -1)
-
-    def drag_data_received_data(
-        self, treeview, context, x, y, selection, info, etime
-    ):
-        model = treeview.get_model()
-        data = selection.get_data()
-
-        drop_info = treeview.get_dest_row_at_pos(x, y)
-        dest_path, position = drop_info
-        dest_field = model[dest_path][BitCol.FIELD]
-
-        src_uuid = Uuid(str(data, "ascii"))
-        src_info = self._find_row_from_uuid(src_uuid)
-
-        src_row, src_field = src_info
-
-        dest_iter = self._model.get_iter(dest_path)
-        src_iter = src_row.iter
-
-        if position == Gtk.TreeViewDropPosition.BEFORE:
-            print(f"Move {src_field.name} before {dest_field.name}")
-            self._move_field_before(src_field, dest_field)
-        elif position in (
-            Gtk.TreeViewDropPosition.INTO_OR_BEFORE,
-            Gtk.TreeViewDropPosition.INTO_OR_AFTER,
-        ):
-            print(f"Move {src_field.name} to {dest_field.name}")
-            self._move_field_to(src_field, src_iter, dest_field, dest_iter)
-        else:
-            print(f"Move {src_field.name} after {dest_field.name}")
-            self._move_field_after(src_field, dest_field)
-        return
 
     def _find_row_from_uuid(self, uuid: Uuid):
         for row in self._model:
@@ -413,11 +354,6 @@ class BitList:
         "Associates a List Model with the list view."
         self._model = model
         self._treeview.set_model(model)
-
-    # def on_drag_data_get(self, widget, drag_context, data, info, time):
-    #     selected_path = self.get_selected_items()[0]
-    #     selected_iter = self.get_model().get_iter(selected_path)
-    #     print(info)
 
     def set_mode(self, mode: ShareType) -> None:
         """

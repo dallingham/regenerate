@@ -4,6 +4,7 @@
   <requires lib="gtk+" version="3.20"/>
   <object class="GtkDialog" id="reorder">
     <property name="can_focus">False</property>
+    <property name="title" translatable="yes">regenerate - Reorder Bit Fields</property>
     <property name="default_width">1000</property>
     <property name="default_height">800</property>
     <property name="type_hint">dialog</property>
@@ -119,6 +120,7 @@ Fields that are not transferred to the New list will be deleted.</property>
                           <object class="GtkTreeView" id="src_table">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
+                            <signal name="key-press-event" handler="on_src_table_key_press_event" swapped="no"/>
                             <signal name="row-activated" handler="on_row_activated" swapped="no"/>
                             <child internal-child="selection">
                               <object class="GtkTreeSelection"/>

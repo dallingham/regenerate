@@ -40,6 +40,8 @@ class ReorderFields(BaseWindow):
         ("text/plain", Gtk.TargetFlags.OTHER_WIDGET, 0),
     ]
 
+    ENTER_KEY = Gdk.keyval_from_name("Return")
+
     def __init__(self, register: Register, callback: Callable):
 
         super().__init__()
@@ -56,6 +58,7 @@ class ReorderFields(BaseWindow):
             self._builder.add_from_file(str(GLADE_REORDER))
             self._top_window = self._builder.get_object("reorder")
             self._builder.connect_signals(self)
+            self.configure(self._top_window)
 
             self._build()
             self._populate()
@@ -142,6 +145,44 @@ class ReorderFields(BaseWindow):
 
         for index in range(0, self._register.width):
             self._dest_model.append(row=(f"{index}", "", index, None))
+
+    def _last_index(self) -> int:
+        for index in range(self._register.width, 0, -1):
+            row = self._dest_model[index - 1]
+            field = row[-1]
+            if field and index + field.width - 1 < self._register.width:
+                return index + field.width - 1
+        return 0
+
+    def on_src_table_key_press_event(
+        self, treeview: Gtk.TreeView, event: Gdk.EventKey
+    ) -> bool:
+        if event.state == Gdk.ModifierType.CONTROL_MASK:
+            if event.keyval == self.ENTER_KEY:
+                _, node = treeview.get_selection().get_selected()
+                field = self._src_model[self._src_model.get_path(node)][-1]
+                width = field.width
+
+                max_val = self._last_index()
+                if max_val + width > self._register.width:
+                    return False
+
+                start = max_val
+                if field.width > 1:
+                    self._dest_model[max_val][
+                        0
+                    ] = f"[{start + field.width -1}:{start}]"
+                else:
+                    self._dest_model[max_val][0] = f"{start}"
+                self._dest_model[max_val][1] = field.name
+                self._dest_model[max_val][-1] = field
+
+                for val in reversed(range(max_val + 1, max_val + width)):
+                    self._dest_model.remove(self._dest_model.get_iter(val))
+
+                _, node = self._src_table.get_selection().get_selected()
+                self._src_model.remove(node)
+        return False
 
     def on_row_activated(
         self,
