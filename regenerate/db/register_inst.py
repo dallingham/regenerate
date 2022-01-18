@@ -102,6 +102,13 @@ class RegisterInst(NameBase):
         self._array = bool(val)
 
     def json_decode(self, data: Dict[str, Any]) -> None:
+        """
+        Load the object from JSON data.
+
+        Parameters:
+            data (Dict[str, Any]): JSON data describing the object
+
+        """
         self.regset_id = Uuid(data["regset_id"])
         self.uuid = Uuid(data["uuid"])
         self.name = data["name"]
@@ -115,6 +122,13 @@ class RegisterInst(NameBase):
         self.single_decode = data["single_decode"]
 
     def json(self) -> Dict[str, Any]:
+        """
+        Convert the object to a JSON compatible dictionary.
+
+        Returns:
+            Dict[str, Any]: dictionary in JSON format
+
+        """
         return {
             "regset_id": self.regset_id,
             "name": self.name,

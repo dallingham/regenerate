@@ -376,7 +376,9 @@ class RegProject(BaseFile):
         try:
             return self.regsets[regset_inst.regset_id]
         except KeyError:
-            print(f"inst {regset_inst.name}/{regset_inst.regset_id} didn't map")
+            print(
+                f"inst {regset_inst.name}/{regset_inst.regset_id} didn't map"
+            )
             print(self.regsets)
             return None
 
@@ -617,7 +619,7 @@ class RegProject(BaseFile):
     def _load_address_maps_from_json_data(self, data: Dict[str, Any]) -> None:
         "Loads the address map information from JSON data"
         if data:
-            for uuid, addr_data_json in data.items():
+            for _, addr_data_json in data.items():
                 addr_data = AddressMap()
                 addr_data.json_decode(addr_data_json)
                 self.address_maps[addr_data.uuid] = addr_data
@@ -716,14 +718,25 @@ class RegProject(BaseFile):
                 self.regsets[regset.uuid] = regset
 
     def check_uuids(self):
+        """
+        Check the uuids.
 
+        Make sure that the UUIDs point to something valid, reporting any
+        dangling links.
+        """
         for blkinst in self.block_insts:
             if blkinst.blkid not in self.blocks.keys():
                 print("*** WARNING ***")
-                print(f"Block inst {blkinst.name}({blkinst.uuid}) referenced block {blkinst.blkid}, which does not exist")
+                print(
+                    f"Block inst {blkinst.name}({blkinst.uuid}) referenced "
+                    f"block {blkinst.blkid}, which does not exist"
+                )
         for block in self.blocks.values():
             for reginst in block.get_regset_insts():
                 if block.get_regset_from_id(reginst.regset_id) is None:
                     print("*** WARNING ***")
-                    print(f"Register inst {reginst.name}({reginst.uuid}) referenced register set {reginst.regset_id}, which does not exist")
-                    
+                    print(
+                        f"Register inst {reginst.name}({reginst.uuid}) "
+                        f"referenced register set {reginst.regset_id}, "
+                        "which does not exist"
+                    )

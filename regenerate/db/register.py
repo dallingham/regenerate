@@ -339,6 +339,9 @@ class Register(NameBase):
         self._bit_fields[field.lsb] = field
 
     def remove_all_fields(self) -> None:
+        """
+        Remove all fields from the curent register.
+        """
         self._bit_fields = {}
 
     def delete_bit_field(self, field: BitField) -> None:

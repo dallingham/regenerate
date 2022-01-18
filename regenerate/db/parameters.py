@@ -674,8 +674,14 @@ class ParameterOverrides:
         param = self.finder.find(self.parameter)
         pval_str = str(self.value)
         if param:
-            return f'ParameterOverrides(path="{self.path}", parameter="{param.name}", value="{pval_str}")'
-        return f'ParameterOverrides(path="{self.path}", parameter=<unknown>, value="{pval_str}")'
+            return (
+                f'ParameterOverrides(path="{self.path}", '
+                f'parameter="{param.name}", value="{pval_str}")'
+            )
+        return (
+            f'ParameterOverrides(path="{self.path}", parameter=<unknown>, '
+            f'value="{pval_str}"'
+        )
 
     def json(self) -> Dict[str, Any]:
         """

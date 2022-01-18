@@ -80,13 +80,12 @@ def html_string(text):
         "warning_stream": io.NullOutput(),
     }
 
-    html = ""
-
     try:
         html = publish_string(
             text, writer_name="html", settings_overrides=overrides
         )
     except SystemMessage as msg:
+        html = text
         LOGGER.error(str(msg))
 
     return html

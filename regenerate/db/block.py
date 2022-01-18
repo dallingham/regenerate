@@ -310,7 +310,8 @@ class Block(BaseFile):
                 self.finder.register(regset)
                 if key != regset.uuid:
                     LOGGER.error(
-                        "Register set %s's UUID (%s) in %s does not match the UUID reference in the block file",
+                        "Register set %s's UUID (%s) in %s does not match the "
+                        "UUID reference in the block file",
                         regset.name,
                         regset.uuid,
                         regset.filename,
