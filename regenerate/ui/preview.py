@@ -24,6 +24,7 @@ from regenerate.db import LOGGER
 try:
     from docutils.core import publish_string
     from docutils import io
+    from docutils.utils import SystemMessage
 
 except ImportError:
 
@@ -72,7 +73,6 @@ def html_string(text):
     Converts the strng from restructuredText to HTML and prepends
     the CSS string.
     """
-    from docutils.utils import SystemMessage
 
     overrides = {
         "output_encoding": "unicode",

@@ -23,7 +23,7 @@ Provides both the GTK ListStore and ListView for the bit fields.
 import re
 from enum import IntEnum
 from typing import Optional, Callable, List, Union, Set
-from gi.repository import Gtk, Gdk
+from gi.repository import Gtk
 
 from regenerate.db import TYPES, LOGGER, ResetType, BitField, Uuid
 from regenerate.ui.columns import (
@@ -162,7 +162,10 @@ class BitList:
     def __init__(
         self,
         treeview: Gtk.TreeView,
-        selection_changed: Callable,
+        add_btn: Gtk.Button,
+        remove_btn: Gtk.Button,
+        edit_btn: Gtk.Button,
+        reorder_btn: Gtk.Button,
         modified: Callable,
     ):
         """
@@ -172,8 +175,6 @@ class BitList:
 
         Parameters:
            treeview (Gtk.TreeView): treeview interface object
-           selection_changed (Callable): function that is called when the
-                selection changed
            modified (Callable): function that is called when the data has
                 been modified
 
@@ -183,15 +184,30 @@ class BitList:
         self._model: Optional[BitModel] = None
         self._modified = modified
         self._build_bitfield_columns()
-        self.selection_changed = selection_changed
+        self._add_btn = add_btn
+        self._remove_btn = remove_btn
+        self._edit_btn = edit_btn
+        self._reorder_btn = reorder_btn
         self._treeview.get_selection().set_mode(Gtk.SelectionMode.MULTIPLE)
         self._treeview.get_selection().connect(
-            "changed", self.selection_changed
+            "changed",
+            self._bitfield_selection_changed,
         )
         self._treeview.connect(
             "button-press-event", self.on_button_press_event
         )
         self._menu = self._build_menu()
+        self._remove_btn.set_sensitive(False)
+        self._edit_btn.set_sensitive(False)
+
+    def _bitfield_selection_changed(self, selection):
+        _, row_list = selection.get_selected_rows()
+        if row_list:
+            self._remove_btn.set_sensitive(True)
+            self._edit_btn.set_sensitive(True)
+        else:
+            self._remove_btn.set_sensitive(False)
+            self._edit_btn.set_sensitive(False)
 
     def _find_row_from_uuid(self, uuid: Uuid):
         for row in self._model:
@@ -752,91 +768,6 @@ class BitList:
             )
             return True
         return False
-
-    def _move_field_before(
-        self, src_field: BitField, dest_field: BitField
-    ) -> None:
-        bitlist = self._model.register.get_bit_fields()
-
-        if src_field.lsb > dest_field.lsb:
-            for field in bitlist:
-                if dest_field.lsb <= field.lsb <= src_field.lsb:
-                    print(field)
-        return
-
-    def _move_field_after(
-        self, src_field: BitField, dest_field: BitField
-    ) -> None:
-        return
-
-    def _move_field_to(
-        self,
-        src_field: BitField,
-        src_iter: Gtk.TreeIter,
-        dest_field: BitField,
-        dest_iter: Gtk.TreeIter,
-    ) -> None:
-        bitlist = self._model.register.get_bit_fields()
-
-        used = _get_used_bits(bitlist)
-
-        if src_field.lsb > dest_field.lsb:
-            dest_pos = dest_field.lsb
-            dest_width = dest_field.width
-            delta = src_field.width
-            src_lsb = src_field.lsb
-            src_width = src_field.width
-
-            for field in bitlist:
-                if dest_field.lsb <= field.lsb < src_lsb:
-                    print(
-                        f"{field.name} from {field.lsb} to {field.lsb+delta}"
-                    )
-                    new_delta = field.width
-                    field.lsb = field.lsb + delta
-                    field.msb.set_int(field.lsb + new_delta - 1)
-                    print(
-                        f" -> {field.name} from {field.msb.resolve()}:{field.lsb}"
-                    )
-                    delta = new_delta
-                    if not _is_range_used(
-                        field.lsb, field.msb.resolve(), used
-                    ):
-                        break
-
-            src_field.lsb = dest_pos
-            src_field.msb.set_int(dest_pos + src_width - 1)
-            self._model.move_before(src_iter, dest_iter)
-        else:
-            dest_pos = dest_field.lsb
-            dest_width = dest_field.width
-            delta = src_field.width
-            src_lsb = src_field.lsb
-            src_width = src_field.width
-            print(f"MOVE DOWN {src_field.name}")
-
-            print(f"Range {src_field.lsb} {dest_field.lsb}")
-            for field in bitlist:
-                print(f"{field.name} {field.msb.resolve()}:{field.lsb}")
-                if src_field.lsb < field.lsb <= dest_field.lsb:
-                    new_delta = field.width
-                    field.lsb = field.lsb - delta
-                    field.msb.set_int(field.lsb + new_delta - 1)
-                    delta = new_delta
-                    if not _is_range_used(
-                        field.lsb, field.msb.resolve(), used
-                    ):
-                        break
-                else:
-                    print(" - Skip")
-
-            src_field.lsb = dest_pos
-            src_field.msb = dest_pos + src_width - 1
-            self._model.move_after(src_iter, dest_iter)
-
-        self.update_display()
-        self._modified()
-        return
 
 
 def _check_reset(field: BitField, value: int) -> bool:

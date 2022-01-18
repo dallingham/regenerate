@@ -173,7 +173,6 @@ class MainWindow(BaseWindow):
             self.set_project_modified,
             self.db_selected,
             self.reg_selected,
-            self.field_selected,
         )
 
         self.block_tab = BlockTab(
@@ -324,8 +323,6 @@ class MainWindow(BaseWindow):
                          valid
         db_selected    - A database is selected, so registers can be added,
                          checked, etc.
-        field_selected - A bit field is selected, so a field can be removed
-                         or edited.
         """
 
         prj_acn = [
@@ -343,14 +340,12 @@ class MainWindow(BaseWindow):
             "add_bit_action",
         ]
         db_acn = ["add_register_action", "remove_set_action", "import_action"]
-        fld_acn = ["remove_bit_action", "edit_bit_action"]
 
         prj_acn.append("preview_action")
 
         self.prj_loaded = self._build_group("project_loaded", prj_acn)
         self.reg_selected = self._build_group("reg_selected", reg_acn)
         self.db_selected = self._build_group("database_selected", db_acn)
-        self.field_selected = self._build_group("field_selected", fld_acn)
 
     def on_build_action_activate(self, _obj: Gtk.Action) -> None:
         "Launch the builder when the build button is pushed"

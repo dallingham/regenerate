@@ -44,6 +44,7 @@ from regenerate.extras.regutils import (
     calculate_next_address,
     duplicate_register,
 )
+from .bit_reorder import ReorderFields
 from .bit_list import BitModel, BitList
 from .bitfield_editor import BitFieldEditor
 from .enums import BitCol, RegCol
@@ -128,7 +129,7 @@ class RegSetStatus:
 
 
 class RegSetTab:
-    "Register set tab"
+    """Register set tab"""
 
     def __init__(
         self,
@@ -136,12 +137,10 @@ class RegSetTab:
         modified: Callable,
         db_selected_action: Gtk.ActionGroup,
         reg_selected_action: Gtk.ActionGroup,
-        field_selected_action: Gtk.ActionGroup,
     ):
         self._modified_callback = modified
         self._db_selected_action = db_selected_action
         self._reg_selected_action = reg_selected_action
-        self._field_selected_action = field_selected_action
 
         self._reg_model: Optional[RegisterModel] = None
         self._bit_model = BitModel()
@@ -191,7 +190,10 @@ class RegSetTab:
 
         self._bitfield_obj = BitList(
             self._widgets.bitfield_list,
-            self._bit_changed,
+            self._widgets.add_field_button,
+            self._widgets.remove_field_button,
+            self._widgets.edit_field_button,
+            self._widgets.reorder_field_button,
             self.set_modified,
         )
 
@@ -671,8 +673,6 @@ class RegSetTab:
         self._set_register_warn_flags(register)
 
     def _reorder_callback(self, _obj: Gtk.Button) -> None:
-        from .bit_reorder import ReorderFields
-
         ReorderFields(self.get_selected_registers()[0], self._reorder_update)
 
     def _reorder_update(self, register: Register) -> None:
@@ -856,9 +856,6 @@ class RegSetTab:
                 register.share = ShareType.READ
             self._set_share(register)
         self._regset.add_register(register)
-
-    def _bit_changed(self, _obj) -> None:
-        self._field_selected_action.set_sensitive(True)
 
     def _remove_regset_callback(self, _obj: Gtk.Button):
         """

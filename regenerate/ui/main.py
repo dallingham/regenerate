@@ -64,32 +64,36 @@ def main():
     main program
     """
 
-    parser = ArgumentParser(
-        description="Manages the registers in an ASIC or FPGA design"
-    )
-
-    parser.add_argument(
-        "project_file", nargs="?", default=None, help="Regenerate project file"
-    )
-    parser.add_argument(
-        "--log", type=str, default="WARN", help="logging level"
-    )
-
-    args = parser.parse_args()
-
-    if args.log:
-        numeric_level = getattr(logging, args.log.upper(), None)
-        if not isinstance(numeric_level, int):
-            raise ValueError("Invalid log level: %s" % args.log)
-    else:
-        numeric_level = logging.INFO
-
-    logging.basicConfig(
-        level=numeric_level, format="%(levelname)s: %(message)s"
-    )
-
     if "DISPLAY" in os.environ:
+        parser = ArgumentParser(
+            description="Manages the registers in an ASIC or FPGA design"
+        )
+
+        parser.add_argument(
+            "project_file",
+            nargs="?",
+            default=None,
+            help="Regenerate project file",
+        )
+        parser.add_argument(
+            "--log", type=str, default="WARN", help="logging level"
+        )
+
+        args = parser.parse_args()
+
+        if args.log:
+            numeric_level = getattr(logging, args.log.upper(), None)
+            if not isinstance(numeric_level, int):
+                raise ValueError("Invalid log level: %s" % args.log)
+        else:
+            numeric_level = logging.INFO
+
+            logging.basicConfig(
+                level=numeric_level, format="%(levelname)s: %(message)s"
+            )
+
         run_gui(args)
+
     else:
         sys.stderr.write(
             'ERROR: Display not available. Did you forget to give ssh the "-X" option?\n'

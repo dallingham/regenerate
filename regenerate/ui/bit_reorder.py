@@ -24,6 +24,7 @@ Allows the user to reorder the bit fields within a register.
 
 """
 from typing import Callable
+from enum import IntEnum
 from gi.repository import Gtk, Gdk
 
 from regenerate.settings.paths import GLADE_REORDER
@@ -34,13 +35,30 @@ from .columns import ReadOnlyColumn
 from .error_dialogs import ErrorMsg
 
 
+class SrcCol(IntEnum):
+
+    BITPOS = 0
+    NAME = 1
+    FIELD = 2
+
+
+class DestCol(IntEnum):
+
+    BITPOS = 0
+    NAME = 1
+    INDEX = 2
+    FIELD = 3
+
+
 class ReorderFields(BaseWindow):
 
     TARGETS = [
         ("text/plain", Gtk.TargetFlags.OTHER_WIDGET, 0),
     ]
 
-    ENTER_KEY = Gdk.keyval_from_name("Return")
+    ENTER = Gdk.keyval_from_name("Return")
+    BACKSPACE = Gdk.keyval_from_name("BackSpace")
+    DELETE = Gdk.keyval_from_name("Delete")
 
     def __init__(self, register: Register, callback: Callable):
 
@@ -149,7 +167,7 @@ class ReorderFields(BaseWindow):
     def _last_index(self) -> int:
         for index in range(self._register.width, 0, -1):
             row = self._dest_model[index - 1]
-            field = row[-1]
+            field = row[DestCol.FIELD]
             if field and index + field.width - 1 < self._register.width:
                 return index + field.width - 1
         return 0
@@ -158,31 +176,90 @@ class ReorderFields(BaseWindow):
         self, treeview: Gtk.TreeView, event: Gdk.EventKey
     ) -> bool:
         if event.state == Gdk.ModifierType.CONTROL_MASK:
-            if event.keyval == self.ENTER_KEY:
-                _, node = treeview.get_selection().get_selected()
-                field = self._src_model[self._src_model.get_path(node)][-1]
-                width = field.width
+            if event.keyval == self.ENTER:
+                self._move_selected_to_bottom(treeview)
+        return False
 
-                max_val = self._last_index()
-                if max_val + width > self._register.width:
+    def on_dest_table_key_press_event(
+        self, treeview: Gtk.TreeView, event: Gdk.EventKey
+    ) -> bool:
+        if event.state == 0 and event.keyval in (self.DELETE, self.BACKSPACE):
+            _, node = treeview.get_selection().get_selected()
+            treeview.get_selection().unselect_all()
+            if node:
+                dest_path = self._dest_model.get_path(node)
+                field = self._dest_model[dest_path][DestCol.FIELD]
+                if field is None:
                     return False
 
-                start = max_val
+                start_bit = self._dest_model[dest_path][DestCol.INDEX]
+                self._dest_model[dest_path][DestCol.BITPOS] = f"{start_bit}"
+                self._dest_model[dest_path][DestCol.NAME] = ""
+                self._dest_model[dest_path][DestCol.INDEX] = start_bit
+                self._dest_model[dest_path][DestCol.FIELD] = None
+
                 if field.width > 1:
-                    self._dest_model[max_val][
-                        0
-                    ] = f"[{start + field.width -1}:{start}]"
+                    for bitpos in range(field.width - 1, 0, -1):
+                        self._dest_model.insert_after(
+                            node,
+                            row=(
+                                f"{bitpos + start_bit}",
+                                "",
+                                bitpos + start_bit,
+                                None,
+                            ),
+                        )
+
+                if field.msb.resolve() == field.lsb:
+                    val = f"{field.lsb}"
                 else:
-                    self._dest_model[max_val][0] = f"{start}"
-                self._dest_model[max_val][1] = field.name
-                self._dest_model[max_val][-1] = field
+                    val = f"[{field.msb.resolve()}:{field.lsb}]"
+                data = [val, field.name, field]
 
-                for val in reversed(range(max_val + 1, max_val + width)):
-                    self._dest_model.remove(self._dest_model.get_iter(val))
+                for index, row in enumerate(self._src_model):
+                    pos = row[SrcCol.FIELD].lsb
+                    if pos > field.lsb:
+                        self._src_model.insert_before(
+                            self._src_model.get_iter(index), row=data
+                        )
+                        break
+                else:
+                    self._src_model.insert_after(
+                        self._src_model.get_iter(index), row=data
+                    )
 
-                _, node = self._src_table.get_selection().get_selected()
-                self._src_model.remove(node)
         return False
+
+    def _move_selected_to_bottom(self, treeview: Gtk.TreeView) -> None:
+        _, node = treeview.get_selection().get_selected()
+        field = self._src_model[self._src_model.get_path(node)][SrcCol.FIELD]
+        width = field.width
+
+        max_val = self._last_index()
+        if max_val + width > self._register.width:
+            return
+
+        start = max_val
+        if field.width > 1:
+            self._dest_model[max_val][
+                DestCol.BITPOS
+            ] = f"[{start + field.width -1}:{start}]"
+        else:
+            self._dest_model[max_val][DestCol.BITPOS] = f"{start}"
+        self._dest_model[max_val][DestCol.NAME] = field.name
+        self._dest_model[max_val][DestCol.FIELD] = field
+
+        for val in reversed(range(max_val + 1, max_val + width)):
+            self._dest_model.remove(self._dest_model.get_iter(val))
+
+        _, node = self._src_table.get_selection().get_selected()
+        self._src_model.remove(node)
+
+    def _build_row_map(self):
+        row_map = {}
+        for row in self._dest_model:  # pylint: disable=E1133
+            row_map[row[DestCol.INDEX]] = row
+        return row_map
 
     def on_row_activated(
         self,
@@ -190,24 +267,27 @@ class ReorderFields(BaseWindow):
         path: Gtk.TreePath,
         _column: ReadOnlyColumn,
     ):
-        field = self._src_model[path][-1]
+        field = self._src_model[path][SrcCol.FIELD]
         width = field.width
 
+        row_map = self._build_row_map()
         for index in range(field.lsb, field.lsb + width):
-            row = self._dest_model[index]
-            if row[-1]:
+            if row_map[index][DestCol.FIELD]:
                 return
 
         start = field.lsb
         if field.width > 1:
-            self._dest_model[index][0] = f"[{start + field.width -1}:{start}]"
+            row_map[start][
+                DestCol.BITPOS
+            ] = f"[{start + field.width -1}:{start}]"
         else:
-            self._dest_model[index][0] = f"{start}"
-        self._dest_model[index][1] = field.name
-        self._dest_model[index][-1] = field
+            row_map[start][DestCol.BITPOS] = f"{start}"
+        row_map[start][DestCol.NAME] = field.name
+        row_map[start][DestCol.INDEX] = start
+        row_map[start][DestCol.FIELD] = field
 
-        for val in reversed(range(index + 1, index + width)):
-            self._dest_model.remove(self._dest_model.get_iter(val))
+        for val in reversed(range(field.lsb + 1, field.lsb + field.width)):
+            self._dest_model.remove(row_map[val].iter)
 
         _, node = self._src_table.get_selection().get_selected()
         self._src_model.remove(node)
@@ -219,7 +299,7 @@ class ReorderFields(BaseWindow):
         model, selected_paths = tree_selection.get_selected_rows()
         selected_iter = model.get_iter(selected_paths[0])
 
-        obj = self._src_model.get_value(selected_iter, 2)
+        obj = self._src_model.get_value(selected_iter, SrcCol.FIELD)
         uuid = obj.uuid
         selection.set_text(uuid, -1)
 
@@ -236,16 +316,16 @@ class ReorderFields(BaseWindow):
 
             index = dest_path.get_indices()[0]
             for val in range(index, index + width):
-                if self._dest_model[val][-1]:
+                if self._dest_model[val][DestCol.FIELD]:
                     return
 
             if field.width > 1:
-                start = int(self._dest_model[index][0])
+                start = int(self._dest_model[index][DestCol.BITPOS])
                 self._dest_model[index][
-                    0
+                    DestCol.BITPOS
                 ] = f"[{start + field.width -1}:{start}]"
-            self._dest_model[index][1] = field.name
-            self._dest_model[index][-1] = field
+            self._dest_model[index][DestCol.NAME] = field.name
+            self._dest_model[index][DestCol.FIELD] = field
 
         for val in reversed(range(index + 1, index + width)):
             self._dest_model.remove(self._dest_model.get_iter(val))
@@ -262,10 +342,10 @@ class ReorderFields(BaseWindow):
 
         """
         self._register.remove_all_fields()
-        for row in self._dest_model:
-            if row[-1] is not None:
-                lsb = row[2]
-                field = row[-1]
+        for row in self._dest_model:  # pylint: disable=E1133
+            if row[DestCol.FIELD] is not None:
+                lsb = row[DestCol.INDEX]
+                field = row[DestCol.FIELD]
                 width = field.width
                 field.lsb = lsb
                 field.msb.set_int(lsb + width - 1)

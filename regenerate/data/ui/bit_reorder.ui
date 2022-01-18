@@ -76,14 +76,34 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel">
+          <object class="GtkExpander">
             <property name="visible">True</property>
-            <property name="can_focus">False</property>
+            <property name="can_focus">True</property>
+            <property name="margin_left">6</property>
+            <property name="margin_right">6</property>
+            <property name="margin_top">6</property>
             <property name="margin_bottom">6</property>
-            <property name="label" translatable="yes">Drag and drop fields from the Original list to the new bit position in the New list.
+            <child>
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_bottom">6</property>
+                <property name="label" translatable="yes">Drag and drop fields from the Original list to the new bit position in the New list.
 Double-clicking on a field in the Original list will transfer it to the same position in the New list.
+Control-Enter will move the selected field in the Original list to the bottom of the New list.
+Delete or BackSpace will return a field from the New list to the Original List
 Fields that are not transferred to the New list will be deleted.</property>
-            <property name="justify">center</property>
+                <property name="justify">center</property>
+              </object>
+            </child>
+            <child type="label">
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Help</property>
+                <property name="track_visited_links">False</property>
+              </object>
+            </child>
           </object>
           <packing>
             <property name="expand">False</property>
@@ -104,7 +124,7 @@ Fields that are not transferred to the New list will be deleted.</property>
                 <property name="margin_right">6</property>
                 <property name="margin_top">6</property>
                 <property name="margin_bottom">6</property>
-                <property name="label_xalign">0</property>
+                <property name="label_xalign">0.5</property>
                 <property name="shadow_type">none</property>
                 <child>
                   <object class="GtkAlignment">
@@ -135,7 +155,8 @@ Fields that are not transferred to the New list will be deleted.</property>
                   <object class="GtkLabel">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Original</property>
+                    <property name="margin_bottom">6</property>
+                    <property name="label" translatable="yes">Original Ordering</property>
                   </object>
                 </child>
               </object>
@@ -153,7 +174,7 @@ Fields that are not transferred to the New list will be deleted.</property>
                 <property name="margin_right">6</property>
                 <property name="margin_top">6</property>
                 <property name="margin_bottom">6</property>
-                <property name="label_xalign">0</property>
+                <property name="label_xalign">0.5</property>
                 <property name="shadow_type">none</property>
                 <child>
                   <object class="GtkAlignment">
@@ -169,6 +190,7 @@ Fields that are not transferred to the New list will be deleted.</property>
                           <object class="GtkTreeView" id="dest_table">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
+                            <signal name="key-press-event" handler="on_dest_table_key_press_event" swapped="no"/>
                             <child internal-child="selection">
                               <object class="GtkTreeSelection"/>
                             </child>
@@ -182,7 +204,8 @@ Fields that are not transferred to the New list will be deleted.</property>
                   <object class="GtkLabel">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">New</property>
+                    <property name="margin_bottom">6</property>
+                    <property name="label" translatable="yes">New Ordering</property>
                   </object>
                 </child>
               </object>

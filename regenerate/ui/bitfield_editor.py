@@ -134,25 +134,31 @@ class BitFieldEditor(BaseWindow):
     def _build_register_text(self, bit_field: BitField) -> str:
         """Returns the type of the verilog instantiation of the type"""
         try:
-            edge = (
-                "posedge"
-                if self._regset.ports.reset_active_level
-                else "negedge"
-            )
-            condition = "" if self._regset.ports.reset_active_level else "~"
+            if self._regset.ports.reset_active_level:
+                edge = "posedge"
+                condition = ""
+                rst_name = "RST"
+            else:
+                edge = "negedge"
+                condition = "!"
+                rst_name = "RSTn"
 
             trigger = (
                 "" if self._regset.ports.sync_reset else f" or {edge} RSTn"
             )
             name_map = {
                 "MODULE": self._regset.name,
+                "RST": rst_name,
                 "RESET_CONDITION": condition,
                 "RESET_TRIGGER": trigger,
                 "RESET_EDGE": edge,
             }
-            text = REG[TYPE_TO_ID[bit_field.field_type].lower()] % name_map
+            ftype = bit_field.field_type
+            t2id = TYPE_TO_ID[ftype].lower()
+            print(t2id)
+            text = REG[t2id] % name_map
         except KeyError:
-            text = ""
+            text = "Error generating the implmentation"
         return text
 
     def _initialize_from_data(self, bit_field: BitField) -> None:
