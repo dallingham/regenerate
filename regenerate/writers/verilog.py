@@ -568,7 +568,8 @@ class Verilog(RegsetWriter):
                         f"{field.control_signal}{reg_field.dim}"
                     )
                 if cell_info.has_rd:
-                    reg_field.read_name = f"read_r{reg_field.reg_addr:02x}"
+                    reg_field.read_name = f"read_r{byte_addr:02x}"
+#                    reg_field.read_name = f"read_r{reg_field.reg_addr:02x}"
                 if rset.ports.secondary_reset and field.use_alternate_reset:
                     reg_field.reset_name = ports.alt_reset
                 else:
@@ -687,7 +688,6 @@ def build_read_address_selects(
             width = addr_width - LOWER_BIT[data_width]
             decode = f"{width}'h{rval:x}"
             register = val[0][-1]
-
             assigns.append(DecodeInfo(signal, decode, register))
 
     return assigns

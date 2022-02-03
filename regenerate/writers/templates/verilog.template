@@ -156,6 +156,7 @@ generate
       .BE    ({{ri.byte_strobe_name}}),
 {%     endif %}
 {%     if ri.read_name %}
+
       .RD    ({{ri.read_name}}),
 {%     endif %}
 {%     if ri.control_name %}

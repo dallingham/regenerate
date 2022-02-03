@@ -160,11 +160,11 @@ class RegProject(BaseFile):
             try:
                 with self._filename.open() as jfile:
                     self.json_loads(jfile.read())
+                self.check_uuids()
             except json.decoder.JSONDecodeError as msg:
                 raise CorruptProjectFile(self._filename.name, str(msg))
             except OSError as msg:
                 raise IoErrorProjectFile(self._filename.name, msg)
-            self.check_uuids()
 
     def xml_loads(self, data: bytes, name: str) -> None:
         """
@@ -400,12 +400,12 @@ class RegProject(BaseFile):
         """Returns the address maps associated with the specified group."""
         addr_map = self.address_maps.get(map_id)
         if addr_map:
-            blocks = addr_map.block_insts
-            if blocks:
+            blkinst_ids = addr_map.block_insts
+            if blkinst_ids:
                 return [
                     blk_inst
                     for blk_inst in self.block_insts
-                    if blk_inst.name in set(blocks)
+                    if blk_inst.uuid in blkinst_ids
                 ]
         return self.block_insts
 

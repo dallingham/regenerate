@@ -309,12 +309,21 @@ class Block(BaseFile):
                 regset.json_decode(json_data)
                 self.finder.register(regset)
                 if key != regset.uuid:
+                    print("File", filename)
                     LOGGER.error(
                         "Register set %s's UUID (%s) in %s does not match the "
                         "UUID reference in the block file",
                         regset.name,
                         regset.uuid,
                         regset.filename,
+                    )
+                    print(
+                        "Register set %s's UUID (%s) in %s does not match the "
+                        "UUID reference in the block file" % (
+                            regset.name,
+                            regset.uuid,
+                            regset.filename,
+                        )
                     )
             regsets[regset.uuid] = regset
         return regsets
@@ -410,7 +419,7 @@ class Block(BaseFile):
 
         for name in self._regsets:
             new_path = os.path.relpath(
-                self._regsets[name].filename,
+                self._regsets[name].filename.with_suffix(REG_EXT),
                 self._filename.parent,
             )
             data["regsets"][name] = {
