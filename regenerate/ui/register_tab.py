@@ -912,7 +912,6 @@ class RegSetTab:
         response = choose.run()
         if response == Gtk.ResponseType.OK:
             for filename in choose.get_filenames():
-
                 if self._project:
                     name = Path(filename)
                     dbase = RegisterSet(name)

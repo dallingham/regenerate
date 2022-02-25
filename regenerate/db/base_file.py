@@ -98,10 +98,8 @@ class BaseFile(NameBase):
         """
         self.original_name = Path(value)
 
-        if self.original_name.suffix == OLD_REG_EXT:
-            self._filename = self.original_name.with_suffix(REG_EXT)
-        else:
-            self._filename = self.original_name.with_suffix(BLK_EXT)
+        if self.original_name.suffix != self.suffix_name():
+            self._filename = self.original_name.with_suffix(self.suffix_name())
 
     @property
     def modified(self):

@@ -496,7 +496,7 @@ class Verilog(RegsetWriter):
         ports = build_standard_ports(rset)
 
         full_list = []
-        for reg in rset.get_all_registers():
+        for reg in self.__sorted_regs:
             for field in reg.get_bit_fields():
 
                 base_name = reg_field_name(reg, field)
@@ -892,6 +892,8 @@ def build_input_signals(
     signals: Set[Scalar] = set()
 
     for reg in regset.get_all_registers():
+        if reg.flags.do_not_generate_code:
+            continue
         for field in reg.get_bit_fields():
             cinfo = cell_info[field.field_type]
             vector = make_vector(field)
@@ -1023,6 +1025,8 @@ def register_output_definitions(regset: RegisterSet) -> List[LogicDefResolved]:
     current_group = -1
 
     for reg in regset.get_all_registers():
+        if reg.flags.do_not_generate_code:
+            continue
 
         current_offset = reg.address % bytes_per_reg
         base_addr = (reg.address // bytes_per_reg) * bytes_per_reg

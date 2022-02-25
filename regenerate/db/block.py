@@ -95,6 +95,9 @@ class Block(BaseFile):
         """
         return f'Block(name="{self.name}", uuid="{self.uuid}")'
 
+    def suffix_name(self) -> str:
+        return BLK_EXT
+
     def add_register_set(self, regset: RegisterSet) -> None:
         """
         Add a register set to the block.

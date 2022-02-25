@@ -68,7 +68,7 @@ class RegisterSet(BaseFile):
         if filename is not None:
             self.read_db(filename)
             self.filename = Path(filename)
-
+            
     def __repr__(self) -> str:
         return f'RegisterSet(name="{self.name}", uuid="{self.uuid}")'
 
@@ -109,6 +109,9 @@ class RegisterSet(BaseFile):
         """Removes the register to the database."""
         del self._registers[reg.uuid]
 
+    def suffix_name(self) -> str:
+        return REG_EXT
+    
     def read_db(self, filename: Path) -> None:
         "Loads either from XML or JSON depending on the extension"
         if filename.suffix == OLD_REG_EXT:
@@ -128,13 +131,12 @@ class RegisterSet(BaseFile):
         return self
 
     def read_json(self, filename: Path) -> "RegisterSet":
-        """Reads the JSON file, loading the databsae."""
+        """Reads the JSON file, loading the database."""
 
-        self.filename = filename.resolve()
-
-        LOGGER.info("Reading JSON register file %s", str(self.filename))
+        filename = filename.resolve()
+        LOGGER.info("Reading JSON register file %s", str(filename))
         try:
-            with self.filename.open("r") as ifile:
+            with filename.open("r") as ifile:
                 self.name = filename.stem
                 self.json_decode(json.loads(ifile.read()))
         except json.decoder.JSONDecodeError as msg:
@@ -148,7 +150,6 @@ class RegisterSet(BaseFile):
 
         filename = Path(filename)
 
-        self.filename = filename
         self.name = filename.stem
         ifile = StringIO(data)
         name = filename.parent.stem + filename.stem
