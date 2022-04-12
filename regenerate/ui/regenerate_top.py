@@ -496,13 +496,13 @@ class MainWindow(BaseWindow):
         self._load_project_tab()
 
         self.project_modified(False)
-        self._add_resent(str(filename.resolve()))
+        self._add_recent(str(filename.resolve()))
         self._find_obj("save_btn").set_sensitive(True)
         self.prj_loaded.set_sensitive(True)
         if self._initial_popup.get_visible():
             self._initial_popup.hide()
 
-    def _add_resent(self, path: str):
+    def _add_recent(self, path: str):
         "Adds the path th the recent manager. Must be an absolute path"
 
         if self._recent_manager:
@@ -522,7 +522,7 @@ class MainWindow(BaseWindow):
         choose.destroy()
         if response == Gtk.ResponseType.OK:
             self.open_project(filename, uri)
-            self._add_resent(Path(filename).resolve())
+            self._add_recent(Path(filename).resolve())
 
     def open_project(self, filepath: str, _uri: str):
         "Opens the selected project"
@@ -582,7 +582,7 @@ class MainWindow(BaseWindow):
 
         self.regset_tab.change_project(self.prj)
 
-        self._add_resent(str(filepath.resolve()))
+        self._add_recent(str(filepath.resolve()))
         self._find_obj("save_btn").set_sensitive(True)
 
         self.set_title(False)

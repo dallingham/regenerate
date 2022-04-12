@@ -110,10 +110,13 @@ class RegProject(BaseFile):
             self._filename = Path(path)
             self.open(self._filename)
         else:
-            self._filename = Path(".")
+            self._filename = Path("unnamed.regp")
 
     def __repr__(self) -> str:
         return f'RegProject(name="{self.name}", uuid="{self.uuid}")'
+
+    def suffix_name(self) -> str:
+        return PRJ_EXT
 
     def save(self) -> None:
         """Save the project using the default name."""
@@ -367,7 +370,10 @@ class RegProject(BaseFile):
 
     def get_block_from_block_inst(self, blk_inst: BlockInst) -> Block:
         "Find the block associated with a particular block instance"
-        return self.blocks[blk_inst.blkid]
+        try:
+            return self.blocks[blk_inst.blkid]
+        except KeyError:
+            print(blk_inst.blkid, "not in", self.blocks)
 
     def get_regset_from_regset_inst(
         self, regset_inst: RegisterInst
@@ -379,7 +385,6 @@ class RegProject(BaseFile):
             print(
                 f"inst {regset_inst.name}/{regset_inst.regset_id} didn't map"
             )
-            print(self.regsets)
             return None
 
     def get_register_set(self) -> List[Path]:
@@ -659,12 +664,14 @@ class RegProject(BaseFile):
 
                 if self.reader_class:
                     rdr = self.reader_class
+                    path = self._filename.parent / base_path
                     text = rdr.read_bytes(base_path)
 
                     json_data = json.loads(text)
-                    blk_data.filename, _ = self.reader_class.resolve_path(
-                        base_path
+                    (new_path, new_path2) = self.reader_class.resolve_path(
+                        path
                     )
+                    blk_data.filename = new_path
                     blk_data.reader_class = self.reader_class.__class__(
                         base_path,
                         self.reader_class.repo,

@@ -43,7 +43,7 @@ from .parameters import (
     ParameterContainer,
     ParameterOverrides,
 )
-from .const import REG_EXT
+from .const import REG_EXT, BLK_EXT
 from .regset_finder import RegsetFinder
 from .export import ExportData
 from .exceptions import (
@@ -312,7 +312,6 @@ class Block(BaseFile):
                 regset.json_decode(json_data)
                 self.finder.register(regset)
                 if key != regset.uuid:
-                    print("File", filename)
                     LOGGER.error(
                         "Register set %s's UUID (%s) in %s does not match the "
                         "UUID reference in the block file",
@@ -421,10 +420,14 @@ class Block(BaseFile):
         self._dump_exports(self.exports, data["exports"])
 
         for name in self._regsets:
-            new_path = os.path.relpath(
-                self._regsets[name].filename.with_suffix(REG_EXT),
-                self._filename.parent,
-            )
+            try:
+                new_path = os.path.relpath(
+                    self._regsets[name].filename.with_suffix(REG_EXT),
+                    self._filename.parent,
+                )
+            except ValueError:
+                new_path = self._regsets[name].name + REG_EXT
+                self._regsets[name].filename = new_path
             data["regsets"][name] = {
                 "filename": new_path,
             }

@@ -100,7 +100,9 @@ class BaseFile(NameBase):
 
         if self.original_name.suffix != self.suffix_name():
             self._filename = self.original_name.with_suffix(self.suffix_name())
-
+        else:
+            self._filename = self.original_name
+              
     @property
     def modified(self):
         """

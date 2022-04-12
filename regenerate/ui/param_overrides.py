@@ -333,7 +333,7 @@ class BlockParameterOverridesList(ParameterOverridesList):
         self._used = set()
         for override in self.prj.overrides:
             path = ""
-            for inst in self.prj.regset_insts:
+            for inst in self.prj.get_regset_insts():
                 if inst.uuid == override.path:
                     path = inst.name
             self._model.append_instance(path, override)
@@ -361,7 +361,7 @@ class BlockParameterOverridesList(ParameterOverridesList):
         for row in self._model:
             data = row[OverrideCol.OBJ]
             path = ""
-            for inst in self.prj.regset_insts:
+            for inst in self.prj.get_regset_insts():
                 if inst.uuid == data.path:
                     path = inst.name
 

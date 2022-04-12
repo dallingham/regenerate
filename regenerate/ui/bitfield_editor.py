@@ -155,7 +155,6 @@ class BitFieldEditor(BaseWindow):
             }
             ftype = bit_field.field_type
             t2id = TYPE_TO_ID[ftype].lower()
-            print(t2id)
             text = REG[t2id] % name_map
         except KeyError:
             text = "Error generating the implmentation"

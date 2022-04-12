@@ -39,7 +39,7 @@ else:
     FULLPATH = os.getcwd()
 sys.path.insert(0, os.path.dirname(FULLPATH))
 
-from regenerate.db import Register, BitField, RegisterDb, ResetType, BitType
+from regenerate.db import Register, BitField, RegisterSet, ResetType, BitType
 
 
 ARRAY_ELEMENT = re.compile(r"^(.*[^d])(\d+)(_reg)?\s*$", re.I)
@@ -62,6 +62,13 @@ RESERVED = [
     re.compile("^UNSD"),
 ]
 
+
+def convert_hex(value: str) -> int:
+    try:
+        return int(value, 0)
+    except ValueError:
+        return int(re.sub("(\d*)?'h", "0x", value), 0)
+    
 
 class RegGroup:
     def __init__(self):
@@ -108,7 +115,8 @@ class IpXactParser:
         self.vendor = ""
         self._keep_reserved = keep_reserved
         self.scope = ""
-
+        self.reg_names = set()
+        
     def import_data(self, input_file):
         """
         Parses the specified input file.
@@ -138,7 +146,7 @@ class IpXactParser:
     def parse_address_block(self, addrblk, original_base):
         base = addrblk.find(self.scope + "baseAddress")
         if base is not None:
-            base_addr = int(base.text, 0) + original_base
+            base_addr = convert_hex(base.text) + original_base
         else:
             base_addr = original_base
 
@@ -150,20 +158,30 @@ class IpXactParser:
             descr_tag = register.find(self.scope + "description")
             addr_tag = register.find(self.scope + "addressOffset")
 
+            token = name_tag.text.upper()
+            count = 0
+
+            new_token = token
+            while new_token in self.reg_names:
+                count += 1
+                new_token = f"{token}_DUPLICATE_{count}"
+
+            self.reg_names.add(new_token)
+            
             if disp_tag is not None:
                 self._reg.name = disp_tag.text
             else:
-                self._reg.name = name_tag.text.replace("_", " ")
+                self._reg.name = new_token.replace("_", " ")
 
             if descr_tag is not None:
                 self._reg.description = descr_tag.text
 
             if addr_tag is not None:
-                self._reg.address = int(addr_tag.text, 16) + base_addr
+                self._reg.address = convert_hex(addr_tag.text) + base_addr
 
-            self._reg.token = name_tag.text.upper()
+            self._reg.token = new_token.upper()
 
-            self._reg.width = int(size_tag.text)
+            self._reg.width = convert_hex(size_tag.text)
 
             for field in register.findall(self.scope + "field"):
                 self.start_field()
@@ -178,12 +196,18 @@ class IpXactParser:
                 if element:
                     self._field.description = element.text
 
-                self._field.lsb = int(
+                element = field.find(self.scope + "resets")
+                if element:
+                    for value in element.find(self.scope + "reset"):
+                        rval = convert_hex(value.text)
+                        self._field.set_reset_value_int(rval)
+                    
+                self._field.lsb = convert_hex(
                     field.find(self.scope + "bitOffset").text
                 )
                 self._field.msb = (
                     self._field.lsb
-                    + int(field.find(self.scope + "bitWidth").text)
+                    + convert_hex(field.find(self.scope + "bitWidth").text)
                     - 1
                 )
                 if self._field.field_type not in (
@@ -475,7 +499,7 @@ if __name__ == "__main__":
             title = f"{ip.db_title}_{index}"
             filename = Path(title).stem + f"_{index}.regr"
 
-        regset = RegisterDb()
+        regset = RegisterSet()
         regset.filename = filename
 
         # copy data from old regset, or create our own

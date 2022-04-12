@@ -19,7 +19,7 @@ module {{db.name}}
 {% if parameters|length > 0 %}
    #(
 {%   for p in parameters %}
-    parameter int {{p.name}} = {{p.value}}{% if not loop.last %},{% endif %}
+    parameter int {{p.name}} = {{"'h%x" % p.value}}{% if not loop.last %},{% endif %}
 
 {%   endfor %}
     )
@@ -116,20 +116,19 @@ module {{db.name}}
  * Reset Value : {{ri.field.reset_string()}}
  *------------------------------------------------------------------------------
  */
-{%   if (ri.field.msb.is_parameter or ri.field.width != 1) and not ri.reset_from_input %}
-   localparam bit [{{ri.msb.int_decimal_str()}}:{{ri.lsb}}] {{ri.rval}} = {{ri.field.reset_vstr()}};
-
-{%   endif %}
+ {% if ri.field.reset_type != 1 and ri.field.field_type != 1 %}  
+ localparam bit [{{ri.msb.int_decimal_str()}}:{{ri.lsb}}] {{ri.rval}} = {{ri.field.reset_vstr()}};
+ {% endif %}
 {%   if ri.dim_param %}
 generate 
    for (dim = 0; dim < {{ri.dim_param}}; dim++) begin : g_r{{"%02x" % ri.reg_addr}}
 
 {%   endif %}
 {%   if ri.field.field_type == 0 %}
-    assign {{ri.name}}{{ri.dim}} = {{full_reset_value(ri.field)}};
+ assign {{ri.name}}{{ri.dim}} = {{ri.rval}};
 
 {%   elif ri.field.field_type == 1 %}
-    assign {{ri.name}} = {{ri.input_name}};
+   assign {{ri.name}} = {{ri.input_name}};
 
 {%   else %}
 {%     if ri.generate %}  

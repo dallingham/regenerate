@@ -130,7 +130,6 @@ class ProjectReader(XmlBase):
             )
             blk_str = f"{attrs['name']}blk{self.path.stem}"
             self.new_block.uuid = mk_uuid(blk_str)
-            print("block", self.new_block.uuid)
             self.id_to_block[self.new_block.uuid] = self.new_block
             self.name_to_blk_id[self.new_block.name] = self.new_block.uuid
         else:
@@ -139,7 +138,6 @@ class ProjectReader(XmlBase):
         self.current_blk_inst = BlockInst(attrs["name"])
         core_str = f"{attrs['name']}inst{self.path.stem}"
         self.current_blk_inst.uuid = mk_uuid(core_str)
-        print("blockinst", self.current_blk_inst.uuid)
 
         self.name_to_blkinst_id[attrs["name"]] = self.current_blk_inst.uuid
         self.prj.block_insts.append(self.current_blk_inst)
@@ -154,16 +152,15 @@ class ProjectReader(XmlBase):
 
         sname = attrs["set"]
         data = RegisterInst(
-            Uuid(sname),
-            attrs.get("inst", sname),
-            int(attrs["offset"], 16),
-            int(attrs["repeat"]),
-            int(attrs["repeat_offset"]),
-            attrs.get("hdl", ""),
-            bool(attrs.get("no_uvm", "0")),
-            bool(attrs.get("no_decode", "0")),
-            bool(attrs.get("array", "0")),
-            bool(attrs.get("single_decode", "0")),
+            inst=attrs.get("inst", sname),
+            offset=int(attrs["offset"], 16),
+            repeat=int(attrs["repeat"]),
+            repeat_offset=int(attrs["repeat_offset"]),
+            hdl=attrs.get("hdl", ""),
+            no_uvm=bool(attrs.get("no_uvm", "0")),
+            no_decode=bool(attrs.get("no_decode", "0")),
+            array=bool(attrs.get("array", "0")),
+            single_decode=bool(attrs.get("single_decode", "0")),
         )
         self.new_block.get_regset_insts().append(data)
 
@@ -272,13 +269,16 @@ class ProjectReader(XmlBase):
         """
         Make the best guess at a path for the block file.
         """
-        counter = self.build_path_counter(blk.uuid)
-        most_common = counter.most_common(1)[0][0]
-        filename = Path(most_common) / f"{blk.name}{BLK_EXT}"
-        block_dir = Path(self.path.parent).resolve()
-        filename = block_dir / filename
+        try:
+            counter = self.build_path_counter(blk.uuid)
+            most_common = counter.most_common(1)[0][0]
+            filename = Path(most_common) / f"{blk.name}{BLK_EXT}"
+            block_dir = Path(self.path.parent).resolve()
+            filename = block_dir / filename
 
-        return filename.resolve()
+            return filename.resolve()
+        except:
+            return Path(".") / f"{blk.name}{BLK_EXT}"
 
     def connect_address_maps(self) -> None:
         """

@@ -89,6 +89,7 @@ class TopLevelTab:
     ) -> None:
         "Called when the notebook page changes"
         if page_num == 1:
+            self.update();
             self._overrides_list.update_display()
 
     def connect_signals(self, find_obj: Callable):
@@ -112,7 +113,12 @@ class TopLevelTab:
 
     def param_list_modified(self) -> None:
         "Callback to set the modified flag when the parameter list is modified"
+
+        if self.prj is None:
+            return
+        
         self.project_modified(True)
+        self.set_parameters(self.prj.parameters.get())
 
     def overrides_modified(self) -> None:
         "Callback to set the modified flag when the overrides have modified"

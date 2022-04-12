@@ -14,18 +14,7 @@ package {{prj.short_name}}_reg_pkg;
 
    import uvm_pkg::*;
 
-   /*
-    * Controls the handling of the volatile bit. By default, we try to adhere
-    * to the strict definition of UVM - any register that has the potential of
-    * changing between reads should be marked as volatile. This does impact
-    * some usages of the uvm_reg.mirror(UVM_CHECK) function. So if 
-    * s_relaxed_volitile is set to a 1, then only registers explicity marked
-    * as volatile in regenerate will be identified as volatile. Fields that
-    * have an input signal that can change the value will not. In this case,
-    * it is the responsibility of the user to manage this potential volatility
-    * on their own.
-    */
-   bit s_relaxed_volatile = 1'b0;
+   bit s_relaxed_volatile = 1'b0;  // deprecated
    int s_access_map[string][string] = '{
 {% for map in prj.get_address_maps() %}
       "{{map.name}}" : '{
@@ -248,24 +237,14 @@ package {{prj.short_name}}_reg_pkg;
          {{fix_name(field)}} = new("{{fix_name(field)}}");
      {% endfor %}
      {%- for field in reg.get_bit_fields() -%}
-        {%- if field.flags.volatile %}
+        {%- if field.flags.volatile or TYPE_TO_INPUT[field.type] %}
           {% set volatile = "1" %}
-        {% elif TYPE_TO_INPUT[field.type] %}
-          {% set volatile = "!" + prj.short_name + "_reg_pkg::s_relaxed_volatile" %}
         {% else %}
           {% set volatile = "0" %}
         {% endif %}
 	{%  set mask = (2 ** field.width) - 1 %}
-	{%- if field.reset_type == 1 %}
-	{%-   set has_reset = 0 %}
-	{%-   set reset = "'0" %}
-	{%- elif field.reset_type == 2 %}
-	{%-  set has_reset = 1 %}
-        {%   set reset = "%d'h%x" % (field.width, field.reset_value.__and__(mask)) %}
-	{%- else %}
-        {%   set has_reset = 1 %}
-        {%   set reset = "%d'h%x" % (field.width, field.reset_value.__and__(mask)) %}
-	{%- endif %}
+        {%  set has_reset = 1 %}
+        {%  set reset = "%d'h%x" % (field.width, field.reset_value.__and__(mask)) %}
         {%- set ind_access = individual_access(field, reg) %}
         {%- set access = ACCESS_MAP[field.field_type] %}
 	
@@ -312,24 +291,6 @@ package {{prj.short_name}}_reg_pkg;
 	    .val(1),
 	    .accessor(this)
 	 );
-         {% elif reg.strict_volatile() %}
-           {% if reg.loose_volatile() %}
-         uvm_resource_db #(bit)::set(
-	    .scope({"REG::", get_full_name()}),
-	    .name("NO_REG_HW_RESET_TEST"),
-	    .val(1),
-	    .accessor(this)
-	 );
-           {% else %}
-         if ({{prj.short_name}}_reg_pkg::s_relaxed_volatile == 1'b0) begin
-            uvm_resource_db #(bit)::set(
-	       .scope({"REG::", get_full_name()}),
-	       .name("NO_REG_HW_RESET_TEST"),
-	       .val(1),
-	       .accessor(this)
-	    );
-         end
-           {% endif %}
 	 {% endif %}
       {% endif %}
       endfunction : build

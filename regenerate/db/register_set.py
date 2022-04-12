@@ -159,7 +159,13 @@ class RegisterSet(BaseFile):
 
     def save(self) -> None:
         "Save the data to the specified file as a JSON file"
-        self.save_json(self.json(), self.filename.with_suffix(REG_EXT))
+        try:
+            path =  self.filename.with_suffix(REG_EXT)
+        except ValueError:
+            path =  Path(self.name + REG_EXT)
+            self.filename = path
+            
+        self.save_json(self.json(),path)
 
     @property
     def overview_text(self) -> str:
