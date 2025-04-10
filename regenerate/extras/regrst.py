@@ -36,6 +36,7 @@ from regenerate.extras.token import full_token, in_groups, uvm_name
 
 try:
     from docutils.core import publish_parts
+    from docutils.utils import SystemMessage
 
     _HTML = True
 except ImportError:
@@ -400,7 +401,7 @@ class RegisterRst:
         ofile.write(".. role:: editable\n\n")
         ofile.write(".. role:: mono\n\n")
         ofile.write(".. list-table::\n")
-        ofile.write("   :name: bit_table\n")
+        ofile.write(f"   :name: bit_table_{self._reg.uuid}_{self._group}\n")
         ofile.write("   :widths: 8, 10, 7, 25, 50\n")
         if self._bootstrap:
             ofile.write(
@@ -425,13 +426,14 @@ class RegisterRst:
 
         for field in reversed(self._reg.get_bit_fields()):
             msb = field.msb.resolve()
+
             if msb != last_index:
                 display_reserved(ofile, last_index, msb + 1)
 
             if field.width == 1:
-                ofile.write("   * - %02d\n" % field.lsb)
+                ofile.write(f"   * - ``{field.lsb:02d}``\n")
             else:
-                ofile.write("   * - %02d:%02d\n" % (msb, field.lsb))
+                ofile.write(f"   * - ``{msb:02d}:{field.lsb:02d}``\n")
 
             if self._decode:
                 val = (self._decode & mask(msb, field.lsb)) >> field.lsb
@@ -557,7 +559,7 @@ class RegisterRst:
 
         registers = self.find_registers(block_inst_list)
         names = self.expand_register_list(registers)
-
+        
         if not addr_maps_regset_is_in:
             ofile.write(".. warning::\n")
             ofile.write("   :class: alert alert-warning\n\n")
@@ -684,6 +686,15 @@ class RegisterRst:
                     + paren_re.sub(r"<mark>\1</mark>", parts["body"])
                 )
 
+            except SystemMessage as msg:
+                return (
+                    "<h3>DocUtils SystemMessage</h3><p>"
+                    + str(msg)
+                    + "</p><pre>"
+                    + text
+                    + "</pre>"
+                )
+
             except TypeError as msg:
                 return (
                     "<h3>TypeError</h3><p>"
@@ -703,7 +714,16 @@ class RegisterRst:
             except ZeroDivisionError:
                 return "<h3>ZeroDivisionError in Restructured Text</h3>Please contact the developer to get the documentation fixed"
         else:
-            return "<pre>{0}</pre>".format(self.restructured_text())
+            try:
+                return "<pre>{0}</pre>".format(self.restructured_text())
+            except SystemMessage as msg:
+                return (
+                    "<h3>DocUtils SystemMessage</h3><p>"
+                    + str(msg)
+                    + "</p><pre>"
+                    + self.restructured_text()
+                    + "</pre>"
+                )
 
     def html(self, text=""):
         """
@@ -755,7 +775,13 @@ class RegisterRst:
         return registers
 
     def expand_register_list(self, registers):
-        rtoken = self._reg.token.lower()
+        regdim = self._reg.dimension.int_value
+        
+        if regdim > 1:
+            rtoken = f"{self._reg.token.lower()}[{regdim}]"
+        else:
+            rtoken = self._reg.token.lower()
+            
         names = []
         for (blk_inst, regset_list) in registers:
             bname = blk_inst.name

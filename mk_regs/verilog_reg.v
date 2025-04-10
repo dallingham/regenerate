@@ -113,6 +113,52 @@ module %(MODULE)s_rwpr1s_reg
 
 endmodule
 
+/* Read/Write, Read Only on control signal, reset when control signal deasserts */
+module %(MODULE)s_rwpr1sr_reg
+   (
+    input      CLK,         // Clock
+    input      %(RST)s,        // Reset
+    input      RVAL,        // Value on reset
+    input      BE,          // Byte Enable
+    input      WE,          // Write Strobe
+    input      LD,          // Write protect when high
+    input      DI,          // Data In
+    output reg DO,          // Data Out
+    output     DO_1S        // One Shot
+    );
+
+   reg          ws;
+   reg          ws_d;
+   reg          prev_ld;
+
+   always @(posedge CLK%(RESET_TRIGGER)s) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
+         DO <= RVAL;
+      end else begin
+         if (WE & BE & ~LD) begin
+            DO <= DI;
+         end else if (prev_ld && ~LD) begin
+            DO <= RVAL;
+         end
+      end
+   end
+
+   assign DO_1S = ws & !ws_d;
+
+   always @(posedge CLK%(RESET_TRIGGER)s) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
+         ws <= 1'b0;
+         ws_d <= 1'b0;
+         prev_ld <= 1'b0;
+      end else begin
+         ws <= WE & BE & ~LD;
+         ws_d <= ws;
+         prev_ld <= LD;
+      end
+   end
+
+endmodule
+
 /* Read/Write, Read Only on control signal, One shot on illegal write */
 module %(MODULE)s_rwpri1s_reg
    (
@@ -379,7 +425,7 @@ module %(MODULE)s_rws_reg
 
 endmodule
 
-/* Read/write with input signal that sets bits on one, one shot on write */
+/* read/write with input signal that sets bits on one, one shot on write */
 module %(MODULE)s_rws1s_reg
    (
     input      CLK,         // Clock
@@ -774,7 +820,6 @@ module %(MODULE)s_rv1s_reg
    (
     input      CLK,         // Clock
     input      %(RST)s,        // Reset
-    input      RVAL,        // Value on reset
     input      RD,          // Read Strobe
     input      IN,          // Load Data
     output     DO,          // Data Out
@@ -879,7 +924,7 @@ module %(MODULE)s_wod_reg
       if (%(RESET_CONDITION)s%(RST)s) begin
          ws <= 1'b0;
          ws_d <= 1'b0;
-         DO <= 1'b0;
+         DO <= RVAL;
       end else begin
          if (WE & BE) begin
             ws <= 1;
@@ -1143,4 +1188,31 @@ module %(MODULE)s_rwrc_reg
         end
       end
    end
+endmodule
+
+/* Read/write, reset when control signal asserted */
+module %(MODULE)s_rwr_reg
+   (
+    input      CLK,         // Clock
+    input      %(RST)s,        // Reset
+    input      RVAL,        // Value on reset
+    input      BE,          // Byte Enable
+    input      WE,          // Write Strobe
+    input      DI,          // Data In
+    input      IN,          // Load Data
+    output reg DO           // Data Out
+    );
+
+   always @(posedge CLK%(RESET_TRIGGER)s) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
+         DO <= RVAL;
+      end else begin
+         if (WE & BE) begin
+            DO <= DI;
+         end else if (IN) begin
+            DO <= RVAL;
+         end
+      end
+   end
+
 endmodule

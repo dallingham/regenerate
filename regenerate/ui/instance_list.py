@@ -45,10 +45,10 @@ class InstMdl(Gtk.TreeStore):
 
     def __init__(self, project: RegProject):
 
-        super().__init__(str, str, str, GObject.TYPE_UINT64, str, str, object)
+        super().__init__(str, str, str, GObject.TYPE_UINT64, str, str, str, object)
 
         self.callback = _null_callback
-        self.project = project
+        self.__project = project
 
     def change_hdl(self, path: str, text: str) -> None:
         """
@@ -115,15 +115,16 @@ class InstMdl(Gtk.TreeStore):
         Adds a new instance to the model. It is not added to the database until
         either the change_id or change_base is called.
         """
+        block = self.__project.blocks[new_inst.blkid]
         row = build_row_data(
             block_name,
             new_inst.name,
             new_inst.address_base,
             new_inst.repeat,
             new_inst.hdl_path,
+            block.address_size,
             new_inst,
         )
-
         self.append(None, row=row)
         self.callback()
 
@@ -166,6 +167,7 @@ class InstanceList:
                 row[InstCol.BASE] = f"0x{item.address_base:x}"
                 row[InstCol.SORT] = item.address_base
                 row[InstCol.RPT] = f"{item.repeat}"
+                row[InstCol.SIZE] = f"{self.__project.blocks[item.blkid].address_size}"
                 row[InstCol.HDL] = item.hdl_path
 
     def get_selected_instance(self) -> Tuple[InstMdl, Gtk.TreeIter]:
@@ -195,6 +197,7 @@ class InstanceList:
                     blk_inst.address_base,
                     blk_inst.repeat,
                     blk_inst.hdl_path,
+                    block.address_size,
                     blk_inst,
                 ),
             )
@@ -227,6 +230,15 @@ class InstanceList:
         column.set_resizable(True)
         self.__obj.append_column(column)
 
+        column = ReadOnlyColumn(
+            "Block Size",
+            InstCol.SIZE,
+        )
+        
+        column.set_min_width(125)
+        column.set_resizable(True)
+        self.__obj.append_column(column)
+        
         column = EditableColumn(
             "Repeat", self.instance_repeat_changed, InstCol.RPT, True
         )
@@ -330,8 +342,9 @@ def build_row_data(
     offset: int,
     rpt: int,
     hdl: str,
+    size: int,
     obj: BlockInst,
-) -> Tuple[str, str, str, int, str, str, BlockInst]:
+) -> Tuple[str, str, str, int, str, str, str, BlockInst]:
     """Build row data from the data"""
 
     return (
@@ -341,5 +354,6 @@ def build_row_data(
         offset,
         f"{rpt:d}",
         hdl,
+        f"0x{size:08x}",
         obj,
     )

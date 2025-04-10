@@ -7,9 +7,9 @@
 # BIN_DIR     - path where the executable script will be installedd. This
 #               path needs to be in your search path ($PATH)
 #
-INSTALL_DIR = /home/tools/vlsi-utils/regenerate
-BIN_DIR = /home/tools/bin
-
+INSTALL_DIR=/home/tools/vlsi-utils/regenerate
+BIN_DIR=/home/tools/bin
+PYTHON=/apps/python/3.6.8/bin/python3
 
 all:
 	@echo "Type 'make install' to install"
@@ -19,15 +19,15 @@ install:
 
 release:
 	mkdir -p /home/tools/release
-	python3 setup.py install --home=/home/tools/release --force
+	$(PYTHON) setup.py install --home=/home/tools/release --force
 
 beta:
 	mkdir -p /home/tools/beta
-	python3 setup.py install --home=/home/tools/beta --force
+	$(PYTHON) setup.py install --home=/home/tools/beta --force
 
 alpha:
 	mkdir -p /home/tools/alpha
-	python3 setup.py install --home=/home/tools/alpha --force
+	$(PYTHON) setup.py install --home=/home/tools/alpha --force
 
 clean:
 	rm -f *.pyc *.v *.bak *~ *.log

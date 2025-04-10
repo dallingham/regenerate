@@ -75,7 +75,6 @@ class AddressMap(NameBase):
         Returns:
            fixed (bool): True indicates a fixed address map, False is
                          relocatable
-
         """
         return self._fixed
 

@@ -33,7 +33,8 @@ class InstCol(IntEnum):
     SORT = 3
     RPT = 4
     HDL = 5
-    OBJ = 6
+    SIZE = 6
+    OBJ = 7
 
 
 class AddrCol(IntEnum):

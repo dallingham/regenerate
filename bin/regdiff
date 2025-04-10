@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 #
 # Manage registers in a hardware design
 #
@@ -24,9 +24,7 @@ Actual program. Parses the arguments, and initiates the main window
 
 import os
 import sys
-from regenerate.db.reg_project import RegProject
-from regenerate.db.register_db import RegisterDb
-from regenerate.db.bitfield_types import TYPE_TO_DESCR
+from regenerate.db import RegProject, RegisterSet, TYPE_TO_DESCR
 
 if os.path.dirname(sys.argv[0]) != ".":
     if sys.argv[0][0] == "/":
@@ -50,7 +48,6 @@ def run():
     parser = ArgumentParser(
         description="Compares two project files, reporting differences",
         prog="regdiff",
-        version=PROGRAM_VERSION,
     )
 
     parser.add_argument("--verbose", action="store_true")
@@ -187,11 +184,11 @@ def dump_register_changes(new_reg, old_reg):
 
     removed = old_field_ids - new_field_ids
     for i in removed:
-        print('   - Field "{0}" removed'.format(old_fields[i].field_name))
+        print('   - Field "{0}" removed'.format(old_fields[i].name))
 
     added = new_field_ids - old_field_ids
     for i in added:
-        print('   - Field "{0}" added'.format(new_fields[i].field_name))
+        print('   - Field "{0}" added'.format(new_fields[i].name))
 
     for uuid in old_field_ids & new_field_ids:
         dump_field_changes(old_fields[uuid], new_fields[uuid])
@@ -199,61 +196,61 @@ def dump_register_changes(new_reg, old_reg):
 
 def dump_field_changes(ofld, nfld):
 
-    if ofld.field_name != nfld.field_name:
+    if ofld.name != nfld.name:
         print(
             '   - Field "{0}" renamed from "{1}"'.format(
-                nfld.field_name, ofld.field_name
+                nfld.name, ofld.name
             )
         )
     if (ofld.msb, ofld.lsb) != (nfld.msb, nfld.lsb):
         print(
             '   - Field "{0}" bit fields changed from [{1}:{2}] to [{3}:{4}]'.format(
-                nfld.field_name, ofld.msb, ofld.lsb, nfld.msb, nfld.lsb
+                nfld.name, ofld.msb, ofld.lsb, nfld.msb, nfld.lsb
             )
         )
 
     if ofld.reset_type != nfld.reset_type:
-        print('   - Field "{0}" reset type changed'.format(nfld.field_name))
+        print('   - Field "{0}" reset type changed'.format(nfld.name))
     else:
         if ofld.reset_value != nfld.reset_value:
             print(
                 '   - Field "{0}" reset value changed from {1:x} to {2:X}'.format(
-                    nfld.field_name, ofld.reset_value, nfld.reset_value
+                    nfld.name, ofld.reset_value, nfld.reset_value
                 )
             )
         if ofld.reset_input != nfld.reset_input:
             print(
                 '   - Field "{0}" reset input value changed from "{1}" to "{2}"'.format(
-                    nfld.field_name, ofld.reset_input, nfld.reset_input
+                    nfld.name, ofld.reset_input, nfld.reset_input
                 )
             )
         if ofld.reset_parameter != nfld.reset_parameter:
             print(
                 '   - Field "{0}" reset parameter value changed from "{1}" to "{2}"'.format(
-                    nfld.field_name, ofld.reset_input, nfld.reset_input
+                    nfld.name, ofld.reset_input, nfld.reset_input
                 )
             )
 
     if ofld.use_output_enable != nfld.use_output_enable:
         print(
             '   - Field "{0}" output enable changed from {1} to {2}'.format(
-                nfld.field_name, ofld.use_output_enable, nfld.use_output_enable
+                nfld.name, ofld.use_output_enable, nfld.use_output_enable
             )
         )
     elif ofld.output_signal != nfld.output_signal:
         print(
             '   - Field "{0}" output signal changed from "{1}" to "{2}"'.format(
-                nfld.field_name, ofld.output_signal, nfld.output_signal
+                nfld.name, ofld.output_signal, nfld.output_signal
             )
         )
 
     if ofld.description != nfld.description:
-        print('   - Field "{0}" documentation changed'.format(nfld.field_name))
+        print('   - Field "{0}" documentation changed'.format(nfld.name))
 
     if ofld.field_type != nfld.field_type:
         print(
             '   - Field "{0}" changed from "{1}" to "{2}"'.format(
-                nfld.field_name,
+                nfld.name,
                 TYPE_TO_DESCR[ofld.field_type],
                 TYPE_TO_DESCR[nfld.field_type],
             )
@@ -262,14 +259,14 @@ def dump_field_changes(ofld, nfld):
     if ofld.flag.volatile != nfld.flag.volatile:
         print(
             '   - Field "{0}" volatile flag changed from {1} to {2}'.format(
-                nfld.field_name, ofld.flag.volatile, nfld.flag.volatile
+                nfld.name, ofld.flag.volatile, nfld.flag.volatile
             )
         )
 
     if ofld.flag.is_error_field != nfld.flag.is_error_field:
         print(
             '   - Field "{0}" is_error_field flag changed from {1} to {2}'.format(
-                nfld.field_name,
+                nfld.name,
                 ofld.flag.is_error_field,
                 nfld.flag.is_error_field,
             )
@@ -278,7 +275,7 @@ def dump_field_changes(ofld, nfld):
     if ofld.flag.can_randomize != nfld.flag.can_randomize:
         print(
             '   - Field "{}" can_randomize flag changed from {} to {}'.format(
-                nfld.field_name,
+                nfld.name,
                 ofld.flag.can_randomize,
                 nfld.flag.can_randomize,
             )
@@ -287,38 +284,33 @@ def dump_field_changes(ofld, nfld):
     if ofld.control_signal != nfld.control_signal:
         print(
             '   - Field "{}" control signal changed from "{}" to "{}"'.format(
-                nfld.field_name, ofld.control_signal, nfld.control_signal
+                nfld.name, ofld.control_signal, nfld.control_signal
             )
         )
 
     if ofld.output_is_static != nfld.output_is_static:
         print(
             '   - Field "{0}" output static flag changed from {1} to {2}'.format(
-                nfld.field_name, ofld.output_is_static, nfld.output_is_static
+                nfld.name, ofld.output_is_static, nfld.output_is_static
             )
         )
+        
+    old_effect = ofld.output_has_side_effect
+    new_effect = nfld.output_has_side_effect
 
-    if ofld.output_has_side_effect != nfld.output_has_side_effect:
+    if old_effect != new_effect:
         print(
-            '   - Field "{0}" output side effect flag changed from {1} to {2}'.format(
-                nfld.field_name,
-                ofld.output_has_side_effect,
-                nfld.output_has_side_effect,
-            )
+            f'   - Field "{nfld.name}" output side effect flag changed from {old_effect} to {new_effect}'
         )
 
     if ofld.values != nfld.values:
-        print(
-            '   - Field "{0}" value definitions changed'.format(
-                nfld.field_name
-            )
-        )
+        print(f'   - Field "{nfld.name}" value definitions changed')
 
 
 def check_register_sets(old_project, new_project, verbose):
 
-    old_list = [RegisterDb(item) for item in old_project.get_register_set()]
-    new_list = [RegisterDb(item) for item in new_project.get_register_set()]
+    old_list = [RegisterSet(item) for item in old_project.get_register_set()]
+    new_list = [RegisterSet(item) for item in new_project.get_register_set()]
 
     old_set = set([item.set_name for item in old_list])
     new_set = set([item.set_name for item in new_list])
@@ -518,6 +510,6 @@ if __name__ == "__main__":
     try:
         run()
         sys.exit(0)
-    except IOError, msg:
+    except IOError as msg:
         sys.stderr.write(str(msg) + "\n")
         sys.exit(1)

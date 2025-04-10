@@ -110,6 +110,51 @@ endmodule
 
 endmodule
 """,
+    "rwpr1sr": """module %(MODULE)s_rwpr1sr_reg
+   (
+    input      CLK,         // Clock
+    input      %(RST)s,        // Reset
+    input      RVAL,        // Value on reset
+    input      BE,          // Byte Enable
+    input      WE,          // Write Strobe
+    input      LD,          // Write protect when high
+    input      DI,          // Data In
+    output reg DO,          // Data Out
+    output     DO_1S        // One Shot
+    );
+
+   reg          ws;
+   reg          ws_d;
+   reg          prev_ld;
+
+   always @(posedge CLK%(RESET_TRIGGER)s) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
+         DO <= RVAL;
+      end else begin
+         if (WE & BE & ~LD) begin
+            DO <= DI;
+         end else if (prev_ld && ~LD) begin
+            DO <= RVAL;
+         end
+      end
+   end
+
+   assign DO_1S = ws & !ws_d;
+
+   always @(posedge CLK%(RESET_TRIGGER)s) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
+         ws <= 1'b0;
+         ws_d <= 1'b0;
+         prev_ld <= 1'b0;
+      end else begin
+         ws <= WE & BE & ~LD;
+         ws_d <= ws;
+         prev_ld <= LD;
+      end
+   end
+
+endmodule
+""",
     "rwpri1s": """module %(MODULE)s_rwpri1s_reg
    (
     input      CLK,         // Clock
@@ -752,7 +797,6 @@ endmodule
    (
     input      CLK,         // Clock
     input      %(RST)s,        // Reset
-    input      RVAL,        // Value on reset
     input      RD,          // Read Strobe
     input      IN,          // Load Data
     output     DO,          // Data Out
@@ -855,7 +899,7 @@ endmodule
       if (%(RESET_CONDITION)s%(RST)s) begin
          ws <= 1'b0;
          ws_d <= 1'b0;
-         DO <= 1'b0;
+         DO <= RVAL;
       end else begin
          if (WE & BE) begin
             ws <= 1;
@@ -1114,6 +1158,32 @@ endmodule
         end
       end
    end
+endmodule
+""",
+    "rwr": """module %(MODULE)s_rwr_reg
+   (
+    input      CLK,         // Clock
+    input      %(RST)s,        // Reset
+    input      RVAL,        // Value on reset
+    input      BE,          // Byte Enable
+    input      WE,          // Write Strobe
+    input      DI,          // Data In
+    input      IN,          // Load Data
+    output reg DO           // Data Out
+    );
+
+   always @(posedge CLK%(RESET_TRIGGER)s) begin
+      if (%(RESET_CONDITION)s%(RST)s) begin
+         DO <= RVAL;
+      end else begin
+         if (WE & BE) begin
+            DO <= DI;
+         end else if (IN) begin
+            DO <= RVAL;
+         end
+      end
+   end
+
 endmodule
 """,
  }

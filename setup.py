@@ -3,13 +3,7 @@ try:
 except ImportError:
     from distutils.core import setup
 
-import subprocess
-
-label = str(subprocess.check_output(["git", "describe", "--always"]).strip())
-
-label = label.split("'")[1]
-
-VERSION = f"1.9.9 ({label})"
+VERSION = f"2.0.0"
 
 try:
     out = open("regenerate/settings/version.py", "w")
@@ -55,10 +49,11 @@ setup(
     scripts=[
         "bin/regenerate",
         "bin/regbuild",
-        "bin/regupdate",
         "bin/regxref",
         "bin/regdiff",
         "bin/ipxact2reg",
+	"bin/reg2rst",
+	"bin/reg2docx",
     ],
     classifiers=[
         "Operating System :: POSIX",

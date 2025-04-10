@@ -1,2 +1,2 @@
-PROGRAM_VERSION = "1.9.99"
+PROGRAM_VERSION = "2.0.0"
 PROGRAM_NAME = "regenerate"

@@ -110,7 +110,7 @@ class IpXactParser:
         self._last_reg = None
         self._last_index = -11
         self._ignore_count = 0
-        self.reglist = []
+        self.reglist = defaultdict(list)
         self._grp = False
         self.vendor = ""
         self._keep_reserved = keep_reserved
@@ -127,6 +127,10 @@ class IpXactParser:
         self.filename = Path(input_file).with_suffix(".regp")
 
         self.scope = root.tag.split("}")[0] + "}"
+        if not root.tag.endswith("component"):
+            print("Error: File is not an IPXACT file");
+            sys.exit(1)
+            
         self.count = 0
 
         self.vendor = root.find(self.scope + "vendor").text
@@ -135,6 +139,16 @@ class IpXactParser:
         for mem_maps in root.findall(self.scope + "memoryMaps"):
             for mem_map in mem_maps.findall(self.scope + "memoryMap"):
                 self.parse_mem_map(mem_map)
+        else:
+            print("Non-standard file. Looking for Intel extensions")
+            vendor_ext_list = root.findall(self.scope + "vendorExtensions")
+            for vendor_ext in vendor_ext_list:
+                components = vendor_ext.find(self.scope + "components")
+                if components:
+                    for component in components.findall(self.scope + "component"):
+                        for mem_maps in component.findall(self.scope + "memoryMaps"):
+                            for mem_map in mem_maps.findall(self.scope + "memoryMap"):
+                                self.parse_mem_map(mem_map)
 
     def parse_mem_map(self, mem_map):
         name = mem_map.find(self.scope + "name")
@@ -150,6 +164,12 @@ class IpXactParser:
         else:
             base_addr = original_base
 
+        possible_word_addressing = 1
+
+        print("Address block", addrblk.find(self.scope + 'name').text)
+
+        self.current_blk = addrblk.find(self.scope + 'name').text
+        
         for register in addrblk.findall(self.scope + "register"):
             self.start_register()
             name_tag = register.find(self.scope + "name")
@@ -183,24 +203,36 @@ class IpXactParser:
 
             self._reg.width = convert_hex(size_tag.text)
 
+            if self._reg.width == 16 and self._reg.address % 2:
+                possible_word_addressing = 2
+            elif self._reg.width == 32 and self._reg.address % 4:
+                possible_word_addressing = 4
+            elif self._reg.width == 64 and self._reg.address % 8:
+                possible_word_addressing = 8
+            
             for field in register.findall(self.scope + "field"):
                 self.start_field()
 
                 element = field.find(self.scope + "name")
-                if element is not None:
+                try:
                     self._field.name = element.text.upper()
-                else:
+                except:
                     self._field.name = "UNNAMED"
 
                 element = field.find(self.scope + "description")
-                if element:
+                try:
                     self._field.description = element.text
+                except:
+                    self._field.description = "No description provided by IPXACT file."
 
                 element = field.find(self.scope + "resets")
-                if element:
+                try:
                     for value in element.find(self.scope + "reset"):
-                        rval = convert_hex(value.text)
-                        self._field.set_reset_value_int(rval)
+                        if value.tag.endswith("value"):
+                            rval = convert_hex(value.text)
+                            self._field.set_reset_value_int(rval)
+                except:
+                    pass
                     
                 self._field.lsb = convert_hex(
                     field.find(self.scope + "bitOffset").text
@@ -223,6 +255,17 @@ class IpXactParser:
             self.end_register()
             self.count += 1
 
+
+        if possible_word_addressing > 1:
+            print("Warning: Unaligned addresses were found. It is likely that word")
+            print("         addressing instead of byte addressing was used. Regenerate")
+            print("         only supports byte addressing. The addresses will be converted")
+            print("         byte addressing. You will need to manually verify these addresses.")
+
+            for reg in self.reglist[self.current_blk]:
+                reg.address = reg.address * possible_word_addressing
+
+            
         for blk in addrblk.findall(self.scope + "addressBlock"):
             self.parse_address_block(blk, base_addr)
 
@@ -266,12 +309,12 @@ class IpXactParser:
             self._last_reg.name = new_name
         else:
             if self._reg.get_bit_fields():
-                self.reglist.append(self._reg)
+                self.reglist[self.current_blk].append(self._reg)
                 self._last_reg = self._reg
             else:
                 self._last_reg = None
                 self._ignore_count += 1
-                self.reglist.append(self._reg)
+                self.reglist[self.current_blk].append(self._reg)
         self._last_index = idx
 
         self._reg = None
@@ -467,77 +510,85 @@ if __name__ == "__main__":
 
     ip = IpXactParser()
 
-    ip.import_data(args.input_file)
+    try:
+        ip.import_data(args.input_file)
+    except FileNotFoundError as msg:
+        print(f"Error: {args.input_file} does not exist")
+        sys.exit(1)
+    except PermissionError as msg:
+        print(f"Error: do not have permission to read {args.input_file}")
+        sys.exit(1)
 
     # Group elements
-    grp = Groupings(ip.reglist)
+    for iplist in ip.reglist:
+        grp = Groupings(ip.reglist[iplist])
 
-    (counters, data) = grp.group(args.boundary)
+        (counters, data) = grp.group(args.boundary)
 
-    src = []
-    dest = []
-    if args.xlate:
-        for val in args.xlate:
-            vals = val.split("=")
-            if len(vals) == 2:
-                src.append(vals[0])
-                dest.append(vals[1])
-            else:
-                sys.stderr.write("Ignoring %s\n" % val)
+        src = []
+        dest = []
+        if args.xlate:
+            for val in args.xlate:
+                vals = val.split("=")
+                if len(vals) == 2:
+                    src.append(vals[0])
+                    dest.append(vals[1])
+                else:
+                    sys.stderr.write("Ignoring %s\n" % val)
 
     # Save files
 
-    if not data:
-        sys.stderr.write("No registers were found\n")
+        if not data:
+            sys.stderr.write("No registers were found\n")
 
-    for index, rgrp in enumerate(sorted(data)):
+        for index, rgrp in enumerate(sorted(data)):
 
-        if index == 0:
-            title = ip.db_title
-            filename = Path(title).with_suffix(".regr")
-        else:
-            title = f"{ip.db_title}_{index}"
-            filename = Path(title).stem + f"_{index}.regr"
+            if index == 0:
+                title = iplist
+                filename = Path(title).with_suffix(".regr")
+            else:
+                title = f"{ip.db_title}_{index}"
+                filename = Path(title).stem + f"_{index}.regr"
 
-        regset = RegisterSet()
-        regset.filename = filename
+            regset = RegisterSet()
+            regset.filename = filename
 
         # copy data from old regset, or create our own
 
-        regset.owner = ip.vendor
-        regset.organization = ip.vendor
-        regset.descriptive_title = title
-        regset.module_name = title.lower()
-        regset.name = title.lower()
-        regset.doc_pages.update_page("Overview", "", [])
-        regset.doc_pages.update_page(
-            "Import",
-            f"Imported from IPXACT data provided by {ip.vendor}.",
-            [],
-        )
-
-        max_addr = 0
-        for r in rgrp.get_regs():
-            if args.xlate:
-                for i, s in enumerate(src):
-                    r.token = re.sub(s, dest[i], r.token, flags=re.I)
-                    r.name = re.sub(s, dest[i], r.name, flags=re.I)
-
-            max_addr = max(r.address, max_addr)
-
-            regset.add_register(r)
-
-        if rgrp.repeat == 1:
-            regset.address_bus_width = int(math.ceil(math.log(max_addr, 2)))
-        else:
-            regset.address_bus_width = int(
-                math.ceil(math.log(args.boundary, 2))
+            regset.owner = ip.vendor
+            regset.organization = ip.vendor
+            regset.descriptive_title = title
+            regset.module_name = title.lower()
+            regset.name = title.lower()
+            regset.doc_pages.update_page("Overview", "", [])
+            regset.doc_pages.update_page(
+                "Import",
+                f"Imported from IPXACT data provided by {ip.vendor}.",
+                [],
             )
 
-        if args.xref:
-            crossreference(regset)
+            max_addr = 0
+            for r in rgrp.get_regs():
+                if args.xlate:
+                    for i, s in enumerate(src):
+                        r.token = re.sub(s, dest[i], r.token, flags=re.I)
+                        r.name = re.sub(s, dest[i], r.name, flags=re.I)
+                    
+                max_addr = max(r.address, max_addr)
 
-        regset.save()
+                regset.add_register(r)
+
+            if rgrp.repeat == 1 and max_addr != 0:
+                regset.address_bus_width = int(math.ceil(math.log(max_addr, 2)))
+            else:
+                regset.address_bus_width = int(
+                    math.ceil(math.log(args.boundary, 2))
+                )
+
+            if args.xref:
+                crossreference(regset)
+
+            regset.save()
 
     if len(data) > 1:
         print("%-20s %-8s Repeat" % ("Register Set", "Address"))

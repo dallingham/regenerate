@@ -139,7 +139,10 @@ class BaseFile(NameBase):
             with path.open("w") as ofile:
                 ofile.write(
                     json.dumps(
-                        data, default=methodcaller("json"), sort_keys=True
+                        data,
+                        indent=2,
+                        default=methodcaller("json"),
+                        sort_keys=True
                     )
                 )
         except FileNotFoundError as msg:

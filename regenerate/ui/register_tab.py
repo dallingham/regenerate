@@ -471,6 +471,7 @@ class RegSetTab:
                 reg = regset.get_register(key)
                 if reg:
                     self._reg_model.append_register(reg)
+                    self._set_register_warn_flags(reg)
 
             status = RegSetStatus(
                 regset,
@@ -534,6 +535,10 @@ class RegSetTab:
         if reg.token.lower() in REMAP_NAME:
             warn_reg = True
             msg.append("Register name is a SystemVerilog reserved word")
+        if (len(reg.get_bit_fields()) and
+            reg.width < max([f.msb.resolve() for f in reg.get_bit_fields()])):
+            warn_bit = True
+            msg.append("Register is width is less than the MSB of its fields")
         if not reg.get_bit_fields():
             warn_bit = True
             msg.append("No bit fields exist for the register")
@@ -564,6 +569,7 @@ class RegSetTab:
             self._reg_model.set_tooltip(reg, "\n".join(msg))
         else:
             self._reg_model.set_tooltip(reg, None)
+
 
     def _selected_reg_changed(self, _obj) -> None:
         """

@@ -2,10 +2,12 @@
 SystemVerilog RTL register decoder generator
 """
 
+import math
+
 from pathlib import Path
 from typing import List, NamedTuple, Dict
 
-from regenerate.db import RegProject, RegisterSet, Block
+from regenerate.db import RegProject, RegisterSet, Block, ParameterValue, ParameterFinder
 from .writer_base import BlockWriter, ProjectType, find_template
 from .export_info import ExportInfo
 
@@ -22,6 +24,7 @@ class BlockInfo(NamedTuple):
     offset: int
     single_decode: bool
     db: RegisterSet
+    repeat_obj: ParameterValue
 
 
 class RegDecode(BlockWriter):
@@ -62,36 +65,37 @@ class RegDecode(BlockWriter):
         # Build the data to send to the template
         external_list = []
 
-        reg_addr_width = 16  # FIXME
+        reg_addr_width = block.address_size
 
-        mask = (1 << reg_addr_width) - 1
+        mask = reg_addr_width - 1
         for reg_inst in reginsts:
             regset = proj.finder.find_by_id(reg_inst.regset_id)
+
             if regset is None:
                 continue
 
             size = 1 << regset.ports.address_bus_width
 
             if reg_inst.repeat.resolve() > 1:  # and args.array_single_decode:
-                flatten = True
-                repeat_val = 1
-                size = reg_inst.repeat.resolve() >> 3
-            else:
-                flatten = reg_inst.single_decode
                 repeat_val = reg_inst.repeat.resolve()
-                offset = reg_inst.repeat_offset >> 3
+            else:
+                repeat_val = 1
+
+            flatten = False
+            offset = size
 
             lower = reg_inst.offset & mask
             upper = lower + size
 
             new_set = BlockInfo(
                 reg_inst.name,
-                lower // 8,
-                upper // 8,
+                (lower & mask) // 8,
+                (upper & mask) // 8,
                 repeat_val,
                 offset,
                 flatten,
                 regset,
+                reg_inst.repeat,
             )
 
             external_list.append(new_set)
@@ -106,16 +110,26 @@ class RegDecode(BlockWriter):
         # Open the JINJA template
         template = find_template("decode_rtl.template")
 
+        addr_width_f = math.log(self._block.address_size, 2)
+        addr_width = int(addr_width_f)
+
+        group_params = self._block.parameters.get()
+
+        data_width = max([inst.db.ports.data_bus_width for inst in external_list])
+
         with filename.open("w") as ofile:
             ofile.write(
                 template.render(
-                    REG_ADDR_WIDTH=16,  # args.reg_addr_width,
-                    ADDR_WIDTH=16,  # FIXME args.addr_width,
+                    REG_ADDR_WIDTH=addr_width,  # args.reg_addr_width,
+                    ADDR_WIDTH=addr_width,  # FIXME args.addr_width,
                     flatten=False,  # FIXME args.flatten,
-                    DATA_WIDTH=64,  # FIXME args.width,
+                    DATA_WIDTH=data_width,  # FIXME args.width,
                     ID_WIDTH=4,  # args.id_size,
                     GROUP=self._block.name,
+                    group_params=group_params,
+                    group_overrides=self._block.overrides,
                     ext_insts=external_list,
+                    finder=ParameterFinder
                 )
             )
 

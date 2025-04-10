@@ -332,8 +332,11 @@ class EntryInt(EntryText):
         """Called on the change event"""
 
         if self.data_obj:
-            setattr(self.data_obj, self.field_name, int(obj.get_text()))
-            self.modified()
+            try:
+                setattr(self.data_obj, self.field_name, int(obj.get_text()))
+                self.modified()
+            except ValueError:
+                pass
 
     def change_db(self, data_obj):
         """Change the database"""

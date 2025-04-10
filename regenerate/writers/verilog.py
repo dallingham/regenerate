@@ -155,7 +155,7 @@ class LanguageTerms(NamedTuple):
 
 
 class PortInfo(NamedTuple):
-    "Holds the information on the stanard module ports"
+    "Holds the information on the standard module ports"
 
     clk: str
     reset: str
@@ -206,7 +206,7 @@ def full_reset_value(field: BitField) -> str:
     """returns the full reset value for the entire field"""
 
     if field.reset_type == ResetType.NUMERIC:
-        return f"{field.width}'h{field.reset_value:0x}"
+        return f"{field.width}'h{field.reset_value_display():0x}"
     if field.reset_type == ResetType.INPUT:
         return field.reset_input
     return field.reset_parameter
@@ -217,7 +217,7 @@ def reset_value(field: BitField, start: int, stop: int) -> str:
 
     if field.reset_type == ResetType.NUMERIC:
         field_width = (stop - start) + 1
-        reset = int(field.reset_value >> int(start - field.lsb))
+        reset = int(field.reset_value_display() >> int(start - field.lsb))
         return "{0}'h{1:x}".format(
             field_width, reset & int((2 ** field_width) - 1)
         )
@@ -370,7 +370,8 @@ class Verilog(RegsetWriter):
             self._regset, word_fields, self._cell_info
         )
 
-        signal_list = self.build_signal_list()
+        signal_list, signal_names = self.build_signal_list(
+            len(write_address_selects) == 0)
         reg_data_list = self.build_flop_info()
 
         if self._regset.ports.reset_active_level:
@@ -398,7 +399,7 @@ class Verilog(RegsetWriter):
                     parameters=self._regset.parameters.get(),
                     cell_info=self._cell_info,
                     word_fields=word_fields,
-                    assign_list=build_assignments(word_fields),
+                    assign_list=build_assignments(word_fields, signal_names),
                     full_reset_value=full_reset_value,
                     reset_value=reset_value,
                     lang=self.lang,
@@ -407,9 +408,20 @@ class Verilog(RegsetWriter):
                     low_bit=LOWER_BIT[self._regset.ports.data_bus_width],
                 )
             )
-            self.write_register_modules(ofile)
 
-    def build_signal_list(self):
+            if self._regset.ports.sync_reset:
+                self.write_register_modules(ofile, "")
+            else:
+                ofile.write("\n`ifdef SYNC_RESET\n\n")
+                self.write_register_modules(ofile, "")
+                ofile.write("\n\n`else\n\n")
+                if self._regset.ports.reset_active_level:
+                    self.write_register_modules(ofile, " or posedge RST")
+                else:
+                    self.write_register_modules(ofile, " or negedge RSTn")
+                ofile.write("\n\n`endif\n\n")
+
+    def build_signal_list(self, read_only: bool):
         "Builds the list of signals"
 
         input_signals = build_input_signals(self._regset, self._cell_info)
@@ -418,35 +430,42 @@ class Verilog(RegsetWriter):
         out_logic = self.lang.output_logic
         port_width = build_port_widths(self._regset)
         ports = build_standard_ports(self._regset)
+        signal_names = []
 
         if self._regset.use_interface:
-            new_input_signals = [f"{ports.interface}.{ports.modport} MGMT"]
+            if read_only:
+                new_input_signals = [
+                    f"{ports.interface}.{ports.modport} MGMT /* spyglass disable W240 */"]
+            else:
+                new_input_signals = [f"{ports.interface}.{ports.modport} MGMT"]
         else:
             new_input_signals = [
-                f"{in_logic}          {ports.clk}",
-                f"{in_logic}          {ports.reset}",
-                f"{in_logic}          {ports.write_strobe}",
-                f"{in_logic}          {ports.read_strobe}",
-                f"{in_logic}  {port_width['byte_strobe']:7s} {ports.byte_strobe}",
-                f"{in_logic}  {port_width['addr']:7s} {ports.addr}",
-                f"{in_logic}  {port_width['write_data']:7s} {ports.write_data}",
-                f"{out_logic} {port_width['write_data']:7s} {ports.read_data}",
-                f"{out_logic}         {ports.ack}",
+                f"{in_logic}           {ports.clk}",
+                f"{in_logic}           {ports.reset}",
+                f"{in_logic}           {ports.write_strobe}",
+                f"{in_logic}           {ports.read_strobe}",
+                f"{in_logic}  {port_width['byte_strobe']:7s}  {ports.byte_strobe}",
+                f"{in_logic}  {port_width['addr']:7s}  {ports.addr}",
+                f"{in_logic}  {port_width['write_data']:7s}  {ports.write_data}",
+                f"{out_logic} {port_width['write_data']:7s}  {ports.read_data}",
+                f"{out_logic}          {ports.ack}",
             ]
 
         if self._regset.ports.secondary_reset:
             new_input_signals.append(f"{in_logic}          {ports.alt_reset}")
-        for scalar in input_signals:
+        for scalar in clean_signal_list(input_signals):
             new_input_signals.append(
                 f"{in_logic}  {scalar.vector:7s} {scalar.name}"
             )
-        for scalar in output_signals:
+            signal_names.append(scalar.name)
+        for scalar in clean_signal_list(output_signals):
             new_input_signals.append(
                 f"{out_logic} {scalar.vector:7s} {scalar.name}"
             )
-        return new_input_signals
+            signal_names.append(scalar.name)
+        return new_input_signals, signal_names
 
-    def write_register_modules(self, ofile):
+    def write_register_modules(self, ofile, trigger):
         """Writes the used register module types to the file."""
 
         if self._regset.ports.reset_active_level:
@@ -457,14 +476,6 @@ class Verilog(RegsetWriter):
             edge = "negedge"
             condition = "!"
             rst_name = "RSTn"
-
-        if self._regset.ports.sync_reset:
-            trigger = ""
-        else:
-            if self._regset.ports.reset_active_level:
-                trigger = " or posedge RST"
-            else:
-                trigger = " or negedge RSTn"
 
         name_map = {
             "MODULE": self._regset.name,
@@ -569,7 +580,6 @@ class Verilog(RegsetWriter):
                     )
                 if cell_info.has_rd:
                     reg_field.read_name = f"read_r{byte_addr:02x}"
-#                    reg_field.read_name = f"read_r{reg_field.reg_addr:02x}"
                 if rset.ports.secondary_reset and field.use_alternate_reset:
                     reg_field.reset_name = ports.alt_reset
                 else:
@@ -655,6 +665,11 @@ def build_write_address_selects(
     addr_width = regset.ports.address_bus_width
 
     for addr, val in word_fields.items():
+        for field in val:
+            if not field.field.is_read_only():
+                break
+        else:
+            continue
         rval = addr >> LOWER_BIT[data_width]
         signal = f"write_r{addr:02x}"
         width = addr_width - LOWER_BIT[data_width]
@@ -700,7 +715,7 @@ def build_output_signals(
 
     scalar_ports: List[Tuple[str, str, str]] = []
     array_ports: Dict[str, list] = defaultdict(list)
-    dim: Dict[str, str] = {}
+    dim: Dict[str, str] = defaultdict(str, "")
     signals = []
 
     reg_list = [
@@ -781,7 +796,10 @@ def add_scalar_output_signal(
     else:
         dim[field.output_signal] = reg.dimension.param_name()
         for i in range(field.lsb, field.msb.resolve() + 1):
-            array_ports[field.output_signal].append(i)
+            if field.output_signal in array_ports:
+                array_ports[field.output_signal].append(i)
+            else:
+                array_ports[field.output_signal] = [i]
 
 
 def add_wildcards(
@@ -807,8 +825,11 @@ def add_output_signal_bus_slice(sig: str, array_ports) -> bool:
     match = BUS_SLICE.match(sig)
     if match:
         grp = match.groups()
-        for i in range(int(grp[1]), int(grp[2])):
-            array_ports[grp[0]].append(i)
+        for i in range(int(grp[2]), int(grp[1]) + 1):
+            if grp[0] in array_ports:
+                array_ports[grp[0]].append(i)
+            else:
+                array_ports[grp[0]] = [i]
         return True
     return False
 
@@ -914,6 +935,25 @@ def build_input_signals(
     return sorted(signals)
 
 
+def clean_signal_list(data: List[Scalar]) -> List[Scalar]:
+    current = set()
+    duplicates = set()
+
+    for entry in data:
+        if entry.name in current:
+            duplicates.add(entry.name)
+        current.add(entry.name)
+
+    new_list = []
+    for entry in data:
+        if entry.name not in duplicates:
+            new_list.append(entry)
+        elif entry.vector != "":
+            new_list.append(entry)
+
+    return new_list
+
+
 def add_signal(
     signal_name: str,
     vector: str,
@@ -957,7 +997,7 @@ def build_oneshot_assignments(word_fields, cell_info) -> List[OneShots]:
                 else:
                     name = f"{fld.output_signal}_1S"
 
-                value = f"(|r{reg.address:x}_{fld.name.lower()}_1S)"
+                value = f"(|r{reg.address:02x}_{fld.name.lower()}_1S)"
 
                 assign_list.append(OneShots(name, value))
     return assign_list
@@ -982,7 +1022,7 @@ def valid_output(field: BitField) -> bool:
     return field.use_output_enable and field.output_signal != ""
 
 
-def build_assignments(word_fields) -> List[AssignInfo]:
+def build_assignments(word_fields, signal_list) -> List[AssignInfo]:
     "Build the general assignments"
 
     assign_list: List[AssignInfo] = []
@@ -1009,7 +1049,14 @@ def build_assignments(word_fields) -> List[AssignInfo]:
                 signal_name = fld.resolved_output_signal()
                 dimension = ""
 
-            assign_list.append(AssignInfo(signal_name, reg_name, dimension))
+            signal_root = signal_name.split('[')[0]
+
+            if signal_root in signal_list:
+                assign_list.append(
+                    AssignInfo(
+                        signal_name, reg_name, dimension
+                    )
+                )
 
     return assign_list
 

@@ -118,6 +118,13 @@ class Block(BaseFile):
         """
         self._regset_insts.append(reginst)
 
+        
+    def del_regset_inst(self, reginst: RegisterInst) -> None:
+        self._regset_insts = [
+            inst for inst in self._regset_insts if inst.uuid != reginst.uuid
+        ]
+
+        
     def get_reginst_from_id(self, uuid: Uuid) -> Optional[RegisterInst]:
         """
         Return the register instance based on the uuid.
@@ -378,6 +385,7 @@ class Block(BaseFile):
         self.overrides = []
         resolver = ParameterResolver()
         try:
+            print(">", self.name, data["overrides"])
             for override in data["overrides"]:
                 item = ParameterOverrides()
                 item.json_decode(override)
@@ -389,6 +397,7 @@ class Block(BaseFile):
         except KeyError:
             ...
 
+        print(self.name, self.overrides)
         for override in self.overrides:
             resolver.add_regset_override(
                 override.path, override.parameter, override.value

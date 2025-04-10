@@ -50,14 +50,16 @@ module {{db.name}}
 /*
  * Address Selects
  */
+{% if write_address_selects %}
    wire wr_strb = ~prev_write & {{ports.write_strobe}};
-{% for data in write_address_selects %}
-{%   if data.register.dimension.is_parameter %}
+{%   for data in write_address_selects %}
+{%     if data.register.dimension.is_parameter %}
    wire {{data.name}}[{{data.register.dimension.param_name()}}];
-{%-  else %}
+{%-    else %}
    wire {{data.name}};
-{%-  endif %}   
-{% endfor %}
+{%-    endif %}   
+{%   endfor %}
+{% endif %}
 {% for data in read_address_selects %}
    wire {{data.name}};
 {% endfor %}
@@ -140,10 +142,12 @@ generate
      (
       .CLK   ({{ports.clk}}),
       .{{RST}}  ({{ri.reset_name}}),
+{%     if ri.field.field_type not in [0, 1, 4] -%}
 {%     if not ri.field.msb.is_parameter and ri.field.width == 1 %}
       .RVAL  ({{ri.field.reset_vstr()}}),
     {%-    else %}
       .RVAL  ({{ri.rval}}{{ri.pos}}),
+{%-    endif %}
 {%-    endif %}
 {%     if ri.write_name %}    
       .WE    ({{ri.write_name}}),
@@ -184,7 +188,11 @@ generate
 {% if db.ports.sync_reset %}
    {{lang.always}} @(posedge {{ports.clk}}) begin
 {% else %}
-   {{lang.always}} @(posedge {{ports.clk}} or {{reset_edge}} {{ports.reset}}) begin
+`ifdef SYNC_RESET
+   {{lang.always}} @(posedge {{ports.clk}}) begin
+`else
+  {{lang.always}} @(posedge {{ports.clk}} or {{reset_edge}} {{ports.reset}}) begin
+`endif  
 {% endif %}
      if ({{reset_op}}{{ports.reset}}) begin
         prev_write <= 1'b0;
@@ -218,7 +226,11 @@ generate
 {% if db.ports.sync_reset %}
    {{lang.always}} @(posedge {{ports.clk}}) begin
 {% else %}
+`ifdef SYNC_RESET
+   {{lang.always}} @(posedge {{ports.clk}}) begin
+`else   
    {{lang.always}} @(posedge {{ports.clk}} or {{reset_edge}} {{ports.reset}}) begin
+`endif	   
 {% endif %}
       if ({{reset_op}}{{ports.reset}}) begin
          mux_rdata <= '0;

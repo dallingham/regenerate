@@ -51,6 +51,7 @@ class RegisterDescription:
         text_view.add(editor)
         Spell(editor)
 
+        self.stop_recursion = False
         self.buf = editor.get_buffer()
         self.buf.connect("changed", self.changed)
 
@@ -75,12 +76,17 @@ class RegisterDescription:
 
     def changed(self, _obj):
         """A change to the text occurred"""
+        if self.stop_recursion:
+            return
+        
         if self.reg:
+            self.stop_recursion = True
             new_text = self.buf.get_text(
                 self.buf.get_start_iter(), self.buf.get_end_iter(), False
             )
             self.reg.description = new_text
             self.callback(self.reg)
+            self.stop_recursion = False
 
     def on_key_press_event(self, obj, event):
         """If F12 pressed, clean the selection"""

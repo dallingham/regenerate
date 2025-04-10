@@ -37,6 +37,8 @@ from regenerate.db import (
     TYPES,
 )
 
+from regenerate.ui.error_dialogs import ErrorMsg
+
 from ..extras.remap import REMAP_NAME
 from .writer_base import ProjectWriter, ProjectType, find_template
 from .export_info import ExportInfo
@@ -56,6 +58,14 @@ for i in TYPES:
     ACCESS_MAP[i.type] = i.simple_type
 
 TYPE_TO_INPUT = dict((__i.type, __i.input) for __i in TYPES)
+
+
+class AddrMapErr(Exception):
+    pass
+
+
+class NoRegisterSetsErr(Exception):
+    pass
 
 
 class UVMRegBlockRegisters(ProjectWriter):
@@ -87,7 +97,10 @@ class UVMRegBlockRegisters(ProjectWriter):
             ]
         else:
             uvm_maps = list(self._project.get_address_maps())
-        return uvm_maps
+        if uvm_maps:
+            return uvm_maps
+        else:
+            raise AddrMapErr("UVM generation requires that an address map be defined")
 
     def _block_inst_to_address_map(self) -> Dict[BlockInst, Set[AddressMap]]:
         "Returns the map of block instances to address maps"
@@ -96,6 +109,8 @@ class UVMRegBlockRegisters(ProjectWriter):
 
         for map_id in self._project.address_maps:
             addr_map = self._project.address_maps[map_id]
+            if addr_map not in self._used_maps():
+                continue
 
             for blkid in addr_map.block_insts:
                 blkinst = self._project.get_blkinst_from_id(blkid)
@@ -122,23 +137,30 @@ class UVMRegBlockRegisters(ProjectWriter):
 
         used_dbs = self.get_used_databases()
 
-        with filename.open("w") as ofile:
-            ofile.write(
-                template.render(
-                    prj=self._project,
-                    resolver=ParameterResolver(),
-                    dblist=used_dbs,
-                    individual_access=individual_access,
-                    ACCESS_MAP=ACCESS_MAP,
-                    TYPE_TO_INPUT=TYPE_TO_INPUT,
-                    db_grp_maps=self.get_db_groups(),
-                    group_maps=self._block_inst_to_address_map(),
-                    fix_name=fix_name,
-                    fix_reg=fix_reg_name,
-                    used_maps=self._used_maps(),
-                    current_date=time.strftime("%B %d, %Y"),
+        try:
+            with filename.open("w") as ofile:
+                ofile.write(
+                    template.render(
+                        pkgname=filename.stem.split("_reg_pkg")[0],
+                        prj=self._project,
+                        resolver=ParameterResolver(),
+                        dblist=used_dbs,
+                        individual_access=individual_access,
+                        ACCESS_MAP=ACCESS_MAP,
+                        TYPE_TO_INPUT=TYPE_TO_INPUT,
+                        db_grp_maps=self.get_db_groups(),
+                        group_maps=self._block_inst_to_address_map(),
+                        fix_name=fix_name,
+                        fix_reg=fix_reg_name,
+                        used_maps=self._used_maps(),
+                        current_date=time.strftime("%B %d, %Y"),
+                    )
                 )
-            )
+        except AddrMapErr as msg:
+            ErrorMsg("Cannot generate UVM Registers", str(msg))
+        except NoRegisterSetsErr as msg:
+            ErrorMsg("Cannot generate UVM Registers", str(msg))
+            
 
     def get_db_groups(self):
         "Returns the data set"
@@ -166,8 +188,12 @@ class UVMRegBlockRegisters(ProjectWriter):
                         )
                     )
                     used.add(tag)
-
-        return data_set
+        if data_set:
+            return data_set
+        else:
+            raise NoRegisterSetsErr("No blocks containing register sets were found.\n"
+                                    "Make sure that register sets have been assigned to a block\n"
+                                    "and the block has been assigned to a address map")
 
     def get_used_databases(self) -> Set[RegisterInst]:
         "Gets the register sets used"

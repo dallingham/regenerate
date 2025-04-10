@@ -131,7 +131,7 @@ class BlockTab:
         "Clears data from the tab"
 
         self._sidebar.clear()
-        self._reg_model = Gtk.ListStore(str, str, str, str, str, object)
+        self._reg_model = Gtk.ListStore(str, str, str, str, str, str, object)
         self._block_regsets.set_model(self._reg_model)
         self._block_name.change_db(None)
         self._block_description.change_db(None)
@@ -216,6 +216,10 @@ class BlockTab:
             "Offset", self._address_changed, 2, monospace=True
         )
         self._setup_column(column, 125)
+        
+        column = ReadOnlyColumn("Size", 5)
+        self._setup_column(column, 125)
+
         column = MenuEditColumn(
             "Repeat", self._repeat_menu, self._repeat_text, [], 3
         )
@@ -250,11 +254,12 @@ class BlockTab:
         if self._block is None or self._reg_model is None:
             return
 
-        old_text = self._reg_model[int(path)][col]
         self._reg_model[int(path)][col] = text
 
+        changed_obj = self._reg_model[int(path)][-1]
+
         for rset in self._block.get_regset_insts():
-            if rset.name == old_text:
+            if changed_obj.uuid == rset.uuid:
                 rset.name = text
                 self.modified()
 
@@ -481,6 +486,7 @@ class BlockTab:
                 f"0x{reginst.offset:08x}",
                 f"{reginst.repeat.int_str()}",
                 reginst.hdl,
+                f"0x{regset.ports.address_bus_width:08x}",
                 reginst,
             )
         )
@@ -496,11 +502,8 @@ class BlockTab:
 
         to_be_deleted = model[node][-1]
 
-        self._block.regset_insts = [
-            regset
-            for regset in self._block.get_regset_insts()
-            if regset.uuid != to_be_deleted.uuid
-        ]
+        self._block.del_regset_inst(to_be_deleted)
+        
         model.remove(node)
         self.modified()
 
@@ -517,7 +520,7 @@ class BlockTab:
         self._block_description.change_db(self._block)
         self._block_size.change_db(self._block)
 
-        self._reg_model = Gtk.ListStore(str, str, str, str, str, object)
+        self._reg_model = Gtk.ListStore(str, str, str, str, str, str, object)
         self._block_regsets.set_model(self._reg_model)
         self._overrides_list.set_project(self._block)
 
@@ -530,6 +533,7 @@ class BlockTab:
                     f"0x{reginst.offset:08x}",
                     reginst.repeat.int_str(),
                     reginst.hdl,
+                    f"0x{1 << regset.ports.address_bus_width:08x}",
                     reginst,
                 )
             )

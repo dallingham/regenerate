@@ -550,12 +550,14 @@ class RegProject(BaseFile):
             token = key[1:] if key[0] == "_" else key
             data[token] = self.__getattribute__(key)
 
-        data["filelist"] = [
-            os.path.relpath(
-                Path(fname).with_suffix(REG_EXT), self._filename.parent
-            )
-            for fname in set(self._filelist)
-        ]
+        data["filelist"] = sorted(
+            [
+                os.path.relpath(
+                    Path(fname).with_suffix(REG_EXT), self._filename.parent
+                )
+                for fname in set(self._filelist)
+            ]
+        )
         data["address_maps"] = self.address_maps
 
         data["exports"] = []
@@ -661,7 +663,7 @@ class RegProject(BaseFile):
             for key in data:
                 blk_data = Block()
                 base_path = data[key]["filename"]
-
+                
                 if self.reader_class:
                     rdr = self.reader_class
                     path = self._filename.parent / base_path

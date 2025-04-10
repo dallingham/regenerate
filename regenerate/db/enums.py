@@ -67,7 +67,8 @@ class BitType(IntEnum):
     WRITE_1_TO_CLEAR_SET_CLR = 30
     WRITE_ONLY_WITH_DATA_1S = 31
     READ_WRITE_PROTECT_ILLEGAL_1S = 32
-
+    READ_WRITE_RESET = 33,
+    READ_WRITE_PROTECT_RESET_1S = 34
 
 class OneShot(IntEnum):
     """

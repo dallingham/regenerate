@@ -540,23 +540,38 @@ class BitList:
 
         field = self._model.get_bitfield_at_path(path)
 
-        if re.match(r"^(0x)?[a-fA-F0-9]+$", new_val):
-            if _check_reset(field, int(new_val, 0)) is False:
+        try:
+            val = int(new_val, 0)
+            if _check_reset(field, val) is False:
                 return
-            field.set_reset_value_int(int(new_val, 0))
+            field.set_reset_value_int(val)
             field.reset_type = ResetType.NUMERIC
             self._model[path][col] = reset_value(field)
             self._modified()
-        elif re.match(r"""^[A-Za-z]\w*$""", new_val):
+            return
+        except ValueError:
+            pass
+        
+        groups = re.match(r"""^(\d+)\'h?([a-fA-F0-9_]+)$""", new_val)
+        if groups:
+            if _check_reset(field, int(groups[0], 16)) is False:
+                return
+            field.set_reset_value_int(int(groups[0], 16))
+            field.reset_type = ResetType.NUMERIC
+            self._model[path][col] = reset_value(field)
+            self._modified()
+            return
+        groups = re.match(r"""^[A-Za-z]\w*$""", new_val)
+        if groups:
             field.reset_input = new_val
             field.reset_type = ResetType.INPUT
             self._model[path][BitCol.RESET] = new_val
             self._modified()
-        else:
-            LOGGER.warning(
-                '"%s" is not a valid constant, parameter, or signal name',
-                new_val,
-            )
+            return
+        LOGGER.warning(
+            '"%s" is not a valid constant, parameter, or signal name',
+            new_val,
+        )
 
     def reset_menu_edit(self, cell, path, node, _col) -> None:
         "Called with the reset field has been altered by the menu"
@@ -677,13 +692,20 @@ class BitList:
         self._model[path][BitCol.LSB] = f"{field.lsb}"
         self._model[path][BitCol.SORT] = field.lsb
 
-    def check_for_width(self, _start: int, stop: int) -> bool:
+    def check_for_width(self, start: int, stop: int) -> bool:
         "Checks to make sure the bit position is with the valid range"
 
         if self._model is None:
             return False
 
         reg = self._model.register
+        if start > stop:
+            LOGGER.warning(
+                "LSB position (%d) is greater than MSB (%d)",
+                start,
+                stop,
+            )
+            return False
         if stop >= reg.width:
             LOGGER.warning(
                 "Bit position (%d) is greater than register width (%d)",
@@ -743,22 +765,28 @@ class BitList:
 
         field = self._model[path][-1]
         new_text = new_text.strip()
+        
         try:
             value = int(new_text, 0)
-            if value < 1:
+            if self.check_for_width(field.lsb, value) is False:
+                return
+
+            if value < field.lsb:
                 LOGGER.warning(
-                    "The dimension for a register must be 1 or greater"
+                    "The width of a bit field must be 1 or greater"
                 )
                 return
             field.msb.is_parameter = False
             field.msb.offset = 0
-
+            
             field.msb.set_int(int(new_text, 0))
             self._model[path][BitCol.MSB] = f"{field.msb.int_decimal_str()}"
             self._modified()
+
         except ValueError:
             ...
 
+            
     def on_button_press_event(self, _obj, event):
         "Callback for a button press on the register list. Display the menu"
 
@@ -787,7 +815,7 @@ def _check_reset(field: BitField, value: int) -> bool:
 def reset_value(field: BitField) -> str:
     "Returns a string representation of the reset value."
 
-    return f"0x{field.reset_value:x}"
+    return f"0x{field.reset_value_display():x}"
 
 
 def get_field_reset_data(field: BitField) -> str:

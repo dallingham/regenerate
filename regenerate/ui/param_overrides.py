@@ -56,7 +56,11 @@ class ParameterOverridesListMdl(Gtk.ListStore):
 
     def append_instance(self, path, inst):
         """Adds the specified instance to the InstanceList"""
-        return self.append(row=get_row_data(path, inst))
+        data = get_row_data(path, inst)
+        if data:
+            return self.append(row=get_row_data(path, inst))
+        else:
+            return None
 
 
 class ParameterOverridesList:
@@ -375,8 +379,12 @@ def get_row_data(path, map_obj):
     "Returns the row data from an object"
 
     finder = ParameterFinder()
-    return (
-        f"{path}.{finder.find(map_obj.parameter).name}",
-        f"{map_obj.value.int_str()}",
-        map_obj,
-    )
+    obj = finder.find(map_obj.parameter)
+    if obj:
+        return (
+            f"{path}.{finder.find(map_obj.parameter).name}",
+            f"{map_obj.value.int_str()}",
+            map_obj,
+        )
+    else:
+        return None

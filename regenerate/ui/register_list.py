@@ -200,11 +200,14 @@ class RegisterModel(Gtk.ListStore):
         """
         Sets the tooltip for the register.
         """
-        try:
-            path = self.get_path_from_register(reg)
-            self[path][RegCol.TOOLTIP] = msg
-        except IndexError:
-            pass
+        if reg:
+            try:
+                path = self.get_path_from_register(reg)
+                self[path][RegCol.TOOLTIP] = msg
+            except IndexError:
+                pass
+        else:
+            self[path][RegCol.TOOLTIP] = None
 
     def get_register_at_path(self, path: str) -> Register:
         """
@@ -217,9 +220,10 @@ class RegisterModel(Gtk.ListStore):
         "Sets the warning icon for the register in the table"
         try:
             path = self.reg2path[register]
-            self[path][RegCol.ICON] = (
-                Gtk.STOCK_DIALOG_WARNING if flag else None
-            )
+            if flag:
+                self[path][RegCol.ICON] = Gtk.STOCK_DIALOG_WARNING
+            else: 
+                self[path][RegCol.ICON] = None
         except IndexError:
             pass
 
@@ -259,6 +263,7 @@ class RegisterList:
     ):
         self._obj = obj
         self._model = None
+        self._fmodel = None
         self._addr_col = None
         self._selection = self._obj.get_selection()
         self._selection.set_mode(Gtk.SelectionMode.MULTIPLE)
@@ -391,6 +396,7 @@ class RegisterList:
         "Sets the active model."
 
         self._obj.set_model(model)
+        self._fmodel = model
         self._model = model.get_model() if model else None
 
     def clear(self):
@@ -521,11 +527,11 @@ class RegisterList:
         if text != reg.name:
             reg.name = text
             self._set_modified()
-        self._model[path][RegCol.NAME] = reg.name
+        self._fmodel[path][RegCol.NAME] = reg.name
 
         if reg.token == "":
             value = build_define(reg.name)
-            self._model[path][RegCol.DEFINE] = value
+            self._fmodel[path][RegCol.DEFINE] = value
             reg.token = value
             self._set_modified()
 
@@ -537,7 +543,7 @@ class RegisterList:
         if text != reg.dimension.int_str():
             reg.dimension.set_int(int(text, 0))
             self._set_modified()
-        self._model[path][RegCol.DIM] = text
+        self._fmodel[path][RegCol.DIM] = text
 
     def _reg_update_define(self, reg, path, text, _cell):
         """
@@ -551,7 +557,7 @@ class RegisterList:
             reg.token = text
             self._set_warn_flags(reg)
             self._set_modified()
-        self._model[path][RegCol.DEFINE] = reg.token
+        self._fmodel[path][RegCol.DEFINE] = reg.token
 
     def _new_address_is_not_used(self, new_text, path):
         """
@@ -650,8 +656,6 @@ class RegisterList:
             self._handle_edited_address(register, path, new_text)
         elif col == RegCol.NAME:
             self._reg_update_name(register, path, new_text)
-        # elif col == RegCol.DIM:
-        #     self._reg_update_dim(register, path, new_text)
         elif col == RegCol.DEFINE:
             self._reg_update_define(register, path, new_text, cell)
 
@@ -717,9 +721,8 @@ class RegisterList:
 def _build_icon_col():
     "Builds the icon column"
 
-    renderer = Gtk.CellRendererPixbuf()
-    col = Gtk.TreeViewColumn("", renderer, stock_id=RegColType.ICON)
-    col.set_resizable(True)
+    col = Gtk.TreeViewColumn("", Gtk.CellRendererPixbuf(), stock_id=0)
+    col.set_resizable(False)
     col.set_min_width(30)
     col.set_expand(False)
     return col

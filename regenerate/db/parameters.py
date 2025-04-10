@@ -333,6 +333,7 @@ class ParameterResolver:
         """
         if not self.reginst_id:
             return param.value
+
         if (
             self.reginst_id in self.reginst_overrides
             and param.uuid in self.reginst_overrides[self.reginst_id]
@@ -364,7 +365,10 @@ class ParameterResolver:
         ):
             new_val = self.top_overrides[self.blkinst_id][value.txt_value]
             return _resolve_blk_value(new_val)
-        return value.value
+        if isinstance(value, ParameterValue):
+            return value.resolve()
+        else:
+            return value.value
 
     def resolve(self, param: "ParameterDefinition") -> int:
         """
@@ -380,9 +384,21 @@ class ParameterResolver:
             int: resolved value
 
         """
+
+        print("Param", param)
+
+        param_id = param.uuid
+
+        if self.reginst_id in self.reginst_overrides and param_id in self.reginst_overrides[self.reginst_id]:
+            print("blk", self.regset_overrides[sef.reginst_id][param_id])
+
+        if self.blkinst_id in self.top_overrides and param_id in self.top_overrides[self.blkinst_id]:
+            print("top", type(self.top_overrides[self.blkinst_id][param_id]))
+            
         val = self.resolve_reg(param)
         if isinstance(val, int):
             return val
+        
         new_val = self.resolve_blk(val)
         return new_val
 

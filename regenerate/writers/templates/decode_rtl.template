@@ -7,23 +7,102 @@
 
 // spyglass disable_block W240
 
+{% set pns = namespace(params=[]) %}
+{% for inst in ext_insts %}
+{%    set pns.params = pns.params + [inst.repeat_obj.txt_value] %}
+{% endfor %}
+{% set usens = namespace(intf=0) %}
+{% for inst in ext_insts %}
+{%   if inst.db.use_interface %}
+{%     set usens.intf = 1 %}
+{%   endif %}
+{% endfor %}
+{% if group_params %}
 module {{GROUP}}_decode
+   #(
+{% for i in group_params %}
+   parameter int {{i.name}} = {{i.value}}{% if not loop.last %},{% endif %}
+{% endfor %}
+
+   )
+{% else %}
+module {{GROUP}}_decode
+{% endif %}
   (
 {% for inst in ext_insts %}
-  {% if inst.repeat > 1 and not inst.single_decode %}
-    {% if flatten %}
-      {% for i in range(inst.repeat) %}
-   {{inst.db.ports.interface_name}}.{{inst.db.ports.imodport_name}} MGMT_{{inst.inst|upper}}_{{i}},
-      {% endfor %}
+  {% if inst.repeat_obj.is_parameter %}
+    {% if inst.db.use_interface %}
+   {{inst.db.ports.interface_name}}.{{inst.db.ports.imodport_name}} MGMT_{{inst.inst|upper}}[{{finder().find(inst.repeat_obj.txt_value).name}}],
     {% else %}
+   output logic [{{REG_ADDR_WIDTH-1}}:0] {{inst.inst|upper}}_ADDR[{{finder().find(inst.repeat_obj.txt_value)}}],
+   output logic {{inst.inst|upper}}_WR[{{finder().find(inst.repeat_obj.txt_value)}}],
+   output logic {{inst.inst|upper}}_RD[{{finder().find(inst.repeat_obj.txt_value)}}],
+   output logic {{inst.inst|upper}}_BE[{{finder().find(inst.repeat_obj.txt_value)}}],
+   output logic [{{DATA_WIDTH-1}}:0] {{inst.inst|upper}}_WDATA[{{finder().find(inst.repeat_obj.txt_value)}}],
+   input logic {{inst.inst|upper}}_ACK[{{finder().find(inst.repeat_obj.txt_value)}}],
+   input logic [{{DATA_WIDTH-1}}:0] {{inst.inst|upper}}_RDATA[{{finder().find(inst.repeat_obj.txt_value)}}],
+    {% endif %}
+  {% elif inst.repeat > 1 and not inst.single_decode %}
+    {% if inst.db.use_interface %}
    {{inst.db.ports.interface_name}}.{{inst.db.ports.imodport_name}} MGMT_{{inst.inst|upper}}[{{inst.repeat}}],
+    {% else %}
+   output logic [{{REG_ADDR_WIDTH-1}}:0] {{inst.inst|upper}}_ADDR[{{inst.repeat}}],
+   output logic {{inst.inst|upper}}_WR[{{inst.repeat}}],
+   output logic {{inst.inst|upper}}_RD[{{inst.repeat}}],
+   output logic {{inst.inst|upper}}_BE[{{inst.repeat}}],
+   output logic [{{DATA_WIDTH-1}}:0] {{inst.inst|upper}}_WDATA[{{inst.repeat}}],
+   input logic {{inst.inst|upper}}_ACK[{{inst.repeat}}],
+   input logic [{{DATA_WIDTH-1}}:0] {{inst.inst|upper}}_RDATA[{{inst.repeat}}],
     {% endif %}
   {% else %}
+    {% if inst.db.use_interface %}
    {{inst.db.ports.interface_name}}.{{inst.db.ports.imodport_name}} MGMT_{{inst.inst|upper}},
+    {% else %}
+   output logic [{{REG_ADDR_WIDTH-1}}:0] {{inst.inst|upper}}_ADDR,
+   output logic {{inst.inst|upper}}_WR,
+   output logic {{inst.inst|upper}}_RD,
+   output logic {{inst.inst|upper}}_BE,
+   output logic [{{DATA_WIDTH-1}}:0] {{inst.inst|upper}}_WDATA,
+   input logic {{inst.inst|upper}}_ACK,
+   input logic [{{DATA_WIDTH-1}}:0] {{inst.inst|upper}}_RDATA,
+    {% endif %}
   {% endif %}
 {% endfor %}
+{% if usens.intf %}
    mgmt_interface.target MGMT_MAIN
+{% else %}
+   input logic [{{REG_ADDR_WIDTH-1}}:0] MAIN_ADDR,
+   input logic MAIN_WR,
+   input logic MAIN_RD,
+   input logic MAIN_BE,
+   input logic [{{DATA_WIDTH-1}}:0] MAIN_WDATA,
+   output logic MAIN_ACK,
+   output logic [{{DATA_WIDTH-1}}:0] MAIN_RDATA,
+   input logic CLK,
+   input logic RESETn
+{% endif %}
    );
+{% if usens.intf %}
+  {% set MAIN_CLK = "MGMT_MAIN.CLK" %}
+  {% set MAIN_RSTn = "MGMT_MAIN.RSTn" %}
+  {% set MAIN_ADDR = "MGMT_MAIN.ADDR" %}
+  {% set MAIN_WR = "MGMT_MAIN.WR" %}
+  {% set MAIN_RD = "MGMT_MAIN.RD" %}
+  {% set MAIN_BE = "MGMT_MAIN.BE" %}
+  {% set MAIN_ACK = "MGMT_MAIN.ACK" %}
+  {% set MAIN_RDATA = "MGMT_MAIN.RDATA" %}
+  {% set MAIN_WDATA = "MGMT_MAIN.WDATA" %}
+{% else %}
+  {% set MAIN_CLK = "CLK" %}
+  {% set MAIN_RSTn = "RESETn" %}
+  {% set MAIN_ADDR = "MAIN_ADDR" %}
+  {% set MAIN_WR = "MAIN_WR" %}
+  {% set MAIN_RD = "MAIN_RD" %}
+  {% set MAIN_BE = "MAIN_BE" %}
+  {% set MAIN_ACK = "MAIN_ACK" %}
+  {% set MAIN_RDATA = "MAIN_RDATA" %}
+  {% set MAIN_WDATA = "MAIN_WDATA" %}
+{% endif %}
 
    genvar                   i;
    logic                    rw_delay;
@@ -36,54 +115,114 @@ module {{GROUP}}_decode
     */
 {% for inst in ext_insts %}
    {% set select = "sel_" + inst.inst | lower %}
-   {% set addr = "MGMT_MAIN.ADDR[%d:3]" % (REG_ADDR_WIDTH - 1,) %}
-   {% if inst.upper > inst.offset %}
-     {% set limit = inst.offset %}
+   {% set addr = MAIN_ADDR + "[%d:3]" % (REG_ADDR_WIDTH - 1,) %}
+   {% set limit = inst.offset // 8 %}
+   {% if inst.repeat_obj.is_parameter %}
+   
+   wire [{{finder().find(inst.repeat_obj.txt_value).name}}-1:0] {{select}}{{i}};
+   generate
+      for(i=0; i < {{finder().find(inst.repeat_obj.txt_value).name}}; i++) begin
+         assign {{select}}[i] = {{addr}} >= ('h{{"%x" % inst.lower}} + (i * {{limit}})) && {{addr}} < ('h{{"%x" % inst.lower}} + ((i+1) * {{limit}}));
+      end
+   endgenerate
+
+   {% elif inst.repeat_obj.int_value > 1 %}
+   
+   wire [{{inst.repeat_obj.int_value-1}}:0] {{select}}{{i}};
+   generate
+      for(i=0; i < {{inst.repeat_obj.int_value}}; i++) begin
+         assign {{select}}[i] = {{addr}} >= ('h{{"%x" % inst.lower}} + (i * {{limit}})) && {{addr}} < ('h{{"%x" % inst.lower}} + ((i+1) * {{limit}}));
+      end
+   endgenerate
+
    {% else %}
-     {% set limit = inst.upper %}
-   {% endif %}
-   {% if inst.repeat > 1 %}
-     {% if inst.single_decode %}
-   wire {{select}} = {{addr}} >= 'h{{"%x" % inst.lower}} && {{addr}} < 'h{{"%x" % (inst.lower + (inst.repeat * inst.offset),)}};
+     {% if inst.lower == inst.upper %}
+   wire {{select}} = {{addr}} == 'h{{"%x" % inst.lower }};
      {% else %}
-       {% for i in range(inst.repeat) %}
-         {% set bar = inst.lower + (i * inst.offset) %}
-   wire {{select}}{{i}} = {{addr}} >= 'h{{"%x" % bar}} && {{addr}} < 'h{{"%x" % (bar + limit,)}};
-       {% endfor %}
+   wire {{select}} = {{addr}} >= 'h{{"%x" % inst.lower }} && {{addr}} < 'h{{"%x" % inst.upper}};
      {% endif %}
-   {% else %}
-   wire {{select}} = {{addr}} >= 'h{{"%x" % inst.lower}} && {{addr}} < 'h{{"%x" % inst.upper}};
    {% endif %}
 {% endfor %}
 
    // Output port assignments
 
 {% for inst in ext_insts %}
-  // {{inst}}
-  {% if inst.repeat > 1 and not inst.single_decode %}
-    {% for i in range(inst.repeat) %}
-      {% if flatten %}
-   assign MGMT_{{inst.inst|upper}}_{{i}}.{{inst.db.ports.address_bus_name}} = MGMT_MAIN.ADDR;
-   assign MGMT_{{inst.inst|upper}}_{{i}}.{{inst.db.ports.write_data_name}} = MGMT_MAIN.WDATA;
-   assign MGMT_{{inst.inst|upper}}_{{i}}.{{inst.db.ports.byte_strobe_name}} = MGMT_MAIN.BE;
-   assign MGMT_{{inst.inst|upper}}_{{i}}.{{inst.db.ports.read_data_name}} = MGMT_MAIN.RD & sel_{{inst.inst|lower}}{{i}};
-   assign MGMT_{{inst.inst|upper}}_{{i}}.{{inst.db.ports.write_strobe_name}} = MGMT_MAIN.WR & sel_{{inst.inst|lower}}{{i}};
-      {% else %}
-   assign MGMT_{{inst.inst|upper}}[{{i}}].{{inst.db.ports.address_bus_name}} = MGMT_MAIN.ADDR;
-   assign MGMT_{{inst.inst|upper}}[{{i}}].{{inst.db.ports.write_data_name}} = MGMT_MAIN.WDATA;
-   assign MGMT_{{inst.inst|upper}}[{{i}}].{{inst.db.ports.byte_strobe_name}} = MGMT_MAIN.BE;
-   assign MGMT_{{inst.inst|upper}}[{{i}}].{{inst.db.ports.read_strobe_name}} = MGMT_MAIN.RD & sel_{{inst.inst|lower}}{{i}};
-   assign MGMT_{{inst.inst|upper}}[{{i}}].{{inst.db.ports.write_strobe_name}} = MGMT_MAIN.WR & sel_{{inst.inst|lower}}{{i}};
-      {% endif %}
-    {% endfor %}
+  {% if inst.repeat_obj.is_parameter %}
+   generate
+     for(i = 0; i < {{finder().find(inst.repeat_obj.txt_value).name}}; i++) begin : g_{{inst.inst|lower}}
+     {% if usens.intf %}
+        assign MGMT_{{inst.inst|upper}}[i].{{inst.db.ports.address_bus_name}} = {{MAIN_ADDR}};
+        assign MGMT_{{inst.inst|upper}}[i].{{inst.db.ports.write_data_name}} = {{MAIN_WDATA}};
+        assign MGMT_{{inst.inst|upper}}[i].{{inst.db.ports.byte_strobe_name}} = {{MAIN_BE}};
+        assign MGMT_{{inst.inst|upper}}[i].{{inst.db.ports.read_strobe_name}} = {{MAIN_RD}} & sel_{{inst.inst|lower}}[i];
+        assign MGMT_{{inst.inst|upper}}[i].{{inst.db.ports.write_strobe_name}} = {{MAIN_WR}} & sel_{{inst.inst|lower}}[i];
+     {% else %}
+        assign {{inst.inst|upper}}_{{inst.db.ports.address_bus_name}}[i] = {{MAIN_ADDR}};
+        assign {{inst.inst|upper}}_{{inst.db.ports.write_data_name}}[i] = {{MAIN_WDATA}};
+        assign {{inst.inst|upper}}_{{inst.db.ports.byte_strobe_name}}[i] = {{MAIN_BE}};
+        assign {{inst.inst|upper}}_{{inst.db.ports.read_strobe_name}}[i] = {{MAIN_RD}} & sel_{{inst.inst|lower}}[i];
+        assign {{inst.inst|upper}}_{{inst.db.ports.write_strobe_name}}[i] = {{MAIN_WR}} & sel_{{inst.inst|lower}}[i];
+     {% endif %}
+     end
+   endgenerate
+  {% elif inst.repeat_obj.int_value > 1 %}
+   generate
+     for(i = 0; i < {{inst.repeat_obj.int_value}}; i++) begin : g_{{inst.inst|lower}}
+     {% if usens.intf %}
+        assign MGMT_{{inst.inst|upper}}[i].{{inst.db.ports.address_bus_name}} = {{MAIN_ADDR}};
+        assign MGMT_{{inst.inst|upper}}[i].{{inst.db.ports.write_data_name}} = {{MAIN_WDATA}};
+        assign MGMT_{{inst.inst|upper}}[i].{{inst.db.ports.byte_strobe_name}} = {{MAIN_BE}};
+        assign MGMT_{{inst.inst|upper}}[i].{{inst.db.ports.read_strobe_name}} = {{MAIN_RD}} & sel_{{inst.inst|lower}}[i];
+        assign MGMT_{{inst.inst|upper}}[i].{{inst.db.ports.write_strobe_name}} = {{MAIN_WR}} & sel_{{inst.inst|lower}}[i];
+     {% else %}
+        assign {{inst.inst|upper}}_{{inst.db.ports.address_bus_name}}[i] = {{MAIN_ADDR}};
+        assign {{inst.inst|upper}}_{{inst.db.ports.write_data_name}}[i] = {{MAIN_WDATA}};
+        assign {{inst.inst|upper}}_{{inst.db.ports.byte_strobe_name}}[i] = {{MAIN_BE}};
+        assign {{inst.inst|upper}}_{{inst.db.ports.read_strobe_name}}[i] = {{MAIN_RD}} & sel_{{inst.inst|lower}}[i];
+        assign {{inst.inst|upper}}_{{inst.db.ports.write_strobe_name}}[i] = {{MAIN_WR}} & sel_{{inst.inst|lower}}[i];
+     {% endif %}
+     end
+   endgenerate
   {% else %}
-   assign MGMT_{{inst.inst|upper}}.{{inst.db.ports.address_bus_name}} = MGMT_MAIN.ADDR;
-   assign MGMT_{{inst.inst|upper}}.{{inst.db.ports.write_data_name}} = MGMT_MAIN.WDATA;
-   assign MGMT_{{inst.inst|upper}}.{{inst.db.ports.byte_strobe_name}} = MGMT_MAIN.BE;
-   assign MGMT_{{inst.inst|upper}}.{{inst.db.ports.read_strobe_name}} = MGMT_MAIN.RD & sel_{{inst.inst|lower}};
-   assign MGMT_{{inst.inst|upper}}.{{inst.db.ports.write_strobe_name}} = MGMT_MAIN.WR & sel_{{inst.inst|lower}};
-  {% endif %}
+     {% if usens.intf %}
+   assign MGMT_{{inst.inst|upper}}.{{inst.db.ports.address_bus_name}} = {{MAIN_ADDR}};
+   assign MGMT_{{inst.inst|upper}}.{{inst.db.ports.write_data_name}} = {{MAIN_WDATA}};
+   assign MGMT_{{inst.inst|upper}}.{{inst.db.ports.byte_strobe_name}} = {{MAIN_BE}};
+   assign MGMT_{{inst.inst|upper}}.{{inst.db.ports.read_strobe_name}} = {{MAIN_RD}} & sel_{{inst.inst|lower}};
+   assign MGMT_{{inst.inst|upper}}.{{inst.db.ports.write_strobe_name}} = {{MAIN_WR}} & sel_{{inst.inst|lower}};
+    {% else %}
+   assign {{inst.inst|upper}}_{{inst.db.ports.address_bus_name}} = {{MAIN_ADDR}};
+   assign {{inst.inst|upper}}_{{inst.db.ports.write_data_name}} = {{MAIN_WDATA}};
+   assign {{inst.inst|upper}}_{{inst.db.ports.byte_strobe_name}} = {{MAIN_BE}};
+   assign {{inst.inst|upper}}_{{inst.db.ports.read_strobe_name}} = {{MAIN_RD}} & sel_{{inst.inst|lower}};
+   assign {{inst.inst|upper}}_{{inst.db.ports.write_strobe_name}} = {{MAIN_WR}} & sel_{{inst.inst|lower}};
+    {% endif %}
+  {% endif -%}
 {% endfor %}
+
+{% for inst in ext_insts %}
+  {% if inst.repeat_obj.is_parameter %}
+
+  logic mgmt_{{inst.inst|lower}}_ack[{{finder().find(inst.repeat_obj.txt_value).name}}];
+  logic [63:0] mgmt_{{inst.inst|lower}}_data[{{finder().find(inst.repeat_obj.txt_value).name}}];
+  generate
+     for (i = 0; i < {{finder().find(inst.repeat_obj.txt_value).name}}; i++) begin
+        assign mgmt_{{inst.inst|lower}}_ack[i] = MGMT_{{inst.inst|upper}}[i].{{inst.db.ports.acknowledge_name}};
+        assign mgmt_{{inst.inst|lower}}_data[i] = MGMT_{{inst.inst|upper}}[i].{{inst.db.ports.read_data_name}};
+     end
+  endgenerate	
+  {% elif inst.repeat_obj.int_value > 1 %}
+
+  logic mgmt_{{inst.inst|lower}}_ack[{{inst.repeat_obj.int_value}}];
+  logic [63:0] mgmt_{{inst.inst|lower}}_data[{{inst.repeat_obj.int_value}}];
+  generate
+     for (i = 0; i < {{inst.repeat_obj.int_value}}; i++) begin
+        assign mgmt_{{inst.inst|lower}}_ack[i] = MGMT_{{inst.inst|upper}}[i].{{inst.db.ports.acknowledge_name}};
+        assign mgmt_{{inst.inst|lower}}_data[i] = MGMT_{{inst.inst|upper}}[i].{{inst.db.ports.read_data_name}};
+     end
+  endgenerate	
+  {% endif %}
+{% endfor %}	
 
   /*--------------------------------------------------------------------
    *
@@ -93,31 +232,45 @@ module {{GROUP}}_decode
    */
    always_comb begin
 {% for inst in ext_insts %}
-  {% set outer_loop = loop %}
-  {% if inst.repeat > 1 and not inst.single_decode %}
-    {% for i in range(inst.repeat) %}
-      {% if outer_loop.index0 == 0 and i == 0 %}
-      unique if (sel_{{inst.inst|lower}}{{i}}) begin
-      {% else %}
-      end else if (sel_{{inst.inst|lower}}{{i}}) begin
-      {% endif %}
-      {% if flatten %}
-         MGMT_MAIN.RDATA = MGMT_{{inst.inst|upper}}_{{i}}.{{inst.db.ports.read_data_name}};
-      {% else  %}
-         MGMT_MAIN.RDATA = MGMT_{{inst.inst|upper}}[{{i}}].{{inst.db.ports.read_data_name}};
-      {% endif %}
-    {% endfor %}
+  {% if inst.repeat_obj.is_parameter %}
+    {% if loop.index0 == 0 %}
+      if (|sel_{{inst.inst|lower}}) begin
+    {% else %}
+      end else if (|sel_{{inst.inst|lower}}) begin
+    {% endif %}
+         for (int j = 0; j < {{finder().find(inst.repeat_obj.txt_value).name}}; j++) begin
+	    if (sel_{{inst.inst|lower}}[j]) begin
+	       {{MAIN_RDATA}} = mgmt_{{inst.inst|lower}}_data[j];
+	       break;
+	    end		  
+	 end	       
+  {% elif inst.repeat_obj.int_value > 1 %}
+    {% if loop.index0 == 0 %}
+      if (|sel_{{inst.inst|lower}}) begin
+    {% else %}
+      end else if (|sel_{{inst.inst|lower}}) begin
+    {% endif %}
+         for (int j = 0; j < {{inst.repeat_obj.int_value}}; j++) begin
+	    if (sel_{{inst.inst|lower}}[j]) begin
+	       {{MAIN_RDATA}} = mgmt_{{inst.inst|lower}}_data[j];
+	       break;
+	    end		  
+	 end	       
   {% else %}
     {% if loop.index0 == 0 %}
-      unique if (sel_{{inst.inst|lower}}) begin
+      if (sel_{{inst.inst|lower}}) begin
     {% else %}
       end else if (sel_{{inst.inst|lower}}) begin
     {% endif %}
-         MGMT_MAIN.RDATA = MGMT_{{inst.inst|upper}}.{{inst.db.ports.read_data_name}};
+    {% if usens.intf %}
+         {{MAIN_RDATA}} = MGMT_{{inst.inst|upper}}.{{inst.db.ports.read_data_name}};
+    {% else %}
+         {{MAIN_RDATA}} = {{inst.inst|upper}}_{{inst.db.ports.read_data_name}};
+    {% endif %}
   {% endif %}
 {% endfor %}
       end else begin
-         MGMT_MAIN.RDATA = 64'hdead_beef_dead_beef;
+         {{MAIN_RDATA}} = 64'hdead_beef_dead_beef;
       end
    end
 
@@ -129,39 +282,57 @@ module {{GROUP}}_decode
    */
    always_comb begin
 {% for inst in ext_insts %}
-  {% set outer_loop = loop %}
-  {% if inst.repeat > 1 and not inst.single_decode %}
-    {% for i in range(inst.repeat) %}
-      {% if outer_loop.index0 == 0 and i == 0 %}
-      unique if (sel_{{inst.inst|lower}}{{i}}) begin
-      {% else %}
-      end else if (sel_{{inst.inst|lower}}{{i}}) begin
-      {% endif %}
-      {% if flatten %}
-         MGMT_MAIN.ACK = MGMT_{{inst.inst|upper}}_{{i}}.{{inst.db.ports.acknowledge_name}};
-      {% else %}
-         MGMT_MAIN.ACK = MGMT_{{inst.inst|upper}}[{{i}}].{{inst.db.ports.acknowledge_name}};
-      {% endif %}
-    {% endfor %}
+  {% if inst.repeat_obj.is_parameter %}
+    {% if loop.index0 == 0 %}
+      if (|sel_{{inst.inst|lower}}) begin
+    {% else %}
+      end else if (|sel_{{inst.inst|lower}}) begin
+    {% endif %}
+         for (int j = 0; j < {{finder().find(inst.repeat_obj.txt_value).name}}; j++) begin
+	    if (sel_{{inst.inst|lower}}[j]) begin
+	       {{MAIN_ACK}} = mgmt_{{inst.inst|lower}}_ack[j];
+	       break;
+	    end		  
+	 end	       
+  {% elif inst.repeat_obj.int_value > 1 %}
+    {% if loop.index0 == 0 %}
+      if (|sel_{{inst.inst|lower}}) begin
+    {% else %}
+      end else if (|sel_{{inst.inst|lower}}) begin
+    {% endif %}
+         for (int j = 0; j < {{inst.repeat_obj.int_value}}; j++) begin
+	    if (sel_{{inst.inst|lower}}[j]) begin
+	       {{MAIN_ACK}} = mgmt_{{inst.inst|lower}}_ack[j];
+	       break;
+	    end		  
+	 end	       
   {% else %}
     {% if loop.index0 == 0 %}
-      unique if (sel_{{inst.inst|lower}}) begin
+      if (sel_{{inst.inst|lower}}) begin
     {% else %}
       end else if (sel_{{inst.inst|lower}}) begin
     {% endif %}
-         MGMT_MAIN.ACK = MGMT_{{inst.inst|upper}}.{{inst.db.ports.acknowledge_name}};
+    {% if usens.intf %}
+         {{MAIN_ACK}} = MGMT_{{inst.inst|upper}}.{{inst.db.ports.acknowledge_name}};
+    {% else %}
+         {{MAIN_ACK}} = {{inst.inst|upper}}_{{inst.db.ports.acknowledge_name}};
+    {% endif %}
   {% endif %}
 {% endfor %}
       end else begin
-         MGMT_MAIN.ACK = rw_delay & (MGMT_MAIN.RD | MGMT_MAIN.WR);
+         {{MAIN_ACK}} = rw_delay & ({{MAIN_RD}} | {{MAIN_WR}});
       end
    end
 
-   always_ff @(posedge MGMT_MAIN.CLK or negedge MGMT_MAIN.RSTn) begin
-      if (~MGMT_MAIN.RSTn) begin
+`ifdef SYNC_RESET
+   always_ff @(posedge {{MAIN_CLK}}) begin
+`else   
+   always_ff @(posedge {{MAIN_CLK}} or negedge {{MAIN_RSTn}}) begin
+`endif   
+      if (~{{MAIN_RSTn}}) begin
          rw_delay <= 1'b0;
       end else begin
-         rw_delay <= MGMT_MAIN.RD | MGMT_MAIN.WR;
+         rw_delay <= {{MAIN_RD}} | {{MAIN_WR}};
       end
    end
 

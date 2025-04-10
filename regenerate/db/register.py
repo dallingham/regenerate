@@ -79,6 +79,7 @@ class Register(NameBase):
 
         self.flags = RegisterFlags()
         self.address = address
+        self.name = name
         self.ram_size = 0
         self.width = width
         self.regset_name: Optional[str] = None

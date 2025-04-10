@@ -511,6 +511,7 @@ class RuleBuilder(Gtk.Assistant):
         if "addrmap" in exporter.options:
             widget = self._build_options_addrmap()
             box.pack_start(widget, True, True, 6)
+
         for option in exporter.options:
             if option.startswith("bool:"):
                 hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)

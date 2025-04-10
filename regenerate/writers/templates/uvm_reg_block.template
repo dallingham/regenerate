@@ -10,13 +10,13 @@
 
 `include "uvm_macros.svh"
 
-package {{prj.short_name}}_reg_pkg;
+package {{pkgname}}_reg_pkg;
 
    import uvm_pkg::*;
 
    bit s_relaxed_volatile = 1'b0;  // deprecated
    int s_access_map[string][string] = '{
-{% for map in prj.get_address_maps() %}
+{% for map in used_maps %}
       "{{map.name}}" : '{
   {% for blkinst_uuid in prj.access_map[map.name] %}
     {% for reginst_uuid in prj.access_map[map.name][blkinst_uuid] %}
@@ -100,14 +100,15 @@ package {{prj.short_name}}_reg_pkg;
   {% endif %}
 
   {% for reg in db.get_all_registers() | remove_no_uvm %}
+    // {{reg}}
     {% if reg.ram_size %}
       {% set num_bytes = reg.width // 8 %}
-   class mem_{{blk_inst.name}}__{{regset_inst.name}}_{{fix_reg(reg)}} extends uvm_mem;
+   class mem_{{blk_inst.name}}__{{regset_inst.name}}__{{fix_reg(reg)}} extends uvm_mem;
 
-      `uvm_object_utils(mem_{{blk_inst.name}}__{{regset_inst.name}}_{{fix_reg(reg)}})
+      `uvm_object_utils(mem_{{blk_inst.name}}__{{regset_inst.name}}__{{fix_reg(reg)}})
 
       function new (
-         string name = "mem_{{blk_inst.name}}__{{regset_inst.name}}_{{fix_reg(reg)}}"
+         string name = "mem_{{blk_inst.name}}__{{regset_inst.name}}__{{fix_reg(reg)}}"
       );
          super.new(
 	    .name(name),
@@ -118,7 +119,7 @@ package {{prj.short_name}}_reg_pkg;
 	 );
       endfunction : new
 
-   endclass : mem_{{blk_inst.name}}__{{regset_inst.name}}_{{fix_reg(reg)}}
+   endclass : mem_{{blk_inst.name}}__{{regset_inst.name}}__{{fix_reg(reg)}}
 
     {% else %}
 
@@ -154,7 +155,7 @@ package {{prj.short_name}}_reg_pkg;
            {% for field in reg.get_bit_fields_with_values() %}
          {{fix_name(field)|upper}}: coverpoint {{field.name|lower}}.value[{{field.msb.resolve()}}:{{field.lsb}}] {
                {% for value in field.values %}
-            bins {{fix_name(field)}}_{{value.value}} = {'h{{value.value}} };
+            bins {{fix_name(field)}}_{{value.value}} = { {{value.value}} };
                {% endfor %}
          }
            {% endfor %}
@@ -195,12 +196,12 @@ package {{prj.short_name}}_reg_pkg;
 	 
      {% if db.coverage and reg.flags.do_not_cover == False %}
        {% if reg.get_bit_fields() | length > 0 %}
-         if (get_coverage(UVM_CVR_REG_BITS)) begin
+         if (has_coverage(UVM_CVR_REG_BITS)) begin
             cov_bits = new;
          end
        {% endif %}
        {% if reg.get_bit_fields_with_values() | length > 0 %}
-         if (get_coverage(UVM_CVR_FIELD_VALS)) begin
+         if (has_coverage(UVM_CVR_FIELD_VALS)) begin
             cov_fields = new;
          end
        {% endif %}
@@ -215,7 +216,7 @@ package {{prj.short_name}}_reg_pkg;
       );
          super.sample(data, byte_en, is_read, map);
        {% if reg.get_bit_fields() | length > 0 %}
-         if (get_coverage(UVM_CVR_REG_BITS)) begin
+         if (has_coverage(UVM_CVR_REG_BITS)) begin
             m_data = data;
             m_be = byte_en;
             m_is_read = is_read;
@@ -223,7 +224,7 @@ package {{prj.short_name}}_reg_pkg;
          end
        {% endif %}
        {% if reg.get_bit_fields_with_values() | sort(attribute='lsb') | length > 0 %}
-         if (get_coverage(UVM_CVR_FIELD_VALS)) begin
+         if (has_coverage(UVM_CVR_FIELD_VALS)) begin
             sample_values();
             cov_fields.sample();
          end
@@ -243,8 +244,15 @@ package {{prj.short_name}}_reg_pkg;
           {% set volatile = "0" %}
         {% endif %}
 	{%  set mask = (2 ** field.width) - 1 %}
-        {%  set has_reset = 1 %}
-        {%  set reset = "%d'h%x" % (field.width, field.reset_value.__and__(mask)) %}
+	{%  if field.field_type == 1 and field.reset_test is none %}
+        {%    set has_reset = 0 %}
+	{%  elif field.reset_type == 1 and field.reset_test is none %}
+        {%    set has_reset = 0 %}
+	{%  else %}
+        {%    set has_reset = 1 %}
+	{%  endif %}
+	{%  set reset_val = field.get_reset_value() %}
+        {%  set reset = "%d'h%x" % (field.width, reset_val.__and__(mask)) %}
         {%- set ind_access = individual_access(field, reg) %}
         {%- set access = ACCESS_MAP[field.field_type] %}
 	
@@ -314,7 +322,7 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
 
    {% for reg in db.get_all_registers()|remove_no_uvm %}
      {% if reg.ram_size %}
-    mem_{{regset_inst.name}}__{{fix_reg(reg)}} {{fix_reg(reg)}};
+    mem_{{grp.name}}__{{regset_inst.name}}__{{fix_reg(reg)}} {{fix_reg(reg)}};
      {% else %}
        {% if reg.dimension.resolve() > 1 %}
     rand reg__{{grp.name}}__{{regset_inst.name}}__{{fix_reg(reg)}} {{fix_reg(reg)}}[{{reg.dimension.resolve()}}];
@@ -425,7 +433,7 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
     virtual function void build();
 
 {% if db.coverage %}
-      if (get_coverage(UVM_CVR_ADDR_MAP)) begin
+      if (has_coverage(UVM_CVR_ADDR_MAP)) begin
         {{regset_inst.name}}_access_cg = new("{{regset_inst.name}}_access_cg");
       end
 {% endif %}
@@ -482,7 +490,7 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
        bit is_read,
        uvm_reg_map map
     );
-       if (get_coverage(UVM_CVR_ADDR_MAP)) begin
+       if (has_coverage(UVM_CVR_ADDR_MAP)) begin
           {{regset_inst.name}}_access_cg.sample(offset, is_read);
        end
     endfunction: sample
@@ -507,6 +515,7 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
   {% for regset_inst in prj.blocks[grp.blkid].get_regset_insts() %}
   {%    set regset = prj.regsets[regset_inst.regset_id] %}
   {%    if regset_inst.repeat.resolve() > 1 %}
+  // DNA  {{regset_inst.repeat}} {{ regset_inst.repeat.resolve() }}
      {{grp.name}}__{{regset_inst.name}}__regset {{regset_inst.name}}[{{regset_inst.repeat.resolve()}}];
   {%    else %}
      {{grp.name}}__{{regset_inst.name}}__regset {{regset_inst.name}};
@@ -591,9 +600,9 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
 {% endfor %}
 
   /* Top level register block */
-  class {{prj.short_name}}_reg_block extends uvm_reg_block;
+  class {{pkgname}}_reg_block extends uvm_reg_block;
 
-     `uvm_object_utils({{prj.short_name}}_reg_block)
+     `uvm_object_utils({{pkgname}}_reg_block)
 {% for grp in group_maps %}
 {%   if grp.repeat > 1 %}
      {{grp.name}}__blk {{grp.name}}[{{grp.repeat}}];
@@ -605,7 +614,7 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
      uvm_reg_map {{data.name}}_map;
 {% endfor %}
 
-     function new(string name = "{{prj.short_name}}_reg_block");
+     function new(string name = "{{pkgname}}_reg_block");
         super.new(name, build_coverage(UVM_NO_COVERAGE));
      endfunction : new
 
@@ -620,8 +629,7 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
         {{grp.name}} = new("{{grp.name}}");
         {{grp.name}}.configure(this, "{{grp.hdl_path}}");
         {{grp.name}}.build();
-
-    {%- for mset in group_maps[grp] %}
+    {% for mset in group_maps[grp] %}
         {{mset.name}}_map.add_submap({{grp.name}}.{{mset.name}}_map, 'h{{"%x" % grp.address_base}});
     {% endfor %}
 
@@ -652,5 +660,5 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
         lock_model();
      endfunction: build
 
-  endclass : {{prj.short_name}}_reg_block
-endpackage : {{prj.short_name}}_reg_pkg
+  endclass : {{pkgname}}_reg_block
+endpackage : {{pkgname}}_reg_pkg

@@ -109,8 +109,43 @@ class BitField(NameBase):
 
     write_only_types = {
         BitType.WRITE_ONLY,
+        BitType.WRITE_ONLY_WITH_DATA_1S,
     }
 
+    write_1_to_clear_types = {
+        BitType.WRITE_1_TO_CLEAR_SET,
+        BitType.WRITE_1_TO_CLEAR_SET_1S,
+        BitType.WRITE_1_TO_CLEAR_SET_1S_1,
+        BitType.WRITE_1_TO_CLEAR_LOAD,
+        BitType.WRITE_1_TO_CLEAR_LOAD_1S,
+        BitType.WRITE_1_TO_CLEAR_LOAD_1S_1,
+    }
+    
+    write_1_to_set_types = {
+        BitType.WRITE_1_TO_SET,
+        BitType.WRITE_1_TO_SET_1S,
+        BitType.WRITE_1_TO_SET_1S1,
+    }
+
+    read_write_types = {
+        BitType.READ_WRITE,
+        BitType.READ_WRITE_1S,
+        BitType.READ_WRITE_1S_1,
+        BitType.READ_WRITE_LOAD,
+        BitType.READ_WRITE_LOAD_1S,
+        BitType.READ_WRITE_LOAD_1S_1,
+        BitType.READ_WRITE_SET,
+        BitType.READ_WRITE_SET_1S,
+        BitType.READ_WRITE_SET_1S_1,
+        BitType.READ_WRITE_CLR,
+        BitType.READ_WRITE_CLR_1S,
+        BitType.READ_WRITE_CLR_1S_1,
+        BitType.READ_WRITE_RESET_ON_COMP,
+        BitType.READ_WRITE_PROTECT,
+        BitType.READ_WRITE_PROTECT_1S,
+        BitType.READ_WRITE_PROTECT_ILLEGAL_1S,
+    }
+    
     _full_compare = (
         "_input_signal",
         "_output_signal",
@@ -125,6 +160,7 @@ class BitField(NameBase):
         "reset_parameter",
         "reset_type",
         "use_output_enable",
+        "reset_test",
         "use_alternate_reset",
         "values",
     )
@@ -154,6 +190,7 @@ class BitField(NameBase):
         "reset_input",
         "reset_parameter",
         "reset_type",
+        "reset_test",
         "use_alternate_reset",
         "use_output_enable",
         "values",
@@ -192,6 +229,7 @@ class BitField(NameBase):
         self.use_alternate_reset = False
 
         self._reset_value = 0
+        self.reset_test = None
         self.reset_input = ""
         self.reset_parameter = Uuid("")
         self.reset_type = ResetType.NUMERIC
@@ -328,8 +366,39 @@ class BitField(NameBase):
             return self.name
         return f"{self.name}[{self.msb.resolve()}:{self.lsb}]"
 
+    def get_reset_value(self):
+        return self.reset_value
+
     @property
-    def reset_value(self) -> int:
+    def reset_value(self, display=False) -> int:
+        """
+        Return the reset value.
+
+        If the source is an input signal assume that the value is zero.
+
+        Returns:
+           int: Resolved value of the reset value, resolving parameters
+                if needed
+
+        """
+        if self.reset_type == ResetType.PARAMETER:
+            finder = ParameterFinder()
+            resolver = ParameterResolver()
+            param = finder.find(self.reset_parameter)
+            if param:
+                val = resolver.resolve(param)
+                return val
+            return 0
+        if self.reset_type == ResetType.INPUT and not display:
+            if self.reset_test is not None:
+                return self.reset_test
+            return 0
+        if (self.field_type == BitType.READ_ONLY_VALUE and
+            self.reset_test is not None and not display):
+            return self.reset_test
+        return self._reset_value
+
+    def reset_value_display(self) -> int:
         """
         Return the reset value.
 
@@ -353,6 +422,7 @@ class BitField(NameBase):
         return self._reset_value
 
     @reset_value.setter
+
     def reset_value(self, value: int) -> None:
         """
         Set the reset value to an integer.
@@ -423,7 +493,7 @@ class BitField(NameBase):
             finder = ParameterFinder()
             param = finder.find(self.reset_parameter)
             if param:
-                return param.name
+                return f"{param.name}[{self.width-1}:0]"
             return ""
         if self.reset_type == ResetType.INPUT:
             return self.reset_input
@@ -535,6 +605,7 @@ class BitField(NameBase):
             "reset_type": self.reset_type,
             "use_output_enable": self.use_output_enable,
             "use_alternate_reset": self.use_alternate_reset,
+            "reset_test": self.reset_test,
             "values": [value.json() for value in self.values],
         }
 
@@ -556,6 +627,7 @@ class BitField(NameBase):
         self._output_signal = data["output_signal"]
         self.use_output_enable = data["use_output_enable"]
         self.use_alternate_reset = data.get("use_alternate_reset", False)
+        self.reset_test = data.get("reset_test")
         self.field_type = data["field_type"]
         if "flags" in data:
             self.flags.json_decode(data["flags"])

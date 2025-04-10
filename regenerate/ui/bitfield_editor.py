@@ -37,6 +37,7 @@ from regenerate.db import (
     ResetType,
     BitValues,
 )
+from regenerate.db.enums import BitType
 from regenerate.settings.paths import GLADE_BIT
 from regenerate.ui.error_dialogs import ErrorMsg
 from regenerate.ui.help_window import HelpWindow
@@ -81,6 +82,7 @@ class BitFieldEditor(BaseWindow):
         self._output_enable_obj = self._builder.get_object("outen")
         self._input_obj = self._builder.get_object("input")
         self._value_obj = self._builder.get_object("values")
+        self._reset_test = self._builder.get_object('reset_test_value')
         self._col = None
 
         pango_font = Pango.FontDescription("monospace")
@@ -166,8 +168,18 @@ class BitFieldEditor(BaseWindow):
         self._set_text("field_name", bit_field.full_field_name())
         self._set_text("type", TYPE_TO_DESCR[bit_field.field_type])
 
+        if bit_field.reset_test is None:
+            self._reset_test.set_text('')
+        else:
+            self._reset_test.set_text(f'0x{bit_field.reset_test:x}')
+
+        self._reset_test.set_sensitive(
+            bit_field.reset_type == ResetType.INPUT or
+            bit_field.field_type == BitType.READ_ONLY_VALUE
+        )
+
         if bit_field.reset_type == ResetType.NUMERIC:
-            self._set_text("reset_value", bit_field.reset_string())
+            self._set_text("reset_value", bit_field.reset_string(), )
         else:
             self._set_text("reset_value", bit_field.reset_parameter)
 
@@ -202,6 +214,15 @@ class BitFieldEditor(BaseWindow):
         "Display the help window"
         HelpWindow("bitfield_value_help.rst")
 
+    @modified
+    def on_reset_test_value_changed(self, obj: Gtk.Entry) -> None:
+        "Reset test value changed"
+        try:
+            self._bit_field.reset_test = int(obj.get_text(), 0)
+        except:
+            self._bit_field.reset_test = None
+
+        
     def on_property_help_clicked(self, _obj: Gtk.Button) -> None:
         "Display the help window"
         HelpWindow("bitfield_signal_prop_help.html", "Bit Field Properties")
@@ -217,6 +238,15 @@ class BitFieldEditor(BaseWindow):
     def _set_flag_value(self, val: str, obj: Gtk.CheckButton) -> None:
         "Sets the field value"
         setattr(self._bit_field.flags, val, obj.get_active())
+
+    @modified
+    def on_reset_test_changed(self, obj: Gtk.Entry) -> None:
+        "Called with the output signal changed"
+        try:
+            self._bit_field.reset_test = int(obj.get_text(), 0)
+        except:
+            self._bit_field.reset_test = None
+        self._check_data()
 
     @modified
     def on_output_changed(self, obj: Gtk.Entry) -> None:
@@ -310,13 +340,13 @@ class BitFieldEditor(BaseWindow):
         self._bit_field.values = [
             BitValues(val[0], val[1], val[2]) for val in self.value_model
         ]
-        self._bit_field.values = []
-        for val in self.value_model:
-            bfval = BitValues()
-            bfval.value = int(val[0])
-            bfval.token = val[1]
-            bfval.description = val[2]
-            self._bit_field.values.append(bfval)
+#        self._bit_field.values = []
+#        for val in self.value_model:
+#            bfval = BitValues()
+#            bfval.value = int(val[0])
+#            bfval.token = val[1]
+#            bfval.description = val[2]
+#            self._bit_field.values.append(bfval)
 
     @modified
     def on_output_enable_toggled(self, obj: Gtk.CheckButton) -> None:
@@ -473,9 +503,9 @@ class BitFieldEditor(BaseWindow):
         start = self._bit_field.lsb
         stop = self._bit_field.msb.resolve()
         maxval = (2 ** (stop - start + 1)) - 1
-
+        
         try:
-            if new_text == "" or int(new_text, 16) > maxval:
+            if new_text == "" or int(new_text, 0) > maxval:
                 return
         except ValueError:
             return
