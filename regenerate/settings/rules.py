@@ -25,11 +25,13 @@ This allows the end user to customize their installation without the fear of
 the next update overwriting their modifications.
 """
 
-from configparser import SafeConfigParser, NoSectionError, NoOptionError
+from configparser import ConfigParser
+from configparser import NoSectionError, NoOptionError
+    
 import os
 from .paths import INSTALL_PATH
 
-__Rules = SafeConfigParser()
+__Rules = ConfigParser()
 
 __SITE_IO = os.path.join(INSTALL_PATH, "site_local", "iorules.conf")
 __DEF_IO = os.path.join(INSTALL_PATH, "data", "iorules.conf")

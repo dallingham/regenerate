@@ -656,7 +656,11 @@ class RegSetTab:
             _obj (Gtk.Button): GTK button that caused the callback (unused)
 
         """
-        register = self.get_selected_registers()[0]
+        try:
+            register = self.get_selected_registers()[0]
+        except IndexError:
+            return
+        
         next_pos = register.find_next_unused_bit()
 
         if next_pos == -1:

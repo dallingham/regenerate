@@ -24,9 +24,10 @@ Select the available WebKit version and handle the differences.
 from regenerate.db import LOGGER
 
 try:
+
     import gi
 
-    gi.require_version("WebKit2", "4.0")
+    gi.require_version("WebKit2", "4.1")
     from gi.repository import WebKit2 as webkit
 
     WEBKIT = True
@@ -34,23 +35,37 @@ try:
 except ValueError:
 
     try:
-        gi.require_version("WebKit", "3.0")
-        from gi.repository import WebKit as webkit
-
+        import gi
+        
+        gi.require_version("WebKit2", "4.1")
+        from gi.repository import WebKit2 as webkit
+        
         WEBKIT = True
 
-    except ImportError:
+    except ValueError:
+        
+        try:
+            gi.require_version("WebKit", "3.0")
+            from gi.repository import WebKit as webkit
+            
+            print("3.0")
+            WEBKIT = True
 
-        WEBKIT = False
-        PREVIEW_ENABLED = False
-        LOGGER.warning(
-            "Webkit is not installed, preview of formatted "
-            "comments will not be available"
-        )
+        except ImportError:
+
+            WEBKIT = False
+            PREVIEW_ENABLED = False
+            LOGGER.warning(
+                "Webkit is not installed, preview of formatted "
+                "comments will not be available"
+            )
 
 
 class HtmlDisplay(webkit.WebView):
     """Wrapper interface for WebKit"""
+
+    def __init__(self):
+        super().__init__()
 
     def show_html(self, data):
         """Shows the HTML using either Webkit 4.0 or 3.0"""

@@ -385,7 +385,6 @@ class Block(BaseFile):
         self.overrides = []
         resolver = ParameterResolver()
         try:
-            print(">", self.name, data["overrides"])
             for override in data["overrides"]:
                 item = ParameterOverrides()
                 item.json_decode(override)
@@ -397,7 +396,6 @@ class Block(BaseFile):
         except KeyError:
             ...
 
-        print(self.name, self.overrides)
         for override in self.overrides:
             resolver.add_regset_override(
                 override.path, override.parameter, override.value
