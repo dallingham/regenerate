@@ -144,6 +144,7 @@ class BlockTab:
         "Called when the notebook page changes"
         if page_num == 1:
             self._overrides_list.update_display()
+            self._build_add_regset_menu()
 
     def redraw(self) -> None:
         "Redraw the screen"
@@ -188,6 +189,12 @@ class BlockTab:
 
         if node:
             self._setup_and_select_block(model, node)
+            self._block_notebook.set_sensitive(True)
+            self._block_name_obj.set_sensitive(self._block is not None)
+            self._block_descr_obj.set_sensitive(self._block is not None)
+            self._block_size_obj.set_sensitive(self._block is not None)
+            self._overrides_list.update_display()
+            self._build_add_regset_menu()
         else:
             self._block_notebook.set_sensitive(False)
 

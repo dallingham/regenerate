@@ -232,7 +232,7 @@ class Build(BaseWindow):
         """
         # mod = file_needs_rebuilt(local_dest, self.__dbmap, [dbase_full_path])
         self.__build_notebook.set_current_page(0)
-        mod = True
+        mod = False
         self.__modlist.append(mod)
         info = self.__optmap[exporter]
         block = self.__prj.blocks[blkid]

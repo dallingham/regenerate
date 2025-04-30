@@ -41,8 +41,8 @@ package {{pkgname}}_reg_pkg;
     *-------------------------------------------------------------------------
     */
 {% for db, regset_inst, blk_inst, grp_map, tag in db_grp_maps %}
-  {{- resolver.set_reginst(regset_inst.uuid) or '' -}}
-  {{- resolver.set_blkinst(blk_inst.uuid) or '' -}}
+  {%- set a = resolver.set_reginst(regset_inst.uuid) -%}
+  {%- set a = resolver.set_blkinst(blk_inst.uuid) -%}
   {%- if db.coverage %}
    class {{blk_inst.name}}__{{regset_inst.name}}__reg_access_wrapper extends uvm_object;
 
@@ -58,8 +58,8 @@ package {{pkgname}}_reg_pkg;
          READ_ADDR: coverpoint addr iff (is_read) {
             {% for reg in db.get_all_registers() | remove_no_uvm %}
               {% if reg.flags.do_not_cover == False and reg.is_completely_write_only() == False %}
-                {% if reg.dimension.resolve() > 1 %}
-           bins r_{{fix_reg(reg)}} = { {% for i in range(0, reg.dimension.resolve()) %}'h{{ '%x' % (reg.address + (i * (reg.width // 8)),) }}{% if not loop.last %}, {% endif %}{% endfor %} };
+                {% if reg.dimension.resolve(binst=blk_inst.uuid, rinst=regset_inst.uuid) > 1 %}
+           bins r_{{fix_reg(reg)}} = { {% for i in range(0, reg.dimension.resolve(binst=blk_inst.uuid, rinst=regset_inst.uuid)) %}'h{{ '%x' % (reg.address + (i * (reg.width // 8)),) }}{% if not loop.last %}, {% endif %}{% endfor %} };
                 {% else %}
            bins r_{{fix_reg(reg)}} = { 'h{{ '%x' % reg.address }} };
                 {% endif %}
@@ -71,8 +71,8 @@ package {{pkgname}}_reg_pkg;
             {% for reg in db.get_all_registers() | remove_no_uvm %}
               {% if reg.is_completely_read_only() == False %}
                 {% if reg.flags.do_not_cover == False and reg.is_completely_read_only() == False %}
-                  {% if reg.dimension.resolve() > 1 %}
-           bins w_{{fix_reg(reg)}} = { {% for i in range(0, reg.dimension.resolve()) %}'h{{ '%x' % (reg.address + (i * (reg.width // 8)),) }}{% if not loop.last %}, {% endif %}{% endfor %} };
+                  {% if reg.dimension.resolve(binst=blk_inst.uuid, rinst=regset_inst.uuid) > 1 %}
+           bins w_{{fix_reg(reg)}} = { {% for i in range(0, reg.dimension.resolve(binst=blk_inst.uuid, rinst=regset_inst.uuid)) %}'h{{ '%x' % (reg.address + (i * (reg.width // 8)),) }}{% if not loop.last %}, {% endif %}{% endfor %} };
                   {% else %}
            bins w_{{fix_reg(reg)}} = { 'h{{ '%x' % reg.address }} };
                   {% endif %}
@@ -153,7 +153,7 @@ package {{pkgname}}_reg_pkg;
          option.per_instance = 1;
 
            {% for field in reg.get_bit_fields_with_values() %}
-         {{fix_name(field)|upper}}: coverpoint {{field.name|lower}}.value[{{field.msb.resolve()}}:{{field.lsb}}] {
+         {{fix_name(field)|upper}}: coverpoint {{field.name|lower}}.value[{{field.msb.resolve(binst=blk_inst.uuid, rinst=regset_inst.uuid)}}:{{field.lsb}}] {
                {% for value in field.values %}
             bins {{fix_name(field)}}_{{value.value}} = { {{value.value}} };
                {% endfor %}
@@ -168,12 +168,12 @@ package {{pkgname}}_reg_pkg;
 
          {% for field in reg.get_bit_fields() %}
            {% if reg.flags.do_not_cover == False and field.values|length == 0 %}
-             {% for i in range(field.lsb, field.msb.resolve()+1) %}
+             {% for i in range(field.lsb, field.msb.resolve(binst=blk_inst.uuid, rinst=regset_inst.uuid)+1) %}
                {% if field.is_read_only() == 0 %}
          {{fix_name(field)|upper}}_W{{i}}: coverpoint (m_data[{{i}}]) iff (!m_is_read && m_be[{{i // 8}}]);
                {% endif %}
                {% if field.is_read_only() and field.is_constant() %}
-         {{fix_name(field)|upper}}_R{{i}}: coverpoint (m_data[{{i}}]) iff (m_is_read) {bins ro_{{i}} = { {{field.reset_value_bit(i - field.lsb)}} }; }
+         {{fix_name(field)|upper}}_R{{i}}: coverpoint (m_data[{{i}}]) iff (m_is_read) {bins ro_{{i}} = { {{field.reset_value_bit(i - field.lsb, binst=blk_inst.uuid, rinst=regset_inst.uuid)}} }; }
                {% elif field.is_write_only() == False %}
          {{fix_name(field)|upper}}_R{{i}}: coverpoint (m_data[{{i}}]) iff (m_is_read);
                {% endif %}
@@ -244,14 +244,20 @@ package {{pkgname}}_reg_pkg;
           {% set volatile = "0" %}
         {% endif %}
 	{%  set mask = (2 ** field.width) - 1 %}
-	{%  if field.field_type == 1 and field.reset_test is none %}
+	{%  if field.field_type == 2 %}
+        {%    set has_reset = 1 %}
+	{%  elif field.field_type == 1 and field.reset_test is none %}
         {%    set has_reset = 0 %}
 	{%  elif field.reset_type == 1 and field.reset_test is none %}
         {%    set has_reset = 0 %}
 	{%  else %}
         {%    set has_reset = 1 %}
 	{%  endif %}
-	{%  set reset_val = field.get_reset_value() %}
+	{%  if field.type == 2 %}
+	{%    set reset_val = field.reset_value(binst=blkinst, rinst=reginst) %}
+	{%  else %}
+	{%    set reset_val = field.get_reset_value() %}
+	{%   endif %}
         {%  set reset = "%d'h%x" % (field.width, reset_val.__and__(mask)) %}
         {%- set ind_access = individual_access(field, reg) %}
         {%- set access = ACCESS_MAP[field.field_type] %}
@@ -316,16 +322,18 @@ package {{pkgname}}_reg_pkg;
    *--------------------------------------------------------------------------
    */
 {% for db, regset_inst, grp, grp_map, tag in db_grp_maps %}
+  {%- set a = resolver.set_reginst(regset_inst.uuid) -%}
+  {%- set a = resolver.set_blkinst(db.uuid) -%}
 
-class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
+  class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
     `uvm_object_utils({{grp.name}}__{{regset_inst.name}}__regset)
 
    {% for reg in db.get_all_registers()|remove_no_uvm %}
      {% if reg.ram_size %}
     mem_{{grp.name}}__{{regset_inst.name}}__{{fix_reg(reg)}} {{fix_reg(reg)}};
      {% else %}
-       {% if reg.dimension.resolve() > 1 %}
-    rand reg__{{grp.name}}__{{regset_inst.name}}__{{fix_reg(reg)}} {{fix_reg(reg)}}[{{reg.dimension.resolve()}}];
+       {% if reg.dimension.resolve(binst=grp.uuid, rinst=regset_inst.uuid) > 1 %}
+    rand reg__{{grp.name}}__{{regset_inst.name}}__{{fix_reg(reg)}} {{fix_reg(reg)}}[{{reg.dimension.resolve(binst=grp.uuid, rinst=regset_inst.uuid)}}];
        {% else %}
     rand reg__{{grp.name}}__{{regset_inst.name}}__{{fix_reg(reg)}} {{fix_reg(reg)}};
        {% endif %}
@@ -395,8 +403,8 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
        {% if reg.ram_size %}
           rmap.add_mem({{fix_reg(reg)}}, 'h{{"%04x" % reg.address}}, access_mode("{{mode}}", force_mode));
       {% else %}
-         {% if reg.dimension.resolve() > 1 %}
-           {% for i in range(0, reg.dimension.resolve()) %}
+         {% if reg.dimension.resolve(binst=grp.uuid, rinst=regset_inst.uuid) > 1 %}
+           {% for i in range(0, reg.dimension.resolve(binst=grp.uuid, rinst=regset_inst.uuid)) %}
           rmap.add_reg({{fix_reg(reg)}}[{{i}}], 'h{{"%04x" % (reg.address + (i * (reg.width // 8)),)}}, access_mode("{{mode}}", force_mode));
            {% endfor %}
          {% else %}
@@ -450,7 +458,7 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
       {{fix_reg(reg)}} = new("{{fix_reg(reg)}}");
       {{fix_reg(reg)}}.configure(this);
 {%   else %}
-{%     if reg.dimension.resolve() > 1 %}
+{%     if reg.dimension.resolve(binst=grp.uuid, rinst=regset_inst.uuid) > 1 %}
       foreach ({{fix_reg(reg)}}[i]) begin
          {{fix_reg(reg)}}[i] = new("{{fix_reg(reg)}}");
          {{fix_reg(reg)}}[i].configure(this);
@@ -508,15 +516,13 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
    */
 {% for grp in group_maps %}
 
-   class {{grp.name}}__blk extends uvm_reg_block;
-
-     `uvm_object_utils({{grp.name}}__blk)
+  class {{grp.name}}__blk extends uvm_reg_block;
 
   {% for regset_inst in prj.blocks[grp.blkid].get_regset_insts() %}
   {%    set regset = prj.regsets[regset_inst.regset_id] %}
-  {%    if regset_inst.repeat.resolve() > 1 %}
-  // DNA  {{regset_inst.repeat}} {{ regset_inst.repeat.resolve() }}
-     {{grp.name}}__{{regset_inst.name}}__regset {{regset_inst.name}}[{{regset_inst.repeat.resolve()}}];
+  {%-   set a = resolver.set_blkinst(regset_inst.uuid) -%}
+  {%    if regset_inst.repeat.resolve(binst=grp.uuid, rinst=regset_inst.uuid) > 1 %}
+     {{grp.name}}__{{regset_inst.name}}__regset {{regset_inst.name}}[{{regset_inst.repeat.resolve(binst=grp.uuid, rinst=regset_inst.uuid)}}];
   {%    else %}
      {{grp.name}}__{{regset_inst.name}}__regset {{regset_inst.name}};
   {%    endif %}
@@ -543,8 +549,8 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
 
   {% for regset_inst in prj.blocks[grp.blkid].get_regset_insts() %}
    {% set regset = prj.regsets[regset_inst.regset_id] %}
-   {% if regset_inst.repeat.resolve() > 1 or regset.array %}
-        for (int i = 0; i < {{regset_inst.repeat.resolve()}}; i++) begin
+   {% if regset_inst.repeat.resolve(binst=grp.uuid, rinst=regset_inst.uuid) > 1 or regset.array %}
+        for (int i = 0; i < {{regset_inst.repeat.resolve(binst=grp.uuid, rinst=regset_inst.uuid)}}; i++) begin
            {{regset_inst.name}}[i] = new($sformatf("{{regset_inst.name}}[%0d]", i));
       {% if regset_inst.hdl: %}
       	 {% if '%' in regset_inst.hdl %}
@@ -596,7 +602,8 @@ class {{grp.name}}__{{regset_inst.name}}__regset extends uvm_reg_block;
     {%  endif %}
   {% endfor %}
       endfunction: build
-  endclass : {{grp.name}}__blk
+   endclass : {{grp.name}}__blk
+
 {% endfor %}
 
   /* Top level register block */

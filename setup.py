@@ -1,7 +1,4 @@
-try:
-    from setuputils import setup
-except ImportError:
-    from distutils.core import setup
+from setuptools import setup
 
 VERSION = f"2.0.0"
 
@@ -53,11 +50,15 @@ setup(
         "bin/regdiff",
         "bin/ipxact2reg",
 	"bin/reg2rst",
-	"bin/reg2docx",
     ],
+    entry_points={
+        'gui_scripts': [
+            'regenerate = regenerate.ui.main:main'
+        ]
+    },
     classifiers=[
         "Operating System :: POSIX",
-        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.11",
         "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
         "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
     ],

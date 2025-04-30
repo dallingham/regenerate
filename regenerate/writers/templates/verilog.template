@@ -118,7 +118,10 @@ module {{db.name}}
  * Reset Value : {{ri.field.reset_string()}}
  *------------------------------------------------------------------------------
  */
- {% if ri.field.reset_type != 1 and ri.field.field_type != 1 %}  
+// Type {{ri.field.reset_type}}
+ {% if ri.field.reset_type == 2 %}
+ localparam bit [{{ri.msb.int_decimal_str()}}:{{ri.lsb}}] {{ri.rval}} = {{ri.field.reset_string()}};
+ {% elif ri.field.reset_type != 1 and ri.field.field_type != 1 %}  
  localparam bit [{{ri.msb.int_decimal_str()}}:{{ri.lsb}}] {{ri.rval}} = {{ri.field.reset_vstr()}};
  {% endif %}
 {%   if ri.dim_param %}

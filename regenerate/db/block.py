@@ -263,8 +263,8 @@ class Block(BaseFile):
         LOGGER.info("Reading block file %s", str(self._filename))
 
         try:
-            with self._filename.open() as ofile:
-                data = ofile.read()
+            with self._filename.open() as ifile:
+                data = ifile.read()
                 self.json_decode(json.loads(data))
         except json.decoder.JSONDecodeError as msg:
             raise CorruptBlockFile(str(self._filename.resolve()), str(msg))
@@ -299,7 +299,8 @@ class Block(BaseFile):
         """
         regsets: Dict[Uuid, RegisterSet] = {}
         for key, item in data.items():
-            filename = Path(self._filename.parent / item["filename"]).resolve()
+            new_path = self._filename.parent / item["filename"]
+            filename = new_path.absolute()
             regset = self.finder.find_by_file(str(filename))
             if not regset:
                 regset = RegisterSet()
@@ -352,7 +353,7 @@ class Block(BaseFile):
             for exp_json in data:
                 exp = ExportData()
                 target = exp_json["target"]
-                exp.target = str((self.filename.parent / target).resolve())
+                exp.target = str((self.filename.parent / target).absolute())
                 exp.options = exp_json["options"]
                 exp.exporter = exp_json["exporter"]
 
@@ -411,6 +412,7 @@ class Block(BaseFile):
             Dict[str, Any]: JSON-ish dictionary
 
         """
+
         data: Dict[str, Any] = {
             "name": self.name,
             "uuid": Uuid(self.uuid),
@@ -432,7 +434,7 @@ class Block(BaseFile):
                     self._regsets[name].filename.with_suffix(REG_EXT),
                     self._filename.parent,
                 )
-            except ValueError:
+            except IndexError:
                 new_path = self._regsets[name].name + REG_EXT
                 self._regsets[name].filename = new_path
             data["regsets"][name] = {

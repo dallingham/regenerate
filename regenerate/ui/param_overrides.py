@@ -74,7 +74,7 @@ class ParameterOverridesList:
         self.add = add
         self.remove = remove
         self._model = None
-        self._used = set()
+        self._used_override_insts = set()
 
         self._build_table()
         self._obj.set_sensitive(True)
@@ -115,14 +115,14 @@ class ParameterOverridesList:
     def populate(self) -> None:
         "Loads the data from the project"
         self._model.clear()
-        self._used = set()
+        self._used_override_insts = set()
         for override in self.prj.overrides:
             path = ""
             for inst in self.prj.block_insts:
                 if inst.uuid == override.path:
                     path = inst.name
             self._model.append_instance(path, override)
-            self._used.add(override.parameter)
+            self._used_override_insts.add(f"{path}.{override.value}")
         self.set_add_menu()
 
     def build_used(self) -> None:
@@ -130,9 +130,10 @@ class ParameterOverridesList:
         Builds the set of parameters used in the display. Used to prevent
         adding a parameter twice.
         """
-        self._used = set()
+        self._used_override_insts = set()
         for row in self._model:
-            self._used.add(row[-1].parameter)
+            inst_name = row[OverrideCol.NAME]
+            self._used_override_insts.add(inst_name)
 
     def set_add_menu(self) -> None:
         """
@@ -176,8 +177,8 @@ class ParameterOverridesList:
 
     def remove_clicked(self, _button: Gtk.Button) -> None:
         "Removes the selected parameter when the button is clicked"
-        name = self.get_selected()
-        self.prj.parameters.remove(name)
+        obj = self.get_selected_obj()
+        self.prj.overrides.remove(obj)
         self.remove_selected()
         self.set_add_menu()
         self._callback()
@@ -197,8 +198,10 @@ class ParameterOverridesList:
         override.parameter = info[1].uuid
         override.value = ParameterValue()
         override.value.set_int(info[1].value)
+        pname = self.finder.find(info[1].uuid)
+        name = f"{info[0].name}.{pname.name}"
         self._model.append(row=get_row_data(info[0].name, override))
-        self._used.add(override.parameter)
+        self._used_override_insts.add(name);
         self.prj.overrides.append(override)
         self.set_add_menu()
         self._callback()
@@ -290,8 +293,18 @@ class ParameterOverridesList:
 
         if len(model.get_path(node)) > 1:
             return None
-        return model.get_value(node, ParameterCol.NAME)
+        return model.get_value(node, OverrideCol.NAME)
 
+    def get_selected_obj(self):
+        "Removes the selected node from the list"
+        (model, node) = self._obj.get_selection().get_selected()
+        if node is None:
+            return None
+
+        if len(model.get_path(node)) > 1:
+            return None
+        return model.get_value(node, OverrideCol.OBJ)
+    
     def remove_selected(self):
         "Removes the selected node from the list"
         select_data = self._obj.get_selection().get_selected()
@@ -300,7 +313,8 @@ class ParameterOverridesList:
 
         (model, node) = select_data
         obj = model.get_value(node, OverrideCol.OBJ)
-        self._used.remove(obj.parameter)
+        name = model.get_value(node, OverrideCol.Name)
+        self._used_override_insts.remove((name, obj.parameter))
         model.remove(node)
 
     def set_parameters(self, parameters):
@@ -320,9 +334,9 @@ class ParameterOverridesList:
             block = project.blocks[blkinst.blkid]
             for param in block.parameters.get():
                 total += 1
-                if param.uuid not in self._used:
-                    name = f"{blkinst_name}.{param.name}"
-                    param_list.append((name, (blkinst, param)))
+                new_name = f"{blkinst_name}.{param.name}"
+                if new_name not in self._used_override_insts:
+                    param_list.append((new_name, (blkinst, param)))
         return param_list, total
 
 
@@ -334,14 +348,14 @@ class BlockParameterOverridesList(ParameterOverridesList):
         Loads the data from the project
         """
         self._model.clear()
-        self._used = set()
+        self._used_override_insts = set()
         for override in self.prj.overrides:
             path = ""
             for inst in self.prj.get_regset_insts():
                 if inst.uuid == override.path:
                     path = inst.name
             self._model.append_instance(path, override)
-            self._used.add(override.parameter)
+            self._used_override_insts.add(path)
         self.set_add_menu()
 
     def build_overrides_list(self, block: Block):
@@ -355,8 +369,8 @@ class BlockParameterOverridesList(ParameterOverridesList):
                 regset = block.get_regset_from_id(reginst.regset_id)
                 for param in regset.parameters.get():
                     total += 1
-                    if param.uuid not in self._used:
-                        name = f"{reginst.name}.{param.name}"
+                    name = f"{reginst.name}.{param.name}"
+                    if (name, param.uuid) not in self._used_override_insts:
                         param_list.append((name, (reginst, param)))
         return param_list, total
 

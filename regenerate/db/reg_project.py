@@ -106,6 +106,11 @@ class RegProject(BaseFile):
 
         self.exports: List[ExportData] = []
 
+        # Set the working directory to the project file's directory
+
+        if path:
+            os.chdir(path.parent)
+        
         if path:
             self._filename = Path(path)
             self.open(self._filename)
@@ -152,6 +157,8 @@ class RegProject(BaseFile):
 
         self._filename = Path(name)
 
+        os.chdir(self._filename.parent)
+        
         if self._filename.suffix == OLD_PRJ_EXT:
             LOGGER.info("Loading XML project file '%s'", str(self._filename))
 
@@ -395,7 +402,7 @@ class RegProject(BaseFile):
         if self._filename is None:
             return self._filelist
         base = self._filename.parent
-        return [Path(base / i).resolve() for i in self._filelist]
+        return [Path(base / i).absolute() for i in self._filelist]
 
     def get_address_maps(self) -> ValuesView[AddressMap]:
         """Returns a list of the existing address maps"""
@@ -504,7 +511,7 @@ class RegProject(BaseFile):
             new_name = Path(name)
             if new_name.suffix == original:
                 new_name = new_name.with_suffix(new)
-            new_list.append(new_name.resolve())
+            new_list.append(new_name.absolute())
         self._filelist = new_list
 
     def blocks_containing_regset(self, regset_id: Uuid) -> List[Block]:
@@ -604,7 +611,7 @@ class RegProject(BaseFile):
 
         if not skip:
             for path in data["filelist"]:
-                full_path = Path(self._filename.parent / path).resolve()
+                full_path = Path(self._filename.parent / path).absolute()
                 self._filelist.append(
                     Path(os.path.relpath(full_path, self._filename.parent))
                 )
@@ -640,7 +647,7 @@ class RegProject(BaseFile):
 
             exp_data = ExportData(
                 exporter,
-                str(target.resolve()),
+                str(target.absolute()),
             )
             exp_data.options = item["options"]
 
@@ -683,7 +690,7 @@ class RegProject(BaseFile):
                 else:
                     path = self._filename.parent / base_path
                     blk_data.open(path)
-
+                    
                 self.blocks[blk_data.uuid] = blk_data
 
     def _load_overrides_from_json_data(
@@ -711,7 +718,7 @@ class RegProject(BaseFile):
         the filelist
         """
         for filename in self._filelist:
-            full_path = (self._filename.parent / filename).resolve()
+            full_path = (self._filename.parent / filename).absolute()
             regset = self.finder.find_by_file(str(full_path))
             if not regset and full_path.exists():
                 regset = RegisterSet()

@@ -31,7 +31,12 @@ from regenerate.db import (
     Register,
     RegProject,
     RegisterSet,
+    ResetType
 )
+
+from regenerate.db.parameters import ParameterValue, ParameterResolver, ParameterFinder
+
+
 from regenerate.extras.token import full_token, in_groups, uvm_name
 
 try:
@@ -424,8 +429,12 @@ class RegisterRst:
 
         footnote = False
 
+        binst = None if not self._group else self._group.uuid
+        rinst = None if not self._inst else self._inst.uuid
+
         for field in reversed(self._reg.get_bit_fields()):
-            msb = field.msb.resolve()
+
+            msb = field.msb.resolve(binst=binst, rinst=rinst)
 
             if msb != last_index:
                 display_reserved(ofile, last_index, msb + 1)
@@ -435,14 +444,23 @@ class RegisterRst:
             else:
                 ofile.write(f"   * - ``{msb:02d}:{field.lsb:02d}``\n")
 
+                
+            if field.reset_type == ResetType.PARAMETER:
+                finder = ParameterFinder()
+                resolver = ParameterResolver()
+                rval = resolver.resolve(finder.find(field.reset_parameter),
+                                        binst=binst, rinst=rinst)
+            else:
+                rval = field.reset_value
+                
             if self._decode:
                 val = (self._decode & mask(msb, field.lsb)) >> field.lsb
-                if val != field.reset_value:
+                if val != rval:
                     ofile.write("     - :resetvalue:`0x%x`" % val)
                 else:
-                    ofile.write("     - ``0x%x``" % val)
+                    ofile.write("     - ``0x%x``" % rval)
             else:
-                ofile.write("     - ``0x%x``" % field.reset_value)
+                ofile.write("     - ``0x%x``" % rval)
 
             if field.use_alternate_reset:
                 ofile.write(" :sup:`*`")
@@ -775,8 +793,12 @@ class RegisterRst:
         return registers
 
     def expand_register_list(self, registers):
-        regdim = self._reg.dimension.int_value
-        
+
+        binst = None if not self._group else self._group.uuid
+        rinst = None if not self._inst else self._inst.uuid
+
+        regdim = self._reg.dimension.resolve(binst=binst, rinst=rinst)
+
         if regdim > 1:
             rtoken = f"{self._reg.token.lower()}[{regdim}]"
         else:
@@ -789,8 +811,9 @@ class RegisterRst:
                 for idx in range(0, blk_inst.repeat):
                     for regset in regset_list:
                         rname = regset.name
-                        if regset.repeat.resolve() > 1:
-                            for ridx in range(0, regset.repeat.resolve()):
+                        val = regset.repeat.resolve(binst=binst, rinst=rinst)
+                        if val > 1:
+                            for ridx in range(0, val):
                                 names.append(
                                     (
                                         f"{bname}[{idx}].{rname}[{ridx}].{rtoken}",
@@ -809,8 +832,9 @@ class RegisterRst:
             else:
                 for regset in regset_list:
                     rname = regset.name
-                    if regset.repeat.resolve() > 1:
-                        for ridx in range(0, regset.repeat.resolve()):
+                    val = regset.repeat.resolve(binst=binst, rinst=rinst)
+                    if val > 1:
+                        for ridx in range(0, val):
                             names.append(
                                 (
                                     f"{bname}.{rname}[{ridx}].{rtoken}",

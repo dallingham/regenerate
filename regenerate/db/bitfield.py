@@ -366,11 +366,12 @@ class BitField(NameBase):
             return self.name
         return f"{self.name}[{self.msb.resolve()}:{self.lsb}]"
 
-    def get_reset_value(self):
-        return self.reset_value
-
     @property
-    def reset_value(self, display=False) -> int:
+    def reset_value(self, display=False, binst=None, rinst=None) -> int:
+        self.get_reset_value(display=display, binst=binst, rinst=rinst)
+
+        
+    def get_reset_value(self, display=False, binst=None, rinst=None) -> int:
         """
         Return the reset value.
 
@@ -386,7 +387,7 @@ class BitField(NameBase):
             resolver = ParameterResolver()
             param = finder.find(self.reset_parameter)
             if param:
-                val = resolver.resolve(param)
+                val = resolver.resolve(param, binst, rinst)
                 return val
             return 0
         if self.reset_type == ResetType.INPUT and not display:
@@ -422,7 +423,6 @@ class BitField(NameBase):
         return self._reset_value
 
     @reset_value.setter
-
     def reset_value(self, value: int) -> None:
         """
         Set the reset value to an integer.
@@ -446,7 +446,7 @@ class BitField(NameBase):
         """
         self._reset_value = value
 
-    def reset_value_bit(self, bit: int) -> int:
+    def reset_value_bit(self, bit: int, binst=None, rinst=None) -> int:
         """
         Return 1 if the bit in the resolved reset value is a 1.
 
@@ -457,7 +457,7 @@ class BitField(NameBase):
            int: 1 or 0, depending of the bit is sets
 
         """
-        if self.reset_value & (1 << bit):
+        if self.get_reset_value(binst=binst, rinst=rinst) & (1 << bit):
             return 1
         return 0
 

@@ -177,7 +177,7 @@ class ParameterValue:
         self.offset = offset
         self.is_parameter = True
 
-    def resolve(self) -> int:
+    def resolve(self, binst=None, rinst=None) -> int:
         """
         Return the integer value that the value represents.
 
@@ -196,9 +196,9 @@ class ParameterValue:
 
         finder = ParameterFinder()
         value = finder.find(self.txt_value)
-        if value:
+        if isinstance(value, ParameterDefinition):
             resolver = ParameterResolver()
-            return resolver.resolve(value) + self.offset
+            return resolver.resolve(value, binst, rinst) + self.offset
         return 0
 
     def json_decode(self, data):
@@ -251,15 +251,16 @@ class ParameterResolver:
     def __init__(self):
         ...
 
-    def set_reginst(self, uuid: Uuid) -> None:
+    def set_reginst(self, uuid: Uuid) -> Uuid:
         "Set the instance name."
 
         self.reginst_id = uuid
+        return uuid
 
-    def set_blkinst(self, uuid: Uuid) -> None:
+    def set_blkinst(self, uuid: Uuid) -> Uuid:
         "Set the instance name."
-
         self.blkinst_id = uuid
+        return uuid
 
     def clear(self) -> None:
         """
@@ -298,7 +299,7 @@ class ParameterResolver:
             self.reginst_overrides[reginst_id][param_id] = data
 
     def add_blockinst_override(
-        self, blkinst_id: Uuid, param_id: Uuid, data: "ParameterValue"
+        self, blkinst_id: Uuid, param_id: Uuid, data: ParameterValue
     ) -> None:
         """
         Add an override for a parameter in a block.
@@ -309,7 +310,6 @@ class ParameterResolver:
             data (ParameterValue): value for the override
 
         """
-
         if blkinst_id not in self.top_overrides:
             self.top_overrides[blkinst_id] = {param_id: data}
         else:
@@ -370,7 +370,7 @@ class ParameterResolver:
         else:
             return value.value
 
-    def resolve(self, param: "ParameterDefinition") -> int:
+    def resolve(self, param: "ParameterDefinition", binst=None, rinst=None) -> int:
         """
         Resolve a parameter looking for overrides in the block.
 
@@ -384,29 +384,29 @@ class ParameterResolver:
             int: resolved value
 
         """
-
         param_id = param.uuid
 
-        if self.reginst_id in self.reginst_overrides and param_id in self.reginst_overrides[self.reginst_id]:
-            value = self.reginst_overrides[self.reginst_id][param_id]
+        if rinst is None:
+            rinst = self.reginst_id
+        if binst is None:
+            binst = self.blkinst_id
+
+        if rinst in self.reginst_overrides and param_id in self.reginst_overrides[rinst]:
+            value = self.reginst_overrides[rinst][param_id]
             if value.is_parameter:
                 param_id = value.txt_value
             else:
                 return value.int_value
 
-        if self.blkinst_id in self.top_overrides and param_id in self.top_overrides[self.blkinst_id]:
-            value = self.top_overrides[self.blkinst_id][param_id]
+        if binst in self.top_overrides and param_id in self.top_overrides[binst]:
+            value = self.top_overrides[binst][param_id]
             if value.is_parameter:
+                pval = ParameterFinder().find(value.txt_value)
+                return pval.value
+            else:
                 return value.int_value
         else:
             return param.value
-            
-        # val = self.resolve_reg(param)
-        # if isinstance(val, int):
-        #     return val
-        
-        # new_val = self.resolve_blk(val)
-        # return new_val
 
 
 def _resolve_blk_value(value):
@@ -479,6 +479,9 @@ class ParameterFinder:
         if parameter.uuid in self.data_map:
             del self.data_map[parameter.uuid]
 
+    def dump(self):
+        print(self.data_map)
+            
 
 class ParameterDefinition(NameBase):
     """
